@@ -282,6 +282,9 @@ and the maintainer's six decisions of 2026-10-11:
   2026-10-15. Design written, nothing built; waiting on the maintainer's nine calls (K1–K9):
   [architecture/research-kit.md](architecture/research-kit.md) § 10.
   2026-10-17, the maintainer: "NO TIMES!", so the kit has no typed times and that task is dropped (§ 5.5).
+  - [x] 25r, its wage part (K5 B of 2026-10-16), written 2026-10-20: official wage ranges with their area level,
+    period and source may appear, outlook ratings don't; CLAUDE.md, future-cockpit.md decision 2, § 12 and § 13
+    and research-kit.md say the same (docs only)
 - 🔄 **[14j] Testing any idea (S2.5.29).** The gate every new road and screen passes: a corpus of invented
   ideas run through the app, with invariants a person can read. The maintainer's first pick of 2026-10-17
   (tests plus a calm screen first).
@@ -310,8 +313,8 @@ and the maintainer's six decisions of 2026-10-11:
     door to the plan in the browser both ways in, every screen read for verdict words, time words and the
     clutter measurer (`e2e/clutter-measure.ts`, shared with the clutter limit); findings listed in the file's
     `SCREEN_GAPS`, never fixed quietly. Two on 2026-10-19, both the maintainer's call: *Your destination*'s
-    first question says "In a few years" (the front door's known gap, in a file the words scan doesn't read);
-    and a first visit with the person's words kept shows them in a 13th text size (17 px) against the cockpit's
+    first question says "In a few years" (the front door's known gap, in a file the words scan doesn't read;
+    reworded 2026-10-20 on his pick "Reword both", taken out of `SCREEN_GAPS`); and a first visit with the person's words kept shows them in a 13th text size (17 px) against the cockpit's
     budget of 12, measured on a visit with no words (gone with the type scale, 2026-10-20: the words are the
     title size, one of the six, and the cockpit counts 5 sizes either way; taken out of `SCREEN_GAPS`)
   - [x] 29f: `npm run eval:intent` (`scripts/eval-intent.mjs`), the AI parser on the developer's own key, scored
@@ -326,7 +329,7 @@ and the maintainer's six decisions of 2026-10-11:
     drivers); the keyword parser's places, kinds of work and equipment proposed only when the words state
     them; no duration in road 1's first step. Their "bug" entries left `tests/fixtures/ideas/known-gaps.ts`.
     Still listed for the maintainer: equipment on a picked future can't be answered, the front door's
-    "in a few years", and "Incorporating" on a future picked on road 0 can't light at all: the rule compares
+    "in a few years" (reworded 2026-10-20, "Reword both"; out of the list), and "Incorporating" on a future picked on road 0 can't light at all: the rule compares
     "I'd incorporate at" with a third-year sales estimate, Pick a future keeps none (it saves 0,
     `lib/front-door/start-future.ts`) and nothing in the cockpit asks for one (only the intake's Year 3 box
     sets it). The *Not told yet* row is no longer asked there and the step's card and panel say it needs that

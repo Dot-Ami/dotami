@@ -51,7 +51,8 @@ export interface DestinationQuestion {
 export const DESTINATION_QUESTIONS: readonly DestinationQuestion[] = [
   {
     id: "destination",
-    ask: "In a few years, what do you want your work and life to look like? Use your own words.",
+    // Began "In a few years, …" until 2026-10-20; reworded with the front door's first door (no times at all).
+    ask: "What do you want your work and life to look like? Use your own words.",
     // Only a future picked on Pick a future shows them: an idea with its own sentence shows that one.
     why: "So the top of each future you pick here is your own goal, exactly as you said it.",
     unlocks: "The words at the top of each future you pick here, with the day you said them. No rule reads them.",

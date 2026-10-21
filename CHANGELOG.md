@@ -76,6 +76,12 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   against what each idea's words name, and writes `test-results/intent-eval.md` with ids only.
 
 ### Changed
+- **No span of time on the front door or Your destination** (the maintainer's pick of 2026-10-20, "Reword
+  both"). The first door said "Say where you want to be in a few years, in your own words, …" and now says
+  "Say where you want to be, in your own words, …"; Your destination's first question said "In a few years,
+  what do you want your work and life to look like?" and now asks "What do you want your work and life to
+  look like? Use your own words." The no-times checks had listed both as known gaps for his call; both
+  entries are gone, so the words-file scan and the browser sweep now fail if either comes back.
 - **Six text sizes instead of twenty-three** (S2.5.30d, the plan of 2026-10-17). The screens had grown
   twenty-three ad hoc text sizes, from 8 px to 46 px with half-pixel neighbours among them, in 661 places;
   one screen drew fifteen distinct sizes. They are now six named sizes, theme tokens in
@@ -186,6 +192,17 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
     the same (`app/api/intent/parse/route.ts`).
   - Road 1's first step no longer says how long a period is designed to take: its summary ends at "4 periods
     (levels)." The official page's words stay quoted in its source.
+
+### Documented
+- **Official wage ranges are allowed in the design docs; outlook ratings aren't** (the maintainer's call K5,
+  answered "B" on 2026-10-16, written down 2026-10-20). A government's own published wage range for a job may
+  appear, labelled with its area level (economic region, province-wide figure or small-area estimate), its
+  period and its source, as what workers in that job were paid, never as the person's income and never added
+  to a cost. CLAUDE.md's numbers rule,
+  [docs/architecture/future-cockpit.md](docs/architecture/future-cockpit.md) decision 2, § 12 and § 13 (its
+  "typical numbers, before phase 2" question closed; that "phase 2" was the cockpit's own, now called cockpit
+  phase 2 (compare futures)) and [docs/architecture/research-kit.md](docs/architecture/research-kit.md) now say
+  the same. Docs only: no wage is shown anywhere yet.
 
 ## [0.4.0] — 2026-10-17
 

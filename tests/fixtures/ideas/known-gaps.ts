@@ -40,12 +40,9 @@ export interface ShownWordsGap {
  * the spec fails on a sentence with a time not listed here, and on a listed one that no longer has one.
  */
 export const SHOWN_WORDS_GAPS: readonly ShownWordsGap[] = [
-  {
-    where: "lib/front-door/words.ts frontDoorWords.doors.dream.body",
-    kind: "bug",
-    story: MAINTAINERS_CALL,
-    why: "The front door's first door (components/discovery/landing-page.tsx) says “Say where you want to be in a few years, in your own words”: a span of time DotAmi writes, though it asks about the person's own future rather than how long something takes. Whether it breaks “no times at all” (2026-10-17) is the maintainer's call.",
-  },
+  // Taken out on 2026-10-20: the front door's first door said "Say where you want to be in a few years". The
+  // maintainer picked "Reword both" (this door and Your destination's first question) on the page "DotAmi
+  // Phase 2", so neither says a span of time any more.
 ];
 
 export const KNOWN_GAPS: readonly KnownGap[] = [

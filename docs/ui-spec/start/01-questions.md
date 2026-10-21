@@ -3,7 +3,7 @@
 Page: Your destination (`/start`) · Component: `components/front-door/destination-page.tsx`
 Type: wizard step (one question at a time) + receipts
 
-Last updated: 2026-10-12 (built)
+Last updated: 2026-10-20 (the first question reworded; built 2026-10-12)
 
 ## What it is
 
@@ -28,7 +28,7 @@ left; **Change** moves it to the question it opens.
 
 | Id | Question | Answer controls | Required |
 |---|---|---|---|
-| `destination` | *In a few years, what do you want your work and life to look like? Use your own words.* | a box (up to 2,000 characters, `STATEMENT_MAX_CHARS`), **Keep my words**, **I don't know yet** | no |
+| `destination` | *What do you want your work and life to look like? Use your own words.* (until 2026-10-20 it began "In a few years", a span of time DotAmi wrote; reworded on the maintainer's pick) | a box (up to 2,000 characters, `STATEMENT_MAX_CHARS`), **Keep my words**, **I don't know yet** | no |
 | `looking-for` | *Are you after a business of your own, a job or career, or both?* | **A business of my own** · **A job or career** · **Both, or not sure** | yes (*Both, or not sure* is an answer) |
 | `place` | *Which province or territory are you in?* | a dropdown of the thirteen places, by name, valued by code (`CA-AB` …), and **Use this place** | yes, no *I don't know*: no road can be drawn without one |
 | `income-wanted` | *What yearly income do you want, before tax?* | an amount box (dollars), **Keep it**, **Skip** | no |
