@@ -10,21 +10,6 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
-### Documented
-- **Phase 2's screens, designed before they are built** (task 28g, 2026-10-20): six ui-spec files, each with
-  every word, what is new, its regions and controls against the clutter limit, how a screen reader hears it,
-  the phone layout and what is not in this version. Pick a future becomes three steps asked before any road
-  is drawn, on both ways in: *What's closest to your work?* (the person's own words searched in the
-  government's example job titles, grouped by how many of their words each job holds, DotAmi's own word list
-  marked as DotAmi's), *Where you are* (which area, then which economic region, never worked out for them),
-  and the road written for the picked job or an honest *No road is written for this job yet* with *About this
-  job* in place ([docs/ui-spec/futures/](docs/ui-spec/futures/_index.md)); the federal steps for a person
-  outside Alberta; *About this job* in the cockpit's right-hand panel
-  ([docs/ui-spec/cockpit/about-this-job.md](docs/ui-spec/cockpit/about-this-job.md)); and the *Incorporating*
-  fix, asking for the third-year sales estimate on a picked future
-  ([docs/ui-spec/cockpit/incorporating-estimate.md](docs/ui-spec/cockpit/incorporating-estimate.md)). Docs
-  only: nothing DotAmi keeps, sends, ships or asks changes yet.
-
 ### Fixed
 - **Your answer to "Are you buying equipment, a vehicle or tools?" on a future picked on Pick a future is
   kept** (the maintainer's "Yes, fix both", 2026-10-20). Pick a future saves equipment as not said, since it
@@ -58,6 +43,30 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   asked again), the task list's cockpit phase 2 entry and
   [docs/architecture/other-ways-to-build.md](docs/architecture/other-ways-to-build.md)'s out-of-scope list now
   say the same. Docs only: no wage is shown anywhere yet.
+- **Phase 2 on the task list** (2026-10-20): [docs/task-list.md](docs/task-list.md) now lists the plan's
+  phase 2, every idea ending honestly in Alberta, with each task and its order: matching a person's words
+  to the government's job list ([14l]), the research kit's core and *About this job* ([14i]), asking the
+  area once ([14g]), the test gate's new endings ([14j]), the data check in CI ([14m]), quality numbers
+  and the maintainer's walk ([14n]), the screen review ([14k], [13g]) and the release work ([14o]), with
+  the maintainer's twelve calls of 2026-10-20. Corrected on the way: [14f], [14h] and [14i] no longer say
+  they wait on calls answered on 2026-10-16; [14j] and [14k] are marked done for phase 1; [14a] is marked
+  partly done (shipped in 0.4.0, with what's left listed) instead of in progress; the cockpit's own
+  phases are called "cockpit phase 1" to "cockpit phase 4", so the cockpit's phase 2 ([14b], now placed in
+  the plan's phase 3, its time strip and hours dropped under "no times") no longer reads as the plan's
+  phase 2. Docs only: nothing DotAmi keeps, sends, ships or asks changes.
+- **Phase 2's screens, designed before they are built** (task 28g, 2026-10-20): six ui-spec files, each with
+  every word, what is new, its regions and controls against the clutter limit, how a screen reader hears it,
+  the phone layout and what is not in this version. Pick a future becomes three steps asked before any road
+  is drawn, on both ways in: *What's closest to your work?* (the person's own words searched in the
+  government's example job titles, grouped by how many of their words each job holds, DotAmi's own word list
+  marked as DotAmi's), *Where you are* (which area, then which economic region, never worked out for them),
+  and the road written for the picked job or an honest *No road is written for this job yet* with *About this
+  job* in place ([docs/ui-spec/futures/](docs/ui-spec/futures/_index.md)); the federal steps for a person
+  outside Alberta; *About this job* in the cockpit's right-hand panel
+  ([docs/ui-spec/cockpit/about-this-job.md](docs/ui-spec/cockpit/about-this-job.md)); and the *Incorporating*
+  fix, asking for the third-year sales estimate on a picked future
+  ([docs/ui-spec/cockpit/incorporating-estimate.md](docs/ui-spec/cockpit/incorporating-estimate.md)). Docs
+  only: nothing DotAmi keeps, sends, ships or asks changes yet.
 
 ## [0.4.1] — 2026-10-20
 
