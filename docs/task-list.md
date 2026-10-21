@@ -799,10 +799,10 @@ roadmap's build order.
   - [ ] A "What does this mean?" link from a card's short form to its glossary entry
   - [ ] Later: the glossary as the translators' word list, once a second language is planned
 - ✅ **[13b] Releases** — tags, changelog, release notes; the app's updates come from these.
-  - [x] Version tags (v0.1.0, v0.2.0, v0.2.1, v0.3.0) and [CHANGELOG.md](../CHANGELOG.md)
+  - [x] Version tags (v0.1.0, v0.2.0, v0.2.1, v0.3.0, v0.4.0) and [CHANGELOG.md](../CHANGELOG.md)
   - [x] A tag builds the Windows installer into a draft release; the maintainer writes the notes and publishes
-  - [x] A release after v0.2.0 built by the fixed workflow and published end to end (with [7d]): v0.2.1
-    and v0.3.0 were each built by the release workflow from their tag and published; 0.2.0 → 0.2.1
+  - [x] A release after v0.2.0 built by the fixed workflow and published end to end (with [7d]): v0.2.1,
+    v0.3.0 and v0.4.0 were each built by the release workflow from their tag and published; 0.2.0 → 0.2.1
     reached an installed app (by hand, 2026-10-08)
   - [x] A release with a database change ships its migration, which the desktop app applies itself
     (`tests/desktop-migrate.spec.ts`), and says so in its CHANGELOG entry
