@@ -341,8 +341,15 @@ placed in phase 3.
     period and source may appear, outlook ratings don't; CLAUDE.md, future-cockpit.md decision 2, § 12 and § 13
     and research-kit.md say the same, and so do CONTRIBUTING.md, [14b] above and other-ways-to-build.md § 11
     (docs only)
-  - [x] 25b: the source registry ("connector cards"): every outside source with its access, who holds the
-    key, what may be kept, its licence and credit line, and a validator (`lib/engines/research-kit/v2026/`)
+  - [x] 25b, its first part: the source registry ("connector cards", `lib/engines/research-kit/v2026/`) and its
+    validator, with a card for each government file phases 2 and 3 ship, the two ad libraries, and the
+    never-fetch list (Job Bank's pages, YellowPages.ca, Canada411, Google Maps' consumer site, DOZR, Kijiji, Meta)
+  - [ ] 25b, the rest (phase 3; corrected 2026-10-20: 25b was ticked whole): cards for the other sources in
+    research-kit.md § 3.2 (Overture Maps, Calgary's and Edmonton's business-licence lists, OpenStreetMap, Google
+    Places, Grounding Lite, Yelp, Semrush, Ahrefs, Similarweb, Apollo, ZoomInfo), a "not offered" kind for
+    Apollo, ZoomInfo, Ahrefs, Similarweb and the S2.5.26 finds, 22n's rent-price places (Rogers Rent-All,
+    Protospace, ENTS) and the 22n list as a view over the registry; the live look-ups wait on the Lens's
+    connector powers ([9g]), the place lists on S2.5.26, the rent-price places on their replies
   - [x] 25c: one shared import core (encoding, table id, period, licence and next-release date as data),
     with the OaSIS importer moved onto it unchanged (`scripts/lib/import-kit.mjs`)
   - [ ] 25e: code keys on roads (the jobs a road is written for), job links, the 2022 industry code list

@@ -345,9 +345,13 @@ never-automated one (the address beginnings nothing may fetch); `figureKind` gai
 comes from, and `checkedBy` is person, model, tool or not-read. The validator also refuses a licence it doesn't
 know, a shipped source without an open licence or a credit line, a live look-up whose terms nobody has read, and
 any card that would fetch an address a never-automated card bars. The ad-library links of *Others in this line
-of work* (`lib/landscape/words.ts`) are a view over it. Not entered yet: the live look-ups (Google Places, Yelp,
-Semrush, Ahrefs, Similarweb), which come with the Lens's connector powers and S2.5.26; and 22n's rent-price
-places, which have no list in the app yet and whose price reuse waits on their replies.
+of work* (`lib/landscape/words.ts`) are a view over it. Not entered yet (the rest of 25b, placed in phase 3):
+the live look-ups (Google Places, Grounding Lite, Yelp, Semrush, Ahrefs, Similarweb), which come with the Lens's
+connector powers and S2.5.26; the shipped place lists (Overture Maps, Calgary's and Edmonton's business-licence
+lists) and OpenStreetMap, which wait on S2.5.26; Apollo and ZoomInfo, and a "not offered" kind of `access` for
+them, for Ahrefs and Similarweb until their keep terms are read, and for the S2.5.26 finds; and 22n's rent-price
+places (Rogers Rent-All, Protospace, ENTS) with the 22n list as a view, which have no list in the app yet and
+whose price reuse waits on their replies.
 
 ### 5.3 The four code keys and the job-links catalog
 
@@ -394,8 +398,10 @@ and prints the amber words ("A newer count may be out.", from `lib/engines/resea
 a card's stated next release has come. `scripts/import-oasis.mjs` is now an adapter on it: its `--check`
 output, `tests/oasis-import.spec.ts` and the module it writes are unchanged, byte for byte. `npm run
 data:check` (`scripts/data-check.mjs`) runs every importer's `--check` offline and is a step of
-`npm run ci:quality` and of CI. The
-S2.5.23f counts import is built on the core. As far as the research saw (reported, not confirmed; 23f checks
+`npm run ci:quality` and of CI.
+
+**Still to build (phase 3).** The S2.5.23f counts import will be built on the core; no importer for it exists
+yet. As far as the research saw (reported, not confirmed; 23f checks
 it), the census-metropolitan-area table goes down to 4-digit industry groups and counts only businesses with
 employees, so the import covers every NAICS code down to 4 digits for each Alberta census metropolitan area,
 and 6 digits only for Alberta and Canada. Snapshots ship with each release and are not fetched on the person's

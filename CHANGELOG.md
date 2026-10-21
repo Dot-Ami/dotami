@@ -11,12 +11,14 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [Unreleased]
 
 ### Added
-- **One list of every outside source and its terms** (the research kit's source registry,
+- **One list of outside sources and their terms** (the research kit's source registry,
   `lib/engines/research-kit/v2026/registry.ts`; [docs/architecture/research-kit.md](docs/architecture/research-kit.md)
-  § 5.2). Plumbing, with no change on screen: one card per source the kit imports or links in the next two phases
-  (the government's job and skills files, its job titles, the wage file, the industry code list, the business
-  counts and census tables marked as later, the two ad libraries) and the sites whose terms bar scripts (Job
-  Bank's pages, YellowPages.ca, Canada411, Google Maps, DOZR, Kijiji, Meta). Each says how DotAmi may reach it,
+  § 5.2). Plumbing, with no change on screen: one card for each government file the kit ships in this phase and
+  the next (the job and skills files, the job titles, the wage file, the industry code list, the business counts
+  and census tables marked as later), the two ad libraries, and the sites whose terms bar scripts (Job Bank's
+  pages, YellowPages.ca, Canada411, Google Maps, DOZR, Kijiji, Meta). The other sources the design names (the
+  live look-ups on a person's own account, the place lists, Apollo and ZoomInfo, and the rent-price places) get
+  their cards in phase 3. Each says how DotAmi may reach it,
   what may be kept, its licence and credit line, and the words on its own terms page that decided it, with the
   day (most were found word for word by the quote checker on 2026-10-20). A test refuses a card with a field
   missing, an unknown licence, a vendor's estimate feeding a total, or a site whose terms bar scripts marked as
