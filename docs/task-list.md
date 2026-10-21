@@ -239,8 +239,10 @@ and the maintainer's six decisions of 2026-10-11:
   side* across your saved futures, sorted by one thing you choose, said on screen; *Keep as a copy* for
   a what-if; a time strip from your own dates (each step's own date kept then: one added column); hours you want, things you won't do, and a dream-life
   list that adds up your own monthly amounts into your target; *I paid this* linking an expense to a
-  planned cost. Before this phase is locked, the maintainer is asked again whether to show typical
-  numbers beside the official fees and your own quotes (the approved plan's follow-up to decision 2).
+  planned cost. The approved plan's follow-up to decision 2, whether to show typical numbers beside
+  the official fees and your own quotes, is answered (K5 B of 2026-10-16, written 2026-10-20): official
+  wage ranges by job may appear on *About this job*, built in the research kit's tasks; start-up costs
+  stay official fees plus your own quotes, no averages ([future-cockpit.md](architecture/future-cockpit.md) § 13).
 - ⏸ **[14c] Phase 3 — The Lens helps, on your own model.** Waits on § 9. Your résumé read where it
   sits, proposing skill marks that quote the line they came from, for you to tick; *Ask the Lens* on a
   step, its drafts tagged "drafted by your model, not from DotAmi's sources"; it never writes into your
@@ -284,7 +286,8 @@ and the maintainer's six decisions of 2026-10-11:
   2026-10-17, the maintainer: "NO TIMES!", so the kit has no typed times and that task is dropped (§ 5.5).
   - [x] 25r, its wage part (K5 B of 2026-10-16), written 2026-10-20: official wage ranges with their area level,
     period and source may appear, outlook ratings don't; CLAUDE.md, future-cockpit.md decision 2, § 12 and § 13
-    and research-kit.md say the same (docs only)
+    and research-kit.md say the same, and so do CONTRIBUTING.md, [14b] above and other-ways-to-build.md § 11
+    (docs only)
 - 🔄 **[14j] Testing any idea (S2.5.29).** The gate every new road and screen passes: a corpus of invented
   ideas run through the app, with invariants a person can read. The maintainer's first pick of 2026-10-17
   (tests plus a calm screen first).

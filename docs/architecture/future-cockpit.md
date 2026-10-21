@@ -1950,8 +1950,8 @@ The maintainer expects the layout, and so the back end, to change as this is bui
 ## 12. Not in phase 1
 
 - Any number that isn't an official fee or the person's own agreed number: no averages, no
-  government wage or industry figures, no survival rates (decision 2; whether phase 2 shows typical
-  numbers is asked again before it starts, § 13).
+  government wage or industry figures, no survival rates (decision 2; the typical-numbers question this
+  item used to leave open is closed, § 13, and the note below says what changed).
   *Note (the maintainer's answer of 2026-10-16, written here 2026-10-20):* official wage ranges by job
   are no longer ruled out. They may appear with their geography level, reference period and source, on
   *About this job* ([research-kit.md](research-kit.md) § 4.2, call K5 B), built in the research kit's
@@ -1969,15 +1969,15 @@ The maintainer expects the layout, and so the back end, to change as this is bui
   buying, renting or leasing each start-up item and where to ask about tax and legal questions
   ([other-ways-to-build.md](other-ways-to-build.md)), and others in the same line of work
   ([competitive-landscape.md](competitive-landscape.md)). The second asks (its call 1) whether an
-  official count of businesses may appear for a real person, which this section rules out today.
-  The maintainer answered that "A" on 2026-10-15 (counts may appear; recorded here once built, task 23n).
+  official count of businesses may appear for a real person, which this section ruled out until
+  then. The maintainer answered that "A" on 2026-10-15 (counts may appear; recorded here once built, task 23n).
 - Two more designs asked for the same day, also not built and waiting on calls: the Lens answering
   "cheapest", "fastest" and "strongest foundation" by a measure the person names
   ([lens-comparisons.md](lens-comparisons.md)), which would bring decision 3's sort forward from phase 2 (it
   adds no typed times: the maintainer answered "NO TIMES!" on 2026-10-17, so the months-only rule above
   stands), and one research kit that
   makes all of this work for any job ([research-kit.md](research-kit.md)), whose call K5 asks whether
-  government wage figures may appear for a real person, which this section rules out today. The
+  government wage figures may appear for a real person, which this section ruled out until then. The
   maintainer answered K5 "B" on 2026-10-16 (official wage ranges may appear, with their geography level
   and period; outlook ratings don't; written here 2026-10-20, see the note under this section's first item).
 

@@ -615,7 +615,9 @@ tax treatment and *Where to ask* before any per-way number is kept; stage 2 adds
   (`lib/engines/grants/v2026/programs.ts`); asking the person's city; hiring and workers' compensation (a separate
   story).
 - Ask-in-writing lists and *Where to ask* rows for provinces other than Alberta (the keys are ready; the reading isn't);
-  typical numbers for a real person (phase-2 open item, `future-cockpit.md` § 13).
+  averages or typical prices for a real person (start-up costs stay official fees plus the person's own quotes,
+  `future-cockpit.md` decision 2; the official wage ranges allowed on 2026-10-16 belong on *About this job*, not in
+  this story, § 13).
 - Any time figure, time gauge, timeline or date forecast (K9; "NO TIMES!", 2026-10-17, § 1).
 
 ## 12. Open questions (never stated as fact in the product)

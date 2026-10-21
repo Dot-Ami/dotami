@@ -201,8 +201,11 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   to a cost. CLAUDE.md's numbers rule,
   [docs/architecture/future-cockpit.md](docs/architecture/future-cockpit.md) decision 2, § 12 and § 13 (its
   "typical numbers, before phase 2" question closed; that "phase 2" was the cockpit's own, now called cockpit
-  phase 2 (compare futures)) and [docs/architecture/research-kit.md](docs/architecture/research-kit.md) now say
-  the same. Docs only: no wage is shown anywhere yet.
+  phase 2 (compare futures)), [docs/architecture/research-kit.md](docs/architecture/research-kit.md),
+  CONTRIBUTING.md's rule for the official job lists (it had said wages weren't allowed and the question would be
+  asked again), the task list's cockpit phase 2 entry and
+  [docs/architecture/other-ways-to-build.md](docs/architecture/other-ways-to-build.md)'s out-of-scope list now
+  say the same. Docs only: no wage is shown anywhere yet.
 
 ## [0.4.0] — 2026-10-17
 
