@@ -1,6 +1,6 @@
 # Task list — what's being built, and what you can pick up
 
-Last updated: 2026-10-17. Every story planned for DotAmi, with its tasks. The plan behind it is
+Last updated: 2026-10-20. Every story planned for DotAmi, with its tasks. The plan behind it is
 [architecture/use-cases.md](architecture/use-cases.md) (who it's for, the decisions, the build
 order); the settings and edge cases each story must test are in
 [architecture/settings-and-edge-cases.md](architecture/settings-and-edge-cases.md) — the codes in
@@ -19,7 +19,8 @@ need a maintainer's decision first (⏸); those are marked.
 content and the project itself run alongside everything. **Changed 2026-10-11:** the future
 cockpit (§ 14) is now first, because the maintainer named it the top priority on 2026-10-10; it
 takes in the planning pieces of § 10 ([10b] progress, [10c] tasks) and starts § 11's roadmaps as
-data. Its design: [architecture/future-cockpit.md](architecture/future-cockpit.md).
+data. Its design: [architecture/future-cockpit.md](architecture/future-cockpit.md). **Changed
+2026-10-20:** phase 2 of the plan for any idea (§ 14 below, [14l]–[14o]) is next.
 
 ---
 
@@ -31,7 +32,37 @@ blank cost lines they price themselves. The cockpit is where they plan it and th
 and the maintainer's six decisions of 2026-10-11:
 [architecture/future-cockpit.md](architecture/future-cockpit.md).
 
-- 🔄 **[14a] Phase 1 — Look inside one future (Alberta).** About two calendar weeks.
+The cockpit's own phases are called **cockpit phase 1** to **cockpit phase 4** ([14a]–[14d]; renamed
+2026-10-20), so they never read as the phases of the plan below.
+
+**The plan for any idea** (the maintainer's, 2026-10-17): DotAmi works for any career or business idea,
+with every idea tested, calm screens and clean data, built in phases. **Phase 1**, the test gate and the
+calm screen ([14j], [14k]), finished on 2026-10-20. **Phase 2, every idea ends honestly in Alberta,
+started 2026-10-20:** a person picks the job closest to their work and sees the road written for it, or
+an honest "No road is written for this job yet" with *About this job*; a person outside Alberta sees the
+federal steps and "Written for Alberta" with their own province named. Its tasks, in order (the codes are
+the task ids the pull requests use): 28f → 25s → 28g → the "In a few years" rewording → the equipment fix →
+25r-K5 → 25b → 25c → 31a → 28a → 29k → 25e → 29h → 23g → 28b → 29i → 25i → 25h → 28c → the *Incorporating*
+fix → 29j → 28d → 30f → 32a → 32b → release 0.5.0. Where each sits: [14l] (28a–28g, 29h–29k), [14i] (25s,
+25r-K5, 25b, 25c, 25e, 25i, 25h), [14g] (23g), [14m] (31a), [14n] (32a, 32b), [13g] (30f), [14o] (the
+fixes and the releases).
+
+The maintainer's calls for phase 2 (2026-10-20): start it with the tasks an audit added (28f, 28g, 25s,
+25r-K5, 29h–29k, 32a and 32b); *About this job* ships without business counts, and only "which area" is
+asked for now (the industry question waits for the counts, in phase 3); the area is asked once, right after
+the job pick; *Where to look yourself* links Job Bank's general search page with the job's name and code
+shown to copy, never the picked job in a web address; if Statistics Canada publishes no official table from
+city areas to the economic regions the wage figures use, DotAmi asks "which region are you in?" rather than
+working it out; no sending an idea with no road to the maintainers until a privacy policy exists; both known
+bugs fixed (the equipment answer on a picked future, and *Incorporating* that can't light on a picked
+future); "In a few years" reworded; phase 1's work released now as a small update, before phase 2's data
+file changes; the parked pull request #138 closed with its branch kept; and the work in no phase yet
+(editing your own path, roads for closing, pausing or catching up, and the cockpit's phase 2 pieces, [14b])
+placed in phase 3.
+
+- 🟡 **[14a] Cockpit phase 1 — Look inside one future (Alberta).** About two calendar weeks. Built and
+  shipped in 0.4.0; the open items below are what's left (corrected 2026-10-20: this line still said
+  "in progress").
   - [x] The design, written before any code ([future-cockpit.md](architecture/future-cockpit.md))
   - [x] Fixes carried in, the first three (#142, 2026-10-11): the uncited $80,000 incorporation
     trigger off the map (the step is now *Incorporating*, cited facts only, lit only while it is the
@@ -233,32 +264,38 @@ and the maintainer's six decisions of 2026-10-11:
   - [ ] The catalogs' place keys (`AB`, `CA`) and the app's own place type moved to international codes
     such as `CA-AB`, as the data file already stores them (2026-10-12). No phase 1 screen needs it; it
     comes before any place outside Canada is added
-- ⬜ **[14b] Phase 2 — Compare futures, dates and your dream numbers.** A second written future; a
-  shelf of *Possible futures* (business, career, side gig) with *Peek inside*: what the work looks like
-  running, the road, skills, costs to start, and your own numbers beside it with no verdict; *Side by
+- ⬜ **[14b] Cockpit phase 2 — Compare futures and your dream numbers.** *(Renamed 2026-10-20 from
+  "Phase 2 — Compare futures, dates and your dream numbers", because the plan for any idea has a phase 2 of
+  its own; the maintainer placed these pieces in that plan's phase 3 the same day.)* A second written
+  future; a shelf of *Possible futures* (business, career, side gig) with *Peek inside*: what the work looks
+  like running, the road, skills, costs to start, and your own numbers beside it with no verdict; *Side by
   side* across your saved futures, sorted by one thing you choose, said on screen; *Keep as a copy* for
-  a what-if; a time strip from your own dates (each step's own date kept then: one added column); hours you want, things you won't do, and a dream-life
-  list that adds up your own monthly amounts into your target; *I paid this* linking an expense to a
-  planned cost. The approved plan's follow-up to decision 2, whether to show typical numbers beside
-  the official fees and your own quotes, is answered (K5 B of 2026-10-16, written 2026-10-20): official
-  wage ranges by job may appear on *About this job*, built in the research kit's tasks; start-up costs
-  stay official fees plus your own quotes, no averages ([future-cockpit.md](architecture/future-cockpit.md) § 13).
-- ⏸ **[14c] Phase 3 — The Lens helps, on your own model.** Waits on § 9. Your résumé read where it
+  a what-if; ~~a time strip from your own dates (each step's own date kept then: one added column); hours
+  you want~~ (both dropped under "no times", 2026-10-17; *Your date*, the month the person picks, stays);
+  things you won't do, and a dream-life list that adds up your own monthly amounts into your target; *I
+  paid this* linking an expense to a planned cost. The approved plan's follow-up to decision 2, whether to
+  show typical numbers beside the official fees and your own quotes, is answered (K5 B of 2026-10-16,
+  written 2026-10-20): official wage ranges by job may appear on *About this job*, built in the research
+  kit's tasks; outlooks don't; start-up costs stay official fees plus your own quotes, no averages
+  ([future-cockpit.md](architecture/future-cockpit.md) § 13); survival rates and grant counts not asked yet.
+- ⏸ **[14c] Cockpit phase 3 — The Lens helps, on your own model.** Waits on § 9. Your résumé read where it
   sits, proposing skill marks that quote the line they came from, for you to tick; *Ask the Lens* on a
   step, its drafts tagged "drafted by your model, not from DotAmi's sources"; it never writes into your
   own words; where to find a licensed professional for steps that need one.
-- ⬜ **[14d] Phase 4 — More futures, more places.** More businesses and careers; B.C. and Ontario
+- ⬜ **[14d] Cockpit phase 4 — More futures, more places.** More businesses and careers; B.C. and Ontario
   versions; futures written by contributors, one cited file per step, through a checker that refuses an
   uncited step.
 - ⬜ **[14e] Built to change.** Roads, overlays and questions kept as data the screens read, so the
   layout can change as the cockpit grows without rewriting the rules; each phase reviewed with the
   maintainer before the next is locked.
-- ⏸ **[14f] Other ways to build: buy, rent or lease, and where to ask about tax and legal questions.**
+- ⬜ **[14f] Other ways to build: buy, rent or lease, and where to ask about tax and legal questions.**
   For each start-up cost line, the ways to get it side by side (already have it, buy, rent, lease), each
   with the person's own number and the official tax treatment of that way; the cited rules the person's
   picks bring into view; and a *Where to ask* list of government offices, regulators' directories and
-  government-funded advice. Asked for 2026-10-15. Design written, nothing built; call 1 answered (C),
-  waiting on the maintainer's other calls: [architecture/other-ways-to-build.md](architecture/other-ways-to-build.md) § 9.
+  government-funded advice. Asked for 2026-10-15. Design written, nothing built; every call answered
+  (call 1 on 2026-10-15, the rest on 2026-10-16; corrected 2026-10-20: this line still said it waited on
+  them); the plan for any idea builds it in its phase 4, its first stage first:
+  [architecture/other-ways-to-build.md](architecture/other-ways-to-build.md) § 9.
 - 🟡 **[14g] Others in this line of work (the competitive landscape).** An official Statistics Canada
   count of businesses by area and industry, a dated list of public places to look (city licence lists,
   public contract records, ad libraries), a plain line that ordinary ad spend isn't published in Canada,
@@ -270,30 +307,59 @@ and the maintainer's six decisions of 2026-10-11:
   for each idea (the name as typed, a link, a note, the ads they saw with the day), kept on this computer,
   deleted with the idea ([ui-spec/cockpit/landscape.md](ui-spec/cockpit/landscape.md)). Still to build: the
   counts, the area and industry questions, *Where to look*, and Mara's landscape.
-- ⏸ **[14h] Ask the Lens "what's cheapest, fastest, strongest?"** The Lens, and a *Sort by one thing you
+  - [ ] 23g (phase 2 of the plan for any idea): ask the area once, right after the job pick (a fixed list of
+    Alberta census metropolitan areas plus *Somewhere else in Alberta* and *I don't know*, each with a line
+    saying why it's asked); it picks the wage region for *About this job* ([14i]), and *Others in this line
+    of work* reads the same answer. The industry question waits for the counts (the maintainer's call of
+    2026-10-20)
+  - [ ] Phase 3: the business counts for the area and industry (Statistics Canada table 33-10-1176), the
+    industry question, *Where to look* as a dated, checked list, and the rest of the panel
+- ⬜ **[14h] Ask the Lens "what's cheapest, fastest, strongest?"** The Lens, and a *Sort by one thing you
   choose* control on screen, put the person's own options in order by one measure they name, with every
   number worked out by DotAmi's code, the gaps counted, and the words "your choice" on screen; questions
   that need a forecast get a plain "DotAmi can't answer that" and where to ask. Asked for 2026-10-15.
-  Design written, nothing built; waiting on the maintainer's calls:
+  Design written, nothing built; the maintainer's calls answered 2026-10-16 (corrected 2026-10-20: this
+  line still said it waited on them), the three questions taken as examples of any question a person may
+  ask; the parts before the Lens (the comparison and *Sort by one thing you choose*) come in the plan's
+  phase 4, the rest after the Lens:
   [architecture/lens-comparisons.md](architecture/lens-comparisons.md) § 10.
   2026-10-17, the maintainer: no times anywhere, and the Lens may state a number only when it comes from
   DotAmi, a cost link it found or its calculator, never made up (§ 6.4; a calculator and a cost-link tool added).
 - 🔄 **[14i] One research kit for every job.** A list of every outside source and its terms, one import
   for the government's job and business data, code keys on every road, and a script that hands whoever
   writes a new road an empty, cited outline, so nothing is built again for each job. Asked for
-  2026-10-15. Design written; the maintainer's nine calls (K1–K9) answered 2026-10-16:
+  2026-10-15. Design written; the maintainer's nine calls (K1–K9) answered 2026-10-16
+  (corrected 2026-10-20: this line still said it waited on them; K3 is on hold for research):
   [architecture/research-kit.md](architecture/research-kit.md) § 10.
   2026-10-17, the maintainer: "NO TIMES!", so the kit has no typed times and that task is dropped (§ 5.5).
+  Phase 2 of the plan for any idea builds its core, in this order:
+  - [x] 25s: two open data questions checked first (2026-10-20): Statistics Canada publishes no ready-made
+    table from census metropolitan areas to Job Bank's economic regions (and Edmonton's spans two), so DotAmi
+    asks "which region are you in?"; Job Bank's 2025 wage file (Open Government Licence – Canada) has the
+    example rows for jobs 72311, 63210 and 21232, each with its geography level
   - [x] 25r, its wage part (K5 B of 2026-10-16), written 2026-10-20: official wage ranges with their area level,
     period and source may appear, outlook ratings don't; CLAUDE.md, future-cockpit.md decision 2, § 12 and § 13
     and research-kit.md say the same, and so do CONTRIBUTING.md, [14b] above and other-ways-to-build.md § 11
     (docs only)
-  - [x] 25b: the source registry, one card per outside source with its terms (`lib/engines/research-kit/v2026/`)
-  - [x] 25c: one import core (`scripts/lib/import-kit.mjs`), with the OaSIS import moved onto it unchanged
-  - [x] 31a: `npm run data:check`, every importer checked offline inside `ci:quality` and CI
-- 🔄 **[14j] Testing any idea (S2.5.29).** The gate every new road and screen passes: a corpus of invented
+  - [x] 25b: the source registry ("connector cards"): every outside source with its access, who holds the
+    key, what may be kept, its licence and credit line, and a validator (`lib/engines/research-kit/v2026/`)
+  - [x] 25c: one shared import core (encoding, table id, period, licence and next-release date as data),
+    with the OaSIS importer moved onto it unchanged (`scripts/lib/import-kit.mjs`)
+  - [ ] 25e: code keys on roads (the jobs a road is written for), job links, the 2022 industry code list
+    (NAICS) and an economic-region key
+  - [ ] 25i: wages only, from Job Bank's open-data wage file (never its pages), each row with its geography
+    level and period; no outlooks
+  - [ ] 25h: *About this job* for any job, in the right-hand panel from *Look closer*: the job's rules quoted
+    word for word, the published wages labelled "Not what a shop earns, and not what you would earn", and
+    *Where to look yourself* (Job Bank's general search, with the job's name and code to copy); no business
+    counts in this version, and it says so
+  - [ ] Phase 3: business counts for every industry (25d), the research-pack script (25f), the validator and
+    writer's guide (25g), read tools (25k), a second road built with the kit (25l), the rest of the rule text
+    (25r)
+- ✅ **[14j] Testing any idea (S2.5.29).** The gate every new road and screen passes: a corpus of invented
   ideas run through the app, with invariants a person can read. The maintainer's first pick of 2026-10-17
-  (tests plus a calm screen first).
+  (tests plus a calm screen first). Phase 1's part done 2026-10-20 (corrected 2026-10-20: this line still
+  said in progress after 29d–29f merged in #187); phase 2's changes to the gate, 29h–29k, are under [14l].
   - [x] 29a: the idea corpus, `tests/fixtures/ideas/v1.ts`, 367 invented ideas with permanent ids, every kind
     of person, place, business or career answer, job category, kind of work and odd case;
     `tests/idea-corpus.spec.ts` holds the minimums
@@ -340,12 +406,14 @@ and the maintainer's six decisions of 2026-10-11:
     `lib/front-door/start-future.ts`) and nothing in the cockpit asks for one (only the intake's Year 3 box
     sets it). The *Not told yet* row is no longer asked there and the step's card and panel say it needs that
     estimate (second review of PR #182, pinned in `tests/cockpit-told.spec.ts`), but the panel's box still
-    takes a number that can't light it; whether the cockpit asks for a third-year estimate is the maintainer's call
+    takes a number that can't light it; whether the cockpit asks for a third-year estimate is the maintainer's call.
+    2026-10-20, the maintainer: fix both bugs and reword "in a few years" ([14o])
   - [x] Equipment on a picked future answered and kept (the maintainer's "Yes, fix both", 2026-10-20): the
     box's answer takes equipment off the not-said list, so it is saved, read back and asked no more; taken
     back, it is not said again. Its "bug" entry left `tests/fixtures/ideas/known-gaps.ts`
-- 🔄 **[14k] A calm screen, kept calm by a limit (S2.5.30).** The maintainer's first pick of 2026-10-17,
-  with testing any idea: a calm first view, enforced by a limit on how busy a screen can get.
+- ✅ **[14k] A calm screen, kept calm by a limit (S2.5.30).** The maintainer's first pick of 2026-10-17,
+  with testing any idea: a calm first view, enforced by a limit on how busy a screen can get. Phase 1's part
+  done 2026-10-20 (#179, #183, #184); phase 2's screen review, 30f, is [13g].
   - [x] The layout rule: one primary thing per screen (on the cockpit, the road); new features open in the
     right-hand panel or the step panel, never as a new region; the first visit shows the least; everything
     folds and is remembered; and where each planned feature lands
@@ -386,6 +454,65 @@ and the maintainer's six decisions of 2026-10-11:
     `components/cockpit/` and fails on a sentence or label written there (one allowance: the legend's
     *Compass, not GPS — nothing here is a recommendation*, see the test), in place of the three older
     four-word checks over named files
+- ⬜ **[14l] Any idea to any job or business, Alberta first (S2.5.28).** Phase 2 of the plan for any idea.
+  Today every idea typed in is drawn on the general road, *Starting any business in Alberta*, without
+  saying so. After phase 2 the person picks the job closest to their work; the road written for that job
+  comes first, or the screen says plainly that no road is written for it yet and offers *About this job*
+  ([14i]) and the general road.
+  - [ ] 28f: research the free tools, datasets and repos that already match a person's words to the
+    government's 2021 job classification (NOC), before building the search; a dated findings note (today's
+    search finds the expected job for 20 of 219 test ideas)
+  - [ ] 28g: design phase 2's screens before building them, in `docs/ui-spec/`, shown to the maintainer:
+    where the job question sits on both ways in, what *Skip* leads to, the one place the area is asked, and
+    the "not written yet" screen
+  - [ ] 28a: import the classification's elements file (example job titles and "Employment requirements")
+    on the shared import core, with its checksum, licence and credit line
+  - [ ] 28b: *What's closest to your work?*: the person searches the example titles and picks the job;
+    matches in code order, labelled "matches your words · your pick"; *Skip* allowed; nothing set without a
+    click
+  - [ ] 28c: the road written for the picked job comes first; otherwise "No road is written for this job
+    yet", with *About this job* and the general road; no silent fallback for a new idea
+  - [ ] 28d: outside Alberta, the federal steps that apply everywhere, plus "Written for Alberta" with the
+    person's own province named; Alberta-only steps and pages left out (full B.C. and Ontario roads come
+    later)
+  - [ ] 28e (phase 3): one career road for any job
+  - The test gate learns these endings ([14j]'s harness, reopened for phase 2):
+    - [ ] 29h: the harness picks a job as a recorded click and accepts the honest "not written yet" ending;
+      a job the person didn't pick still fails
+    - [ ] 29i: a number kind for a published job fact (a wage with its source row); a wage without its row
+      fails, and a wage is never added into a total
+    - [ ] 29j: a federal-only road counted honestly, the browser sweep reading any road, and a written way
+      for a new screen to get its clutter budget
+    - [ ] 29k: quoted official requirement text, shown word for word as a labelled quote, passes the
+      no-times check by one rule (the maintainer's ruling), while DotAmi's own words still fail on any time
+- 🔄 **[14m] A clean data pipeline you can see (S2.5.31).** Every government file DotAmi imports is checked
+  offline on every pull request, so a changed file can't slip in unnoticed.
+  - [x] 31a (phase 2): `npm run data:check`, every importer's check run offline inside `ci:quality`; it
+    fails on a checksum mismatch or a changed regenerated file
+  - [ ] Phase 3: importers for the business counts, the census table linking jobs to industries
+    (98-10-0594-01), Red Seal's tools appendix and Job Bank's postings, each with pins, licence, period and
+    next release; a link checker (31b); a weekly freshness check that opens one issue (31c); a *Where
+    DotAmi's numbers come from* page (31d)
+- ⬜ **[14n] Best results without analytics (S2.5.32).** Nothing comes from the people using DotAmi;
+  quality is measured from the tests.
+  - [ ] 32a: each CI run writes the harness pass rate, how often the expected job is among the matches, how
+    many ideas reach a written road, the general road or "not written yet", silent fallbacks (0), clutter
+    numbers per screen and width, and source health; each release's changelog gets a Quality line
+  - [ ] 32b: the maintainer's first monthly walk, three test ideas plus one of the maintainer's own, with
+    the findings turned into issues or test ideas
+- 🔄 **[14o] Phase 2's fixes and releases.** The maintainer's calls of 2026-10-20.
+  - [x] Reword "In a few years" (the front door's first door, and the first question on *Your
+    destination*), so DotAmi's own words carry no span of time; the two known-gap entries removed with it
+    (#189)
+  - [x] Keep the answer to "Are you buying equipment, a vehicle or tools?" on a future picked on *Pick a
+    future* (it was lost; 323 of the 367 test ideas met it) (#190)
+  - [ ] Let *Incorporating* light on a future picked on the general road, or say plainly that it can't (it
+    needs a third-year sales estimate nothing there asks for); after 28g
+  - [x] A small release of phase 1's work (the calm first view, the six text sizes, *Look closer*, the
+    harness's fixes) before phase 2 changes the data file: 0.4.1 (#188), published 2026-10-20
+  - [ ] Release 0.5.0: no silent fallbacks, every Alberta test idea ending on a road written for it or an
+    honest "not written yet", the maintainer's walk done (32b), a Quality line in the changelog, the privacy
+    log's section for the new version; publishing is the maintainer's click
 
 ## 7 — The desktop app (one download, everything on your computer)
 
@@ -808,10 +935,10 @@ roadmap's build order.
   - [ ] A "What does this mean?" link from a card's short form to its glossary entry
   - [ ] Later: the glossary as the translators' word list, once a second language is planned
 - ✅ **[13b] Releases** — tags, changelog, release notes; the app's updates come from these.
-  - [x] Version tags (v0.1.0, v0.2.0, v0.2.1, v0.3.0, v0.4.0) and [CHANGELOG.md](../CHANGELOG.md)
+  - [x] Version tags (v0.1.0, v0.2.0, v0.2.1, v0.3.0, v0.4.0, v0.4.1) and [CHANGELOG.md](../CHANGELOG.md)
   - [x] A tag builds the Windows installer into a draft release; the maintainer writes the notes and publishes
   - [x] A release after v0.2.0 built by the fixed workflow and published end to end (with [7d]): v0.2.1,
-    v0.3.0 and v0.4.0 were each built by the release workflow from their tag and published; 0.2.0 → 0.2.1
+    v0.3.0, v0.4.0 and v0.4.1 were each built by the release workflow from their tag and published; 0.2.0 → 0.2.1
     reached an installed app (by hand, 2026-10-08)
   - [x] A release with a database change ships its migration, which the desktop app applies itself
     (`tests/desktop-migrate.spec.ts`), and says so in its CHANGELOG entry
@@ -853,7 +980,11 @@ roadmap's build order.
     `start`, `lint` through `scripts/next.mjs`; CI already had it off)
   - [x] Prisma's check-in off by default for people running from source (the `prisma:*` scripts; CI
     already had it off). Not reachable from a script: `npm ci`'s own Prisma run and `npx` by hand
-- ⬜ **[13g] Screen-by-screen review.** For every screen, five questions answered with evidence:
+- ⬜ **[13g] Screen-by-screen review.** Phase 2 task 30f of the plan for any idea (2026-10-20, § 14): every
+  screen on main (front door, *Start*, *Your futures*, intake, the cockpit on both roads, *Your plan*, the
+  ideas page, *What DotAmi knows about you*, settings, expenses, licences, Mara's example) plus phase 2's
+  *About this job* and "not written yet" screens; each gap becomes a story. For every screen, five
+  questions answered with evidence:
   - [ ] **Useful:** what does a first-time person learn here that they didn't know?
   - [ ] **Guides:** is the next step obvious, and does it go somewhere that helps?
   - [ ] **Honest:** every figure and claim shows where it came from; nothing invented
