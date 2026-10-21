@@ -43,7 +43,16 @@ to give people value first. This design adds no new permission screens, warnings
    official source is filled in, with the source and the day it was read. Everything else is a named
    blank ("tools: add your quote"). DotAmi adds up only official fees and what the person agreed to,
    and always says how many lines are not priced yet. (The approved plan suggested this for phase 1
-   and asking again before phase 2 whether to show typical numbers; that question is open, § 13.)
+   and asking again before phase 2 whether to show typical numbers; that question is closed, § 13.)
+   *Note (the maintainer's answer of 2026-10-16, written here 2026-10-20):* one kind of government
+   number may now appear beside a job, as well as official fees: **official wage ranges** the
+   government publishes for a job (Job Bank's low, median and high), each labelled with its real
+   geography level (economic region, province-wide figure or small-area estimate, from the row's own
+   source code), its reference period and its source, and always said to be what workers in the job
+   were paid, never what the person would earn or a shop would make
+   ([research-kit.md](research-kit.md) call K5, answer B; § 4.2 there). Government outlook ratings were
+   not picked (K5 C), so no outlook or projection appears. Start-up costs are unchanged: official fees
+   plus the person's own quotes, no averages; a wage range is never added to a total, a gauge or a cost line.
 3. **"The best path forward" means the person picks one thing to sort by,** and the screen says so:
    *"Sorted by fewest steps left: your choice. DotAmi doesn't rank futures."* (Built in phase 2;
    phase 1 shows road order and the order added.)
@@ -82,7 +91,7 @@ to give people value first. This design adds no new permission screens, warnings
 | # | Screen | Its job | What it asks | What it shows | Next |
 |---|---|---|---|---|---|
 | 1 | **Front door** (`/`) | Let a first-time person choose how to start, and show at once that DotAmi draws futures, not only tax | Three doors, one click each: *Start from where I want to be* · *I already have an idea* · *Show me an example first* | A plain headline (e.g. *"See the road to the work and life you want: every step, skill and start-up cost, with sources."*); a still picture of a filled-in cockpit labelled *Invented example*; *"What you type stays on this computer."* | Your destination, today's intake, or the example cockpit |
-| 2 | **Your destination** (`/start`) | Get where the person wants to end up, one question at a time, and pay off each answer with a receipt | (1) *"In a few years, what do you want your work and life to look like? Use your own words."* (*I don't know yet* allowed) · (2) a business of your own, a job or career, or both / not sure · (3) province or territory (required: fees, licences and tax rules differ by place) · (4) optional: the yearly income you want, before tax — your number, through the agree prompt. Every question has a *why we ask / what it unlocks* line and *I don't know* | Under each answer, a receipt (*"Alberta and federal rules apply"*); the person's words shown back exactly, with the date | Pick a future |
+| 2 | **Your destination** (`/start`) | Get where the person wants to end up, one question at a time, and pay off each answer with a receipt | (1) *"What do you want your work and life to look like? Use your own words."* (*I don't know yet* allowed; it began "In a few years" until 2026-10-20, reworded on the maintainer's pick: no times) · (2) a business of your own, a job or career, or both / not sure · (3) province or territory (required: fees, licences and tax rules differ by place) · (4) optional: the yearly income you want, before tax — your number, through the agree prompt. Every question has a *why we ask / what it unlocks* line and *I don't know* | Under each answer, a receipt (*"Alberta and federal rules apply"*); the person's words shown back exactly, with the date | Pick a future |
 | 3 | **Pick a future** (`/futures`) | Choose the one business or career to look into, and see its whole road before any more questions | Pick a card (phase 1: *From apprentice to your own shop (Alberta)* and *Starting any business in Alberta (tax and structure)*, in the order added, never ranked) · optional name and kind of work · *"Which job is closest to the work you'd do yourself?"* (decision 5; *Skip* allowed) · *Not here yet?* keeps a note in the person's words and offers the general road | Each card shows counts only: steps, skills listed, official fees found, cost lines you'd price · *"More futures are being written"* · after a pick, the full road drawn in grey | The cockpit on this future (saved to Your futures here) |
 | 4 | **The cockpit** (`/cockpit?venture=<id>`) | See the chosen future whole and work through it (§ 2) | Nothing up front. Each gauge showing **?** carries one invitation that opens a one-question box | Destination bar and gauges, the road with one overlay on, the left list, *Next on your road* and the what-if bar | Any step, overlay, gauge or question |
 | 5 | **A step opened** (the right panel; today's detail panel, extended) | Everything about one step, and the controls to do it | *Doing / Done / Not for me* · tick each *done when* line · mark the skills it needs: *have / learning / not yet / don't know* · *Add your quote* on each named cost line (then the agree prompt) | One line on what the step is (more on click) · the *done when* checklist, each line cited · skills with the person's mark and the official way to get each (cited) · costs in three labelled kinds (§ 6) · today's rules and tax cards for the stage · sources with read dates · links to official pages the person opens themselves | Back to the road; gauges, receipt and left list update at once |
@@ -131,7 +140,10 @@ each choice that differs from the table above says why.
   answer shown back and its one-line receipt; **Change** opens it again. The receipts are worked out by
   pure functions from the answer and the catalogs (`lib/front-door/receipts.ts`), never written by a
   model, and every amount goes through `lib/format/money-and-months.ts`.
-  1. *"In a few years, what do you want your work and life to look like? Use your own words."*
+  1. *"What do you want your work and life to look like? Use your own words."* (Until 2026-10-20 it
+     began "In a few years", and the first door's line said "Say where you want to be in a few years":
+     spans of time DotAmi wrote, which the no-times checks listed for the maintainer. He picked "Reword
+     both" that day.)
      **Keep my words** saves it at once as the person's destination (a dated, word-for-word statement,
      `kind: "destination"`, through the statements route, which now accepts that one kind). Receipt:
      *"Kept word for word, dated 2026-10-12. It goes at the top of each future you pick on Pick a
@@ -1813,7 +1825,7 @@ answer and the *This is mine* pin; a step's own date; moving the catalogs' keys 
 | **Legal but honest; not advice; never files** | Steps link to the official page and the person acts there. Nothing files, registers or generates a binding document. The export keeps the disclaimer |
 | **The person's words stay the person's words** | The destination is stored dated and verbatim, shown back, never summarised and never read by a rule. A model never writes into it (§ 9) |
 | **Never derive a fact about the person they didn't state** | Skill marks are the person's own clicks. The job is the person's pick, tagged so. *You are here* comes only from their stated work situation or progress. Unmarked skills are counted as unmarked |
-| **Never invent a number** — no projections, no ranges without a sourced figure | Three kinds of cost line only: official fee (cited, dated), the person's agreed quote, named and not priced. No averages (decision 2). The only duration is calendar months to the person's own date. What-ifs carry *your what-if, not a forecast* and never become figures. The invented $80,000 incorporation trigger comes off the map (§ 9) |
+| **Never invent a number** — no projections, no ranges without a sourced figure | Three kinds of cost line only: official fee (cited, dated), the person's agreed quote, named and not priced. No averages (decision 2). The only duration is calendar months to the person's own date. What-ifs carry *your what-if, not a forecast* and never become figures. The invented $80,000 incorporation trigger comes off the map (§ 9). Since the maintainer's K5 B (2026-10-16, written here 2026-10-20), official wage ranges by job may also appear, with their geography level, period and source, never as a cost line or in a total (decision 2's note) |
 | **Catalogs are code, never rows; ids are forever; numbers are typed fields** | Roads, steps, skill items and fees are TypeScript catalogs; amounts are typed fields; today's node ids become step ids unchanged, including the one whose label changes |
 | **Never put venture or tax knowledge in a component** | The map draws whatever road file it is given; components hold no steps, fees or rules |
 | **Data stays on the computer; the privacy inventory is complete** | New tables in the existing local file, listed in the inventory, shown and deletable on `/your-data`. No new request leaves the computer |
@@ -1895,7 +1907,8 @@ invented example behind *Show me an example first*. Everything works with no AI 
 on today's general Alberta road, for the maintainer to click through before the first written future
 lands.
 
-**Phase 2 — Compare futures, dates and your dream numbers.** About 3–4 weeks. A second written future
+**Phase 2 — Compare futures, dates and your dream numbers.** (Called *cockpit phase 2 (compare
+futures)* since 2026-10-20, so it isn't read as phase 2 of the any-idea plan of 2026-10-17.) About 3–4 weeks. A second written future
 and the *Possible futures* shelf with kind badges (Business / Career / Side gig) and *Peek inside*
 (what the work looks like running — the government's duties for the job the person picked, plus the
 owner's cited running duties such as books, GST/HST filing and licence renewals — the road, skills,
@@ -1938,8 +1951,13 @@ The maintainer expects the layout, and so the back end, to change as this is bui
 ## 12. Not in phase 1
 
 - Any number that isn't an official fee or the person's own agreed number: no averages, no
-  government wage or industry figures, no survival rates (decision 2; whether phase 2 shows typical
-  numbers is asked again before it starts, § 13).
+  government wage or industry figures, no survival rates (decision 2; the typical-numbers question this
+  item used to leave open is closed, § 13, and the note below says what changed).
+  *Note (the maintainer's answer of 2026-10-16, written here 2026-10-20):* official wage ranges by job
+  are no longer ruled out. They may appear with their geography level, reference period and source, on
+  *About this job* ([research-kit.md](research-kit.md) § 4.2, call K5 B), built in the research kit's
+  tasks, not phase 1. Outlook ratings (K5 C, not picked), averages, industry figures beyond the official
+  counts the maintainer allowed on 2026-10-15 (below), and survival rates stay out.
 - The sort-by-one-thing control (decision 3 is phase 2), *Possible futures*, *Peek inside*, *Side by
   side* across saved futures, *Keep as a copy*.
 - Dates beyond the target date: the time strip, the Dates overlay, step dates on a timeline.
@@ -1952,22 +1970,29 @@ The maintainer expects the layout, and so the back end, to change as this is bui
   buying, renting or leasing each start-up item and where to ask about tax and legal questions
   ([other-ways-to-build.md](other-ways-to-build.md)), and others in the same line of work
   ([competitive-landscape.md](competitive-landscape.md)). The second asks (its call 1) whether an
-  official count of businesses may appear for a real person, which this section rules out today.
-  The maintainer answered that "A" on 2026-10-15 (counts may appear; recorded here once built, task 23n).
+  official count of businesses may appear for a real person, which this section ruled out until
+  then. The maintainer answered that "A" on 2026-10-15 (counts may appear; recorded here once built, task 23n).
 - Two more designs asked for the same day, also not built and waiting on calls: the Lens answering
   "cheapest", "fastest" and "strongest foundation" by a measure the person names
   ([lens-comparisons.md](lens-comparisons.md)), which would bring decision 3's sort forward from phase 2 (it
   adds no typed times: the maintainer answered "NO TIMES!" on 2026-10-17, so the months-only rule above
   stands), and one research kit that
   makes all of this work for any job ([research-kit.md](research-kit.md)), whose call K5 asks whether
-  government wage figures may appear for a real person, which this section rules out today.
+  government wage figures may appear for a real person, which this section ruled out until then. The
+  maintainer answered K5 "B" on 2026-10-16 (official wage ranges may appear, with their geography level
+  and period; outlook ratings don't; written here 2026-10-20, see the note under this section's first item).
 
 ## 13. Open items
 
-- **Typical numbers, before phase 2.** The approved plan recommended official fees and the person's
+- ~~**Typical numbers, before phase 2.** The approved plan recommended official fees and the person's
   own quotes for phase 1 (decision 2), then asking the maintainer again, once a real future with
   blanks can be clicked through, whether to also show typical numbers (the plan's options B and C).
-  Ask before phase 2 is locked.
+  Ask before phase 2 is locked.~~ Closed (the maintainer's answer of 2026-10-16, written here
+  2026-10-20): asked as [research-kit.md](research-kit.md) call K5, he picked B, official wage ranges
+  by job, each with its geography level, reference period and source; outlook ratings (C) not picked.
+  Start-up costs stay official fees plus the person's own quotes, with no averages (decision 2). "Phase 2"
+  in this item meant this design's own phase 2 (§ 10), now called **cockpit phase 2 (compare futures)**
+  so it isn't read as phase 2 of the any-idea plan of 2026-10-17.
 - ~~**The period a new number carries**, and the per-person table's exact shape.~~ Settled in the
   storage pull request (2026-10-11, § 7 *Storage as built*): income wanted is per year on a per-person
   table with a kind column; savings and a cost line cover the day the person gave them.
