@@ -19,7 +19,8 @@ export const frontDoorWords = {
   doors: {
     dream: {
       title: "Start from where I want to be",
-      body: "Say where you want to be in a few years, in your own words, then look inside one business or career: its steps, the skills it lists and its official fees.",
+      // No span of time ("in a few years" until 2026-10-20): DotAmi writes no times at all.
+      body: "Say where you want to be, in your own words, then look inside one business or career: its steps, the skills it lists and its official fees.",
       // True of this door only: its answers go to DotAmi's own server on this computer, never to a model.
       stays: "What you type here stays on this computer.",
       go: "Start here →",

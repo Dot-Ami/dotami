@@ -24,8 +24,8 @@
  * - no verdict phrase (tests/helpers/verdict-words.ts `findVerdicts`, as e2e/no-verdict.spec.ts reads);
  * - no time words (tests/helpers/time-words.ts `findTimeWords`, with its allowances) in what DotAmi writes:
  *   a source's own words, drawn in quote marks (the plan's citation quotes, which the harness tags
- *   `official-quote` and never reads as DotAmi's), are taken out first; one known gap on the front door is let
- *   through here while it is listed in tests/fixtures/ideas/known-gaps.ts, and no longer once it isn't;
+ *   `official-quote` and never reads as DotAmi's), are taken out first; a known gap in a words file is let
+ *   through here only while it is listed in tests/fixtures/ideas/known-gaps.ts (none since 2026-10-20);
  * - the clutter measurer (e2e/clutter-measure.ts, the same code as e2e/clutter-budget.spec.ts): no drawn block
  *   without a region mark on any screen; and where the screen's state is the one e2e/budgets.ts measures (the
  *   front door, Pick a future after Your destination, the cockpit's first visit on a picked future, the plan),
@@ -40,7 +40,6 @@ import { expect, test, type Page } from "@playwright/test";
 
 import { COCKPIT_FOLDS_KEY } from "../lib/cockpit/folds";
 import { generalRoadV2026, roadApprenticeToOwnShopAB } from "../lib/engines/roads/v2026";
-import { frontDoorWords } from "../lib/front-door/words";
 import { parseIntentFallback } from "../lib/journey/intent-fallback";
 import { PROVINCES, type Province } from "../lib/scenarios/types";
 import { SHOWN_WORDS_GAPS } from "../tests/fixtures/ideas/known-gaps";
@@ -116,7 +115,8 @@ console.log(`idea sweep, ${WEEK}: ${SWEEP.map(({ idea, why }) => `${idea.id} (${
  * harness lists it as a known gap, so it can't outlive that ruling here.
  */
 const SCREEN_TIME_ALLOWANCES: readonly { text: string; gap: string }[] = [
-  { text: frontDoorWords.doors.dream.body, gap: "lib/front-door/words.ts frontDoorWords.doors.dream.body" },
+  // Empty since 2026-10-20: the front door's first door, the one entry, was reworded. A new entry names its
+  // text and its SHOWN_WORDS_GAPS `where`, e.g. { text: frontDoorWords.doors.dream.body, gap: "lib/front-door/words.ts …" }.
 ];
 
 interface ScreenGap {
@@ -136,13 +136,9 @@ const isProvince = (place: string): place is Province => (PROVINCES as readonly 
  * Each is a ratchet: it must still show for every idea it is expected for, so a gap can't outlive its fix here.
  */
 export const SCREEN_GAPS: readonly ScreenGap[] = [
-  {
-    screen: /› your destination, (?:as opened|answered)$/,
-    found: /^time: a duration in words: .*In a few years, what do you want your work and life to look like/,
-    expectedFor: (idea) => isProvince(idea.place),
-    story: "none yet: found by S2.5.29e on 2026-10-19, the maintainer's call",
-    why: "Your destination's first question (lib/front-door/questions.ts, `ask`) says “In a few years, what do you want your work and life to look like?”: the same span of time as the front door's first door, which tests/fixtures/ideas/known-gaps.ts lists. The words-file scan (tests/idea-invariants.spec.ts) doesn't read the questions file, so only the sweep sees this one. Whether it breaks “no times at all” (2026-10-17) is the maintainer's call, the same call as the front door's.",
-  },
+  // Taken out on 2026-10-20: Your destination's first question began "In a few years, …", the same span of
+  // time as the front door's first door. The maintainer picked "Reword both" on the page "DotAmi Phase 2"; it
+  // now reads "What do you want your work and life to look like? Use your own words."
   // Taken out on 2026-10-20 with the type scale (S2.5.30d): a first visit with the person's words kept drew
   // them in a 13th text size (17 px serif italic) against the cockpit's budget of 12, measured on a visit with no
   // words. The words are now the title size (19 px), one of the six, and the cockpit counts 5 sizes with or
@@ -243,7 +239,8 @@ async function read(s: Sweep, where: string, held: ScreenId | null = null) {
 
 // --- The two ways in.
 
-const Q1 = /what do you want your work and life to look like/;
+// Case-blind: the question starts with "What" since 2026-10-20 (it began "In a few years, what …").
+const Q1 = /what do you want your work and life to look like/i;
 const Q2 = "Are you after a business of your own, a job or career, or both?";
 const Q3 = "Which province or territory are you in?";
 const button = (page: Page, name: string) => page.getByRole("button", { name, exact: true });

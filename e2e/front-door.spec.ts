@@ -21,7 +21,8 @@ import { showRail } from "./cockpit-calm";
 const GENERAL = "Starting any business in Alberta (tax and structure)";
 const APPRENTICE = "From apprentice to your own shop (Alberta)";
 
-const Q1 = /what do you want your work and life to look like/;
+// Case-blind: the question starts with "What" since 2026-10-20 (it began "In a few years, what …").
+const Q1 = /what do you want your work and life to look like/i;
 const Q2 = "Are you after a business of your own, a job or career, or both?";
 const Q3 = "Which province or territory are you in?";
 const Q4 = "What yearly income do you want, before tax?";

@@ -273,10 +273,11 @@ placed in phase 3.
   a what-if; ~~a time strip from your own dates (each step's own date kept then: one added column); hours
   you want~~ (both dropped under "no times", 2026-10-17; *Your date*, the month the person picks, stays);
   things you won't do, and a dream-life list that adds up your own monthly amounts into your target; *I
-  paid this* linking an expense to a planned cost. Typical numbers beside the official fees and your own
-  quotes (the approved plan's follow-up to decision 2): answered for wages on 2026-10-16 (official wage
-  ranges with their geography level may appear, research kit K5 B; outlooks don't); survival rates and
-  grant counts not asked yet.
+  paid this* linking an expense to a planned cost. The approved plan's follow-up to decision 2, whether to
+  show typical numbers beside the official fees and your own quotes, is answered (K5 B of 2026-10-16,
+  written 2026-10-20): official wage ranges by job may appear on *About this job*, built in the research
+  kit's tasks; outlooks don't; start-up costs stay official fees plus your own quotes, no averages
+  ([future-cockpit.md](architecture/future-cockpit.md) § 13); survival rates and grant counts not asked yet.
 - ⏸ **[14c] Cockpit phase 3 — The Lens helps, on your own model.** Waits on § 9. Your résumé read where it
   sits, proposing skill marks that quote the line they came from, for you to tick; *Ask the Lens* on a
   step, its drafts tagged "drafted by your model, not from DotAmi's sources"; it never writes into your
@@ -332,11 +333,14 @@ placed in phase 3.
   [architecture/research-kit.md](architecture/research-kit.md) § 10.
   2026-10-17, the maintainer: "NO TIMES!", so the kit has no typed times and that task is dropped (§ 5.5).
   Phase 2 of the plan for any idea builds its core, in this order:
-  - [ ] 25s: two open data questions checked first: does Statistics Canada publish an official table from
-    census metropolitan areas to Job Bank's economic regions (if not, DotAmi asks "which region are you
-    in?"), and the example wage rows for jobs 72311, 63210 and 21232 in Calgary; a dated note
-  - [ ] 25r-K5: the rule and design text that allow official wage ranges with their geography level (K5 B),
-    before any wage is shown
+  - [x] 25s: two open data questions checked first (2026-10-20): Statistics Canada publishes no ready-made
+    table from census metropolitan areas to Job Bank's economic regions (and Edmonton's spans two), so DotAmi
+    asks "which region are you in?"; Job Bank's 2025 wage file (Open Government Licence – Canada) has the
+    example rows for jobs 72311, 63210 and 21232, each with its geography level
+  - [x] 25r, its wage part (K5 B of 2026-10-16), written 2026-10-20: official wage ranges with their area level,
+    period and source may appear, outlook ratings don't; CLAUDE.md, future-cockpit.md decision 2, § 12 and § 13
+    and research-kit.md say the same, and so do CONTRIBUTING.md, [14b] above and other-ways-to-build.md § 11
+    (docs only)
   - [ ] 25b: the source registry ("connector cards"): every outside source with its access, who holds the
     key, what may be kept, its licence and credit line, and a validator
   - [ ] 25c: one shared import core (encoding, table id, period, licence and next-release date as data),
@@ -381,8 +385,8 @@ placed in phase 3.
     door to the plan in the browser both ways in, every screen read for verdict words, time words and the
     clutter measurer (`e2e/clutter-measure.ts`, shared with the clutter limit); findings listed in the file's
     `SCREEN_GAPS`, never fixed quietly. Two on 2026-10-19, both the maintainer's call: *Your destination*'s
-    first question says "In a few years" (the front door's known gap, in a file the words scan doesn't read);
-    and a first visit with the person's words kept shows them in a 13th text size (17 px) against the cockpit's
+    first question says "In a few years" (the front door's known gap, in a file the words scan doesn't read;
+    reworded 2026-10-20 on his pick "Reword both", taken out of `SCREEN_GAPS`); and a first visit with the person's words kept shows them in a 13th text size (17 px) against the cockpit's
     budget of 12, measured on a visit with no words (gone with the type scale, 2026-10-20: the words are the
     title size, one of the six, and the cockpit counts 5 sizes either way; taken out of `SCREEN_GAPS`)
   - [x] 29f: `npm run eval:intent` (`scripts/eval-intent.mjs`), the AI parser on the developer's own key, scored
@@ -396,14 +400,17 @@ placed in phase 3.
     on the side that holds the step); no map pick asked that no rule reads (GST timing for
     drivers); the keyword parser's places, kinds of work and equipment proposed only when the words state
     them; no duration in road 1's first step. Their "bug" entries left `tests/fixtures/ideas/known-gaps.ts`.
-    Still listed for the maintainer: equipment on a picked future can't be answered, the front door's
-    "in a few years", and "Incorporating" on a future picked on road 0 can't light at all: the rule compares
+    Still listed for the maintainer (the front door's "in a few years" reworded 2026-10-20, "Reword both", and
+    equipment on a picked future fixed the same day, below; both out of the list): "Incorporating" on a future picked on road 0 can't light at all: the rule compares
     "I'd incorporate at" with a third-year sales estimate, Pick a future keeps none (it saves 0,
     `lib/front-door/start-future.ts`) and nothing in the cockpit asks for one (only the intake's Year 3 box
     sets it). The *Not told yet* row is no longer asked there and the step's card and panel say it needs that
     estimate (second review of PR #182, pinned in `tests/cockpit-told.spec.ts`), but the panel's box still
     takes a number that can't light it; whether the cockpit asks for a third-year estimate is the maintainer's call.
     2026-10-20, the maintainer: fix both bugs and reword "in a few years" ([14o])
+  - [x] Equipment on a picked future answered and kept (the maintainer's "Yes, fix both", 2026-10-20): the
+    box's answer takes equipment off the not-said list, so it is saved, read back and asked no more; taken
+    back, it is not said again. Its "bug" entry left `tests/fixtures/ideas/known-gaps.ts`
 - ✅ **[14k] A calm screen, kept calm by a limit (S2.5.30).** The maintainer's first pick of 2026-10-17,
   with testing any idea: a calm first view, enforced by a limit on how busy a screen can get. Phase 1's part
   done 2026-10-20 (#179, #183, #184); phase 2's screen review, 30f, is [13g].
@@ -493,15 +500,16 @@ placed in phase 3.
     numbers per screen and width, and source health; each release's changelog gets a Quality line
   - [ ] 32b: the maintainer's first monthly walk, three test ideas plus one of the maintainer's own, with
     the findings turned into issues or test ideas
-- ⬜ **[14o] Phase 2's fixes and releases.** The maintainer's calls of 2026-10-20.
-  - [ ] Reword "In a few years" (the front door's first door, and the first question on *Your
+- 🔄 **[14o] Phase 2's fixes and releases.** The maintainer's calls of 2026-10-20.
+  - [x] Reword "In a few years" (the front door's first door, and the first question on *Your
     destination*), so DotAmi's own words carry no span of time; the two known-gap entries removed with it
-  - [ ] Keep the answer to "Are you buying equipment, a vehicle or tools?" on a future picked on *Pick a
-    future* (today it is lost; 323 of the 367 test ideas meet it)
+    (#189)
+  - [x] Keep the answer to "Are you buying equipment, a vehicle or tools?" on a future picked on *Pick a
+    future* (it was lost; 323 of the 367 test ideas met it) (#190)
   - [ ] Let *Incorporating* light on a future picked on the general road, or say plainly that it can't (it
     needs a third-year sales estimate nothing there asks for); after 28g
-  - [ ] A small release of phase 1's work (the calm first view, the six text sizes, *Look closer*, the
-    harness's fixes) before phase 2 changes the data file
+  - [x] A small release of phase 1's work (the calm first view, the six text sizes, *Look closer*, the
+    harness's fixes) before phase 2 changes the data file: 0.4.1 (#188), published 2026-10-20
   - [ ] Release 0.5.0: no silent fallbacks, every Alberta test idea ending on a road written for it or an
     honest "not written yet", the maintainer's walk done (32b), a Quality line in the changelog, the privacy
     log's section for the new version; publishing is the maintainer's click
@@ -927,10 +935,10 @@ roadmap's build order.
   - [ ] A "What does this mean?" link from a card's short form to its glossary entry
   - [ ] Later: the glossary as the translators' word list, once a second language is planned
 - ✅ **[13b] Releases** — tags, changelog, release notes; the app's updates come from these.
-  - [x] Version tags (v0.1.0, v0.2.0, v0.2.1, v0.3.0) and [CHANGELOG.md](../CHANGELOG.md)
+  - [x] Version tags (v0.1.0, v0.2.0, v0.2.1, v0.3.0, v0.4.0, v0.4.1) and [CHANGELOG.md](../CHANGELOG.md)
   - [x] A tag builds the Windows installer into a draft release; the maintainer writes the notes and publishes
-  - [x] A release after v0.2.0 built by the fixed workflow and published end to end (with [7d]): v0.2.1
-    and v0.3.0 were each built by the release workflow from their tag and published; 0.2.0 → 0.2.1
+  - [x] A release after v0.2.0 built by the fixed workflow and published end to end (with [7d]): v0.2.1,
+    v0.3.0, v0.4.0 and v0.4.1 were each built by the release workflow from their tag and published; 0.2.0 → 0.2.1
     reached an installed app (by hand, 2026-10-08)
   - [x] A release with a database change ships its migration, which the desktop app applies itself
     (`tests/desktop-migrate.spec.ts`), and says so in its CHANGELOG entry
