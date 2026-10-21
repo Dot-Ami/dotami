@@ -309,7 +309,8 @@ placed in phase 3.
   counts, the area and industry questions, *Where to look*, and Mara's landscape.
   - [ ] 23g (phase 2 of the plan for any idea): ask the area once, right after the job pick (a fixed list of
     Alberta census metropolitan areas plus *Somewhere else in Alberta* and *I don't know*, each with a line
-    saying why it's asked); *Others in this line of work* reads it. The wage region for *About this job*
+    saying why it's asked); it is kept for the business counts by area, and nothing reads it until they come
+    (phase 3). The wage region for *About this job*
     ([14i]) is not worked out from it: "which region are you in?" is asked right after it, with Alberta's
     eight economic regions listed (the maintainer's call of 2026-10-20; research 25s: the Edmonton area spans
     two regions; designed in [ui-spec/futures/02-where-you-are.md](ui-spec/futures/02-where-you-are.md);

@@ -65,8 +65,10 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   outside Alberta; *About this job* in the cockpit's right-hand panel
   ([docs/ui-spec/cockpit/about-this-job.md](docs/ui-spec/cockpit/about-this-job.md)); and the *Incorporating*
   fix, asking for the third-year sales estimate on a picked future
-  ([docs/ui-spec/cockpit/incorporating-estimate.md](docs/ui-spec/cockpit/incorporating-estimate.md)). Docs
-  only: nothing DotAmi keeps, sends, ships or asks changes yet.
+  ([docs/ui-spec/cockpit/incorporating-estimate.md](docs/ui-spec/cockpit/incorporating-estimate.md)). The
+  research kit's sketch of *About this job* ([docs/architecture/research-kit.md](docs/architecture/research-kit.md)
+  § 4.2) now follows the same picks (no business counts yet, general pages only, no job in any web address).
+  Docs only: nothing DotAmi keeps, sends, ships or asks changes yet.
 
 ## [0.4.1] — 2026-10-20
 

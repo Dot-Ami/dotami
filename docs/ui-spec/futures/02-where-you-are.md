@@ -51,10 +51,14 @@ Two parts in the step region, one question on screen at a time, so each fits the
   The published names use a double hyphen (*Lethbridge--Medicine Hat*); the catalog keeps them as published,
   and the screen draws an en dash so a screen reader doesn't say "dash dash". The code isn't shown in the
   list; it is what is kept.
+- **Next: the futures →**.
 - **Which towns are in each region? Statistics Canada's list ↗**, a fixed link to the economic-region page for
   Alberta (`https://www23.statcan.gc.ca/imdb/p3VD.pl?Function=getVD&TVD=1368923&CVD=1368932&CPV=48&CST=01012021&CLV=2&MLV=5`,
-  read 2026-10-20 by research 25s), opening in the person's browser, carrying nothing about them.
-- **Next: the futures →**.
+  read 2026-10-20 by research 25s), opening in the person's browser, carrying nothing about them. It shows
+  **once the person picks *I don't know***, under the note that says so, not as the part opens: the part's
+  first window holds the site footer's link too, and with this link drawn from the start 2b would be 6
+  controls against the phone's 5 (see *Regions and controls*). The note under the drop-down says where the
+  link is before anyone picks (`dontKnowNote`), so a person who isn't sure knows to pick *I don't know*.
 
 **Never derived.** The region is never filled in, pre-selected or narrowed from the area, even where the area
 sits wholly in one region (Calgary, Lethbridge, Red Deer, research 25s): the person picks it. The why-line says
@@ -87,7 +91,7 @@ whereStepWords = {
     label: "Which region are you in?",
     why: "Job Bank publishes wages by economic region, a larger map than a city's area. DotAmi doesn't work your region out from your area: the Edmonton area reaches into two regions, and “Somewhere else in Alberta” could be any of them.",
     order: "Listed in Statistics Canada's code order.",
-    dontKnowNote: "With “I don't know”, About this job shows the Alberta-wide figure.",
+    dontKnowNote: "With “I don't know”, About this job shows the Alberta-wide figure, and a link to Statistics Canada's list of the towns in each region shows here.",
     lookup: "Which towns are in each region? Statistics Canada's list ↗",
     next: "Next: the futures →",
   },
@@ -96,7 +100,7 @@ whereStepWords = {
     areaNotAsked: "The area question lists Alberta's areas only in this version, so it isn't asked for <province>.",
     oneRegion: "Job Bank publishes one region for <province>, so there is nothing to pick here.",
   },
-  kept: "Both answers are kept with this future once you open it, on this computer only. Change them from About this job in the cockpit.",
+  kept: "Both answers are kept with this future once you open it, on this computer only. You can change your region later from About this job in the cockpit.",
 }
 ```
 
@@ -128,6 +132,13 @@ you* (issue #41), deleted with the idea, and in the plan export. *I don't know* 
 not turned into "Alberta-wide": About this job shows the Alberta-wide row **because** they said they don't
 know, and says so.
 
+**Changing them later.** The region: *About this job*'s **Change** sets or changes it
+([../cockpit/about-this-job.md](../cockpit/about-this-job.md), row 2), including for a person who skipped the job
+here, picked one later in the skills list and so was never asked. The area: nothing changes it after the flow
+in this version, because nothing reads it yet; it is shown on *Your plan* and in *What DotAmi knows about you*,
+and deleted with the idea. A way to change it comes with the counts that read it (phase 3). The `kept` line
+says only what is true: the region can be changed later.
+
 **Privacy inventory lines** (`lib/privacy/inventory.ts`; the privacy test fails until each exists):
 
 - *Your area*: *"The area you picked (one of Alberta's four census metropolitan areas, somewhere else in Alberta,
@@ -149,13 +160,27 @@ region's place; it adds no region.
 
 ## Regions and controls
 
+The gate counts every usable control in the first window, the site footer's *open source on GitHub* link
+among them: Pick a future's page is the window's height less the footer's (`pick-future-page.tsx:103`,
+`h-[calc(100vh-2.5rem)]`; the footer is `h-10` in `app/layout.tsx`), so the footer always sits in the first
+window, and `e2e/clutter-budget.spec.ts` leaves nothing out. The counts below include it.
+
 - **Regions: 4** (nav, intro, step region, site footer), as on step 1; under the `futures` budget's 6.
-- **Controls, 2a:** the back link, the word mark, the area drop-down, **Next →**: **4**.
-- **Controls, 2b:** the back link (**← Back to your area**), the word mark, the region drop-down, the
-  Statistics Canada link, **Next: the futures →**: **5**, at every width.
+- **Controls, 2a:** the back link, the word mark, the area drop-down, **Next →**, the footer's link: **5**.
+- **Controls, 2b, as it opens** (*Choose one*): the back link (**← Back to your area**), the word mark, the
+  region drop-down, **Next: the futures →**, the footer's link: **5**, at every width. The Statistics Canada
+  link isn't drawn until *I don't know* is picked (above): drawn from the start it would make **6**, over the
+  phone's 5. Once it shows, the part holds 6, as any screen holds more after a person acts on it; the limit
+  is on the screen as it opens.
 - **The budget:** the step gets its own row in the build (task 29j's written way for a new screen's first
   row), at or under the `futures` row: phone 5, tablet 7, laptop 6. Two parts, one question each, are what
-  keep it inside the phone's 5: both drop-downs, the link and both buttons on one screen would be 7.
+  keep it inside the phone's 5: both drop-downs and both buttons on one screen, with the footer's link, would
+  be 6.
+- **On the intake page** (the typed way), the intake's own row holds: 4 regions, 5 controls at every width
+  (`BUDGETS.intake`). The step sits inside the intake's own `intake` region with the preview rail put away,
+  so 2a and 2b each count 3 regions (nav, intake, site footer) and the same 5 controls (the intake's
+  **← Back** in place of the back link). With the Statistics Canada link held back until *I don't know*, 2b
+  is at the intake's 5 at all three widths, not over it.
 
 ## How a screen reader hears it
 
@@ -164,7 +189,8 @@ region's place; it adds no region.
 - The region list's order line (*Listed in Statistics Canada's code order.*) is part of its description.
 - **Next →** moves focus to the next part's question; the back link to the part before's question.
 - The Statistics Canada link's name says it opens Statistics Canada's list; it is marked as opening outside
-  DotAmi.
+  DotAmi. It appears right after the note when *I don't know* is picked, in reading order; focus stays on the
+  drop-down.
 
 ## Phone (375 px)
 
@@ -178,6 +204,7 @@ drop-down, the hint and order line below it, then **Next**.
 - Any lookup from a city or a postal code to a region (research 25s: none is published as a file for Alberta;
   the Geographic Attribute File's download blocks scripts).
 - The area question for a person outside Alberta.
+- Changing the area after the flow (nothing reads it yet; it comes with the counts, phase 3).
 
 ## Checked against the rules
 

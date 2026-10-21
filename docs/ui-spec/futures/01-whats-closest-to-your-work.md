@@ -29,7 +29,7 @@ The three steps are one flow, asked **before any road is drawn**, so the road ma
 | Way in | Today (main `09c0080`) | With this design |
 |---|---|---|
 | *Start from where I want to be* → *Your destination* → **Pick a future →** | `/futures` shows the cards at once; the job is never asked there (future-cockpit.md:221-222) | `/futures` opens on step 1. The cards are step 3 |
-| *I already have an idea* → the intake → Screen B **Open my map →** | Saves the idea and opens the cockpit on road 0 with no road picked and no job asked (roadForFuture's silent default, `lib/futures/types.ts:39-42`) | Screen B's button becomes **Next: the work closest to yours →**, which shows the same three steps on the intake page, in place of its screen (the live preview rail is put away for them: it previews the intake's answers, and these steps are about the road). The idea is saved at step 3's **Look inside**, with the road the person opened |
+| *I already have an idea* → the intake → Screen B **Open my map →** | Saves the idea and opens the cockpit on road 0 with no road picked and no job asked (roadForFuture's silent default, `lib/futures/types.ts:39-42`) | Screen B's button becomes **Next: the work closest to yours →**, which shows the same three steps on the intake page, in place of its screen (the live preview rail is put away for them: it previews the intake's answers, and these steps are about the road). All three steps sit inside the intake's own `intake` region, so the intake's limit of 4 regions and 5 controls holds for each (counted in each step's file). The idea is saved at step 3's **Look inside**, with the road the person opened |
 | The cockpit's skills list (**Pick a job**, `components/cockpit/gauge-panels.tsx` JobSection) | Searches job names and codes only | Stays, as the way to change the pick later; it runs the same search as step 1, with the same words, so there is still one picker |
 
 On the typed way the person's own first sentence shows above the box, word for word (*Your idea, in your
@@ -58,14 +58,28 @@ The page's step region (the same block that holds the cards today, so no region 
    three title types, Example, Index and Inclusion, keyed to the 7-character OaSIS codes DotAmi already uses)
    and in the job names. A word matches a title word when they share their first five letters, or the
    whole of the shorter word (*plumbing* finds *plumber*).
-3. A word that is on **DotAmi's own word list** (*salon* → *hairstylist*; *food truck* → *cook*; *dayhome* →
-   *home child care provider*; *ride-share* → *taxi driver*, each line the maintainer approves) is also looked
-   for under DotAmi's word. A job found that way is marked: the chip *DotAmi's word list* and the line *Your
-   word “salon” was matched through DotAmi's own word list (“hairstylist”), not by a government title.*
-4. Each job is counted by how many of the person's searched words its titles hold, and put in one group:
+3. A word that is on **DotAmi's own word list** (*dayhome* → *home child care provider*; *food truck* →
+   *cook*; *ride-share* → *taxi driver*; *salon* → *hairstylist*, the maintainer's example; each line the
+   maintainer approves) is also looked for under DotAmi's word. **The government's titles come first, per
+   job and per word:** where a job's own titles hold the word, that is the match, DotAmi's list isn't used for
+   that word on that job, and no list mark shows. Only where none of a job's titles holds the word can the
+   list find the job, and then it is marked: the chip *DotAmi's word list* and the line *Your word “dayhome”
+   was matched through DotAmi's own word list (“home child care provider”), not by a government title.* (So a
+   list line can sit unused for some jobs: the NOC 2021 elements file's group 63210 already lists *beauty
+   salon operator*, copy of 2026-10-15, so where the OaSIS file's titles for Hairstylists hold *salon* too,
+   *salon* finds Hairstylists through the government's title and the list line never shows there.)
+4. Each job is counted by how many of the person's searched words **its government titles** hold, and put
+   in one group, so every group heading is a true statement about the government's titles:
    - **all your words** (*your word* when one word was searched);
    - **all but one of your words** (only when three or more words were searched);
-   - **at least one of your words** (every other job holding one or more).
+   - **at least one of your words** (every other job whose titles hold one or more);
+   - **found only through DotAmi's word list**: a job whose titles hold none of the words, reached only
+     through a line of DotAmi's list. Its own group, last, headed as DotAmi's, never under a heading about the
+     government's titles.
+
+   A word a job matched only through DotAmi's list doesn't count toward that job's group: a job whose titles
+   hold one of two words, and whose other word came through the list, sits under *at least one of your
+   words*, with the list's chip and line saying where the other word was matched.
 5. Inside a group, jobs are in the government's code order. Nothing is scored. The group is a plain count
    of the person's own words, said on screen, never DotAmi's view of which job fits.
 6. **Which groups are open.** The first group that holds any job is shown open; each later group is one
@@ -101,13 +115,16 @@ jobStepWords = {
   empty: "Type a word or two about the work. The jobs whose titles hold your words show here.",
   tooShort: "Type at least 3 letters.",
   status: "<n> jobs hold your words: <a> all of them, <b> all but one, <c> at least one.",
+  statusWithList: "<n> jobs found: <a> whose titles hold all your words, <b> all but one, <c> at least one, and <d> only through DotAmi's word list.",
   groupAll: "Jobs whose example titles have all your words",
   groupOne: "Jobs whose example titles have your word",
   groupAllButOne: "Jobs whose example titles have all but one of your words",
   groupSome: "Jobs whose example titles have at least one of your words",
+  groupList: "Jobs found only through DotAmi's word list, not by a government title",
   groupOrder: "In the government's code order, not ranked.",
   showGroup: "Show the <n> jobs whose example titles have all but one of your words",
   showGroupSome: "Show the <n> jobs whose example titles have at least one of your words",
+  showGroupList: "Show the <n> jobs found only through DotAmi's word list",
   hideGroup: "Hide these <n> jobs",
   capped: "Showing the first <shown> of <total> in this group, in code order. Add a word to narrow it.",
   result: "<job> · <code>",
@@ -142,7 +159,7 @@ meaning, and it passes the check.
 |---|---|---|
 | **Empty** | Nothing typed (as the step opens, on both ways in) | *Type a word or two about the work. The jobs whose titles hold your words show here.* No list, no groups. This is the state the clutter limit measures |
 | **Too short** | One or two letters | *Type at least 3 letters.* |
-| **No match** | Every searched word is in no title, name or code, and in no line of DotAmi's word list | *No government example title holds any of these words: “dayhome”. Try another word for the same work, or skip this question.* and *Titles are searched in English in this version.* (research 28f's misses: *dayhome*, *maple syrup*, *ride-share* until DotAmi's list has a line for them, French words such as *infirmière*) |
+| **No match** | Every searched word is in no title, name or code, and in no line of DotAmi's word list | *No government example title holds any of these words: “infirmière”. Try another word for the same work, or skip this question.* and *Titles are searched in English in this version.* (research 28f's misses: French words such as *infirmière*, and *dayhome*, *maple syrup*, *ride-share* until DotAmi's list has a line for them; with *dayhome*'s line, *dayhome* finds Home child care providers · 44100.01 under *Jobs found only through DotAmi's word list*) |
 | **Only left-out words** | Every word typed is on the filler or business list (*my own shop*) | The no-match line, with *Not searched: “my”, “own”, “shop”. …* above it |
 
 ## What is new on the screen vs today
@@ -163,18 +180,21 @@ As the step opens (the state the clutter test measures, nothing typed):
 
 - **Regions: 4.** The nav, the intro, the step region (the cards' block, holding the step instead) and the
   site footer. *Name it* and *Not here yet?* belong to step 3 and aren't drawn here. Two fewer than today.
-- **Controls DotAmi draws: 4.** **← Your destination** (the nav's back link, as today), the word mark, the
-  search box and **Skip this question**. Today's first window holds the back link, the word mark, the name
-  box and both **Look inside** buttons in the same places. Whatever else the gate counts there today (the
-  site footer's links) is unchanged.
+- **Controls: 5.** **← Your destination** (the nav's back link, as today), the word mark, the search box,
+  **Skip this question**, and the site footer's *open source on GitHub* link. The gate counts that link: the
+  page is the window's height less the footer's (`pick-future-page.tsx:103`), so the footer always sits in
+  the first window, and `e2e/clutter-budget.spec.ts` leaves nothing out. 5 is the phone's limit, so step 1
+  has no room for another control in its first window at phone width.
 - **The budget:** the row stays at or under today's, and is lowered in the build's pull request to what CI
   measures for the opened step, as the README's rule says (a calmer screen lowers its own row). Typing
   adds result buttons, but the gate measures the screen as it opens; a long result list is one region, the
   step's own.
 
-The step on the intake page: the intake's nav, the step, the footer, with the preview rail put away: 3
-regions against the intake's 4; the same 4 controls (the intake's **← Back** in place of **← Your
-destination**) against its 5.
+The step on the intake page sits inside the intake's own `intake` region (no region of its own), with the
+preview rail put away: the intake's nav, the `intake` region, the footer, 3 regions against the intake's 4;
+the same 5 controls (the intake's **← Back** in place of **← Your destination**, its word mark, the box,
+**Skip this question**, the footer's link) against its 5 at every width (`BUDGETS.intake`). Steps 2 and 3 on
+the intake page are counted in their own files ([02](./02-where-you-are.md), [03](./03-road-match.md)).
 
 ## How a screen reader hears it
 

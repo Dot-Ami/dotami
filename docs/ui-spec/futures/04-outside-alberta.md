@@ -33,8 +33,21 @@ One catalog road, **The federal steps for any business in Canada** (`road-federa
   credit page, not Alberta's register-a-name page (`:461-467`). A filtered step says how many it left out
   (below), so nothing is hidden silently.
 
-`FULL_COVERAGE_PROVINCES` (`lib/scenarios/types.ts:23`, AB, BC, ON) stops calling BC and Ontario "full" while
-every written road is Alberta's: only Alberta is listed until a BC or Ontario road exists (phase 4).
+`FULL_COVERAGE_PROVINCES` (`lib/scenarios/types.ts:23`, AB, BC, ON) **stays as it is.** It says which provinces'
+rules, grants and structure entries the catalogs carry, and that is true for BC and Ontario: the rules and tax
+cards pick entries by each entry's own province list (`lib/brain/evaluate.ts` `provinceMatches`), and the
+catalogs hold Ontario and BC entries (`lib/engines/compliance/v2026/rules.ts`, 8 lines naming `"ON"`;
+`grants/v2026/programs.ts`, 5; `structure/v2026/ladder.ts`, 5). The constant drives the words that say so: the
+intake's *Federal rules apply …* note (`components/discovery/intake-page.tsx:391-396`), the place receipt
+(`lib/front-door/receipts.ts:86`) and the cockpit legend's *federal rules only for this province*
+(`lib/cockpit/words.ts:747`). Taking BC and Ontario out would make those lines say "federal rules only" to an
+Ontario idea while its Ontario rules and grants still show. What isn't written for BC and Ontario is a
+**road** (their steps), and that is said by the road's own words below (*<province>'s own steps aren't
+written yet*), which read the roads' `provinces`, as the place receipt already counts the roads written for a
+place apart from the rules (*Ontario's rules and the federal rules apply.*, then how many futures are written
+for it, `lib/front-door/words.ts:83-87`). The phase 2 task text asked for the constant to stop listing BC and
+Ontario; this design meets what that asked for (nothing calls BC or Ontario covered by a road) without making
+the rules lines untrue, and the pull request asks the maintainer to confirm it.
 
 ## Who sees it
 
@@ -62,8 +75,11 @@ same federal steps with Alberta's own. Outside Canada is unchanged: the flow sto
 - **The step panel's sources:** *Sources for this step · n* as today, then, when the filter left some out,
   *<n> sources for other provinces aren't shown.* No button: they cite other provinces' pages, and the line
   says they exist so nothing is left out unsaid.
-- **The rules and tax cards** already keep to federal-only outside full coverage (`lib/brain/evaluate.ts:94-103`,
-  with the legend line `words.ts:747`); unchanged.
+- **The rules and tax cards** pick entries by each entry's province list (`lib/brain/evaluate.ts:94-103`):
+  an Ontario or BC idea sees the federal entries and its own province's entries the catalogs carry; any other
+  province sees federal entries only, with the legend line *federal rules only for this province*
+  (`words.ts:747`). Unchanged. So on the federal road an Ontario idea's steps are the federal ones, and its
+  rules and tax cards still include Ontario's; the goal bar's line speaks of steps only, never of rules.
 - **About this job** opens from **Look closer** as on any road; outside Alberta its wage row reads the person's
   own province's row and its *Where to look yourself* row leaves out Alberta's trade list (Tradesecrets) and says
   why ([../cockpit/about-this-job.md](../cockpit/about-this-job.md)).
@@ -95,7 +111,7 @@ Kept as they are: `pickWords.writtenFor` (*Written for all of Canada.*, `allOfCa
 |---|---|
 | Two Alberta cards, each *Written for Alberta. You said Ontario.* | The federal road's card first, under *Written for all of Canada*; the Alberta cards one click away, unchanged |
 | Opening one draws an Alberta road (*Map drawn: … written for AB; this idea is in ON*) | The federal road draws only the steps that apply in Ontario, each with its federal and Ontario sources |
-| BC and Ontario are labelled full coverage | Only Alberta is |
+| BC and Ontario are labelled as having their provincial rules (`FULL_COVERAGE_PROVINCES`) | Unchanged: true of the rules and tax cards. The missing BC and Ontario roads are said by the road's own lines |
 
 ## Regions and controls
 

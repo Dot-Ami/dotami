@@ -10,9 +10,13 @@ database it reads as none, and the intake starts on *About you* as before); 2026
 > **Designed 2026-10-20, not built yet (task 28g).** Screen B's **Open my map →** becomes **Next: the work
 > closest to yours →**, which shows Pick a future's three steps (the job, where you are, the road) on this
 > page, the live preview rail put away for them; the idea is saved at the road step's **Look inside**, on the
-> road the person opened, so a typed idea no longer lands on the general road without saying why. Design:
+> road the person opened, so a typed idea no longer lands on the general road without saying why. The steps
+> sit inside this page's own `intake` region, so its limit (4 regions, 5 controls at every width) holds for
+> each: 3 regions, and the build held to its 5 controls, with the site footer's link counted. On this page the road step
+> draws no *Name it* box (Screen B already asks it) and no regions of its own. Design:
 > [../futures/01-whats-closest-to-your-work.md](../futures/01-whats-closest-to-your-work.md) § *Where it sits,
-> on both ways in*.
+> on both ways in*; the counts per step in [01](../futures/01-whats-closest-to-your-work.md),
+> [02](../futures/02-where-you-are.md) and [03](../futures/03-road-match.md) § *Regions and controls*.
 
 **Route:** `/intake`
 **Component:** [components/discovery/intake-page.tsx](../../../components/discovery/intake-page.tsx) (one file — both screens + preview rail)

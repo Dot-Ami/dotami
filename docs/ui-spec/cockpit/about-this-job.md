@@ -40,13 +40,30 @@ The kicker: *Cabinetmakers · 72311.00 · your pick of job*.
   Cabinetmakers:*
 - Every *Employment requirements* line of the job's 5-digit group in the NOC 2021 Version 1.0 elements file,
   word for word, in the file's order, each as its own line inside one quotation block (`<blockquote>`, marked
-  `data-official-quote` with its citation). Lines the file gives as sub-headings within a group (*Hairstylists*,
+  `data-official-quote` with its citation), and **each line inside quote marks** (“…”), drawn as text, so the
+  screen checks read it as a quote. Lines the file gives as sub-headings within a group (*Hairstylists*,
   *Barbers* for 63210) stay as sub-headings.
 - When the picked OaSIS profile is one of several in its group (Barbers, 63210.02, in group 63210 Hairstylists
   and barbers): *The group holds more than one job, so some lines are about the others.*
 - The source line (below). The quote's durations (*a four-year apprenticeship program*) are the government's
-  own words, shown as its words: they pass the no-times check as an *official-quote* piece
-  (`tests/helpers/text-pieces.ts`), never as DotAmi's. DotAmi writes nothing about them.
+  own words, shown as its words. DotAmi writes nothing about them.
+
+**How the quoted lines pass the screen checks** (the whole-screen walks read the visible text, not the
+`data-official-quote` mark, so the mark alone isn't enough):
+
+- *No times.* The idea sweep's screen check (`e2e/idea-sweep.spec.ts` `withoutQuotedWords`) skips only what
+  stands inside “…”; the harness's pieces carry the lines as `official-quote` (`tests/helpers/text-pieces.ts`).
+  The quote marks on each line are what make both true.
+- *No verdicts.* `e2e/no-verdict.spec.ts` reads every screen with `findVerdicts`, which lifts a phrase only
+  when its sentence is in `OFFICIAL_QUOTE_ALLOWANCES` (`tests/helpers/verdict-words.ts`) **and** stands in
+  quote marks. Run over all 2,122 *Employment requirements* lines of the elements file (copy of 2026-10-15)
+  on 2026-10-20, `findVerdicts` catches one, with or without quote marks: group 53200 (Athletes),
+  *“A background combining athletic training and college or university
+  studies is strongly recommended.”* (phrase *recommended*). So the build (25h, with 28a's import) adds that
+  sentence to `OFFICIAL_QUOTE_ALLOWANCES`, word for word, with its *where* (this row, group 53200) and *why*
+  (the government's own requirement line, quoted in full and labelled as its words), and 28a's importer test
+  runs `findVerdicts` over every shipped requirement line and fails on any it catches that has no allowance,
+  so a re-pinned file can't bring a new one in unseen. Nothing is reworded or left out of the quote.
 
 Example (72311 Cabinetmakers, the four lines as the elements file holds them, the copy of 2026-10-15 used by
 research 28f; 28a's importer reads the pinned download and the build's test checks the shipped text against it):
@@ -59,7 +76,8 @@ research 28f; 28a's importer reads the pinned download and the build's test chec
 > Red Seal endorsement is also available to qualified cabinetmakers upon successful completion of the
 > interprovincial Red Seal examination.
 
-(The double space before *or* is in the file and is kept; the screen shows the line as written.)
+(The double space before *or* is in the file and is kept; the screen shows the line as written, each line
+inside its own quote marks.)
 
 ### 2. Wages published for this job group
 
@@ -111,7 +129,9 @@ Example rows, real, from the 2025 wage file as research 25s read it on 2026-10-2
 - Heading *Business counts*, and *Not in this version. DotAmi doesn't show how many businesses work in this
   line yet; the official counts by area come with a later version.*
 - *Your area: Somewhere else in Alberta (your pick). Nothing reads it yet.* when an area is kept (or *Your area
-  isn't picked.*), so the person sees the answer they gave and that it does nothing yet.
+  isn't picked.*), so the person sees the answer they gave and that it does nothing yet. There is no
+  **Change** for the area here in this version: nothing reads it, so a way to change it comes with the counts
+  (phase 3). Step 2's `kept` line promises only the region's **Change** ([../futures/02-where-you-are.md](../futures/02-where-you-are.md)).
 
 ### 4. Where to look yourself
 
@@ -234,7 +254,9 @@ A full-width sheet over the road, with *Close* at its top. Rows stacked; the quo
 ## State touched
 
 Reads `occupationCode`, `economicRegion`, `landscapeArea`; writes only `economicRegion` and
-`economicRegionSetAt` through **Change**. Nothing else. No inventory line beyond step 2's.
+`economicRegionSetAt` through **Change**. Nothing else. No inventory line beyond step 2's. **Change** is also
+how a person who picked their job later in the skills list (and so was never asked step 2) sets a region
+for the first time; the area isn't set or changed here (row 3).
 
 ## Downstream consumers
 
@@ -250,6 +272,7 @@ logo.
 ## Not in this version
 
 - Business counts (phase 3, 23f/25d) and the industry question.
+- Changing the area (phase 3, with the counts that read it).
 - The main-duties text, skills (already in the skills list), outlooks.
 - A Copy button.
 
@@ -257,4 +280,5 @@ logo.
 
 Every string in the words block was run through `VERDICT_WORDS`, `findVerdicts` and `findTimeWords` on
 2026-10-20: no finding. The quoted requirement lines hold durations (*four-year*, *several years*); they are the
-government's words, an *official-quote* piece, and are not DotAmi's.
+government's words, an *official-quote* piece, and are not DotAmi's. All 2,122 of them were also run through
+`findVerdicts` on 2026-10-20: one is caught (group 53200, *recommended*), handled by an allowance as row 1 says.

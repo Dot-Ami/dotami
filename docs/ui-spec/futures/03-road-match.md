@@ -129,6 +129,33 @@ until a privacy policy exists).
 - **The budget:** today's `futures` row (6 regions; 5, 7 and 6 controls) holds; this step gets its own row in
   the build (29j), measured on case B, the longest, and lowered to what CI measures.
 
+### On the intake page (the typed way)
+
+The intake's own row holds there: **4 regions** (nav, intake, preview, site footer) and **5 controls** at every
+width (`BUDGETS.intake`, `e2e/budgets.ts`). Drawn as on `/futures`, step 3 would be 6 regions (nav, intro,
+*Name it*, the list, *Not here yet?*, footer), over the intake's 4. So on the intake page it is drawn
+differently, with nothing taken away from what the person can do:
+
+- **Regions: 3.** The step's heading, pick line, cards (both groups and the no-road block) and *Not here yet?*
+  all sit inside the intake's own `intake` region, as parts of the step, with no `data-region` marks of their
+  own; the preview rail stays put away (as on steps 1 and 2). Nav, `intake`, site footer: 3, under 4. Nothing
+  inside the `intake` region is a landmark or section of its own outside a region, so the gate's check on
+  unmarked blocks holds.
+- ***Name it (optional)* isn't drawn on the intake page**: Screen B already asks it (*Name it — optional*,
+  `components/discovery/intake-page.tsx`), and the idea is saved with that answer, as **Open my map** saves it
+  today.
+- **Controls in the first window:** the intake's **← Back**, the word mark, the cards' **Look inside**
+  buttons and the site footer's link (the gate counts it; see step 1's file). Case A at a laptop: back, word
+  mark, two **Look inside**, footer link: **5**, the intake's limit. Case C: as case A. On a phone one **Look
+  inside** reaches the first window: 4. Case B: back, word mark, footer link (3), plus whichever of *About
+  this job*'s controls reach the first window (**Change**, the three links, and on a phone **Show all n
+  lines**). The government's quote sits above them, so how many reach the first window depends on how long a
+  job's requirements text is; it isn't known before the build.
+- The gate measures the intake as it opens (Screen A), so none of this is measured by CI on the intake page
+  until the build adds a row for it. The build's pull request adds one, measured on case B with the job whose
+  requirements text is shortest among the corpus's Alberta ideas (29j), at or under the intake's 5. If CI
+  measures more, the pull request shows the maintainer that screen instead of raising the row.
+
 ## How a screen reader hears it
 
 - Each group is a level 2 heading; the cards stay a list named *Written futures*.
