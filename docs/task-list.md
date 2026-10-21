@@ -309,9 +309,11 @@ placed in phase 3.
   counts, the area and industry questions, *Where to look*, and Mara's landscape.
   - [ ] 23g (phase 2 of the plan for any idea): ask the area once, right after the job pick (a fixed list of
     Alberta census metropolitan areas plus *Somewhere else in Alberta* and *I don't know*, each with a line
-    saying why it's asked); it picks the wage region for *About this job* ([14i]), and *Others in this line
-    of work* reads the same answer. The industry question waits for the counts (the maintainer's call of
-    2026-10-20)
+    saying why it's asked); *Others in this line of work* reads it. The wage region for *About this job*
+    ([14i]) is not worked out from it: "which region are you in?" is asked right after it, with Alberta's
+    eight economic regions listed (the maintainer's call of 2026-10-20; research 25s: the Edmonton area spans
+    two regions; designed in [ui-spec/futures/02-where-you-are.md](ui-spec/futures/02-where-you-are.md);
+    corrected 2026-10-20). The industry question waits for the counts (the maintainer's call of 2026-10-20)
   - [ ] Phase 3: the business counts for the area and industry (Statistics Canada table 33-10-1176), the
     industry question, *Where to look* as a dated, checked list, and the rest of the panel
 - ⬜ **[14h] Ask the Lens "what's cheapest, fastest, strongest?"** The Lens, and a *Sort by one thing you
