@@ -133,7 +133,9 @@ const FONTS = [
 /**
  * Data written by others that ships inside DotAmi's own code, each with the licence file committed beside
  * it. The government's skills list (lib/engines/oasis/v2026/data.ts, made by scripts/import-oasis.mjs)
- * is under the Open Government Licence – Canada, whose attribution line is in that file.
+ * and Job Bank's published wages (lib/engines/wages/v2026/data.ts, made by scripts/import-job-bank-wages.mjs
+ * since 2026-10-21; no screen shows them yet) are under the Open Government Licence – Canada, whose
+ * attribution line is in each file.
  */
 const DATA = [
   {
@@ -141,6 +143,12 @@ const DATA = [
     licence: "OGL-Canada-2.0",
     file: "lib/engines/oasis/v2026/LICENCE.txt",
     version: "2025 Version 1.0, record modified 2026-10-04",
+  },
+  {
+    name: "Job Bank wages 2025 (data from Employment and Social Development Canada)",
+    licence: "OGL-Canada-2.0",
+    file: "lib/engines/wages/v2026/LICENCE.txt",
+    version: "2025 file, revised 2025-11-19",
   },
 ];
 

@@ -362,8 +362,12 @@ placed in phase 3.
     with the OaSIS importer moved onto it unchanged (`scripts/lib/import-kit.mjs`)
   - [ ] 25e: code keys on roads (the jobs a road is written for), job links, the 2022 industry code list
     (NAICS) and an economic-region key
-  - [ ] 25i: wages only, from Job Bank's open-data wage file (never its pages), each row with its geography
-    level and period; no outlooks
+  - [x] 25i: wages only, from Job Bank's open-data wage file (never its pages), each row with its geography
+    level and period; no outlooks. Built 2026-10-21 (the maintainer's word that the build may download the
+    2025 file, pinned by checksum): `scripts/import-job-bank-wages.mjs` turns the file in
+    `data/job-bank-wages-2025/` into `lib/engines/wages/v2026/`, whose look-ups give the file's own row for a
+    job in an economic region or a province as a whole, the level from its source code, and a missing row as
+    missing. Not shown anywhere yet: *About this job* (25h) is the first screen to read it
   - [ ] 25h: *About this job* for any job, in the right-hand panel from *Look closer*: the job's rules quoted
     word for word, the published wages labelled "Not what a shop earns, and not what you would earn", and
     *Where to look yourself* (Job Bank's general search, with the job's name and code to copy); no business

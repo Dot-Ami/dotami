@@ -10,6 +10,7 @@ import path from "node:path";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { IMPORTERS, main } from "../scripts/data-check.mjs";
+import { WAGE_DATA_DIR, WAGE_FILES, WAGE_MODULE_PATH } from "../scripts/import-job-bank-wages.mjs";
 import { OASIS_DATA_DIR, OASIS_FILES, OASIS_MODULE_PATH } from "../scripts/import-oasis.mjs";
 
 const root = process.cwd();
@@ -38,13 +39,19 @@ describe("on a copy of the committed data", () => {
     scratch = "";
   });
 
-  /** A throwaway top folder holding the OaSIS files and module, as committed. */
+  /** A throwaway top folder holding every importer's files and module, as committed (OaSIS's, and the wage file's). */
   const copyRoot = () => {
     scratch = mkdtempSync(path.join(os.tmpdir(), "data-check-"));
-    mkdirSync(path.join(scratch, OASIS_DATA_DIR), { recursive: true });
-    mkdirSync(path.join(scratch, path.dirname(OASIS_MODULE_PATH)), { recursive: true });
-    for (const f of OASIS_FILES) copyFileSync(path.join(root, OASIS_DATA_DIR, f.name), path.join(scratch, OASIS_DATA_DIR, f.name));
-    copyFileSync(path.join(root, OASIS_MODULE_PATH), path.join(scratch, OASIS_MODULE_PATH));
+    const sets = [
+      { dataDir: OASIS_DATA_DIR, files: OASIS_FILES, modulePath: OASIS_MODULE_PATH },
+      { dataDir: WAGE_DATA_DIR, files: WAGE_FILES, modulePath: WAGE_MODULE_PATH },
+    ];
+    for (const { dataDir, files, modulePath } of sets) {
+      mkdirSync(path.join(scratch, dataDir), { recursive: true });
+      mkdirSync(path.join(scratch, path.dirname(modulePath)), { recursive: true });
+      for (const f of files) copyFileSync(path.join(root, dataDir, f.name), path.join(scratch, dataDir, f.name));
+      copyFileSync(path.join(root, modulePath), path.join(scratch, modulePath));
+    }
     return scratch;
   };
   const run = async (dir: string) => {
@@ -60,7 +67,8 @@ describe("on a copy of the committed data", () => {
     const { code, said } = await run(copyRoot());
     expect(code).toBe(0);
     expect(said).toContain("lib/engines/oasis/v2026/data.ts is what the files in data/oasis-2025-v1.0 make.");
-    expect(said).toContain("data:check: every importer's files match their pins and rebuild its module exactly (1 importer).");
+    expect(said).toContain("lib/engines/wages/v2026/data.ts is what the files in data/job-bank-wages-2025 make.");
+    expect(said).toContain("data:check: every importer's files match their pins and rebuild its module exactly (2 importers).");
   });
 
   it("fails on one changed byte in a pinned data file, naming the file and its pin", async () => {
@@ -75,7 +83,34 @@ describe("on a copy of the committed data", () => {
     expect(code).toBe(1);
     expect(said).toContain("data/oasis-2025-v1.0/labels_oasis_2025_v1.1.csv is not the file pinned for it");
     expect(said).toContain(`the pin in OASIS_FILES (scripts/import-oasis.mjs) is ${OASIS_FILES.find((f) => f.key === "labels")!.sha256}`);
-    expect(said).toContain("data:check: 1 of 1 importers failed: scripts/import-oasis.mjs.");
+    expect(said).toContain("data:check: 1 of 2 importers failed: scripts/import-oasis.mjs.");
+  });
+
+  it("fails on one changed figure in the wage file, naming the file and its pin (2026-10-21)", async () => {
+    const dir = copyRoot();
+    const file = path.join(dir, WAGE_DATA_DIR, WAGE_FILES[0]!.name);
+    const text = readFileSync(file, "utf8");
+    // Cabinetmakers in Calgary's region: median 23 becomes 24.
+    const row = "NOC_72311,Cabinetmakers,Ébénistes,AB,ER4830,Calgary,Calgary,18,23,30,";
+    expect(text).toContain(row);
+    writeFileSync(file, text.replace(row, row.replace(",18,23,30,", ",18,24,30,")));
+    const { code, said } = await run(dir);
+    expect(code).toBe(1);
+    expect(said).toContain(`data/job-bank-wages-2025/${WAGE_FILES[0]!.name} is not the file pinned for it`);
+    expect(said).toContain(`the pin in WAGE_FILES (scripts/import-job-bank-wages.mjs) is ${WAGE_FILES[0]!.sha256}`);
+    expect(said).toContain("data:check: 1 of 2 importers failed: scripts/import-job-bank-wages.mjs.");
+  });
+
+  it("fails on one edited figure in the generated wage module", async () => {
+    const dir = copyRoot();
+    const module = path.join(dir, WAGE_MODULE_PATH);
+    const text = readFileSync(module, "utf8");
+    const row = '["72311","ER4830","18","23","30",';
+    expect(text).toContain(row);
+    writeFileSync(module, text.replace(row, '["72311","ER4830","18","24","30",'));
+    const { code, said } = await run(dir);
+    expect(code).toBe(1);
+    expect(said).toContain("lib/engines/wages/v2026/data.ts is NOT what the files in data/job-bank-wages-2025 make.");
   });
 
   it("fails on one edited line in the generated module", async () => {

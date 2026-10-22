@@ -52,7 +52,7 @@ function fakePackage(nodeModules: string, name: string, version: string, opts: {
   return dir;
 }
 
-/** A checkout-shaped folder with the pieces collectNotices always reads (Tailwind, the two fonts, the OaSIS data's licence). */
+/** A checkout-shaped folder with the pieces collectNotices always reads (Tailwind, the two fonts, the OaSIS and wage data's licences). */
 function fakeCheckout(name: string, dependencies: Record<string, string>) {
   const root = path.join(temp, name);
   const modules = path.join(root, "node_modules");
@@ -60,8 +60,10 @@ function fakeCheckout(name: string, dependencies: Record<string, string>) {
   writeFileSync(path.join(root, "package.json"), JSON.stringify({ name: "dotami", version: "9.9.9", dependencies }));
   writeFileSync(path.join(root, "app", "fonts", "LICENSE-Inter.txt"), "Inter: SIL Open Font License 1.1");
   writeFileSync(path.join(root, "app", "fonts", "LICENSE-JetBrainsMono.txt"), "JetBrains Mono: SIL Open Font License 1.1");
-  mkdirSync(path.join(root, "lib", "engines", "oasis", "v2026"), { recursive: true });
-  writeFileSync(path.join(root, "lib", "engines", "oasis", "v2026", "LICENCE.txt"), "Contains information licensed under the Open Government Licence – Canada.");
+  for (const engine of ["oasis", "wages"]) {
+    mkdirSync(path.join(root, "lib", "engines", engine, "v2026"), { recursive: true });
+    writeFileSync(path.join(root, "lib", "engines", engine, "v2026", "LICENCE.txt"), "Contains information licensed under the Open Government Licence – Canada.");
+  }
   fakePackage(modules, "tailwindcss", "4.0.0");
   return { root, modules };
 }
@@ -143,6 +145,7 @@ describe("collectNotices: what the generator lists, and what stops it", () => {
       "font:Inter (font)",
       "font:JetBrains Mono (font)",
       "data:OaSIS 2025 Version 1.0 (data from Employment and Social Development Canada)",
+      "data:Job Bank wages 2025 (data from Employment and Social Development Canada)",
     ]);
     expect(entries[0].texts).toEqual([{ file: "LICENSE", text: "Copyright (c) app authors\nMIT terms" }]);
   });
@@ -298,13 +301,19 @@ describe("the list for this checkout", () => {
     expect(keys.filter((k, i) => keys.indexOf(k) !== i)).toEqual([]);
   });
 
-  it("lists the government's skills list as data that ships, with the licence's own attribution line (2026-10-12)", () => {
-    const oasis = entries.filter((e) => e.kind === "data");
-    expect(oasis.map((e) => [e.name, e.licence])).toEqual([["OaSIS 2025 Version 1.0 (data from Employment and Social Development Canada)", "OGL-Canada-2.0"]]);
-    expect(oasis[0]!.texts[0]!.file).toBe("LICENCE.txt");
-    expect(oasis[0]!.texts[0]!.text).toContain("Contains information licensed under the Open Government Licence – Canada.");
-    expect(oasis[0]!.texts[0]!.text).toContain("https://open.canada.ca/en/open-government-licence-canada");
-    expect(parseNotices(formatNotices(oasis, { version: "0.0.0-test", desktop: false })).entries[0]!.kind).toBe("data");
+  it("lists the government's skills list and Job Bank's wages as data that ships, each with the licence's own attribution line (2026-10-12, wages 2026-10-21)", () => {
+    const data = entries.filter((e) => e.kind === "data");
+    expect(data.map((e) => [e.name, e.licence])).toEqual([
+      ["OaSIS 2025 Version 1.0 (data from Employment and Social Development Canada)", "OGL-Canada-2.0"],
+      ["Job Bank wages 2025 (data from Employment and Social Development Canada)", "OGL-Canada-2.0"],
+    ]);
+    for (const entry of data) {
+      expect(entry.texts[0]!.file).toBe("LICENCE.txt");
+      expect(entry.texts[0]!.text).toContain("Contains information licensed under the Open Government Licence – Canada.");
+      expect(entry.texts[0]!.text).toContain("https://open.canada.ca/en/open-government-licence-canada");
+    }
+    expect(data[1]!.texts[0]!.text).toContain("2a71-das-wage2025opendata-esdc-all-19nov2025-vf.csv");
+    expect(parseNotices(formatNotices(data, { version: "0.0.0-test", desktop: false })).entries.map((e) => e.kind)).toEqual(["data", "data"]);
   });
 
   it("follows what desktop/package.mjs copies into the installed app", () => {

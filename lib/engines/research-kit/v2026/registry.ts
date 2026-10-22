@@ -159,7 +159,8 @@ export const SOURCES: readonly SourceCard[] = [
     name: "Wages",
     publisher: "Employment and Social Development Canada",
     url: "https://open.canada.ca/data/en/dataset/adad580f-76b0-4502-bd05-20c125de9116",
-    phase: "phase-2",
+    // Shipped since 2026-10-21 (task 25i): scripts/import-job-bank-wages.mjs imports it; no screen shows it yet.
+    phase: "now",
     ...shippedUnder("ogl-canada-2.0"),
     display: { kind: "with-conditions", conditions: [OGL_NO_ENDORSEMENT] },
     figureKind: "published",
@@ -172,7 +173,7 @@ export const SOURCES: readonly SourceCard[] = [
         url: "https://open.canada.ca/data/dataset/adad580f-76b0-4502-bd05-20c125de9116/resource/9da94d63-b178-4a64-aeb3-b6a3bd721ad2/download/2a71-das-wage2025opendata-esdc-all-19nov2025-vf.csv",
       },
     ],
-    note: "Job Bank's wage file, by job, province and economic region (research note 25s; task 25i imports it). Each row's source code says what the row really is: a row shown under a region can be a province-wide figure or a small-area estimate. UTF-8 with a byte-order mark. No next-release date is stated; Job Bank's methodology page says wages are updated \"on an annual basis, usually in the fall\". Job Bank's own pages are never fetched (the job-bank-pages card).",
+    note: "Job Bank's wage file, by job, province and economic region (research note 25s). Imported since 2026-10-21 by scripts/import-job-bank-wages.mjs into lib/engines/wages/v2026/ (task 25i, on the maintainer's word that the build may download it, pinned by checksum); wages only, never outlooks. Each row's source code says what the row really is: a row shown under a region can be a province-wide figure or a small-area estimate. UTF-8 with a byte-order mark. No next-release date is stated; Job Bank's methodology page says wages are updated \"on an annual basis, usually in the fall\". Job Bank's own pages are never fetched (the job-bank-pages card).",
   },
   {
     id: "naics-2022",

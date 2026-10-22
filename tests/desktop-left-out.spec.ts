@@ -142,9 +142,11 @@ describe("collectNotices with leaveOut: the desktop notices drop what the server
     writeFileSync(path.join(root, "package.json"), JSON.stringify({ name: "dotami", version: "9.9.9", dependencies: { next: "15" } }));
     writeFileSync(path.join(root, "app", "fonts", "LICENSE-Inter.txt"), "Inter: SIL Open Font License 1.1");
     writeFileSync(path.join(root, "app", "fonts", "LICENSE-JetBrainsMono.txt"), "JetBrains Mono: SIL Open Font License 1.1");
-    // The government's skills list ships as data, with its licence file (2026-10-12).
-    mkdirSync(path.join(root, "lib", "engines", "oasis", "v2026"), { recursive: true });
-    writeFileSync(path.join(root, "lib", "engines", "oasis", "v2026", "LICENCE.txt"), "Contains information licensed under the Open Government Licence – Canada.");
+    // The government's skills list (2026-10-12) and Job Bank's wages (2026-10-21) ship as data, each with its licence file.
+    for (const engine of ["oasis", "wages"]) {
+      mkdirSync(path.join(root, "lib", "engines", engine, "v2026"), { recursive: true });
+      writeFileSync(path.join(root, "lib", "engines", engine, "v2026", "LICENCE.txt"), "Contains information licensed under the Open Government Licence – Canada.");
+    }
     fakePackage(modules, "tailwindcss", "4.0.0");
     fakePackage(modules, "next", "15.0.0", { deps: { "styled-jsx": "5" }, optional: { sharp: "0.35" } });
     fakePackage(modules, "styled-jsx", "5.0.0");

@@ -55,13 +55,14 @@ describe("the registry", () => {
     ]);
   });
 
-  it("marks when each source comes in: OaSIS's four files now, the job titles, wages and code lists in phase 2, the counts and census later", () => {
+  it("marks when each source comes in: OaSIS's four files and the wage file now, the job titles and code lists in phase 2, the counts and census later", () => {
     const phaseOf = Object.fromEntries(SOURCES.filter((c) => c.access === "ship").map((c) => [c.id, c.phase]));
     expect(phaseOf).toEqual({
       "oasis-2025": "now",
       "oasis-2025-example-titles": "phase-2",
       "noc-2021-elements": "phase-2",
-      "job-bank-wages": "phase-2",
+      // Shipped since 2026-10-21 (task 25i).
+      "job-bank-wages": "now",
       "naics-2022": "phase-2",
       "statcan-business-counts": "phase-3",
       "statcan-census-98-10-0594": "phase-3",
