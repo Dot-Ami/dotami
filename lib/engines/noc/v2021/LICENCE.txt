@@ -1,0 +1,12 @@
+Adapted from Statistics Canada, National Occupational Classification (NOC) 2021 Version 1.0, 2021. This does
+not constitute an endorsement by Statistics Canada of this product.
+https://www.statcan.gc.ca/en/reference/licence
+
+The job groups in data.ts (each five-digit group's title, its example titles and its "Employment
+requirements") come from the National Occupational Classification (NOC) 2021 Version 1.0, published by
+Statistics Canada under the Statistics Canada Open Licence:
+https://www.statcan.gc.ca/en/subjects/standard/noc/2021/indexV1
+(file noc-2021-v1.0-elements.csv).
+
+DotAmi keeps those three things and shows the requirements word for word, as the government's own words.
+Statistics Canada does not endorse DotAmi or anyone's use of this information.

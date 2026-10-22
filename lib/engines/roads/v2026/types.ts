@@ -21,6 +21,8 @@ export interface Road {
   kind: RoadKind;
   /** Where it is written for, in today's place values. */
   provinces: Province[];
+  /** The code keys the road names (docs/architecture/research-kit.md § 5.3): today, the jobs it is written for. */
+  codes: RoadCodes;
   /** Left to right. */
   columns: RoadColumn[];
   /** Every step on the road, each listed once; columns say where each one sits. */
@@ -39,6 +41,21 @@ export interface Road {
    * `roadJoinProblems` checks both exist.
    */
   joins?: RoadJoin;
+}
+
+/**
+ * What a road says about the work it is written for (task 25e, 2026-10-21). It only describes the road: the
+ * person's job is still their own pick (lib/futures/job.ts), and nothing here is read to pick one for them.
+ */
+export interface RoadCodes {
+  /**
+   * The jobs the road is written for, as 5-digit NOC 2021 codes ("72311" for Cabinetmakers), in the order the
+   * road's writer put them; each must be a job group on the government's list (`roadCodeProblems` checks it
+   * against OaSIS). A road written for no particular job, such as road 0's tax and structure steps for any
+   * business, says so with "no-particular-job" rather than an empty list, so a road nobody gave codes to
+   * can't pass as one written for no job.
+   */
+  occupations: readonly string[] | "no-particular-job";
 }
 
 export interface RoadJoin {

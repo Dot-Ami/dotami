@@ -360,8 +360,13 @@ placed in phase 3.
     connector powers ([9g]), the place lists on S2.5.26, the rent-price places on their replies
   - [x] 25c: one shared import core (encoding, table id, period, licence and next-release date as data),
     with the OaSIS importer moved onto it unchanged (`scripts/lib/import-kit.mjs`)
-  - [ ] 25e: code keys on roads (the jobs a road is written for), job links, the 2022 industry code list
-    (NAICS) and an economic-region key
+  - [x] 25e, its phase 2 part: the jobs each road is written for (road 1: 72311 Cabinetmakers; road 0: no
+    particular job), unknown job codes refused, the roads written for a picked job (none is an answer, no
+    fall back), a job-links file with an entry only for a job a road is written for, and Alberta's eight
+    economic regions as data for the region question, with their source and credit line
+  - [ ] 25e, the rest (phase 3, with the industry question; the maintainer's call of 2026-10-20): the 2022
+    industry code list (NAICS) imported and checked, the job links' industry candidates checked against it,
+    and the census table that cites them (NAICS 2017 at sector level) checked against the 2022 sectors
   - [ ] 25i: wages only, from Job Bank's open-data wage file (never its pages), each row with its geography
     level and period; no outlooks
   - [ ] 25h: *About this job* for any job, in the right-hand panel from *Look closer*: the job's rules quoted
@@ -485,11 +490,15 @@ placed in phase 3.
     The maintainer's calls on them, 2026-10-21: the typed way ends on the same three steps; no region question
     outside Alberta for now; a job with no written road saves nothing; the what-if **Keep** bug is fixed with
     the *Incorporating* fix)
-  - [ ] 28a: import the classification's elements file (example job titles and "Employment requirements")
-    on the shared import core, with its checksum, licence and credit line
+  - [x] 28a: import the classification's elements file (example job titles and "Employment requirements")
+    on the shared import core, with its checksum, licence and credit line; and the OaSIS "Example Titles"
+    file beside it (`scripts/import-noc.mjs`, `scripts/import-oasis-titles.mjs`; both in `npm run data:check`
+    and on `/licences`)
   - [ ] 28b: *What's closest to your work?*: the person searches the example titles and picks the job;
     matches in code order, labelled "matches your words · your pick"; *Skip* allowed; nothing set without a
-    click
+    click. The search itself is built (`lib/engines/oasis/v2026/title-search.ts`, with DotAmi's word list the
+    maintainer approves line by line): 153 of 220 corpus ideas find their job in the group shown first, against
+    20 today. The screen is still to build.
   - [ ] 28c: the road written for the picked job comes first; otherwise "No road is written for this job
     yet", with *About this job* and the general road; no silent fallback for a new idea; a job with no written
     road saves nothing until a future is opened (the maintainer's call of 2026-10-21; a kind of saved idea with

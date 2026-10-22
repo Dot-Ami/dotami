@@ -9,8 +9,13 @@ import { FutureInputError } from "./types";
  * The job the person picks as closest to the work they'd do themselves (docs/architecture/future-cockpit.md
  * § 6, "Skills, and the government's list for your pick of job, as built"; the maintainer's decision 5 of
  * 2026-10-11). Kept on the idea as the job's OaSIS code and the moment it was picked; the cockpit then
- * shows the government's skills list for that job, tagged "your pick of job". Only the person picks it:
- * nothing in DotAmi links a business or a road to a job.
+ * shows the government's skills list for that job, tagged "your pick of job".
+ *
+ * Only the person picks it. Since task 25e (2026-10-21) a road names the jobs it is written for
+ * (`Road.codes.occupations`: road 1 is written for 72311 Cabinetmakers, road 0 for no particular job), so Pick a
+ * future can offer the road written for the job the person picked (`roadsWrittenForJob`). That runs one way only:
+ * from the person's pick to the roads. Nothing in DotAmi picks or changes a job from a road, a business, the
+ * idea's words or anything else the person said; the job is still only their own pick, and Skip leaves none.
  */
 
 /**
