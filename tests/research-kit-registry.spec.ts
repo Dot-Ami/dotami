@@ -58,13 +58,14 @@ describe("the registry", () => {
     ]);
   });
 
-  it("marks when each source comes in: OaSIS's four files, the two job-title files and Alberta's economic regions now (since 2026-10-21), wages in phase 2, the industry list, counts and census later", () => {
+  it("marks when each source comes in: OaSIS's four files, the two job-title files, Alberta's economic regions and the wage file now (since 2026-10-21), the industry list, counts and census later", () => {
     const phaseOf = Object.fromEntries(SOURCES.filter((c) => c.access === "ship").map((c) => [c.id, c.phase]));
     expect(phaseOf).toEqual({
       "oasis-2025": "now",
       "oasis-2025-example-titles": "now",
       "noc-2021-elements": "now",
-      "job-bank-wages": "phase-2",
+      // Shipped since 2026-10-21 (task 25i).
+      "job-bank-wages": "now",
       // With the industry question, in phase 3 (the maintainer's call of 2026-10-20).
       "naics-2022": "phase-3",
       // Typed from Statistics Canada's pages for the region question (task 25e).
@@ -83,9 +84,9 @@ describe("the registry", () => {
     expect(card("noc-2021-elements").files).toEqual(NOC_FILES.map((f) => ({ name: f.name, url: f.url })));
   });
 
-  it("marks as shipped now exactly the three sources an importer reads today, and Alberta's economic regions (typed from Statistics Canada's pages)", () => {
+  it("marks as shipped now exactly the four sources an importer reads today, and Alberta's economic regions (typed from Statistics Canada's pages)", () => {
     const shippedNow = SOURCES.filter((c) => c.access === "ship" && c.phase === "now").map((c) => c.id);
-    expect(shippedNow.sort()).toEqual(["noc-2021-elements", "oasis-2025", "oasis-2025-example-titles", "sgc-2021-economic-regions"]);
+    expect(shippedNow.sort()).toEqual(["job-bank-wages", "noc-2021-elements", "oasis-2025", "oasis-2025-example-titles", "sgc-2021-economic-regions"]);
   });
 
   it("gives every shipped source an open licence and its credit line, and the government files their licence's own words", () => {

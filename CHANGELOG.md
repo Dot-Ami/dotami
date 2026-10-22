@@ -34,6 +34,17 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - **`npm run data:check`**, a step of `npm run ci:quality` and of CI on every pull request: every importer's
   government files checked against their pins and its generated module rebuilt and compared, offline. A changed
   byte in a government file, or a hand edit to a generated module, now fails the pull request.
+- **Job Bank's published wages, imported, not shown yet** ([14i], task 25i; the maintainer's word of
+  2026-10-21). Plumbing, with no change on screen: Job Bank's 2025 wage file from open.canada.ca (revised
+  2025-11-19, Open Government Licence – Canada), pinned by its checksum and committed as downloaded under
+  `data/job-bank-wages-2025/`, becomes `lib/engines/wages/v2026/`. For each job group and place it keeps the
+  low, median and high wage exactly as the file prints them, whether they are hourly or yearly, the reference
+  period, the row's own source code and the level that code says (a row filed under Calgary whose code says
+  "province" is an Alberta-wide figure), and the file's note where it published no figures. A look-up gives
+  the file's own row for a job in an economic region or in a province as a whole, and says plainly when the
+  file has no such row, never borrowing a neighbour's. Wages only: no outlook ratings, and never a person's
+  income or part of any total. The licence's credit line is on `/licences`. It makes possible: the wage row of
+  *About this job* (25h).
 - **Tests: the gate knows a published wage and a quoted government requirement** (29i, 29k; for *About this
   job*, before it is built). No change on screen. A wage the government publishes for a job group is now a kind
   of number the "every number cited or the person's own" check accepts, but only on *About this job*'s wage row,

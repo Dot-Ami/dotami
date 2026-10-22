@@ -138,7 +138,9 @@ const FONTS = [
  * made by scripts/import-noc.mjs) are under the Statistics Canada Open Licence, whose notice is in its file.
  * Alberta's economic regions (lib/engines/research-kit/v2026/economic-regions.ts, typed from Statistics
  * Canada's pages) are under the same Statistics Canada Open Licence, with its notice in their licence file;
- * the registry card `sgc-2021-economic-regions` carries the same credit line.
+ * the registry card `sgc-2021-economic-regions` carries the same credit line. Job Bank's published wages
+ * (lib/engines/wages/v2026/data.ts, made by scripts/import-job-bank-wages.mjs since 2026-10-21; no screen
+ * shows them yet) are under the Open Government Licence – Canada, whose attribution line is in their file.
  */
 const DATA = [
   {
@@ -158,6 +160,12 @@ const DATA = [
     licence: "Statistics-Canada-Open-Licence",
     file: "lib/engines/research-kit/v2026/LICENCE-economic-regions.txt",
     version: "SGC 2021, Alberta's page read 2026-10-21",
+  },
+  {
+    name: "Job Bank wages 2025 (data from Employment and Social Development Canada)",
+    licence: "OGL-Canada-2.0",
+    file: "lib/engines/wages/v2026/LICENCE.txt",
+    version: "2025 file, revised 2025-11-19",
   },
 ];
 

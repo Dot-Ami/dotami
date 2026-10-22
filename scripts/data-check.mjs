@@ -15,7 +15,12 @@ import { pathToFileURL } from "node:url";
 import { ROOT } from "./lib/import-kit.mjs";
 
 /** Every importer, by its script, relative to the repo's top folder. */
-export const IMPORTERS = ["scripts/import-oasis.mjs", "scripts/import-oasis-titles.mjs", "scripts/import-noc.mjs"];
+export const IMPORTERS = [
+  "scripts/import-oasis.mjs",
+  "scripts/import-oasis-titles.mjs",
+  "scripts/import-noc.mjs",
+  "scripts/import-job-bank-wages.mjs",
+];
 
 /** Runs every importer's --check on the files under `root`; returns the exit code. */
 export async function main({ root = ROOT, log = console.log, importers = IMPORTERS } = {}) {

@@ -358,7 +358,8 @@ A test fails on a missing field, and fails if any `vendor-estimate` source feeds
 **As built (2026-10-20, task 25b).** Fifteen cards (sixteen since 2026-10-21: task 25e added Statistics Canada's
 economic-region variant, typed for Alberta and shipped now, and moved the NAICS 2022 list to phase 3 with the
 industry question; § 5.3, *As built*): OaSIS's four files today; in phase 2 the OaSIS Example
-Titles file, the NOC 2021 elements file, Job Bank's wage file and the NAICS 2022 list; in phase 3 the business
+Titles file, the NOC 2021 elements file, Job Bank's wage file (marked `now` since 2026-10-21, when task 25i
+imported it, § 5.4) and the NAICS 2022 list; in phase 3 the business
 counts and census table 98-10-0594 (marked as later); Meta's Ad Library and Google's Ads Transparency Center
 (links the person opens); and the never-automated list (Job Bank's pages, YellowPages.ca, Canada411, Google Maps'
 consumer site, DOZR, Kijiji, Meta's library, and since 2026-10-21 Google's Ads Transparency Center, whose terms
@@ -454,6 +455,29 @@ gained `parseCsv` and `expectHeader`. Statistics Canada's site answered a script
 2026-10-21, so the committed elements file is the 2026-10-15 copy research 28f measured
 (`data/noc-2021-v1.0/README.md`); its `--download` writes nothing until the site answers scripts again. The
 search over the titles (28b's engine) is `lib/engines/oasis/v2026/title-search.ts`.
+
+**As built (2026-10-21, task 25i): the wage file.** The maintainer's word of 2026-10-21: "Yes, the build may
+download Job Bank's 2025 wage file from open.canada.ca, pinned by checksum like the other government files."
+`scripts/import-job-bank-wages.mjs` is the fourth adapter on the core (after OaSIS and task 28a's two). It reads the 2025 file
+(`2a71-das-wage2025opendata-esdc-all-19nov2025-vf.csv`, revised 2025-11-19), committed as downloaded under
+`data/job-bank-wages-2025/` (17,981,889 bytes; git stores it compressed, about 1 MB, and keeping the whole file
+lets `npm run data:check` rebuild the module from it offline on every pull request; the folder's README says
+what the file holds). It refuses a file that isn't its pin, isn't UTF-8, or has lost its byte-order mark, and
+`--download` refuses each of these before it is written. The pin alone can't catch the lost mark (the
+fingerprint drops it), so the file is declared `bom: true` and the core checks for the mark when it reads a
+file, downloaded or committed. It writes `lib/engines/wages/v2026/data.ts`: every one of the
+44,376 rows (516 job groups in each of 86 geographies), with the job group, the geography code and the file's
+province code and name, the source code word for word, the method, hourly or annual, low / median / high as the
+file's own text (empty stays empty), the reference period, the English comment and the revision date. The
+average, quartiles, French columns and benefit share are left out, and there is no outlook field.
+`lib/engines/wages/v2026/` gives the file's own row for a job group in an economic region (`4830` or `ER4830`)
+or in a province or territory as a whole (by the file's own province code, `AB`; the file spells Yukon `YK`,
+the Northwest Territories `NWT` and Prince Edward Island `PEI`): that is its `ER<pp>` row, or for the four places
+with no such code the one code the file gives them (`ER1110`, `ER6010`, `ER6110`, `ER6210`), as
+[ui-spec/cockpit/about-this-job.md](../ui-spec/cockpit/about-this-job.md) § 2 says. The level comes from the
+source code's own token (`levels.ts`: `CAN`, `PR`, `ER`; any other code, `ATL` included, is "level not
+stated"; `N/A` is "not published"), never from the region's name. A combination the file has no row for comes
+back as missing, with no neighbour's row. Nothing on a screen reads it yet; 25h is the first.
 
 **Still to build (phase 3).** The S2.5.23f counts import will be built on the core; no importer for it exists
 yet. As far as the research saw (reported, not confirmed; 23f checks

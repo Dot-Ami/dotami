@@ -1,0 +1,11 @@
+Contains information licensed under the Open Government Licence – Canada.
+https://open.canada.ca/en/open-government-licence-canada
+
+The wages in data.ts come from the Wages dataset published by Employment and Social Development Canada
+(Job Bank's wage file for 2025):
+https://open.canada.ca/data/en/dataset/adad580f-76b0-4502-bd05-20c125de9116
+(file 2a71-das-wage2025opendata-esdc-all-19nov2025-vf.csv; revised 2025-11-19).
+
+DotAmi keeps each row's job group, geography, source code, method, basis, low, median and high, reference
+period, comment and revision date, as the file gives them. They are what workers in a job group were paid,
+never anyone's income. The government of Canada does not endorse DotAmi or anyone's use of this information.
