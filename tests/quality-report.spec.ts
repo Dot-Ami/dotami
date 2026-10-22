@@ -448,24 +448,48 @@ describe("the report and the Quality line", () => {
     const md = qualityMarkdown({ ...numbers(), harness: null, search: null, clutter: null, sources: null });
     expect(md.match(/Not counted in this run/g)).toHaveLength(3);
     expect(md).toContain("No browser run's measurements in test-results/ here.");
-    expect(qualityLine({ ...numbers(), harness: null, clutter: null })).toContain("the idea harness not counted");
-    expect(qualityLine({ ...numbers(), clutter: null })).toContain("clutter not measured in this run");
+    expect(qualityLine({ ...numbers(), harness: null, clutter: null })).toContain("the idea test wasn't counted in this run");
+    expect(qualityLine({ ...numbers(), clutter: null })).toContain(
+      "how busy each screen looks wasn't measured in this run (only the browser tests measure it)",
+    );
   });
 
-  it("gives one Quality line for the CHANGELOG with every headline number", () => {
+  it("gives one Quality line for the CHANGELOG with every headline number, in plain words", () => {
     const line = qualityLine(numbers());
-    expect(line.startsWith("- **Quality** ")).toBe(true);
+    expect(line.startsWith("- **Quality** (counted by DotAmi's own tests, nothing from people using DotAmi; ")).toBe(true);
     expect(line).not.toContain("\n");
     for (const part of [
-      "passes 10 of 10 invented ideas (100%; 7 with no known gap)",
-      `typed in, 8 of 10 ideas end on the general road (“${generalRoadV2026.label}”, which any idea can reach) and 1 stops before any road is shown; 1 of the 2 ideas with a road of their own written for them reaches it`,
-      "3 silent fallbacks",
-      "first group for 5 of 8 ideas (any group 6, no job found 1)",
-      "1 of 2 screen sizes within their clutter budget",
-      "2 citations read by a person, 1 by an AI model, 5 read with no record of who read them, 12 checked by a tool only, 1 stale, 5 on dead addresses",
+      `typed in, 8 of 10 invented test ideas end on the general road (“${generalRoadV2026.label}”, which any idea can reach) and 1 stops before any road is shown; 1 of the 2 ideas with a road of their own written for them reaches it`,
+      "3 ideas are shown a road that isn't theirs with nothing on screen saying so",
+      "of the 8 ideas that name the job they expect, “What's closest to your work?” lists it in the group it opens for 5, somewhere in the jobs it lists for 6, and finds no job at all for 1 (the cockpit's older job list finds it for 2)",
+      "1 of 2 screen sizes (each main screen at 375, 768 and 1280 px wide) stay within their limits on how busy a screen looks",
+      "of 20 source citations, 2 were read by a person, 1 by an AI model, 5 were read with no record of who read them, and 12 were checked only by a tool that found the quoted words on the page",
+      "1 of the 3 sources DotAmi lists has a stated next release date that has passed",
+      "5 citations point to government pages that answered “page not found”",
+      "7 of 10 ideas break none of the idea test's rules, and the other 3 break only rules the tests list as known and not yet fixed (the tests fail otherwise)",
     ]) {
       expect(line).toContain(part);
     }
+  });
+
+  it("leads with what the numbers show, not with a pass rate that is 100% whenever the tests pass", () => {
+    const line = qualityLine(numbers());
+    const body = line.slice(line.indexOf("): ") + 3);
+    expect(body.startsWith("typed in, ")).toBe(true);
+    expect(line).not.toMatch(/100%/);
+  });
+
+  it("uses none of the report's shorthand without saying what it means", () => {
+    const line = qualityLine(numbers());
+    for (const shorthand of ["known gap", "silent fallback", "first group", "stale", "clutter budget", "dead address", "harness"]) {
+      expect(line, shorthand).not.toContain(shorthand);
+    }
+  });
+
+  it("says when an idea breaks a rule the tests don't list, rather than only how many pass", () => {
+    const n = numbers();
+    const line = qualityLine({ ...n, harness: { ...n.harness!, passing: 9, unlisted: 1 } });
+    expect(line).toContain("7 of 10 ideas break none of the idea test's rules, 2 break only rules the tests list as known and not yet fixed, and 1 breaks a rule not listed (the tests fail on it)");
   });
 });
 

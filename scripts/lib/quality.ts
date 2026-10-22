@@ -477,31 +477,49 @@ export function qualityMarkdown(q: QualityNumbers): string {
  * says what it counts; a part this run didn't count says so, never a guess.
  */
 export function qualityLine(q: QualityNumbers): string {
+  // Plain words for a person reading the release notes: no report shorthand ("known gap", "silent fallback",
+  // "first group", "stale"), each number out of what it counts, and what the numbers show first. The pass rate
+  // isn't led with: it is 100% whenever the tests pass, so the line says how the ideas pass instead, last.
   const parts: string[] = [];
   const h = q.harness;
   if (h) {
+    const stops = h.typed["stops-before"];
+    const own = h.typed["own-road"];
     parts.push(
-      `the idea harness passes ${h.passing} of ${h.ideas} invented ideas (${pct(h.passing, h.ideas)}; ${h.clean} with no known gap)`,
-      `typed in, ${onGeneralRoad(h.typed)} of ${h.ideas} ideas end on the general road (“${generalRoadV2026.label}”, which any idea can reach) and ${h.typed["stops-before"]} ${verb(h.typed["stops-before"], "stops", "stop")} before any road is shown; ${h.typed["own-road"]} of the ${h.ownRoad} ideas with a road of their own written for them ${verb(h.typed["own-road"], "reaches", "reach")} it`,
-      `${h.silentFallbacks.ideas} silent fallback${h.silentFallbacks.ideas === 1 ? "" : "s"}`,
+      `typed in, ${onGeneralRoad(h.typed)} of ${h.ideas} invented test ideas end on the general road (“${generalRoadV2026.label}”, which any idea can reach) and ${stops} ${verb(stops, "stops", "stop")} before any road is shown; ${own} of the ${h.ownRoad} ideas with a road of their own written for them ${verb(own, "reaches", "reach")} it`,
+      `${h.silentFallbacks.ideas} ${verb(h.silentFallbacks.ideas, "idea is", "ideas are")} shown a road that isn't theirs with nothing on screen saying so`,
     );
-  } else parts.push("the idea harness not counted");
+  } else parts.push("the idea test wasn't counted in this run");
   const s = q.search;
   if (s) {
     parts.push(
-      `the expected job is in the job search's first group for ${s.firstGroup} of ${s.withJob} ideas (any group ${s.anyGroup}, no job found ${s.noResults})`,
+      `of the ${s.withJob} ideas that name the job they expect, “What's closest to your work?” lists it in the group it opens for ${s.firstGroup}, somewhere in the jobs it lists for ${s.anyGroup}, and finds no job at all for ${s.noResults} (the cockpit's older job list finds it for ${s.cockpitList})`,
     );
   }
   const c = q.clutter;
   if (c) {
     const inside = c.rows.filter((r) => r.within).length;
-    parts.push(`${inside} of ${c.rows.length} screen sizes within their clutter budget (375, 768 and 1280 px)`);
-  } else parts.push("clutter not measured in this run");
+    parts.push(
+      `${inside} of ${c.rows.length} screen sizes (each main screen at 375, 768 and 1280 px wide) stay within their limits on how busy a screen looks`,
+    );
+  } else parts.push("how busy each screen looks wasn't measured in this run (only the browser tests measure it)");
   const src = q.sources;
   if (src) {
+    const stale = src.stale.length;
     parts.push(
-      `sources: ${src.byCheck.person} citations read by a person, ${src.byCheck.model} by an AI model, ${src.byCheck.read} read with no record of who read them, ${src.byCheck.tool} checked by a tool only, ${src.stale.length} stale, ${src.dead.citations} on dead addresses`,
+      `of ${src.citations} source citations, ${src.byCheck.person} were read by a person, ${src.byCheck.model} by an AI model, ${src.byCheck.read} were read with no record of who read them, and ${src.byCheck.tool} were checked only by a tool that found the quoted words on the page`,
+      `${stale} of the ${src.cards} sources DotAmi lists ${verb(stale, "has", "have")} a stated next release date that has passed`,
+      `${src.dead.citations} ${verb(src.dead.citations, "citation points", "citations point")} to government pages that answered “page not found”`,
     );
   }
-  return `- **Quality** (from the tests, nothing from people using DotAmi; scripts/quality-report.mjs, ${q.on}): ${parts.join("; ")}.`;
+  if (h) {
+    const known = h.passing - h.clean;
+    const unlisted = h.ideas - h.passing;
+    parts.push(
+      unlisted === 0
+        ? `${h.clean} of ${h.ideas} ideas break none of the idea test's rules, and the other ${known} break only rules the tests list as known and not yet fixed (the tests fail otherwise)`
+        : `${h.clean} of ${h.ideas} ideas break none of the idea test's rules, ${known} break only rules the tests list as known and not yet fixed, and ${unlisted} ${verb(unlisted, "breaks", "break")} a rule not listed (the tests fail on ${verb(unlisted, "it", "them")})`,
+    );
+  }
+  return `- **Quality** (counted by DotAmi's own tests, nothing from people using DotAmi; scripts/quality-report.mjs, ${q.on}): ${parts.join("; ")}.`;
 }
