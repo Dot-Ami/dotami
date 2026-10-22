@@ -174,9 +174,9 @@ test("the whole journey: front door → destination → pick a future → the co
   await gauge(page, "Skills").click();
   await skillRow(page, ASN).getByRole("button", { name: "Have", exact: true }).click();
   await expect(skillRow(page, ASN).getByRole("button", { name: "Have", exact: true })).toHaveAttribute("aria-pressed", "true");
-  await expect(skillsList(page).getByRole("status")).toContainText(`Because you told us you have “${ASN}”`);
+  await expect(skillsList(page).getByRole("status", { name: "What changed" })).toContainText(`Because you told us you have “${ASN}”`);
   await skillRow(page, AGREEMENT).getByRole("button", { name: "Learning", exact: true }).click();
-  await expect(skillsList(page).getByRole("status")).toContainText(`Because you told us you're learning “${AGREEMENT}”`);
+  await expect(skillsList(page).getByRole("status", { name: "What changed" })).toContainText(`Because you told us you're learning “${AGREEMENT}”`);
   const own = `Joinery (invented ${stamp})`;
   await skillsList(page).getByLabel("A skill in your own words").fill(own);
   await skillsList(page).getByRole("button", { name: "Add as learning" }).click();

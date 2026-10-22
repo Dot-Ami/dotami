@@ -228,6 +228,8 @@ test("a returning person in a fresh tab: words and income already kept count as 
     `Not given. Nothing here waits on it. Your target of $70,000, agreed ${today}, still stands; Delete on What DotAmi knows about you removes it.`,
   );
   await page.getByRole("link", { name: "Pick a future →" }).click();
+  // Pick a future opens on its first step since 2026-10-22: skipped, every future is listed with no job to match.
+  await skipTheJob(page);
 
   // Each card says it is written for Alberta, and that the person said Yukon.
   const cards = page.getByRole("list", { name: "Written futures" }).getByRole("listitem");

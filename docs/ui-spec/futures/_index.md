@@ -54,7 +54,7 @@ Last updated: 2026-10-13 (the first written future listed; design: docs/architec
 >   fails opens nothing and says so, on both pages.
 > - **Clutter** (`e2e/budgets.ts`; regions / controls in the first window at 375, 768 and 1280 px / text
 >   sizes): step 1 is measured as `futures`, lowered from 6 / 5, 7, 6 / 6 to **4 / 5, 5, 5 / 5**; the later
->   parts have rows of their own (`FIRST_ROWS`, the written way for a new screen's first row): 2a
+>   parts have rows of their own (`FIRST_MEASURED`, the written way for a new screen's first row): 2a
 >   `futures-area` 4 / 5, 5, 5 / 5; 2b `futures-region` 4 / 5, 5, 5 / 5 (6 once *I don't know* shows the
 >   Statistics Canada link, as designed); outside Alberta `futures-outside` 4 / 4, 4, 4 / 5; step 3 case B
 >   `futures-road` 6 / 3, 6, 3 / 6; on the intake page step 1 `intake-steps` 3 / 5, 5, 5 / 5 and step 3 case B

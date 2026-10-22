@@ -26,7 +26,7 @@ export const BASELINE_SCREENS = [
 ] as const;
 
 /**
- * Screens added after the baseline (the written way for a new screen's first row, below `FIRST_ROWS`). Each is a
+ * Screens added after the baseline (the written way for a new screen's first row, below `FIRST_MEASURED`). Each is a
  * part of a screen the baseline measured, named in `ADDED_SCREEN_PART_OF`.
  */
 export const ADDED_SCREENS = [
@@ -126,7 +126,7 @@ export const BASELINE: ClutterTable = {
  * future after a job pick; and on the intake page, step 1 and step 3 case B, inside the intake's own region with
  * the preview rail put away. Measured on 2026-10-22 (see the pull request for the run).
  */
-export const FIRST_ROWS: Partial<Record<AddedScreenId, Partial<Record<WidthId, Clutter>>>> = {
+export const FIRST_MEASURED: Partial<Record<AddedScreenId, Partial<Record<WidthId, Clutter>>>> = {
   "futures-area": { phone: m(4, 5, 5, 10.5), tablet: m(4, 5, 5, 10.5), laptop: m(4, 5, 5, 10.5) },
   "futures-region": { phone: m(4, 5, 5, 10.5), tablet: m(4, 5, 5, 10.5), laptop: m(4, 5, 5, 10.5) },
   "futures-outside": { phone: m(4, 4, 5, 10.5), tablet: m(4, 4, 5, 10.5), laptop: m(4, 4, 5, 10.5) },
@@ -228,7 +228,7 @@ export const BUDGETS: ClutterTable = {
   "cockpit-road-0": { phone: m(7, 17, 4, 9.5), tablet: m(8, 29, 5, 9.5), laptop: m(8, 27, 5, 9.5) },
   "cockpit-road-1": { phone: m(7, 14, 4, 9.5), tablet: m(8, 25, 5, 9.5), laptop: m(8, 23, 5, 9.5) },
   plan: { phone: m(10, 2, 5, 10.5), tablet: m(10, 2, 5, 10.5), laptop: m(10, 2, 5, 10.5) },
-  // Added screens start at their first row (FIRST_ROWS) and can only go down from there.
+  // Added screens start at their first row (FIRST_MEASURED) and can only go down from there.
   "futures-area": { phone: m(4, 5, 5, 10.5), tablet: m(4, 5, 5, 10.5), laptop: m(4, 5, 5, 10.5) },
   "futures-region": { phone: m(4, 5, 5, 10.5), tablet: m(4, 5, 5, 10.5), laptop: m(4, 5, 5, 10.5) },
   "futures-outside": { phone: m(4, 4, 5, 10.5), tablet: m(4, 4, 5, 10.5), laptop: m(4, 4, 5, 10.5) },
