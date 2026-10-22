@@ -529,11 +529,15 @@ placed in phase 3.
     (98-10-0594-01), Red Seal's tools appendix and Job Bank's postings, each with pins, licence, period and
     next release; a link checker (31b); a weekly freshness check that opens one issue (31c); a *Where
     DotAmi's numbers come from* page (31d)
-- ⬜ **[14n] Best results without analytics (S2.5.32).** Nothing comes from the people using DotAmi;
+- 🔄 **[14n] Best results without analytics (S2.5.32).** Nothing comes from the people using DotAmi;
   quality is measured from the tests.
-  - [ ] 32a: each CI run writes the harness pass rate, how often the expected job is among the matches, how
+  - [x] 32a: each CI run writes the harness pass rate, how often the expected job is among the matches, how
     many ideas reach a written road, the general road or "not written yet", silent fallbacks (0), clutter
-    numbers per screen and width, and source health; each release's changelog gets a Quality line
+    numbers per screen and width, and source health; each release's changelog gets a Quality line.
+    `npm run quality:report` (scripts/quality-report.mjs) prints them and writes `test-results/quality.md`,
+    in CI after the tests (the quality job) and after the browser run (the clutter); `npm run quality:line`
+    gives the release's Quality line. Information only: no number fails anything yet. Silent fallbacks
+    counted on 2026-10-21: 37 ideas (the aim, 0, is phase 2's end)
   - [ ] 32b: the maintainer's first monthly walk, three test ideas plus one of the maintainer's own, with
     the findings turned into issues or test ideas
 - 🔄 **[14o] Phase 2's fixes and releases.** The maintainer's calls of 2026-10-20.

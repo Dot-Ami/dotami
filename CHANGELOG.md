@@ -95,6 +95,17 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   /licences; reading the person's answer never works a region out from their area. The industry code list
   (NAICS) moved to phase 3 with the industry question, as the maintainer decided. Nothing DotAmi keeps, sends or
   asks changes.
+- **Quality numbers on every CI run, and a Quality line for the release notes** ([14n], task 32a; the plan's
+  S2.5.32, "best results without analytics"). For the people building DotAmi, with no change in the app:
+  `npm run quality:report` prints, and writes to `test-results/quality.md`, what the tests already compute: the
+  idea harness's pass rate (367 of 367 test ideas on 2026-10-21; 140 with no known gap at all), where each idea
+  ends (96 of the 107 ideas a road is written for reach it the typed way in), the silent fallbacks (37 ideas
+  today; phase 2 aims for 0), how often the job search's first group holds the expected job (150 of 220), the
+  clutter per screen and width from the last browser run, and source health (each citation by who checked it,
+  the registry's stale sources, the 5 citations on 2 dead addresses left for a person, and, only when a builder
+  asks with `--live`, a live run of the quote checker). CI prints it after the tests and after the browser run,
+  and on the run's summary page; no number fails anything yet. `npm run quality:line` gives the one Quality line
+  each release adds here. Nothing comes from the people using DotAmi, and nothing is sent anywhere.
 ### Fixed
 - **Your answer to "Are you buying equipment, a vehicle or tools?" on a future picked on Pick a future is
   kept** (the maintainer's "Yes, fix both", 2026-10-20). Pick a future saves equipment as not said, since it

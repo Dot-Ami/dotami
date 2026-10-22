@@ -152,7 +152,10 @@ A road may name where it carries on after its last column: `joins: { roadId, col
     changes something), nothing derived, and the same output for the same input. It fails on any failure
     the known-gaps list (`tests/fixtures/ideas/known-gaps.ts`) doesn't name, and on any gap it names that
     now passes, so a road that fixes a gap takes those ideas off the list in the same pull request. What
-    it saw is written to `test-results/idea-coverage.md`.
+    it saw is written to `test-results/idea-coverage.md`. `npm run quality:report` (task 32a,
+    `scripts/quality-report.mjs`) counts the same run into the quality numbers CI prints: the pass rate,
+    where each idea ends (the road written for it, the general road, or before the cockpit) and the silent
+    fallbacks.
 14. **A road says which jobs it is written for** (task 25e, 2026-10-21; research-kit.md § 5.3), in
     `codes.occupations`, beside `provinces`: the 5-digit NOC 2021 job groups (`["72311"]` for road 1), or
     `"no-particular-job"` in words for a road such as road 0 (an empty list is refused, so a road nobody
