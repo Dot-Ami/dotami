@@ -27,7 +27,7 @@ import { quoted, rulesLead, wageBlock, type WageBlock } from "@/lib/about-job/te
 import type { AboutJobView, WageRowView } from "@/lib/about-job/types";
 import { aboutJobForFuture, aboutThisJob, isRequirementSubheading, requirementEntries } from "@/lib/about-job/view";
 import { aboutJobWords } from "@/lib/about-job/words";
-import { nocGroups, nocRequirements } from "@/lib/engines/noc/v2021";
+import { NOC_URL, nocGroups, nocRequirements } from "@/lib/engines/noc/v2021";
 import { jobGroupOf, oasisJobs } from "@/lib/engines/oasis/v2026";
 import { ALBERTA_ECONOMIC_REGIONS, regionThePersonPicked } from "@/lib/engines/research-kit/v2026/economic-regions";
 import { SOURCES } from "@/lib/engines/research-kit/v2026/registry";
@@ -64,9 +64,26 @@ const one = (jobCode: string, province: string, region: string | null = null) =>
 /** One job per group, the first the government lists for it. */
 const firstJobOfEachGroup = [...new Map(oasisJobs.map((job) => [jobGroupOf(job.code), job])).values()];
 
+/** The panel's markup, as the server would render it. */
+const markup = (view: AboutJobView) => renderToStaticMarkup(createElement(AboutThisJobPanel, { view, onClose: () => {} }));
+
+/**
+ * The only addresses the panel may carry: the quote's source page (the blockquote's cite, never a link) and the
+ * three fixed pages (lib/about-job/links.ts).
+ */
+const FIXED_ADDRESSES = new Set([NOC_URL, ...ABOUT_JOB_LINKS.map((link) => link.url)]);
+
+/**
+ * Every address the panel's markup carries, read from the markup itself (never from the drawn text, which has
+ * no attributes left): href, src, srcset, action, formaction, cite, poster and data, entities decoded.
+ */
+function addressesIn(html: string): string[] {
+  return [...html.matchAll(/\s(?:href|src|srcset|action|formaction|cite|poster|data)="([^"]*)"/g)].map((m) => m[1]!.replace(/&amp;/g, "&"));
+}
+
 /** The panel drawn, as plain text with a line break at every block's edge, the way a screen's innerText reads. */
 function drawn(view: AboutJobView, part?: string): string {
-  let html = renderToStaticMarkup(createElement(AboutThisJobPanel, { view, onClose: () => {} }));
+  let html = markup(view);
   if (part) {
     const start = html.indexOf(`data-about-row="${part}"`);
     const end = html.indexOf("data-about-row=", start + 10);
@@ -133,7 +150,8 @@ function findings(view: AboutJobView): string[] {
   for (const u of uncitedAmounts(wagePieces(block), ledgerFor(rowsOf(block)))) found.push(`amount: ${u}`);
   // Nothing outside the wage row writes an amount at all.
   for (const part of ["rules", "counts", "links"]) for (const u of uncitedAmounts([{ where: part, text: drawn(view, part) }], ledgerFor([]))) found.push(`amount: ${u}`);
-  for (const href of whole.match(/href="[^"]*"/g) ?? []) found.push(`link: ${href}`);
+  // An address is one of the three fixed pages, exactly: no search words, no job code, nothing of the person's.
+  for (const address of addressesIn(markup(view))) if (!FIXED_ADDRESSES.has(address)) found.push(`link: ${address}`);
   return found;
 }
 
@@ -406,6 +424,25 @@ describe("the controls: the screen checks still catch what they should", () => {
   it("the real lines under their lead line fail on any other row", () => {
     const view = one("72311.00", "AB");
     expect(findTimeWords(drawn(view, "rules"), [], { where: "cockpit › about this job › wages", read: readFor(view) }).length).toBeGreaterThan(0);
+  });
+
+  it("a drawn link carrying the job's code, or any address not on the fixed list, is found", () => {
+    const view = one("72311.00", "AB");
+    // The scan reads the real panel's three links, so it is looking at the markup, not at text with no tags.
+    expect(addressesIn(markup(view))).toEqual([...FIXED_ADDRESSES]);
+    const planted = (url: (u: string) => string): AboutJobView => ({
+      ...view,
+      links: { ...view.links, pages: view.links.pages.map((link) => ({ ...link, url: url(link.url) })) },
+    });
+    expect(findings(planted((u) => `${u}?q=${view.job.code}`))).toEqual([
+      "link: https://www.jobbank.gc.ca/trend-analysis/search-wages?q=72311.00",
+      "link: https://bizpal.ca/?q=72311.00",
+      "link: https://tradesecrets.alberta.ca/trades-in-alberta/profiles/?q=72311.00",
+    ]);
+    expect(findings(planted((u) => `${u}#cabinetmakers`)).length).toBe(3);
+    expect(findings(planted((u) => u.replace("https:", "http:"))).length).toBe(3);
+    // The quote's cite is read too.
+    expect(findings({ ...view, rules: { ...view.rules, sourceUrl: `${NOC_URL}?code=72311` } })).toEqual([`link: ${NOC_URL}?code=72311`]);
   });
 
   it("a wage with no row, or on another row's piece, has no source", () => {
