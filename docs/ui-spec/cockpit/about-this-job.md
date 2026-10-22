@@ -2,8 +2,9 @@
 
 Page: Cockpit (`/cockpit?venture=<id>`), in the right-hand panel; also shown in place on Pick a future's
 no-road block ([../futures/03-road-match.md](../futures/03-road-match.md)) · Component:
-`components/cockpit/about-this-job-panel.tsx` (planned; words `lib/about-job/words.ts`; data from the research
-kit's library: job facts from 28a and 25i, links from the source registry 25b)
+`components/cockpit/about-this-job-panel.tsx` (built 2026-10-22, task 25h; words `lib/about-job/words.ts`; data
+from the research kit's library, read on the server by `lib/about-job/view.ts`: job facts from 28a and 25i, links
+from the source registry 25b)
 Type: panel (four rows in fixed order, links)
 
 Last updated: 2026-10-20 (designed before it is built, task 28g, for task 25h. The maintainer's picks: K5 B of
@@ -14,6 +15,34 @@ code shown as text to copy, never the job in a web address; of 2026-10-21, call 
 asked and the wage row is the one for the province or territory as a whole, labelled by its own source
 code, said on screen. Design:
 [../../architecture/research-kit.md](../../architecture/research-kit.md) § 4.2.)
+
+**As built (2026-10-22, task 25h).** In the cockpit, as below, with these differences, each for the maintainer
+to see:
+
+- **The region isn't kept yet.** `Venture.economicRegion` and `landscapeArea` come with Pick a future's step 2
+  ([../futures/02-where-you-are.md](../futures/02-where-you-are.md), its own pull request). The panel takes the
+  region and the area as inputs (`aboutJobForFuture` in `lib/about-job/view.ts`), and GET /api/futures/<id>
+  passes none for now, so the wage row is the province's own with *Your region isn't picked.*, the counts row
+  says *Your area isn't picked.*, and **Change** isn't drawn (nothing can be kept until the column exists).
+  Wiring the column in is one line in `app/api/futures/[id]/route.ts`; **Change** joins with it.
+- **Read on the server.** The NOC lines and the wage file (about 2 MB each) are read by GET /api/futures/<id>,
+  which hands the panel its rows as `aboutJob`; no browser file imports them (`tests/about-job.spec.ts` walks
+  the imports).
+- **Sub-headings.** The elements file doesn't mark them: a line is drawn as one when it is short, ends without
+  punctuation and has no verb (57 of the 2,122 lines; *Hairstylists*, *Barbers*). The longest is 75 characters,
+  so the screen checks now read a sub-heading of up to 100 between quoted lines (it was 60, which ended
+  group 40010's run early and read the government's lines after it as DotAmi's).
+- **"an Alberta-wide figure".** The *Shown under* line reads "an" before a vowel, as the example below does; the
+  words block wrote "a <province>-wide figure".
+- **A note that names no level** (the `N/A` rows with no note, and Canada's own physicians' note): only *Not
+  published for <region>.*, as row 2 says; the government's note shows only when it names the level to look at.
+- **Words the block didn't have**, each for a case the files hold: *The National Occupational Classification
+  file has no Employment requirements lines for job group <noc>.*; *not published* for one figure a row leaves
+  empty; *Reference period <period>* alone where the row names no method; *The wage file has no row for job group
+  <noc> in <place>.*; and each link's name for a screen reader, *<label>, opens in your browser*.
+- **Not in this task:** Pick a future's no-road block shows it in place with 28c.
+- **Its clutter row** is `cockpit-about-job`, the first screen added after the baseline (`FIRST_MEASURED` in
+  `e2e/budgets.ts`, from CI's first count).
 
 Mockup: `C:\dotami-wt\designs-phase2\05-about-this-job.html` (an invented cabinetmaker in Calgary, corpus idea
 `idea-v1-0276`, on road 1).
