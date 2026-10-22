@@ -448,9 +448,32 @@ describe("the report and the Quality line", () => {
     const md = qualityMarkdown({ ...numbers(), harness: null, search: null, clutter: null, sources: null });
     expect(md.match(/Not counted in this run/g)).toHaveLength(3);
     expect(md).toContain("No browser run's measurements in test-results/ here.");
-    expect(qualityLine({ ...numbers(), harness: null, clutter: null })).toContain("the idea test wasn't counted in this run");
-    expect(qualityLine({ ...numbers(), clutter: null })).toContain(
-      "how busy each screen looks wasn't measured in this run (only the browser tests measure it)",
+    // The line says so for every part, one at a time and all at once. A part added to QualityNumbers with no
+    // words here fails the first check.
+    const notCounted: Record<string, string> = {
+      harness: "the idea test wasn't counted in this run",
+      search: "the job search (“What's closest to your work?”) wasn't counted in this run",
+      clutter: "how busy each screen looks wasn't measured in this run (only the browser tests measure it)",
+      sources: "the sources DotAmi cites weren't counted in this run",
+    };
+    const parts = Object.keys(numbers()).filter((k) => k !== "on");
+    expect(parts.sort()).toEqual(Object.keys(notCounted).sort());
+    for (const part of parts) {
+      const line = qualityLine({ ...numbers(), [part]: null });
+      expect(line, part).toContain(notCounted[part]);
+      for (const other of parts.filter((p) => p !== part)) expect(line, `${part} counted, ${other} said not`).not.toContain(notCounted[other]);
+    }
+    const none = qualityLine({ ...numbers(), harness: null, search: null, clutter: null, sources: null });
+    for (const part of parts) expect(none, part).toContain(notCounted[part]);
+  });
+
+  it("says whether the run checked the quoted words on the live pages, and what it found", () => {
+    expect(qualityLine(numbers())).toContain("the quoted words weren't checked on the live government pages in this run");
+    const live = { checkedOn: "2026-10-21", pages: 12, found: 9, wordsMissing: 1, notFound: 2, otherAnswer: 0, unreachable: 0, pdf: 0, problems: [] };
+    const line = qualityLine({ ...numbers(), sources: { ...numbers().sources!, live } });
+    expect(line).not.toContain("weren't checked on the live government pages");
+    expect(line).toContain(
+      "a check of the 12 citations checked by a tool on the live government pages found the quoted words on 9, didn't find them on 1, got “page not found” on 2, another answer on 0, no answer on 0, and a PDF on 0",
     );
   });
 

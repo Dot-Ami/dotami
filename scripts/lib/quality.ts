@@ -495,7 +495,7 @@ export function qualityLine(q: QualityNumbers): string {
     parts.push(
       `of the ${s.withJob} ideas that name the job they expect, “What's closest to your work?” lists it in the group it opens for ${s.firstGroup}, somewhere in the jobs it lists for ${s.anyGroup}, and finds no job at all for ${s.noResults} (the cockpit's older job list finds it for ${s.cockpitList})`,
     );
-  }
+  } else parts.push("the job search (“What's closest to your work?”) wasn't counted in this run");
   const c = q.clutter;
   if (c) {
     const inside = c.rows.filter((r) => r.within).length;
@@ -511,7 +511,14 @@ export function qualityLine(q: QualityNumbers): string {
       `${stale} of the ${src.cards} sources DotAmi lists ${verb(stale, "has", "have")} a stated next release date that has passed`,
       `${src.dead.citations} ${verb(src.dead.citations, "citation points", "citations point")} to government pages that answered “page not found”`,
     );
-  }
+    // The live check only runs when the builder asks for it (`--live`); without it the line says so.
+    const l = src.live;
+    parts.push(
+      l
+        ? `a check of the ${l.pages} citations checked by a tool on the live government pages found the quoted words on ${l.found}, didn't find them on ${l.wordsMissing}, got “page not found” on ${l.notFound}, another answer on ${l.otherAnswer}, no answer on ${l.unreachable}, and a PDF on ${l.pdf}`
+        : "the quoted words weren't checked on the live government pages in this run",
+    );
+  } else parts.push("the sources DotAmi cites weren't counted in this run");
   if (h) {
     const known = h.passing - h.clean;
     const unlisted = h.ideas - h.passing;
