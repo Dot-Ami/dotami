@@ -16,7 +16,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   § 5.2). Plumbing, with no change on screen: one card for each government file the kit ships in this phase and
   the next (the job and skills files, the job titles, the wage file, the industry code list, the business counts
   and census tables marked as later), the two ad libraries, and the sites whose terms bar scripts (Job Bank's
-  pages, YellowPages.ca, Canada411, Google Maps, DOZR, Kijiji, Meta). The other sources the design names (the
+  pages, YellowPages.ca, Canada411, Google Maps, DOZR, Kijiji, Meta), plus Google's Ads Transparency Center,
+  never fetched because its terms couldn't be read (the maintainer's call, 2026-10-21; still a link you open
+  yourself). The other sources the design names (the
   live look-ups on a person's own account, the place lists, Apollo and ZoomInfo, and the rent-price places) get
   their cards in phase 3. Each says how DotAmi may reach it,
   what may be kept, its licence and credit line, and the words on its own terms page that decided it, with the

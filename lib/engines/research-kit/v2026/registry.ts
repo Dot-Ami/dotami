@@ -152,7 +152,7 @@ export const SOURCES: readonly SourceCard[] = [
     creditLine: statcanCredit("National Occupational Classification (NOC) 2021 Version 1.0"),
     keyedBy: ["noc"],
     files: [{ name: "noc-2021-v1.0-elements.csv", url: "https://www.statcan.gc.ca/en/subjects/standard/noc/2021/indexV1/noc-2021-v1.0-elements.csv" }],
-    note: "The elements file: each job group's example titles, and its \"Employment requirements\", quoted word for word as the government's own words (task 28a). Its open.canada.ca record says it is made available under the Statistics Canada Open Licence, and its metadata also names the Open Government Licence – Canada; the Statistics Canada notice is the one used here.",
+    note: "The elements file: each job group's example titles, and its \"Employment requirements\", quoted word for word as the government's own words (task 28a). Its open.canada.ca record says it is made available under the Statistics Canada Open Licence, and its metadata also names the Open Government Licence – Canada; the Statistics Canada notice is the one used here. Decided 2026-10-21 (the maintainer's call 4, \"statcan\"): this file uses Statistics Canada's credit line.",
   },
   {
     id: "job-bank-wages",
@@ -224,7 +224,7 @@ export const SOURCES: readonly SourceCard[] = [
     note: "Later phase: the nearest official link from jobs to industries, at 4-digit occupation by 2-digit sector, as the research reported it (not confirmed; research-kit.md § 13 item 4). Used to cite the job-links catalog, not shown.",
   },
 
-  // ---- Links only: the person opens them in their own browser -----------------------------------------------
+  // ---- The ad libraries: links the person opens in their own browser; nothing in DotAmi fetches either --------
   {
     id: "meta-ad-library",
     name: "Meta's Ad Library",
@@ -248,15 +248,18 @@ export const SOURCES: readonly SourceCard[] = [
     publisher: "Google",
     url: "https://adstransparency.google.com/",
     phase: "now",
-    access: "link",
+    // On the never-fetch list because its terms couldn't be read, not because words were found that bar scripts:
+    // the maintainer's call 5, 2026-10-21 ("never-fetch"). The person still opens it through the link.
+    access: "never-automated",
     ...linkOnly,
     keyedBy: ["business-name"],
     termsUrl: "https://adstransparency.google.com/terms",
     termsQuote: null,
     seenOn: "2026-10-15",
     checkedBy: "not-read",
+    neverFetch: ["https://adstransparency.google.com"],
     lists: ["ad-libraries"],
-    note: "Its own terms page loads only with scripts and wasn't readable by our tools (competitive-landscape.md § 4.6), and Google's general terms restrict automated access. A link only: DotAmi reads nothing from it.",
+    note: "Its own terms page loads only with scripts and wasn't readable by our tools (competitive-landscape.md § 4.6), and Google's general terms restrict automated access. The maintainer's call 5, 2026-10-21: on the never-fetch list now, since its terms couldn't be read; DotAmi still links to it and reads nothing from it.",
   },
 
   // ---- Never automated: their terms bar scripts, so nothing in DotAmi fetches them -------------------------

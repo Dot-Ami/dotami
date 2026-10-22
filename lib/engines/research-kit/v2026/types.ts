@@ -16,8 +16,9 @@
  * - `lens-live`: the Lens looks things up through the source's official API or MCP server on the person's own
  *   account. Only after the source's terms for agent use have been read (research-kit.md § 5.2).
  * - `page-person-opens`: DotAmi may read the one page the person opens, once per ask (S2.5.22's rule).
- * - `never-automated`: the source's terms bar automated access, so nothing in DotAmi ever fetches it. A person
- *   may still open it through a link.
+ * - `never-automated`: the source's terms bar automated access, or the maintainer put it on the list because its
+ *   terms couldn't be read (Google's Ads Transparency Center, call 5 of 2026-10-21), so nothing in DotAmi ever
+ *   fetches it. A person may still open it through a link.
  */
 export type Access = "ship" | "link" | "lens-live" | "page-person-opens" | "never-automated";
 

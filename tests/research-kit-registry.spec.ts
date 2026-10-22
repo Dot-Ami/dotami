@@ -91,12 +91,41 @@ describe("the registry", () => {
 });
 
 describe("the never-automated list, one for every story, and the ad libraries are views over it", () => {
-  it("holds Job Bank's pages, YellowPages.ca, Canada411, Google Maps' consumer site, DOZR, Kijiji and Meta", () => {
+  it("holds Job Bank's pages, YellowPages.ca, Canada411, Google Maps' consumer site, DOZR, Kijiji, Meta and Google's Ads Transparency Center", () => {
     expect(neverAutomated().map((c) => c.id).sort()).toEqual(
-      ["canada411", "dozr", "google-maps-consumer", "job-bank-pages", "kijiji", "meta-ad-library", "yellowpages-ca"].sort(),
+      [
+        "canada411",
+        "dozr",
+        "google-ads-transparency-center",
+        "google-maps-consumer",
+        "job-bank-pages",
+        "kijiji",
+        "meta-ad-library",
+        "yellowpages-ca",
+      ].sort(),
     );
-    // Each with the words that bar scripts, read on the site's own terms page.
-    for (const c of neverAutomated()) expect(c.termsQuote, c.id).toBeTruthy();
+    // Each with the words that bar scripts, read on the site's own terms page; except Google's Ads Transparency
+    // Center, which is on the list because its terms couldn't be read at all (the maintainer's call 5, 2026-10-21).
+    for (const c of neverAutomated()) {
+      if (c.id === "google-ads-transparency-center") expect([c.checkedBy, c.termsQuote]).toEqual(["not-read", null]);
+      else expect(c.termsQuote, c.id).toBeTruthy();
+    }
+  });
+
+  it("never fetches Google's Ads Transparency Center, and still links to it (the maintainer's call 5, 2026-10-21)", () => {
+    const ads = card("google-ads-transparency-center");
+    expect(ads.access).toBe("never-automated");
+    expect(ads.neverFetch).toContain("https://adstransparency.google.com");
+    expect(linksOn("ad-libraries")).toContainEqual({ label: "Google's Ads Transparency Center", url: "https://adstransparency.google.com/" });
+    // A card that would fetch one of its pages, beside the real card, is refused.
+    const scraped: SourceCard = {
+      ...card("job-bank-wages"),
+      id: "planted-ads-scrape",
+      files: [{ name: "ads.csv", url: "https://adstransparency.google.com/advertiser/AR00000000000000000000?region=CA" }],
+    };
+    expect(check([scraped, ads])).toEqual([
+      "planted-ads-scrape: is ship and would fetch https://adstransparency.google.com/advertiser/AR00000000000000000000?region=CA, which the google-ads-transparency-center card marks never-automated",
+    ]);
   });
 
   it("bars Job Bank's pages, but ships its wage file from open.canada.ca", () => {

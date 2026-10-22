@@ -329,16 +329,18 @@ A source is marked `lens-live` only after that vendor's terms for agent use have
 `link`. Several S2.5.22 and S2.5.23 lists become **views over this one catalog**:
 - PR #175's *Where to look* list (23e);
 - S2.5.22's places that publish rent prices (22n);
-- one `never-automated` list for every story: S2.5.22's do-not-fetch pages (DOZR, Meta, Kijiji) and
-  competitive-landscape § 4.4's sites (YellowPages.ca, Canada411, Google Maps' consumer site, Job Bank pages).
+- one `never-automated` list for every story: S2.5.22's do-not-fetch pages (DOZR, Meta, Kijiji),
+  competitive-landscape § 4.4's sites (YellowPages.ca, Canada411, Google Maps' consumer site, Job Bank pages),
+  and Google's Ads Transparency Center (added 2026-10-21, call 5 below: its terms couldn't be read).
 
 A test fails on a missing field, and fails if any `vendor-estimate` source feeds a gauge or a total.
 
 **As built (2026-10-20, task 25b).** Fifteen cards: OaSIS's four files today; in phase 2 the OaSIS Example
 Titles file, the NOC 2021 elements file, Job Bank's wage file and the NAICS 2022 list; in phase 3 the business
 counts and census table 98-10-0594 (marked as later); Meta's Ad Library and Google's Ads Transparency Center
-(links only); and the never-automated list (Job Bank's pages, YellowPages.ca, Canada411, Google Maps' consumer
-site, DOZR, Kijiji, and Meta's library). To carry the rules above, each card also says `phase` (now, phase 2,
+(links the person opens); and the never-automated list (Job Bank's pages, YellowPages.ca, Canada411, Google Maps'
+consumer site, DOZR, Kijiji, Meta's library, and since 2026-10-21 Google's Ads Transparency Center, whose terms
+couldn't be read: call 5 below). To carry the rules above, each card also says `phase` (now, phase 2,
 phase 3), `feeds` (gauge, total, shown, search; what in DotAmi reads it), `termsUrl` (the page the quote was read
 on), `files` for a shipped source (name and address; the pins stay in its importer) and `neverFetch` for a
 never-automated one (the address beginnings nothing may fetch); `figureKind` gains `none` for a source no figure
@@ -846,6 +848,18 @@ times are prose today, and the cockpit allows only months to the person's own da
    2026-10-17: "yah, this is fine. Lets do it".** It needs no outside tool, ships no names and sends nothing,
    and K4 A's saved ad links live on it. Asked in [competitive-landscape.md](competitive-landscape.md) § 15,
    item 11, which records the answer in its own pull request.
+
+**Two of the maintainer's six calls of 2026-10-21 touch this kit** (answered on the screens calls page, each the
+recommended option, no notes; the other four are about the screens in their own pull request):
+- **Call 4, answered 2026-10-21: "statcan".** The NOC 2021 job-titles file (the elements file) uses Statistics
+  Canada's credit line: *"Adapted from Statistics Canada, … This does not constitute an endorsement by Statistics
+  Canada of this product."* Its record also names the Open Government Licence – Canada; this is the notice used
+  (the `noc-2021-elements` card in `lib/engines/research-kit/v2026/registry.ts` says so too). Nothing changed.
+- **Call 5, answered 2026-10-21: "never-fetch".** Google's Ads Transparency Center goes on the never-fetch list
+  now, because its terms couldn't be read (its terms page needs scripts; competitive-landscape.md § 4.6). DotAmi
+  still links to it. Its card is `never-automated` with `checkedBy: not-read`, the one card on that list without
+  words that bar scripts, and the validator refuses any card that would fetch an address under
+  `https://adstransparency.google.com` (`tests/research-kit-registry.spec.ts`).
 
 ## 11. Tasks
 
