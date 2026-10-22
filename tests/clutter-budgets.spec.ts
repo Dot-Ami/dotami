@@ -16,7 +16,7 @@ import { pathToFileURL } from "node:url";
 
 import { describe, expect, it } from "vitest";
 
-import { BASELINE, BUDGETS, SCREENS, WIDTHS, WINDOWS_EXTRA, type ClutterTable } from "../e2e/budgets";
+import { ADDED_SCREENS, BASELINE, BUDGETS, SCREENS, WIDTHS, WINDOWS_EXTRA, type ClutterTable, type ScreenId } from "../e2e/budgets";
 
 /**
  * The baseline as recorded on 2026-10-17. The baseline is a record, so it never changes: this fails on any edit
@@ -89,11 +89,26 @@ async function budgetsAt(commit: string): Promise<{ BASELINE: ClutterTable; BUDG
   }
 }
 
+/** The screens added after the baseline was recorded (e2e/budgets.ts `ADDED_SCREENS`), and the ones it records. */
+const added = Object.keys(ADDED_SCREENS) as ScreenId[];
+const recorded = SCREENS.filter((screen) => !added.includes(screen));
+
+/**
+ * The ceiling an added screen is held to, from `table`: the row of the screen it stands beside (`atMost`). The
+ * added screen's own row is never in a baseline, so this stands in for it there.
+ */
+function atMostFrom(table: ClutterTable): ClutterTable {
+  return Object.fromEntries(added.map((screen) => [screen, table[ADDED_SCREENS[screen]!.atMost]])) as ClutterTable;
+}
+
 describe("the clutter budgets (e2e/budgets.ts)", () => {
-  it("have a baseline and a budget for every screen at every size, and nothing else", () => {
-    for (const table of [BASELINE, BUDGETS]) {
-      expect(Object.keys(table).sort()).toEqual([...SCREENS].sort());
-      for (const screen of SCREENS) {
+  it("have a budget for every screen at every size, a baseline for every screen but the added ones, and nothing else", () => {
+    expect(Object.keys(BUDGETS).sort()).toEqual([...SCREENS].sort());
+    // The baseline is the record of 2026-10-17: a screen added since has no row there (it gets its budget the
+    // written way, ADDED_SCREENS).
+    expect(Object.keys(BASELINE).sort()).toEqual([...recorded].sort());
+    for (const [table, screens] of [[BUDGETS, SCREENS], [BASELINE, recorded]] as const) {
+      for (const screen of screens) {
         expect(Object.keys(table[screen] ?? {}).sort(), screen).toEqual([...sizes].sort());
       }
     }
@@ -101,6 +116,26 @@ describe("the clutter budgets (e2e/budgets.ts)", () => {
 
   it("are never above the baseline, and the smallest text never below it", () => {
     expect(looserThan(BASELINE, BUDGETS)).toEqual([]);
+  });
+
+  it("an added screen names a recorded screen to stand beside, and is never looser than that screen's baseline", () => {
+    for (const screen of added) {
+      const { atMost, addedOn } = ADDED_SCREENS[screen]!;
+      expect(recorded, `${screen}: atMost must be a screen the baseline records`).toContain(atMost);
+      expect(addedOn, screen).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+    }
+    expect(looserThan(atMostFrom(BASELINE), BUDGETS)).toEqual([]);
+  });
+
+  it("catch an added screen whose budget is looser than the screen it stands beside", () => {
+    // A planted copy: Pick a future outside Alberta allowed one control more than Pick a future's own budget.
+    const planted: ClutterTable = {
+      ...BUDGETS,
+      "futures-outside-alberta": { ...BUDGETS["futures-outside-alberta"], phone: { ...BUDGETS.futures!.phone!, controls: BUDGETS.futures!.phone!.controls + 1 } },
+    };
+    expect(looserThan(atMostFrom(BUDGETS), planted)).toEqual([
+      `futures-outside-alberta phone: controls ${BUDGETS.futures!.phone!.controls + 1} > ${BUDGETS.futures!.phone!.controls}`,
+    ]);
   });
 
   it("are never above what they are on main, so a budget once lowered stays down", async () => {
@@ -118,6 +153,11 @@ describe("the clutter budgets (e2e/budgets.ts)", () => {
       looserThan(before.BUDGETS, BUDGETS),
       `budgets looser than on main (${main.slice(0, 7)}); make the screen calmer instead of raising its limit`,
     ).toEqual([]);
+    // A screen added in this change (no row on main yet) starts no looser than the screen it stands beside, as
+    // main budgets that one (e2e/budgets.ts, ADDED_SCREENS, step 3).
+    const newHere = added.filter((screen) => !before.BUDGETS[screen]);
+    const ceiling = Object.fromEntries(newHere.map((screen) => [screen, before.BUDGETS[ADDED_SCREENS[screen]!.atMost]])) as ClutterTable;
+    expect(looserThan(ceiling, BUDGETS), `a new screen looser than the screen it stands beside on main (${main.slice(0, 7)})`).toEqual([]);
     expect(BASELINE, `BASELINE differs from main's (${main.slice(0, 7)}); it is a record and never changes`).toEqual(
       before.BASELINE,
     );

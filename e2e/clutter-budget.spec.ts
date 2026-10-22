@@ -33,7 +33,7 @@ import path from "node:path";
 
 import { expect, test, type Locator, type Page, type TestInfo } from "@playwright/test";
 
-import { generalRoadV2026, roadApprenticeToOwnShopAB } from "../lib/engines/roads/v2026";
+import { generalRoadV2026, roadApprenticeToOwnShopAB, roadFederalStepsCA } from "../lib/engines/roads/v2026";
 import { waitForReact } from "../tests/helpers/react-ready";
 import { BUDGETS, WIDTHS, WINDOWS_EXTRA, type Clutter, type ScreenId } from "./budgets";
 import { measurePage, type Measured } from "./clutter-measure";
@@ -198,9 +198,10 @@ async function load(page: Page, url: string, ready: (page: Page) => Locator) {
 /**
  * *Your destination* answered in this tab the way a person who doesn't know yet answers it: question 1 "I
  * don't know yet" (keeps nothing) unless the data file already holds a destination, a business of their own,
- * Alberta, and question 4 skipped (keeps nothing) unless an income is already agreed. Ends on its way on.
+ * Alberta (or `place`), and question 4 skipped (keeps nothing) unless an income is already agreed. Ends on its
+ * way on.
  */
-async function answerDestination(page: Page) {
+async function answerDestination(page: Page, place = "CA-AB") {
   await page.goto("/start");
   const q1 = page.getByRole("textbox", { name: Q1 });
   await expect(q1.or(page.getByRole("heading", { name: Q2, level: 2 })).first()).toBeVisible();
@@ -212,7 +213,7 @@ async function answerDestination(page: Page) {
   const business = page.getByRole("button", { name: "A business of my own" });
   await waitForReact(business);
   await business.click();
-  await page.getByRole("combobox", { name: Q3 }).selectOption("CA-AB");
+  await page.getByRole("combobox", { name: Q3 }).selectOption(place);
   await page.getByRole("button", { name: "Use this place" }).click();
   const next = page.getByRole("link", { name: "Pick a future →" });
   const skip = page.getByRole("button", { name: "Skip" });
@@ -222,8 +223,8 @@ async function answerDestination(page: Page) {
 }
 
 /** A fresh idea picked on *Pick a future*, as a person picks one; returns the cockpit's address for it. */
-async function pickFuture(page: Page, roadLabel: string): Promise<string> {
-  await answerDestination(page);
+async function pickFuture(page: Page, roadLabel: string, place = "CA-AB"): Promise<string> {
+  await answerDestination(page, place);
   await page.getByRole("link", { name: "Pick a future →" }).click();
   await expect(page).toHaveURL(/\/futures$/);
   const lookInside = page.getByRole("button", { name: `Look inside ${roadLabel}` });
@@ -256,6 +257,15 @@ test("Pick a future stays within its clutter budget", async ({ page }, testInfo)
   );
 });
 
+// Added 2026-10-21 (task 28d; e2e/budgets.ts ADDED_SCREENS): the same page for a person in Ontario, the federal
+// steps first and the two Alberta futures folded behind one button, as it opens.
+test("Pick a future outside Alberta stays within its clutter budget", async ({ page }, testInfo) => {
+  await answerDestination(page, "CA-ON");
+  await measureAtEverySize(page, testInfo, "futures-outside-alberta", () =>
+    load(page, "/futures", (p) => p.getByRole("button", { name: `Look inside ${roadFederalStepsCA.label}` })),
+  );
+});
+
 test("the intake stays within its clutter budget", async ({ page }, testInfo) => {
   await measureAtEverySize(page, testInfo, "intake", () => load(page, "/intake", (p) => p.getByRole("heading", { level: 1 })));
 });
@@ -282,6 +292,11 @@ test("the cockpit on road 0, a first visit, stays within its clutter budget", as
 test("the cockpit on road 1, a first visit, stays within its clutter budget", async ({ page }, testInfo) => {
   const cockpit = await pickFuture(page, roadApprenticeToOwnShopAB.label);
   await measureAtEverySize(page, testInfo, "cockpit-road-1", () => load(page, cockpit, road));
+});
+
+test("the cockpit on the federal road, a first visit from Ontario, stays within its clutter budget", async ({ page }, testInfo) => {
+  const cockpit = await pickFuture(page, roadFederalStepsCA.label, "CA-ON");
+  await measureAtEverySize(page, testInfo, "cockpit-federal", () => load(page, cockpit, road));
 });
 
 test("Your plan stays within its clutter budget", async ({ page }, testInfo) => {

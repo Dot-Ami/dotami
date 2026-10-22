@@ -106,11 +106,14 @@ describe("the harness fails on a planted product regression", () => {
   });
 
   it("a silent fallback on every click Pick a future offers, written for the idea or not", () => {
-    // Pick a future lists both roads for any place in Canada, and "Not here yet?" opens road 0 anywhere.
+    // Outside Alberta Pick a future lists the federal steps first (task 28d); in Alberta its two roads; and
+    // "Not here yet?" opens road 0 anywhere.
     const clicks = [
-      [idea("idea-v1-0003"), { by: "card", roadId: "road-starting-any-business-ab" }], // British Columbia
-      [idea("idea-v1-0004"), { by: "card", roadId: "road-apprentice-to-own-shop-ab" }], // Ontario, a bakery
+      [idea("idea-v1-0003"), { by: "card", roadId: "road-federal-steps-ca" }], // British Columbia, an app
+      [idea("idea-v1-0178"), { by: "card", roadId: "road-apprentice-to-own-shop-ab" }], // Alberta, closing a store
+      [idea("idea-v1-0180"), { by: "card", roadId: "road-starting-any-business-ab" }], // Alberta, back to a job
       [idea("idea-v1-0008"), { by: "not-here", roadId: "road-starting-any-business-ab" }], // Alberta, a career
+      [idea("idea-v1-0188"), { by: "not-here", roadId: "road-starting-any-business-ab" }], // Newfoundland, closing a shop
     ] as const;
     for (const [target, click] of clicks) {
       expect(pickedChoice(target)).toEqual(click);

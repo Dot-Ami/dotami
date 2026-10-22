@@ -95,10 +95,13 @@ describe("the idea corpus (tests/fixtures/ideas/v1.ts)", () => {
     expect(unknown).toEqual([]);
   });
 
-  it("expects a written road only where one is written: road 0 for an Alberta business, road 1 for an Alberta cabinetmaker", () => {
+  it("expects a written road only where one is written: road 0 for an Alberta business, road 1 for an Alberta cabinetmaker, the federal road for a business elsewhere in Canada", () => {
+    const elsewhereInCanada = (place: string) => place !== "AB" && place !== "outside-canada" && place !== "not-said";
     const wrong = IDEAS_V1.filter((idea) => {
       if (idea.road === "road-0") return idea.place !== "AB" || idea.lookingFor !== "business";
       if (idea.road === "road-1") return idea.place !== "AB" || !/cabinet/i.test(idea.words);
+      // Task 28d (2026-10-21): the federal steps are written for a business anywhere in Canada outside Alberta.
+      if (idea.road === "road-federal") return !elsewhereInCanada(idea.place) || idea.lookingFor !== "business";
       return false;
     }).map((idea) => idea.id);
     expect(wrong).toEqual([]);
@@ -110,7 +113,7 @@ describe("the idea corpus (tests/fixtures/ideas/v1.ts)", () => {
     // (Road 1 stays written for a cabinetmaker who is also behind: its apprenticeship steps are about them.)
     const closingOrBehind =
       /\b(?:closing|close (?:my|the|down)|wind(?:ing)? down|paus(?:e|ing)|shutting down|selling (?:the|my) company|never (?:registered|filed|reported|claimed|charged|set up)|not filed|hasn't filed|haven't done taxes|didn't report|behind on)\b/i;
-    const wrong = IDEAS_V1.filter((idea) => idea.road === "road-0" && closingOrBehind.test(idea.words)).map((idea) => idea.id);
+    const wrong = IDEAS_V1.filter((idea) => (idea.road === "road-0" || idea.road === "road-federal") && closingOrBehind.test(idea.words)).map((idea) => idea.id);
     expect(wrong).toEqual([]);
   });
 

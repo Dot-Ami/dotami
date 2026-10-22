@@ -9,6 +9,10 @@
  *   (the smallest text size can only go up): `tests/clutter-budgets.spec.ts` fails on a budget above the
  *   baseline or above main's. When a change makes a screen calmer, lower its budget in the same pull
  *   request, so the room it freed can't fill up again unseen; once that is on main, it can't be raised back.
+ *
+ * A screen added after the baseline was recorded (`ADDED_SCREENS`, since 2026-10-21) has no baseline row: the
+ * baseline is a record of one day. It gets its budget the written way below instead, and from then on its
+ * budget can only go down, like every other.
  */
 
 /** The screens measured, in the order the spec opens them. */
@@ -17,14 +21,38 @@ export const SCREENS = [
   "front-door",
   "start",
   "futures",
+  "futures-outside-alberta",
   "intake",
   "ventures",
   "example-mara",
   "cockpit-road-0",
   "cockpit-road-1",
+  "cockpit-federal",
   "plan",
 ] as const;
 export type ScreenId = (typeof SCREENS)[number];
+
+/**
+ * How a new screen gets its clutter budget (task 29j, 2026-10-21; docs/ui-spec/README.md, "The clutter limit"):
+ *
+ * 1. Name the screen in `SCREENS` and here, with the day it was added, the task, and `atMost`: the measured
+ *    screen it is a state or a sibling of (Pick a future for a person outside Alberta is a state of Pick a
+ *    future; the cockpit on another road is a sibling of the cockpit on road 0).
+ * 2. Measure it the way every screen is measured (`e2e/clutter-budget.spec.ts`, a test of its own), in CI on
+ *    Ubuntu, and write what CI counts as its row in `BUDGETS`.
+ * 3. That row may be no looser than `atMost`'s baseline, ever, and on the day it is added no looser than
+ *    `atMost`'s budget on main (`tests/clutter-budgets.spec.ts`): a new screen starts at most as busy as the
+ *    screen it stands beside. If it measures busier, make it calmer; a new screen never raises a limit.
+ * 4. Once on main, its row is held like every other: never looser than main's.
+ *
+ * A screen added here never gets a `BASELINE` row: the baseline stays the record of 2026-10-17.
+ */
+export const ADDED_SCREENS: Partial<Record<ScreenId, { addedOn: string; task: string; atMost: ScreenId }>> = {
+  // Pick a future for a person in Ontario: the federal steps first, the two Alberta futures folded (task 28d).
+  "futures-outside-alberta": { addedOn: "2026-10-21", task: "28d", atMost: "futures" },
+  // The cockpit on the federal road, a first visit from Ontario (task 28d).
+  "cockpit-federal": { addedOn: "2026-10-21", task: "28d", atMost: "cockpit-road-0" },
+};
 
 /** The three window sizes: a phone, a tablet standing up, and a small laptop (the suite's own default). */
 export const WIDTHS = [
@@ -165,6 +193,12 @@ export const BUDGETS: ClutterTable = {
   "cockpit-road-0": { phone: m(7, 17, 4, 9.5), tablet: m(8, 29, 5, 9.5), laptop: m(8, 27, 5, 9.5) },
   "cockpit-road-1": { phone: m(7, 14, 4, 9.5), tablet: m(8, 25, 5, 9.5), laptop: m(8, 23, 5, 9.5) },
   plan: { phone: m(10, 2, 5, 10.5), tablet: m(10, 2, 5, 10.5), laptop: m(10, 2, 5, 10.5) },
+  // Added 2026-10-21 (task 28d, `ADDED_SCREENS`), at what they measure (Chromium on Windows, the full browser run
+  // of the clutter spec): Pick a future in Ontario counts as in Alberta on a phone and a tablet, and one control
+  // fewer on a laptop (5, not 6: its one card is taller with the federal line, so the fold button under it is
+  // below the window's edge); the cockpit on the federal road counts as road 0 does. CI on Ubuntu decides the rows.
+  "futures-outside-alberta": { phone: m(6, 5, 6, 10.5), tablet: m(6, 7, 6, 10.5), laptop: m(6, 5, 6, 10.5) },
+  "cockpit-federal": { phone: m(7, 17, 4, 9.5), tablet: m(8, 29, 5, 9.5), laptop: m(8, 27, 5, 9.5) },
 };
 
 /** What Chromium on Windows may count over a budget: only regions, controls and text sizes, never fewer. */

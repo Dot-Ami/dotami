@@ -50,8 +50,9 @@ export const KNOWN_GAPS: readonly KnownGap[] = [
     invariant: "ends:road-written-for-place",
     subject: "typed",
     kind: "planned",
-    story: "S2.5.28d (outside Alberta, honestly)",
-    why: "Every typed idea is drawn on road 0, which is written for Alberta only, wherever the idea is. The plan's goal line says “written for AB; this idea is in …”, but every step still reads as Alberta's. 28d draws the federal steps that apply everywhere and says “Written for Alberta” with the person's own province named.",
+    story:
+      "The typed way ending on Pick a future's three steps (the maintainer's call 1 of 2026-10-21, docs/ui-spec/intake/_index.md; tasks 28b and 28c), where 28d's federal road is listed first outside Alberta",
+    why: "Every typed idea is drawn on road 0, which is written for Alberta only, wherever the idea is: “I already have an idea” still ends on Open my map, which saves no road. The plan's goal line says “written for AB; this idea is in …”, but every step still reads as Alberta's. Since 28d (2026-10-21) the federal steps exist and Pick a future lists them first outside Alberta; the typed way reaches them once it ends on the same three steps.",
     ideas: [
       3, 4, 5, 7, 9, 10, 11, 13, 15, 16, 18, 20, 22, 28, 29, 30, 32, 33, 35, 36, 37, 38, 40, 42, 43, 45, 47, 49, 50, 52, 53, 54, 56, 58, 59,
       60, 61, 63, 64, 66, 67, 69, 73, 75, 76, 78, 79, 80, 82, 84, 85, 86, 88, 91, 92, 94, 96, 97, 98, 100, 101, 102, 103, 105, 107, 109,
@@ -66,17 +67,10 @@ export const KNOWN_GAPS: readonly KnownGap[] = [
     invariant: "ends:road-written-for-place",
     subject: "picked",
     kind: "planned",
-    story: "S2.5.28d (outside Alberta, honestly)",
-    why: "Pick a future lists both Alberta roads for every place in Canada, saying “Written for Alberta. You said …” on the card, and “Not here yet?” opens road 0 anywhere. Once picked, the cockpit draws every step as Alberta's, as on the typed way in. 28d draws the federal steps that apply everywhere and names the person's own province.",
-    ideas: [
-      3, 4, 5, 7, 9, 10, 11, 13, 15, 16, 18, 20, 22, 28, 29, 30, 32, 33, 35, 36, 37, 38, 40, 42, 43, 45, 47, 49, 50, 52, 53, 54, 56, 58, 59,
-      60, 61, 63, 64, 66, 67, 69, 73, 75, 76, 78, 79, 80, 82, 84, 85, 86, 88, 91, 92, 94, 96, 97, 98, 100, 101, 102, 103, 105, 107, 109,
-      111, 112, 113, 114, 115, 117, 119, 121, 123, 124, 126, 128, 129, 133, 135, 138, 140, 142, 145, 148, 150, 152, 154, 156, 158, 160, 161,
-      163, 164, 165, 166, 167, 169, 171, 172, 173, 177, 179, 181, 182, 184, 185, 186, 188, 189, 190, 192, 194, 197, 198, 199, 200, 202, 203,
-      206, 208, 210, 211, 212, 213, 245, 246, 247, 248, 249, 251, 254, 255, 260, 268, 269, 287, 288, 289, 290, 294, 295, 296, 297, 298, 299,
-      300, 301, 302, 303, 304, 305, 306, 307, 308, 309, 310, 311, 312, 313, 314, 315, 316, 317, 318, 319, 320, 321, 322, 323, 324, 332, 334,
-      337, 346, 351, 352, 353, 354, 355, 356, 357, 360, 361, 362, 363, 364, 365, 366,
-    ],
+    story: "The maintainer's call, asked in 28d's pull request: should “Not here yet?” open the federal steps outside Alberta?",
+    // 190 ideas until 28d (2026-10-21); the federal road, listed first outside Alberta, took 177 of them off.
+    why: "Outside Alberta, Pick a future lists the federal steps first (28d), and an idea picked there is drawn on a road written for its place. “Not here yet?” still keeps the note and opens road 0, the general road, anywhere, as its own spec says (docs/ui-spec/futures/03-road-match.md: “as today”): these are the ideas with no road written for them whose invented person keeps a note. The goal bar says “Map drawn: … written for AB; this idea is in …”, so it isn't silent; whether the note should open the federal steps there instead is the maintainer's call.",
+    ideas: [188, 194, 197, 200, 203, 206, 212, 251, 287, 290, 308, 362, 365],
   },
   {
     invariant: "ends:no-silent-fallback",

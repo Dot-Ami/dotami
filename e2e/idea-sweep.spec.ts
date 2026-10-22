@@ -44,11 +44,11 @@ import { expect, test, type Page } from "@playwright/test";
 import { COCKPIT_FOLDS_KEY } from "../lib/cockpit/folds";
 import { allCatalogCitations } from "../lib/engines/all-citations";
 import { toolCheckQuotes } from "../lib/engines/shared/citation-check";
-import { generalRoadV2026, roadApprenticeToOwnShopAB } from "../lib/engines/roads/v2026";
+import { generalRoadV2026, roadApprenticeToOwnShopAB, roadById, roadFederalStepsCA, roadsV2026 } from "../lib/engines/roads/v2026";
 import { parseIntentFallback } from "../lib/journey/intent-fallback";
 import { PROVINCES, type Province } from "../lib/scenarios/types";
 import { SHOWN_WORDS_GAPS } from "../tests/fixtures/ideas/known-gaps";
-import { IDEAS_V1, ROAD_IDS, type Idea } from "../tests/fixtures/ideas/v1";
+import { IDEAS_V1, type Idea } from "../tests/fixtures/ideas/v1";
 import { pickedChoice, SCREEN_WORK_SITUATION } from "../tests/helpers/idea-pipeline";
 import { waitForReact } from "../tests/helpers/react-ready";
 import { normaliseSpaces } from "../tests/helpers/text-pieces";
@@ -215,6 +215,16 @@ const CITATION_QUOTES = new Set(allCatalogCitations().flatMap(({ citation }) => 
  * carry one.
  */
 const withoutCitationQuotes = (text: string) => text.replace(/“([^”]*)”/g, (whole, inner: string) => (CITATION_QUOTES.has(inner.trim()) ? PIECE : whole));
+
+/**
+ * The cockpit budget a picked road's first visit is held to (e2e/budgets.ts), so the sweep reads any road the
+ * catalog holds (task 29j): a road with no row here fails the last test below.
+ */
+const HELD_FOR_ROAD: Readonly<Record<string, ScreenId>> = {
+  [generalRoadV2026.id]: "cockpit-road-0",
+  [roadApprenticeToOwnShopAB.id]: "cockpit-road-1",
+  [roadFederalStepsCA.id]: "cockpit-federal",
+};
 
 /** The budget for this screen and the one it is held to, with Windows' extra where Chromium there counts more. */
 function budgetFor(screen: ScreenId): Clutter | null {
@@ -388,14 +398,24 @@ async function pickedWay(s: Sweep) {
 
   await next.click();
   await expect(page).toHaveURL(/\/futures$/);
-  const lookInside = page.getByRole("button", { name: `Look inside ${generalRoadV2026.label}` });
+  // Any road the catalog holds (task 29j): the page lists the ones for the person's place, the federal steps
+  // first outside Alberta, with Alberta's two behind one button there (task 28d).
+  const outsideAlberta = idea.place !== "AB";
+  const firstCard = outsideAlberta ? roadFederalStepsCA : generalRoadV2026;
+  const lookInside = page.getByRole("button", { name: `Look inside ${firstCard.label}` });
   await waitForReact(lookInside);
-  await read(s, "pick a future", "futures");
-  const road = choice.roadId === ROAD_IDS["road-1"] ? roadApprenticeToOwnShopAB : generalRoadV2026;
-  const held: ScreenId = road.id === generalRoadV2026.id ? "cockpit-road-0" : "cockpit-road-1";
+  await read(s, "pick a future", outsideAlberta ? "futures-outside-alberta" : "futures");
+  const road = roadById(choice.roadId)!;
+  const held = HELD_FOR_ROAD[road.id];
   if (choice.by === "card") {
     await page.getByRole("textbox", { name: "Name it (optional)" }).fill(`Invented — idea sweep ${idea.id} (picked)`);
-    await page.getByRole("button", { name: `Look inside ${road.label}` }).click();
+    const card = page.getByRole("button", { name: `Look inside ${road.label}` });
+    // An Alberta future picked from outside Alberta: the person opens the fold first, as the page asks.
+    if (!(await card.isVisible())) {
+      await page.getByRole("button", { name: /^Show the \d+ futures? written for Alberta$/ }).click();
+      await read(s, "pick a future, the Alberta futures shown");
+    }
+    await card.click();
   } else {
     // "Not here yet?": the note is kept as one of the person's statements, and the general road opens.
     await page.getByRole("textbox", { name: "Not here yet?" }).fill(idea.words);
@@ -445,6 +465,8 @@ test("the sweep ran twelve ideas, eight fixed and four for the week, and every a
   for (const allowance of SCREEN_TIME_ALLOWANCES) {
     expect(SHOWN_WORDS_GAPS.map((g) => g.where), `${allowance.gap} is no longer a known gap: take its allowance out of the sweep`).toContain(allowance.gap);
   }
+  // Every road the catalog holds can be read: its first visit is held to a budget of its own.
+  for (const road of roadsV2026) expect(HELD_FOR_ROAD[road.id], `${road.id}: add it to HELD_FOR_ROAD`).toBeDefined();
   // Every listed gap is expected of some idea this week, so its ratchet (in the ideas' tests) is live.
   for (const gap of SCREEN_GAPS) {
     expect(SWEEP.some(({ idea }) => gap.expectedFor(idea)), `no idea this week is expected to show ${gap.found}: its ratchet checks nothing`).toBe(true);

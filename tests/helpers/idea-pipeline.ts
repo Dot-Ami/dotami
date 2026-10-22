@@ -1,7 +1,7 @@
 import { buildPlan, type PlanView } from "@/lib/cockpit/plan";
 import { answerEquipment, answerSalesYear3, compareEndings, forksToCompare, notToldYet, type KeptAnswers, type NotToldRow } from "@/lib/cockpit/told";
 import { cockpitInput, gaugeView, nextOnYourRoad, stepBadges, type KeptFuture } from "@/lib/cockpit/view";
-import { generalRoadV2026, roadsV2026, skillItemsV2026, type Road } from "@/lib/engines/roads/v2026";
+import { FEDERAL_ROAD_ID, forksAreTheMapToggles, generalRoadV2026, roadsV2026, skillItemsV2026, type Road } from "@/lib/engines/roads/v2026";
 import type { FigureView } from "@/lib/figures/types";
 import { futureCards, listedRoads, sourcesLine } from "@/lib/front-door/futures";
 import type { LookingFor as DoorLookingFor } from "@/lib/front-door/questions";
@@ -404,8 +404,8 @@ function runCockpit(
   const fork = road.forks[0];
   if (fork) {
     answer("fork", (k) => {
-      if (road.id === generalRoadV2026.id) {
-        // Road 0's forks are the map's toggles: the person clicks the side that isn't the default.
+      if (forksAreTheMapToggles(road)) {
+        // Road 0's forks (and the federal road's, the same two) are the map's toggles: the person clicks the side that isn't the default.
         const other = fork.sides.find((side) => side !== k.scenario.state.activeBranches[fork.id as BranchDecisionId]) ?? fork.sides[0];
         k.scenario = updateScenarioBranch(k.scenario, fork.id as BranchDecisionId, other as CFENodeId);
       } else {
@@ -570,6 +570,7 @@ export function piecesOfPlan(add: AddPiece, p: PlanView) {
         add(`${w} › cost count`, s.costCount);
         s.officialLinks.forEach((l) => add(`${w} › official link`, l.label, "catalog"));
         s.sources.forEach((src) => addSource(w, src));
+        add(`${w} › sources left out`, s.sourcesLeftOut);
       }
     }
     for (const sk of p.skills.road) {
@@ -674,16 +675,19 @@ const DOOR_LOOKING_FOR: Record<Idea["lookingFor"], DoorLookingFor | null> = {
 };
 
 /**
- * What the invented person clicks on *Pick a future*. The page lists every written road for any place in
- * Canada (a road written for elsewhere says "Written for Alberta. You said …"), and "Not here yet?" keeps a
- * note and opens the general road. So: the road written for the idea when there is one; otherwise, by the
- * idea's number, road 0's card, road 1's card, or the note (road 0's card when there are no words to note).
+ * What the invented person clicks on *Pick a future*. In Alberta the page lists Alberta's two roads; anywhere
+ * else in Canada it lists the federal steps first, under "Written for all of Canada", and Alberta's two
+ * behind one button, each saying "Written for Alberta. You said …" (task 28d). "Not here yet?" keeps a note
+ * and opens the general road, road 0, anywhere. So: the road written for the idea when there is one;
+ * otherwise, by the idea's number, the note (when there are words to note), or else the card the page shows
+ * first for the place: outside Alberta the federal road's; in Alberta road 1's or road 0's.
  */
 export function pickedChoice(idea: Idea): { by: "card" | "not-here"; roadId: string } {
   if (idea.road !== "none-written-yet") return { by: "card", roadId: ROAD_IDS[idea.road] };
   const n = Number(idea.id.slice(-4));
-  if (n % 3 === 1) return { by: "card", roadId: ROAD_IDS["road-1"] };
   if (n % 3 === 2 && idea.words.trim().length > 0) return { by: "not-here", roadId: generalRoadV2026.id };
+  if (isProvince(idea.place) && idea.place !== "AB") return { by: "card", roadId: FEDERAL_ROAD_ID };
+  if (n % 3 === 1) return { by: "card", roadId: ROAD_IDS["road-1"] };
   return { by: "card", roadId: generalRoadV2026.id };
 }
 
@@ -696,7 +700,7 @@ function pickedWayIn(idea: Idea, pieces: TextPiece[], options: RunOptions): Cock
   // Pick a future asks for a province or territory first ("Say which province or territory you're in first").
   if (!isProvince(idea.place)) return null;
   const choice = pickedChoice(idea);
-  const listed = listedRoads(roadsV2026);
+  const listed = listedRoads(roadsV2026, idea.place);
   const own = ownNumbers(idea);
   const add = (where: string, text: string, kind: TextPiece["kind"] = "dotami") => pieces.push({ where: `picked › ${where}`, text, kind });
   const words = idea.words.trim().length > 0 ? idea.words : null;
@@ -705,8 +709,17 @@ function pickedWayIn(idea: Idea, pieces: TextPiece[], options: RunOptions): Cock
   if (lookingFor) add("looking for › receipt", lookingForReceipt(lookingFor, listed));
   add("place › receipt", placeReceipt(placeCode(idea.place), listed));
   add("income › receipt", incomeReceipt({ kind: "agreed", amountCents: own.incomeWantedCents, agreedOn: HARNESS_TODAY }));
-  // Each card as components/front-door/pick-future-page.tsx writes it.
-  for (const card of futureCards(listed, skillItemsV2026)) {
+  // Each card as components/front-door/futures-list.tsx writes it; outside Alberta, under the two groups'
+  // headings, with the Alberta ones behind the button that shows them.
+  const cards = futureCards(listed, skillItemsV2026);
+  const forAllOfCanada = (card: (typeof cards)[number]) => (card.writtenFor as readonly string[]).includes("CA");
+  if (cards.some(forAllOfCanada)) {
+    add("pick a future › heading", pickWords.canadaHeading);
+    add("pick a future › heading", pickWords.albertaHeading);
+    add("pick a future › show the others", pickWords.showAlberta(cards.filter((card) => !forAllOfCanada(card)).length));
+    add("pick a future › hide the others", pickWords.hideAlberta);
+  }
+  for (const card of cards) {
     const at = `pick a future › ${card.roadId}`;
     add(at, card.label, "catalog");
     add(`${at} › kind`, pickWords.kind[card.kind]);
@@ -714,6 +727,7 @@ function pickedWayIn(idea: Idea, pieces: TextPiece[], options: RunOptions): Cock
     const names = places.map((p) => (p === "CA" ? pickWords.allOfCanada : ((PROVINCE_LABELS as Record<string, string>)[p] ?? p))).join(", ");
     add(`${at} › written for`, pickWords.writtenFor(names));
     if (!places.includes("CA") && !places.includes(idea.place)) add(`${at} › you said`, pickWords.youSaid(placeName(placeCode(idea.place))));
+    if (places.includes("CA")) add(`${at} › federal only`, pickWords.federalOnly(placeName(placeCode(idea.place))));
     add(`${at} › counts`, pickWords.counts(card.steps, card.skillsListed, card.officialFees, card.linesToPrice));
     for (const part of sourcesLine(card.sources)) add(`${at} › sources`, part.text);
   }
