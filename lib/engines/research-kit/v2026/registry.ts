@@ -179,7 +179,9 @@ export const SOURCES: readonly SourceCard[] = [
     name: "North American Industry Classification System (NAICS) Canada 2022 Version 1.0",
     publisher: "Statistics Canada",
     url: "https://www.statcan.gc.ca/en/subjects/standard/naics/2022/v1/index",
-    phase: "phase-2",
+    // Phase 3, with the industry question and the business counts (the maintainer's call of 2026-10-20): not
+    // imported in phase 2, so no road or job link names an industry code yet.
+    phase: "phase-3",
     ...shippedUnder("statcan-open-licence"),
     display: { kind: "allowed" },
     figureKind: "none",
@@ -192,7 +194,28 @@ export const SOURCES: readonly SourceCard[] = [
         url: "https://www.statcan.gc.ca/eng/statistical-programs/document/naics-scian-2022-structure-v1-eng.csv",
       },
     ],
-    note: "The industry code list a person picks their industry from, and that roads' job links are checked against (task 25e). Its open.canada.ca record says it is made available under the Statistics Canada Open Licence.",
+    note: "Later phase: the industry code list a person picks their industry from, and that the job links' industry candidates are checked against once it is imported (with the industry question, phase 3; the maintainer's call of 2026-10-20). Its open.canada.ca record says it is made available under the Statistics Canada Open Licence.",
+  },
+  {
+    id: "sgc-2021-economic-regions",
+    name: "Variant of Standard Geographical Classification (SGC) 2021 for Economic Regions",
+    publisher: "Statistics Canada",
+    url: "https://www23.statcan.gc.ca/imdb/p3VD.pl?Function=getVD&TVD=1368923",
+    phase: "now",
+    ...shippedUnder("statcan-open-licence"),
+    display: { kind: "allowed" },
+    figureKind: "none",
+    // The region question lists them; About this job reads the person's pick to choose a published wage row.
+    feeds: ["shown"],
+    creditLine: statcanCredit("Variant of Standard Geographical Classification (SGC) 2021 for Economic Regions"),
+    keyedBy: ["economic-region", "province"],
+    files: [
+      {
+        name: "The variant's page for Alberta (HTML; no CSV is published)",
+        url: "https://www23.statcan.gc.ca/imdb/p3VD.pl?Function=getVD&TVD=1368923&CVD=1368932&CPV=48&CST=01012021&CLV=2&MLV=5",
+      },
+    ],
+    note: "Alberta's eight economic regions, their 4-digit codes and their names as published (double hyphens and all), in ./economic-regions.ts. Statistics Canada publishes the variant as HTML and PDF pages only, so there is no file to pin or importer to run: research note 25s read the codes and names from the page above on 2026-10-20, its verifier checked each region's own page the same day, and the page was read again on 2026-10-21 for task 25e (the same eight). The same eight code and name pairs are in Job Bank's wage file. Other provinces' regions are added one province at a time, each checked against these pages first (the maintainer's call of 2026-10-21). The SGC 2021 dataset's open.canada.ca record says it is made available under the Statistics Canada Open Licence; that notice is the one used here.",
   },
   {
     id: "statcan-business-counts",

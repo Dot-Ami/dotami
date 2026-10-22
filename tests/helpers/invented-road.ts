@@ -32,6 +32,7 @@ export function inventedRoad(): Road {
     label: "Invented road (test only)",
     kind: "both",
     provinces: ["AB"],
+    codes: { occupations: "no-particular-job" },
     lastVerified: "2026-10-02",
     columns: [
       { id: "col-invented-start", label: "Start", summary: "Where it begins.", steps: ["step-invented-train"] },

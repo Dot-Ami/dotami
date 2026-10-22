@@ -136,6 +136,9 @@ const FONTS = [
  * made by scripts/import-oasis.mjs and scripts/import-oasis-titles.mjs) are under the Open Government Licence
  * – Canada, whose attribution line is in that file; the NOC 2021 job groups (lib/engines/noc/v2021/data.ts,
  * made by scripts/import-noc.mjs) are under the Statistics Canada Open Licence, whose notice is in its file.
+ * Alberta's economic regions (lib/engines/research-kit/v2026/economic-regions.ts, typed from Statistics
+ * Canada's pages) are under the same Statistics Canada Open Licence, with its notice in their licence file;
+ * the registry card `sgc-2021-economic-regions` carries the same credit line.
  */
 const DATA = [
   {
@@ -146,9 +149,15 @@ const DATA = [
   },
   {
     name: "NOC 2021 Version 1.0 (data from Statistics Canada)",
-    licence: "Statistics Canada Open Licence",
+    licence: "Statistics-Canada-Open-Licence",
     file: "lib/engines/noc/v2021/LICENCE.txt",
     version: "2021 Version 1.0, elements file",
+  },
+  {
+    name: "Variant of SGC 2021 for Economic Regions, Alberta (data from Statistics Canada)",
+    licence: "Statistics-Canada-Open-Licence",
+    file: "lib/engines/research-kit/v2026/LICENCE-economic-regions.txt",
+    version: "SGC 2021, Alberta's page read 2026-10-21",
   },
 ];
 

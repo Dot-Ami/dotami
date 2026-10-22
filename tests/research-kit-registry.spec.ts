@@ -44,6 +44,7 @@ describe("the registry", () => {
       "noc-2021-elements",
       "job-bank-wages",
       "naics-2022",
+      "sgc-2021-economic-regions",
       "statcan-business-counts",
       "statcan-census-98-10-0594",
       "meta-ad-library",
@@ -57,14 +58,17 @@ describe("the registry", () => {
     ]);
   });
 
-  it("marks when each source comes in: OaSIS's four files and the two job-title files now (since 2026-10-21), wages and code lists in phase 2, the counts and census later", () => {
+  it("marks when each source comes in: OaSIS's four files, the two job-title files and Alberta's economic regions now (since 2026-10-21), wages in phase 2, the industry list, counts and census later", () => {
     const phaseOf = Object.fromEntries(SOURCES.filter((c) => c.access === "ship").map((c) => [c.id, c.phase]));
     expect(phaseOf).toEqual({
       "oasis-2025": "now",
       "oasis-2025-example-titles": "now",
       "noc-2021-elements": "now",
       "job-bank-wages": "phase-2",
-      "naics-2022": "phase-2",
+      // With the industry question, in phase 3 (the maintainer's call of 2026-10-20).
+      "naics-2022": "phase-3",
+      // Typed from Statistics Canada's pages for the region question (task 25e).
+      "sgc-2021-economic-regions": "now",
       "statcan-business-counts": "phase-3",
       "statcan-census-98-10-0594": "phase-3",
     });
@@ -79,9 +83,9 @@ describe("the registry", () => {
     expect(card("noc-2021-elements").files).toEqual(NOC_FILES.map((f) => ({ name: f.name, url: f.url })));
   });
 
-  it("marks as shipped now exactly the three sources an importer reads today", () => {
+  it("marks as shipped now exactly the three sources an importer reads today, and Alberta's economic regions (typed from Statistics Canada's pages)", () => {
     const shippedNow = SOURCES.filter((c) => c.access === "ship" && c.phase === "now").map((c) => c.id);
-    expect(shippedNow.sort()).toEqual(["noc-2021-elements", "oasis-2025", "oasis-2025-example-titles"]);
+    expect(shippedNow.sort()).toEqual(["noc-2021-elements", "oasis-2025", "oasis-2025-example-titles", "sgc-2021-economic-regions"]);
   });
 
   it("gives every shipped source an open licence and its credit line, and the government files their licence's own words", () => {
@@ -227,7 +231,9 @@ describe("the registry's folder", () => {
 
   it("is found by the scan", () => {
     expect(files).toEqual(
-      ["freshness.ts", "registry.ts", "types.ts", "validate.ts", "views.ts", "words.ts"].map((f) => `lib/engines/research-kit/v2026/${f}`),
+      ["economic-regions.ts", "freshness.ts", "job-links.ts", "registry.ts", "types.ts", "validate.ts", "views.ts", "words.ts"].map(
+        (f) => `lib/engines/research-kit/v2026/${f}`,
+      ),
     );
   });
 

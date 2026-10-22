@@ -65,6 +65,11 @@ to give people value first. This design adds no new permission screens, warnings
    Development Canada, under the Open Government Licence – Canada. The person picks "the job closest
    to the work you'd do yourself"; the list appears tagged *your pick of job*. DotAmi never claims
    which skills a business needs. [CONTRIBUTING.md](../../CONTRIBUTING.md) gains this kind of source.
+   *(2026-10-21, task 25e: a road now names the jobs it is written for, as 5-digit job codes in
+   `Road.codes.occupations` (road 1 is written for 72311 Cabinetmakers; road 0 for no particular job), so
+   Pick a future can offer the road written for the person's pick of job. The job is still only the
+   person's own pick: nothing goes from a road, a business or the idea's words to a job, only from their
+   pick to the roads written for it. § 6, *The road type as built*.)*
 6. **The front door leads with the dream: three doors.** *Start from where I want to be* (the main
    one), *I already have an idea* (today's box and intake), *Show me an example first* (an invented,
    labelled example). "Your ideas" becomes "Your futures".
@@ -1089,6 +1094,16 @@ for a reason:
   maintainer's. *(2026-10-11: the storage pull request keeps another road's picks in a column of their
   own instead and leaves the type as it is; the maintainer decided places are stored as codes such as
   `CA-AB`. Both in § 7, Storage as built.)*
+- **A road names the jobs it is written for (added 2026-10-21, task 25e;
+  [research-kit.md](research-kit.md) § 5.3).** `Road` gains `codes`, beside `provinces`, holding
+  `occupations`: the 5-digit NOC 2021 job groups the road is written for. Road 1 carries `["72311"]`
+  (Cabinetmakers); road 0 says `"no-particular-job"` in words, since an empty list could be a road nobody
+  gave codes to. The checks (`roadCodeProblems`, run inside `roadProblems`) refuse a code that isn't five
+  digits, one the OaSIS list has no job in, a code named twice and an empty list. `roadsWrittenForJob`
+  answers Pick a future's road match ([../ui-spec/futures/03-road-match.md](../ui-spec/futures/03-road-match.md)):
+  the roads written for the person's pick of job, in the order written, and an empty list when there are
+  none, with no fall back to road 0. It reads only the person's own pick: the job is never picked or
+  changed from a road, and decision 5 still holds (the person picks the job).
 
 ### Road evaluation as built (2026-10-12)
 
@@ -1883,7 +1898,9 @@ phase it names.
    catalog and tagged *"drafted by your model, not from DotAmi's sources"*.
 5. **The closest job for a skills list is always the person's pick.** In every phase, including
    *Peek inside* in phase 2, DotAmi never links a business to a job itself; the person picks, and the
-   list says *your pick of job*.
+   list says *your pick of job*. (Since 2026-10-21 a road names the jobs it is written for, so the road
+   written for the person's pick can be offered; that runs from their pick to the road, never from a road
+   to a job: § 6, *The road type as built*.)
 6. **Every *done when* line is written from its step's official page and carries that citation.**
    A *done when* line with no citation fails the catalog tests like any other uncited claim.
 

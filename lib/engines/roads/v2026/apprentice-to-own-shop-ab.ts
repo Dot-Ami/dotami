@@ -382,6 +382,8 @@ export const roadApprenticeToOwnShopAB: Road = {
   label: "From apprentice to your own shop (Alberta)",
   kind: "both",
   provinces: ["AB"],
+  // Written for cabinetmakers: its trade steps are Alberta's Cabinetmaker trade (0361), NOC 2021 group 72311.
+  codes: { occupations: ["72311"] },
   columns: [
     {
       id: "col-shop-training",

@@ -1,7 +1,7 @@
 import type { CFENode } from "../../cfe/v2026/types";
 import type { CFETier } from "../../cfe/v2026/tiers";
 import type { Province } from "../../shared/types";
-import type { CatalogCostLine, DoneWhenLine, Fork, OnlyForKindsOfWork, Road, RoadKind, RoadStep } from "./types";
+import type { CatalogCostLine, DoneWhenLine, Fork, OnlyForKindsOfWork, Road, RoadCodes, RoadKind, RoadStep } from "./types";
 import { newestReadDate } from "./validate";
 
 /**
@@ -27,6 +27,7 @@ export function roadFromCfe(input: {
   label: string;
   kind: RoadKind;
   provinces: Province[];
+  codes: RoadCodes;
   nodes: readonly CFENode[];
   tiers: readonly CFETier[];
   forks: Fork[];
@@ -47,6 +48,7 @@ export function roadFromCfe(input: {
     label: input.label,
     kind: input.kind,
     provinces: input.provinces,
+    codes: input.codes,
     columns: input.tiers.map((tier) => ({
       id: tier.id,
       label: tier.label,
