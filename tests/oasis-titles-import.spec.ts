@@ -61,7 +61,10 @@ describe("the import can be redone", () => {
     expect(of("63210.02")).toEqual(["Example: barber apprentice", "Example: barber"]);
     expect(of("63210.01")).toContain("Example: hairstylist");
     expect(of("44100.01")).toContain("Index: home child care provider");
-    for (const [, , title] of oasisTitles.titles) expect(title.trim()).toBe(title);
+    // No title starts or ends with a space or holds a line break: the file's two stray mid-title line breaks
+    // (42203.00) read as one space.
+    for (const [, , title] of oasisTitles.titles) expect(title.replace(/\s+/g, " ").trim()).toBe(title);
+    expect(of("42203.00")).toContain("Index: orientation and mobility teacher of persons with a visual impairment");
   });
 
   it("starts with the licence's attribution line and says it is generated", () => {
@@ -74,9 +77,10 @@ describe("the import can be redone", () => {
 describe("the import's own rules, on tiny invented files", () => {
   const header = "﻿OaSIS profile code,Concordance number,Job title type,Job title text";
 
-  it("keeps a quoted title with a comma in it, and trims the spaces at its ends", () => {
-    const made = buildOasisTitlesModule({ titles: `${header}\r\n72311.00,1,Example,"cabinetmaker, custom "\r\n` });
+  it("keeps a quoted title with a comma in it, trims the spaces at its ends, and reads a line break inside it as one space", () => {
+    const made = buildOasisTitlesModule({ titles: `${header}\r\n72311.00,1,Example,"cabinetmaker, custom "\r\n72311.00,2,Index,"furniture\rmaker"\r\n` });
     expect(made).toContain('["72311.00", "Example", "cabinetmaker, custom"],');
+    expect(made).toContain('["72311.00", "Index", "furniture maker"],');
   });
 
   it("refuses another header, a code that isn't a job code, a type it doesn't know, and an empty title", () => {

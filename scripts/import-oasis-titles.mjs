@@ -61,8 +61,10 @@ const JOB_CODE = /^\d{5}\.\d{2}$/;
 /**
  * The module's text from the file's text: { titles }. Every row is kept, in the file's order, as
  * [job code, title type, title]; the concordance number (which row of the classification the title came
- * from) isn't, since nothing in DotAmi reads it. A title is kept word for word, spaces at its ends aside.
- * Throws, naming the file, on a header it wasn't written for, a code that isn't a job code, a type it
+ * from) isn't, since nothing in DotAmi reads it. A title is kept word for word, its spacing aside: spaces
+ * at its ends are dropped, and any run of spaces or line breaks inside it becomes one space, as the OaSIS
+ * importer does for job names (two titles of 42203.00 hold a stray line break mid-title in the 2026-10-21
+ * copy, "orientation and mobility teacher of persons with" / "a visual impairment"). Throws, naming the file, on a header it wasn't written for, a code that isn't a job code, a type it
  * doesn't know, or an empty title.
  */
 export function buildOasisTitlesModule(texts) {
@@ -75,7 +77,7 @@ export function buildOasisTitlesModule(texts) {
     if (row.length !== OASIS_TITLES_HEADER.length) throw new Error(`${name}, line ${line}: ${row.length} columns, not ${OASIS_TITLES_HEADER.length}`);
     if (!JOB_CODE.test(code)) throw new Error(`${name}, line ${line}: "${code}" isn't a job code like 72311.00`);
     if (!OASIS_TITLE_TYPES.includes(type)) throw new Error(`${name}, line ${line}: the title type "${type}" isn't one of ${OASIS_TITLE_TYPES.join(", ")}`);
-    const title = text.trim();
+    const title = text.replace(/\s+/g, " ").trim();
     if (title === "") throw new Error(`${name}, line ${line}: the title is empty`);
     return [code, type, title];
   });
