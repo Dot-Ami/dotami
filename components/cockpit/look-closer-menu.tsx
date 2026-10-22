@@ -8,9 +8,10 @@ import { cockpitWords as words } from "@/lib/cockpit/words";
 
 /**
  * "Look closer" (the calm first view, 2026-10-17, S2.5.30c): one menu button in the goal bar for the things
- * the goal bar can open in the right-hand panel, where each used to be a button of its own. Today *Compare
- * the two endings* (only on a road with a fork whose own pick moves steps) and *Others in this line of work*;
- * *About this job* joins it later (docs/architecture/research-kit.md § 4.2).
+ * the goal bar can open in the right-hand panel, where each used to be a button of its own: *Compare the two
+ * endings* (only on a road with a fork whose own pick moves steps), *Others in this line of work*, and *About
+ * this job* once a job is picked (task 25h; docs/ui-spec/cockpit/about-this-job.md). A panel's Close can put
+ * focus back here: the button carries `LOOK_CLOSER_BUTTON`, and `focusLookCloser` finds the one on screen.
  *
  * Since 2026-10-20 it also shows what folds under the map on a first visit, the legend and the what-if bar,
  * whose one button each sat at the end of Next on your road (the maintainer's pick: a calmer screen instead
@@ -23,6 +24,15 @@ import { cockpitWords as words } from "@/lib/cockpit/words";
  * between the items, Enter or Space picks one, Escape closes it and puts focus back on the button, and Tab
  * or a click anywhere else closes it. Closed, the items aren't drawn, so the goal bar shows one control.
  */
+
+/** The attribute the menu's button carries, so a panel opened from it can put focus back on it when it closes. */
+export const LOOK_CLOSER_BUTTON = "data-look-closer";
+
+/** Puts focus back on the Look closer button that is drawn (the open goal bar's, or its folded line's). */
+export function focusLookCloser() {
+  const drawn = [...document.querySelectorAll<HTMLButtonElement>(`[${LOOK_CLOSER_BUTTON}]`)].find((b) => b.getClientRects().length > 0);
+  drawn?.focus();
+}
 
 export interface LookCloserItem {
   id: string;
@@ -117,6 +127,7 @@ export function LookCloserMenu({ items }: { items: readonly LookCloserItem[] }) 
         aria-controls={open ? menuId : undefined}
         onClick={() => (open ? close(false) : openAt("first"))}
         onKeyDown={onButtonKey}
+        {...{ [LOOK_CLOSER_BUTTON]: "" }}
         {...(shows.length > 0 ? { [FOLD_CONTROL]: shows.join(" ") } : {})}
         className="inline-flex items-center gap-1 rounded-full border border-rule px-2 py-0 text-body text-paper-dim hover:bg-ink max-md:min-h-8"
       >

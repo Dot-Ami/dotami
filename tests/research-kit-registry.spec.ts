@@ -49,6 +49,8 @@ describe("the registry", () => {
       "statcan-census-98-10-0594",
       "meta-ad-library",
       "google-ads-transparency-center",
+      "bizpal",
+      "alberta-tradesecrets",
       "job-bank-pages",
       "yellowpages-ca",
       "canada411",

@@ -10,7 +10,7 @@
  * It walks the journey and reads the visible text of every screen on it, as each is opened: the front
  * door, the intake's screens, Your destination, Pick a future, the cockpit on both written futures (with
  * every card's panel opened, its sources unfolded, each gauge's list, Compare, Others in this line of work
- * and Export), Your plan for
+ * and Export; on road 0 also About this job, for Athletes), Your plan for
  * both, Your futures, What DotAmi knows about you, Settings, Your expenses and the Licences page's own
  * words. What a screen shows after a person does something there (a skill marked, an agree prompt, a
  * priced line, a date, a what-if, This is mine) is read by e2e/journey.spec.ts, which does each of those
@@ -28,7 +28,7 @@ import { generalRoadV2026, roadApprenticeToOwnShopAB } from "../lib/engines/road
 import { waitForReact } from "../tests/helpers/react-ready";
 import { OFFICIAL_QUOTE_ALLOWANCES, findVerdicts } from "../tests/helpers/verdict-words";
 
-import { lookCloser, lookCloserItems, openTheCockpit } from "./cockpit-calm";
+import { lookCloser, lookCloserItems, openTheCockpit, pickJob } from "./cockpit-calm";
 import { openTheMapFromTheIntake, skipTheJob } from "./three-steps";
 
 const GENERAL = generalRoadV2026.label;
@@ -176,6 +176,14 @@ test("no screen of the journey says what to do or ranks anything: every visible 
   await openTheMapFromTheIntake(page);
   await expect(page).toHaveURL(/\/cockpit/);
   const road0Cards = await readCockpit(seen, page, GENERAL, false);
+  // About this job (task 25h), for a job picked the way a person picks one: Athletes (53200), whose one
+  // requirement line findVerdicts catches shows there, in quote marks under its lead line, where its allowance
+  // lifts it (docs/ui-spec/cockpit/about-this-job.md, "No verdicts").
+  await pickJob(page, "Athletes", "53200.00");
+  await lookCloser(page, "About this job", goalBar(page));
+  const aboutJob = page.getByRole("region", { name: "About this job" });
+  await expect(aboutJob).toContainText("The government's words, quoted in full for job group 53200 Athletes:");
+  await read(seen, page, `cockpit (${GENERAL}), About this job for Athletes`, aboutJob);
   const road0Plan = await planAddress(page);
 
   // Door 1: Your destination, answered, then Pick a future and the first written future.
@@ -247,9 +255,9 @@ test("no screen of the journey says what to do or ranks anything: every visible 
   expect(road0Cards).toBeGreaterThan(generalRoadV2026.steps.length);
   expect(apprenticeCards).toBeGreaterThanOrEqual(roadApprenticeToOwnShopAB.steps.length);
   const all = seen.map((s) => s.text).join("\n").replace(/\s+/g, " ");
-  // The citations' allowances. One with a source kind (the government's requirement line for group 53200)
-  // shows only on About this job for that group, which this walk doesn't open (25h's own test does).
-  for (const allowance of OFFICIAL_QUOTE_ALLOWANCES.filter((a) => !a.sourceKind)) expect(all, allowance.text).toContain(`“${allowance.text}”`);
+  // Every allowance shows somewhere on the walk, in quote marks: the citations' under their steps' sources,
+  // and the one with a source kind (the government's requirement line for group 53200) on About this job.
+  for (const allowance of OFFICIAL_QUOTE_ALLOWANCES) expect(all, allowance.text).toContain(`“${allowance.text}”`);
 
   expect(verdictsIn(seen)).toEqual([]);
 });

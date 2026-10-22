@@ -24,7 +24,8 @@
  * suite's other files saved. *What DotAmi knows about you* is measured first, on that seed alone: it counts
  * everything in the data file. The cockpit is then measured on a fresh idea straight after *Pick a future*,
  * the designed first visit (docs/architecture/future-cockpit.md § 2, "First visit and return visits"), on
- * road 0 and on road 1, and *Your futures* with a fresh idea at the top of its list.
+ * road 0 and on road 1, and *Your futures* with a fresh idea at the top of its list. *About this job* is
+ * measured open on road 1, for a job picked the way a person picks one (task 25h).
  */
 import { execFileSync, spawn, type ChildProcess } from "node:child_process";
 import { existsSync, mkdirSync, rmSync, writeFileSync } from "node:fs";
@@ -35,10 +36,12 @@ import { expect, test, type Locator, type Page, type TestInfo } from "@playwrigh
 
 import { generalRoadV2026, roadApprenticeToOwnShopAB } from "../lib/engines/roads/v2026";
 import { waitForReact } from "../tests/helpers/react-ready";
-import { BUDGETS, WIDTHS, WINDOWS_EXTRA, type Clutter, type ScreenId } from "./budgets";
+import { WIDTHS, type ScreenId } from "./budgets";
 import { intakeStepsWords, jobStepWords, pickWords, whereStepWords } from "../lib/front-door/words";
 
 import { measurePage, type Measured } from "./clutter-measure";
+import { budgetFor, clutterBreaches } from "./clutter-rule";
+import { lookCloser, pickJob } from "./cockpit-calm";
 import { answerWhereInAlberta, pickTheJob, skipTheJob } from "./three-steps";
 
 // Case-blind: the question starts with "What" since 2026-10-20 (it began "In a few years, what …").
@@ -159,29 +162,14 @@ async function measureAtEverySize(page: Page, testInfo: TestInfo, screen: Screen
       `clutter ${label}: ${measured.regions} regions, ${measured.controls} controls, ${measured.textSizes} text sizes, smallest ${measured.smallestTextPx}px`,
     );
 
-    // Checked whatever the budgets say: a block without a mark isn't counted, so it must not be there.
-    expect
-      .soft(measured.unmarkedBlocks, `${label}: blocks with no data-region mark, inside no region (the region count can't see them)`)
-      .toEqual([]);
-
-    const gate = BUDGETS[screen]?.[size.id];
-    expect.soft(gate, `${label}: no budget in e2e/budgets.ts (measured ${JSON.stringify({ ...measured, controlNames: undefined })})`).toBeDefined();
-    if (!gate) continue;
     // The budgets are what CI (Ubuntu) measures; on Windows, where Chromium draws a few screens a little
-    // differently, the extra recorded for that screen is added (e2e/budgets.ts, WINDOWS_EXTRA).
-    const extra = process.platform === "win32" ? (WINDOWS_EXTRA[screen]?.[size.id] ?? {}) : {};
-    const budget: Clutter = {
-      ...gate,
-      regions: gate.regions + (extra.regions ?? 0),
-      controls: gate.controls + (extra.controls ?? 0),
-      textSizes: gate.textSizes + (extra.textSizes ?? 0),
-    };
-    expect.soft(measured.regions, `${label}: regions (${measured.regionNames.join(", ")})`).toBeLessThanOrEqual(budget.regions);
-    expect.soft(measured.controls, `${label}: controls in the first window (${measured.controlNames.join(" | ")})`).toBeLessThanOrEqual(
-      budget.controls,
-    );
-    expect.soft(measured.textSizes, `${label}: text sizes (${measured.sizesPx.join(", ")} px)`).toBeLessThanOrEqual(budget.textSizes);
-    expect.soft(measured.smallestTextPx, `${label}: the smallest text, px`).toBeGreaterThanOrEqual(budget.smallestTextPx);
+    // differently, the extra recorded for that screen is added (e2e/budgets.ts, WINDOWS_EXTRA). The rule lives
+    // in e2e/clutter-rule.ts, and the quality report counts "within" with the same rule.
+    const budget = budgetFor(screen, size.id);
+    expect.soft(budget, `${label}: no budget in e2e/budgets.ts (measured ${JSON.stringify({ ...measured, controlNames: undefined })})`).not.toBeNull();
+    // Checked whatever the budgets say: a block without a region mark isn't counted by the region count, so it
+    // must not be there; then each count against its budget, the names of what was counted in each breach.
+    expect.soft(clutterBreaches(measured, budget), `${label}: over the clutter limit`).toEqual([]);
   }
   // What was counted, beside the screenshots: the regions' names, every control's name and the sizes.
   const counted = testInfo.outputPath(`${screen}.json`);
@@ -422,6 +410,20 @@ test("the cockpit on road 0, a first visit, stays within its clutter budget", as
 test("the cockpit on road 1, a first visit, stays within its clutter budget", async ({ page }, testInfo) => {
   const cockpit = await pickFuture(page, roadApprenticeToOwnShopAB.label);
   await measureAtEverySize(page, testInfo, "cockpit-road-1", () => load(page, cockpit, road));
+});
+
+// docs/ui-spec/cockpit/about-this-job.md, "The budget": opened only by the person's click, so the first-visit
+// rows above don't change; this row is measured with the panel open on road 1, for Cabinetmakers.
+test("About this job, open on road 1, stays within its clutter budget", async ({ page }, testInfo) => {
+  const cockpit = await pickFuture(page, roadApprenticeToOwnShopAB.label);
+  await pickJob(page, "Cabinetmakers", "72311.00");
+  await measureAtEverySize(page, testInfo, "cockpit-about-job", async () => {
+    await load(page, cockpit, road);
+    await lookCloser(page, "About this job");
+    await expect(page.getByRole("region", { name: "About this job" })).toBeVisible();
+    // Opening it moves focus to its heading.
+    await expect(page.getByRole("region", { name: "About this job" }).getByRole("heading", { level: 2 })).toBeFocused();
+  });
 });
 
 test("Your plan stays within its clutter budget", async ({ page }, testInfo) => {

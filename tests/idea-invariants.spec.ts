@@ -12,6 +12,7 @@ import type { NotToldRow } from "@/lib/cockpit/told";
 import { cockpitWords } from "@/lib/cockpit/words";
 import { roadsV2026 } from "@/lib/engines/roads/v2026";
 
+import * as aboutJobFile from "@/lib/about-job/words";
 import * as cockpitFile from "@/lib/cockpit/words";
 import * as frontDoorFile from "@/lib/front-door/words";
 import * as landscapeFile from "@/lib/landscape/words";
@@ -322,7 +323,13 @@ describe("the words no-times lets through", () => {
     // The harness reads what the lib functions it calls write; a screen also shows sentences straight from
     // these files (the front door's doors, the cockpit's help lines). Each plain string is read here; the
     // functions among them are read when the harness calls them, and whole screens by the browser sweep (29e).
-    const files = { "lib/front-door/words.ts": frontDoorFile, "lib/cockpit/words.ts": cockpitFile, "lib/landscape/words.ts": landscapeFile, "lib/roads/words.ts": roadsFile };
+    const files = {
+      "lib/front-door/words.ts": frontDoorFile,
+      "lib/cockpit/words.ts": cockpitFile,
+      "lib/landscape/words.ts": landscapeFile,
+      "lib/roads/words.ts": roadsFile,
+      "lib/about-job/words.ts": aboutJobFile,
+    };
     const withTimes = Object.entries(files).flatMap(([file, mod]) =>
       plainStrings(mod).flatMap(({ path, text }) => (findTimeWords(text).length > 0 ? [`${file} ${path}`] : [])),
     );

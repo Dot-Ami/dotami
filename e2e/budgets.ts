@@ -30,6 +30,9 @@ export const BASELINE_SCREENS = [
  * part of a screen the baseline measured, named in `ADDED_SCREEN_PART_OF`.
  */
 export const ADDED_SCREENS = [
+  // About this job (2026-10-22, task 25h; docs/ui-spec/cockpit/about-this-job.md, "The budget"): the cockpit on
+  // road 1 with the panel open for a picked job.
+  "cockpit-about-job",
   // Pick a future's three steps (2026-10-22; docs/ui-spec/futures/02-where-you-are.md, 03-road-match.md): step 1
   // is measured as `futures` (the page opens on it); these are the parts after it, on Pick a future and on the
   // intake page (the typed way ends on the same steps).
@@ -58,6 +61,7 @@ export type AddedScreenId = (typeof ADDED_SCREENS)[number];
 
 /** The baseline screen each added screen is a part of: its first row may not be busier than that screen's baseline row. */
 export const ADDED_SCREEN_PART_OF: Record<AddedScreenId, (typeof BASELINE_SCREENS)[number]> = {
+  "cockpit-about-job": "cockpit-road-1",
   "futures-area": "futures",
   "futures-region": "futures",
   "futures-outside": "futures",
@@ -135,6 +139,12 @@ export const BASELINE: ClutterTable = {
  * - once on main it never changes (`tests/clutter-budgets.spec.ts` compares it with main's), and the screen's
  *   budget in `BUDGETS` starts at it and can only go down, as every budget does.
  *
+ * About this job (2026-10-22, task 25h; docs/ui-spec/cockpit/about-this-job.md, "The budget"): open on road 1
+ * for a picked job (Cabinetmakers), a part of the cockpit on road 1, its regions the first visit's plus the panel
+ * slot the layout rule already counts. On a phone the sheet covers the road, so its controls are the sheet's (the
+ * spec's ceiling: road 1's 14 there). CI run 39732926050 counted 8, 2, 5 and 9.5 px on a phone, 9, 28, 5 and
+ * 9.5 px on a tablet and 9, 23, 5 and 9.5 px on a laptop, the same as Chromium on Windows.
+ *
  * Pick a future's three steps (tasks 28b, 23g; docs/ui-spec/futures/02-where-you-are.md and 03-road-match.md,
  * "Regions and controls"): area, region, the screen outside Alberta that asks nothing, and step 3 on case B (a
  * job with no written road: the no-road block, About this job's place, the other futures), each on Pick a
@@ -150,6 +160,7 @@ export const BASELINE: ClutterTable = {
  * the first window), over the intake's 5, so it is shown to the maintainer instead (see `ADDED_SCREENS`).
  */
 export const FIRST_MEASURED: Partial<Record<AddedScreenId, Partial<Record<WidthId, Clutter>>>> = {
+  "cockpit-about-job": { phone: m(8, 2, 5, 9.5), tablet: m(9, 28, 5, 9.5), laptop: m(9, 23, 5, 9.5) },
   "futures-area": { phone: m(4, 5, 5, 10.5), tablet: m(4, 5, 5, 10.5), laptop: m(4, 5, 5, 10.5) },
   "futures-region": { phone: m(4, 5, 5, 10.5), tablet: m(4, 5, 5, 10.5), laptop: m(4, 5, 5, 10.5) },
   "futures-outside": { phone: m(4, 4, 5, 10.5), tablet: m(4, 4, 5, 10.5), laptop: m(4, 4, 5, 10.5) },
@@ -239,6 +250,9 @@ export const FIRST_MEASURED: Partial<Record<AddedScreenId, Partial<Record<WidthI
  * tablet (21 on a laptop and 11 on a phone, as budgeted), the cockpit on road 0 18, 32 and 29 to 17, 29 and
  * 27, and on road 1 28 and 25 to 25 and 23 on a tablet and a laptop (14 on a phone, as budgeted).
  *
+ * A screen added after the baseline (`ADDED_SCREENS`) starts at its first row in `FIRST_MEASURED` and only goes
+ * down from there, like the rest.
+ *
  * 2026-10-22, Pick a future's three steps (tasks 28b, 23g): the page opens on step 1, *What's closest to your
  * work?*, with nothing typed: the nav, the step's heading, the step and the site footer, and five controls (the
  * back link, the word mark, the search box, Skip, the footer's link), five text sizes. Lowered from 6 regions, 5,
@@ -257,6 +271,7 @@ export const BUDGETS: ClutterTable = {
   "cockpit-road-1": { phone: m(7, 14, 4, 9.5), tablet: m(8, 25, 5, 9.5), laptop: m(8, 23, 5, 9.5) },
   plan: { phone: m(10, 2, 5, 10.5), tablet: m(10, 2, 5, 10.5), laptop: m(10, 2, 5, 10.5) },
   // Added screens start at their first row (FIRST_MEASURED) and can only go down from there.
+  "cockpit-about-job": { phone: m(8, 2, 5, 9.5), tablet: m(9, 28, 5, 9.5), laptop: m(9, 23, 5, 9.5) },
   "futures-area": { phone: m(4, 5, 5, 10.5), tablet: m(4, 5, 5, 10.5), laptop: m(4, 5, 5, 10.5) },
   "futures-region": { phone: m(4, 5, 5, 10.5), tablet: m(4, 5, 5, 10.5), laptop: m(4, 5, 5, 10.5) },
   "futures-outside": { phone: m(4, 4, 5, 10.5), tablet: m(4, 4, 5, 10.5), laptop: m(4, 4, 5, 10.5) },

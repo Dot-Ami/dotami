@@ -396,7 +396,15 @@ to the data.
 1. Bump `version` in `package.json` (e.g. `0.1.1`, or `0.2.0-dev.1` for a pre-release) in a PR.
    The same PR turns [Unreleased] in [`docs/privacy-log.md`](../privacy-log.md) (what DotAmi keeps,
    sends, ships and asks) into that version's dated section, as it does in `CHANGELOG.md`;
-   `tests/privacy-log.spec.ts` fails until the version has one.
+   `tests/privacy-log.spec.ts` fails until the version has one. The version's CHANGELOG section also
+   gets one **Quality** line (the plan's S2.5.32, task 32a): run `npm run test:browser` (for the
+   clutter numbers), then `npm run quality:line` (add `-- --live` for the live quote check, which
+   reads the cited government pages), and paste the line it prints. It counts the idea harness's pass
+   rate, where ideas end, the silent fallbacks, the job search against the corpus, the clutter per
+   screen and width, and source health, from the tests on that machine; nothing comes from people
+   using DotAmi. Made on the builder's Windows machine, the line's clutter part is counted with the
+   Windows allowance (`WINDOWS_EXTRA` in `e2e/budgets.ts`), so it can differ from CI's Ubuntu numbers.
+   `npm run quality:report` prints the same numbers in full (`test-results/quality.md`).
 2. After it merges: `git tag v0.1.1 && git push origin v0.1.1`.
 3. `.github/workflows/release.yml` checks the tag matches `package.json`, packages the app, runs
    the desktop test on the packaged app, builds the installer and uploads it to a **draft** release.

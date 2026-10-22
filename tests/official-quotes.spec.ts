@@ -63,6 +63,19 @@ describe("the government's requirement lines, quoted under their label", () => {
     expect(labelledQuotes(normaliseSpaces(quotedRun(LABEL_63210, LINES_63210)))).toHaveLength(5);
   });
 
+  it("reads the file's longest sub-heading (75 characters, group 40010) as a sub-heading, so the run goes on past it", () => {
+    // Found by About this job (25h): with sub-headings read up to 60 characters, the run ended at 40010's and
+    // the government's lines after it were read as DotAmi's.
+    const subheading = "Government managers in health policy development and program administration";
+    expect(subheading).toHaveLength(75);
+    const run = quotedRun("The government's words, quoted in full for job group 40010 Government managers - health and social policy development and program administration:", [
+      { subheading },
+      "Several years of experience as a health or social policy researcher, consultant or program officer are usually required.",
+    ]);
+    expect(labelledQuotes(normaliseSpaces(run))).toHaveLength(1);
+    expect(withoutLabelledQuotes(run, () => true)).toContain(subheading);
+  });
+
   it("control: the same line as DotAmi's own words, with no quote marks, is caught", () => {
     expect(findTimeWords(`${LABEL_63210} ${APPRENTICESHIP}`)).not.toEqual([]);
     expect(findTimeWords(`To work as a hairstylist: ${APPRENTICESHIP}`)).not.toEqual([]);

@@ -62,6 +62,18 @@ jobs:
       - name: Test
         run: npm run test
 
+      # The quality numbers (the plan's S2.5.32, task 32a; scripts/quality-report.mjs): the idea harness's pass
+      # rate, the job search against the corpus, where ideas end, the silent fallbacks and source health, counted
+      # from what the tests compute. Printed here and on the run's summary page. Information only, not part of
+      # `npm run ci:quality`: no number fails anything yet, so a problem in this step never fails the job.
+      # Nothing is fetched or sent (no --live here).
+      - name: Quality numbers
+        if: ${{ !cancelled() }}
+        continue-on-error: true
+        run: |
+          npm run quality:report
+          cat test-results/quality.md >> "$GITHUB_STEP_SUMMARY"
+
       - name: Build
         run: npm run build
 
@@ -94,6 +106,15 @@ jobs:
 
       - name: Browser tests
         run: npm run test:browser
+
+      # The clutter part of the quality numbers: each screen at each width as this run measured it
+      # (e2e/clutter-budget.spec.ts), against its budget. Information only, like the quality job's step.
+      - name: Quality numbers (clutter)
+        if: ${{ !cancelled() }}
+        continue-on-error: true
+        run: |
+          npm run quality:report -- --clutter-only
+          cat test-results/quality.md >> "$GITHUB_STEP_SUMMARY"
 
   # The desktop app packaged for Windows and driven like a person drives it (e2e-desktop/):
   # start on an empty data folder → describe a venture → close → start again → still there.

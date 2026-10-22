@@ -151,8 +151,16 @@ describe("the clutter budgets (e2e/budgets.ts)", () => {
     expect(SCREENS.filter((s) => !measured.has(s))).toEqual([]);
   });
 
-  it("are never above the baseline, and the smallest text never below it", () => {
+  it("are never above the baseline or a screen's first row, and the smallest text never below it", () => {
     expect(looserThan(BASELINE, BUDGETS)).toEqual([]);
+    expect(looserThan(FIRST_MEASURED, BUDGETS)).toEqual([]);
+  });
+
+  it("catch a budget above a screen's first row (the control)", () => {
+    const raised: ClutterTable = {
+      "cockpit-about-job": { phone: { ...FIRST_MEASURED["cockpit-about-job"]!.phone!, controls: FIRST_MEASURED["cockpit-about-job"]!.phone!.controls + 1 } },
+    };
+    expect(looserThan(FIRST_MEASURED, raised)).toHaveLength(1);
   });
 
   it("are never above what they are on main, so a budget once lowered stays down", async () => {
@@ -173,7 +181,7 @@ describe("the clutter budgets (e2e/budgets.ts)", () => {
     expect(BASELINE, `BASELINE differs from main's (${main.slice(0, 7)}); it is a record and never changes`).toEqual(
       before.BASELINE,
     );
-    // A first row is a record too, once it is on main.
+    // A first row is a record too, once it is on main: it never changes (a new screen's first row can be added).
     for (const [screen, row] of Object.entries(before.FIRST_MEASURED ?? {})) {
       expect(FIRST_MEASURED[screen as keyof typeof FIRST_MEASURED], `FIRST_MEASURED["${screen}"] differs from main's; it is a record and never changes`).toEqual(row);
     }

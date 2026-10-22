@@ -19,7 +19,8 @@
 // the page hides. A quote needs at least 3 words. Exit code 0 when every quote is found (and it
 // prints the date to record as `checkedOn`), 1 when a quote is missing or a page couldn't be
 // checked, 2 for a usage error. It never changes a file: the builder copies what it printed into
-// the catalog.
+// the catalog. The quality report (`npm run quality:report -- --live`, scripts/quality-report.mjs)
+// runs it over every tool check and counts what it found, through `onResult`.
 
 import { pathToFileURL } from "node:url";
 
@@ -252,9 +253,15 @@ function parseArgs(argv) {
 /**
  * The whole run, with its outside world passed in so the test can use saved pages: `fetchPage`
  * (url → { ok, status, contentType, body }), `collect` (the recorded tool checks), `log` and `today`.
- * Returns the exit code.
+ * `onResult`, when given, gets what a run over every recorded tool check found (not a `--url` run):
+ * { checkedOn, pages: [{ where, url, outcome, status }] }, `outcome` one of "found", "words-missing",
+ * "answered" (the server answered `status`, not the page), "unreachable" or "pdf". The quality report
+ * counts the dead pages from it (scripts/quality-report.mjs --live). Returns the exit code.
  */
-export async function main(argv, { fetchPage = fetchLive, collect = collectToolChecked, log = console.log, today = new Date().toLocaleDateString("en-CA") } = {}) {
+export async function main(
+  argv,
+  { fetchPage = fetchLive, collect = collectToolChecked, log = console.log, today = new Date().toLocaleDateString("en-CA"), onResult } = {},
+) {
   const args = parseArgs(argv);
   if (typeof args === "string") return usage(log, args);
 
@@ -269,25 +276,35 @@ export async function main(argv, { fetchPage = fetchLive, collect = collectToolC
 
   let missing = 0;
   let unchecked = 0;
+  const pages = [];
   for (const target of targets) {
     log("");
     log(target.where === "--url" ? target.url : `${target.where}  ${target.url}`);
     const page = await fetchPage(target.url);
     let reason;
-    if (!page.ok) reason = page.status ? `the server answered ${page.status}` : `the page couldn't be reached (${page.error ?? "no answer"})`;
-    else if (/application\/pdf/i.test(page.contentType) || page.body.startsWith("%PDF-")) {
+    let outcome;
+    if (!page.ok) {
+      reason = page.status ? `the server answered ${page.status}` : `the page couldn't be reached (${page.error ?? "no answer"})`;
+      outcome = page.status ? "answered" : "unreachable";
+    } else if (/application\/pdf/i.test(page.contentType) || page.body.startsWith("%PDF-")) {
       reason = "it is a PDF, which this script doesn't read; a person reads PDFs";
+      outcome = "pdf";
     }
     if (reason) {
       log(`  could not be checked: ${reason}`);
       unchecked += target.quotes.length;
+      pages.push({ where: target.where, url: target.url, outcome, status: page.status ?? 0 });
       continue;
     }
+    let pageMissing = 0;
     for (const { quote, found } of findQuotes(pageToText(page.body), target.quotes)) {
-      if (!found) missing += 1;
+      if (!found) pageMissing += 1;
       log(`  ${found ? "found     " : "NOT FOUND "} ${JSON.stringify(quote)}`);
     }
+    missing += pageMissing;
+    pages.push({ where: target.where, url: target.url, outcome: pageMissing > 0 ? "words-missing" : "found", status: page.status ?? 200 });
   }
+  if (onResult && !args.url) onResult({ checkedOn: today, pages });
 
   log("");
   if (missing === 0 && unchecked === 0) {

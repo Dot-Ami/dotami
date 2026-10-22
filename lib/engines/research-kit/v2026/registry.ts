@@ -286,6 +286,38 @@ export const SOURCES: readonly SourceCard[] = [
     note: "Its own terms page loads only with scripts and wasn't readable by our tools (competitive-landscape.md § 4.6), and Google's general terms restrict automated access. The maintainer's call 5, 2026-10-21: on the never-fetch list now, since its terms couldn't be read; DotAmi still links to it and reads nothing from it.",
   },
 
+  // ---- About this job's general pages: links the person opens in their own browser (task 25h) ---------------
+  {
+    id: "bizpal",
+    name: "BizPaL",
+    publisher: "Innovation, Science and Economic Development Canada, with the provinces and territories",
+    url: "https://bizpal.ca/",
+    phase: "now",
+    access: "link",
+    ...linkOnly,
+    keyedBy: ["none"],
+    termsUrl: null,
+    termsQuote: null,
+    seenOn: "2026-10-20",
+    checkedBy: "not-read",
+    note: "Business permits and licences, searched on its own home page (heading \"Business Permit and Licence Information\", read 2026-10-20 for docs/ui-spec/cockpit/about-this-job.md). About this job links the home page only, with no search words; DotAmi fetches nothing from it, so its terms weren't read.",
+  },
+  {
+    id: "alberta-tradesecrets",
+    name: "Alberta Tradesecrets",
+    publisher: "Government of Alberta",
+    url: "https://tradesecrets.alberta.ca/",
+    phase: "now",
+    access: "link",
+    ...linkOnly,
+    keyedBy: ["none"],
+    termsUrl: null,
+    termsQuote: null,
+    seenOn: "2026-10-20",
+    checkedBy: "not-read",
+    note: "Alberta's designated trades. About this job links its Trade Profiles page (read 2026-10-20: Cabinetmaker and Hairstylist are on it), in Alberta only, with no search words; DotAmi fetches nothing from it, so its terms weren't read.",
+  },
+
   // ---- Never automated: their terms bar scripts, so nothing in DotAmi fetches them -------------------------
   {
     id: "job-bank-pages",

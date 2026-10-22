@@ -378,10 +378,17 @@ placed in phase 3.
     `data/job-bank-wages-2025/` into `lib/engines/wages/v2026/`, whose look-ups give the file's own row for a
     job in an economic region or a province as a whole, the level from its source code, and a missing row as
     missing. Not shown anywhere yet: *About this job* (25h) is the first screen to read it
-  - [ ] 25h: *About this job* for any job, in the right-hand panel from *Look closer*: the job's rules quoted
+  - [x] 25h: *About this job* for any job, in the right-hand panel from *Look closer*: the job's rules quoted
     word for word, the published wages labelled "Not what a shop earns, and not what you would earn", and
     *Where to look yourself* (Job Bank's general search, with the job's name and code to copy); no business
-    counts in this version, and it says so
+    counts in this version, and it says so. Built 2026-10-22 (`components/cockpit/about-this-job-panel.tsx`,
+    `lib/about-job/`, read on the server by GET /api/futures/<id>): the wage row is the province's own until
+    the person's region is kept (Pick a future's step 2, its own pull request; wiring it in is one line in
+    `app/api/futures/[id]/route.ts`), so its **Change** isn't drawn yet; its own clutter row
+    (`cockpit-about-job`, the first screen added after the baseline, `FIRST_MEASURED` in `e2e/budgets.ts`).
+    Pick a future's no-road block shows it in place with its own task (28c). The browser idea sweep (29e)
+    opens it for every swept idea that names a job and reads it through the gate's checks
+    (`e2e/about-job-read.ts`)
   - [ ] Phase 3: business counts for every industry (25d), the research-pack script (25f), the validator and
     writer's guide (25g), read tools (25k), a second road built with the kit (25l), the rest of the rule text
     (25r)
@@ -544,11 +551,19 @@ placed in phase 3.
     (98-10-0594-01), Red Seal's tools appendix and Job Bank's postings, each with pins, licence, period and
     next release; a link checker (31b); a weekly freshness check that opens one issue (31c); a *Where
     DotAmi's numbers come from* page (31d)
-- ⬜ **[14n] Best results without analytics (S2.5.32).** Nothing comes from the people using DotAmi;
+- 🔄 **[14n] Best results without analytics (S2.5.32).** Nothing comes from the people using DotAmi;
   quality is measured from the tests.
-  - [ ] 32a: each CI run writes the harness pass rate, how often the expected job is among the matches, how
+  - [x] 32a: each CI run writes the harness pass rate, how often the expected job is among the matches, how
     many ideas reach a written road, the general road or "not written yet", silent fallbacks (0), clutter
-    numbers per screen and width, and source health; each release's changelog gets a Quality line
+    numbers per screen and width, and source health; each release's changelog gets a Quality line.
+    `npm run quality:report` (scripts/quality-report.mjs) prints them and writes `test-results/quality.md`,
+    in CI after the tests (the quality job) and after the browser run (the clutter); `npm run quality:line`
+    gives the release's Quality line, which says so for any part the run didn't count (the live quote check
+    too) and, made on Windows, counts the clutter with the Windows allowance. Information only: no number
+    fails anything yet. Silent fallbacks
+    counted on 2026-10-21: 37 ideas (the aim, 0, is phase 2's end). Counted on 2026-10-22, typed in: 323 of
+    367 ideas on the general road, 44 before any road, 0 of the 11 ideas with a road of their own (road 1)
+    reach it
   - [ ] 32b: the maintainer's first monthly walk, three test ideas plus one of the maintainer's own, with
     the findings turned into issues or test ideas
 - 🔄 **[14o] Phase 2's fixes and releases.** The maintainer's calls of 2026-10-20.

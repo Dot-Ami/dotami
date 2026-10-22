@@ -11,6 +11,23 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [Unreleased]
 
 ### Added
+- **About this job** ([14i], task 25h; [docs/ui-spec/cockpit/about-this-job.md](docs/ui-spec/cockpit/about-this-job.md)).
+  Once you've picked the job closest to your work, the goal bar's *Look closer* menu has *About this job*, which
+  opens in the right-hand panel (on a phone, a sheet over the road). Four rows, always in this order: the
+  government's *Employment requirements* for the job's group, quoted word for word under a line saying they are
+  its words (Statistics Canada's NOC 2021); the wages Job Bank publishes for the group, the row labelled with the
+  level its own source code gives, its period and survey, and "Not what a shop earns, and not what you would
+  earn" (a region with no figures says so, with the government's note and the row it points to); a plain line
+  that business counts aren't in this version; and *Where to look yourself*: Job Bank's wage search, BizPaL and
+  (in Alberta) Tradesecrets, each the site's own general page, with the job's name and code shown as text to
+  copy, never in a link. Outside Alberta the wage row is the one for the province or territory as a whole, with
+  why under the row's label. It only shows: nothing on the road changes, and nothing new is kept. The government's files are read on
+  DotAmi's own server, so the large job and wage lists never load into the page. Until your region is kept
+  (Pick a future's next step, its own change) the wage row is the province's own, saying your region isn't
+  picked. The screen checks read it: no verdict, no time in DotAmi's own words (the government's quoted lines
+  pass only on this row, only as the shipped file holds them), and its own clutter limit. The browser idea
+  sweep opens it too, for every swept idea that names a job, and reads every wage figure back as the wage
+  file's own row (a summed wage, or a figure outside its row, is caught).
 - **One list of outside sources and their terms** (the research kit's source registry,
   `lib/engines/research-kit/v2026/registry.ts`; [docs/architecture/research-kit.md](docs/architecture/research-kit.md)
   § 5.2). Plumbing, with no change on screen: one card for each government file the kit ships in this phase and
@@ -120,6 +137,25 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   *About this job* until About this job reads the answers kept here. The idea harness and the browser idea sweep
   find each person's job through the search from their own words (the kind of work, or the job's own name), never
   by its code, and accept the honest "not written yet" ending; the sweep plays the three steps.
+- **Quality numbers on every CI run, and a Quality line for the release notes** ([14n], task 32a; the plan's
+  S2.5.32, "best results without analytics"). For the people building DotAmi, with no change in the app:
+  `npm run quality:report` prints, and writes to `test-results/quality.md`, what the tests already compute,
+  counted on 2026-10-22: where each of the 367 invented test ideas ends when typed in (323 on the general road,
+  *Starting any business in Alberta*, which any idea can reach; 44 stop before any road is shown; 0 of the 11
+  ideas with a road of their own written for them reach it), the ideas shown a road that isn't theirs with
+  nothing on screen saying so (37 today; phase 2 aims for 0), how often "What's closest to your work?" lists
+  the job an idea expects (in the group it opens for 150 of 220, anywhere in its lists for 172, no job at all
+  for 4; the cockpit's older job list, 20), how busy each screen looks at each width from the last browser run,
+  source health (each citation by who checked it, sources whose stated next release date has passed, the 5
+  citations on government pages that answered "page not found", and, only when a builder asks with `--live`,
+  a live run of the quote checker), and how the ideas pass the idea test (140 break none of its rules; the
+  other 227 only rules listed as known and not yet fixed). The clutter is counted with the clutter test's own
+  rule and the job search with the count its floor test holds, so the report can't print a number the tests
+  don't. CI prints it after the tests and after the browser run, and on the run's summary page; no number fails
+  anything yet. `npm run quality:line` gives the one Quality line, in plain words, each release adds here;
+  a part the run didn't count (the job search, the clutter, the sources, or the live quote check) says so in
+  the line. Made on a builder's Windows machine, its clutter part counts with the Windows allowance, so it
+  can differ from CI's. Nothing comes from the people using DotAmi, and nothing is sent anywhere.
 ### Fixed
 - **Your answer to "Are you buying equipment, a vehicle or tools?" on a future picked on Pick a future is
   kept** (the maintainer's "Yes, fix both", 2026-10-20). Pick a future saves equipment as not said, since it
