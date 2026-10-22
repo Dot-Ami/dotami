@@ -1,7 +1,6 @@
 import { describe, expect, it } from "vitest";
 
 import { allCatalogCitations } from "@/lib/engines/all-citations";
-import { nocData } from "@/lib/engines/noc/v2021/data";
 import { toolCheckQuotes } from "@/lib/engines/shared/citation-check";
 
 import { OFFICIAL_QUOTE_ALLOWANCES, VERDICT_PHRASES, VERDICT_WORDS, findVerdicts } from "./helpers/verdict-words";
@@ -12,12 +11,9 @@ import { OFFICIAL_QUOTE_ALLOWANCES, VERDICT_PHRASES, VERDICT_WORDS, findVerdicts
  * themselves are checked in a real browser by e2e/no-verdict.spec.ts.
  */
 
-// Every quote a tool found on an official page, from every catalog, and every "Employment requirements" line
-// of the pinned NOC 2021 elements file (shown word for word as the government's own lines, task 28a): the only
-// text that may carry a verdict phrase onto a screen, in the government's own voice.
-const officialQuotes = [
-  ...new Set([...allCatalogCitations().flatMap(({ citation }) => toolCheckQuotes(citation)), ...nocData.requirements.map(([, line]) => line)]),
-];
+// Every quote a tool found on an official page, from every catalog: the only text that may carry a
+// verdict phrase onto a screen, in the page's own voice.
+const officialQuotes = [...new Set(allCatalogCitations().flatMap(({ citation }) => toolCheckQuotes(citation)))];
 
 describe("the phrases a screen may never show", () => {
   it("catches each phrase on the list, however it is capitalised", () => {
@@ -134,7 +130,7 @@ describe("the phrases a screen may never show", () => {
 });
 
 describe("the allowances for quoted official text", () => {
-  it("each one is word for word a quote a tool found on an official page (or a line of a pinned government file), and says why it is allowed", () => {
+  it("each one is word for word a quote a tool found on an official page, and says why it is allowed", () => {
     for (const allowance of OFFICIAL_QUOTE_ALLOWANCES) {
       expect(officialQuotes, allowance.text).toContain(allowance.text);
       expect(allowance.why.length, allowance.text).toBeGreaterThan(20);

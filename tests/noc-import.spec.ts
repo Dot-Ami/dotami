@@ -91,15 +91,24 @@ describe("the import can be redone", () => {
   });
 });
 
-describe("every requirement line passes the screens' verdict check, as a quote", () => {
-  it("catches nothing but the one line with an allowance (group 53200 Athletes: “strongly recommended”)", () => {
+/**
+ * Requirement lines the screens' verdict check catches, which About this job (task 25h) may show only once each
+ * has its official-quote allowance in tests/helpers/verdict-words.ts. The allowance is added with the panel
+ * that shows the line, not here: e2e/no-verdict.spec.ts requires every allowance to be seen on a screen, and
+ * no screen shows these lines yet (docs/ui-spec/cockpit/about-this-job.md, "How the quoted lines pass").
+ */
+const LINES_AWAITING_AN_ALLOWANCE = [
+  ["53200", "A background combining athletic training and college or university studies is strongly recommended."],
+];
+
+describe("every requirement line against the screens' verdict check, as a quote", () => {
+  it("catches only the line known to need an allowance (group 53200 Athletes: “strongly recommended”), so a new one can't come in unseen", () => {
     // Shown as About this job shows them: each line inside its own quote marks.
-    const caught = nocData.requirements.filter(([, line]) => findVerdicts(`“${line}”`).length > 0);
-    expect(caught).toEqual([]);
-    // Without its quote marks the Athletes line is caught: the allowance covers it only as the government's quote.
-    const athletes = nocRequirements("53200").find((line) => /recommended/.test(line))!;
-    expect(OFFICIAL_QUOTE_ALLOWANCES.map((a) => a.text)).toContain(athletes);
-    expect(findVerdicts(athletes)).not.toEqual([]);
+    const allowed = new Set(OFFICIAL_QUOTE_ALLOWANCES.map((a) => a.text));
+    const caught = nocData.requirements.filter(([, line]) => findVerdicts(`“${line}”`).length > 0 && !allowed.has(line));
+    expect(caught).toEqual(LINES_AWAITING_AN_ALLOWANCE);
+    // The line is the government's, word for word, in its group.
+    expect(nocRequirements("53200")).toContain(LINES_AWAITING_AN_ALLOWANCE[0]![1]);
   });
 });
 
