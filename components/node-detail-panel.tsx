@@ -25,6 +25,11 @@ interface NodeDetailPanelProps {
   /** Set or clear the person's own number. Absent = the panel shows it without an input. */
   onOwnNumberChange?: (value: number | null) => void;
   /**
+   * Drawn just above the own-number box: the cockpit puts the Incorporating step's other number there, the
+   * person's third-year sales estimate the rule compares it with (2026-10-21).
+   */
+  ownNumberLead?: ReactNode;
+  /**
    * The cockpit's step panel puts its own sections here (status, done when, skills, costs), between the
    * two lines and the cards (2026-10-12; docs/architecture/future-cockpit.md § 2). Nothing else changes.
    */
@@ -48,6 +53,7 @@ export function NodeDetailPanel({
   reason,
   ownNumber = null,
   onOwnNumberChange,
+  ownNumberLead,
   children,
 }: NodeDetailPanelProps) {
   const { routes, provinceNotWritten } = incorporationRoutesFor(node.id, province);
@@ -76,7 +82,7 @@ export function NodeDetailPanel({
       </div>
       {node.officialWords ? <OfficialWordsBlock words={node.officialWords} className="mt-3" /> : null}
       {node.asksOwnNumber ? (
-        <OwnNumberField ask={node.asksOwnNumber} value={ownNumber} onChange={onOwnNumberChange} />
+        <OwnNumberField ask={node.asksOwnNumber} value={ownNumber} onChange={onOwnNumberChange} lead={ownNumberLead} />
       ) : null}
       {routes.length > 0 ? <RoutesSideBySide routes={routes} provinceNotWritten={provinceNotWritten} /> : null}
       <p className="mt-2 font-mono text-label uppercase tracking-[0.12em] text-stone-dim">
@@ -269,40 +275,46 @@ function OwnNumberField({
   ask,
   value,
   onChange,
+  lead,
 }: {
   ask: CFEOwnNumber;
   value: number | null;
   onChange?: (value: number | null) => void;
+  /** Drawn just above the box (the cockpit's third-year estimate box on Incorporating). */
+  lead?: ReactNode;
 }) {
   const id = useId();
   return (
-    <div className="mt-4 rounded-lg border border-rule bg-ink2 p-3">
-      <div className="flex flex-wrap items-center gap-2">
-        <label htmlFor={id} className="text-lead text-paper">
-          {ask.label}
-        </label>
-        <span className="text-lead text-stone" aria-hidden>
-          $
-        </span>
-        <input
-          id={id}
-          type="text"
-          inputMode="numeric"
-          autoComplete="off"
-          value={value === null ? "" : String(value)}
-          disabled={!onChange}
-          onChange={(e) => {
-            // Digits only, and never more than a save can keep (ownNumberFromTyping).
-            onChange?.(ownNumberFromTyping(e.target.value));
-          }}
-          className="w-32 rounded-sm border border-rule bg-ink px-2 py-1 font-mono text-lead text-paper focus:border-maple focus:outline-hidden"
-        />
-        <span className="rounded-sm border border-rule px-1.5 py-0.5 font-mono text-label uppercase tracking-wider text-stone">
-          your number
-        </span>
+    <>
+      {lead}
+      <div className="mt-4 rounded-lg border border-rule bg-ink2 p-3">
+        <div className="flex flex-wrap items-center gap-2">
+          <label htmlFor={id} className="text-lead text-paper">
+            {ask.label}
+          </label>
+          <span className="text-lead text-stone" aria-hidden>
+            $
+          </span>
+          <input
+            id={id}
+            type="text"
+            inputMode="numeric"
+            autoComplete="off"
+            value={value === null ? "" : String(value)}
+            disabled={!onChange}
+            onChange={(e) => {
+              // Digits only, and never more than a save can keep (ownNumberFromTyping).
+              onChange?.(ownNumberFromTyping(e.target.value));
+            }}
+            className="w-32 rounded-sm border border-rule bg-ink px-2 py-1 font-mono text-lead text-paper focus:border-maple focus:outline-hidden"
+          />
+          <span className="rounded-sm border border-rule px-1.5 py-0.5 font-mono text-label uppercase tracking-wider text-stone">
+            your number
+          </span>
+        </div>
+        <p className="mt-1.5 text-body leading-5 text-stone">{ask.help}</p>
       </div>
-      <p className="mt-1.5 text-body leading-5 text-stone">{ask.help}</p>
-    </div>
+    </>
   );
 }
 

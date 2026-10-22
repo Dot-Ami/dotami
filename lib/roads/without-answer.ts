@@ -1,6 +1,6 @@
 import { branchDecisions, clearScenarioBranch, recomputeScenarioState, setIncorporateAt, type BranchDecisionId } from "@/lib/scenarios/branches";
 import { isBranchDecided } from "@/lib/scenarios/graph";
-import { withNotSaidAgain } from "@/lib/scenarios/not-said";
+import { withNotSaidAgain, withSalesTarget } from "@/lib/scenarios/not-said";
 import type { Scenario } from "@/lib/scenarios/types";
 
 import type { RoadEvaluationInput } from "./evaluate-road";
@@ -56,10 +56,12 @@ export function withoutIdeaAnswer(scenario: Scenario, answerId: string): Scenari
       void _answered;
       return { ...scenario, profile: withNotSaidAgain(rest as Scenario["profile"], "equipment") };
     }
+    // A sales number goes to 0, none; on a picked future that year goes back on the not-said list too, so
+    // the rail and the plan say "Not said" again, as when it was picked (2026-10-21).
     case "idea:sales-year-1":
-      return profile.targetRevenueY1 > 0 ? withProfile({ targetRevenueY1: 0 }) : null;
+      return profile.targetRevenueY1 > 0 ? { ...scenario, profile: withSalesTarget(profile, 1, 0) } : null;
     case "idea:sales-year-3":
-      return profile.targetRevenueY3 > 0 ? withProfile({ targetRevenueY3: 0 }) : null;
+      return profile.targetRevenueY3 > 0 ? { ...scenario, profile: withSalesTarget(profile, 3, 0) } : null;
     case "idea:incorporate-at":
       return (scenario.state.incorporateAt ?? null) === null ? null : setIncorporateAt(scenario, null);
   }

@@ -74,8 +74,10 @@ export function mapVentureRowToScenario(row: VentureWithState): Scenario | null 
     row.scenarioState.activeBranches as unknown as Record<string, unknown>,
   );
 
-  // The answers a picked future was saved without (2026-10-12); an older row has [] and reads as none.
-  const notSaid = cleanNotSaid(row.notSaid);
+  // The answers a picked future was saved without (2026-10-12); an older row has [] and reads as none. A row
+  // still holding the old "sales-targets" with a first-year number kept by Keep reads that year as said
+  // (lib/scenarios/not-said.ts cleanNotSaid). No data update: the idea's next save writes the split ids.
+  const notSaid = cleanNotSaid(row.notSaid, row.targetRevenueY1);
   const profile: VentureProfile = {
     name: row.name,
     type: reverseVentureType(row.type),

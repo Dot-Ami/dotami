@@ -91,8 +91,14 @@ export interface VentureProfile {
   notSaid?: NotSaidField[];
 }
 
-/** The answers a future can be saved without (`VentureProfile.notSaid`). Ids are permanent: the data file keeps them. */
-export const NOT_SAID_FIELDS = ["venture-type", "equipment", "sales-targets"] as const;
+/**
+ * The answers a future can be saved without (`VentureProfile.notSaid`). Ids are permanent: the data file keeps them.
+ * Until 2026-10-21 one id, "sales-targets", covered both sales targets. It was split so each year comes off
+ * the list on its own: Keep on the what-if gives the first year, the cockpit's box the third. A saved
+ * "sales-targets" is still read, as both, except a first-year target the old Keep kept, which reads as said
+ * (`LEGACY_SALES_TARGETS` and `cleanNotSaid`, lib/scenarios/not-said.ts).
+ */
+export const NOT_SAID_FIELDS = ["venture-type", "equipment", "sales-target-year-1", "sales-target-year-3"] as const;
 export type NotSaidField = (typeof NOT_SAID_FIELDS)[number];
 
 export interface ScenarioState {

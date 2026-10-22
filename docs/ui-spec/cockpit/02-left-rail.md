@@ -72,7 +72,10 @@ spot in the product — it carries 6+ unrelated concerns.
   idea picked on *Pick a future* was saved without the kind of venture or its sales targets
   (`profile.notSaid`): those rows, and the line under the name, say *Not said* instead of the
   intake's starting values (*service*, *$0*), through `lib/cockpit/profile-rows.ts`; its work
-  situation says *Not said* the same way. The link to every idea reads **Your futures**, as the
+  situation says *Not said* the same way. Since 2026-10-21 each target is said or not on its own: Keep on
+  the what-if makes *Target Y1* the kept amount, the cockpit's "Your third-year sales estimate" makes
+  *Target Y3* the person's number, and the other still says *Not said*
+  ([incorporating-estimate.md](./incorporating-estimate.md)). The link to every idea reads **Your futures**, as the
   header's back link does.
   `archetype = resolveArchetypeForScenario(currentScenario)` — matches
   `scenario.archetypeId` (or legacy `scenario.id`) against the 4 archetypes, else
