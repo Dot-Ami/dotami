@@ -136,6 +136,9 @@ const STILL_DEAD: { url: string; where: string[] }[] = [
       "cfe stage-4-retained-earnings-planning",
       "roads road-starting-any-business-ab stage-4-retained-earnings-planning",
       "roads road-starting-any-business-ab stage-4-retained-earnings-planning",
+      // The federal steps (2026-10-21, task 28d) keep road 0's map stages as they are, this one's sources too.
+      "roads road-federal-steps-ca stage-4-retained-earnings-planning",
+      "roads road-federal-steps-ca stage-4-retained-earnings-planning",
     ],
   },
 ];

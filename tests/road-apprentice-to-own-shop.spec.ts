@@ -67,8 +67,8 @@ describe("the first written future is in the catalog", () => {
     // A career and a business together.
     expect(road.kind).toBe("both");
     expect(road.provinces).toEqual(["AB"]);
-    // Order added, never ranked (decision 3).
-    expect(roadsV2026.map((r) => r.id)).toEqual(["road-starting-any-business-ab", "road-apprentice-to-own-shop-ab"]);
+    // Order added, never ranked (decision 3); the federal steps came after it (2026-10-21, task 28d).
+    expect(roadsV2026.map((r) => r.id)).toEqual(["road-starting-any-business-ab", "road-apprentice-to-own-shop-ab", "road-federal-steps-ca"]);
     expect(generalRoadV2026).toBe(roadStartingAnyBusinessAB);
   });
 

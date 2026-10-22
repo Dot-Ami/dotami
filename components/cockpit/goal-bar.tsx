@@ -2,6 +2,7 @@
 
 import { FoldButton } from "@/components/cockpit/folding";
 import { LookCloserMenu, type LookCloserItem } from "@/components/cockpit/look-closer-menu";
+import { goalRoadLine } from "@/lib/cockpit/road-line";
 import { gaugeView, type GaugeId } from "@/lib/cockpit/view";
 import { cockpitWords as words } from "@/lib/cockpit/words";
 import type { Road } from "@/lib/engines/roads/v2026";
@@ -104,11 +105,8 @@ export function GoalBar({
   // Each gauge's name and the tag saying whose numbers they are; on an example, the example person's.
   const gaugeLabel = (id: GaugeId) => (person && id === "date" ? words.example.theirs.dateLabel(person) : words.gauges[id].label);
   const gaugeTag = (id: GaugeId) => (person ? words.example.theirs.tags(person)[id] : words.gauges[id].tag);
-  // A road written for all of Canada ("CA") covers every province; otherwise the idea's own must be listed.
-  const place = scenario.profile.province;
-  // An idea's province can be one no road names yet (MB, QC…), so the list is read as plain strings.
-  const roadPlaces: readonly string[] = road.provinces;
-  const writtenForThisPlace = roadPlaces.includes(place) || roadPlaces.includes("CA");
+  // Which road is drawn, and for which place it is written (lib/cockpit/road-line.ts, shared with the plan).
+  const roadLine = goalRoadLine(road, scenario.profile.province);
   // The idea's own sentence wins; the person's destination stands in only when there is none.
   const shownWords = firstWords
     ? { text: firstWords.text, line: words.goal.yourWords(firstWords.saidAt) }
@@ -169,7 +167,7 @@ export function GoalBar({
             </span>
           ) : null}
           <span>
-            {writtenForThisPlace ? words.goal.future(road.label) : words.goal.drawnOnly(road.label, road.provinces, place)}
+            {roadLine}
           </span>
           <LookCloserMenu items={lookCloser} />
           {onToggleFold ? (

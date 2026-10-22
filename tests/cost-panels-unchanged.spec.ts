@@ -43,7 +43,7 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 
-import { generalRoadV2026, roadsV2026, type Road } from "@/lib/engines/roads/v2026";
+import { FEDERAL_ROAD_ID, generalRoadV2026, roadsV2026, type Road } from "@/lib/engines/roads/v2026";
 
 import { drawCostPanels } from "./helpers/cost-panels";
 import { withTypeScaleNames } from "./helpers/type-scale-renames";
@@ -79,15 +79,21 @@ function withoutStartUpLines(road: Road): Road {
   };
 }
 
+/**
+ * The roads the fixture was drawn from: every road but the federal steps (2026-10-21, task 28d), which came after
+ * the move and has no "before" (its own panels are road 0's, less Alberta, checked in tests/road-federal-steps.spec.ts).
+ */
+const ROADS_DRAWN_BEFORE = roadsV2026.filter((road) => road.id !== FEDERAL_ROAD_ID);
+
 describe("every card that shows a cost line, before and after the official fees catalog", () => {
   it("draws the same panels as main did, byte for byte, with road 0's start-up lines taken out", () => {
-    const now = drawCostPanels(roadsV2026.map(withoutStartUpLines));
+    const now = drawCostPanels(ROADS_DRAWN_BEFORE.map(withoutStartUpLines));
     expect(Object.keys(now).sort()).toEqual(Object.keys(before).sort());
     for (const [key, html] of Object.entries(before)) expect(now[key], key).toBe(html);
   });
 
   it("with the start-up lines in, only Sole Prop activation's panel and road 0's money list change", () => {
-    const now = drawCostPanels(roadsV2026);
+    const now = drawCostPanels(ROADS_DRAWN_BEFORE);
     const changed = Object.keys(before).filter((key) => now[key] !== before[key]);
     const allowed = [`${generalRoadV2026.id}/${START_UP_STEP}`, `${generalRoadV2026.id}/money`];
     for (const key of changed) expect(allowed, key).toContain(key);

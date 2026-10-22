@@ -12,13 +12,13 @@ import { describe, expect, it } from "vitest";
 
 import { GoalBar } from "@/components/cockpit/goal-bar";
 import { cockpitWords } from "@/lib/cockpit/words";
-import { generalRoadV2026, roadApprenticeToOwnShopAB, roadsV2026, skillItemsV2026, type Road } from "@/lib/engines/roads/v2026";
+import { generalRoadV2026, roadApprenticeToOwnShopAB, roadFederalStepsCA, roadsV2026, skillItemsV2026, type Road } from "@/lib/engines/roads/v2026";
 import { howChecked, howCheckedWords } from "@/lib/engines/shared/citation-check";
 import { formatMoney } from "@/lib/format/money-and-months";
 import { CHECK_FIRST_LINE } from "@/components/ventures/agree-prompt";
 import { profileRows, ventureLine } from "@/lib/cockpit/profile-rows";
 import { withKept } from "@/lib/front-door/draft";
-import { futureCards, LISTED_ROAD_IDS, listedRoads, sourcesLine } from "@/lib/front-door/futures";
+import { futureCards, groupedForPlace, LISTED_ROAD_IDS, listedRoads, sourcesLine } from "@/lib/front-door/futures";
 import { DESTINATION_PLACES, DESTINATION_QUESTIONS, LOOKING_FOR, type LookingFor } from "@/lib/front-door/questions";
 import { destinationReceipt, incomeReceipt, lookingForReceipt, placeReceipt, roadIncludes } from "@/lib/front-door/receipts";
 import { firstSaveForPickedFuture, scenarioForPickedFuture } from "@/lib/front-door/start-future";
@@ -128,9 +128,12 @@ describe("the receipts: worked out from the answer and the catalogs, never a ver
     // One is "includes".
     expect(lookingForReceipt("business", [{ kind: "business" }, { kind: "career" }])).toBe("Of the 2 futures listed, 1 includes a business of your own.");
     expect(lookingForReceipt("both-or-not-sure", [{ kind: "business" }])).toBe("The 1 future listed is shown.");
-    // What Pick a future lists today: road 0, a business, and the first written future, a career and a business.
-    expect(lookingForReceipt("business", listedRoads(roadsV2026))).toBe("Of the 2 futures listed, 2 include a business of your own.");
-    expect(lookingForReceipt("career", listedRoads(roadsV2026))).toBe("Of the 2 futures listed, 1 includes a job or career.");
+    // What Pick a future lists today in Alberta: road 0, a business, and the first written future, a career and
+    // a business; outside Alberta the federal steps too, a business (task 28d).
+    expect(lookingForReceipt("business", listedRoads(roadsV2026, "AB"))).toBe("Of the 2 futures listed, 2 include a business of your own.");
+    expect(lookingForReceipt("career", listedRoads(roadsV2026, "AB"))).toBe("Of the 2 futures listed, 1 includes a job or career.");
+    expect(lookingForReceipt("business", listedRoads(roadsV2026, "ON"))).toBe("Of the 3 futures listed, 3 include a business of your own.");
+    expect(lookingForReceipt("career", listedRoads(roadsV2026, null))).toBe("Of the 2 futures listed, 1 includes a job or career.");
   });
 
   it("a road's kind decides what it includes; nothing is filtered by it", () => {
@@ -141,17 +144,18 @@ describe("the receipts: worked out from the answer and the catalogs, never a ver
   });
 
   it("the place: whose rules are written, and how many futures listed are written for it", () => {
-    const listed = listedRoads(roadsV2026);
-    expect(placeReceipt("CA-AB", listed)).toBe("Alberta's rules and the federal rules apply. 2 futures listed are written for Alberta.");
+    const listed = (province: "AB" | "BC" | "YT") => listedRoads(roadsV2026, province);
+    expect(placeReceipt("CA-AB", listed("AB"))).toBe("Alberta's rules and the federal rules apply. 2 futures listed are written for Alberta.");
     expect(placeReceipt("CA-AB", [{ provinces: ["AB"] }])).toBe("Alberta's rules and the federal rules apply. 1 future listed is written for Alberta.");
     expect(placeReceipt("CA-AB", [{ provinces: ["AB"] }, { provinces: ["AB"] }])).toBe(
       "Alberta's rules and the federal rules apply. 2 futures listed are written for Alberta.",
     );
-    expect(placeReceipt("CA-BC", listed)).toBe(
+    // Outside Alberta the federal steps are listed too, written for all of Canada (task 28d, 2026-10-21).
+    expect(placeReceipt("CA-BC", listed("BC"))).toBe("British Columbia's rules and the federal rules apply. 1 future listed is written for British Columbia.");
+    expect(placeReceipt("CA-YT", listed("YT"))).toBe("The federal rules apply; Yukon's own rules aren't written yet. 1 future listed is written for Yukon.");
+    // Without it (before task 28d), every place outside Alberta read "No future listed …".
+    expect(placeReceipt("CA-BC", listed("BC").filter((r) => r.id !== roadFederalStepsCA.id))).toBe(
       "British Columbia's rules and the federal rules apply. No future listed is written for British Columbia yet: the ones shown are written for other places, and each says which.",
-    );
-    expect(placeReceipt("CA-YT", listed)).toBe(
-      "The federal rules apply; Yukon's own rules aren't written yet. No future listed is written for Yukon yet: the ones shown are written for other places, and each says which.",
     );
     // A road written for all of Canada counts for every place.
     expect(placeReceipt("CA-YT", [{ provinces: ["CA"] }])).toBe("The federal rules apply; Yukon's own rules aren't written yet. 1 future listed is written for Yukon.");
@@ -218,13 +222,40 @@ describe("Pick a future: every written future, in the order added, as counts", (
   it("lists road 0 and the first written future: the maintainer said yes on 2026-10-13 (design § 13)", () => {
     // The first written future's sources are all tool checks; the maintainer decided on 2026-10-13 that it
     // may be listed, with its card saying so in amber (the test below).
-    expect(LISTED_ROAD_IDS).toEqual([generalRoadV2026.id, roadApprenticeToOwnShopAB.id]);
-    expect(listedRoads(roadsV2026).map((r) => r.id)).toEqual([generalRoadV2026.id, roadApprenticeToOwnShopAB.id]);
+    expect(LISTED_ROAD_IDS).toEqual([generalRoadV2026.id, roadApprenticeToOwnShopAB.id, roadFederalStepsCA.id]);
+    expect(listedRoads(roadsV2026, "AB").map((r) => r.id)).toEqual([generalRoadV2026.id, roadApprenticeToOwnShopAB.id]);
     // In the catalog's order, whatever order the list names them in.
-    expect(listedRoads([roadApprenticeToOwnShopAB, generalRoadV2026]).map((r) => r.id)).toEqual([
+    expect(listedRoads([roadApprenticeToOwnShopAB, generalRoadV2026], "AB").map((r) => r.id)).toEqual([
       roadApprenticeToOwnShopAB.id,
       generalRoadV2026.id,
     ]);
+  });
+
+  it("lists the federal steps only to a person in Canada outside Alberta, first, with Alberta's two after (task 28d)", () => {
+    // An Albertan doesn't see it: road 0 already holds the same federal steps with Alberta's own.
+    expect(listedRoads(roadsV2026, "AB").map((r) => r.id)).not.toContain(roadFederalStepsCA.id);
+    // No place said yet: none is listed for all of Canada (Pick a future asks for the place first).
+    expect(listedRoads(roadsV2026, null).map((r) => r.id)).toEqual([generalRoadV2026.id, roadApprenticeToOwnShopAB.id]);
+    for (const province of ["BC", "ON", "SK", "MB", "QC", "NB", "NS", "PE", "NL", "YT", "NT", "NU"] as const) {
+      const listed = listedRoads(roadsV2026, province);
+      expect(listed.map((r) => r.id), province).toEqual([generalRoadV2026.id, roadApprenticeToOwnShopAB.id, roadFederalStepsCA.id]);
+      // The page draws the ones written for all of Canada first, then the rest behind one button.
+      const { canada, elsewhere } = groupedForPlace(listed);
+      expect(canada.map((r) => r.id), province).toEqual([roadFederalStepsCA.id]);
+      expect(elsewhere.map((r) => r.id), province).toEqual([generalRoadV2026.id, roadApprenticeToOwnShopAB.id]);
+    }
+    // In Alberta there is no group for all of Canada, so the page draws one list, as before.
+    expect(groupedForPlace(listedRoads(roadsV2026, "AB")).canada).toEqual([]);
+  });
+
+  it("the federal road's card line names the person's own province, with the right article", () => {
+    expect(pickWords.federalOnly("Ontario")).toBe(
+      "The federal steps only. Ontario's own steps aren't written yet; a step shows an Ontario page only where a federal step cites one.",
+    );
+    expect(pickWords.federalOnly("Yukon")).toBe(
+      "The federal steps only. Yukon's own steps aren't written yet; a step shows a Yukon page only where a federal step cites one.",
+    );
+    expect(pickWords.showAlberta(2)).toBe("Show the 2 futures written for Alberta");
   });
 
   it("docs/engines/roads.md never says a listed road is on no screen", () => {
@@ -239,7 +270,7 @@ describe("Pick a future: every written future, in the order added, as counts", (
   });
 
   it("the first written future's card says its sources were checked by a tool, not read by a person, in amber", () => {
-    const apprentice = futureCards(listedRoads(roadsV2026), skillItemsV2026).find(
+    const apprentice = futureCards(listedRoads(roadsV2026, "AB"), skillItemsV2026).find(
       (c) => c.roadId === roadApprenticeToOwnShopAB.id,
     )!;
     const parts = sourcesLine(apprentice.sources);

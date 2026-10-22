@@ -14,7 +14,8 @@ import { itemsForStep } from "@/lib/brain/node-items";
 import type { EvaluationResult } from "@/lib/brain/types";
 import { cockpitWords as words } from "@/lib/cockpit/words";
 import { cfeCatalogV2026 } from "@/lib/engines/cfe/v2026";
-import type { Road, RoadStep, SkillItem } from "@/lib/engines/roads/v2026";
+import { citationsForPlace, type Road, type RoadStep, type SkillItem } from "@/lib/engines/roads/v2026";
+import type { EngineCitation } from "@/lib/engines/shared/types";
 import type { CostLineAmountFrom } from "@/lib/figures/types";
 import { formatMoney } from "@/lib/format/money-and-months";
 import { SKILL_MARKS, STEP_STATUSES, type SkillMarkValue, type StepStatus } from "@/lib/futures/types";
@@ -91,12 +92,17 @@ export function StepPanel(props: StepPanelProps) {
   const items = itemsForStep(rules.unlocks, step);
   const node = cfeCatalogV2026.nodes.find((n) => n.id === step.id);
   const sections = <StepSections {...props} />;
+  // On a road written for all of Canada, the step's sources for the idea's own place, and a line saying how
+  // many other provinces' pages were left out (task 28d); on any other road, every source.
+  const sources = citationsForPlace(props.road, step.citations, province);
+  const sourcesNote = sources.leftOut > 0 ? words.panel.sourcesOtherProvinces(sources.leftOut) : null;
 
   return (
     <section aria-label={words.panel.region} className="h-full">
       {node ? (
         <NodeDetailPanel
-          node={node}
+          node={sourcesNote ? { ...node, citations: sources.shown } : node}
+          sourcesNote={sourcesNote}
           items={items}
           province={province}
           // The rules' own sentence naming the person's answers behind this stage's colour (2026-10-11).
@@ -109,7 +115,7 @@ export function StepPanel(props: StepPanelProps) {
           {sections}
         </NodeDetailPanel>
       ) : (
-        <OtherRoadStep step={step} items={items} onClose={onClose}>
+        <OtherRoadStep step={step} citations={sources.shown} sourcesNote={sourcesNote} items={items} onClose={onClose}>
           {sections}
         </OtherRoadStep>
       )}
@@ -170,7 +176,22 @@ export function ThirdYearEstimate({
 }
 
 /** A step from a road other than road 0: its own line, the sections, its cards and its sources. */
-function OtherRoadStep({ step, items, onClose, children }: { step: RoadStep; items: ReturnType<typeof itemsForStep>; onClose: () => void; children: ReactNode }) {
+function OtherRoadStep({
+  step,
+  citations,
+  sourcesNote,
+  items,
+  onClose,
+  children,
+}: {
+  step: RoadStep;
+  /** The step's sources as drawn for the idea's place, and the line about any left out. */
+  citations: readonly EngineCitation[];
+  sourcesNote: string | null;
+  items: ReturnType<typeof itemsForStep>;
+  onClose: () => void;
+  children: ReactNode;
+}) {
   return (
     <aside className="h-full overflow-y-auto border-l border-rule bg-ink3 p-5 text-body leading-snug">
       <div className="flex items-start justify-between gap-4">
@@ -193,8 +214,9 @@ function OtherRoadStep({ step, items, onClose, children }: { step: RoadStep; ite
           ))}
         </ul>
       ) : null}
-      <Fold title={words.panel.sources(step.citations.length)}>
-        <CitationLinks citations={step.citations} />
+      <Fold title={words.panel.sources(citations.length)}>
+        <CitationLinks citations={[...citations]} />
+        {sourcesNote ? <p className="mt-2 text-body text-stone">{sourcesNote}</p> : null}
       </Fold>
     </aside>
   );

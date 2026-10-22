@@ -127,6 +127,7 @@ function Step({ step }: { step: PlanStep }) {
           </ul>
         </>
       ) : null}
+      {step.sourcesLeftOut ? <p className="mt-1 text-body text-ink/80 print:text-black">{step.sourcesLeftOut}</p> : null}
     </article>
   );
 }

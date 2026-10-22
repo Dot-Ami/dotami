@@ -1,7 +1,7 @@
 import type { Prisma, PrismaClient } from "@prisma/client";
 
 import { oasisJobByCode } from "@/lib/engines/oasis/v2026";
-import { generalRoadV2026, type Road } from "@/lib/engines/roads/v2026";
+import { forksAreTheMapToggles, generalRoadV2026, type Road } from "@/lib/engines/roads/v2026";
 import { LOOKING_FOR, type LookingFor } from "@/lib/front-door/questions";
 import { requireVenture } from "@/lib/figures/store";
 import { placeCodeFor, type PlaceCode } from "@/lib/places/codes";
@@ -115,7 +115,7 @@ export async function readFuture(prisma: PrismaClient, ventureId: string, catalo
   const road = roadForFuture(catalog, row.roadId);
 
   let forkPicks: Record<string, ForkPick>;
-  if (road.id === generalRoadV2026.id) {
+  if (forksAreTheMapToggles(road)) {
     // Road 0: the map's own toggles, from where the map keeps them, so the cockpit reads one set of picks.
     const branches = isRecord(row.scenarioState?.activeBranches) ? row.scenarioState.activeBranches : {};
     forkPicks = Object.fromEntries(

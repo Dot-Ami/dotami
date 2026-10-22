@@ -7,8 +7,9 @@ import type { SkillMarkValue } from "@/lib/futures/types";
 import { evaluateRoad, type RoadEvaluationInput, type StepEvaluation } from "@/lib/roads";
 import type { BranchDecisionId } from "@/lib/scenarios/branches";
 import { isBranchDecided } from "@/lib/scenarios/graph";
-import { generalRoadV2026 } from "@/lib/engines/roads/v2026";
+import { citationsForPlace, forksAreTheMapToggles } from "@/lib/engines/roads/v2026";
 
+import { goalRoadLine } from "./road-line";
 import { dayOfMoment, toldDay, toldRows, type KeptAnswers } from "./told";
 import { gaugeView } from "./view";
 import { cockpitWords as words } from "./words";
@@ -79,7 +80,10 @@ export interface PlanStep {
   /** "n cost lines, under Start-up money", or null for a step with none. */
   costCount: string | null;
   officialLinks: { label: string; url: string }[];
+  /** The step's sources for the idea's place (on a road written for all of Canada, the federal ones and its province's). */
   sources: PlanSource[];
+  /** How many sources for other provinces the list leaves out, said in a line; null when none is left out. */
+  sourcesLeftOut: string | null;
 }
 
 export interface PlanView {
@@ -134,15 +138,13 @@ export function buildPlan(args: PlanArgs): PlanView {
 
   // --- The road: the goal bar's line, who picked it, each fork's ending in Compare's words.
   const place = scenario.profile.province;
-  const roadPlaces: readonly string[] = road.provinces;
-  const writtenHere = roadPlaces.includes(place) || roadPlaces.includes("CA");
   const endings = road.forks.map((fork) => {
     const pick = input.forkPicks[fork.id];
     let pickWords: string;
     if (!pick) pickWords = words.compare.nonePicked;
     else if (pick.from === "you") pickWords = words.compare.yourPick(stepLabel(pick.stepId));
     // Road 0's forks are the map's toggles: the person's pick only once they clicked one.
-    else if (road.id === generalRoadV2026.id && isBranchDecided(fork.id as BranchDecisionId, scenario.state)) pickWords = words.compare.yourPick(stepLabel(pick.stepId));
+    else if (forksAreTheMapToggles(road) && isBranchDecided(fork.id as BranchDecisionId, scenario.state)) pickWords = words.compare.yourPick(stepLabel(pick.stepId));
     else pickWords = words.compare.mapDefault(stepLabel(pick.stepId));
     return words.plan.ending(fork.label, pickWords);
   });
@@ -161,6 +163,7 @@ export function buildPlan(args: PlanArgs): PlanView {
 
   function planStep(step: (typeof road.steps)[number], evaluated: StepEvaluation): PlanStep {
     const ticked = new Set(evaluated.doneWhen.tickedIds);
+    const sources = citationsForPlace(road, step.citations, place);
     return {
       id: step.id,
       label: step.label,
@@ -181,7 +184,8 @@ export function buildPlan(args: PlanArgs): PlanView {
       }),
       costCount: step.costs.length > 0 ? words.plan.costCount(step.costs.length) : null,
       officialLinks: step.officialLinks.map((link) => ({ label: link.label, url: link.url })),
-      sources: step.citations.map(source),
+      sources: sources.shown.map(source),
+      sourcesLeftOut: sources.leftOut > 0 ? words.panel.sourcesOtherProvinces(sources.leftOut) : null,
     };
   }
 
@@ -265,7 +269,7 @@ export function buildPlan(args: PlanArgs): PlanView {
     wordsNone: said.length === 0 ? words.plan.wordsNone : null,
     target: args.incomeWanted ? words.goal.target(args.incomeWanted.amountCents, args.incomeWanted.agreedOn) : null,
     road: {
-      future: writtenHere ? words.goal.future(road.label) : words.goal.drawnOnly(road.label, road.provinces, place),
+      future: goalRoadLine(road, place),
       picked: input.roadChosen ? words.plan.roadChosen(args.roadChosenOn) : words.plan.roadDefault,
       endings: endings.length > 0 ? endings : [words.plan.noForks],
       // The invitations are left out: there is nothing to click on paper.

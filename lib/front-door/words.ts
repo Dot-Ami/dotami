@@ -107,6 +107,15 @@ export const pickWords = {
   writtenFor: (names: string) => `Written for ${names}.`,
   allOfCanada: "all of Canada",
   youSaid: (name: string) => `You said ${name}.`,
+  // Outside Alberta (docs/ui-spec/futures/04-outside-alberta.md, task 28d): the futures written for all of
+  // Canada first, then the ones written for Alberta, folded behind one button.
+  canadaHeading: "Written for all of Canada",
+  albertaHeading: "Written for Alberta",
+  /** On the federal road's card: the person's own province's steps aren't on it, and where its pages show. */
+  federalOnly: (province: string) =>
+    `The federal steps only. ${province}'s own steps aren't written yet; a step shows ${/^[AEIOU]/.test(province) ? "an" : "a"} ${province} page only where a federal step cites one.`,
+  showAlberta: (n: number) => (n === 1 ? "Show the 1 future written for Alberta" : `Show the ${n} futures written for Alberta`),
+  hideAlberta: "Hide the futures written for Alberta",
   counts: (steps: number, skills: number, fees: number, lines: number) =>
     [
       plural(steps, "step", "steps"),

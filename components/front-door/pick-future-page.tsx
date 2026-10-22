@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useId, useMemo, useState } from "react";
 
+import { FuturesList } from "@/components/front-door/futures-list";
 import { useJourney } from "@/components/shared/journey-provider";
 import { GhostLink, Pill, WordMark } from "@/components/ui";
 import {
@@ -12,16 +13,13 @@ import {
   skillItemsV2026,
   type Road,
 } from "@/lib/engines/roads/v2026";
-import { futureCards, listedRoads, sourcesLine, type FutureCard } from "@/lib/front-door/futures";
+import { futureCards, listedRoads } from "@/lib/front-door/futures";
 import { lookingForReceipt, placeName, provinceOfPlace } from "@/lib/front-door/receipts";
 import { firstSaveForPickedFuture, scenarioForPickedFuture } from "@/lib/front-door/start-future";
 import { pickWords as words } from "@/lib/front-door/words";
 import { saveScenario } from "@/lib/journey/save-scenario";
 import { STATEMENT_MAX_CHARS } from "@/lib/person/types";
-import { PROVINCE_LABELS, type Province } from "@/lib/scenarios/types";
 
-/** The roads this page lists (road 0 and the first written future; lib/front-door/futures.ts). */
-const LISTED = listedRoads(roadsV2026);
 
 /**
  * *Pick a future* (`/futures`; docs/ui-spec/futures/_index.md): the futures it lists, in the order the
@@ -34,7 +32,11 @@ export function PickFuturePage() {
   const router = useRouter();
   const { intake, setScenario, hydrated } = useJourney();
   const draft = intake.destination ?? {};
-  const cards = useMemo(() => futureCards(LISTED, skillItemsV2026), []);
+  const place = draft.place;
+  // The roads this page lists for the person's place (lib/front-door/futures.ts): outside Alberta, the federal
+  // steps for any business in Canada too, first (task 28d).
+  const listed = useMemo(() => listedRoads(roadsV2026, place ? provinceOfPlace(place) : null), [place]);
+  const cards = useMemo(() => futureCards(listed, skillItemsV2026), [listed]);
   const [name, setName] = useState("");
   const [note, setNote] = useState("");
   // The road being saved, so its button says so and every other waits.
@@ -43,7 +45,6 @@ export function PickFuturePage() {
   const nameId = useId();
   const noteId = useId();
 
-  const place = draft.place;
   const placeLabel = place ? placeName(place) : null;
 
   /**
@@ -121,7 +122,7 @@ export function PickFuturePage() {
             <p className="mt-2 text-lead text-paper-dim">{words.order}</p>
             {draft.lookingFor ? (
               <p className="mt-1 text-body text-stone">
-                {lookingForReceipt(draft.lookingFor, LISTED)}
+                {lookingForReceipt(draft.lookingFor, listed)}
               </p>
             ) : null}
           </header>
@@ -162,21 +163,13 @@ export function PickFuturePage() {
                 </p>
               ) : null}
 
-              <ul data-region="futures" aria-label={words.listLabel} className="grid gap-4 md:grid-cols-2">
-                {cards.map((card) => {
-                  const road = LISTED.find((r) => r.id === card.roadId)!;
-                  return (
-                    <FutureCardItem
-                      key={card.roadId}
-                      card={card}
-                      personPlace={provinceOfPlace(place)}
-                      personPlaceLabel={placeLabel!}
-                      opening={opening}
-                      onLookInside={() => void lookInside(road)}
-                    />
-                  );
-                })}
-              </ul>
+              <FuturesList
+                cards={cards}
+                personPlace={provinceOfPlace(place)}
+                personPlaceLabel={placeLabel!}
+                opening={opening}
+                onLookInside={(roadId) => void lookInside(listed.find((r) => r.id === roadId)!)}
+              />
 
               <section
                 data-region="not-here"
@@ -213,70 +206,5 @@ export function PickFuturePage() {
         </div>
       </main>
     </div>
-  );
-}
-
-function FutureCardItem({
-  card,
-  personPlace,
-  personPlaceLabel,
-  opening,
-  onLookInside,
-}: {
-  card: FutureCard;
-  personPlace: Province | null;
-  personPlaceLabel: string;
-  opening: string | null;
-  onLookInside: () => void;
-}) {
-  const headingId = useId();
-  // A road's places are read as plain strings: "CA" means it is written for all of Canada.
-  const places: readonly string[] = card.writtenFor;
-  const forYourPlace =
-    places.includes("CA") || (personPlace !== null && places.includes(personPlace));
-  const writtenFor = card.writtenFor
-    .map((p) => (p === "CA" ? words.allOfCanada : (PROVINCE_LABELS[p as Province] ?? p)))
-    .join(", ");
-  return (
-    <li
-      aria-labelledby={headingId}
-      className="flex flex-col gap-3 rounded-lg border border-rule bg-ink2 p-5"
-    >
-      <h2
-        id={headingId}
-        className="font-serif text-title font-bold leading-snug tracking-tight text-paper"
-      >
-        {card.label}
-      </h2>
-      <p className="font-mono text-small uppercase tracking-[0.14em] text-stone">
-        {words.kind[card.kind]}
-      </p>
-      <p className="text-body text-stone">
-        {words.writtenFor(writtenFor)}
-        {forYourPlace ? null : <> {words.youSaid(personPlaceLabel)}</>}
-      </p>
-      <p className="text-body tabular-nums text-paper-dim">
-        {words.counts(card.steps, card.skillsListed, card.officialFees, card.linesToPrice)}
-      </p>
-      <p className="text-body leading-snug text-stone">
-        {words.sourcesLead}{" "}
-        {sourcesLine(card.sources).map((part, i) => (
-          <span key={part.text} className={part.checkFirst ? "text-amber" : undefined}>
-            {i > 0 ? " · " : ""}
-            {part.text}
-          </span>
-        ))}
-      </p>
-      <div className="mt-auto flex justify-end">
-        <Pill
-          variant="maple"
-          aria-label={words.lookInsideName(card.label)}
-          onClick={onLookInside}
-          disabled={opening !== null}
-        >
-          {opening === card.roadId ? words.opening : words.lookInside}
-        </Pill>
-      </div>
-    </li>
   );
 }

@@ -49,7 +49,7 @@ import type { CostLineAmountFrom, FigureView } from "@/lib/figures/types";
 import { useLocalToday } from "@/lib/figures/use-local-today";
 import type { CFENodeId } from "@/lib/engines/cfe/v2026";
 import { oasisListForJob } from "@/lib/engines/oasis/v2026";
-import { generalRoadV2026, roadsV2026, skillItemsV2026 } from "@/lib/engines/roads/v2026";
+import { forksAreTheMapToggles, roadsV2026, skillItemsV2026 } from "@/lib/engines/roads/v2026";
 import { templatesCatalogV2026 } from "@/lib/engines/templates/v2026";
 import type { ExampleFuture } from "@/lib/examples";
 import { exampleStory } from "@/lib/examples/story";
@@ -819,7 +819,7 @@ export function CockpitPage({ initialScenario, pinned = false, example }: Cockpi
     if (isExample) return sayExample();
     const decision = branchDecisions.find((d) => d.id === forkId);
     // Road 0's forks are the map's toggles, kept with the map; every other road's ending is kept on the future.
-    if (road.id === generalRoadV2026.id && decision) {
+    if (forksAreTheMapToggles(road) && decision) {
       handleBranchChange(decision, stepId as CFENodeId, "compare");
       return;
     }

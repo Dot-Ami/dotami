@@ -30,14 +30,18 @@ import {
   lookingForReceipt,
   placeName,
   placeReceipt,
+  provinceOfPlace,
   type StillAgreed,
 } from "@/lib/front-door/receipts";
 import { destinationWords as words } from "@/lib/front-door/words";
 import type { PlaceCode } from "@/lib/places/codes";
 import { STATEMENT_FULL_NOTE } from "@/lib/person/types";
 
-/** Every count on this page is of the futures Pick a future lists (lib/front-door/futures.ts). */
-const LISTED = listedRoads(roadsV2026);
+/**
+ * Every count on this page is of the futures Pick a future lists for the place answered (lib/front-door/futures.ts):
+ * outside Alberta that includes the federal steps for any business in Canada (task 28d).
+ */
+const listedFor = (draft: DestinationDraft) => listedRoads(roadsV2026, draft.place ? provinceOfPlace(draft.place) : null);
 
 /**
  * *Your destination* (`/start`; docs/ui-spec/start/): the four questions of lib/front-door/questions.ts,
@@ -534,10 +538,10 @@ function AnsweredQuestion({
   ) {
     const choice = question.answer.choices.find((c) => c.id === draft.lookingFor);
     shown = <p className="text-lead text-paper">{choice?.label}</p>;
-    receipt = lookingForReceipt(draft.lookingFor, LISTED);
+    receipt = lookingForReceipt(draft.lookingFor, listedFor(draft));
   } else if (question.id === "place" && draft.place) {
     shown = <p className="text-lead text-paper">{words.answeredPlace(placeName(draft.place))}</p>;
-    receipt = placeReceipt(draft.place, LISTED);
+    receipt = placeReceipt(draft.place, listedFor(draft));
   } else if (question.id === "income-wanted" && draft.incomeWanted) {
     const income = draft.incomeWanted;
     // A number turned down in the prompt shows nothing here: its receipt says what became of it.

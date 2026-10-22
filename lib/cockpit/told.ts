@@ -1,5 +1,5 @@
 import type { CFENodeId } from "@/lib/engines/cfe/v2026";
-import { generalRoadV2026, type Fork } from "@/lib/engines/roads/v2026";
+import { forksAreTheMapToggles, type Fork } from "@/lib/engines/roads/v2026";
 import { SALES_DOLLARS_MAX } from "@/lib/db/scenario-state-json";
 import type { FigureView } from "@/lib/figures/types";
 import {
@@ -286,7 +286,7 @@ const INCORPORATING_STEP = "stage-3a-incorporation-80k-net";
 export function notToldYet(input: RoadEvaluationInput, evaluation: RoadEvaluation): NotToldRow[] {
   const q = words.questions;
   const rows: NotToldRow[] = [];
-  const onRoad0 = input.road.id === generalRoadV2026.id;
+  const onRoad0 = forksAreTheMapToggles(input.road);
   const notGiven = (id: string) => evaluation.answers.some((a) => a.id === id && !a.given);
   const money = evaluation.gauges.money;
 
@@ -469,7 +469,7 @@ export interface CompareView {
 
 /** The input with one side of the fork picked: on road 0 the map's toggle, on any other road the future's pick. */
 function withSide(input: RoadEvaluationInput, fork: Fork, stepId: string): RoadEvaluationInput {
-  const onMap = input.road.id === generalRoadV2026.id && branchDecisions.some((d) => d.id === fork.id);
+  const onMap = forksAreTheMapToggles(input.road) && branchDecisions.some((d) => d.id === fork.id);
   const scenario = onMap ? updateScenarioBranch(input.scenario, fork.id as BranchDecisionId, stepId as CFENodeId) : input.scenario;
   return { ...input, scenario, forkPicks: { ...input.forkPicks, [fork.id]: { stepId, from: onMap ? "map" : "you" } } };
 }
@@ -571,7 +571,7 @@ export function compareEndings(withWhatIf: RoadEvaluationInput, forkId: string):
       : null;
 
   // On road 0 the fork is one of the map's toggles, whose sides have short names of their own.
-  const toggle = input.road.id === generalRoadV2026.id ? branchDecisions.find((d) => d.id === fork.id) : undefined;
+  const toggle = forksAreTheMapToggles(input.road) ? branchDecisions.find((d) => d.id === fork.id) : undefined;
   const rows = COMPARE_ROWS.map((id) => ({ id, label: words.compare.rows[id], values: [columns[0][id], columns[1][id]] as [string, string] }));
   return {
     forkId: fork.id,

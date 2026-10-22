@@ -822,7 +822,12 @@ export const skillItemsStartingAnyBusinessAB: readonly SkillItem[] = [
 
 // ---- The road ------------------------------------------------------------------------------------
 
-export const roadStartingAnyBusinessAB = roadFromCfe({
+/**
+ * Road 0 as `roadFromCfe` builds it, kept as its own value so the federal road (./federal-steps-ca.ts,
+ * 2026-10-21) is built from the same parts, less the Alberta-only ones, and can't drift from road 0's
+ * federal steps.
+ */
+export const roadZeroParts: Parameters<typeof roadFromCfe>[0] = {
   id: "road-starting-any-business-ab",
   label: "Starting any business in Alberta (tax and structure)",
   kind: "business",
@@ -881,4 +886,6 @@ export const roadStartingAnyBusinessAB = roadFromCfe({
     { columnId: "tier-1-before", step: businessAccount },
     { columnId: "tier-1-before", step: keepRecords },
   ],
-});
+};
+
+export const roadStartingAnyBusinessAB = roadFromCfe(roadZeroParts);
