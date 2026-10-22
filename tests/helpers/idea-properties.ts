@@ -444,6 +444,8 @@ function ledgerOf(input: RoadEvaluationInput): AmountLedger {
     ],
     quotedThresholds: quotedOfficialAmounts(),
     addable: [...roadFees, ...quotes],
+    // No generated screen shows a published wage (About this job isn't part of road evaluation or the plan).
+    publishedWageRows: [],
   };
 }
 
@@ -503,6 +505,8 @@ export function invariantFailures(run: GeneratedRun): Failure[] {
     questions: [],
     ledger: ledgerOf(input),
     dateWords: months === undefined ? [] : [monthsFromToday(months)],
+    // No generated screen quotes the government's requirement lines (About this job isn't part of the plan).
+    quotedLines: [],
   };
   const idea: Idea = {
     id: "generated",

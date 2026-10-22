@@ -245,7 +245,9 @@ test("no screen of the journey says what to do or ranks anything: every visible 
   expect(road0Cards).toBeGreaterThan(generalRoadV2026.steps.length);
   expect(apprenticeCards).toBeGreaterThanOrEqual(roadApprenticeToOwnShopAB.steps.length);
   const all = seen.map((s) => s.text).join("\n").replace(/\s+/g, " ");
-  for (const allowance of OFFICIAL_QUOTE_ALLOWANCES) expect(all, allowance.text).toContain(`“${allowance.text}”`);
+  // The citations' allowances. One with a source kind (the government's requirement line for group 53200)
+  // shows only on About this job for that group, which this walk doesn't open (25h's own test does).
+  for (const allowance of OFFICIAL_QUOTE_ALLOWANCES.filter((a) => !a.sourceKind)) expect(all, allowance.text).toContain(`“${allowance.text}”`);
 
   expect(verdictsIn(seen)).toEqual([]);
 });

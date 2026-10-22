@@ -45,6 +45,24 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   file has no such row, never borrowing a neighbour's. Wages only: no outlook ratings, and never a person's
   income or part of any total. The licence's credit line is on `/licences`. It makes possible: the wage row of
   *About this job* (25h).
+- **Tests: the gate knows a published wage and a quoted government requirement** (29i, 29k; for *About this
+  job*, before it is built). No change on screen. A wage the government publishes for a job group is now a kind
+  of number the "every number cited or the person's own" check accepts, but only on *About this job*'s wage row,
+  only beside the row it comes from, and only when that row carries its source code, the geography level the
+  code gives, and its reference period (`tests/helpers/number-provenance.ts`); a wage is never one of the lines
+  a total adds up, so a wage put into a cost, a total or a gauge fails. The government's "Employment
+  requirements" lines (*"a one- or two-year hairstyling apprenticeship"*) pass the no-times check by one rule
+  for their kind of source instead of one entry per line: only inside quote marks, under the label that says
+  they are the government's words, on *About this job*'s requirements row, and only lines the run read
+  word for word from the shipped file for the group the label names (`tests/helpers/official-quotes.ts`;
+  until the importer ships those lines, none pass anywhere). The same words without the label or the quote
+  marks, on any other screen, or a sentence of DotAmi's own put in quote marks under the label, still fail.
+  The verdict check gets the same treatment for the one requirement line the design allows (group 53200's
+  *"strongly recommended"*), under its label only. The browser sweep now takes out only a catalog citation's
+  own quote before its no-times check, where it used to take out anything in quote marks. Over all 2,122
+  requirement lines of the elements file (the copy of 2026-10-15), 404 hold a time and 1 a verdict phrase as
+  DotAmi's words; drawn on the requirements row with the group's lines read, none is caught, and planted on a
+  plan step, or with nothing read, all 404 are.
 - **The government's job titles, imported** (task 28a). Two files, each pinned by its SHA-256 and checked by
   `npm run data:check`: OaSIS 2025's "Example Titles" (18,666 titles for the 900 jobs, Employment and Social
   Development Canada, Open Government Licence – Canada; `lib/engines/oasis/v2026/titles.ts`) and Statistics

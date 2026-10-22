@@ -53,19 +53,32 @@ The kicker: *Cabinetmakers · 72311.00 · your pick of job*.
 **How the quoted lines pass the screen checks** (the whole-screen walks read the visible text, not the
 `data-official-quote` mark, so the mark alone isn't enough):
 
-- *No times.* The idea sweep's screen check (`e2e/idea-sweep.spec.ts` `withoutQuotedWords`) skips only what
-  stands inside “…”; the harness's pieces carry the lines as `official-quote` (`tests/helpers/text-pieces.ts`).
-  The quote marks on each line are what make both true.
+- *No times* (task 29k, done before this panel). `findTimeWords` (`tests/helpers/time-words.ts`) lets the
+  lines through by their kind of source (`tests/helpers/official-quotes.ts`), not one entry per line: only
+  the lines that stand inside “…” in a run that opens with the lead line *The government's words, quoted in
+  full for job group <noc> <group title>:* (sub-headings may stand between them, unquoted, and are still read).
+  The same words without the lead line or without the quote marks are DotAmi's and fail. The lead line and
+  the quote marks are only the shape: a line is lifted only when its piece stands on this row (its place
+  holds `about this job › rules`) **and** it is, word for word, one of the lines the run read from the
+  shipped file for the group the lead line names (`QuoteContext`, the run's `quotedLines`). So a sentence of
+  DotAmi's own in quote marks under a copied lead line fails on this row too, and the lines fail on any other
+  screen (the review of #195). Until 28a ships the lines nothing is lifted anywhere. The harness collects the
+  row as the screen draws it, the lead line and the quoted lines in one piece (`quotedRun`), and 25h fills
+  the run's `quotedLines` from 28a's data for the group it shows; the idea sweep's screen check takes out
+  only a catalog citation's own quote before it, and 25h passes `findTimeWords` this row's place and the
+  same lines when the sweep opens the panel (until then the sweep lifts none). 25h's words must keep the lead
+  line in that shape (its test checks `aboutJobWords.rules.lead` against the kind's label).
 - *No verdicts.* `e2e/no-verdict.spec.ts` reads every screen with `findVerdicts`, which lifts a phrase only
   when its sentence is in `OFFICIAL_QUOTE_ALLOWANCES` (`tests/helpers/verdict-words.ts`) **and** stands in
   quote marks. Run over all 2,122 *Employment requirements* lines of the elements file (copy of 2026-10-15)
   on 2026-10-20, `findVerdicts` catches one, with or without quote marks: group 53200 (Athletes),
   *“A background combining athletic training and college or university
-  studies is strongly recommended.”* (phrase *recommended*). So the build (25h, with 28a's import) adds that
-  sentence to `OFFICIAL_QUOTE_ALLOWANCES`, word for word, with its *where* (this row, group 53200) and *why*
-  (the government's own requirement line, quoted in full and labelled as its words), and 28a's importer test
-  runs `findVerdicts` over every shipped requirement line and fails on any it catches that has no allowance,
-  so a re-pinned file can't bring a new one in unseen. Nothing is reworded or left out of the quote.
+  studies is strongly recommended.”* (phrase *recommended*). That sentence is in `OFFICIAL_QUOTE_ALLOWANCES`
+  (29k), word for word, with its *where* (this row, group 53200), its *why* (the government's own requirement
+  line, quoted in full and labelled as its words) and its source kind, so it is lifted only under the lead line
+  above, never in quote marks elsewhere. 28a's importer test runs `findVerdicts` over every shipped requirement
+  line and fails on any it catches that has no allowance, so a re-pinned file can't bring a new one in unseen.
+  Nothing is reworded or left out of the quote.
 
 Example (72311 Cabinetmakers, the four lines as the elements file holds them, the copy of 2026-10-15 used by
 research 28f; 28a's importer reads the pinned download and the build's test checks the shipped text against it):
@@ -137,6 +150,11 @@ inside its own quote marks.)
 - The source line: *Job Bank wage file 2025, revised 2025-11-19. Contains information licensed under the Open
   Government Licence – Canada.* No Job Bank or Government of Canada logo, and nothing styled as Job Bank's own
   screen (OGL's exemptions, research 25s verifier's check).
+- **The amounts check** (29i, `tests/helpers/number-provenance.ts`): a wage passes "every number cited or the
+  person's own" only on a piece of this row (its place holds `about this job › wages`) that carries the row it
+  comes from (`wageRow`), when the row has its source code, the level that code gives and its reference period,
+  and is one the run read from the wage file (the ledger's `publishedWageRows`). A wage is never a line a sum
+  adds up, so a wage in a cost, a total or a gauge fails.
 - `EmployeesWithNonWageBenefit_Pct` is not shown (its definition isn't cited; research 25s, open question 4).
 
 Example rows, real, from the 2025 wage file as research 25s read it on 2026-10-20 (all hourly, CAD):
