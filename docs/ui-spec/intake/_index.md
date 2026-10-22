@@ -17,6 +17,8 @@ database it reads as none, and the intake starts on *About you* as before); 2026
 > [../futures/01-whats-closest-to-your-work.md](../futures/01-whats-closest-to-your-work.md) § *Where it sits,
 > on both ways in*; the counts per step in [01](../futures/01-whats-closest-to-your-work.md),
 > [02](../futures/02-where-you-are.md) and [03](../futures/03-road-match.md) § *Regions and controls*.
+> **Decided 2026-10-21 (the maintainer, call 1, "same-steps"):** the typed way ends on these three steps
+> instead of opening the map.
 
 **Route:** `/intake`
 **Component:** [components/discovery/intake-page.tsx](../../../components/discovery/intake-page.tsx) (one file — both screens + preview rail)

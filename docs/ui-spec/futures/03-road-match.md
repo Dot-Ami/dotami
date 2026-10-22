@@ -10,7 +10,8 @@ Type: list of cards, a no-road block, buttons
 Last updated: 2026-10-20 (designed before it is built, task 28g, for task 28c. The maintainer's picks of
 2026-10-16, K6 A: a job with no written road shows *About this job* by default, with road 0 one click away; of
 2026-10-20: the career road joins in phase 3, so it is not offered now; no sending an idea with no road to the
-maintainers, D4 = no.)
+maintainers, D4 = no; of 2026-10-21, call 3: a job with no written road saves nothing, and call 2: no region
+question outside Alberta.)
 
 Mockup: `C:\dotami-wt\designs-phase2\03-road-match.html` (a job with no road; a smaller frame below shows a job
 with one).
@@ -26,9 +27,10 @@ is never reached without a line saying why the road drawn is the one drawn.
 
 ### A. A road is written for the picked job (example: Cabinetmakers, 72311.00)
 
-- The nav's back link goes back one part, as on step 2: **← Back to your region** after 2b (or after 2a where
-  2b wasn't asked, **← Back to your area**), **← Back to your work** after a Skip. Every answer given so far stays
-  in the flow's memory and is offered again.
+- The nav's back link goes back one part, as on step 2: **← Back to your region** after 2b (in Alberta),
+  **← Back to where you are** outside Alberta (step 2 there asks nothing and says why, the maintainer's call 2
+  of 2026-10-21), **← Back to your work** after a Skip. Every answer given so far stays in the flow's memory and
+  is offered again.
 - Heading *Pick a future to look inside* and today's order line, then *Your pick of job: Cabinetmakers ·
   72311.00 · your pick of job*.
 - *Name it (optional)*, as today.
@@ -54,6 +56,10 @@ is never reached without a line saying why the road drawn is the one drawn.
 - **Nothing is saved** until the person presses a card's **Look inside**: a future with no road is never
   saved, because a saved idea with no road (`roadId` null) is drawn on road 0, and that would be the silent
   fallback this task removes. The block's last line says so.
+- **Decided 2026-10-21 (the maintainer, call 3, "no-save"):** a job with no written road saves nothing. The
+  screen offers *About this job* and the general road, and says plainly that nothing is kept until a future is
+  opened (`noRoad.nothingSaved`). A person who reads *About this job* here and leaves keeps nothing. A kind of
+  saved idea with no road may come in phase 3, with the career road (28e); it is not designed here.
 
 ### C. The person skipped the job question
 
@@ -85,7 +91,7 @@ the road stays the screen's one primary thing). For an idea whose job has no roa
 pickWords (additions) = {
   pickLine: "Your pick of job: <job> · <code>",
   backToRegion: "← Back to your region",
-  backToArea: "← Back to your area",
+  backToWhere: "← Back to where you are",
   backToWork: "← Back to your work",
   writtenForJobHeading: "Written for your pick of job",
   othersHeading: "The other futures, in the order they were written",
@@ -93,7 +99,7 @@ pickWords (additions) = {
   noRoad: {
     heading: "No road is written for <job> (<code>) yet.",
     body: "Here is what the government publishes about this job. If you plan to run a business of your own, the general road below covers the tax and structure steps for any business in Alberta. It isn't written for <job>, and opening it doesn't say you're starting a business.",
-    nothingSaved: "Nothing is saved until you open a future.",
+    nothingSaved: "Nothing is saved until you open a future. If you leave from here, DotAmi keeps nothing about this job.",
   },
   road0NotForJob: "Not written for <job>. It covers the tax and structure steps for any business in Alberta.",
   skipped: "You didn't pick a job, so no future is matched to one. These are all the futures written so far, in the order they were written.",
@@ -148,8 +154,8 @@ differently, with nothing taken away from what the person can do:
   buttons and the site footer's link (the gate counts it; see step 1's file). Case A at a laptop: back, word
   mark, two **Look inside**, footer link: **5**, the intake's limit. Case C: as case A. On a phone one **Look
   inside** reaches the first window: 4. Case B: back, word mark, footer link (3), plus whichever of *About
-  this job*'s controls reach the first window (**Change**, the three links, and on a phone **Show all n
-  lines**). The government's quote sits above them, so how many reach the first window depends on how long a
+  this job*'s controls reach the first window (**Change**, in Alberta only, the links, and on a phone **Show
+  all n lines**). The government's quote sits above them, so how many reach the first window depends on how long a
   job's requirements text is; it isn't known before the build.
 - The gate measures the intake as it opens (Screen A), so none of this is measured by CI on the intake page
   until the build adds a row for it. The build's pull request adds one, measured on case B with the job whose
@@ -190,9 +196,10 @@ or on this step's honest no-road ending; `ends:road-drawn` accepts both); the co
 - The career road for any job (task 28e, phase 3): not offered, and not mentioned as coming.
 - A road for closing, pausing, selling or catching up (placed in phase 3 by the maintainer).
 - Sending an idea with no road to the maintainers (D4: no).
-- A future saved with no road.
+- A future saved with no road (the maintainer's call 3 of 2026-10-21: none in this version; a kind of saved idea
+  with no road may come in phase 3, with the career road).
 
 ## Checked against the rules
 
 Every string in the words block was run through `VERDICT_WORDS`, `findVerdicts` and `findTimeWords` on
-2026-10-20: no finding.
+2026-10-20, and again on 2026-10-21 after the maintainer's calls: no finding.

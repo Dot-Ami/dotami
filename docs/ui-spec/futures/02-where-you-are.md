@@ -8,7 +8,9 @@ Type: wizard step, two parts, one question each (a drop-down each)
 Last updated: 2026-10-20 (designed before it is built, task 28g, for tasks 23g and 25e. The maintainer's picks
 of 2026-10-20: the area is asked once, right after the job pick; only "which area" for now, the industry
 question waits for phase 3; Statistics Canada publishes no standalone city-to-economic-region file, so DotAmi
-asks "which region are you in?" with the regions listed. Research: `25s-wage-regions.md`.)
+asks "which region are you in?" with the regions listed. Research: `25s-wage-regions.md`. Updated
+2026-10-21 for the maintainer's call 2: outside Alberta neither question is asked for now; see *Outside
+Alberta*.)
 
 Mockup: `C:\dotami-wt\designs-phase2\02-where-you-are.html`.
 
@@ -33,7 +35,7 @@ Two parts in the step region, one question on screen at a time, so each fits the
 - A hint under it saying what the four areas are.
 - **Next →**. Leaving *Choose one* is allowed: the area is then not kept (null, never "I don't know").
 
-**2b. Which region are you in?**
+**2b. Which region are you in?** (Alberta only in this version, see *Outside Alberta* below)
 
 - The area answer shown back (*Your area: Somewhere else in Alberta*). The nav's back link now reads **← Back
   to your area** (the nav's one back link always goes back one part: from 2a to step 1, from 2b to 2a).
@@ -97,8 +99,10 @@ whereStepWords = {
   },
   outside: {
     heading: "Where you are in <province>",
-    areaNotAsked: "The area question lists Alberta's areas only in this version, so it isn't asked for <province>.",
-    oneRegion: "Job Bank publishes one region for <province>, so there is nothing to pick here.",
+    notAsked: "In this version DotAmi asks which area and which region you're in only in Alberta, so nothing is asked here for <province>.",
+    why: "Job Bank publishes wages by economic region. DotAmi lists a province's regions only once its list has been checked against Statistics Canada's own pages, and Alberta's is the one checked so far.",
+    wageRow: "About this job shows <province>'s province-wide wage figure, labelled as one.",
+    next: "Next: the futures →",
   },
   kept: "Both answers are kept with this future once you open it, on this computer only. You can change your region later from About this job in the cockpit.",
 }
@@ -106,25 +110,45 @@ whereStepWords = {
 
 ## Outside Alberta (a person whose place on *Your destination* is another province or territory)
 
-- **2a is not asked.** The area list is Alberta's census metropolitan areas only in this version, and the
-  counts it waits for are Alberta-first. The step opens on 2b with *The area question lists Alberta's areas
-  only in this version, so it isn't asked for Ontario.*
-- **2b lists that province's own economic regions**, by code and name as the wage file publishes them
-  (`ER_Code_Code_RE` and `ER_Name` for the province, research 25s), in code order, plus **I don't know**,
-  which shows the province-wide row where the file has one.
-- **Prince Edward Island, Yukon, the Northwest Territories and Nunavut** each have one code only in the wage
-  file (`ER1110`, `ER6010`, `ER6110`, `ER6210`, research 25s): the question isn't asked, and the step says
-  *Job Bank publishes one region for Yukon, so there is nothing to pick here.* before **Next: the futures →**.
-- Research 25s checked Alberta's regions against Statistics Canada's own pages; the other provinces' lists come
-  from the wage file and aren't checked against those pages yet (25s, open question 5). That is a call for the
-  maintainer (see the pull request's questions).
+**Decided 2026-10-21 (the maintainer, call 2, "province-wide"):** outside Alberta there is **no region
+question** for now, and *About this job* shows the province-wide wage figure. The region question is added
+province by province, once that province's region list has been checked against Statistics Canada's own pages
+the way Alberta's eight were (research 25s § 1). Until a province's list is checked, its regions are not listed
+from the wage file's own list (`ER_Code_Code_RE`, `ER_Name`): research 25s checked Alberta's only (its open
+question 5).
+
+- **Neither question is asked.** 2a's area list is Alberta's census metropolitan areas, and the counts it waits
+  for are Alberta-first; 2b's region list is checked for Alberta only.
+- **What a person in Ontario sees** (an invented person in Ottawa who picked Bakers): step 2 is one short
+  screen with no drop-down, so the steps still count *2 of 3* and the person is told why nothing is asked
+  rather than skipped past it. The kicker *2 of 3 · Where you are*, the pick line, the heading *Where you are
+  in Ontario*, then:
+  - *In this version DotAmi asks which area and which region you're in only in Alberta, so nothing is asked
+    here for Ontario.*
+  - *Job Bank publishes wages by economic region. DotAmi lists a province's regions only once its list has
+    been checked against Statistics Canada's own pages, and Alberta's is the one checked so far.*
+  - *About this job shows Ontario's province-wide wage figure, labelled as one.*
+  - **Next: the futures →**. The nav's back link reads **← Change your pick of job**, as on 2a.
+  - The `kept` line isn't drawn: nothing is asked, so nothing is kept from this step.
+- **The same screen for every province and territory outside Alberta**, including Prince Edward Island, Yukon,
+  the Northwest Territories and Nunavut, which have one code each in the wage file (`ER1110`, `ER6010`,
+  `ER6110`, `ER6210`, research 25s). Their *About this job* row is that one code's row, labelled by its own
+  source code as every row is.
+- **What is kept:** `economicRegion` and `landscapeArea` stay null (not asked). Nothing is guessed for the
+  person: the province-wide row is shown because the question isn't asked in their province, and *About this
+  job* says so ([../cockpit/about-this-job.md](../cockpit/about-this-job.md), row 2).
+- **Adding a province later:** when a province's list has been checked against Statistics Canada's pages, the
+  build adds 2b for that province (its regions in code order, plus **I don't know**, which then shows that
+  province's province-wide row), with the check's date and source in the region catalog (25e), and *About this
+  job*'s **Change** appears for it. Each province is its own change, with its own check; none is added from the
+  wage file's list alone.
 
 ## What is kept, and where
 
 | Answer | Column (add-only migration, task 23g / 25e) | Values | Set-at column |
 |---|---|---|---|
 | Area | `Venture.landscapeArea` (the name 23g's task gives it) | `cma-825` Calgary, `cma-835` Edmonton, `cma-810` Lethbridge, `cma-830` Red Deer (Statistics Canada's census metropolitan area codes), `ab-elsewhere`, `dont-know`; null when not asked or left on *Choose one* | `landscapeAreaSetAt` |
-| Region | `Venture.economicRegion` (new, research 25s § 3: its own column) | The 4-character region code (`4810`…`4880`; another province's codes the same way), or `dont-know`; null when not asked | `economicRegionSetAt` |
+| Region | `Venture.economicRegion` (new, research 25s § 3: its own column) | The 4-character region code (`4810`…`4880`; another province's codes the same way once its list is checked and its question added), or `dont-know`; null when not asked (every place outside Alberta in this version) | `economicRegionSetAt` |
 
 Saved with the idea at step 3's **Look inside** (the first save), not before: until then the answers live in
 the flow's memory only, never in the window's storage. Shown back on *Your plan* and in *What DotAmi knows about
@@ -134,7 +158,8 @@ know, and says so.
 
 **Changing them later.** The region: *About this job*'s **Change** sets or changes it
 ([../cockpit/about-this-job.md](../cockpit/about-this-job.md), row 2), including for a person who skipped the job
-here, picked one later in the skills list and so was never asked. The area: nothing changes it after the flow
+here, picked one later in the skills list and so was never asked. Outside Alberta there is no **Change** in
+this version: no region is asked there (call 2, above). The area: nothing changes it after the flow
 in this version, because nothing reads it yet; it is shown on *Your plan* and in *What DotAmi knows about you*,
 and deleted with the idea. A way to change it comes with the counts that read it (phase 3). The `kept` line
 says only what is true: the region can be changed later.
@@ -181,6 +206,9 @@ window, and `e2e/clutter-budget.spec.ts` leaves nothing out. The counts below in
   so 2a and 2b each count 3 regions (nav, intake, site footer) and the same 5 controls (the intake's
   **← Back** in place of the back link). With the Statistics Canada link held back until *I don't know*, 2b
   is at the intake's 5 at all three widths, not over it.
+- **Outside Alberta** (the screen with no question): the same 4 regions on Pick a future (3 on the intake
+  page); controls: the back link, the word mark, **Next: the futures →**, the footer's link: **4**, at every
+  width, on both pages.
 
 ## How a screen reader hears it
 
@@ -204,9 +232,11 @@ drop-down, the hint and order line below it, then **Next**.
 - Any lookup from a city or a postal code to a region (research 25s: none is published as a file for Alberta;
   the Geographic Attribute File's download blocks scripts).
 - The area question for a person outside Alberta.
+- The region question outside Alberta (the maintainer's call 2 of 2026-10-21): added province by province,
+  each once its region list is checked against Statistics Canada's own pages.
 - Changing the area after the flow (nothing reads it yet; it comes with the counts, phase 3).
 
 ## Checked against the rules
 
 Every string in the words block was run through `VERDICT_WORDS`, `findVerdicts` and `findTimeWords` on
-2026-10-20: no finding.
+2026-10-20, and again on 2026-10-21 after the maintainer's calls: no finding.

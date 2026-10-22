@@ -8,7 +8,8 @@ Type: a card, a fold button, the goal bar's line, a sources line
 
 Last updated: 2026-10-20 (designed before it is built, task 28g, for task 28d. The approved plan's phase 2: the
 federal steps that apply everywhere, plus "Written for Alberta" with the person's own province named; full BC
-and Ontario roads come in phase 4.)
+and Ontario roads come in phase 4. Updated 2026-10-21 for the maintainer's call 2: no region question outside
+Alberta for now; *About this job* shows the province-wide wage figure.)
 
 Mockup: `C:\dotami-wt\designs-phase2\04-outside-alberta.html` (an invented person in Ottawa, corpus idea
 `idea-v1-0004`, picking Bakers).
@@ -57,6 +58,8 @@ same federal steps with Alberta's own. Outside Canada is unchanged: the flow sto
 
 ## Pick a future, step 3, for a person outside Alberta
 
+- The nav's back link reads **← Back to where you are** (step 2 outside Alberta asks nothing and says why,
+  [02-where-you-are.md](./02-where-you-are.md)).
 - The pick line and the no-road block (*No road is written for Bakers (63202.00) yet.*, with *About this job*
   in place; [03-road-match.md](./03-road-match.md) case B), when the job has no road; every road is Alberta's or
   the federal one today, so outside Alberta every job has no road of its own.
@@ -80,9 +83,12 @@ same federal steps with Alberta's own. Outside Canada is unchanged: the flow sto
   province sees federal entries only, with the legend line *federal rules only for this province*
   (`words.ts:747`). Unchanged. So on the federal road an Ontario idea's steps are the federal ones, and its
   rules and tax cards still include Ontario's; the goal bar's line speaks of steps only, never of rules.
-- **About this job** opens from **Look closer** as on any road; outside Alberta its wage row reads the person's
-  own province's row and its *Where to look yourself* row leaves out Alberta's trade list (Tradesecrets) and says
-  why ([../cockpit/about-this-job.md](../cockpit/about-this-job.md)).
+- **About this job** opens from **Look closer** as on any road. Outside Alberta no region is asked (decided
+  2026-10-21, the maintainer's call 2, "province-wide"; [02-where-you-are.md](./02-where-you-are.md), *Outside
+  Alberta*), so its wage row is always the province-wide row, labelled by its own source code (*Ontario-wide
+  figure*), with the line *DotAmi asks your region only in Alberta for now, so this is Ontario's province-wide
+  row.* and no **Change**. Its *Where to look yourself* row leaves out Alberta's trade list (Tradesecrets) and
+  says why ([../cockpit/about-this-job.md](../cockpit/about-this-job.md)).
 
 ## Words
 
@@ -136,7 +142,9 @@ under it.
 ## Not in this version
 
 - A full Ontario or BC road (their registries, fees, sales-tax rules; phase 4).
-- The area question for a person outside Alberta ([02-where-you-are.md](./02-where-you-are.md)).
+- The area and region questions for a person outside Alberta ([02-where-you-are.md](./02-where-you-are.md)):
+  step 2 says why nothing is asked there; the region question is added province by province once each list is
+  checked against Statistics Canada's own pages (the maintainer's call 2 of 2026-10-21).
 - Any place outside Canada.
 
 ## Checked against the rules

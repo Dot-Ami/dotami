@@ -10,7 +10,8 @@ Last updated: 2026-10-20 (designed before it is built, task 28g, for task 25h. T
 2026-10-16, official wage ranges each labelled with its real geography level; of 2026-10-20, *About this job*
 ships **without** business counts, the rules row quotes the job's Employment requirements word for word as the
 government's words, and *Where to look yourself* links Job Bank's general search page with the job's name and
-code shown as text to copy, never the job in a web address. Design:
+code shown as text to copy, never the job in a web address; of 2026-10-21, call 2: outside Alberta no region is
+asked and the wage row is the province-wide one, said on screen. Design:
 [../../architecture/research-kit.md](../../architecture/research-kit.md) § 4.2.)
 
 Mockup: `C:\dotami-wt\designs-phase2\05-about-this-job.html` (an invented cabinetmaker in Calgary, corpus idea
@@ -103,6 +104,16 @@ inside its own quote marks.)
 - Which row: the row for the person's region (*Your region: Calgary (your pick)*); for *I don't know* or no
   answer, the province's own row (*You said you don't know your region.* / *Your region isn't picked.*), with
   **Change** opening the region drop-down in place (the same list and why-line as Pick a future's step 2b).
+- **Outside Alberta** (decided 2026-10-21, the maintainer's call 2, "province-wide"): no region is asked, so
+  the row is always the province's own row (the two-digit `ER<pp>` code, as Alberta's is `ER48`; the build's
+  importer reads which code each province has, research 25s), and there is no **Change**. Its label comes from
+  its source code as every row's does, so a `PR` row reads *Ontario-wide figure*. Under the
+  label: *DotAmi asks your region only in Alberta for now, so this is Ontario's province-wide row.* Prince
+  Edward Island, Yukon, the Northwest Territories and Nunavut have one code each in the wage file (`ER1110`,
+  `ER6010`, `ER6110`, `ER6210`, research 25s), which is the row shown, labelled by its own source code, with
+  the same line. When a province's region list has been checked against Statistics Canada's own pages and its
+  question added ([../futures/02-where-you-are.md](../futures/02-where-you-are.md), *Outside Alberta*), that
+  province gets the Alberta behaviour above: its region's row, *I don't know*, and **Change**.
 - **When the region's row is shown under the region but its code says province** (Hairstylists and barbers
   under Calgary, `LFS 2023-24 PR NOC5`): *Shown under Calgary, but the government's code for this row says it is
   an Alberta-wide figure.*
@@ -185,6 +196,7 @@ aboutJobWords = {
     yourRegion: "Your region: <region> (your pick)",
     dontKnow: "You said you don't know your region.",
     notPicked: "Your region isn't picked.",
+    outsideAlberta: "DotAmi asks your region only in Alberta for now, so this is <province>'s province-wide row.",
     change: "Change",
     shownUnder: "Shown under <region>, but the government's code for this row says it is a <province>-wide figure.",
     notPublished: "Not published for <region>.",
@@ -229,6 +241,7 @@ only the government's skills list for the job.
   cockpit's regions*); a first visit opens with it empty, as today, so the first-visit counts don't change.
 - **Controls:** the menu's items aren't drawn while it is closed, so *Look closer* stays one control. Open, the
   panel holds *Close*, **Change** (region), the three links, and on a phone **Show all n lines**: 5 or 6.
+  Outside Alberta there is no **Change** and no Tradesecrets link: 3 or 4.
 - **The budget:** like *Compare* and *Others in this line of work*, it opens only on the person's click, so the
   first-visit rows (`cockpit-road-0`, `cockpit-road-1`, `example-mara`) don't change. The build adds one row
   measured with the panel open on road 1 (29j's written way for a new screen's first row): its regions are the
@@ -253,8 +266,9 @@ A full-width sheet over the road, with *Close* at its top. Rows stacked; the quo
 
 ## State touched
 
-Reads `occupationCode`, `economicRegion`, `landscapeArea`; writes only `economicRegion` and
-`economicRegionSetAt` through **Change**. Nothing else. No inventory line beyond step 2's. **Change** is also
+Reads `occupationCode`, `economicRegion`, `landscapeArea`, and the idea's province; writes only
+`economicRegion` and `economicRegionSetAt` through **Change**, which is drawn only in a province whose region
+question exists (Alberta in this version). Nothing else. No inventory line beyond step 2's. **Change** is also
 how a person who picked their job later in the skills list (and so was never asked step 2) sets a region
 for the first time; the area isn't set or changed here (row 3).
 
@@ -279,6 +293,6 @@ logo.
 ## Checked against the rules
 
 Every string in the words block was run through `VERDICT_WORDS`, `findVerdicts` and `findTimeWords` on
-2026-10-20: no finding. The quoted requirement lines hold durations (*four-year*, *several years*); they are the
+2026-10-20, and again on 2026-10-21 after the maintainer's calls: no finding. The quoted requirement lines hold durations (*four-year*, *several years*); they are the
 government's words, an *official-quote* piece, and are not DotAmi's. All 2,122 of them were also run through
 `findVerdicts` on 2026-10-20: one is caught (group 53200, *recommended*), handled by an allowance as row 1 says.

@@ -11,7 +11,8 @@ yet. The maintainer's picks of 2026-10-20 it follows: the government's example t
 grouped by how many of the person's words a job matches, each group labelled and in the government's code order
 inside; DotAmi may add a short word list of its own, shown on screen as DotAmi's and never as the
 government's, the list a plain file the maintainer approves; the build may download the OaSIS 2025 "Example
-Titles" file, pinned by checksum. Research: `28f-job-title-matching.md`, option 1 with rule H.)
+Titles" file, pinned by checksum. Research: `28f-job-title-matching.md`, option 1 with rule H. Of 2026-10-21,
+call 1: the typed way ends on the same three steps.)
 
 Mockup: `C:\dotami-wt\designs-phase2\01-whats-closest-to-your-work.html` (outside the repo; laptop width,
 then phone width).
@@ -31,6 +32,10 @@ The three steps are one flow, asked **before any road is drawn**, so the road ma
 | *Start from where I want to be* → *Your destination* → **Pick a future →** | `/futures` shows the cards at once; the job is never asked there (future-cockpit.md:221-222) | `/futures` opens on step 1. The cards are step 3 |
 | *I already have an idea* → the intake → Screen B **Open my map →** | Saves the idea and opens the cockpit on road 0 with no road picked and no job asked (roadForFuture's silent default, `lib/futures/types.ts:39-42`) | Screen B's button becomes **Next: the work closest to yours →**, which shows the same three steps on the intake page, in place of its screen (the live preview rail is put away for them: it previews the intake's answers, and these steps are about the road). All three steps sit inside the intake's own `intake` region, so the intake's limit of 4 regions and 5 controls holds for each (counted in each step's file). The idea is saved at step 3's **Look inside**, with the road the person opened |
 | The cockpit's skills list (**Pick a job**, `components/cockpit/gauge-panels.tsx` JobSection) | Searches job names and codes only | Stays, as the way to change the pick later; it runs the same search as step 1, with the same words, so there is still one picker |
+
+**Decided 2026-10-21 (the maintainer, call 1, "same-steps"):** *I already have an idea* ends on the same three
+steps (your work, where you are, the road) instead of opening the map, as the table above designs. The
+alternative, opening the map and asking the job later from the cockpit, was not picked.
 
 On the typed way the person's own first sentence shows above the box, word for word (*Your idea, in your
 words: “…”*), so they can see what they wrote. It is **not** searched by itself: the box starts empty on both

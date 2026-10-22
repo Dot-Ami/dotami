@@ -314,7 +314,10 @@ placed in phase 3.
     ([14i]) is not worked out from it: "which region are you in?" is asked right after it, with Alberta's
     eight economic regions listed (the maintainer's call of 2026-10-20; research 25s: the Edmonton area spans
     two regions; designed in [ui-spec/futures/02-where-you-are.md](ui-spec/futures/02-where-you-are.md);
-    corrected 2026-10-20). The industry question waits for the counts (the maintainer's call of 2026-10-20)
+    corrected 2026-10-20). The industry question waits for the counts (the maintainer's call of 2026-10-20).
+    Outside Alberta neither question is asked for now: *About this job* shows the province-wide wage figure,
+    and the region question is added province by province once each province's region list is checked
+    against Statistics Canada's own pages, as Alberta's eight were (the maintainer's call of 2026-10-21)
   - [ ] Phase 3: the business counts for the area and industry (Statistics Canada table 33-10-1176), the
     industry question, *Where to look* as a dated, checked list, and the rest of the panel
 - ⬜ **[14h] Ask the Lens "what's cheapest, fastest, strongest?"** The Lens, and a *Sort by one thing you
@@ -469,14 +472,19 @@ placed in phase 3.
     where the job question sits on both ways in, what *Skip* leads to, the one place the area is asked, and
     the "not written yet" screen (2026-10-20: [ui-spec/futures/](ui-spec/futures/_index.md) steps 1 to 3 and
     outside Alberta, [ui-spec/cockpit/about-this-job.md](ui-spec/cockpit/about-this-job.md) and
-    [ui-spec/cockpit/incorporating-estimate.md](ui-spec/cockpit/incorporating-estimate.md); nothing built yet)
+    [ui-spec/cockpit/incorporating-estimate.md](ui-spec/cockpit/incorporating-estimate.md); nothing built yet.
+    The maintainer's calls on them, 2026-10-21: the typed way ends on the same three steps; no region question
+    outside Alberta for now; a job with no written road saves nothing; the what-if **Keep** bug is fixed with
+    the *Incorporating* fix)
   - [ ] 28a: import the classification's elements file (example job titles and "Employment requirements")
     on the shared import core, with its checksum, licence and credit line
   - [ ] 28b: *What's closest to your work?*: the person searches the example titles and picks the job;
     matches in code order, labelled "matches your words · your pick"; *Skip* allowed; nothing set without a
     click
   - [ ] 28c: the road written for the picked job comes first; otherwise "No road is written for this job
-    yet", with *About this job* and the general road; no silent fallback for a new idea
+    yet", with *About this job* and the general road; no silent fallback for a new idea; a job with no written
+    road saves nothing until a future is opened (the maintainer's call of 2026-10-21; a kind of saved idea with
+    no road may come in phase 3 with the career road)
   - [ ] 28d: outside Alberta, the federal steps that apply everywhere, plus "Written for Alberta" with the
     person's own province named; Alberta-only steps and pages left out (full B.C. and Ontario roads come
     later)
@@ -513,7 +521,11 @@ placed in phase 3.
     future* (it was lost; 323 of the 367 test ideas met it) (#190)
   - [ ] Let *Incorporating* light on a future picked on the general road, or say plainly that it can't (it
     needs a third-year sales estimate nothing there asks for); after 28g (designed 2026-10-20: the cockpit
-    asks for the estimate, [ui-spec/cockpit/incorporating-estimate.md](ui-spec/cockpit/incorporating-estimate.md))
+    asks for the estimate, [ui-spec/cockpit/incorporating-estimate.md](ui-spec/cockpit/incorporating-estimate.md)).
+    The same pull request fixes the what-if **Keep** bug (the maintainer's call of 2026-10-21): on a picked
+    future, **Keep** (`lib/cockpit/told.ts` `keepWhatIf`) sets the first-year sales but leaves `sales-targets`
+    on the not-said list, so the rail and *Your plan* say "Not said" while the road reads the number; **Keep**
+    will also mark the first-year target as said
   - [x] A small release of phase 1's work (the calm first view, the six text sizes, *Look closer*, the
     harness's fixes) before phase 2 changes the data file: 0.4.1 (#188), published 2026-10-20
   - [ ] Release 0.5.0: no silent fallbacks, every Alberta test idea ending on a road written for it or an

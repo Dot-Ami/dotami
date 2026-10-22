@@ -1,4 +1,4 @@
-# The Incorporating fix: asking for your third-year sales estimate on a picked future
+# The Incorporating fix: asking for your third-year sales estimate on a picked future (with the what-if Keep bug)
 
 Page: Cockpit (`/cockpit?venture=<id>`), road 0 (and the federal road) · Components: *Not told yet* and the
 one-question box ([12-told-list.md](./12-told-list.md); `lib/cockpit/told.ts` `notToldYet`), the step panel of
@@ -6,8 +6,10 @@ one-question box ([12-told-list.md](./12-told-list.md); `lib/cockpit/told.ts` `n
 `lib/cockpit/words.ts` `questions`, `lib/roads/words.ts` `salesYear`
 Type: a *Not told yet* row, a number box, a take-back
 
-Last updated: 2026-10-20 (designed before it is built, task 28g, for the *Incorporating* fix. The maintainer,
-2026-10-20: fix both known bugs, and the *Incorporating* one needs a design here.)
+Last updated: 2026-10-21 (designed before it is built, task 28g, for the *Incorporating* fix. The maintainer,
+2026-10-20: fix both known bugs, and the *Incorporating* one needs a design here. **Decided 2026-10-21 (the
+maintainer, call 6, "fix"):** the what-if **Keep** bug on a picked future is fixed in the **same** pull request
+as the *Incorporating* fix; its part is *The what-if Keep bug* below.)
 
 No mockup: it changes one row and one box on screens that already exist.
 
@@ -51,6 +53,34 @@ back**, as today. Taking it back sets the estimate to 0 **and** puts `sales-targ
 list, so a picked future is exactly as it was when picked: the rail says *Not said* again, the row comes back
 to *Not told yet*, and the *I'd incorporate at* row leaves it (it changes nothing without an estimate).
 
+## The what-if Keep bug, fixed in the same pull request (the maintainer's call 6, 2026-10-21)
+
+**The bug.** On a future picked on *Pick a future*, both sales targets start on the *not said* list under one
+id, `sales-targets` (`lib/front-door/start-future.ts`, `lib/scenarios/types.ts:95`). The what-if bar's
+**Keep** (`keepWhatIf`, `lib/cockpit/told.ts:360-363`, called from `components/cockpit/cockpit-page.tsx`) sets
+the idea's first-year sales, `targetRevenueY1`, to the what-if, but leaves `sales-targets` on the not-said
+list. So after **Keep**:
+
+- the rail's *Target Y1* (`lib/cockpit/profile-rows.ts` `profileRows`) and *Your plan* and its export
+  (`lib/playbook/render-markdown.ts` `formatProfileBlock`), which both read `isNotSaid(profile,
+  "sales-targets")`, still say *Not said*;
+- while the road reads the number: road evaluation takes `targetRevenueY1` as the person's own first-year
+  sales (the rules' sales lines, such as the CRA's $30,000 line, `lib/brain/evaluate.ts`).
+
+The screen and the road disagree about the same answer. Today's test (`tests/cockpit-told.spec.ts`, *Keep
+makes it the idea's own first-year sales, and changes nothing else*) runs on an intake idea, which has nothing
+on its not-said list, so it doesn't see this.
+
+**The fix.** With the split of `sales-targets` into `sales-target-year-1` and `sales-target-year-3` (part 3
+above), **Keep** sets `targetRevenueY1` **and** takes `sales-target-year-1` off the not-said list
+(`withSaid`, as `answerEquipment` does for `equipment`). The third-year target is untouched: it stays *Not
+said* until the person gives it (part 1). The rail and *Your plan* read each year's own id, so after **Keep**
+*Target Y1* shows the kept amount, *Target Y3* still says *Not said*, and the road reads the same number the
+screen shows. Taking the first-year number back (*What you've told DotAmi*, **Take back**) sets it to 0 and puts
+`sales-target-year-1` back on the not-said list, as part 5 does for the third year. **Clear** on the what-if bar
+is unchanged: it clears the what-if, not a kept number. No words change: the receipt and the told row use the
+existing `salesYear(1)` words (*you told us first-year sales of $N*).
+
 ## Words
 
 ```words
@@ -74,6 +104,7 @@ number*).
 |---|---|
 | *Incorporating* can never light; its panel takes *I'd incorporate at*, which changes nothing | *Not told yet* asks for the estimate; the panel holds both boxes; with both given, the step lights as it does on an intake idea |
 | The rail's *Target Y3* says *Not said* for good | It shows the person's estimate once given, and *Not said* again after **Take back** |
+| After the what-if bar's **Keep**, the rail's *Target Y1* and *Your plan* say *Not said* while the road reads the kept number | *Target Y1* and *Your plan* show the kept number the road reads; *Target Y3* stays *Not said* until given |
 
 ## Regions and controls
 
@@ -99,10 +130,18 @@ browser test answers the estimate and the *I'd incorporate at* number on a picke
 reloads, takes the estimate back and sees the not-said list restored (as PR #190's test does for equipment); a
 control keeps the old save and fails.
 
+For the **Keep** bug: a unit test in `tests/cockpit-told.spec.ts` runs **Keep** on a **picked** future (not the
+intake idea today's test uses) and checks that `targetRevenueY1` is the kept number, `sales-target-year-1` is
+off the not-said list, `sales-target-year-3` is still on it, and the rail's rows read *Target Y1* as the amount
+and *Target Y3* as *Not said*; run against today's `keepWhatIf`, it fails (the year-1 target stays not said). A
+browser test keeps a what-if on a picked future, reloads, and reads the same amount on the rail and on *Your
+plan*. A saved `sales-targets` (from before the split) is read as both ids, so an old future still reads *Not
+said* for both until each is given.
+
 ## Not in this version
 
-- Asking for the first-year target in the cockpit (only the what-if bar's **Keep** sets it; see the pull
-  request's finding about **Keep** on a picked future).
+- A *Not told yet* row or box asking for the first-year target in the cockpit: only the what-if bar's **Keep**
+  sets it, and after this fix **Keep** also marks it as said (above).
 - Any number of DotAmi's own for when to incorporate.
 
 ## Checked against the rules

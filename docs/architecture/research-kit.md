@@ -207,7 +207,9 @@ in phase 3 with the industry question); the rules row quotes the job's *Employme
 **general** page, with the job's name and code shown as text to copy, and never puts the job (or anything of
 the person's) in a web address; the wage row is picked by the economic region the person chose
 ([ui-spec/futures/02-where-you-are.md](../ui-spec/futures/02-where-you-are.md)), never worked out from their
-area. The screen as it will be built, every word included, is
+area. Outside Alberta (the maintainer's call of 2026-10-21) no region is asked for now and the wage row is the
+province-wide one, labelled as such; a province's region question is added once its region list is checked
+against Statistics Canada's own pages, as Alberta's was. The screen as it will be built, every word included, is
 [ui-spec/cockpit/about-this-job.md](../ui-spec/cockpit/about-this-job.md); where the two differ, that file
 wins. In short:
 
