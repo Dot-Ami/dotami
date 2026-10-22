@@ -402,7 +402,9 @@ to the data.
    reads the cited government pages), and paste the line it prints. It counts the idea harness's pass
    rate, where ideas end, the silent fallbacks, the job search against the corpus, the clutter per
    screen and width, and source health, from the tests on that machine; nothing comes from people
-   using DotAmi. `npm run quality:report` prints the same numbers in full (`test-results/quality.md`).
+   using DotAmi. Made on the builder's Windows machine, the line's clutter part is counted with the
+   Windows allowance (`WINDOWS_EXTRA` in `e2e/budgets.ts`), so it can differ from CI's Ubuntu numbers.
+   `npm run quality:report` prints the same numbers in full (`test-results/quality.md`).
 2. After it merges: `git tag v0.1.1 && git push origin v0.1.1`.
 3. `.github/workflows/release.yml` checks the tag matches `package.json`, packages the app, runs
    the desktop test on the packaged app, builds the installer and uploads it to a **draft** release.

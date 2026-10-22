@@ -110,8 +110,10 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   other 227 only rules listed as known and not yet fixed). The clutter is counted with the clutter test's own
   rule and the job search with the count its floor test holds, so the report can't print a number the tests
   don't. CI prints it after the tests and after the browser run, and on the run's summary page; no number fails
-  anything yet. `npm run quality:line` gives the one Quality line, in plain words, each release adds here.
-  Nothing comes from the people using DotAmi, and nothing is sent anywhere.
+  anything yet. `npm run quality:line` gives the one Quality line, in plain words, each release adds here;
+  a part the run didn't count (the job search, the clutter, the sources, or the live quote check) says so in
+  the line. Made on a builder's Windows machine, its clutter part counts with the Windows allowance, so it
+  can differ from CI's. Nothing comes from the people using DotAmi, and nothing is sent anywhere.
 ### Fixed
 - **Your answer to "Are you buying equipment, a vehicle or tools?" on a future picked on Pick a future is
   kept** (the maintainer's "Yes, fix both", 2026-10-20). Pick a future saves equipment as not said, since it

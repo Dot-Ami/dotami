@@ -549,6 +549,19 @@ describe("CI", () => {
   });
 });
 
+describe("the release steps", () => {
+  it("say the release line's clutter part, counted on the builder's Windows machine, uses the Windows allowance", () => {
+    const doc = readFileSync(path.join(process.cwd(), "docs", "architecture", "desktop-app.md"), "utf8").replace(/\r\n/g, "\n");
+    // Step 1 of the release steps: from the version bump to step 2.
+    const from = doc.indexOf("1. Bump `version` in `package.json`");
+    expect(from).toBeGreaterThan(0);
+    const step1 = doc.slice(from, doc.indexOf("\n2. ", from));
+    expect(step1).toContain("WINDOWS_EXTRA");
+    expect(step1).toMatch(/Windows allowance/);
+    expect(step1).toMatch(/CI's Ubuntu/);
+  });
+});
+
 describe("the script's flags", () => {
   it("takes --clutter-only, --live and --line, --clutter-only with neither other, and nothing else", () => {
     expect(parseArgs([])).toEqual({ clutterOnly: false, line: false, live: false });

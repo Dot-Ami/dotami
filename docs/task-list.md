@@ -536,7 +536,9 @@ placed in phase 3.
     numbers per screen and width, and source health; each release's changelog gets a Quality line.
     `npm run quality:report` (scripts/quality-report.mjs) prints them and writes `test-results/quality.md`,
     in CI after the tests (the quality job) and after the browser run (the clutter); `npm run quality:line`
-    gives the release's Quality line. Information only: no number fails anything yet. Silent fallbacks
+    gives the release's Quality line, which says so for any part the run didn't count (the live quote check
+    too) and, made on Windows, counts the clutter with the Windows allowance. Information only: no number
+    fails anything yet. Silent fallbacks
     counted on 2026-10-21: 37 ideas (the aim, 0, is phase 2's end). Counted on 2026-10-22, typed in: 323 of
     367 ideas on the general road, 44 before any road, 0 of the 11 ideas with a road of their own (road 1)
     reach it
