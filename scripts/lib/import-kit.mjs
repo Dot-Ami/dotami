@@ -80,6 +80,49 @@ export function fingerprint(text) {
   return createHash("sha256").update(evenText(text), "utf8").digest("hex");
 }
 
+/**
+ * Rows of a comma-separated file, the way the government's CSV files write them: a field may be in double
+ * quotes (to hold a comma, a line break or a quote, written ""), and blank lines are skipped. `separator` is
+ * "," unless a file says otherwise. The text is evened out first, so "\r\n" never ends up inside a field.
+ */
+export function parseCsv(text, separator = ",") {
+  const rows = [];
+  let row = [];
+  let field = "";
+  let quoted = false;
+  const body = evenText(text);
+  for (let i = 0; i < body.length; i += 1) {
+    const c = body[i];
+    if (quoted) {
+      if (c === '"' && body[i + 1] === '"') {
+        field += '"';
+        i += 1;
+      } else if (c === '"') quoted = false;
+      else field += c;
+    } else if (c === '"' && field === "") quoted = true;
+    else if (c === separator) {
+      row.push(field);
+      field = "";
+    } else if (c === "\n") {
+      row.push(field);
+      if (row.some((f) => f !== "")) rows.push(row);
+      row = [];
+      field = "";
+    } else field += c;
+  }
+  row.push(field);
+  if (row.some((f) => f !== "")) rows.push(row);
+  return rows;
+}
+
+/** Throws, naming the file, when its first row isn't exactly the header the importer was written for. */
+export function expectHeader(rows, expected, name) {
+  const got = rows[0] ?? [];
+  if (got.length !== expected.length || got.some((cell, i) => cell !== expected[i])) {
+    throw new Error(`${name}: the header is "${got.join(",")}", not the "${expected.join(",")}" this import reads`);
+  }
+}
+
 // ---- The licence header, from the registry card ------------------------------------------------------
 
 /** The widest a header line may run, "// " included. */

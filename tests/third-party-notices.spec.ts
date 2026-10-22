@@ -62,6 +62,8 @@ function fakeCheckout(name: string, dependencies: Record<string, string>) {
   writeFileSync(path.join(root, "app", "fonts", "LICENSE-JetBrainsMono.txt"), "JetBrains Mono: SIL Open Font License 1.1");
   mkdirSync(path.join(root, "lib", "engines", "oasis", "v2026"), { recursive: true });
   writeFileSync(path.join(root, "lib", "engines", "oasis", "v2026", "LICENCE.txt"), "Contains information licensed under the Open Government Licence – Canada.");
+  mkdirSync(path.join(root, "lib", "engines", "noc", "v2021"), { recursive: true });
+  writeFileSync(path.join(root, "lib", "engines", "noc", "v2021", "LICENCE.txt"), "Adapted from Statistics Canada.");
   fakePackage(modules, "tailwindcss", "4.0.0");
   return { root, modules };
 }
@@ -143,6 +145,7 @@ describe("collectNotices: what the generator lists, and what stops it", () => {
       "font:Inter (font)",
       "font:JetBrains Mono (font)",
       "data:OaSIS 2025 Version 1.0 (data from Employment and Social Development Canada)",
+      "data:NOC 2021 Version 1.0 (data from Statistics Canada)",
     ]);
     expect(entries[0].texts).toEqual([{ file: "LICENSE", text: "Copyright (c) app authors\nMIT terms" }]);
   });
@@ -299,12 +302,25 @@ describe("the list for this checkout", () => {
   });
 
   it("lists the government's skills list as data that ships, with the licence's own attribution line (2026-10-12)", () => {
-    const oasis = entries.filter((e) => e.kind === "data");
+    const data = entries.filter((e) => e.kind === "data");
+    const oasis = data.filter((e) => e.name.startsWith("OaSIS"));
     expect(oasis.map((e) => [e.name, e.licence])).toEqual([["OaSIS 2025 Version 1.0 (data from Employment and Social Development Canada)", "OGL-Canada-2.0"]]);
     expect(oasis[0]!.texts[0]!.file).toBe("LICENCE.txt");
     expect(oasis[0]!.texts[0]!.text).toContain("Contains information licensed under the Open Government Licence – Canada.");
     expect(oasis[0]!.texts[0]!.text).toContain("https://open.canada.ca/en/open-government-licence-canada");
-    expect(parseNotices(formatNotices(oasis, { version: "0.0.0-test", desktop: false })).entries[0]!.kind).toBe("data");
+    // The example job titles (2026-10-21) ship from the same dataset, under the same licence file.
+    expect(oasis[0]!.texts[0]!.text).toContain("example-titles_oasis_2025_v1.0.csv");
+    expect(parseNotices(formatNotices(data, { version: "0.0.0-test", desktop: false })).entries.map((e) => e.kind)).toEqual(["data", "data"]);
+  });
+
+  it("lists the NOC 2021 job groups as data that ships, with Statistics Canada's notice (2026-10-21, the maintainer's call 4)", () => {
+    const noc = entries.filter((e) => e.kind === "data" && e.name.startsWith("NOC"));
+    expect(noc.map((e) => [e.name, e.licence])).toEqual([["NOC 2021 Version 1.0 (data from Statistics Canada)", "Statistics Canada Open Licence"]]);
+    expect(noc[0]!.texts[0]!.file).toBe("LICENCE.txt");
+    expect(noc[0]!.texts[0]!.text.replace(/\s+/g, " ")).toContain(
+      "Adapted from Statistics Canada, National Occupational Classification (NOC) 2021 Version 1.0, 2021. This does not constitute an endorsement by Statistics Canada of this product.",
+    );
+    expect(noc[0]!.texts[0]!.text).toContain("https://www.statcan.gc.ca/en/reference/licence");
   });
 
   it("follows what desktop/package.mjs copies into the installed app", () => {

@@ -115,6 +115,12 @@ export const OFFICIAL_QUOTE_ALLOWANCES: readonly OfficialQuoteAllowance[] = [
     where: "Alberta's Register a business name page, quoted on the apprentice road's Open your own shop step (lib/engines/roads/v2026/apprentice-to-own-shop-ab.ts)",
     why: "The province pointing people to a lawyer, in its own words (its grammar kept as written). It is the opposite of DotAmi choosing for the person, and it is shown as the page's quote.",
   },
+  {
+    text: "A background combining athletic training and college or university studies is strongly recommended.",
+    where:
+      "Statistics Canada's NOC 2021 elements file, an \"Employment requirements\" line of group 53200 Athletes (lib/engines/noc/v2021/data.ts), quoted on About this job's Employment requirements row (docs/ui-spec/cockpit/about-this-job.md)",
+    why: "The government's own requirement line for the job group, quoted in full inside quote marks and labelled as the government's words, never reworded or left out. It is the classification's statement about the job, not DotAmi choosing for the person.",
+  },
 ];
 
 /**

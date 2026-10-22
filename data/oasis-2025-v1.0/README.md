@@ -1,4 +1,4 @@
-# OaSIS 2025 Version 1.0: the four files DotAmi imports
+# OaSIS 2025 Version 1.0: the files DotAmi imports
 
 Four files of the government of Canada's *Occupational and Skills Information System (OaSIS) - 2025
 Version 1.0*, as downloaded from
@@ -26,6 +26,21 @@ from the government means updating that pinned value by hand, on purpose. `npm r
 the dataset's title come from its card in the source registry (`lib/engines/research-kit/v2026/registry.ts`,
 card `oasis-2025`); the reading, pins and header are the research kit's import core, `scripts/lib/import-kit.mjs`.
 Nothing in this folder ships with the app; the module made from it does, with its licence line.
+
+## The fifth file: the example job titles (since 2026-10-21)
+
+| File | What DotAmi uses it for |
+|---|---|
+| `example-titles_oasis_2025_v1.0.csv` | Each job's example titles (18,666 of them, of three types: Example, Index and Inclusion), the words *What's closest to your work?* searches |
+
+Downloaded from the same dataset on 2026-10-21, on the maintainer's word of 2026-10-20, and read by its own
+importer, `node scripts/import-oasis-titles.mjs` (card `oasis-2025-example-titles`), into
+`lib/engines/oasis/v2026/titles.ts`, the same way: pinned by its SHA-256 in `OASIS_TITLES_FILES`, checked by
+`--check`, `tests/oasis-titles-import.spec.ts` and `npm run data:check`, and fetched again only by `--download`,
+which writes it only when it matches its pin. The search over it is `lib/engines/oasis/v2026/title-search.ts`
+(research note 28f, rule H).
+
+## Why these files
 
 Why these files and not the others (Work Activities, Abilities, …), how much of each list is shown,
 and how each item is cited: [docs/architecture/future-cockpit.md](../../docs/architecture/future-cockpit.md)

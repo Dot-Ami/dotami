@@ -132,8 +132,10 @@ const FONTS = [
 
 /**
  * Data written by others that ships inside DotAmi's own code, each with the licence file committed beside
- * it. The government's skills list (lib/engines/oasis/v2026/data.ts, made by scripts/import-oasis.mjs)
- * is under the Open Government Licence – Canada, whose attribution line is in that file.
+ * it. The government's skills list and example job titles (lib/engines/oasis/v2026/data.ts and titles.ts,
+ * made by scripts/import-oasis.mjs and scripts/import-oasis-titles.mjs) are under the Open Government Licence
+ * – Canada, whose attribution line is in that file; the NOC 2021 job groups (lib/engines/noc/v2021/data.ts,
+ * made by scripts/import-noc.mjs) are under the Statistics Canada Open Licence, whose notice is in its file.
  */
 const DATA = [
   {
@@ -141,6 +143,12 @@ const DATA = [
     licence: "OGL-Canada-2.0",
     file: "lib/engines/oasis/v2026/LICENCE.txt",
     version: "2025 Version 1.0, record modified 2026-10-04",
+  },
+  {
+    name: "NOC 2021 Version 1.0 (data from Statistics Canada)",
+    licence: "Statistics Canada Open Licence",
+    file: "lib/engines/noc/v2021/LICENCE.txt",
+    version: "2021 Version 1.0, elements file",
   },
 ];
 

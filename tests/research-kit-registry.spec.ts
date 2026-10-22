@@ -16,7 +16,9 @@ import { linksOn, neverAutomated } from "@/lib/engines/research-kit/v2026/views"
 import { researchKitWords } from "@/lib/engines/research-kit/v2026/words";
 import { AD_LIBRARIES } from "@/lib/landscape/words";
 
+import { NOC_FILES } from "../scripts/import-noc.mjs";
 import { OASIS_FILES } from "../scripts/import-oasis.mjs";
+import { OASIS_TITLES_FILES } from "../scripts/import-oasis-titles.mjs";
 import { SOURCE_FILES, importedModules, networkCalls, readSource, sourceFiles } from "./helpers/source-scan";
 import { findVerdicts } from "./helpers/verdict-words";
 
@@ -55,12 +57,12 @@ describe("the registry", () => {
     ]);
   });
 
-  it("marks when each source comes in: OaSIS's four files now, the job titles, wages and code lists in phase 2, the counts and census later", () => {
+  it("marks when each source comes in: OaSIS's four files and the two job-title files now (since 2026-10-21), wages and code lists in phase 2, the counts and census later", () => {
     const phaseOf = Object.fromEntries(SOURCES.filter((c) => c.access === "ship").map((c) => [c.id, c.phase]));
     expect(phaseOf).toEqual({
       "oasis-2025": "now",
-      "oasis-2025-example-titles": "phase-2",
-      "noc-2021-elements": "phase-2",
+      "oasis-2025-example-titles": "now",
+      "noc-2021-elements": "now",
       "job-bank-wages": "phase-2",
       "naics-2022": "phase-2",
       "statcan-business-counts": "phase-3",
@@ -70,6 +72,16 @@ describe("the registry", () => {
 
   it("lists the four OaSIS files the importer reads, at the addresses it downloads from", () => {
     expect(card("oasis-2025").files).toEqual(OASIS_FILES.map((f) => ({ name: f.name, url: f.url })));
+  });
+
+  it("lists the two job-title files their importers read, at the addresses they download from", () => {
+    expect(card("oasis-2025-example-titles").files).toEqual(OASIS_TITLES_FILES.map((f) => ({ name: f.name, url: f.url })));
+    expect(card("noc-2021-elements").files).toEqual(NOC_FILES.map((f) => ({ name: f.name, url: f.url })));
+  });
+
+  it("marks as shipped now exactly the three sources an importer reads today", () => {
+    const shippedNow = SOURCES.filter((c) => c.access === "ship" && c.phase === "now").map((c) => c.id);
+    expect(shippedNow.sort()).toEqual(["noc-2021-elements", "oasis-2025", "oasis-2025-example-titles"]);
   });
 
   it("gives every shipped source an open licence and its credit line, and the government files their licence's own words", () => {
