@@ -48,6 +48,14 @@ to see:
 - **Not in this task:** Pick a future's no-road block shows it in place with 28c.
 - **Its clutter row** is `cockpit-about-job`, the first screen added after the baseline (`FIRST_MEASURED` in
   `e2e/budgets.ts`, from CI's first count).
+- **The browser idea sweep opens it.** For every swept idea that reaches a cockpit and names a job in the corpus
+  (`jobs`), `e2e/idea-sweep.spec.ts` picks that job on the future the idea picked, opens *About this job* from
+  *Look closer*, and reads the panel through the gate's checks (`e2e/about-job-read.ts`, shared with
+  `e2e/about-this-job.spec.ts`): no verdict; no time words in DotAmi's words, the government's lines lifted only
+  inside their labelled quote on the rules row and only as the shipped file holds them; and every figure a
+  published wage, on its own wage block, read back as the file's own row with the level its source code gives.
+  A planted control in the sweep shows each is caught (an unlabelled quote, a line the file doesn't hold, a
+  summed wage, a wrong level, a wage outside its row, a verdict).
 
 Mockup: `C:\dotami-wt\designs-phase2\05-about-this-job.html` (an invented cabinetmaker in Calgary, corpus idea
 `idea-v1-0276`, on road 1).

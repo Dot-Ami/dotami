@@ -381,7 +381,9 @@ placed in phase 3.
     the person's region is kept (Pick a future's step 2, its own pull request; wiring it in is one line in
     `app/api/futures/[id]/route.ts`), so its **Change** isn't drawn yet; its own clutter row
     (`cockpit-about-job`, the first screen added after the baseline, `FIRST_MEASURED` in `e2e/budgets.ts`).
-    Pick a future's no-road block shows it in place with its own task (28c)
+    Pick a future's no-road block shows it in place with its own task (28c). The browser idea sweep (29e)
+    opens it for every swept idea that names a job and reads it through the gate's checks
+    (`e2e/about-job-read.ts`)
   - [ ] Phase 3: business counts for every industry (25d), the research-pack script (25f), the validator and
     writer's guide (25g), read tools (25k), a second road built with the kit (25l), the rest of the rule text
     (25r)

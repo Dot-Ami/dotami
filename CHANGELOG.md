@@ -25,7 +25,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   DotAmi's own server, so the large job and wage lists never load into the page. Until your region is kept
   (Pick a future's next step, its own change) the wage row is the province's own, saying your region isn't
   picked. The screen checks read it: no verdict, no time in DotAmi's own words (the government's quoted lines
-  pass only on this row, only as the shipped file holds them), and its own clutter limit.
+  pass only on this row, only as the shipped file holds them), and its own clutter limit. The browser idea
+  sweep opens it too, for every swept idea that names a job, and reads every wage figure back as the wage
+  file's own row (a summed wage, or a figure outside its row, is caught).
 - **One list of outside sources and their terms** (the research kit's source registry,
   `lib/engines/research-kit/v2026/registry.ts`; [docs/architecture/research-kit.md](docs/architecture/research-kit.md)
   § 5.2). Plumbing, with no change on screen: one card for each government file the kit ships in this phase and
