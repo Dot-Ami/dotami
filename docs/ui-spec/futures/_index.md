@@ -5,6 +5,27 @@ Page: `/futures` · Component: `components/front-door/pick-future-page.tsx` (car
 
 Last updated: 2026-10-13 (the first written future listed; design: docs/architecture/future-cockpit.md § 1, The way in as built)
 
+> **Designed 2026-10-20, not built yet — phase 2's three steps (task 28g).** Pick a future becomes three
+> steps in the page's one step region, one at a time, asked before any road is drawn: **1. What's closest to
+> your work?** ([01-whats-closest-to-your-work.md](./01-whats-closest-to-your-work.md): the person's own words
+> searched in the government's example job titles, grouped by how many of their words each job holds, Skip
+> allowed, nothing picked without a click); **2. Where you are**
+> ([02-where-you-are.md](./02-where-you-are.md): which area, then which economic region, each with its
+> why-line; only after a job is picked; in Alberta only for now); **3. Pick a future**
+> ([03-road-match.md](./03-road-match.md): the road written for the picked job first, or *No road is written
+> for this job yet* with *About this job* shown in place and road 0 under it; no silent fallback, and nothing
+> saved for a job with no road until a future is opened). Outside Alberta, step 2 asks nothing and says why,
+> *About this job* shows the province-wide wage figure, and step 3 shows the federal steps first
+> ([04-outside-alberta.md](./04-outside-alberta.md)). The typed way (*I already have an idea*) ends on the
+> same three steps, on the intake page, in place of **Open my map**. The table and controls below are today's,
+> until the build's pull requests (28b, 23g, 28c, 28d) change them.
+>
+> **The maintainer's calls of 2026-10-21** on these designs: (1) the typed way ends on the same three steps;
+> (2) outside Alberta no region question for now, the province-wide wage figure, and the question added
+> province by province once each province's region list is checked against Statistics Canada's own pages;
+> (3) a job with no written road saves nothing (a kind of saved idea with no road may come in phase 3, with
+> the career road).
+
 ## Page job
 
 Choose the one future to look inside, and see what each holds before any more questions. Reached
@@ -43,4 +64,14 @@ from *Your destination*'s **Pick a future →**. Next: the cockpit on the new id
 ## Not built yet
 
 *Which job is closest to the work you'd do yourself?* (decision 5) comes with the OaSIS import; the road
-drawn in grey before the pick.
+drawn in grey before the pick. *(2026-10-20: designed as step 1, [01-whats-closest-to-your-work.md](./01-whats-closest-to-your-work.md);
+the grey road before the pick stays out: the cockpit draws it whole.)*
+
+## Phase 2's steps (designed 2026-10-20)
+
+| Step | File |
+|---|---|
+| 1. What's closest to your work? | [01-whats-closest-to-your-work.md](./01-whats-closest-to-your-work.md) |
+| 2. Where you are: your area, then your region | [02-where-you-are.md](./02-where-you-are.md) |
+| 3. Pick a future: the road written for your job, or an honest "not written yet" | [03-road-match.md](./03-road-match.md) |
+| Outside Alberta: the federal steps, and "Written for Alberta" with your province named | [04-outside-alberta.md](./04-outside-alberta.md) |

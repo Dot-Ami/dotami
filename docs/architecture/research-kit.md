@@ -196,23 +196,43 @@ Later, not planned yet: K6 C, the Lens drafting a personal road, is a future sto
 
 ### 4.2 *About this job* (the same panel for every job)
 
-It opens from the goal bar, in the right-hand panel, like *Compare*. Which rows appear for a real person was
-call K5; the maintainer picked **K5 B** on 2026-10-16: counts plus official wage ranges, each labelled with its
-real geography level. Government outlook ratings (K5 C) were not picked, so there is no outlook row. The rows
-always appear in this fixed order: rules, wages, counts, links.
+It opens from the goal bar's *Look closer* menu, in the right-hand panel, like *Compare*. Which rows appear for a
+real person was call K5; the maintainer picked **K5 B** on 2026-10-16: counts plus official wage ranges, each
+labelled with its real geography level. Government outlook ratings (K5 C) were not picked, so there is no
+outlook row. The rows always appear in this fixed order: rules, wages, counts, links.
 
-> **About this job · Cabinetmakers (NOC 72311) · your pick of job**
-> **Certification in Alberta:** "Optional Certification" (Alberta Tradesecrets, trade 0361).
-> **Hourly wage published for this job · Calgary economic region** (or *Alberta-wide figure* when the row's
+**Updated 2026-10-20, the maintainer's picks:** this version ships **without** business counts (they come
+in phase 3 with the industry question); the rules row quotes the job's *Employment requirements* from the NOC
+2021 elements file word for word, as the government's words; *Where to look yourself* links each site's
+**general** page, with the job's name and code shown as text to copy, and never puts the job (or anything of
+the person's) in a web address; the wage row is picked by the economic region the person chose
+([ui-spec/futures/02-where-you-are.md](../ui-spec/futures/02-where-you-are.md)), never worked out from their
+area. Outside Alberta (the maintainer's call of 2026-10-21) no region is asked for now and the wage row is the
+province-wide one, labelled as such; a province's region question is added once its region list is checked
+against Statistics Canada's own pages, as Alberta's was. The screen as it will be built, every word included, is
+[ui-spec/cockpit/about-this-job.md](../ui-spec/cockpit/about-this-job.md); where the two differ, that file
+wins. In short:
+
+> **About this job · Cabinetmakers · 72311.00 · your pick of job**
+> **Employment requirements:** *The government's words, quoted in full for job group 72311 Cabinetmakers:* each
+> line of the elements file, in quote marks.
+> **Wages published for this job group · Economic region: Calgary** (or *Alberta-wide figure* when the row's
 > source code says so; *small-area estimate* where it is one) **· reference period shown:** low $NN · median $NN
-> · high $NN (Job Bank wage file). *What workers in this job were paid. Not what a shop earns, and not what you
-> would earn.*
-> **Places of business with employees, your area and industry group:** the count from competitive-landscape
-> § 4.1. *One-person shops with no payroll aren't in this count.*
-> **Where to look yourself:** Job Bank's page for this job · BizPaL · the trade's Tradesecrets page.
+> · high $NN (Job Bank wage file). *What workers in this job group were paid. Not what a shop earns, and not
+> what you would earn.*
+> **Business counts:** *Not in this version.* (Your area is shown back, and nothing reads it yet.)
+> **Where to look yourself:** the job's name and code as text to copy · Job Bank: Search wages · BizPaL ·
+> Alberta Tradesecrets: trade profiles (each the site's own general page).
 > *What the government publishes about this job, side by side. Nothing here says whether it fits you.*
 
 The area in the wage label comes from the row's source code, never from the row's region name.
+
+The earlier draft (2026-10-16) had a *Certification in Alberta* row from Tradesecrets, a count of places of
+business with employees for the person's area and industry group (competitive-landscape § 4.1), and links to
+Job Bank's page for the job and the trade's own Tradesecrets page. The quoted *Employment requirements* take
+the certification row's place (they say, in the government's words, whether certification is required); the
+counts wait for phase 3; the job-specific links are not planned, because they would carry the job in the
+address.
 
 ### 4.3 *Others in this line of work*, with outside tools (answers 2 and 3)
 
