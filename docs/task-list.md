@@ -508,8 +508,10 @@ placed in phase 3.
       for a new screen to get its clutter budget
     - [x] 29k: quoted official requirement text, shown word for word as a labelled quote, passes the
       no-times check by one rule (the maintainer's ruling), while DotAmi's own words still fail on any time
-      (`tests/helpers/official-quotes.ts`; the verdict check too, for group 53200's line only; 28a's importer
-      still runs the verdict check over every shipped line, as the design says)
+      (`tests/helpers/official-quotes.ts`: only on About this job's requirements row, and only lines the run
+      read from the shipped file, so 25h hands the harness 28a's lines for the group it shows; the verdict
+      check too, for group 53200's line only; 28a's importer still runs the verdict check over every shipped
+      line, as the design says)
 - 🔄 **[14m] A clean data pipeline you can see (S2.5.31).** Every government file DotAmi imports is checked
   offline on every pull request, so a changed file can't slip in unnoticed.
   - [x] 31a (phase 2): `npm run data:check`, every importer's check run offline inside `ci:quality`; it

@@ -23,6 +23,7 @@ import { PROVINCE_LABELS, PROVINCES, type EmploymentStatus, type Province, type 
 
 import { ROAD_IDS, type Idea, type PeopleType } from "../fixtures/ideas/v1";
 import { officialFeeAmounts, quotedOfficialAmounts, type AmountLedger, type PublishedWageRow } from "./number-provenance";
+import type { QuotedLines } from "./official-quotes";
 import type { TextPiece } from "./text-pieces";
 
 /**
@@ -102,6 +103,11 @@ export interface CockpitRun {
   ledger: AmountLedger;
   /** The words of the person's own date in this run ("19 months from today"), which no-times allows. */
   dateWords: string[];
+  /**
+   * The government's requirement lines the run's screens read from the shipped file, by job group (About this
+   * job, 25h, from 28a's import). Only these can pass no-times as quoted official text, and only on that row.
+   */
+  quotedLines: QuotedLines;
 }
 
 export interface IdeaRun {
@@ -465,6 +471,8 @@ function runCockpit(
       publishedWageRows: [],
     },
     dateWords: months === undefined ? [] : [monthsFromToday(months)],
+    // None yet: no screen quotes a requirement line until 28a ships them and 25h shows them.
+    quotedLines: [],
   };
 }
 

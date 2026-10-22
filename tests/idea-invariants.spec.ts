@@ -118,10 +118,21 @@ describe("the harness's checks catch what they guard", () => {
     const line =
       "Completion of a one- or two-year hairstyling apprenticeship program or completion of a college or other program in hairstyling combined with on-the-job training is usually required.";
     const where = "typed › about this job › rules";
-    expect(added(road0Idea, "no-time-words", (run) => void run.pieces.push({ where, text: quotedRun(label, [line]), kind: "dotami" }))).toBe(0);
+    // What the run read from the shipped elements file for the group it shows (28a's import, once 25h shows it).
+    const read = (run: IdeaRun) => void (run.typed!.quotedLines = [{ kind: "noc-employment-requirements", group: "63210", lines: [line] }]);
+    const piece = (at: string, text: string) => (run: IdeaRun) => {
+      read(run);
+      run.pieces.push({ where: at, text, kind: "dotami" });
+    };
+    expect(added(road0Idea, "no-time-words", piece(where, quotedRun(label, [line])))).toBe(0);
     // Controls: the line in quote marks without its label, and the line as DotAmi's own sentence under it.
-    expect(added(road0Idea, "no-time-words", (run) => void run.pieces.push({ where, text: `“${line}”`, kind: "dotami" }))).toBe(1);
-    expect(added(road0Idea, "no-time-words", (run) => void run.pieces.push({ where, text: `${label} ${line}`, kind: "dotami" }))).toBe(1);
+    expect(added(road0Idea, "no-time-words", piece(where, `“${line}”`))).toBe(1);
+    expect(added(road0Idea, "no-time-words", piece(where, `${label} ${line}`))).toBe(1);
+    // Controls (the review of #195): the labelled run on a plan step, a sentence of DotAmi's own in quote marks
+    // under the label on the rules row, and the real line on the rules row when the run read nothing from the file.
+    expect(added(road0Idea, "no-time-words", piece("typed › plan › planted", quotedRun(label, [line])))).toBe(1);
+    expect(added(road0Idea, "no-time-words", piece(where, quotedRun(label, ["Most people finish in two years."])))).toBe(1);
+    expect(added(road0Idea, "no-time-words", (run) => void run.pieces.push({ where, text: quotedRun(label, [line]), kind: "dotami" }))).toBe(1);
   });
 
   it("5. a fork side that never reaches the end of its road", () => {

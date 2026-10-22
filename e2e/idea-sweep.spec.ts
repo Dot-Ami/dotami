@@ -25,8 +25,9 @@
  * - no time words (tests/helpers/time-words.ts `findTimeWords`, with its allowances) in what DotAmi writes:
  *   a source's own words, drawn in quote marks (the plan's citation quotes, word for word as a catalog's
  *   citation carries them, which the harness tags `official-quote` and never reads as DotAmi's), are taken
- *   out first, and the government's requirement lines only under their label (tests/helpers/
- *   official-quotes.ts); anything else in quote marks is read as DotAmi's; a known gap in a words file is let
+ *   out first; the government's requirement lines pass only under their label, on About this job, and only
+ *   lines the shipped file holds (tests/helpers/official-quotes.ts; none on any screen this sweep opens yet,
+ *   so it lifts none); anything else in quote marks is read as DotAmi's; a known gap in a words file is let
  *   through here only while it is listed in tests/fixtures/ideas/known-gaps.ts (none since 2026-10-20);
  * - the clutter measurer (e2e/clutter-measure.ts, the same code as e2e/clutter-budget.spec.ts): no drawn block
  *   without a region mark on any screen; and where the screen's state is the one e2e/budgets.ts measures (the
@@ -207,7 +208,9 @@ const CITATION_QUOTES = new Set(allCatalogCitations().flatMap(({ citation }) => 
  * `official-quote` (tests/helpers/idea-pipeline.ts `addSource`) and never holds to the no-times check. Only a
  * quote a catalog's citation carries, word for word, is taken out (since 29k: before, anything in quote marks
  * was). The government's requirement lines on About this job are taken out by `findTimeWords` itself, by
- * source kind, only under their label (tests/helpers/official-quotes.ts). Anything else in quote marks is read
+ * source kind, only under their label, at that panel's place and only lines the run read from the shipped file
+ * (its third argument, tests/helpers/official-quotes.ts); the sweep passes none, since no screen it opens
+ * quotes them yet (25h passes them when it adds the panel). Anything else in quote marks is read
  * as DotAmi's words. For the time check only: the verdict check keeps its own short list of quotes allowed to
  * carry one.
  */

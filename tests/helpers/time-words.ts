@@ -1,4 +1,4 @@
-import { withoutLabelledQuotes } from "./official-quotes";
+import { liftsQuotedLine, withoutLabelledQuotes, type QuoteContext } from "./official-quotes";
 import { normaliseSpaces } from "./text-pieces";
 
 /**
@@ -17,7 +17,9 @@ import { normaliseSpaces } from "./text-pieces";
  *   tests/helpers/official-quotes.ts. The government's "Employment requirements" lines on *About this job*
  *   ("Completion of a one- or two-year hairstyling apprenticeship program …") pass when they stand inside
  *   quote marks in a run that opens with the kind's label (*The government's words, quoted in full for job
- *   group …:*). The same words without the label, or without quote marks, are DotAmi's and are caught.
+ *   group …:*), on About this job's rules row, and are lines the run read from the shipped file for that
+ *   group (`QuoteContext`). The same words without the label, without quote marks or on any other screen,
+ *   and any sentence the file doesn't hold, are DotAmi's and are caught.
  *
  * `findTimeWords` takes the allowed words out of a text first, then names what is left. The harness runs it
  * over every line it collects for an idea (tests/idea-harness.spec.ts: what the app code it calls writes),
@@ -285,11 +287,13 @@ export const TIME_ALLOWANCES: readonly TimeAllowance[] = [...YOUR_DATE_ALLOWANCE
 
 /**
  * The time words left in a text once its allowed words are taken out. `dateWords` are the words for the
- * person's own date in this run ("19 months from today"), which are allowed wherever they appear.
+ * person's own date in this run ("19 months from today"), which are allowed wherever they appear. `quotes`
+ * says where the text stands and which official lines the run read: without it, no labelled line is lifted.
  */
-export function findTimeWords(text: string, dateWords: readonly string[] = []): string[] {
-  // Official text quoted by source kind first: a labelled run's quoted lines (tests/helpers/official-quotes.ts).
-  let rest = withoutLabelledQuotes(text);
+export function findTimeWords(text: string, dateWords: readonly string[] = [], quotes: QuoteContext = {}): string[] {
+  // Official text quoted by source kind first: a labelled run's quoted lines, only at their place and only
+  // the lines the run read from the shipped file (tests/helpers/official-quotes.ts).
+  let rest = withoutLabelledQuotes(text, liftsQuotedLine(quotes));
   for (const allowed of [...TIME_ALLOWANCES.map((a) => a.text), ...dateWords]) {
     rest = rest.split(normaliseSpaces(allowed)).join(" ");
   }

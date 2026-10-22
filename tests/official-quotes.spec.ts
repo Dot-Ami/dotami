@@ -7,7 +7,7 @@
  */
 import { describe, expect, it } from "vitest";
 
-import { labelledQuotes, QUOTED_SOURCE_KINDS, quotedRun, withoutLabelledQuotes } from "./helpers/official-quotes";
+import { labelledQuotes, QUOTED_SOURCE_KINDS, quotedRun, withoutLabelledQuotes, type QuoteContext, type QuotedLines } from "./helpers/official-quotes";
 import { normaliseSpaces } from "./helpers/text-pieces";
 import { findTimeWords } from "./helpers/time-words";
 import { findVerdicts, OFFICIAL_QUOTE_ALLOWANCES } from "./helpers/verdict-words";
@@ -33,22 +33,29 @@ const LINES_63210 = [
 ] as const;
 const ATHLETES = "A background combining athletic training and college or university studies is strongly recommended.";
 
+// Where About this job's rules row will sit, as the harness names its pieces, with what the run read from the
+// shipped elements file (28a's import): group 63210's lines, as above. A labelled line is lifted only there,
+// and only when it is one of these.
+const RULES_ROW = "typed › about this job › rules";
+const READ_63210: QuotedLines = [{ kind: "noc-employment-requirements", group: "63210", lines: LINES_63210.flatMap((l) => (typeof l === "string" ? [l] : [])) }];
+const ON_RULES_ROW: QuoteContext = { where: RULES_ROW, read: READ_63210 };
+
 describe("the government's requirement lines, quoted under their label", () => {
   it("each line with a time is caught on its own: the allowance is what lets it through", () => {
     for (const line of [APPRENTICESHIP, SEVERAL_YEARS, BARBER]) expect(findTimeWords(line), line).not.toEqual([]);
   });
 
   it("pass the no-times check as the screen draws them: the label, then each line inside quote marks", () => {
-    expect(findTimeWords(quotedRun(LABEL_63210, LINES_63210))).toEqual([]);
+    expect(findTimeWords(quotedRun(LABEL_63210, LINES_63210), [], ON_RULES_ROW)).toEqual([]);
     // As the browser sweep reads a screen: each block on its own line, joined with its block mark.
     const asTheSweepReads = [LABEL_63210, ...LINES_63210.map((l) => (typeof l === "string" ? `“${l}”` : l.subheading))].join(" ¶ ");
-    expect(findTimeWords(asTheSweepReads)).toEqual([]);
+    expect(findTimeWords(asTheSweepReads, [], ON_RULES_ROW)).toEqual([]);
     // And as a panel's innerText gives it, a line break between blocks.
-    expect(findTimeWords([LABEL_63210, `“${APPRENTICESHIP}”`, `“${SEVERAL_YEARS}”`].join("\n"))).toEqual([]);
+    expect(findTimeWords([LABEL_63210, `“${APPRENTICESHIP}”`, `“${SEVERAL_YEARS}”`].join("\n"), [], ON_RULES_ROW)).toEqual([]);
   });
 
   it("lifts only the quoted lines: the label and the sub-headings are still read as DotAmi's words", () => {
-    const rest = withoutLabelledQuotes(quotedRun(LABEL_63210, LINES_63210));
+    const rest = withoutLabelledQuotes(quotedRun(LABEL_63210, LINES_63210), () => true);
     expect(rest).toContain(normaliseSpaces(LABEL_63210));
     expect(rest).toContain("Hairstylists");
     expect(rest).toContain("Barbers");
@@ -71,12 +78,41 @@ describe("the government's requirement lines, quoted under their label", () => {
 
   it("control: DotAmi's own sentence after the quote, or between two quoted lines, is caught and ends the run", () => {
     const after = `${quotedRun(LABEL_63210, [APPRENTICESHIP])} Most people finish in two years.`;
-    expect(findTimeWords(after)).toHaveLength(1);
+    expect(findTimeWords(after, [], ON_RULES_ROW)).toHaveLength(1);
     // A sentence of DotAmi's own breaks the run: the quoted line after it no longer stands under the label.
     const between = `${quotedRun(LABEL_63210, [APPRENTICESHIP])} It is the quickest way in. “${SEVERAL_YEARS}”`;
-    const found = findTimeWords(between);
+    const found = findTimeWords(between, [], ON_RULES_ROW);
     expect(found.some((f) => f.startsWith("fastest"))).toBe(true);
     expect(found.some((f) => f.includes("Several years"))).toBe(true);
+  });
+});
+
+// The review of #195: the label and the quote marks alone were the whole proof, so a sentence of DotAmi's own
+// written in quote marks under a copied label passed, on any screen. A line is now lifted only where About
+// this job's rules row stands, and only when the shipped file holds it for the group the label names.
+describe("a labelled line is lifted only on About this job's rules row, and only when the file holds it", () => {
+  it("control: DotAmi's own sentence in quote marks under the label is caught, even on the rules row", () => {
+    expect(findTimeWords(`${LABEL_63210} “DotAmi thinks it takes about two years.”`, [], ON_RULES_ROW)).not.toEqual([]);
+    expect(findTimeWords(`${LABEL_63210} “DotAmi thinks it takes about two years.”`)).not.toEqual([]);
+  });
+
+  it("control: a made-up sub-heading and a quoted sentence of DotAmi's after a real line are caught", () => {
+    const run = `${quotedRun(LABEL_63210, ["Completion of secondary school education is required."])} Our note “It takes two years.”`;
+    expect(findTimeWords(run, [], ON_RULES_ROW)).not.toEqual([]);
+  });
+
+  it("control: a real line under its label anywhere but the rules row is caught (a plan step, or no place given)", () => {
+    expect(findTimeWords(quotedRun(LABEL_63210, [APPRENTICESHIP]), [], { where: "typed › plan › planted", read: READ_63210 })).not.toEqual([]);
+    expect(findTimeWords(quotedRun(LABEL_63210, [APPRENTICESHIP]), [], { read: READ_63210 })).not.toEqual([]);
+    expect(findTimeWords(quotedRun(LABEL_63210, [APPRENTICESHIP]))).not.toEqual([]);
+  });
+
+  it("control: on the rules row, a line the run didn't read from the file, or read for another group, is caught", () => {
+    // Nothing read from the file (the case today, until 28a ships the lines and 25h shows them).
+    expect(findTimeWords(quotedRun(LABEL_63210, [APPRENTICESHIP]), [], { where: RULES_ROW })).not.toEqual([]);
+    // Group 63210's line under 72311's label.
+    const label72311 = "The government's words, quoted in full for job group 72311 Cabinetmakers:";
+    expect(findTimeWords(quotedRun(label72311, [APPRENTICESHIP]), [], ON_RULES_ROW)).not.toEqual([]);
   });
 });
 

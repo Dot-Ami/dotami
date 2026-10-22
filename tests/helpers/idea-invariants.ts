@@ -92,6 +92,16 @@ const timeWordsIn = remembered((key) => {
   return findTimeWords(text, dateWords);
 });
 
+/**
+ * A piece's time words. Text with a quote mark in it may hold a labelled run of official lines, which pass
+ * only at their place and only when the run read them (tests/helpers/official-quotes.ts), so it's checked
+ * with the piece's place and the run's lines each time; everything else is kept by its text alone.
+ */
+function timeWordsOf(piece: TextPiece, c: CockpitRun): string[] {
+  if (!piece.text.includes("“")) return timeWordsIn([piece.text, ...c.dateWords].join("\u0000"));
+  return findTimeWords(piece.text, c.dateWords, { where: piece.where, read: c.quotedLines });
+}
+
 // "$0" or "$0.00" on its own, not the start of "$0.50" or "$05".
 const ZERO = /(?:^|[^\d])\$0(?:\.00)?(?![\d.,]*\d)/;
 const NOT_PRICED = cockpitWords.plan.costKind["named-not-priced"];
@@ -177,7 +187,7 @@ export function cockpitFailures(run: IdeaRun, c: CockpitRun, fail: Fail) {
 
   // 4. No time words, Your date and official requirement text allowed.
   for (const piece of ours) {
-    for (const found of timeWordsIn([piece.text, ...c.dateWords].join("\u0000"))) fail("no-time-words", placeOf(piece), `${piece.where}: ${found}`);
+    for (const found of timeWordsOf(piece, c)) fail("no-time-words", placeOf(piece), `${piece.where}: ${found}`);
   }
 
   // 5. Every path ends somewhere honest. The checks on the run as a whole name their way in as the subject:

@@ -15,7 +15,8 @@ import type { PublishedWageRow } from "./number-provenance";
  * Official text quoted by source kind (the government's "Employment requirements" lines on *About this
  * job*, tests/helpers/official-quotes.ts) is not an "official-quote" piece: it is collected the way the
  * screen draws it, the label and the quoted lines in one "dotami" piece (`quotedRun`), so the checks see the
- * label the lines stand under. Without it, the lines read as DotAmi's own and fail.
+ * label the lines stand under, at the row's place (its `where`), with the lines the run read from the shipped
+ * file (`CockpitRun.quotedLines`). Without any of those, the lines read as DotAmi's own and fail.
  */
 export type TextKind = "dotami" | "catalog" | "official-quote" | "person";
 

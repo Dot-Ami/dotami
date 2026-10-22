@@ -42,12 +42,16 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   a total adds up, so a wage put into a cost, a total or a gauge fails. The government's "Employment
   requirements" lines (*"a one- or two-year hairstyling apprenticeship"*) pass the no-times check by one rule
   for their kind of source instead of one entry per line: only inside quote marks, under the label that says
-  they are the government's words (`tests/helpers/official-quotes.ts`). The same words without the label or
-  the quote marks are DotAmi's own and still fail. The verdict check gets the same treatment for the one
-  requirement line the design allows (group 53200's *"strongly recommended"*), under its label only. The
-  browser sweep now takes out only a catalog citation's own quote before its no-times check, where it used to
-  take out anything in quote marks. Over all 2,122 requirement lines of the elements file (the copy of
-  2026-10-15), 404 hold a time and 1 a verdict phrase as DotAmi's words, and none under the label.
+  they are the government's words, on *About this job*'s requirements row, and only lines the run read
+  word for word from the shipped file for the group the label names (`tests/helpers/official-quotes.ts`;
+  until the importer ships those lines, none pass anywhere). The same words without the label or the quote
+  marks, on any other screen, or a sentence of DotAmi's own put in quote marks under the label, still fail.
+  The verdict check gets the same treatment for the one requirement line the design allows (group 53200's
+  *"strongly recommended"*), under its label only. The browser sweep now takes out only a catalog citation's
+  own quote before its no-times check, where it used to take out anything in quote marks. Over all 2,122
+  requirement lines of the elements file (the copy of 2026-10-15), 404 hold a time and 1 a verdict phrase as
+  DotAmi's words; drawn on the requirements row with the group's lines read, none is caught, and planted on a
+  plan step, or with nothing read, all 404 are.
 ### Fixed
 - **Your answer to "Are you buying equipment, a vehicle or tools?" on a future picked on Pick a future is
   kept** (the maintainer's "Yes, fix both", 2026-10-20). Pick a future saves equipment as not said, since it

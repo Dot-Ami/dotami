@@ -57,11 +57,17 @@ The kicker: *Cabinetmakers · 72311.00 · your pick of job*.
   lines through by their kind of source (`tests/helpers/official-quotes.ts`), not one entry per line: only
   the lines that stand inside “…” in a run that opens with the lead line *The government's words, quoted in
   full for job group <noc> <group title>:* (sub-headings may stand between them, unquoted, and are still read).
-  The same words without the lead line or without the quote marks are DotAmi's and fail. The harness collects
-  the row as the screen draws it, the lead line and the quoted lines in one piece (`quotedRun`); the idea
-  sweep's screen check takes out only a catalog citation's own quote before it, so the lead line and the
-  quote marks on each line are what let the lines through on both. 25h's words must keep the lead line in that
-  shape (its test checks `aboutJobWords.rules.lead` against the kind's label).
+  The same words without the lead line or without the quote marks are DotAmi's and fail. The lead line and
+  the quote marks are only the shape: a line is lifted only when its piece stands on this row (its place
+  holds `about this job › rules`) **and** it is, word for word, one of the lines the run read from the
+  shipped file for the group the lead line names (`QuoteContext`, the run's `quotedLines`). So a sentence of
+  DotAmi's own in quote marks under a copied lead line fails on this row too, and the lines fail on any other
+  screen (the review of #195). Until 28a ships the lines nothing is lifted anywhere. The harness collects the
+  row as the screen draws it, the lead line and the quoted lines in one piece (`quotedRun`), and 25h fills
+  the run's `quotedLines` from 28a's data for the group it shows; the idea sweep's screen check takes out
+  only a catalog citation's own quote before it, and 25h passes `findTimeWords` this row's place and the
+  same lines when the sweep opens the panel (until then the sweep lifts none). 25h's words must keep the lead
+  line in that shape (its test checks `aboutJobWords.rules.lead` against the kind's label).
 - *No verdicts.* `e2e/no-verdict.spec.ts` reads every screen with `findVerdicts`, which lifts a phrase only
   when its sentence is in `OFFICIAL_QUOTE_ALLOWANCES` (`tests/helpers/verdict-words.ts`) **and** stands in
   quote marks. Run over all 2,122 *Employment requirements* lines of the elements file (copy of 2026-10-15)

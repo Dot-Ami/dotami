@@ -18,6 +18,12 @@ import { normaliseSpaces } from "./text-pieces";
  * Only the quoted lines in that run are lifted. The label, the sub-headings and anything after the run are
  * still read as DotAmi's words, and the same line written without its label, or without its quote marks,
  * is DotAmi's own sentence and is caught. tests/official-quotes.spec.ts holds the planted controls.
+ *
+ * The label and the quote marks are only the shape. A quoted line is lifted only when two more things hold
+ * (`liftsQuotedLine`, since the review of #195): the piece stands at the kind's `place` (About this job's
+ * rules row), and the line is one the run read from the shipped file for the group the label names
+ * (`QuoteContext.read`, filled from 28a's import). So a sentence of DotAmi's own in quote marks under a copied
+ * label is caught on every screen, and until 28a ships the lines nothing is lifted at all.
  */
 
 /** The kinds of official text allowed by source kind. */
@@ -32,17 +38,27 @@ export interface QuotedSourceKind {
    * its spaces made one and its apostrophes straight (`normaliseSpaces`).
    */
   label: RegExp;
+  /**
+   * The words a piece's place holds where the kind may be quoted (its `where`, as the harness names places:
+   * "… › about this job › rules"). A labelled run anywhere else is read as DotAmi's words.
+   */
+  place: string;
   /** Where the label and the quote are shown, so a reader can check them. */
   where: string;
   why: string;
 }
 
+/** About this job's first row, the government's "Employment requirements" (docs/ui-spec/cockpit/about-this-job.md). */
+export const REQUIREMENT_LINES_PLACE = "about this job › rules";
+
 export const QUOTED_SOURCE_KINDS: readonly QuotedSourceKind[] = [
   {
     id: "noc-employment-requirements",
     source: "Statistics Canada, National Occupational Classification 2021 Version 1.0, elements file, the “Employment requirements” lines",
-    // "…for job group 72311 Cabinetmakers:". The group's title stops at the colon; a title has no quote marks.
-    label: /The government's words, quoted in full for job group \d{5} [^:“”¶]{1,120}:/g,
+    // "…for job group 72311 Cabinetmakers:". The group's code is the first capture; its title stops at the
+    // colon, and a title has no quote marks.
+    label: /The government's words, quoted in full for job group (\d{5}) [^:“”¶]{1,120}:/g,
+    place: REQUIREMENT_LINES_PLACE,
     where:
       "About this job, row 1 (docs/ui-spec/cockpit/about-this-job.md; planned, task 25h; the label is `aboutJobWords.rules.lead` in lib/about-job/words.ts once it is built)",
     why: "The government's own requirement lines for the picked job group, quoted in full and in its order, labelled as its words. The durations in them (a four-year apprenticeship) are the government's, and DotAmi writes nothing about them.",
@@ -52,10 +68,26 @@ export const QUOTED_SOURCE_KINDS: readonly QuotedSourceKind[] = [
 /** One quoted line lifted from a labelled run: where it stands in the normalised text, quote marks included. */
 export interface LabelledQuote {
   kind: QuotedSourceId;
+  /** The job group the run's label names ("63210"). */
+  group: string;
   /** The line's words, without its quote marks. */
   text: string;
   start: number;
   end: number;
+}
+
+/**
+ * The lines a run read from a kind's shipped file, for one group each: what About this job is handed to
+ * quote (25h, from 28a's import). Only these can be lifted. Empty until 28a ships the lines.
+ */
+export type QuotedLines = readonly { kind: QuotedSourceId; group: string; lines: readonly string[] }[];
+
+/** Where a text stands and what its run read, for lifting labelled lines. Nothing given, nothing lifted. */
+export interface QuoteContext {
+  /** The piece's place on screen (the harness's `where`). */
+  where?: string;
+  /** The lines the run read from the shipped files. */
+  read?: QuotedLines;
 }
 
 // After the label, or after the line before: spaces or the sweep's block mark, then an optional sub-heading
@@ -70,6 +102,7 @@ export function labelledQuotes(text: string): LabelledQuote[] {
   const out: LabelledQuote[] = [];
   for (const kind of QUOTED_SOURCE_KINDS) {
     for (const label of text.matchAll(new RegExp(kind.label.source, kind.label.flags.includes("g") ? kind.label.flags : `${kind.label.flags}g`))) {
+      const group = label[1] ?? "";
       let at = (label.index ?? 0) + label[0].length;
       for (;;) {
         NEXT_LINE.lastIndex = at;
@@ -78,7 +111,7 @@ export function labelledQuotes(text: string): LabelledQuote[] {
         const end = NEXT_LINE.lastIndex;
         // The quoted line itself starts at its opening mark; a sub-heading before it stays in the text.
         const start = end - line[1].length - 2;
-        out.push({ kind: kind.id, text: line[1], start, end });
+        out.push({ kind: kind.id, group, text: line[1], start, end });
         at = end;
       }
     }
@@ -87,11 +120,30 @@ export function labelledQuotes(text: string): LabelledQuote[] {
 }
 
 /**
- * The text with the labelled runs' quoted lines taken out (each made one space), so what is left is
- * DotAmi's own words. `lift` picks which lines to take out (all of them when it isn't given): the verdict
- * check takes out only the lines its allowances name. Returns normalised text.
+ * Whether a labelled line may be lifted where `context` says the text stands: the piece is at the kind's
+ * place, and the run read that very line (spaces made one, ends trimmed) for the group the label names.
  */
-export function withoutLabelledQuotes(text: string, lift: (quote: LabelledQuote) => boolean = () => true): string {
+export function liftsQuotedLine(context: QuoteContext): (quote: LabelledQuote) => boolean {
+  const read = new Map<string, Set<string>>();
+  for (const { kind, group, lines } of context.read ?? []) {
+    const key = `${kind} ${group}`;
+    const set = read.get(key) ?? new Set<string>();
+    for (const line of lines) set.add(normaliseSpaces(line).trim());
+    read.set(key, set);
+  }
+  return (quote) => {
+    const place = QUOTED_SOURCE_KINDS.find((k) => k.id === quote.kind)?.place;
+    if (!place || !context.where?.includes(place)) return false;
+    return read.get(`${quote.kind} ${quote.group}`)?.has(quote.text.trim()) ?? false;
+  };
+}
+
+/**
+ * The text with the labelled runs' quoted lines taken out (each made one space), so what is left is
+ * DotAmi's own words. `lift` picks which lines to take out: the no-times check takes out only the lines
+ * `liftsQuotedLine` allows, the verdict check only the lines its allowances name. Returns normalised text.
+ */
+export function withoutLabelledQuotes(text: string, lift: (quote: LabelledQuote) => boolean): string {
   const rest = normaliseSpaces(text);
   let out = "";
   let from = 0;
