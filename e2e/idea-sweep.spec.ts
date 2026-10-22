@@ -1,12 +1,12 @@
 /**
- * The idea sweep (S2.5.29e): twelve ideas from the corpus (tests/fixtures/ideas/v1.ts), each taken from the
+ * The idea sweep (S2.5.29e): thirteen ideas from the corpus (tests/fixtures/ideas/v1.ts), each taken from the
  * front door to *Your plan* in a real browser on the production build, every screen read as it opens.
  *
- * Eight ideas are fixed (`FIXED_IDEAS`: across the kinds of person, places outside Alberta and outside Canada,
- * business and career, and the odd cases: French, two provinces, nothing typed) and four rotate by ISO week,
- * drawn from the rest of the corpus by a shuffle seeded with the week's number, so a given week's four are the
- * same on every machine and can be rerun with `IDEA_SWEEP_WEEK=2026-W42`. The twelve are printed when the file
- * loads and listed by the last test.
+ * Nine ideas are fixed (`FIXED_IDEAS`: across the kinds of person, places outside Alberta and outside Canada,
+ * business and career, an Alberta future picked from outside Alberta, and the odd cases: French, two provinces,
+ * nothing typed) and four rotate by ISO week, drawn from the rest of the corpus by a shuffle seeded with the
+ * week's number, so a given week's four are the same on every machine and can be rerun with
+ * `IDEA_SWEEP_WEEK=2026-W42`. The thirteen are printed when the file loads and listed by the last test.
  *
  * Each idea goes in both ways the app has: typed into "I already have an idea" (the intake's screens, the
  * cockpit on road 0, the plan), and, for an idea with a province or territory, picked on *Pick a future* after
@@ -62,12 +62,24 @@ import { cockpitSettled, showRail } from "./cockpit-calm";
 // --- Which ideas.
 
 /**
- * The eight fixed ideas: a Calgary business on road 0 (1); a cabinetmaker apprentice on road 1 (46); an app in
+ * The nine fixed ideas: a Calgary business on road 0 (1); a cabinetmaker apprentice on road 1 (46); an app in
  * British Columbia, a city named with no province (3); a French idea in Quebec (10); a career in Alberta, a
  * regulated profession, which "Not here yet?" takes to the general road (8); a journeyman moving from one
- * province to another (193); nothing typed (130); and a bakery in England, outside Canada (216).
+ * province to another (193); nothing typed (130); a bakery in England, outside Canada (216); and fixing bikes
+ * in Ottawa (361), whose invented person opens "Show the 2 futures written for Alberta" and picks road 1, so
+ * the folded Alberta cards are clicked every week (added 2026-10-22, review of 28d).
  */
-export const FIXED_IDEAS = ["idea-v1-0001", "idea-v1-0046", "idea-v1-0003", "idea-v1-0010", "idea-v1-0008", "idea-v1-0193", "idea-v1-0130", "idea-v1-0216"] as const;
+export const FIXED_IDEAS = [
+  "idea-v1-0001",
+  "idea-v1-0046",
+  "idea-v1-0003",
+  "idea-v1-0010",
+  "idea-v1-0008",
+  "idea-v1-0193",
+  "idea-v1-0130",
+  "idea-v1-0216",
+  "idea-v1-0361",
+] as const;
 const ROTATING = 4;
 
 /** The ISO week of a day, as "YYYY-Www" (the week with the year's first Thursday is week 1). */
@@ -92,7 +104,7 @@ function seededRandom(seed: number): () => number {
   };
 }
 
-/** The four ideas that rotate: a seeded shuffle of the corpus minus the fixed eight, the first four. */
+/** The four ideas that rotate: a seeded shuffle of the corpus minus the fixed nine, the first four. */
 export function rotatingIdeas(week: string, count = ROTATING): string[] {
   const [year, w] = week.split("-W").map(Number);
   const random = seededRandom(year * 100 + w);
@@ -454,10 +466,16 @@ for (const { idea, why } of SWEEP) {
   });
 }
 
-test("the sweep ran twelve ideas, eight fixed and four for the week, and every allowance is still a listed gap", () => {
+test("the sweep ran thirteen ideas, nine fixed and four for the week, and every allowance is still a listed gap", () => {
   const ids = SWEEP.map(({ idea }) => idea.id);
-  expect(new Set(ids).size).toBe(12);
-  expect(ids.slice(0, 8)).toEqual([...FIXED_IDEAS]);
+  expect(new Set(ids).size).toBe(FIXED_IDEAS.length + ROTATING);
+  expect(ids.slice(0, FIXED_IDEAS.length)).toEqual([...FIXED_IDEAS]);
+  // Each card path Pick a future offers outside Alberta is clicked by a fixed idea every week: the federal card
+  // shown first, and an Alberta card behind "Show the 2 futures written for Alberta" (the fold `pickedWay` opens).
+  const fixedOutsideAlberta = FIXED_IDEAS.map(ideaById).filter((idea) => isProvince(idea.place) && idea.place !== "AB");
+  const clicked = fixedOutsideAlberta.map((idea) => roadById(pickedChoice(idea).roadId)!);
+  expect(clicked.some((road) => road.id === roadFederalStepsCA.id), "no fixed idea outside Alberta clicks the federal card").toBe(true);
+  expect(clicked.some((road) => !(road.provinces as readonly string[]).includes("CA")), "no fixed idea outside Alberta opens the Alberta futures and clicks one").toBe(true);
   console.log(`idea sweep, ${WEEK}, ran: ${ids.join(", ")}`);
   // The rotation is deterministic for a week, and changes between weeks.
   expect(rotatingIdeas(WEEK)).toEqual(rotatingIdeas(WEEK));

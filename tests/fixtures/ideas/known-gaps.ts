@@ -68,9 +68,20 @@ export const KNOWN_GAPS: readonly KnownGap[] = [
     subject: "picked",
     kind: "planned",
     story: "The maintainer's call, asked in 28d's pull request: should “Not here yet?” open the federal steps outside Alberta?",
-    // 190 ideas until 28d (2026-10-21); the federal road, listed first outside Alberta, took 177 of them off.
+    // 190 ideas until 28d (2026-10-21), now 13 here and 9 in the next entry. Of the 168 off: 156 because the
+    // corpus now says the federal road is written for them (tests/fixtures/ideas/v1.ts, "road-federal"), so the
+    // invented person clicks its card; 12 because, with no road written for them, they click the card the
+    // page shows first. The product change lists the federal card; the count moved with the clicks.
     why: "Outside Alberta, Pick a future lists the federal steps first (28d), and an idea picked there is drawn on a road written for its place. “Not here yet?” still keeps the note and opens road 0, the general road, anywhere, as its own spec says (docs/ui-spec/futures/03-road-match.md: “as today”): these are the ideas with no road written for them whose invented person keeps a note. The goal bar says “Map drawn: … written for AB; this idea is in …”, so it isn't silent; whether the note should open the federal steps there instead is the maintainer's call.",
     ideas: [188, 194, 197, 200, 203, 206, 212, 251, 287, 290, 308, 362, 365],
+  },
+  {
+    invariant: "ends:road-written-for-place",
+    subject: "picked",
+    kind: "planned",
+    story: "The maintainer's call, asked in 28d's pull request: is an Alberta future picked from outside Alberta, after its card said so, an honest end?",
+    why: "Outside Alberta, Pick a future still offers Alberta's two futures behind one button (“Show the 2 futures written for Alberta”), each card saying “Written for Alberta. You said …”. A person who opens them and picks one is drawn on a road written for AB: the goal bar says “Map drawn: … written for AB; this idea is in …”, so it isn't silent, but every step is Alberta's. These are the ideas with no road written for them whose invented person opens the fold and clicks road 0's or road 1's card (tests/helpers/idea-pipeline.ts `pickedChoice`), so the path stays run; whether this end counts as honest, or the page should say more, is the maintainer's call.",
+    ideas: [22, 199, 202, 208, 211, 289, 301, 361, 364],
   },
   {
     invariant: "ends:no-silent-fallback",

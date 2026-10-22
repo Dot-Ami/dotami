@@ -679,15 +679,20 @@ const DOOR_LOOKING_FOR: Record<Idea["lookingFor"], DoorLookingFor | null> = {
  * else in Canada it lists the federal steps first, under "Written for all of Canada", and Alberta's two
  * behind one button, each saying "Written for Alberta. You said …" (task 28d). "Not here yet?" keeps a note
  * and opens the general road, road 0, anywhere. So: the road written for the idea when there is one;
- * otherwise, by the idea's number, the note (when there are words to note), or else the card the page shows
- * first for the place: outside Alberta the federal road's; in Alberta road 1's or road 0's.
+ * otherwise, by the idea's number, one of three clicks, so each path the page offers is run:
+ * - the note (when there are words to note);
+ * - an Alberta card: in Alberta road 1's; outside Alberta, after opening the fold, road 1's or road 0's by
+ *   the number's evenness (both folded cards are clicked somewhere; the person was told on the card that it
+ *   is written for Alberta, and the known gap "picked" lists what that draws);
+ * - else the card the page shows first for the place: outside Alberta the federal road's; in Alberta road 0's.
  */
 export function pickedChoice(idea: Idea): { by: "card" | "not-here"; roadId: string } {
   if (idea.road !== "none-written-yet") return { by: "card", roadId: ROAD_IDS[idea.road] };
   const n = Number(idea.id.slice(-4));
+  const outsideAlberta = isProvince(idea.place) && idea.place !== "AB";
   if (n % 3 === 2 && idea.words.trim().length > 0) return { by: "not-here", roadId: generalRoadV2026.id };
-  if (isProvince(idea.place) && idea.place !== "AB") return { by: "card", roadId: FEDERAL_ROAD_ID };
-  if (n % 3 === 1) return { by: "card", roadId: ROAD_IDS["road-1"] };
+  if (n % 3 === 1) return { by: "card", roadId: outsideAlberta && n % 2 === 0 ? generalRoadV2026.id : ROAD_IDS["road-1"] };
+  if (outsideAlberta) return { by: "card", roadId: FEDERAL_ROAD_ID };
   return { by: "card", roadId: generalRoadV2026.id };
 }
 
