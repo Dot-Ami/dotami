@@ -96,6 +96,23 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   phases are called "cockpit phase 1" to "cockpit phase 4", so the cockpit's phase 2 ([14b], now placed in
   the plan's phase 3, its time strip and hours dropped under "no times") no longer reads as the plan's
   phase 2. Docs only: nothing DotAmi keeps, sends, ships or asks changes.
+- **Phase 2's screens, designed before they are built** (task 28g, 2026-10-20): six ui-spec files, each with
+  every word, what is new, its regions and controls against the clutter limit, how a screen reader hears it,
+  the phone layout and what is not in this version. Pick a future becomes three steps asked before any road
+  is drawn, on both ways in: *What's closest to your work?* (the person's own words searched in the
+  government's example job titles, grouped by how many of their words each job holds, DotAmi's own word list
+  marked as DotAmi's), *Where you are* (in Alberta, which area, then which economic region, never worked out
+  for them; outside Alberta nothing is asked yet and the province-wide wage figure is shown), and the road
+  written for the picked job or an honest *No road is written for this job yet* with *About this job* in place
+  and nothing saved ([docs/ui-spec/futures/](docs/ui-spec/futures/_index.md)); the federal steps for a person
+  outside Alberta; *About this job* in the cockpit's right-hand panel
+  ([docs/ui-spec/cockpit/about-this-job.md](docs/ui-spec/cockpit/about-this-job.md)); and the *Incorporating*
+  fix, asking for the third-year sales estimate on a picked future, with the what-if **Keep** bug fixed in the
+  same change ([docs/ui-spec/cockpit/incorporating-estimate.md](docs/ui-spec/cockpit/incorporating-estimate.md)).
+  The maintainer's calls on these designs are recorded in each file, dated 2026-10-21. The
+  research kit's sketch of *About this job* ([docs/architecture/research-kit.md](docs/architecture/research-kit.md)
+  § 4.2) now follows the same picks (no business counts yet, general pages only, no job in any web address).
+  Docs only: nothing DotAmi keeps, sends, ships or asks changes yet.
 
 ## [0.4.1] — 2026-10-20
 

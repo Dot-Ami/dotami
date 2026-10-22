@@ -196,23 +196,43 @@ Later, not planned yet: K6 C, the Lens drafting a personal road, is a future sto
 
 ### 4.2 *About this job* (the same panel for every job)
 
-It opens from the goal bar, in the right-hand panel, like *Compare*. Which rows appear for a real person was
-call K5; the maintainer picked **K5 B** on 2026-10-16: counts plus official wage ranges, each labelled with its
-real geography level. Government outlook ratings (K5 C) were not picked, so there is no outlook row. The rows
-always appear in this fixed order: rules, wages, counts, links.
+It opens from the goal bar's *Look closer* menu, in the right-hand panel, like *Compare*. Which rows appear for a
+real person was call K5; the maintainer picked **K5 B** on 2026-10-16: counts plus official wage ranges, each
+labelled with its real geography level. Government outlook ratings (K5 C) were not picked, so there is no
+outlook row. The rows always appear in this fixed order: rules, wages, counts, links.
 
-> **About this job · Cabinetmakers (NOC 72311) · your pick of job**
-> **Certification in Alberta:** "Optional Certification" (Alberta Tradesecrets, trade 0361).
-> **Hourly wage published for this job · Calgary economic region** (or *Alberta-wide figure* when the row's
+**Updated 2026-10-20, the maintainer's picks:** this version ships **without** business counts (they come
+in phase 3 with the industry question); the rules row quotes the job's *Employment requirements* from the NOC
+2021 elements file word for word, as the government's words; *Where to look yourself* links each site's
+**general** page, with the job's name and code shown as text to copy, and never puts the job (or anything of
+the person's) in a web address; the wage row is picked by the economic region the person chose
+([ui-spec/futures/02-where-you-are.md](../ui-spec/futures/02-where-you-are.md)), never worked out from their
+area. Outside Alberta (the maintainer's call of 2026-10-21) no region is asked for now and the wage row is the
+province-wide one, labelled as such; a province's region question is added once its region list is checked
+against Statistics Canada's own pages, as Alberta's was. The screen as it will be built, every word included, is
+[ui-spec/cockpit/about-this-job.md](../ui-spec/cockpit/about-this-job.md); where the two differ, that file
+wins. In short:
+
+> **About this job · Cabinetmakers · 72311.00 · your pick of job**
+> **Employment requirements:** *The government's words, quoted in full for job group 72311 Cabinetmakers:* each
+> line of the elements file, in quote marks.
+> **Wages published for this job group · Economic region: Calgary** (or *Alberta-wide figure* when the row's
 > source code says so; *small-area estimate* where it is one) **· reference period shown:** low $NN · median $NN
-> · high $NN (Job Bank wage file). *What workers in this job were paid. Not what a shop earns, and not what you
-> would earn.*
-> **Places of business with employees, your area and industry group:** the count from competitive-landscape
-> § 4.1. *One-person shops with no payroll aren't in this count.*
-> **Where to look yourself:** Job Bank's page for this job · BizPaL · the trade's Tradesecrets page.
+> · high $NN (Job Bank wage file). *What workers in this job group were paid. Not what a shop earns, and not
+> what you would earn.*
+> **Business counts:** *Not in this version.* (Your area is shown back, and nothing reads it yet.)
+> **Where to look yourself:** the job's name and code as text to copy · Job Bank: Search wages · BizPaL ·
+> Alberta Tradesecrets: trade profiles (each the site's own general page).
 > *What the government publishes about this job, side by side. Nothing here says whether it fits you.*
 
 The area in the wage label comes from the row's source code, never from the row's region name.
+
+The earlier draft (2026-10-16) had a *Certification in Alberta* row from Tradesecrets, a count of places of
+business with employees for the person's area and industry group (competitive-landscape § 4.1), and links to
+Job Bank's page for the job and the trade's own Tradesecrets page. The quoted *Employment requirements* take
+the certification row's place (they say, in the government's words, whether certification is required); the
+counts wait for phase 3; the job-specific links are not planned, because they would carry the job in the
+address.
 
 ### 4.3 *Others in this line of work*, with outside tools (answers 2 and 3)
 
@@ -401,6 +421,16 @@ a card's stated next release has come. `scripts/import-oasis.mjs` is now an adap
 output, `tests/oasis-import.spec.ts` and the module it writes are unchanged, byte for byte. `npm run
 data:check` (`scripts/data-check.mjs`) runs every importer's `--check` offline and is a step of
 `npm run ci:quality` and of CI.
+
+**As built (2026-10-21, task 28a).** Two more adapters on the core, both in `data:check` and both cards now
+marked `now`: `scripts/import-oasis-titles.mjs` (OaSIS 2025 "Example Titles", 18,666 titles keyed to the 900
+OaSIS codes, into `lib/engines/oasis/v2026/titles.ts`) and `scripts/import-noc.mjs` (the NOC 2021 Version 1.0
+elements file: each of the 516 job groups' title, its example titles and its "Employment requirements" word for
+word, into `lib/engines/noc/v2021/data.ts`, with Statistics Canada's notice, reference date 2021). The core
+gained `parseCsv` and `expectHeader`. Statistics Canada's site answered a script with a "Security Check" page on
+2026-10-21, so the committed elements file is the 2026-10-15 copy research 28f measured
+(`data/noc-2021-v1.0/README.md`); its `--download` writes nothing until the site answers scripts again. The
+search over the titles (28b's engine) is `lib/engines/oasis/v2026/title-search.ts`.
 
 **Still to build (phase 3).** The S2.5.23f counts import will be built on the core; no importer for it exists
 yet. As far as the research saw (reported, not confirmed; 23f checks
