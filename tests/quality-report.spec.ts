@@ -199,8 +199,8 @@ describe("the clutter numbers", () => {
   const saved = (over: Partial<typeof within> = {}) =>
     JSON.stringify({
       phone: { ...within, ...over, regionNames: [], controlNames: [], sizesPx: [], unmarkedBlocks: [] },
-      tablet: { ...BUDGETS["front-door"]!.tablet! },
-      laptop: { ...BUDGETS["front-door"]!.laptop! },
+      tablet: { ...BUDGETS["front-door"]!.tablet!, unmarkedBlocks: [] },
+      laptop: { ...BUDGETS["front-door"]!.laptop!, unmarkedBlocks: [] },
     });
   const write = (folder: string, dir: string, screen: string, body: string, at?: number) => {
     mkdirSync(path.join(folder, dir), { recursive: true });
@@ -236,6 +236,34 @@ describe("the clutter numbers", () => {
     const smaller = tempFolder();
     write(smaller, "clutter-budget-a-chromium", "front-door", saved({ smallestTextPx: within.smallestTextPx - 0.5 }));
     expect(clutterNumbers(smaller, "linux")!.rows.find((r) => r.px === 375)!.within).toBe(false);
+  });
+
+  it("count a screen with a drawn block no region mark covers as not within, at the budget or not, as the clutter spec fails it", () => {
+    const folder = tempFolder();
+    const blocked = { ...within, regionNames: [], controlNames: [], sizesPx: [], unmarkedBlocks: ["div.planted-unmarked-block"] };
+    write(folder, "clutter-budget-a-chromium", "front-door", JSON.stringify({ phone: blocked, tablet: { ...blocked, ...BUDGETS["front-door"]!.tablet! }, laptop: { ...blocked, ...BUDGETS["front-door"]!.laptop! } }));
+    const c = clutterNumbers(folder, "linux")!;
+    expect(c.rows.map((r) => [r.screen, r.px, r.within])).toEqual([
+      ["front-door", 375, false],
+      ["front-door", 768, false],
+      ["front-door", 1280, false],
+    ]);
+    expect(c.rows[0].breaches).toEqual(["a drawn block with no region mark, inside none: div.planted-unmarked-block"]);
+  });
+
+  it("count a saved file that doesn't say which blocks were unmarked as not within", () => {
+    const folder = tempFolder();
+    write(folder, "clutter-budget-a-chromium", "front-door", JSON.stringify({ phone: { ...within } }));
+    expect(clutterNumbers(folder, "linux")!.rows[0].within).toBe(false);
+  });
+
+  it("is the one rule: the clutter spec, the idea sweep and the report all hold screens through e2e/clutter-rule.ts", () => {
+    for (const file of ["e2e/clutter-budget.spec.ts", "e2e/idea-sweep.spec.ts", "scripts/lib/quality.ts"]) {
+      const text = readFileSync(path.join(process.cwd(), file), "utf8");
+      expect(text, file).toMatch(/from "(\.\/|\.\.\/\.\.\/e2e\/)clutter-rule"/);
+      // No second copy of the budget arithmetic: the Windows extra is read only by the rule.
+      expect(text, file).not.toContain("WINDOWS_EXTRA[");
+    }
   });
 
   it("take a retry's newer file over the first try's", () => {
@@ -354,8 +382,8 @@ describe("the report and the Quality line", () => {
     clutter: {
       folder: "test-results",
       rows: [
-        { screen: "front-door", width: "phone", px: 375, measured: { regions: 4, controls: 9, textSizes: 8, smallestTextPx: 9.5 }, budget: { regions: 4, controls: 7, textSizes: 8, smallestTextPx: 9.5 }, within: false },
-        { screen: "front-door", width: "tablet", px: 768, measured: { regions: 4, controls: 7, textSizes: 8, smallestTextPx: 9.5 }, budget: { regions: 4, controls: 11, textSizes: 8, smallestTextPx: 9.5 }, within: true },
+        { screen: "front-door", width: "phone", px: 375, measured: { regions: 4, controls: 9, textSizes: 8, smallestTextPx: 9.5 }, budget: { regions: 4, controls: 7, textSizes: 8, smallestTextPx: 9.5 }, within: false, breaches: ["9 controls in the first window, budget 7"] },
+        { screen: "front-door", width: "tablet", px: 768, measured: { regions: 4, controls: 7, textSizes: 8, smallestTextPx: 9.5 }, budget: { regions: 4, controls: 11, textSizes: 8, smallestTextPx: 9.5 }, within: true, breaches: [] },
       ],
       missing: [],
     },
@@ -383,6 +411,7 @@ describe("the report and the Quality line", () => {
     expect(md).toContain("| in the first group shown (the open one) | 5 of 8 (62.5%) |");
     expect(md).toContain("1 of 2 screen sizes within their budget");
     expect(md).toContain("| front-door | 375 px | 4 / 4 | 9 / 7 | 8 / 8 | 9.5 / 9.5 | **no** |");
+    expect(md).toContain("- front-door at 375 px: 9 controls in the first window, budget 7");
     expect(md).toContain("| read by a person | 2 |");
     expect(md).toContain("Stale: 1 of the registry's 3 sources");
     expect(md).toContain("Dead: 5 citations on 2 addresses");

@@ -30,7 +30,8 @@ import type { CheckedBy, SourceCard } from "@/lib/engines/research-kit/v2026/typ
 import { generalRoadV2026 } from "@/lib/engines/roads/v2026";
 import { howChecked, type HowChecked } from "@/lib/engines/shared/citation-check";
 
-import { BUDGETS, SCREENS, WIDTHS, WINDOWS_EXTRA, type Clutter, type ScreenId, type WidthId } from "../../e2e/budgets";
+import { SCREENS, WIDTHS, type Clutter, type ScreenId, type WidthId } from "../../e2e/budgets";
+import { budgetFor, clutterBreaches } from "../../e2e/clutter-rule";
 import { KNOWN_GAPS, type KnownGap } from "../../tests/fixtures/ideas/known-gaps";
 import { IDEAS_V1, ROAD_IDS, type Idea } from "../../tests/fixtures/ideas/v1";
 import { STILL_DEAD } from "../../tests/fixtures/still-dead-pages";
@@ -194,6 +195,8 @@ export interface ClutterRow {
   measured: Clutter;
   budget: Clutter | null;
   within: boolean;
+  /** What breaks the rule, in words (e2e/clutter-rule.ts); none when within. */
+  breaches: string[];
 }
 
 export interface ClutterNumbers {
@@ -235,23 +238,13 @@ export function clutterNumbers(folder: string, platform: NodeJS.Platform = proce
     for (const size of WIDTHS) {
       const measured = saved[size.id];
       if (!isClutter(measured)) continue;
-      const gate = BUDGETS[screen]?.[size.id] ?? null;
-      // The same rule as the spec: on Windows, the extra recorded for that screen is added.
-      const extra = platform === "win32" ? (WINDOWS_EXTRA[screen]?.[size.id] ?? {}) : {};
-      const budget = gate && {
-        ...gate,
-        regions: gate.regions + (extra.regions ?? 0),
-        controls: gate.controls + (extra.controls ?? 0),
-        textSizes: gate.textSizes + (extra.textSizes ?? 0),
-      };
-      const within =
-        !!budget &&
-        measured.regions <= budget.regions &&
-        measured.controls <= budget.controls &&
-        measured.textSizes <= budget.textSizes &&
-        measured.smallestTextPx >= budget.smallestTextPx;
+      // The spec's own rule (e2e/clutter-rule.ts), not a copy: a screen size with no budget isn't within either,
+      // as the spec fails it.
+      const budget = budgetFor(screen, size.id, platform);
+      const breaches = clutterBreaches(measured, budget);
+      const within = !!budget && breaches.length === 0;
       const { regions, controls, textSizes, smallestTextPx } = measured;
-      rows.push({ screen, width: size.id, px: size.width, measured: { regions, controls, textSizes, smallestTextPx }, budget, within });
+      rows.push({ screen, width: size.id, px: size.width, measured: { regions, controls, textSizes, smallestTextPx }, budget, within, breaches });
     }
   }
   return { folder, rows, missing: SCREENS.filter((s) => !newest.has(s)) };
@@ -457,7 +450,13 @@ export function qualityMarkdown(q: QualityNumbers): string {
         r.budget ? (r.within ? "yes" : "**no**") : "no budget",
       ]),
     );
-    lines.push("Each cell is measured / budget; the smallest text's budget is a floor.", "");
+    lines.push(
+      "Each cell is measured / budget; the smallest text's budget is a floor. A screen size is within only when the clutter spec's own rule finds nothing (e2e/clutter-rule.ts), which also counts a drawn block with no region mark.",
+      "",
+    );
+    const broken = c.rows.filter((r) => r.breaches.length > 0);
+    for (const r of broken) lines.push(`- ${r.screen} at ${r.px} px: ${r.breaches.join("; ")}`);
+    if (broken.length > 0) lines.push("");
   }
 
   lines.push("## Source health", "");
