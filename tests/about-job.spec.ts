@@ -85,9 +85,10 @@ function addressesIn(html: string): string[] {
 function drawn(view: AboutJobView, part?: string): string {
   let html = markup(view);
   if (part) {
-    const start = html.indexOf(`data-about-row="${part}"`);
-    const end = html.indexOf("data-about-row=", start + 10);
-    html = html.slice(start, end === -1 ? undefined : end);
+    // From the end of the row's opening tag (so no piece of that tag is read as text) to the next row's tag.
+    const start = html.indexOf(">", html.indexOf(`data-about-row="${part}"`)) + 1;
+    const end = html.indexOf("data-about-row=", start);
+    html = html.slice(start, end === -1 ? undefined : html.lastIndexOf("<", end));
   }
   // Read token by token (a tag, or the text between two tags), never by stripping tags out of the markup: only
   // the text between tags is kept, its entities decoded, and a block's closing tag ends a line.
@@ -303,6 +304,28 @@ describe("Wages published for this job group: the row the spec names, labelled b
     ]);
     expect(block.then?.row?.geography.code).toBe("ER48");
     expect(block.then?.label).toBe("Alberta-wide figure");
+  });
+
+  it("the line saying which row this is sits under the row's label (spec row 2, Outside Alberta: Under the label)", () => {
+    const lines = (view: AboutJobView) => drawn(view, "wages").split("\n");
+    const ontario = lines(one("72311.00", "ON"));
+    expect(ontario.slice(0, 3)).toEqual([
+      "Wages published for this job group",
+      "Ontario-wide figure",
+      "DotAmi asks your region only in Alberta for now, so this is the row the wage file gives for Ontario as a whole, with the level its own code gives it.",
+    ]);
+    expect(lines(one("72311.00", "AB")).slice(0, 3)).toEqual(["Wages published for this job group", "Alberta-wide figure", "Your region isn't picked."]);
+    expect(lines(one("72311.00", "AB", "4830")).slice(0, 3)).toEqual([
+      "Wages published for this job group",
+      "Economic region: Calgary",
+      "Your region: Calgary (your pick)",
+    ]);
+    // A row with no figures has no label: the line comes first, then the row's own words.
+    expect(lines(one("72311.00", "AB", "4850")).slice(0, 3)).toEqual([
+      "Wages published for this job group",
+      "Your region: Red Deer (your pick)",
+      "Not published for Red Deer.",
+    ]);
   });
 
   it("outside Alberta: the row for the province or territory as a whole, labelled by its own code, with no Tradesecrets", () => {

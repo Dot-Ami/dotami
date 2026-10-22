@@ -20,8 +20,8 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   earn" (a region with no figures says so, with the government's note and the row it points to); a plain line
   that business counts aren't in this version; and *Where to look yourself*: Job Bank's wage search, BizPaL and
   (in Alberta) Tradesecrets, each the site's own general page, with the job's name and code shown as text to
-  copy, never in a link. Outside Alberta the wage row is the one for the province or territory as a whole, said
-  why. It only shows: nothing on the road changes, and nothing new is kept. The government's files are read on
+  copy, never in a link. Outside Alberta the wage row is the one for the province or territory as a whole, with
+  why under the row's label. It only shows: nothing on the road changes, and nothing new is kept. The government's files are read on
   DotAmi's own server, so the large job and wage lists never load into the page. Until your region is kept
   (Pick a future's next step, its own change) the wage row is the province's own, saying your region isn't
   picked. The screen checks read it: no verdict, no time in DotAmi's own words (the government's quoted lines

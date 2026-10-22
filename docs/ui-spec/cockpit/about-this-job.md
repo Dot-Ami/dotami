@@ -36,6 +36,11 @@ to see:
   words block wrote "a <province>-wide figure".
 - **A note that names no level** (the `N/A` rows with no note, and Canada's own physicians' note): only *Not
   published for <region>.*, as row 2 says; the government's note shows only when it names the level to look at.
+- **Where the which-row line sits.** Outside Alberta, *DotAmi asks your region only in Alberta for now…* is
+  drawn under the row's label, as row 2 says. Row 2 gives Alberta's lines (*Your region: Calgary (your pick)*,
+  *You said you don't know your region.*, *Your region isn't picked.*) no place, so they sit in the same one:
+  under the label, before the figures. A row with no figures has no label, so there the line comes first, then
+  *Not published for <region>.*
 - **Words the block didn't have**, each for a case the files hold: *The National Occupational Classification
   file has no Employment requirements lines for job group <noc>.*; *not published* for one figure a row leaves
   empty; *Reference period <period>* alone where the row names no method; *The wage file has no row for job group

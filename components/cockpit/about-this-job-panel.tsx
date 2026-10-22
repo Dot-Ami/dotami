@@ -28,11 +28,17 @@ const PHONE_LINES = 5;
 
 const linkClass = "break-words text-body text-maple hover:underline";
 
-/** One wage block: the row's label, its lines, then the row a "not published" note points to. */
-function WageRows({ block, nested = false }: { block: WageBlock; nested?: boolean }) {
+/**
+ * One wage block: the row's label, the line saying which row this is (top block only, under the label as the
+ * spec's row 2 puts it; first when a row with no figures has no label), its lines, then the row a "not published"
+ * note points to.
+ */
+function WageRows({ block, context, nested = false }: { block: WageBlock; context?: string; nested?: boolean }) {
   return (
     <div className={nested ? "mt-1 border-l border-rule pl-3" : undefined} {...(block.row ? { "data-wage-row": block.row.geography.code } : {})}>
       {block.label ? <p className="font-semibold text-paper">{block.label}</p> : null}
+      {/* A gap under it, so the row's figures don't run on from the sentence. */}
+      {context ? <p className="mb-2 text-body text-stone">{context}</p> : null}
       {block.lines.map((line) => (
         <p key={line} className="text-body text-paper-dim">
           {line}
@@ -110,8 +116,7 @@ export function AboutThisJobPanel({ view, onClose }: { view: AboutJobView; onClo
       {/* 2. The wages Job Bank publishes for the group: the row's own level, period and method. */}
       <div className="mt-6 space-y-2" data-about-row="wages">
         <h3 className="font-semibold text-paper">{words.wages.heading}</h3>
-        <p className="text-body text-stone">{wageContextLine(view.wages.context)}</p>
-        <WageRows block={wages} />
+        <WageRows block={wages} context={wageContextLine(view.wages.context)} />
         {showsFigures(wages) ? <p className="text-body text-stone">{words.wages.lowHigh}</p> : null}
         <p className="text-body text-paper-dim">{words.wages.notYours}</p>
         <p className="text-small text-stone">

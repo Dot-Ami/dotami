@@ -165,8 +165,8 @@ test("Cabinetmakers on the apprentice road: the four rows in order, the governme
   expect(await textOf(wages)).toBe(
     [
       "Wages published for this job group",
-      "Your region isn't picked.",
       "Alberta-wide figure",
+      "Your region isn't picked.",
       "Hourly · low $18.00 · median $23.00 · high $30.00",
       "Reference period 2023-2024 · Employment Insurance Survey Data",
       "Low is in most cases the 10th percentile and high the 90th, as Job Bank's method page says.",
@@ -240,12 +240,19 @@ test("in Ontario: the row for Ontario as a whole, why it is that row, and no Tra
   await expect(panel(page)).toBeVisible();
 
   const wages = row(page, "wages");
-  await expect(wages).toContainText(
+  // The line saying why this row sits under the row's label (spec row 2, Outside Alberta: Under the label).
+  await expect(wages.locator("p").nth(0)).toHaveText("Ontario-wide figure");
+  await expect(wages.locator("p").nth(1)).toHaveText(
     "DotAmi asks your region only in Alberta for now, so this is the row the wage file gives for Ontario as a whole, with the level its own code gives it.",
   );
   await expect(wages.locator("[data-wage-row]")).toHaveAttribute("data-wage-row", "ER35");
   await expect(wages).not.toContainText(/province-wide/i);
   await expect(row(page, "links").getByRole("link")).toHaveCount(2);
+  // The same two fixed addresses as in Alberta, nothing added to them for Ontario or the job.
+  expect(await row(page, "links").getByRole("link").evaluateAll((as) => as.map((a) => a.getAttribute("href")))).toEqual([
+    "https://www.jobbank.gc.ca/trend-analysis/search-wages",
+    "https://bizpal.ca/",
+  ]);
   await expect(row(page, "links")).toContainText("Tradesecrets is Alberta's trade list, so it isn't listed for Ontario.");
   expect(await findingsIn(page, "72311")).toEqual([]);
 
