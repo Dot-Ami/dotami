@@ -343,7 +343,9 @@ placed in phase 3.
     (docs only)
   - [x] 25b, its first part: the source registry ("connector cards", `lib/engines/research-kit/v2026/`) and its
     validator, with a card for each government file phases 2 and 3 ship, the two ad libraries, and the
-    never-fetch list (Job Bank's pages, YellowPages.ca, Canada411, Google Maps' consumer site, DOZR, Kijiji, Meta)
+    never-fetch list (Job Bank's pages, YellowPages.ca, Canada411, Google Maps' consumer site, DOZR, Kijiji, Meta,
+    and Google's Ads Transparency Center, whose terms couldn't be read: the maintainer's call of 2026-10-21; still
+    a link you open yourself)
   - [ ] 25b, the rest (phase 3; corrected 2026-10-20: 25b was ticked whole): cards for the other sources in
     research-kit.md § 3.2 (Overture Maps, Calgary's and Edmonton's business-licence lists, OpenStreetMap, Google
     Places, Grounding Lite, Yelp, Semrush, Ahrefs, Similarweb, Apollo, ZoomInfo), a "not offered" kind for
