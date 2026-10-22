@@ -1,4 +1,5 @@
 import { countReadByAPerson, howCheckedWords, oldestRead, toolCheckQuotes } from "@/lib/engines/shared/citation-check";
+import { cockpitWords as words } from "@/lib/cockpit/words";
 import { isNotSaid, salesTargetField } from "@/lib/scenarios/not-said";
 
 import type { PlaybookSkeleton } from "./types";
@@ -117,6 +118,9 @@ export function renderPlaybookMarkdown(skeleton: PlaybookSkeleton): string {
 
       body.push("");
     }
+
+    // On a road written for all of Canada, the step panel's line for the other provinces' pages left out (task 28d).
+    if (section.sourcesLeftOut) body.push(words.panel.sourcesOtherProvinces(section.sourcesLeftOut), "");
   }
 
   body.push("---", "", skeleton.disclaimer, "");

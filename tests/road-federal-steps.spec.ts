@@ -28,8 +28,13 @@ import {
   type Road,
   type RoadStep,
 } from "@/lib/engines/roads/v2026";
+import { POST as postPlaybook } from "@/app/api/playbook/route";
+import { cfeCatalogV2026 } from "@/lib/engines/cfe/v2026";
+import { buildPlaybookSkeleton } from "@/lib/playbook/build-skeleton";
+import { renderPlaybookMarkdown } from "@/lib/playbook/render-markdown";
+import type { PlaybookSkeleton } from "@/lib/playbook/types";
 import { evaluateRoad } from "@/lib/roads";
-import { FULL_COVERAGE_PROVINCES } from "@/lib/scenarios/types";
+import { FULL_COVERAGE_PROVINCES, type Scenario } from "@/lib/scenarios/types";
 
 import { inventedIdea, TODAY } from "./helpers/road-to-evaluate";
 import { findTimeWords } from "./helpers/time-words";
@@ -211,6 +216,58 @@ describe("a step's sources, drawn for the idea's own place", () => {
     const onRoad0 = draw(road0, "branch-hire-first-employee", "ON");
     expect(onRoad0).toContain(bcPage);
     expect(onRoad0).not.toContain("other provinces");
+  });
+});
+
+describe("Export draws a step's sources the way the step panel and the plan do", () => {
+  // Every map stage lit, so every stage's sources are in the export; hiring first, as the reviewer's run had it.
+  const everyStage = (province: string): Scenario => {
+    const idea = inventedIdea({ province: province as "ON", hireFirst: true });
+    return { ...idea, state: { ...idea.state, activeNodeIds: cfeCatalogV2026.nodes.map((n) => n.id), ghostedNodeIds: [] } };
+  };
+  const hire = stepOf(road, "branch-hire-first-employee");
+  const bcPage = hire.citations.find((c) => c.jurisdiction === "BC")!.url;
+  const onPage = hire.citations.find((c) => c.jurisdiction === "ON")!.url;
+  const nameOnlyInAlberta = stepOf(road0, "branch-service-vs-productize").citations.find((c) => c.jurisdiction === "AB")!.url;
+  const exportOf = (scenario: Scenario, r?: Road) => buildPlaybookSkeleton(cfeCatalogV2026.nodes, scenario, r);
+
+  it("on the federal road, an Ontario idea's export has the federal pages and Ontario's, not British Columbia's or Alberta's, and counts them", () => {
+    const skeleton = exportOf(everyStage("ON"), road);
+    const md = renderPlaybookMarkdown(skeleton);
+    expect(md).toContain(onPage);
+    expect(md).not.toContain(bcPage);
+    expect(md).not.toContain(nameOnlyInAlberta);
+    expect(new Set(skeleton.sections.flatMap((s) => s.citations.map((c) => c.jurisdiction)))).toEqual(new Set(["CA", "ON"]));
+    // Each section says how many it left out, in the step panel's words; the Branch points section left out both.
+    const branch = skeleton.sections.find((s) => s.stageKey === "branch")!;
+    expect(branch.sourcesLeftOut).toBe(2);
+    expect(md).toContain(cockpitWords.panel.sourcesOtherProvinces(2));
+    // Yukon: no page of its own here, so the federal pages only.
+    const yukon = exportOf(everyStage("YT"), road);
+    expect(new Set(yukon.sections.flatMap((s) => s.citations.map((c) => c.jurisdiction)))).toEqual(new Set(["CA"]));
+  });
+
+  it("on road 0 every source is in the export, whoever opens it, as before", () => {
+    const md = renderPlaybookMarkdown(exportOf(everyStage("ON"), road0));
+    expect(md).toContain(bcPage);
+    expect(md).toContain(nameOnlyInAlberta);
+    expect(md).not.toContain("other provinces");
+    // No road named is the export as it was: every source.
+    expect(exportOf(everyStage("ON"), road0)).toEqual(exportOf(everyStage("ON")));
+  });
+
+  it("the export route builds for the road the cockpit draws, and refuses a road it doesn't know", async () => {
+    const ask = (body: unknown) =>
+      postPlaybook(new Request("http://localhost/api/playbook", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) }));
+    const scenario = everyStage("ON");
+    const federal = await ask({ scenario, roadId: FEDERAL_ROAD_ID });
+    expect(federal.status).toBe(200);
+    const md = renderPlaybookMarkdown(((await federal.json()) as { skeleton: PlaybookSkeleton }).skeleton);
+    expect(md).toContain(onPage);
+    expect(md).not.toContain(bcPage);
+    const general = await ask({ scenario, roadId: road0.id });
+    expect(renderPlaybookMarkdown(((await general.json()) as { skeleton: PlaybookSkeleton }).skeleton)).toContain(bcPage);
+    expect((await ask({ scenario, roadId: "road-nobody-wrote" })).status).toBe(400);
   });
 });
 

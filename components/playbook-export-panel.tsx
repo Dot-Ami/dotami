@@ -11,6 +11,8 @@ import { saveTextFile } from "@/lib/utils/save-file";
 
 interface PlaybookExportPanelProps {
   scenario: Scenario;
+  /** The road the cockpit draws, so the export's sources are the ones the screen shows (task 28d). */
+  roadId: string;
   /** The saved idea's id, for the link to its plan; null for an idea kept only in this tab. */
   ventureId: string | null;
   onClose: () => void;
@@ -34,7 +36,7 @@ function slugifyFileStem(name: string): string {
  * node with its citations) rendered to markdown for an accountant or lawyer. S2.5.4h: facts
  * only — the LLM narrative paragraphs are gone with the rest of the in-app AI.
  */
-export function PlaybookExportPanel({ scenario, ventureId, onClose }: PlaybookExportPanelProps) {
+export function PlaybookExportPanel({ scenario, roadId, ventureId, onClose }: PlaybookExportPanelProps) {
   const [skeleton, setSkeleton] = useState<PlaybookSkeleton | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -51,7 +53,7 @@ export function PlaybookExportPanel({ scenario, ventureId, onClose }: PlaybookEx
     fetch("/api/playbook", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ scenario }),
+      body: JSON.stringify({ scenario, roadId }),
       signal: controller.signal,
     })
       .then(async (response) => {
@@ -74,7 +76,7 @@ export function PlaybookExportPanel({ scenario, ventureId, onClose }: PlaybookEx
       });
 
     return () => controller.abort();
-  }, [scenario]);
+  }, [scenario, roadId]);
 
   async function handleCopyMarkdown() {
     if (!markdown) return;

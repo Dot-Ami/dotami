@@ -1433,7 +1433,7 @@ export function CockpitPage({ initialScenario, pinned = false, example }: Cockpi
 
               {rightPanel === "playbook" ? (
                 <div className="h-full overflow-y-auto border-l border-rule bg-ink3 max-lg:border-l-0">
-                  <PlaybookExportPanel scenario={scenario} ventureId={ventureId} onClose={() => setRightPanel(null)} />
+                  <PlaybookExportPanel scenario={scenario} roadId={road.id} ventureId={ventureId} onClose={() => setRightPanel(null)} />
                 </div>
               ) : null}
             </div>
