@@ -373,10 +373,17 @@ placed in phase 3.
     `data/job-bank-wages-2025/` into `lib/engines/wages/v2026/`, whose look-ups give the file's own row for a
     job in an economic region or a province as a whole, the level from its source code, and a missing row as
     missing. Not shown anywhere yet: *About this job* (25h) is the first screen to read it
-  - [ ] 25h: *About this job* for any job, in the right-hand panel from *Look closer*: the job's rules quoted
+  - [x] 25h: *About this job* for any job, in the right-hand panel from *Look closer*: the job's rules quoted
     word for word, the published wages labelled "Not what a shop earns, and not what you would earn", and
     *Where to look yourself* (Job Bank's general search, with the job's name and code to copy); no business
-    counts in this version, and it says so
+    counts in this version, and it says so. Built 2026-10-22 (`components/cockpit/about-this-job-panel.tsx`,
+    `lib/about-job/`, read on the server by GET /api/futures/<id>): the wage row is the province's own until
+    the person's region is kept (Pick a future's step 2, its own pull request; wiring it in is one line in
+    `app/api/futures/[id]/route.ts`), so its **Change** isn't drawn yet; its own clutter row
+    (`cockpit-about-job`, the first screen added after the baseline, `FIRST_MEASURED` in `e2e/budgets.ts`).
+    Pick a future's no-road block shows it in place with its own task (28c). The browser idea sweep (29e)
+    opens it for every swept idea that names a job and reads it through the gate's checks
+    (`e2e/about-job-read.ts`)
   - [ ] Phase 3: business counts for every industry (25d), the research-pack script (25f), the validator and
     writer's guide (25g), read tools (25k), a second road built with the kit (25l), the rest of the rule text
     (25r)

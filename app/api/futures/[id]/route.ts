@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 
+import { aboutJobForFuture } from "@/lib/about-job/view";
 import { firstWordsOf } from "@/lib/db/ventures";
 import { readFuture } from "@/lib/futures/future";
 import { futureFailure, guardRead } from "@/lib/futures/http";
@@ -21,8 +22,9 @@ const RATE_LIMIT = { limit: 600, windowMs: 60_000 };
  * GET /api/futures/<idea id> — what the cockpit keeps for one idea (docs/architecture/future-cockpit.md
  * § 2, "Cockpit screen as built"): its road, picks and month (`future`), its step progress, the person's
  * skill marks (kept once for the person, so the same on every idea), the yearly income they agreed to
- * with the day agreed, the sentence typed on the front door for it, and the person's newest destination. Only the idea's id travels in
- * the address; amounts come back in the body.
+ * with the day agreed, the sentence typed on the front door for it, the person's newest destination, and
+ * *About this job* for the picked job (null while none is picked). Only the idea's id travels in the address;
+ * amounts come back in the body.
  */
 export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const limited = guardRead(request, "futures-read", RATE_LIMIT);
@@ -50,6 +52,10 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
       firstWords,
       // The person's, not the idea's: the goal bar shows it when the idea has no first sentence (2026-10-12).
       destination: destination ? { text: destination.text, saidAt: destination.saidAt } : null,
+      // About this job for the picked job (task 25h), read here on the server so the NOC and wage modules never
+      // reach the browser. The idea keeps no region or area yet (their columns come with Pick a future's step 2):
+      // null reads as "not picked" until then.
+      aboutJob: aboutJobForFuture(future, null),
     });
   } catch (error) {
     return futureFailure("futures GET", error);

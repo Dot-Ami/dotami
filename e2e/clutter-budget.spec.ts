@@ -24,7 +24,8 @@
  * suite's other files saved. *What DotAmi knows about you* is measured first, on that seed alone: it counts
  * everything in the data file. The cockpit is then measured on a fresh idea straight after *Pick a future*,
  * the designed first visit (docs/architecture/future-cockpit.md § 2, "First visit and return visits"), on
- * road 0 and on road 1, and *Your futures* with a fresh idea at the top of its list.
+ * road 0 and on road 1, and *Your futures* with a fresh idea at the top of its list. *About this job* is
+ * measured open on road 1, for a job picked the way a person picks one (task 25h).
  */
 import { execFileSync, spawn, type ChildProcess } from "node:child_process";
 import { existsSync, mkdirSync, rmSync, writeFileSync } from "node:fs";
@@ -38,6 +39,7 @@ import { waitForReact } from "../tests/helpers/react-ready";
 import { WIDTHS, type ScreenId } from "./budgets";
 import { measurePage, type Measured } from "./clutter-measure";
 import { budgetFor, clutterBreaches } from "./clutter-rule";
+import { lookCloser, pickJob } from "./cockpit-calm";
 
 // Case-blind: the question starts with "What" since 2026-10-20 (it began "In a few years, what …").
 const Q1 = /what do you want your work and life to look like/i;
@@ -268,6 +270,20 @@ test("the cockpit on road 0, a first visit, stays within its clutter budget", as
 test("the cockpit on road 1, a first visit, stays within its clutter budget", async ({ page }, testInfo) => {
   const cockpit = await pickFuture(page, roadApprenticeToOwnShopAB.label);
   await measureAtEverySize(page, testInfo, "cockpit-road-1", () => load(page, cockpit, road));
+});
+
+// docs/ui-spec/cockpit/about-this-job.md, "The budget": opened only by the person's click, so the first-visit
+// rows above don't change; this row is measured with the panel open on road 1, for Cabinetmakers.
+test("About this job, open on road 1, stays within its clutter budget", async ({ page }, testInfo) => {
+  const cockpit = await pickFuture(page, roadApprenticeToOwnShopAB.label);
+  await pickJob(page, "Cabinetmakers", "72311.00");
+  await measureAtEverySize(page, testInfo, "cockpit-about-job", async () => {
+    await load(page, cockpit, road);
+    await lookCloser(page, "About this job");
+    await expect(page.getByRole("region", { name: "About this job" })).toBeVisible();
+    // Opening it moves focus to its heading.
+    await expect(page.getByRole("region", { name: "About this job" }).getByRole("heading", { level: 2 })).toBeFocused();
+  });
 });
 
 test("Your plan stays within its clutter budget", async ({ page }, testInfo) => {

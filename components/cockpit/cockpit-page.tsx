@@ -8,7 +8,9 @@ import { FoldButton, FoldedBar, FoldedStrip, useFolds } from "@/components/cockp
 import { useIsPhone, useSheet } from "@/components/cockpit/use-sheet";
 import { DatePanel, MoneyListPanel, SkillsListPanel, type SkillKey } from "@/components/cockpit/gauge-panels";
 import { GoalBar } from "@/components/cockpit/goal-bar";
+import { AboutThisJobPanel } from "@/components/cockpit/about-this-job-panel";
 import { LandscapePanel } from "@/components/cockpit/landscape-panel";
+import { focusLookCloser } from "@/components/cockpit/look-closer-menu";
 import { NextOnYourRoad } from "@/components/cockpit/next-on-your-road";
 import { OverlaySwitches } from "@/components/cockpit/overlay-switches";
 import { StepPanel, ThirdYearEstimate } from "@/components/cockpit/step-panel";
@@ -44,12 +46,13 @@ import {
 } from "@/lib/cockpit/told";
 import { cockpitInput, costLineNote, nextOnYourRoad, overlayCounts, type GaugeId } from "@/lib/cockpit/view";
 import { cockpitWords as words } from "@/lib/cockpit/words";
+import { aboutJobWords } from "@/lib/about-job/words";
 import { landscapeWords } from "@/lib/landscape/words";
 import type { CostLineAmountFrom, FigureView } from "@/lib/figures/types";
 import { useLocalToday } from "@/lib/figures/use-local-today";
 import type { CFENodeId } from "@/lib/engines/cfe/v2026";
 import { oasisListForJob } from "@/lib/engines/oasis/v2026";
-import { generalRoadV2026, roadsV2026, skillItemsV2026 } from "@/lib/engines/roads/v2026";
+import { generalRoadV2026, roadsV2026, roadsWrittenForJob, skillItemsV2026 } from "@/lib/engines/roads/v2026";
 import { templatesCatalogV2026 } from "@/lib/engines/templates/v2026";
 import type { ExampleFuture } from "@/lib/examples";
 import { exampleStory } from "@/lib/examples/story";
@@ -140,8 +143,11 @@ const STRIP = "44px";
 /** The road's first columns stay open on a first visit; the rest fold into the road ahead (§ 2, "First visit"). */
 const OPEN_COLUMNS = 2;
 
-/** One thing at a time in the right-hand slot: a step, the export, one gauge's list, Compare, or Others in this line of work. */
-type RightPanel = null | "node" | "playbook" | "skills" | "money" | "date" | "compare" | "landscape";
+/**
+ * One thing at a time in the right-hand slot: a step, the export, one gauge's list, Compare, Others in this line
+ * of work, or About this job.
+ */
+type RightPanel = null | "node" | "playbook" | "skills" | "money" | "date" | "compare" | "landscape" | "about-job";
 
 /** Where an answer was given, so its receipt shows there (the map's own toggles show theirs in "This visit" only). */
 type ReceiptPlace = "step" | "skills" | "money" | "date" | "told" | "compare" | "what-if" | "map";
@@ -279,6 +285,10 @@ export function CockpitPage({ initialScenario, pinned = false, example }: Cockpi
   // The government's skills list for the job the person picked as closest to their work, or none.
   const jobCode = kept?.future.job?.code ?? null;
   const job = useMemo(() => (jobCode ? oasisListForJob(jobCode) : null), [jobCode]);
+  // About this job for that pick, as the server built it (null while none is picked), and whether a road is
+  // written for the job, which places it in the Look closer menu.
+  const aboutJob = (jobCode && kept?.aboutJob) || null;
+  const aboutJobHasRoad = jobCode ? roadsWrittenForJob(jobCode).length > 0 : false;
 
   // One run of road evaluation draws everything: the gauges, the step colours, the badges, the step
   // panel, "Next on your road", and the map's lever cards (its `rules`, run on the idea's own picks;
@@ -558,6 +568,18 @@ export function CockpitPage({ initialScenario, pinned = false, example }: Cockpi
     setReceipt(null);
     setActiveGauge(null);
     setRightPanel("landscape");
+  }
+
+  /**
+   * Opens "About this job" (task 25h; docs/ui-spec/cockpit/about-this-job.md) for the picked job, from the goal
+   * bar's Look closer menu. Like the others it clears the last receipt and the pressed gauge, and changes
+   * nothing on the road.
+   */
+  function openAboutJob() {
+    setAnswerError(null);
+    setReceipt(null);
+    setActiveGauge(null);
+    setRightPanel("about-job");
   }
 
   /**
@@ -871,6 +893,7 @@ export function CockpitPage({ initialScenario, pinned = false, example }: Cockpi
     rightPanel === "date" ||
     rightPanel === "compare" ||
     rightPanel === "landscape" ||
+    (rightPanel === "about-job" && aboutJob !== null) ||
     (rightPanel === "node" && selectedStep !== undefined && selectedStepEvaluation !== undefined);
 
   /** What the right-hand panel holds, named on its folded strip. */
@@ -887,7 +910,9 @@ export function CockpitPage({ initialScenario, pinned = false, example }: Cockpi
               ? words.compare.region
               : rightPanel === "landscape"
                 ? landscapeWords.region
-                : words.folds.exportTitle;
+                : rightPanel === "about-job"
+                  ? aboutJobWords.region
+                  : words.folds.exportTitle;
 
   // The body's columns from 768 px (the rail and the road) and from 1024 px (with the panel, when one is
   // open). A folded rail or panel keeps a narrow strip, so its way back stays where it was. The open rail is
@@ -997,6 +1022,7 @@ export function CockpitPage({ initialScenario, pinned = false, example }: Cockpi
             onGauge={handleGauge}
             onCompare={compareForks.length > 0 ? () => openCompare() : undefined}
             onLandscape={openLandscape}
+            onAboutJob={aboutJob ? { open: openAboutJob, jobHasRoad: aboutJobHasRoad } : undefined}
             folded={folds.goal}
             onToggleFold={() => toggle("goal")}
             person={example?.person ?? null}
@@ -1429,6 +1455,17 @@ export function CockpitPage({ initialScenario, pinned = false, example }: Cockpi
 
               {rightPanel === "landscape" ? (
                 <LandscapePanel ventureId={ventureId} canSave={canSave} isExample={isExample} today={today} onClose={() => setRightPanel(null)} />
+              ) : null}
+
+              {rightPanel === "about-job" && aboutJob ? (
+                <AboutThisJobPanel
+                  view={aboutJob}
+                  onClose={() => {
+                    setRightPanel(null);
+                    // Focus goes back where the panel was opened from, once the panel is gone.
+                    requestAnimationFrame(focusLookCloser);
+                  }}
+                />
               ) : null}
 
               {rightPanel === "playbook" ? (

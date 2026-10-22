@@ -135,3 +135,18 @@ export async function lookCloserItems(page: Page, within?: Locator): Promise<str
   await expect(page.getByRole("menu")).toHaveCount(0);
   return items.map((text) => text.trim());
 }
+
+/**
+ * Picks a job the way a person does (task 25h's tests): the Skills gauge opens the list, the job is searched
+ * by its name and clicked. Waits until the pick is kept and shown. `label` is the government's job name, `code`
+ * its OaSIS code ("Athletes", "53200.00").
+ */
+export async function pickJob(page: Page, label: string, code: string) {
+  await cockpitSettled(page);
+  await page.getByRole("region", { name: "Your goal and gauges" }).getByRole("button", { name: /^Skills/ }).click();
+  const skills = page.getByRole("region", { name: "Skills on this road" }).last();
+  await skills.getByRole("searchbox", { name: "Search jobs by name or code" }).fill(code);
+  await skills.getByRole("button", { name: `${label} · ${code}` }).click();
+  // Picked: the list's line names the job, its code and the day ("Athletes · 53200.00 · picked 2026-10-21").
+  await expect(skills.getByText(`${label} · ${code} · picked`)).toBeVisible();
+}

@@ -11,6 +11,23 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [Unreleased]
 
 ### Added
+- **About this job** ([14i], task 25h; [docs/ui-spec/cockpit/about-this-job.md](docs/ui-spec/cockpit/about-this-job.md)).
+  Once you've picked the job closest to your work, the goal bar's *Look closer* menu has *About this job*, which
+  opens in the right-hand panel (on a phone, a sheet over the road). Four rows, always in this order: the
+  government's *Employment requirements* for the job's group, quoted word for word under a line saying they are
+  its words (Statistics Canada's NOC 2021); the wages Job Bank publishes for the group, the row labelled with the
+  level its own source code gives, its period and survey, and "Not what a shop earns, and not what you would
+  earn" (a region with no figures says so, with the government's note and the row it points to); a plain line
+  that business counts aren't in this version; and *Where to look yourself*: Job Bank's wage search, BizPaL and
+  (in Alberta) Tradesecrets, each the site's own general page, with the job's name and code shown as text to
+  copy, never in a link. Outside Alberta the wage row is the one for the province or territory as a whole, with
+  why under the row's label. It only shows: nothing on the road changes, and nothing new is kept. The government's files are read on
+  DotAmi's own server, so the large job and wage lists never load into the page. Until your region is kept
+  (Pick a future's next step, its own change) the wage row is the province's own, saying your region isn't
+  picked. The screen checks read it: no verdict, no time in DotAmi's own words (the government's quoted lines
+  pass only on this row, only as the shipped file holds them), and its own clutter limit. The browser idea
+  sweep opens it too, for every swept idea that names a job, and reads every wage figure back as the wage
+  file's own row (a summed wage, or a figure outside its row, is caught).
 - **One list of outside sources and their terms** (the research kit's source registry,
   `lib/engines/research-kit/v2026/registry.ts`; [docs/architecture/research-kit.md](docs/architecture/research-kit.md)
   § 5.2). Plumbing, with no change on screen: one card for each government file the kit ships in this phase and
