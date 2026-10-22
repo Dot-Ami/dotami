@@ -4,7 +4,7 @@ import type { FirstSave } from "@/lib/journey/first-save";
 import { INTAKE_GOAL_IDS, type IntakeGoalId } from "@/lib/journey/types";
 import { isValidSaidAt, STATEMENT_MAX_CHARS } from "@/lib/person/types";
 import type { Province, VentureStage, VentureType } from "@/lib/scenarios/types";
-import { cleanDecided, cleanIncorporateAt } from "@/lib/db/scenario-state-json";
+import { cleanDecided, cleanIncorporateAt, SALES_DOLLARS_MAX } from "@/lib/db/scenario-state-json";
 import { recomputeScenarioState } from "@/lib/scenarios/branches";
 import { cleanNotSaid } from "@/lib/scenarios/not-said";
 import { PROVINCES as ALL_PROVINCES, VENTURE_STAGES } from "@/lib/scenarios/types";
@@ -42,7 +42,7 @@ function parseProfile(raw: unknown): VentureProfile | null {
   if (!Number.isFinite(p.targetRevenueY1) || !Number.isFinite(p.targetRevenueY3)) {
     return null;
   }
-  if (p.targetRevenueY1 < 0 || p.targetRevenueY3 < 0 || p.targetRevenueY1 > 1e9 || p.targetRevenueY3 > 1e9) {
+  if (p.targetRevenueY1 < 0 || p.targetRevenueY3 < 0 || p.targetRevenueY1 > SALES_DOLLARS_MAX || p.targetRevenueY3 > SALES_DOLLARS_MAX) {
     return null;
   }
   let structure: VentureProfile["structure"] = "sole-prop";
@@ -72,7 +72,8 @@ function parseProfile(raw: unknown): VentureProfile | null {
     ? (p.stage as VentureStage)
     : "idea";
   // The answers a picked future was saved without (2026-10-12). No list is none: the intake asks them all.
-  const notSaid = cleanNotSaid(p.notSaid);
+  // Read with the first-year sales kept below, so an old "sales-targets" reads as Keep left it (not-said.ts).
+  const notSaid = cleanNotSaid(p.notSaid, Math.round(p.targetRevenueY1));
 
   return {
     name: p.name.trim(),

@@ -95,6 +95,33 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   (`lib/cockpit/told.ts`, `lib/scenarios/not-said.ts`, `lib/roads/without-answer.ts`). Nothing new is kept:
   the answer goes where the same answer on any other idea already goes. The idea harness's "bug" entry for
   it left `tests/fixtures/ideas/known-gaps.ts`.
+- **Incorporating can light on a future picked on Pick a future** (the maintainer's "fix both", 2026-10-20;
+  designed in [docs/ui-spec/cockpit/incorporating-estimate.md](docs/ui-spec/cockpit/incorporating-estimate.md)).
+  The step lights when your own third-year sales estimate reaches your own "I'd incorporate at" number. Pick a
+  future never asks for that estimate, and nothing in the cockpit did, so on a picked future the step could
+  never light. Now *Not told yet* asks "Your third-year sales estimate" (just before "I'd incorporate at",
+  which it opens), and the step's own panel holds that box above the "I'd incorporate at" box, showing your
+  number with *Change your number* once given. With both numbers yours the step lights as it does on an
+  intake idea. *Take back* puts the future back as it was picked: the rail says *Not said* again and the
+  question is asked again. Your typed number is kept where the intake's Year 3 box keeps it; nothing new is
+  kept or sent. On an idea from the intake this changes two things too: a Year 3 box left blank there is now
+  asked in *Not told yet* as well, and *Change* on "You told us third-year sales of $N" opens this same box in
+  the cockpit instead of going back to the intake (the first-year number's *Change* still goes to the intake).
+- **A sales number too large to keep is refused where you type it.** The save keeps sales numbers up to
+  $1,000,000,000, but the third-year box, the "I'd incorporate at" box and the what-if took any digits: a
+  bigger third-year estimate stayed on screen and every later save of that idea failed until it was changed,
+  a bigger "I'd incorporate at" was quietly dropped, and a bigger what-if could be tried and then not kept.
+  Now each box says "DotAmi keeps numbers up to $1,000,000,000. Write a smaller one." and keeps nothing.
+- **Keep on the what-if now counts as told on a picked future** (the maintainer's call, 2026-10-21). Keep made
+  the what-if your first-year sales, and the road read it, but the rail and the plan's export still said *Not
+  said* for it. Now Keep also marks the first-year target as said: the rail, *Your plan* and the export show
+  the kept number, and the third-year target stays *Not said* until you give it. To do this, the one
+  "not said" mark both sales targets shared was split into one per year (`lib/scenarios/not-said.ts`); a future
+  picked before this change still reads both years as not said. **Futures saved before this change where you
+  had already pressed Keep** (the maintainer, 2026-10-22: "if there are any bugs, theey need to be fixed") now
+  read right too: the rail, *Your plan*, its export and *Not told yet* show the kept first-year number as told,
+  exactly as after a Keep today, and taking it back makes it *Not said* again. This is how what is saved is
+  read; nothing in the data file is rewritten (the old mark is replaced only when the idea is next saved).
 
 ### Changed
 - **No span of time on the front door or Your destination** (the maintainer's pick of 2026-10-20, "Reword

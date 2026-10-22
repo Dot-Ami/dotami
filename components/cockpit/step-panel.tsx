@@ -6,6 +6,7 @@ import { AmountForm } from "@/components/cockpit/amount-form";
 import { CantKeepNote } from "@/components/cockpit/example-mode";
 import { ReceiptLines } from "@/components/cockpit/receipt-lines";
 import { BranchToggle } from "@/components/cockpit/strategy-map";
+import { QuestionBox } from "@/components/cockpit/told-list";
 import { Fold, ItemRow, NodeDetailPanel } from "@/components/node-detail-panel";
 import { CitationLinks } from "@/components/shared/citation-links";
 import { Pill } from "@/components/ui";
@@ -68,6 +69,8 @@ export interface StepPanelProps {
   ownNumber: number | null;
   /** Sets or clears that number. */
   onOwnNumberChange: (value: number | null) => void;
+  /** Drawn above that number's box: the Incorporating step's estimate box (`ThirdYearEstimate`), from the page. */
+  ownNumberLead?: ReactNode;
   onClose: () => void;
   /** The receipt of the last answer given in this panel, or null (part 2, 2026-10-12). */
   receipt?: readonly string[] | null;
@@ -84,7 +87,7 @@ export interface StepPanelProps {
 }
 
 export function StepPanel(props: StepPanelProps) {
-  const { step, rules, onClose, province, ownNumber, onOwnNumberChange } = props;
+  const { step, rules, onClose, province, ownNumber, onOwnNumberChange, ownNumberLead } = props;
   const items = itemsForStep(rules.unlocks, step);
   const node = cfeCatalogV2026.nodes.find((n) => n.id === step.id);
   const sections = <StepSections {...props} />;
@@ -100,6 +103,7 @@ export function StepPanel(props: StepPanelProps) {
           reason={rules.nodeReasons[node.id]}
           ownNumber={ownNumber}
           onOwnNumberChange={onOwnNumberChange}
+          ownNumberLead={ownNumberLead}
           onClose={onClose}
         >
           {sections}
@@ -110,6 +114,58 @@ export function StepPanel(props: StepPanelProps) {
         </OtherRoadStep>
       )}
     </section>
+  );
+}
+
+/**
+ * The Incorporating step's estimate box (docs/ui-spec/cockpit/incorporating-estimate.md, 2026-10-21): the
+ * person's own third-year sales estimate, which the step compares with their "I'd incorporate at". Given, it
+ * shows the number with "Change your number", as a cost line's quote does; not given (a future picked on
+ * Pick a future keeps none), the box asks for it. Saved by the page, which shows the receipt in this panel.
+ */
+export function ThirdYearEstimate({
+  value,
+  canSave,
+  onSave,
+}: {
+  /** The estimate in whole dollars, or null when the idea holds none (0, or not said). */
+  value: number | null;
+  canSave: boolean;
+  /** Keeps whole dollars; resolves to an error, or null once kept. */
+  onSave: (dollars: number) => Promise<string | null>;
+}) {
+  const q = words.questions.salesYear3;
+  const [changing, setChanging] = useState(false);
+  const save = async (dollars: string | number) => {
+    const refused = await onSave(Number(dollars));
+    if (!refused) setChanging(false);
+    return refused;
+  };
+  return (
+    <div role="group" aria-label={q.question} className="mt-4 rounded-lg border border-rule bg-ink2 p-3">
+      <p className="text-body leading-5 text-stone">{words.steps.incorporatingBoth}</p>
+      {value !== null && !changing ? (
+        <div className="mt-1.5 flex flex-wrap items-baseline gap-2">
+          <span className="text-lead text-paper">{q.question}</span>
+          <span className="font-mono text-lead text-paper">{formatMoney(value * 100)}</span>
+          <button type="button" disabled={!canSave} onClick={() => setChanging(true)} className="text-body text-maple hover:underline disabled:opacity-50">
+            {words.panel.changeQuote}
+          </button>
+        </div>
+      ) : (
+        <div className="mt-1.5">
+          <QuestionBox
+            title={q.question}
+            why={q.why}
+            control={{ kind: "dollars", label: q.box, value }}
+            canSave={canSave}
+            onSave={save}
+            // Changing a number given can be left as it was; a box asking for one has nothing to fold.
+            onDontKnow={value !== null ? () => setChanging(false) : undefined}
+          />
+        </div>
+      )}
+    </div>
   );
 }
 

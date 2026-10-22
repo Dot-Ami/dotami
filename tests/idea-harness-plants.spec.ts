@@ -139,10 +139,13 @@ describe("the harness fails on a planted product regression", () => {
   });
 
   it("“I'd incorporate at” broken for a person who gave a Year 3 number", () => {
-    // The plumber gave the intake's Year 3 box a number, so on the typed way the answer lights the step;
-    // their picked way already fails it (a known gap), and that must not hide the typed way's new failure.
+    // The plumber gave the intake's Year 3 box a number, so on the typed way the answer lights the step. On
+    // the picked way, since the Incorporating fix (2026-10-21), the cockpit asks for the third-year estimate
+    // first and "I'd incorporate at" after it; with that answer broken, the estimate opens a question no answer
+    // of which changes anything, so the picked way fails too, on the question it asks.
     expect(addedKeys(Y3_IDEA, "dropIncorporateAt", "ends:questions-change-something", true)).toEqual([
       `${Y3_IDEA.id} · ends:questions-change-something · typed › incorporate-at`,
+      `${Y3_IDEA.id} · ends:questions-change-something · picked › sales-year-3`,
     ]);
   });
 

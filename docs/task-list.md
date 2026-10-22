@@ -420,14 +420,10 @@ placed in phase 3.
     on the side that holds the step); no map pick asked that no rule reads (GST timing for
     drivers); the keyword parser's places, kinds of work and equipment proposed only when the words state
     them; no duration in road 1's first step. Their "bug" entries left `tests/fixtures/ideas/known-gaps.ts`.
-    Still listed for the maintainer (the front door's "in a few years" reworded 2026-10-20, "Reword both", and
-    equipment on a picked future fixed the same day, below; both out of the list): "Incorporating" on a future picked on road 0 can't light at all: the rule compares
-    "I'd incorporate at" with a third-year sales estimate, Pick a future keeps none (it saves 0,
-    `lib/front-door/start-future.ts`) and nothing in the cockpit asks for one (only the intake's Year 3 box
-    sets it). The *Not told yet* row is no longer asked there and the step's card and panel say it needs that
-    estimate (second review of PR #182, pinned in `tests/cockpit-told.spec.ts`), but the panel's box still
-    takes a number that can't light it; whether the cockpit asks for a third-year estimate is the maintainer's call.
-    2026-10-20, the maintainer: fix both bugs and reword "in a few years" ([14o])
+    Nothing still listed for the maintainer: the front door's "in a few years" reworded 2026-10-20 ("Reword
+    both"), equipment on a picked future fixed the same day (below), and "Incorporating" on a future picked on
+    road 0, which couldn't light at all (Pick a future keeps no third-year sales estimate and nothing in the
+    cockpit asked for one), fixed 2026-10-21: the cockpit now asks for the estimate ([14o])
   - [x] Equipment on a picked future answered and kept (the maintainer's "Yes, fix both", 2026-10-20): the
     box's answer takes equipment off the not-said list, so it is saved, read back and asked no more; taken
     back, it is not said again. Its "bug" entry left `tests/fixtures/ideas/known-gaps.ts`
@@ -542,13 +538,17 @@ placed in phase 3.
     (#189)
   - [x] Keep the answer to "Are you buying equipment, a vehicle or tools?" on a future picked on *Pick a
     future* (it was lost; 323 of the 367 test ideas met it) (#190)
-  - [ ] Let *Incorporating* light on a future picked on the general road, or say plainly that it can't (it
-    needs a third-year sales estimate nothing there asks for); after 28g (designed 2026-10-20: the cockpit
-    asks for the estimate, [ui-spec/cockpit/incorporating-estimate.md](ui-spec/cockpit/incorporating-estimate.md)).
-    The same pull request fixes the what-if **Keep** bug (the maintainer's call of 2026-10-21): on a picked
-    future, **Keep** (`lib/cockpit/told.ts` `keepWhatIf`) sets the first-year sales but leaves `sales-targets`
-    on the not-said list, so the rail and *Your plan* say "Not said" while the road reads the number; **Keep**
-    will also mark the first-year target as said
+  - [x] Let *Incorporating* light on a future picked on the general road, as designed in
+    [ui-spec/cockpit/incorporating-estimate.md](ui-spec/cockpit/incorporating-estimate.md): *Not told yet*
+    asks for "Your third-year sales estimate" (before "I'd incorporate at"), the step's panel holds that box
+    above the "I'd incorporate at" box, and taking the estimate back puts the future as it was picked; the
+    not-said id `sales-targets` split into `sales-target-year-1` and `sales-target-year-3`, an old saved
+    `sales-targets` read as both, except a first-year number already kept with Keep, read as said (234 of the 234 test ideas picked on the general road can now light it;
+    0 before). The same pull request fixes the what-if **Keep** bug (the maintainer's call of 2026-10-21):
+    **Keep** now also marks the first-year target as said, so the rail and the plan show the number the road
+    reads, and the third-year target stays "Not said". On an intake idea the same row asks a blank Year 3, and
+    *Change* on a given third-year number opens the cockpit's box instead of the intake; a sales number above
+    the save's $1,000,000,000 cap is refused in the box and the what-if (the review of #198)
   - [x] A small release of phase 1's work (the calm first view, the six text sizes, *Look closer*, the
     harness's fixes) before phase 2 changes the data file: 0.4.1 (#188), published 2026-10-20
   - [ ] Release 0.5.0: no silent fallbacks, every Alberta test idea ending on a road written for it or an

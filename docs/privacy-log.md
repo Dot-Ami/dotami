@@ -37,6 +37,20 @@ person is asked).
 
 ## [Unreleased]
 
+### What DotAmi keeps, and where
+
+- **A future picked on Pick a future can now hold your third-year sales estimate, and your kept first-year
+  what-if counts as told (2026-10-21).** The cockpit asks *Your third-year sales estimate* in *Not told yet* and
+  on the Incorporating step, on the general road. The whole-dollar number you type goes in the idea's existing
+  column (`Venture.targetRevenueY3`), where the intake's Year 3 box puts it; no agree prompt, as for the
+  intake's. The idea's not-said list (`Venture.notSaid`) now names each sales target on its own,
+  `sales-target-year-1` and `sales-target-year-3`, instead of one `sales-targets`, which is still read as both,
+  except that a first-year number you kept with Keep before the split reads as yours, as Keep marks it now
+  ([`lib/scenarios/not-said.ts`](../lib/scenarios/not-said.ts)); no migration and no data update, the column is
+  the same JSON list, read as it is.
+  Giving the estimate takes the third year off that list; Keep on the what-if takes the first year off it;
+  taking either back sets it to 0 and puts it back. Nothing new leaves the computer.
+
 ---
 
 ## [0.4.1] — 2026-10-20

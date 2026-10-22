@@ -9,7 +9,11 @@ Type: a *Not told yet* row, a number box, a take-back
 Last updated: 2026-10-21 (designed before it is built, task 28g, for the *Incorporating* fix. The maintainer,
 2026-10-20: fix both known bugs, and the *Incorporating* one needs a design here. **Decided 2026-10-21 (the
 maintainer, call 6, "fix"):** the what-if **Keep** bug on a picked future is fixed in the **same** pull request
-as the *Incorporating* fix; its part is *The what-if Keep bug* below.)
+as the *Incorporating* fix; its part is *The what-if Keep bug* below. **Built 2026-10-21** in that one pull
+request, as written here: `lib/cockpit/told.ts` `notToldYet`, `answerSalesYear3` and `keepWhatIf`,
+`lib/scenarios/not-said.ts` `withSalesTarget`, and `components/cockpit/step-panel.tsx` `ThirdYearEstimate`. The
+estimate's row is asked only where a pair of answers, the estimate and "I'd incorporate at", could change the
+road; on its own the estimate changes nothing, so the idea harness counts it with the question it opens.)
 
 No mockup: it changes one row and one box on screens that already exist.
 
@@ -41,7 +45,10 @@ from the box as the intake's Year 3 box and the *I'd incorporate at* box save th
 `targetRevenueY3` and takes **only the third-year target** off the not-said list. Today one id, `sales-targets`,
 covers both targets (`lib/scenarios/types.ts:95`), so the build splits it into `sales-target-year-1` and
 `sales-target-year-3` (ids are forever: a saved `sales-targets` is read as both, as PR #190 reads `equipment`
-with `withSaid`). The first-year target stays *Not said* on the rail.
+with `withSaid`, except a first-year number already kept with Keep; see the end of *Tests the build adds*). The first-year target stays *Not said* on the rail. A number above the save's own cap on a
+sales number ($1,000,000,000, `SALES_DOLLARS_MAX` in `lib/db/scenario-state-json.ts`) is refused in the box
+with *DotAmi keeps numbers up to $1,000,000,000. Write a smaller one.*, as is a what-if above it (added after
+the review of PR #198: the save refused it, so every later save of the idea failed).
 
 **4. The receipt,** worked out from the two runs of the rules as every receipt is: *Because you told us
 third-year sales of $120,000: …* (the existing `salesYear(3)` words), or *Saved. Nothing on the road changed.*
@@ -51,7 +58,12 @@ yet*.
 **5. Taking it back.** *What you've told DotAmi* lists *your third-year sales number ($120,000)* with **Take
 back**, as today. Taking it back sets the estimate to 0 **and** puts `sales-target-year-3` back on the not-said
 list, so a picked future is exactly as it was when picked: the rail says *Not said* again, the row comes back
-to *Not told yet*, and the *I'd incorporate at* row leaves it (it changes nothing without an estimate).
+to *Not told yet*, and the *I'd incorporate at* row leaves it (it changes nothing without an estimate). The
+row's **Change** opens this same box, on an intake idea too (until this fix it went back to the intake); the
+first-year number's **Change** still goes to the intake, as the cockpit has no box for it.
+
+**On an idea from the intake.** Part 1's "0" holds there too: an intake idea whose Year 3 box was left blank
+is asked the same row in *Not told yet* (the review of PR #198 asked that this be said, not only built).
 
 ## The what-if Keep bug, fixed in the same pull request (the maintainer's call 6, 2026-10-21)
 
@@ -136,7 +148,15 @@ off the not-said list, `sales-target-year-3` is still on it, and the rail's rows
 and *Target Y3* as *Not said*; run against today's `keepWhatIf`, it fails (the year-1 target stays not said). A
 browser test keeps a what-if on a picked future, reloads, and reads the same amount on the rail and on *Your
 plan*. A saved `sales-targets` (from before the split) is read as both ids, so an old future still reads *Not
-said* for both until each is given.
+said* for both until each is given, with one exception (the maintainer, 2026-10-22: "if there are any bugs,
+theey need to be fixed"): where **Keep** was already pressed before the fix, the old future holds
+`sales-targets` with a first-year number above 0, and it reads exactly as a **Keep** after the fix
+(`sales-target-year-1` said, `sales-target-year-3` not). Before the split a first-year number above 0 reached a
+list holding `sales-targets` only through **Keep**: Pick a future saved 0, **Take back** saved 0, and the intake
+makes a new idea with no list. So the number is one the person told DotAmi, never one DotAmi derived. It is
+done where the list is read (`lib/scenarios/not-said.ts` `cleanNotSaid`, given the idea's `targetRevenueY1`),
+not by a data update. Tests: `tests/cockpit-told.spec.ts` and `tests/db-roundtrip.spec.ts` build the old
+future as the old code saved it and compare it with one kept after the fix.
 
 ## Not in this version
 

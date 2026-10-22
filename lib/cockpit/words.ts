@@ -359,6 +359,14 @@ export const cockpitWords = {
       yes: "Yes",
       no: "No",
     },
+    // Asked on a road holding Incorporating while the idea has no third-year estimate (a future picked on
+    // Pick a future keeps none): docs/ui-spec/cockpit/incorporating-estimate.md, 2026-10-21.
+    salesYear3: {
+      question: "Your third-year sales estimate",
+      why: "Your own estimate. The Incorporating step compares it with the yearly sales at which you'd incorporate. DotAmi has no number of its own for this.",
+      unlocks: "“Incorporating” able to light, once you also give the yearly sales at which you'd incorporate",
+      box: "Dollars of sales in your third year",
+    },
     incorporateAt: {
       question: "The yearly sales at which you'd incorporate",
       why: "DotAmi has no number of its own for this, so it waits for yours. It is compared with your third-year sales estimate.",
@@ -373,9 +381,17 @@ export const cockpitWords = {
       dontKnow: "I don't know",
       month: "Month and year",
       wholeDollars: "Write a whole number of dollars, like 45000.",
+      // The save's own cap on a sales number (SALES_DOLLARS_MAX, lib/db/scenario-state-json.ts).
+      tooLarge: "DotAmi keeps numbers up to $1,000,000,000. Write a smaller one.",
       pickOne: "Pick one first.",
       monthNeeded: "Pick a month and year first.",
     },
+  },
+
+  /** Lines a step's own panel shows about the person's numbers it reads. */
+  steps: {
+    /** Above the Incorporating step's two boxes (docs/ui-spec/cockpit/incorporating-estimate.md, 2026-10-21). */
+    incorporatingBoth: "This step lights when your third-year sales estimate reaches your own “I'd incorporate at” number. Both are yours.",
   },
 
   /** A receipt: what one answer changed, from two runs of the rules. */
