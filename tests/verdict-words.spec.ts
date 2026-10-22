@@ -15,6 +15,10 @@ import { OFFICIAL_QUOTE_ALLOWANCES, VERDICT_PHRASES, VERDICT_WORDS, findVerdicts
 // verdict phrase onto a screen, in the page's own voice.
 const officialQuotes = [...new Set(allCatalogCitations().flatMap(({ citation }) => toolCheckQuotes(citation)))];
 
+// The allowances for a citation's quote. The ones with a source kind (a line of the government's
+// requirement text, allowed only under its label) are checked in tests/official-quotes.spec.ts.
+const citationAllowances = OFFICIAL_QUOTE_ALLOWANCES.filter((a) => !a.sourceKind);
+
 describe("the phrases a screen may never show", () => {
   it("catches each phrase on the list, however it is capitalised", () => {
     const samples: Record<string, string> = {
@@ -131,7 +135,7 @@ describe("the phrases a screen may never show", () => {
 
 describe("the allowances for quoted official text", () => {
   it("each one is word for word a quote a tool found on an official page, and says why it is allowed", () => {
-    for (const allowance of OFFICIAL_QUOTE_ALLOWANCES) {
+    for (const allowance of citationAllowances) {
       expect(officialQuotes, allowance.text).toContain(allowance.text);
       expect(allowance.why.length, allowance.text).toBeGreaterThan(20);
       expect(allowance.where.length, allowance.text).toBeGreaterThan(10);
@@ -139,7 +143,7 @@ describe("the allowances for quoted official text", () => {
   });
 
   it("each one is needed: it holds a verdict phrase, which the allowance takes out", () => {
-    for (const allowance of OFFICIAL_QUOTE_ALLOWANCES) {
+    for (const allowance of citationAllowances) {
       expect(VERDICT_PHRASES.some((p) => p.pattern.test(allowance.text)), allowance.text).toBe(true);
       expect(findVerdicts(`Sources: “${allowance.text}”`), allowance.text).toEqual([]);
     }
@@ -151,13 +155,26 @@ describe("the allowances for quoted official text", () => {
     expect(needing).toEqual([]);
   });
 
+  it("an allowance with a source kind says where and why, holds a verdict phrase, and isn't a catalog quote (those need no kind)", () => {
+    const byKind = OFFICIAL_QUOTE_ALLOWANCES.filter((a) => a.sourceKind);
+    expect(byKind.length).toBeGreaterThan(0);
+    for (const allowance of byKind) {
+      expect(allowance.why.length, allowance.text).toBeGreaterThan(20);
+      expect(allowance.where.length, allowance.text).toBeGreaterThan(10);
+      expect(VERDICT_PHRASES.some((p) => p.pattern.test(allowance.text)), allowance.text).toBe(true);
+      expect(officialQuotes, allowance.text).not.toContain(allowance.text);
+      // In quote marks with no label, it is caught: the kind's label is what lets it through.
+      expect(findVerdicts(`Words found on the page: “${allowance.text}”`), allowance.text).not.toEqual([]);
+    }
+  });
+
   it("an allowance covers only its own words: the same phrase elsewhere on the screen is still caught", () => {
     const quote = OFFICIAL_QUOTE_ALLOWANCES[0]!.text;
     expect(findVerdicts(`“${quote}” This road is recommended.`)).toHaveLength(1);
   });
 
   it("an allowance covers its words only inside quote marks, as a source's quote shows: copied in as DotAmi's own line, they are caught", () => {
-    for (const allowance of OFFICIAL_QUOTE_ALLOWANCES) {
+    for (const allowance of citationAllowances) {
       expect(findVerdicts(`Open a bank account. ${allowance.text}`), allowance.text).not.toEqual([]);
       expect(findVerdicts(`Words found on the page: “${allowance.text}”`), allowance.text).toEqual([]);
       // The plan page and a laid-out panel can split a quote over lines; it is still the quote.

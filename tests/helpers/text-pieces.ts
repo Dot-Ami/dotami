@@ -1,3 +1,5 @@
+import type { PublishedWageRow } from "./number-provenance";
+
 /**
  * The words a screen shows, as pieces the idea harness checks one by one (tests/idea-harness.spec.ts).
  * Each piece says whose words it holds, because the checks differ:
@@ -9,6 +11,12 @@
  * - "official-quote": words a citation copied from its official page. They are the page's own, so no
  *   verdict or time check applies to them, and any amount in them is quoted by definition.
  * - "person": the person's own words, shown back word for word. Never checked as DotAmi's.
+ *
+ * Official text quoted by source kind (the government's "Employment requirements" lines on *About this
+ * job*, tests/helpers/official-quotes.ts) is not an "official-quote" piece: it is collected the way the
+ * screen draws it, the label and the quoted lines in one "dotami" piece (`quotedRun`), so the checks see the
+ * label the lines stand under, at the row's place (its `where`), with the lines the run read from the shipped
+ * file (`CockpitRun.quotedLines`). Without any of those, the lines read as DotAmi's own and fail.
  */
 export type TextKind = "dotami" | "catalog" | "official-quote" | "person";
 
@@ -17,6 +25,11 @@ export interface TextPiece {
   where: string;
   text: string;
   kind: TextKind;
+  /**
+   * The published wage row the piece shows, on *About this job*'s wage row only (tests/helpers/
+   * number-provenance.ts): its figures are cited facts there, and nowhere else.
+   */
+  wageRow?: PublishedWageRow;
 }
 
 /** One space for every run of spaces and line breaks, and straight apostrophes. */
