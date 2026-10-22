@@ -537,7 +537,9 @@ placed in phase 3.
     `npm run quality:report` (scripts/quality-report.mjs) prints them and writes `test-results/quality.md`,
     in CI after the tests (the quality job) and after the browser run (the clutter); `npm run quality:line`
     gives the release's Quality line. Information only: no number fails anything yet. Silent fallbacks
-    counted on 2026-10-21: 37 ideas (the aim, 0, is phase 2's end)
+    counted on 2026-10-21: 37 ideas (the aim, 0, is phase 2's end). Counted on 2026-10-22, typed in: 323 of
+    367 ideas on the general road, 44 before any road, 0 of the 11 ideas with a road of their own (road 1)
+    reach it
   - [ ] 32b: the maintainer's first monthly walk, three test ideas plus one of the maintainer's own, with
     the findings turned into issues or test ideas
 - 🔄 **[14o] Phase 2's fixes and releases.** The maintainer's calls of 2026-10-20.
