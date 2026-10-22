@@ -34,6 +34,9 @@ One catalog road, **The federal steps for any business in Canada** (`road-federa
   credit page, not Alberta's register-a-name page (`:461-467`). A filtered step says how many it left out
   (below), so nothing is hidden silently.
 
+> **Decided 2026-10-21, the maintainer:** keep BC and Ontario on the list, with the missing roads said in the
+> road's own words ("Yes, keep the list").
+
 `FULL_COVERAGE_PROVINCES` (`lib/scenarios/types.ts:23`, AB, BC, ON) **stays as it is.** It says which provinces'
 rules, grants and structure entries the catalogs carry, and that is true for BC and Ontario: the rules and tax
 cards pick entries by each entry's own province list (`lib/brain/evaluate.ts` `provinceMatches`), and the
