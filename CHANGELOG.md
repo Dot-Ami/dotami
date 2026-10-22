@@ -107,13 +107,16 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   Alberta. You said Ontario." when shown. On that road the cockpit's goal bar and *Your plan* say "Future: The
   federal steps for any business in Canada · Ontario's own steps aren't written yet", and each step shows its
   federal sources and the person's own province's, with a line such as "1 source for other provinces isn't
-  shown." where it left one out. The rules and tax cards are unchanged (they still pick Ontario's and British
-  Columbia's own entries), and so is the list of provinces whose rules the catalogs carry (the maintainer's
+  shown." where it left one out; *Export* lists the same sources with the same line. The rules and tax cards
+  are unchanged (they still pick Ontario's and British Columbia's own entries), and so is the list of provinces whose rules the catalogs carry (the maintainer's
   call). *Your destination* now counts the federal road as written for a place outside Alberta ("1 future listed
-  is written for Yukon."). The idea harness and the browser sweep run it for the corpus's 155 business ideas
-  outside Alberta; the known gap "the road drawn isn't written for the idea's place" on Pick a future went from
-  190 ideas to 13 (the ones whose note under *Not here yet?* still opens the Alberta road; a question for the
-  maintainer). The two new screens have clutter budgets of their own, by a written rule: a screen added after
+  is written for Yukon."). The idea harness and the browser sweep run it for the corpus's 156 business ideas
+  outside Alberta, now marked as ideas the federal road is written for; the known gap "the road drawn isn't
+  written for the idea's place" on Pick a future went from 190 ideas to 22, mostly because the test's invented
+  person now clicks the federal card for those ideas. The 22 left are 13 whose note under *Not here yet?* still
+  opens the Alberta road and 9 whose person opens the folded Alberta futures and picks one (both questions for
+  the maintainer); the browser sweep now has a ninth fixed idea that picks a folded Alberta future every week.
+  The two new screens have clutter budgets of their own, by a written rule: a screen added after
   the 2026-10-17 baseline starts no looser than the screen it stands beside. Nothing DotAmi keeps changes: a
   picked future keeps the road's id, as before.
 ### Fixed

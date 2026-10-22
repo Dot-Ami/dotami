@@ -173,7 +173,10 @@ Every string in the words block was run through `VERDICT_WORDS`, `findVerdicts` 
 - **Sources filtered when drawn**, not in the catalog: the road keeps each step's sources as road 0 has them;
   the step panel and *Your plan* draw the federal ones and the idea's own province's (`citationsForPlace`) and
   say *<n> sources for other provinces aren't shown.* On map stages the heading keeps its own words, *Sources for
-  this stage · n*.
+  this stage · n*. **Export** does the same since 2026-10-22 (review of 28d): the cockpit sends the drawn road
+  with the request (`app/api/playbook/route.ts`, a road nobody wrote is refused), and each section of the
+  export lists the same sources with the same line under them (`lib/playbook/build-skeleton.ts`). On road 0
+  and road 1 every source is kept, as the step panel shows them.
 - **Pick a future:** `components/front-door/futures-list.tsx` (step 3's list only). The back link and the
   no-road block are steps 2 and 3's other tasks (28b, 28c) and are not in this change.
 - **Your destination** counts the federal road for a place outside Alberta: *1 future listed is written for
@@ -183,6 +186,10 @@ Every string in the words block was run through `VERDICT_WORDS`, `findVerdicts` 
   today"). For 13 corpus ideas outside Alberta that is a road not written for their place, said by the goal bar's
   *Map drawn: … written for AB; this idea is in …*; whether it should open the federal steps there is asked of
   the maintainer in the pull request (`tests/fixtures/ideas/known-gaps.ts`).
+- **An Alberta future picked from outside Alberta**, behind *Show the 2 futures written for Alberta*, still draws
+  an Alberta road, said the same way by the goal bar. The harness's invented person opens the fold and picks one
+  for 9 corpus ideas, listed as their own known gap (is that an honest end? the maintainer's call), and the
+  browser sweep does it every week with a fixed idea (361, fixing bikes in Ottawa, road 1).
 - **About this job** outside Alberta (its province-wide wage row, Tradesecrets left out) is task 25h's.
 - **Clutter** (`e2e/budgets.ts`, two new rows by the written way, `ADDED_SCREENS`; measured with Chromium on
   Windows, phone, tablet, laptop): *Pick a future* in Ontario (`futures-outside-alberta`) 6, 6, 6 regions and
