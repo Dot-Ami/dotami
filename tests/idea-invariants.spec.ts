@@ -188,6 +188,35 @@ describe("the harness's checks catch what they guard", () => {
         run.typed!.final.input = { ...run.typed!.final.input, job: { code: "72311.00", label: "Cabinetmakers", items: [] } };
       }),
     ).toBe(1);
+    // Task 29h: the cabinetmaker's own pick passes, and a job they didn't pick, in place of theirs, still fails.
+    expect(failures(runIdea(road1Idea), "nothing-derived:job")).toBe(0);
+    expect(
+      added(road1Idea, "nothing-derived:job", (run) => {
+        run.picked!.final.input = { ...run.picked!.final.input, job: { code: "72310.00", label: "Carpenters", items: [] } };
+      }),
+    ).toBe(1);
+  });
+
+  // Task 29h: the honest end of Pick a future's third step, for a job with no written road (the maintainer's call 3
+  // of 2026-10-21: nothing is saved, so no road is drawn).
+  const leaves = IDEAS_V1.find((idea) => idea.id === "idea-v1-0003")!; // a British Columbia app, job 21232.00
+
+  it("5. leaving at “No road is written for <job> yet” is an honest end; leaving anywhere else isn't", () => {
+    const run = runIdea(leaves);
+    expect(run.pickedSteps).toMatchObject({ job: { code: "21232.00" }, match: "no-road", click: { by: "left" } });
+    expect(run.picked).toBeNull();
+    expect(failures(run, "ends:road-drawn")).toBe(0);
+    // The same end where a road is written for the job, or with the no-road line not on the screen, fails.
+    expect(added(leaves, "ends:road-drawn", (r) => void (r.pickedSteps = { ...r.pickedSteps!, match: "written" }))).toBe(1);
+    expect(added(leaves, "ends:road-drawn", (r) => void (r.pieces = r.pieces.filter((p) => !p.where.startsWith("picked › steps › no road"))))).toBe(1);
+    expect(added(leaves, "ends:road-drawn", (r) => void (r.pickedSteps = { ...r.pickedSteps!, job: null, match: "skipped" }))).toBe(1);
+  });
+
+  it("5. step 3 listing another road before the one written for the person's pick of job", () => {
+    expect(failures(runIdea(road1Idea), "ends:no-silent-fallback")).toBe(0);
+    expect(
+      added(road1Idea, "ends:no-silent-fallback", (r) => void (r.picked!.steps = { ...r.picked!.steps, offered: [...r.picked!.steps.offered].reverse() })),
+    ).toBe(1);
   });
 
   it("7. two runs that differ", () => {

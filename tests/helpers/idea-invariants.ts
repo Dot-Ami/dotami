@@ -1,5 +1,5 @@
 import { cockpitWords } from "@/lib/cockpit/words";
-import type { Road } from "@/lib/engines/roads/v2026";
+import { roadsWrittenForJob, type Road } from "@/lib/engines/roads/v2026";
 import type { StepEvaluation } from "@/lib/roads";
 
 import { ROAD_IDS } from "../fixtures/ideas/v1";
@@ -22,13 +22,15 @@ import { findVerdicts, VERDICT_WORDS } from "./verdict-words";
  * 4. no-time-words: no durations, "weeks", "fastest"… in DotAmi's text; Your date and official requirement
  *    text allowed through ./time-words.ts.
  * 5. every path ends somewhere honest (docs/architecture/use-cases.md, "how to test that every path ends
- *    somewhere"): a road is drawn and says why; a next step, an unanswered question or the road done, and
+ *    somewhere"): a road is drawn and says why, or, for a job with no written road, Pick a future's step 3 says
+ *    "No road is written for <job> yet" and the person leaves with nothing saved (task 29h; the maintainer's
+ *    call 3 of 2026-10-21); a next step, an unanswered question or the road done, and
  *    once every question is answered, a next step or the road done; every fork side reaches the end; every
  *    question asked changes something when answered, and goes off *Not told yet* once answered; the road is
- *    written for the idea's place; and the road drawn is the one written for the idea (typed) or the one the
- *    person picked (picked), not a silent fallback.
+ *    written for the idea's place; and the road drawn is the one the person picked on step 3, where the roads
+ *    written for their pick of job come first, not a silent fallback.
  * 6. nothing derived: no province, kind of work, equipment purchase or job set without the person's words
- *    naming it or the person picking it; a picked future's unasked answers stay "not said"; ID-like digits
+ *    naming it or the person picking it (a job is only ever the one the person clicked on step 1); a picked future's unasked answers stay "not said"; ID-like digits
  *    never copied into DotAmi's own text.
  * 7. same-output: the same idea gives the same run, checked by the spec (`runDigest` twice).
  */
@@ -246,8 +248,23 @@ export function cockpitFailures(run: IdeaRun, c: CockpitRun, fail: Fail) {
     );
   }
 
-  // 6. Nothing derived downstream: no job picked for the person, the place they picked kept as picked.
-  if (c.fresh.input.job || c.final.input.job || plan.skills.job) fail("nothing-derived:job", c.way, `${c.way}: a job is set though the person picked none`);
+  // Step 3 lists the roads written for the person's pick of job first (docs/ui-spec/futures/03-road-match.md,
+  // case A): a written road listed after another, or not at all, is a fallback the screen doesn't say.
+  if (c.steps.match === "written") {
+    const written = new Set(roadsWrittenForJob(c.steps.job!.code).map((r) => r.id));
+    const firstOthers = c.steps.offered.findIndex((id) => !written.has(id));
+    const lastWritten = c.steps.offered.map((id) => written.has(id)).lastIndexOf(true);
+    if (lastWritten === -1 || (firstOthers !== -1 && firstOthers < lastWritten)) {
+      fail("ends:no-silent-fallback", `${c.way} › step 3`, `${c.way}: step 3 lists ${c.steps.offered.join(", ")}, not the road written for ${c.steps.job!.code} first`);
+    }
+  }
+
+  // 6. Nothing derived downstream: the job is only the one the person clicked on step 1 (task 29h: a recorded
+  // click), or none after Skip; the place they picked kept as picked.
+  const jobs = [c.fresh.input.job?.code ?? null, c.final.input.job?.code ?? null];
+  if (jobs.some((code) => code !== c.job) || (plan.skills.job !== null) !== (c.job !== null) || c.job !== (c.steps.job?.code ?? null)) {
+    fail("nothing-derived:job", c.way, `${c.way}: the cockpit reads the job ${jobs.find((code) => code !== c.job) ?? "?"}, but the person picked ${c.job ?? "none"}`);
+  }
   if (c.way === "typed" && province !== run.province) fail("nothing-derived:place-kept", "", `typed: the person picked ${run.province}, the cockpit reads ${province}`);
   if (c.way === "picked") {
     const p = c.fresh.input.scenario.profile;
@@ -303,6 +320,16 @@ export function checkRun(run: IdeaRun): Failure[] {
   }
 
   for (const c of [run.typed, run.picked]) if (c) cockpitFailures(run, c, fail);
+
+  // 5. The honest end of step 3 (task 29h): a way in that stopped at Pick a future's third step, with nothing
+  // saved, ends honestly only where a job was picked, no road is written for it, and the screen said so.
+  for (const [way, steps, c] of [["typed", run.typedSteps, run.typed], ["picked", run.pickedSteps, run.picked]] as const) {
+    if (!steps || c || steps.click.by !== "left") continue;
+    const said = run.pieces.some((p) => p.where === `${way} › steps › no road › heading`);
+    if (steps.match !== "no-road" || !steps.job || !said) {
+      fail("ends:road-drawn", way, `${way}: left Pick a future with no road drawn, but the step didn't say no road is written for the job (${steps.match})`);
+    }
+  }
   return failures;
 }
 

@@ -8,11 +8,13 @@
  * same on every machine and can be rerun with `IDEA_SWEEP_WEEK=2026-W42`. The twelve are printed when the file
  * loads and listed by the last test.
  *
- * Each idea goes in both ways the app has: typed into "I already have an idea" (the intake's screens, the
- * cockpit on road 0, the plan), and, for an idea with a province or territory, picked on *Pick a future* after
- * *Your destination* (the card the corpus harness's `pickedChoice` clicks for it, or the "Not here yet?" note,
- * then the cockpit and the plan). An idea with nothing typed stops at the box, and one outside Canada at the
- * intake's place question; the sweep checks those honest ends too.
+ * Each idea goes in both ways the app has: typed into "I already have an idea" (the intake's screens, then
+ * Pick a future's three steps on the intake page, the cockpit, the plan), and, for an idea with a province or
+ * territory, picked on *Pick a future* after *Your destination*. Both ways play the three steps (task 29h) as the
+ * corpus harness records the person's clicks for the idea (`stepsChoice`): the expected job typed by its code and
+ * clicked, or Skip; the area and the region in Alberta; then the card, the "Not here yet?" note, or leaving at
+ * "No road is written for <job> yet" with nothing saved. An idea with nothing typed stops at the box, and one
+ * outside Canada at the intake's place question; the sweep checks those honest ends too.
  *
  * On every screen as it opens (and the cockpit with its rail shown, where the person's answers are listed),
  * three checks, over the page's text read the way the harness reads the app's words: line by line (a block's
@@ -49,7 +51,8 @@ import { parseIntentFallback } from "../lib/journey/intent-fallback";
 import { PROVINCES, type Province } from "../lib/scenarios/types";
 import { SHOWN_WORDS_GAPS } from "../tests/fixtures/ideas/known-gaps";
 import { IDEAS_V1, ROAD_IDS, type Idea } from "../tests/fixtures/ideas/v1";
-import { pickedChoice, SCREEN_WORK_SITUATION } from "../tests/helpers/idea-pipeline";
+import { intakeStepsWords, jobStepWords, pickWords, whereStepWords } from "../lib/front-door/words";
+import { SCREEN_WORK_SITUATION, stepsChoice, type StepsRun } from "../tests/helpers/idea-pipeline";
 import { waitForReact } from "../tests/helpers/react-ready";
 import { normaliseSpaces } from "../tests/helpers/text-pieces";
 import { findTimeWords } from "../tests/helpers/time-words";
@@ -58,6 +61,7 @@ import { findVerdicts } from "../tests/helpers/verdict-words";
 import { BUDGETS, WINDOWS_EXTRA, type Clutter, type ScreenId } from "./budgets";
 import { measurePage, type Measured } from "./clutter-measure";
 import { cockpitSettled, showRail } from "./cockpit-calm";
+import { pickTheJob } from "./three-steps";
 
 // --- Which ideas.
 
@@ -333,7 +337,7 @@ async function typedWay(s: Sweep) {
   if (!isProvince(idea.place)) {
     // Outside Canada or not said: the place question has no answer, the screen says why, and the map can't open.
     await expect(page.getByText("Canada is the first jurisdiction mapped; other countries are not on the map yet.")).toBeVisible();
-    await expect(button(page, "Open my map →")).toBeDisabled();
+    await expect(button(page, intakeStepsWords.next)).toBeDisabled();
     s.measured.push(`typed: stopped at the intake's place question (${idea.place})`);
     return;
   }
@@ -342,9 +346,70 @@ async function typedWay(s: Sweep) {
   await page.getByRole("textbox", { name: "Name it — optional", exact: true }).fill(`Invented — idea sweep ${idea.id} (typed)`);
   if (idea.y1) await page.getByLabel("Year 1 revenue").fill(String(idea.y1));
   if (idea.y3) await page.getByLabel("Year 3 revenue").fill(String(idea.y3));
-  await button(page, "Open my map →").click();
+  // Since 2026-10-22 the typed way ends on Pick a future's three steps, on the intake page (the maintainer's call 1).
+  await button(page, intakeStepsWords.next).click();
+  const opened = await playTheSteps(s, "typed", stepsChoice(idea, "typed"));
+  if (!opened) return;
   // A typed idea's cockpit carries its words in the goal bar: measured, not held (see the file's comment).
   await cockpitAndPlan(s, "typed", null);
+}
+
+/**
+ * Pick a future's three steps (task 29h), played as the corpus harness records the person's clicks for this idea
+ * (`stepsChoice`): the job typed by its code and clicked, or Skip; in Alberta the area and the region; then the
+ * card, the "Not here yet?" note, or leaving at "No road is written for <job> yet" (nothing saved). Each part is
+ * read as it opens. Step 1 on Pick a future is the state the `futures` budget measures, so it is held to it.
+ * Returns whether a future was opened.
+ */
+async function playTheSteps(s: Sweep, way: "typed" | "picked", steps: StepsRun): Promise<boolean> {
+  const { page, idea } = s;
+  await expect(page.getByRole("heading", { name: jobStepWords.heading })).toBeVisible();
+  await read(s, `${way}: step 1, your work`, way === "picked" ? "futures" : null);
+  if (steps.job === null) {
+    await button(page, jobStepWords.skip).click();
+  } else {
+    await pickTheJob(page, steps.job);
+    if (steps.area !== null && steps.region !== null) {
+      const area = page.getByRole("combobox", { name: whereStepWords.area.label });
+      await expect(area).toBeVisible();
+      await read(s, `${way}: step 2a, your area`);
+      await area.selectOption(steps.area);
+      await button(page, whereStepWords.area.next).click();
+      const region = page.getByRole("combobox", { name: whereStepWords.region.label });
+      await expect(region).toBeVisible();
+      await read(s, `${way}: step 2b, your region`);
+      await region.selectOption(steps.region);
+      await read(s, `${way}: step 2b, your region, answered`);
+      await button(page, whereStepWords.region.next).click();
+    } else {
+      // Outside Alberta: one short part that asks nothing and says why.
+      await expect(button(page, whereStepWords.outside.next)).toBeVisible();
+      await read(s, `${way}: step 2, outside Alberta`);
+      await button(page, whereStepWords.outside.next).click();
+    }
+  }
+  await expect(page.getByRole("heading", { name: pickWords.heading, level: 1 })).toBeVisible();
+  await read(s, `${way}: step 3 (${steps.match})`);
+  const offered = await page.getByRole("list", { name: pickWords.listLabel }).getByRole("heading", { level: 2 }).allInnerTexts();
+  const labels = steps.offered.map((id) => (id === ROAD_IDS["road-1"] ? roadApprenticeToOwnShopAB.label : generalRoadV2026.label));
+  expect(offered, `${idea.id} › ${way}: step 3 lists the roads written for the picked job first`).toEqual(labels);
+  if (steps.click.by === "left") {
+    // The honest end for a job with no written road: the step says so, and nothing is saved.
+    await expect(page.getByRole("heading", { name: pickWords.noRoad.heading(steps.job!.label, steps.job!.code) })).toBeVisible();
+    await expect(page.getByText(pickWords.noRoad.nothingSaved, { exact: true })).toBeVisible();
+    s.measured.push(`${way}: left at "No road is written for ${steps.job!.label} yet" (nothing saved)`);
+    return false;
+  }
+  const road = steps.click.roadId === ROAD_IDS["road-1"] ? roadApprenticeToOwnShopAB : generalRoadV2026;
+  if (steps.click.by === "card") {
+    if (way === "picked") await page.getByRole("textbox", { name: "Name it (optional)" }).fill(`Invented — idea sweep ${idea.id} (picked)`);
+    await page.getByRole("button", { name: pickWords.lookInsideName(road.label), exact: true }).click();
+  } else {
+    // "Not here yet?": the note is kept as one of the person's statements, and the general road opens.
+    await page.getByRole("textbox", { name: "Not here yet?" }).fill(idea.words);
+    await button(page, "Keep my note and look inside the general road").click();
+  }
+  return true;
 }
 
 /** Your destination, Pick a future, the person's click, the cockpit on the road picked, the plan. */
@@ -354,7 +419,6 @@ async function pickedWay(s: Sweep) {
     s.measured.push(`picked: not taken (${idea.place}: Pick a future needs a province or territory)`);
     return;
   }
-  const choice = pickedChoice(idea);
   await page.goto("/start");
   await expect(page.getByRole("heading", { level: 1 })).toHaveText("Your destination");
   await forgetTheCockpit(page);
@@ -388,20 +452,12 @@ async function pickedWay(s: Sweep) {
 
   await next.click();
   await expect(page).toHaveURL(/\/futures$/);
-  const lookInside = page.getByRole("button", { name: `Look inside ${generalRoadV2026.label}` });
-  await waitForReact(lookInside);
-  await read(s, "pick a future", "futures");
-  const road = choice.roadId === ROAD_IDS["road-1"] ? roadApprenticeToOwnShopAB : generalRoadV2026;
-  const held: ScreenId = road.id === generalRoadV2026.id ? "cockpit-road-0" : "cockpit-road-1";
-  if (choice.by === "card") {
-    await page.getByRole("textbox", { name: "Name it (optional)" }).fill(`Invented — idea sweep ${idea.id} (picked)`);
-    await page.getByRole("button", { name: `Look inside ${road.label}` }).click();
-  } else {
-    // "Not here yet?": the note is kept as one of the person's statements, and the general road opens.
-    await page.getByRole("textbox", { name: "Not here yet?" }).fill(idea.words);
-    await button(page, "Keep my note and look inside the general road").click();
-  }
-  await cockpitAndPlan(s, `picked by ${choice.by}`, held);
+  await waitForReact(page.getByRole("searchbox", { name: jobStepWords.boxLabel }));
+  const steps = stepsChoice(idea, "picked");
+  if (!(await playTheSteps(s, "picked", steps))) return;
+  if (steps.click.by === "left") return;
+  const held: ScreenId = steps.click.roadId === ROAD_IDS["road-1"] ? "cockpit-road-1" : "cockpit-road-0";
+  await cockpitAndPlan(s, `picked by ${steps.click.by}`, held);
 }
 
 // --- The tests.

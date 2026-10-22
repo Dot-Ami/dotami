@@ -67,33 +67,19 @@ export const KNOWN_GAPS: readonly KnownGap[] = [
     subject: "picked",
     kind: "planned",
     story: "S2.5.28d (outside Alberta, honestly)",
-    why: "Pick a future lists both Alberta roads for every place in Canada, saying “Written for Alberta. You said …” on the card, and “Not here yet?” opens road 0 anywhere. Once picked, the cockpit draws every step as Alberta's, as on the typed way in. 28d draws the federal steps that apply everywhere and names the person's own province.",
+    why: "Pick a future's third step lists both Alberta roads for every place in Canada, saying “Written for Alberta. You said …” on the card, and “Not here yet?” opens road 0 anywhere. Once picked, the cockpit draws every step as Alberta's, as on the typed way in. 28d draws the federal steps that apply everywhere and names the person's own province. (Since the three steps, 2026-10-22, an idea whose person leaves at “No road is written for <job> yet” saves nothing and draws no road, so it is off this list: 38 ideas.)",
     ideas: [
-      3, 4, 5, 7, 9, 10, 11, 13, 15, 16, 18, 20, 22, 28, 29, 30, 32, 33, 35, 36, 37, 38, 40, 42, 43, 45, 47, 49, 50, 52, 53, 54, 56, 58, 59,
-      60, 61, 63, 64, 66, 67, 69, 73, 75, 76, 78, 79, 80, 82, 84, 85, 86, 88, 91, 92, 94, 96, 97, 98, 100, 101, 102, 103, 105, 107, 109,
-      111, 112, 113, 114, 115, 117, 119, 121, 123, 124, 126, 128, 129, 133, 135, 138, 140, 142, 145, 148, 150, 152, 154, 156, 158, 160, 161,
-      163, 164, 165, 166, 167, 169, 171, 172, 173, 177, 179, 181, 182, 184, 185, 186, 188, 189, 190, 192, 194, 197, 198, 199, 200, 202, 203,
-      206, 208, 210, 211, 212, 213, 245, 246, 247, 248, 249, 251, 254, 255, 260, 268, 269, 287, 288, 289, 290, 294, 295, 296, 297, 298, 299,
-      300, 301, 302, 303, 304, 305, 306, 307, 308, 309, 310, 311, 312, 313, 314, 315, 316, 317, 318, 319, 320, 321, 322, 323, 324, 332, 334,
-      337, 346, 351, 352, 353, 354, 355, 356, 357, 360, 361, 362, 363, 364, 365, 366,
+      4, 5, 7, 10, 11, 13, 16, 18, 20, 22, 28, 29, 32, 33, 35, 37, 38, 40, 42, 43, 47, 49, 50, 52, 53, 56, 58, 59, 61, 64, 67, 69, 73, 76,
+      79, 80, 82, 85, 86, 88, 91, 92, 94, 97, 98, 100, 101, 102, 103, 105, 107, 109, 112, 113, 115, 119, 121, 123, 124, 126, 128, 133, 135,
+      138, 140, 142, 145, 148, 150, 152, 154, 158, 160, 161, 163, 164, 165, 166, 167, 169, 172, 173, 179, 181, 182, 184, 185, 188, 190, 192,
+      194, 197, 199, 200, 202, 203, 206, 208, 210, 211, 212, 245, 246, 247, 248, 249, 251, 254, 260, 268, 269, 287, 289, 290, 295, 296, 298,
+      299, 301, 302, 304, 305, 307, 308, 310, 311, 312, 313, 314, 315, 316, 317, 319, 320, 322, 323, 332, 334, 337, 346, 352, 353, 354, 355,
+      356, 360, 361, 362, 363, 364, 365, 366,
     ],
   },
-  {
-    invariant: "ends:no-silent-fallback",
-    subject: "typed",
-    kind: "planned",
-    story: "S2.5.28c (honest road match)",
-    why: "Nothing matches a typed idea to a road, so an Alberta idea with no road written for it (a career, work the law forbids, words that don't say business or career) and a cabinetmaker idea (road 1 is written for it) all land on road 0 with only “No future picked: this idea is drawn on the general road.” 28c puts the road written for the picked job first, or says “No road is written for this job yet”.",
-    ideas: [
-      8, 46, 125, 180, 193, 250, 252, 272, 273, 274, 275, 276, 277, 278, 279, 280, 281, 282, 283, 284, 285, 286, 358, 359, 367,
-    ],
-  },
-  {
-    invariant: "ends:no-silent-fallback",
-    subject: "typed",
-    kind: "planned",
-    story: "S2.5.28c (honest road match) says so; the roads themselves are not planned yet (docs/architecture/use-cases.md, people 9 and 10)",
-    why: "An Alberta business that is closing, pausing, being sold, or behind on its filings is drawn on road 0, “Starting any business in Alberta”, with only “No future picked”. No road is written for closing or catching up: use-cases.md says of the closing steps “None of this exists yet” and lists catch-up paths as a need. 28c would say “No road is written for this yet” instead of drawing road 0 as if it were the road for them.",
-    ideas: [178, 183, 191, 195, 196, 201, 204, 205, 207, 209, 330, 331],
-  },
+  // Taken out on 2026-10-22 with the three steps (tasks 28b, 23g, 29h): the typed way's two silent-fallback
+  // entries (25 ideas drawn on road 0 with only "No future picked", and 12 closing, pausing, selling or catch-up
+  // ideas the same way). The typed way now ends on Pick a future's three steps, and the road drawn is the one the
+  // person opened on step 3, kept as their pick, with the step's own line saying why (the road written for their
+  // job first, "No road is written for <job> yet", or "You didn't pick a job").
 ];
