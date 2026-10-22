@@ -4,7 +4,7 @@ import { useId, useState, type ReactNode } from "react";
 
 import { ExampleOnlyNote } from "@/components/cockpit/example-mode";
 import { ReceiptLines, type ShownReceipt } from "@/components/cockpit/receipt-lines";
-import { toldDay, type BoxQuestion, type NotToldRow, type ToldRow } from "@/lib/cockpit/told";
+import { readWholeDollars, toldDay, type BoxQuestion, type NotToldRow, type ToldRow } from "@/lib/cockpit/told";
 import { cockpitWords as words } from "@/lib/cockpit/words";
 import { parseMoneyToCents } from "@/lib/figures/money";
 
@@ -262,9 +262,10 @@ export function QuestionBox({
       if (!/^\d{4}-\d{2}$/.test(text)) return setProblem(words.questions.box.monthNeeded);
       value = text;
     } else if (control.kind === "dollars") {
-      const plain = text.trim().replace(/,/g, "");
-      if (!/^\d+$/.test(plain)) return setProblem(words.questions.box.wholeDollars);
-      value = Number(plain);
+      // A number the save would refuse is refused here, with why, rather than kept on screen to fail every save.
+      const read = readWholeDollars(text);
+      if ("problem" in read) return setProblem(read.problem);
+      value = read.dollars;
     } else {
       const cents = parseMoneyToCents(text);
       if (cents === null) return setProblem(words.amounts.unreadable);

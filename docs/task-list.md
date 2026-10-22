@@ -532,7 +532,9 @@ placed in phase 3.
     `sales-targets` read as both (234 of the 234 test ideas picked on the general road can now light it;
     0 before). The same pull request fixes the what-if **Keep** bug (the maintainer's call of 2026-10-21):
     **Keep** now also marks the first-year target as said, so the rail and the plan show the number the road
-    reads, and the third-year target stays "Not said"
+    reads, and the third-year target stays "Not said". On an intake idea the same row asks a blank Year 3, and
+    *Change* on a given third-year number opens the cockpit's box instead of the intake; a sales number above
+    the save's $1,000,000,000 cap is refused in the box and the what-if (the review of #198)
   - [x] A small release of phase 1's work (the calm first view, the six text sizes, *Look closer*, the
     harness's fixes) before phase 2 changes the data file: 0.4.1 (#188), published 2026-10-20
   - [ ] Release 0.5.0: no silent fallbacks, every Alberta test idea ending on a road written for it or an

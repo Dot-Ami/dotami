@@ -25,12 +25,14 @@ import {
   keepWhatIf,
   notToldYet,
   parseWhatIf,
+  readWholeDollars,
   toldRows,
   type KeptAnswers,
 } from "@/lib/cockpit/told";
 import { profileRows } from "@/lib/cockpit/profile-rows";
 import { cockpitWords } from "@/lib/cockpit/words";
 import { parseScenarioInput } from "@/lib/db/parse-scenario-input";
+import { SALES_DOLLARS_MAX } from "@/lib/db/scenario-state-json";
 import { cfeCatalogV2026, type CFENodeId } from "@/lib/engines/cfe/v2026";
 import { generalRoadV2026, roadApprenticeToOwnShopAB, skillItemsV2026 } from "@/lib/engines/roads/v2026";
 import type { FigureView } from "@/lib/figures/types";
@@ -307,6 +309,37 @@ describe("a future picked on Pick a future: the third-year sales estimate, so In
     const intake = input({ road: generalRoadV2026, roadChosen: false, skillItems: [], scenario: inventedIdea({ targetRevenueY3: 90_000 }) });
     expect(asked(intake)).not.toContain("sales-year-3");
     expect(asked(intake)).toContain("incorporate-at");
+  });
+
+  // The review of PR #198: the spec's part 1 asks wherever the idea has no estimate ("0, or on the not-said
+  // list"), so an idea from the intake whose Year 3 box was left blank is asked too, and Change on a given
+  // estimate opens the cockpit's own box (the same field the intake's Year 3 box sets), not the intake.
+  it("on an idea from the intake: a blank Year 3 is asked here too, and Change on a given estimate opens this box", () => {
+    const intake = (y3: number) => input({ road: generalRoadV2026, roadChosen: false, skillItems: [], scenario: inventedIdea({ targetRevenueY3: y3 }) });
+    const blank = intake(0);
+    expect(asked(blank)).toContain("sales-year-3");
+    expect(asked(blank)).not.toContain("incorporate-at");
+    const given = intake(90_000);
+    const rows = toldRows(given, evaluateRoad(given), kept());
+    expect(rows.find((r) => r.id === "idea:sales-year-3")!.change).toEqual({ kind: "box", question: "sales-year-3" });
+    // The first-year number still goes back to the intake: the cockpit has no box for it, only Keep.
+    expect(rows.find((r) => r.id === "idea:sales-year-1")!.change).toEqual({ kind: "intake" });
+  });
+
+  // The review of PR #198: the box took any digits, but the save refuses a sales number above
+  // $1,000,000,000 (lib/db/parse-scenario-input.ts), so a bigger estimate stayed on screen and every later
+  // save of the idea failed until the number was changed.
+  it("a number the save would refuse is refused in the box, with words that say why; the most the save keeps is taken", () => {
+    const { wholeDollars, tooLarge } = cockpitWords.questions.box;
+    expect(readWholeDollars("45000")).toEqual({ dollars: 45_000 });
+    expect(readWholeDollars(" $1,000,000,000 ")).toEqual({ dollars: SALES_DOLLARS_MAX });
+    for (const big of ["1000000001", "2,000,000,000", "99999999999999999999"]) expect(readWholeDollars(big), big).toEqual({ problem: tooLarge });
+    for (const bad of ["", "abc", "-5", "45000.50"]) expect(readWholeDollars(bad), bad).toEqual({ problem: wholeDollars });
+    expect(tooLarge).toContain("$1,000,000,000");
+    // What the box takes, the save takes; one dollar more, the save refuses.
+    const save = (dollars: number) => parseScenarioInput(JSON.parse(JSON.stringify({ scenario: answerSalesYear3(picked(), dollars) })));
+    expect(save(SALES_DOLLARS_MAX)).not.toBeNull();
+    expect(save(SALES_DOLLARS_MAX + 1)).toBeNull();
   });
 
   it("a future saved before the split, with one id for both targets, reads both years as not said", () => {
@@ -627,6 +660,12 @@ describe("the what-if", () => {
     expect(parseWhatIf(" 45,000 ")).toBe(45_000);
     expect(parseWhatIf("$45,000")).toBe(45_000);
     for (const bad of ["", "abc", "-5", "45000.50", "1e9x"]) expect(parseWhatIf(bad), bad).toBeNull();
+    // Keep saves it as the first-year sales, so a number the save would refuse isn't a what-if either.
+    expect(parseWhatIf("1,000,000,000")).toBe(SALES_DOLLARS_MAX);
+    expect(parseWhatIf("2000000000")).toBeNull();
+    const save = (dollars: number) => parseScenarioInput(JSON.parse(JSON.stringify({ scenario: keepWhatIf(inventedIdea(), dollars) })));
+    expect(save(SALES_DOLLARS_MAX)).not.toBeNull();
+    expect(save(SALES_DOLLARS_MAX + 1)).toBeNull();
   });
 
   it("Keep makes it the idea's own first-year sales, and changes nothing else", () => {

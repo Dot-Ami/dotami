@@ -381,6 +381,8 @@ export const cockpitWords = {
       dontKnow: "I don't know",
       month: "Month and year",
       wholeDollars: "Write a whole number of dollars, like 45000.",
+      // The save's own cap on a sales number (SALES_DOLLARS_MAX, lib/db/scenario-state-json.ts).
+      tooLarge: "DotAmi keeps numbers up to $1,000,000,000. Write a smaller one.",
       pickOne: "Pick one first.",
       monthNeeded: "Pick a month and year first.",
     },

@@ -4,7 +4,7 @@ import type { FirstSave } from "@/lib/journey/first-save";
 import { INTAKE_GOAL_IDS, type IntakeGoalId } from "@/lib/journey/types";
 import { isValidSaidAt, STATEMENT_MAX_CHARS } from "@/lib/person/types";
 import type { Province, VentureStage, VentureType } from "@/lib/scenarios/types";
-import { cleanDecided, cleanIncorporateAt } from "@/lib/db/scenario-state-json";
+import { cleanDecided, cleanIncorporateAt, SALES_DOLLARS_MAX } from "@/lib/db/scenario-state-json";
 import { recomputeScenarioState } from "@/lib/scenarios/branches";
 import { cleanNotSaid } from "@/lib/scenarios/not-said";
 import { PROVINCES as ALL_PROVINCES, VENTURE_STAGES } from "@/lib/scenarios/types";
@@ -42,7 +42,7 @@ function parseProfile(raw: unknown): VentureProfile | null {
   if (!Number.isFinite(p.targetRevenueY1) || !Number.isFinite(p.targetRevenueY3)) {
     return null;
   }
-  if (p.targetRevenueY1 < 0 || p.targetRevenueY3 < 0 || p.targetRevenueY1 > 1e9 || p.targetRevenueY3 > 1e9) {
+  if (p.targetRevenueY1 < 0 || p.targetRevenueY3 < 0 || p.targetRevenueY1 > SALES_DOLLARS_MAX || p.targetRevenueY3 > SALES_DOLLARS_MAX) {
     return null;
   }
   let structure: VentureProfile["structure"] = "sole-prop";

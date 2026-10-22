@@ -5,7 +5,7 @@ import { useId, useState } from "react";
 import { FoldButton } from "@/components/cockpit/folding";
 import { ReceiptLines } from "@/components/cockpit/receipt-lines";
 import { Pill } from "@/components/ui";
-import { parseWhatIf } from "@/lib/cockpit/told";
+import { readWholeDollars } from "@/lib/cockpit/told";
 import { cockpitWords as words } from "@/lib/cockpit/words";
 
 /** The bar's and "This visit"'s ids, for the fold buttons' aria-controls (the header's names the bar's). */
@@ -69,10 +69,11 @@ export function WhatIfBar({
 
   function tryIt(event: React.FormEvent) {
     event.preventDefault();
-    const dollars = parseWhatIf(text);
-    if (dollars === null) return setProblem(words.questions.box.wholeDollars);
+    // Keep saves a what-if as the first-year sales, so one the save would refuse isn't tried either.
+    const read = readWholeDollars(text);
+    if ("problem" in read) return setProblem(read.problem);
     setProblem(null);
-    onTry(dollars);
+    onTry(read.dollars);
   }
 
   return (

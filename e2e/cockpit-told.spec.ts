@@ -401,6 +401,38 @@ test("on a future picked on Pick a future, the third-year estimate and “I'd in
   await expect(notTold(page).getByText(incorporateAt)).toHaveCount(0);
 });
 
+// The review of PR #198: the save refuses a sales number above $1,000,000,000, but the estimate's box and the
+// what-if took any digits, so a bigger number stayed on screen and every later save of the idea failed.
+test("on a future picked on Pick a future, a sales number larger than the save keeps is refused where it is typed, and nothing is kept", async ({ page }) => {
+  const ventureId = await savePickedFuture(page, "Invented — picked too-large test");
+  const keptRow = () =>
+    withE2eDb((db) => db.venture.findUniqueOrThrow({ where: { id: ventureId }, select: { targetRevenueY1: true, targetRevenueY3: true, notSaid: true } }));
+  const asPicked = await keptRow();
+  const tooLarge = "DotAmi keeps numbers up to $1,000,000,000. Write a smaller one.";
+
+  await page.goto(`/cockpit?venture=${ventureId}`);
+  await showRail(page);
+  await showRoadAhead(page);
+  await stage(page, "Incorporating").click();
+  const panelEstimate = stepPanel(page).getByRole("group", { name: "Your third-year sales estimate" });
+  await panelEstimate.getByLabel("Dollars of sales in your third year").fill("2000000000");
+  await panelEstimate.getByRole("button", { name: "Save", exact: true }).click();
+  // The box stays open and says why; nothing is sent, so no save can fail.
+  await expect(panelEstimate.getByText(tooLarge)).toBeVisible();
+  await expect(panelEstimate.getByLabel("Dollars of sales in your third year")).toHaveValue("2000000000");
+  await expect(railValue(page, "Target Y3")).toContainText("Not said");
+
+  // The what-if: Keep would save it as the first-year sales, so it isn't tried.
+  await showWhatIfBar(page);
+  await whatIf(page).getByLabel("Try first-year sales of $").fill("2000000000");
+  await whatIf(page).getByRole("button", { name: "Try", exact: true }).click();
+  await expect(whatIf(page).getByText(tooLarge)).toBeVisible();
+  await expect(whatIf(page).getByRole("button", { name: "Keep", exact: true })).toHaveCount(0);
+
+  expect(await keptRow()).toEqual(asPicked);
+  await expect(page.getByText(/Save unavailable|not saved/i)).toHaveCount(0);
+});
+
 // The what-if Keep bug (the maintainer's call 6, 2026-10-21): on a picked future, Keep set the first-year
 // sales the road reads, but the rail and the plan still said "Not said" for them.
 test("on a future picked on Pick a future, Keep on the what-if shows the kept first-year sales on the rail and the plan; the third year stays not said", async ({ page }) => {

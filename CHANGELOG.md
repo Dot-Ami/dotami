@@ -54,7 +54,14 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   number with *Change your number* once given. With both numbers yours the step lights as it does on an
   intake idea. *Take back* puts the future back as it was picked: the rail says *Not said* again and the
   question is asked again. Your typed number is kept where the intake's Year 3 box keeps it; nothing new is
-  kept or sent.
+  kept or sent. On an idea from the intake this changes two things too: a Year 3 box left blank there is now
+  asked in *Not told yet* as well, and *Change* on "You told us third-year sales of $N" opens this same box in
+  the cockpit instead of going back to the intake (the first-year number's *Change* still goes to the intake).
+- **A sales number too large to keep is refused where you type it.** The save keeps sales numbers up to
+  $1,000,000,000, but the third-year box, the "I'd incorporate at" box and the what-if took any digits: a
+  bigger third-year estimate stayed on screen and every later save of that idea failed until it was changed,
+  a bigger "I'd incorporate at" was quietly dropped, and a bigger what-if could be tried and then not kept.
+  Now each box says "DotAmi keeps numbers up to $1,000,000,000. Write a smaller one." and keeps nothing.
 - **Keep on the what-if now counts as told on a picked future** (the maintainer's call, 2026-10-21). Keep made
   the what-if your first-year sales, and the road read it, but the rail and the plan's export still said *Not
   said* for it. Now Keep also marks the first-year target as said: the rail, *Your plan* and the export show

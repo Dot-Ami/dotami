@@ -45,7 +45,10 @@ from the box as the intake's Year 3 box and the *I'd incorporate at* box save th
 `targetRevenueY3` and takes **only the third-year target** off the not-said list. Today one id, `sales-targets`,
 covers both targets (`lib/scenarios/types.ts:95`), so the build splits it into `sales-target-year-1` and
 `sales-target-year-3` (ids are forever: a saved `sales-targets` is read as both, as PR #190 reads `equipment`
-with `withSaid`). The first-year target stays *Not said* on the rail.
+with `withSaid`). The first-year target stays *Not said* on the rail. A number above the save's own cap on a
+sales number ($1,000,000,000, `SALES_DOLLARS_MAX` in `lib/db/scenario-state-json.ts`) is refused in the box
+with *DotAmi keeps numbers up to $1,000,000,000. Write a smaller one.*, as is a what-if above it (added after
+the review of PR #198: the save refused it, so every later save of the idea failed).
 
 **4. The receipt,** worked out from the two runs of the rules as every receipt is: *Because you told us
 third-year sales of $120,000: …* (the existing `salesYear(3)` words), or *Saved. Nothing on the road changed.*
@@ -55,7 +58,12 @@ yet*.
 **5. Taking it back.** *What you've told DotAmi* lists *your third-year sales number ($120,000)* with **Take
 back**, as today. Taking it back sets the estimate to 0 **and** puts `sales-target-year-3` back on the not-said
 list, so a picked future is exactly as it was when picked: the rail says *Not said* again, the row comes back
-to *Not told yet*, and the *I'd incorporate at* row leaves it (it changes nothing without an estimate).
+to *Not told yet*, and the *I'd incorporate at* row leaves it (it changes nothing without an estimate). The
+row's **Change** opens this same box, on an intake idea too (until this fix it went back to the intake); the
+first-year number's **Change** still goes to the intake, as the cockpit has no box for it.
+
+**On an idea from the intake.** Part 1's "0" holds there too: an intake idea whose Year 3 box was left blank
+is asked the same row in *Not told yet* (the review of PR #198 asked that this be said, not only built).
 
 ## The what-if Keep bug, fixed in the same pull request (the maintainer's call 6, 2026-10-21)
 

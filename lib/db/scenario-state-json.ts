@@ -21,8 +21,14 @@ const OWN_NUMBER_KEY = "incorporateAt";
 const DECIDED_KEY = "decided";
 const EQUIPMENT_NO_KEY = "equipmentNo";
 
+/**
+ * The most a sales number the person types may be, in whole dollars: the save route refuses a revenue
+ * estimate above it (lib/db/parse-scenario-input.ts), so the cockpit's boxes and the what-if refuse it too.
+ */
+export const SALES_DOLLARS_MAX = 1e9;
+
 /** The most a person's number may be: the same cap the save route puts on revenue estimates. */
-export const INCORPORATE_AT_MAX = 1e9;
+export const INCORPORATE_AT_MAX = SALES_DOLLARS_MAX;
 
 /** A whole-dollar amount the person could have typed, or null for anything else. */
 export function cleanIncorporateAt(value: unknown): number | null {

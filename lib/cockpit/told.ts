@@ -1,5 +1,6 @@
 import type { CFENodeId } from "@/lib/engines/cfe/v2026";
 import { generalRoadV2026, type Fork } from "@/lib/engines/roads/v2026";
+import { SALES_DOLLARS_MAX } from "@/lib/db/scenario-state-json";
 import type { FigureView } from "@/lib/figures/types";
 import {
   evaluateRoad,
@@ -383,12 +384,24 @@ function pickChangesSomething(input: RoadEvaluationInput, evaluation: RoadEvalua
 
 // --- The what-if
 
-/** What the person typed as a what-if: a whole, non-negative number of dollars, or null. */
-export function parseWhatIf(text: string): number | null {
+/**
+ * A sales number the person typed (the what-if, the third-year estimate, "I'd incorporate at"): whole,
+ * non-negative dollars no larger than the save keeps, or the words that say what is wrong with it. Until
+ * the review of PR #198 the boxes took any digits, so a number the save refuses stayed on screen and every
+ * later save of the idea failed until it was changed.
+ */
+export function readWholeDollars(text: string): { dollars: number } | { problem: string } {
   const plain = text.trim().replace(/^\$/, "").replace(/,/g, "").trim();
-  if (!/^\d+$/.test(plain)) return null;
+  if (!/^\d+$/.test(plain)) return { problem: words.questions.box.wholeDollars };
   const dollars = Number(plain);
-  return Number.isSafeInteger(dollars) ? dollars : null;
+  if (dollars > SALES_DOLLARS_MAX) return { problem: words.questions.box.tooLarge };
+  return { dollars };
+}
+
+/** What the person typed as a what-if: a whole number of dollars Keep could save, or null. */
+export function parseWhatIf(text: string): number | null {
+  const read = readWholeDollars(text);
+  return "dollars" in read ? read.dollars : null;
 }
 
 /**
