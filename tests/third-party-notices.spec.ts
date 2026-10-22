@@ -35,6 +35,7 @@ import {
   productionPackages,
   SEPARATOR,
 } from "../desktop/notices.mjs";
+import { economicRegionsCreditLine } from "@/lib/engines/research-kit/v2026/economic-regions";
 import { NOTICES_FILE, parseNotices, readNotices } from "@/lib/licences/notices";
 
 import { importedModules, moduleName, readSource, rootSourceFiles, sourceFiles, SOURCE_FILES } from "./helpers/source-scan";
@@ -62,6 +63,8 @@ function fakeCheckout(name: string, dependencies: Record<string, string>) {
   writeFileSync(path.join(root, "app", "fonts", "LICENSE-JetBrainsMono.txt"), "JetBrains Mono: SIL Open Font License 1.1");
   mkdirSync(path.join(root, "lib", "engines", "oasis", "v2026"), { recursive: true });
   writeFileSync(path.join(root, "lib", "engines", "oasis", "v2026", "LICENCE.txt"), "Contains information licensed under the Open Government Licence – Canada.");
+  mkdirSync(path.join(root, "lib", "engines", "research-kit", "v2026"), { recursive: true });
+  writeFileSync(path.join(root, "lib", "engines", "research-kit", "v2026", "LICENCE-economic-regions.txt"), "Adapted from Statistics Canada.");
   fakePackage(modules, "tailwindcss", "4.0.0");
   return { root, modules };
 }
@@ -143,6 +146,7 @@ describe("collectNotices: what the generator lists, and what stops it", () => {
       "font:Inter (font)",
       "font:JetBrains Mono (font)",
       "data:OaSIS 2025 Version 1.0 (data from Employment and Social Development Canada)",
+      "data:Variant of SGC 2021 for Economic Regions, Alberta (data from Statistics Canada)",
     ]);
     expect(entries[0].texts).toEqual([{ file: "LICENSE", text: "Copyright (c) app authors\nMIT terms" }]);
   });
@@ -299,12 +303,24 @@ describe("the list for this checkout", () => {
   });
 
   it("lists the government's skills list as data that ships, with the licence's own attribution line (2026-10-12)", () => {
-    const oasis = entries.filter((e) => e.kind === "data");
-    expect(oasis.map((e) => [e.name, e.licence])).toEqual([["OaSIS 2025 Version 1.0 (data from Employment and Social Development Canada)", "OGL-Canada-2.0"]]);
+    const data = entries.filter((e) => e.kind === "data");
+    expect(data.map((e) => [e.name, e.licence])).toEqual([
+      ["OaSIS 2025 Version 1.0 (data from Employment and Social Development Canada)", "OGL-Canada-2.0"],
+      ["Variant of SGC 2021 for Economic Regions, Alberta (data from Statistics Canada)", "Statistics-Canada-Open-Licence"],
+    ]);
+    const oasis = data.slice(0, 1);
     expect(oasis[0]!.texts[0]!.file).toBe("LICENCE.txt");
     expect(oasis[0]!.texts[0]!.text).toContain("Contains information licensed under the Open Government Licence – Canada.");
     expect(oasis[0]!.texts[0]!.text).toContain("https://open.canada.ca/en/open-government-licence-canada");
     expect(parseNotices(formatNotices(oasis, { version: "0.0.0-test", desktop: false })).entries[0]!.kind).toBe("data");
+  });
+
+  it("lists Alberta's economic regions as data that ships, with the credit line the registry card gives (task 25e, 2026-10-21)", () => {
+    const regions = entries.find((e) => e.kind === "data" && e.name.startsWith("Variant of SGC 2021"))!;
+    expect(regions.texts[0]!.file).toBe("LICENCE-economic-regions.txt");
+    // The same line the registry card owes, with its reference year filled in, so the two can't drift apart.
+    expect(regions.texts[0]!.text.split("\n")[0]).toBe(economicRegionsCreditLine());
+    expect(regions.texts[0]!.text).toContain("https://www.statcan.gc.ca/en/reference/licence");
   });
 
   it("follows what desktop/package.mjs copies into the installed app", () => {

@@ -145,6 +145,9 @@ describe("collectNotices with leaveOut: the desktop notices drop what the server
     // The government's skills list ships as data, with its licence file (2026-10-12).
     mkdirSync(path.join(root, "lib", "engines", "oasis", "v2026"), { recursive: true });
     writeFileSync(path.join(root, "lib", "engines", "oasis", "v2026", "LICENCE.txt"), "Contains information licensed under the Open Government Licence – Canada.");
+    // And Alberta's economic regions, with theirs (2026-10-21).
+    mkdirSync(path.join(root, "lib", "engines", "research-kit", "v2026"), { recursive: true });
+    writeFileSync(path.join(root, "lib", "engines", "research-kit", "v2026", "LICENCE-economic-regions.txt"), "Adapted from Statistics Canada.");
     fakePackage(modules, "tailwindcss", "4.0.0");
     fakePackage(modules, "next", "15.0.0", { deps: { "styled-jsx": "5" }, optional: { sharp: "0.35" } });
     fakePackage(modules, "styled-jsx", "5.0.0");

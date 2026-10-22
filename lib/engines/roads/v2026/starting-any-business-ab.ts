@@ -827,6 +827,8 @@ export const roadStartingAnyBusinessAB = roadFromCfe({
   label: "Starting any business in Alberta (tax and structure)",
   kind: "business",
   provinces: ["AB"],
+  // The tax and structure steps for any business: written for no particular job, and says so.
+  codes: { occupations: "no-particular-job" },
   nodes: cfeNodesV2026,
   tiers: cfeTiersV2026,
   forks: [

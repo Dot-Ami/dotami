@@ -133,7 +133,10 @@ const FONTS = [
 /**
  * Data written by others that ships inside DotAmi's own code, each with the licence file committed beside
  * it. The government's skills list (lib/engines/oasis/v2026/data.ts, made by scripts/import-oasis.mjs)
- * is under the Open Government Licence – Canada, whose attribution line is in that file.
+ * is under the Open Government Licence – Canada, whose attribution line is in that file. Alberta's economic
+ * regions (lib/engines/research-kit/v2026/economic-regions.ts, typed from Statistics Canada's pages) are under
+ * the Statistics Canada Open Licence, with its notice in their licence file; the registry card
+ * `sgc-2021-economic-regions` carries the same credit line.
  */
 const DATA = [
   {
@@ -141,6 +144,12 @@ const DATA = [
     licence: "OGL-Canada-2.0",
     file: "lib/engines/oasis/v2026/LICENCE.txt",
     version: "2025 Version 1.0, record modified 2026-10-04",
+  },
+  {
+    name: "Variant of SGC 2021 for Economic Regions, Alberta (data from Statistics Canada)",
+    licence: "Statistics-Canada-Open-Licence",
+    file: "lib/engines/research-kit/v2026/LICENCE-economic-regions.txt",
+    version: "SGC 2021, Alberta's page read 2026-10-21",
   },
 ];
 

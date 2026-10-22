@@ -34,6 +34,20 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - **`npm run data:check`**, a step of `npm run ci:quality` and of CI on every pull request: every importer's
   government files checked against their pins and its generated module rebuilt and compared, offline. A changed
   byte in a government file, or a hand edit to a generated module, now fails the pull request.
+- **Roads name the jobs they're written for, and Alberta's wage regions are data** (task 25e's phase 2 part,
+  [docs/architecture/research-kit.md](docs/architecture/research-kit.md) § 5.3). Plumbing, with no change on
+  screen yet. *From apprentice to your own shop* says it is written for 72311 Cabinetmakers, and *Starting any
+  business in Alberta* says it is written for no particular job; the road checks refuse a job code the
+  government's list doesn't have. One function gives the roads written for the job a person picked, in the
+  order they were written, and none when none is, without falling back to the general road (for Pick a future's
+  road match, next). The job is still only the person's own pick: nothing picks it from a road. A job-links
+  file holds an entry only for a job a road is written for (today Cabinetmakers), with its industry and place
+  lists left empty until the lists they come from are in DotAmi; every other job gets a line saying so.
+  Alberta's eight economic regions, with Statistics Canada's codes and names as published, are now data for
+  the "Which region are you in?" question, with their source and credit line in the source registry and on
+  /licences; reading the person's answer never works a region out from their area. The industry code list
+  (NAICS) moved to phase 3 with the industry question, as the maintainer decided. Nothing DotAmi keeps, sends or
+  asks changes.
 ### Fixed
 - **Your answer to "Are you buying equipment, a vehicle or tools?" on a future picked on Pick a future is
   kept** (the maintainer's "Yes, fix both", 2026-10-20). Pick a future saves equipment as not said, since it

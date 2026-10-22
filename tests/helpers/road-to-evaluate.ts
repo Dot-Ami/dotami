@@ -49,6 +49,7 @@ export function roadToEvaluate(): Road {
     label: "Invented trade road (test only)",
     kind: "both",
     provinces: ["AB"],
+    codes: { occupations: "no-particular-job" },
     lastVerified: "2026-10-01",
     columns: [
       { id: "col-eval-train", label: "Train", summary: "Learn the trade.", steps: ["step-eval-train", "step-eval-ticket"] },
@@ -120,6 +121,7 @@ export function roadWithRuledFork(): Road {
     label: "Invented road with a ruled fork (test only)",
     kind: "both",
     provinces: ["AB"],
+    codes: { occupations: "no-particular-job" },
     lastVerified: "2026-10-01",
     columns: [
       { id: "col-ruled-start", label: "Start", summary: "Where it begins.", steps: ["step-ruled-start"] },
