@@ -32,6 +32,17 @@ export function searchStatusLine(search: JobSearch): string {
     : words.status(search.total, count("all"), count("all-but-one"), count("some"));
 }
 
+/**
+ * The status line under the box, whatever state the search is in: the empty state's line before anything is
+ * typed (none in the cockpit's narrow panel), the failure line when the search for these words couldn't run, the
+ * searching line while it waits (the PR #202 review: it drew nothing there), and the answer's line once it is in.
+ */
+export function searchBoxStatusLine(state: { typed: boolean; compact: boolean; failed: boolean; search: JobSearch | null }): string {
+  if (!state.typed) return state.compact ? "" : words.empty;
+  if (state.failed) return words.searchFailed;
+  return state.search ? searchStatusLine(state.search) : words.searching;
+}
+
 /** The *Not searched: …* line, or null when no word was left out. */
 export function leftOutLine(search: JobSearch): string | null {
   return search.leftOut.length > 0 ? words.leftOut(search.leftOut.map((w) => `“${w.word}”`).join(", ")) : null;

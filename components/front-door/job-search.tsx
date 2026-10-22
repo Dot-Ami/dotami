@@ -9,7 +9,7 @@ import {
   leftOutLine,
   matchedLine,
   onlyLeftOutWords,
-  searchStatusLine,
+  searchBoxStatusLine,
   showGroupName,
   showsEnglishOnly,
 } from "@/lib/front-door/job-search-lines";
@@ -48,12 +48,14 @@ export function JobSearchBox({
   const [query, setQuery] = useState("");
   // The answer, with the words it answers, so an answer to older words is never shown under newer ones.
   const [answer, setAnswer] = useState<{ query: string; search: JobSearch } | null>(null);
-  const [failed, setFailed] = useState(false);
+  // The words whose search couldn't run, so the failure line is said for those words only: new words search
+  // again, and the line says it is looking while they do.
+  const [failedQuery, setFailedQuery] = useState<string | null>(null);
 
   useEffect(() => {
     if (query.trim() === "") {
       setAnswer(null);
-      setFailed(false);
+      setFailedQuery(null);
       return;
     }
     const controller = new AbortController();
@@ -69,9 +71,9 @@ export function JobSearchBox({
           if (!res.ok) throw new Error(String(res.status));
           const body = (await res.json()) as { search: JobSearch };
           setAnswer({ query, search: body.search });
-          setFailed(false);
+          setFailedQuery(null);
         } catch {
-          if (!controller.signal.aborted) setFailed(true);
+          if (!controller.signal.aborted) setFailedQuery(query);
         }
       })();
     }, PAUSE_MS);
@@ -113,9 +115,10 @@ export function JobSearchBox({
       </div>
 
       {notSearchedFirst ? notSearchedLine : null}
-      {/* One polite line that says what the list holds after each pause in typing (not on every key). */}
+      {/* One polite line: that DotAmi is looking while a search waits, then what the list holds (the searching
+          line stays the same while the person types, so it isn't read again on every key). */}
       <p role="status" className="text-body text-stone">
-        {!typed ? (compact ? "" : words.empty) : failed ? words.searchFailed : search ? searchStatusLine(search) : ""}
+        {searchBoxStatusLine({ typed, compact, failed: failedQuery === query, search })}
       </p>
 
       {notSearchedFirst ? null : notSearchedLine}

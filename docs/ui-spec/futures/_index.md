@@ -35,7 +35,9 @@ Last updated: 2026-10-13 (the first written future listed; design: docs/architec
 > - **The search runs on DotAmi's own server** (`POST /api/jobs/search`, `searchJobTitles`), so the titles file
 >   never goes into a page's code; the words typed are sent in the request's body, never in an address, and
 >   nothing keeps them. Pick a future, the intake and the cockpit's skills list all call it: one picker.
-> - **Words added** (`lib/front-door/words.ts`): a line while the search runs and one if it can't run; the
+> - **Words added** (`lib/front-door/words.ts`): a line while the search runs (*Looking in the government's
+>   example titles…*, in the status line whenever words are typed and their answer isn't in yet; the second review
+>   found it was never drawn) and one if it can't run, said only for the words that failed; the
 >   group heading with its count; the matched line for a job found by its own name or a typed code
 >   (*Matched the job's name “…”*, *Matched the job's code …*), so neither reads as an example title; *Your
 >   area: not answered* on 2b when 2a was left on *Choose one*; the Statistics Canada link's name saying it opens

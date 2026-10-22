@@ -125,6 +125,45 @@ test("step 1 searches the government's example titles, grouped and labelled, and
   for (const r of searched) expect(r).toMatch(/^POST [^?]*\/api\/jobs\/search$/);
 });
 
+test("while a search waits, the status line says DotAmi is looking; a search that can't run says so, and only for its own words", async ({ page }) => {
+  // The PR #202 review: the searching line was in the words file and the docs, but the line drew "" while a
+  // search waited. Each answer is held here until the test lets it go, so the waiting line can be read.
+  await toPickAFuture(page);
+  const held: (() => Promise<void>)[] = [];
+  let failNext = false;
+  await page.route("**/api/jobs/search", async (route) => {
+    if (failNext) {
+      failNext = false;
+      await route.abort();
+      return;
+    }
+    held.push(() => route.continue());
+  });
+  const box = page.getByRole("searchbox", { name: jobStepWords.boxLabel });
+  const status = page.getByRole("status");
+
+  await box.fill("baker");
+  await expect(status).toHaveText(jobStepWords.searching);
+  // The line has no time words (NO TIMES): it says what DotAmi is doing, never how long.
+  expect(jobStepWords.searching).not.toMatch(/\b(second|minute|moment|soon|quick|wait|time)s?\b/i);
+  await expect.poll(() => held.length).toBeGreaterThan(0);
+  await held.shift()!();
+  await expect(page.getByRole("button", { name: /^Pick Bakers, 63202\.00$/ })).toBeVisible();
+  await expect(status).not.toHaveText(jobStepWords.searching);
+
+  // A search that can't run: said so. New words then search again, and the line says it is looking, not that
+  // the earlier search failed.
+  failNext = true;
+  await box.fill("cabinet");
+  await expect(status).toHaveText(jobStepWords.searchFailed);
+  await box.fill("barber");
+  await expect(status).toHaveText(jobStepWords.searching);
+  await expect.poll(() => held.length).toBeGreaterThan(0);
+  while (held.length > 0) await held.shift()!();
+  await expect(page.getByRole("button", { name: jobStepWords.pickName(BARBERS.label, BARBERS.code), exact: true })).toBeVisible();
+  await page.unroute("**/api/jobs/search");
+});
+
 test("in Alberta: the job, then the area, then the region (never worked out from the area); the road written for the job first; all kept at Look inside", async ({ page }) => {
   await toPickAFuture(page);
   await pickTheJob(page, CABINETMAKERS);

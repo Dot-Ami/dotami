@@ -22,7 +22,7 @@ import { parseFirstSave } from "@/lib/db/parse-scenario-input";
 import { searchJobTitles } from "@/lib/engines/oasis/v2026/title-search";
 import { generalRoadV2026, roadApprenticeToOwnShopAB, roadsV2026 } from "@/lib/engines/roads/v2026";
 import { listedRoads } from "@/lib/front-door/futures";
-import { leftOutLine, onlyLeftOutWords, searchStatusLine, showsEnglishOnly } from "@/lib/front-door/job-search-lines";
+import { leftOutLine, onlyLeftOutWords, searchBoxStatusLine, searchStatusLine, showsEnglishOnly } from "@/lib/front-door/job-search-lines";
 import { roadJobNames } from "@/lib/front-door/road-jobs";
 import { roadMatch } from "@/lib/front-door/road-match";
 import { answersOf, back, backLabel, FIRST_STEP, next, pickedJob, skipped, type StepsState } from "@/lib/front-door/three-steps";
@@ -188,6 +188,17 @@ describe("the search's lines (lib/front-door/job-search-lines.ts, drawn by compo
     expect(searchStatusLine(search)).toBe(jobStepWords.noMatch("“infirmiere”"));
     expect(leftOutLine(search)).toBe(jobStepWords.leftOut("“my”"));
     expect(showsEnglishOnly(search)).toBe(true);
+  });
+
+  it("the status line says DotAmi is looking while a search waits, with no time words (the PR #202 review)", () => {
+    const search = searchJobTitles("baker");
+    expect(searchBoxStatusLine({ typed: true, compact: false, failed: false, search: null })).toBe(jobStepWords.searching);
+    expect(searchBoxStatusLine({ typed: true, compact: true, failed: false, search: null })).toBe(jobStepWords.searching);
+    expect(jobStepWords.searching).not.toMatch(/\b(second|minute|moment|soon|quick|wait|time)s?\b/i);
+    expect(searchBoxStatusLine({ typed: true, compact: false, failed: false, search })).toBe(searchStatusLine(search));
+    expect(searchBoxStatusLine({ typed: true, compact: false, failed: true, search: null })).toBe(jobStepWords.searchFailed);
+    expect(searchBoxStatusLine({ typed: false, compact: false, failed: false, search: null })).toBe(jobStepWords.empty);
+    expect(searchBoxStatusLine({ typed: false, compact: true, failed: false, search: null })).toBe("");
   });
 });
 

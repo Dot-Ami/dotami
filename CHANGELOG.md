@@ -112,7 +112,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   opened. The cockpit's **Pick a job** runs the same search. The words you type are searched on DotAmi's own
   server on your computer and never kept; the job, the area and the region are kept with the idea, each with
   its day, only when you open a future (four new optional columns on the idea, through a migration that adds
-  them and changes nothing else), shown on *Your plan*, and deleted with the idea. When every word typed is on
+  them and changes nothing else), shown on *Your plan*, and deleted with the idea; *What DotAmi knows about you*
+  names the area and the region on lines of their own under *Your ideas*. While a search waits, the line under
+  the box says *Looking in the government's example titles…*. When every word typed is on
   DotAmi's filler or business-word list (*my own shop*), the step says nothing was searched, under the *Not
   searched* line, and never that no government title holds those words. *Where you are* promises nothing about
   *About this job* until About this job reads the answers kept here. The idea harness and the browser idea sweep
