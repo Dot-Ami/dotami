@@ -153,6 +153,17 @@ A road may name where it carries on after its last column: `joins: { roadId, col
     the known-gaps list (`tests/fixtures/ideas/known-gaps.ts`) doesn't name, and on any gap it names that
     now passes, so a road that fixes a gap takes those ideas off the list in the same pull request. What
     it saw is written to `test-results/idea-coverage.md`.
+14. **A road says which jobs it is written for** (task 25e, 2026-10-21; research-kit.md § 5.3), in
+    `codes.occupations`, beside `provinces`: the 5-digit NOC 2021 job groups (`["72311"]` for road 1), or
+    `"no-particular-job"` in words for a road such as road 0 (an empty list is refused, so a road nobody
+    gave codes to can't pass as one written for no job). `roadCodeProblems`, run inside `roadProblems`,
+    refuses a code that isn't five digits, one the OaSIS list has no job in, and a code named twice. The
+    road match (`roadsWrittenForJob`, which Pick a future calls from task 28c) gives the roads whose codes
+    hold the person's pick of job, in the order added, and none when none is written; nothing goes the
+    other way, from a road to a person's job. A
+    road written for a job gets that job's entry in the job-links catalog
+    (`lib/engines/research-kit/v2026/job-links.ts`), where its industries and places are kept once per job;
+    `tests/job-links.spec.ts` fails while a road's job has no entry, or an entry has no road.
 
 How a road meets a person's answers (each step's state and its reason, the four gauges, the receipts)
 is not in the catalog: it is `lib/roads/` ([future-cockpit.md § 6, *Road evaluation as

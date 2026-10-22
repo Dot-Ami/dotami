@@ -1,11 +1,14 @@
 Contains information licensed under the Open Government Licence – Canada.
 https://open.canada.ca/en/open-government-licence-canada
 
-The skills and knowledge lists for each job in data.ts come from the Occupational and Skills
-Information System (OaSIS) - 2025 Version 1.0, published by Employment and Social Development Canada:
+The skills and knowledge lists for each job in data.ts, and the example job titles in titles.ts, come from
+the Occupational and Skills Information System (OaSIS) - 2025 Version 1.0, published by Employment and
+Social Development Canada:
 https://open.canada.ca/data/en/dataset/10ce43bd-fb58-4969-806b-4bffebc87bec
 (files skills_oasis_2025_v1.1.csv, knowledge_oasis_2025_v.1.1.csv, labels_oasis_2025_v1.1.csv and
-guide_oasis_2025_v4.0.csv; record modified 2026-10-04).
+guide_oasis_2025_v4.0.csv, record modified 2026-10-04; and example-titles_oasis_2025_v1.0.csv,
+downloaded 2026-10-21).
 
-DotAmi keeps each job's name and its ratings, and shows a job's list by name only. The government of
-Canada does not endorse DotAmi or anyone's use of this information.
+DotAmi keeps each job's name, its ratings and its example titles, shows a job's list by name only, and
+searches the titles for the job a person types. The government of Canada does not endorse DotAmi or
+anyone's use of this information.

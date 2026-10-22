@@ -1,3 +1,4 @@
+import { liftsQuotedLine, withoutLabelledQuotes, type QuoteContext } from "./official-quotes";
 import { normaliseSpaces } from "./text-pieces";
 
 /**
@@ -11,6 +12,14 @@ import { normaliseSpaces } from "./text-pieces";
  * - **Official requirement text**: a line written from an official page that states the page's own hours,
  *   weeks or months ("Official hour or training requirements are shown cited", same section). The road's
  *   step shows its source beside it.
+ * - **Official text quoted by source kind** (the maintainer's phase 2 call, 2026-10-21: the government's
+ *   quoted requirement text allowed, labelled): not one entry per line but one per kind of source, in
+ *   tests/helpers/official-quotes.ts. The government's "Employment requirements" lines on *About this job*
+ *   ("Completion of a one- or two-year hairstyling apprenticeship program …") pass when they stand inside
+ *   quote marks in a run that opens with the kind's label (*The government's words, quoted in full for job
+ *   group …:*), on About this job's rules row, and are lines the run read from the shipped file for that
+ *   group (`QuoteContext`). The same words without the label, without quote marks or on any other screen,
+ *   and any sentence the file doesn't hold, are DotAmi's and are caught.
  *
  * `findTimeWords` takes the allowed words out of a text first, then names what is left. The harness runs it
  * over every line it collects for an idea (tests/idea-harness.spec.ts: what the app code it calls writes),
@@ -117,6 +126,8 @@ const official = (text: string, where: string, why: string): TimeAllowance => ({
  * shown with that page as the line's source. One entry per line: tests/idea-invariants.spec.ts reads every
  * line the written roads hold and fails on one with a time that is neither listed here nor a known gap. A line that says how long something takes or will take is not a requirement and is never listed
  * here: it is reworded without the time (road 1's "each designed to take about a year" was, on 2026-10-17).
+ * These lines are the roads' own prose about an official rule, so each is listed; a source's words quoted
+ * word for word under its label are allowed by kind instead (tests/helpers/official-quotes.ts).
  */
 export const OFFICIAL_TIME_ALLOWANCES: readonly TimeAllowance[] = [
   official(
@@ -276,10 +287,13 @@ export const TIME_ALLOWANCES: readonly TimeAllowance[] = [...YOUR_DATE_ALLOWANCE
 
 /**
  * The time words left in a text once its allowed words are taken out. `dateWords` are the words for the
- * person's own date in this run ("19 months from today"), which are allowed wherever they appear.
+ * person's own date in this run ("19 months from today"), which are allowed wherever they appear. `quotes`
+ * says where the text stands and which official lines the run read: without it, no labelled line is lifted.
  */
-export function findTimeWords(text: string, dateWords: readonly string[] = []): string[] {
-  let rest = normaliseSpaces(text);
+export function findTimeWords(text: string, dateWords: readonly string[] = [], quotes: QuoteContext = {}): string[] {
+  // Official text quoted by source kind first: a labelled run's quoted lines, only at their place and only
+  // the lines the run read from the shipped file (tests/helpers/official-quotes.ts).
+  let rest = withoutLabelledQuotes(text, liftsQuotedLine(quotes));
   for (const allowed of [...TIME_ALLOWANCES.map((a) => a.text), ...dateWords]) {
     rest = rest.split(normaliseSpaces(allowed)).join(" ");
   }

@@ -1,4 +1,5 @@
 import { searchOasisJobs } from "@/lib/engines/oasis/v2026";
+import { openGroupCodes, searchJobTitles } from "@/lib/engines/oasis/v2026/title-search";
 import { ACTIVITY_TAXONOMY } from "@/lib/journey/intent";
 import { PROVINCES } from "@/lib/scenarios/types";
 
@@ -85,12 +86,18 @@ export function coverageReport(args: {
     const found = searchOasisJobs(idea.work, 50).jobs.map((job) => job.code);
     return (idea.jobs ?? []).some((code) => found.includes(code));
   });
+  // The search "What's closest to your work?" runs (task 28b's engine): the expected job in the group shown open.
+  const titleFound = withJobs.filter((idea) => {
+    const found = openGroupCodes(searchJobTitles(idea.work, 50));
+    return (idea.jobs ?? []).some((code) => found.includes(code));
+  });
   lines.push(
     "## Today's parser and job search, against the words (information, not failures)",
     "",
     `- Kinds of work the words name that the keyword parser missed: ${tagMisses.length} of ${parsed.length} ideas.`,
     `- A province or territory the words name that the parser found none for: ${placeMisses.length} of ${parsed.filter((r) => r.idea.named.length > 0).length} ideas.`,
     `- The expected job among today's job search results for the kind of work: ${jobFound.length} of ${withJobs.length} ideas with an expected job (S2.5.32's measure; the search the cockpit's job list uses).`,
+    `- The expected job in the open group of the government-titles search ("What's closest to your work?", first 50 of the group): ${titleFound.length} of ${withJobs.length} (tests/job-title-search.spec.ts holds its floor).`,
     "",
     "## Each idea",
     "",

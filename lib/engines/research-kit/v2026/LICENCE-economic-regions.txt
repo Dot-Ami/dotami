@@ -1,0 +1,11 @@
+Adapted from Statistics Canada, Variant of Standard Geographical Classification (SGC) 2021 for Economic Regions, 2021. This does not constitute an endorsement by Statistics Canada of this product.
+
+Statistics Canada Open Licence:
+https://www.statcan.gc.ca/en/reference/licence
+
+The economic regions in economic-regions.ts (Alberta's eight: each region's 4-digit code and its name as
+published) come from the Variant of Standard Geographical Classification (SGC) 2021 for Economic Regions,
+published by Statistics Canada:
+https://www23.statcan.gc.ca/imdb/p3VD.pl?Function=getVD&TVD=1368923
+(the page for Alberta, read 2026-10-20 and 2026-10-21). DotAmi keeps the codes and names as published and
+lists them for a person to pick their own region; it works out no one's region from anything else.

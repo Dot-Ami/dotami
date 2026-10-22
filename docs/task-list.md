@@ -360,8 +360,13 @@ placed in phase 3.
     connector powers ([9g]), the place lists on S2.5.26, the rent-price places on their replies
   - [x] 25c: one shared import core (encoding, table id, period, licence and next-release date as data),
     with the OaSIS importer moved onto it unchanged (`scripts/lib/import-kit.mjs`)
-  - [ ] 25e: code keys on roads (the jobs a road is written for), job links, the 2022 industry code list
-    (NAICS) and an economic-region key
+  - [x] 25e, its phase 2 part: the jobs each road is written for (road 1: 72311 Cabinetmakers; road 0: no
+    particular job), unknown job codes refused, the roads written for a picked job (none is an answer, no
+    fall back), a job-links file with an entry only for a job a road is written for, and Alberta's eight
+    economic regions as data for the region question, with their source and credit line
+  - [ ] 25e, the rest (phase 3, with the industry question; the maintainer's call of 2026-10-20): the 2022
+    industry code list (NAICS) imported and checked, the job links' industry candidates checked against it,
+    and the census table that cites them (NAICS 2017 at sector level) checked against the 2022 sectors
   - [ ] 25i: wages only, from Job Bank's open-data wage file (never its pages), each row with its geography
     level and period; no outlooks
   - [ ] 25h: *About this job* for any job, in the right-hand panel from *Look closer*: the job's rules quoted
@@ -481,11 +486,15 @@ placed in phase 3.
     The maintainer's calls on them, 2026-10-21: the typed way ends on the same three steps; no region question
     outside Alberta for now; a job with no written road saves nothing; the what-if **Keep** bug is fixed with
     the *Incorporating* fix)
-  - [ ] 28a: import the classification's elements file (example job titles and "Employment requirements")
-    on the shared import core, with its checksum, licence and credit line
+  - [x] 28a: import the classification's elements file (example job titles and "Employment requirements")
+    on the shared import core, with its checksum, licence and credit line; and the OaSIS "Example Titles"
+    file beside it (`scripts/import-noc.mjs`, `scripts/import-oasis-titles.mjs`; both in `npm run data:check`
+    and on `/licences`)
   - [ ] 28b: *What's closest to your work?*: the person searches the example titles and picks the job;
     matches in code order, labelled "matches your words · your pick"; *Skip* allowed; nothing set without a
-    click
+    click. The search itself is built (`lib/engines/oasis/v2026/title-search.ts`, with DotAmi's word list the
+    maintainer approves line by line): 153 of 220 corpus ideas find their job in the group shown first, against
+    20 today. The screen is still to build.
   - [ ] 28c: the road written for the picked job comes first; otherwise "No road is written for this job
     yet", with *About this job* and the general road; no silent fallback for a new idea; a job with no written
     road saves nothing until a future is opened (the maintainer's call of 2026-10-21; a kind of saved idea with
@@ -497,12 +506,17 @@ placed in phase 3.
   - The test gate learns these endings ([14j]'s harness, reopened for phase 2):
     - [ ] 29h: the harness picks a job as a recorded click and accepts the honest "not written yet" ending;
       a job the person didn't pick still fails
-    - [ ] 29i: a number kind for a published job fact (a wage with its source row); a wage without its row
-      fails, and a wage is never added into a total
+    - [x] 29i: a number kind for a published job fact (a wage with its source row); a wage without its row
+      fails, and a wage is never added into a total (`tests/helpers/number-provenance.ts`; About this job's
+      pieces carry their row when 25h adds them)
     - [ ] 29j: a federal-only road counted honestly, the browser sweep reading any road, and a written way
       for a new screen to get its clutter budget
-    - [ ] 29k: quoted official requirement text, shown word for word as a labelled quote, passes the
+    - [x] 29k: quoted official requirement text, shown word for word as a labelled quote, passes the
       no-times check by one rule (the maintainer's ruling), while DotAmi's own words still fail on any time
+      (`tests/helpers/official-quotes.ts`: only on About this job's requirements row, and only lines the run
+      read from the shipped file, so 25h hands the harness 28a's lines for the group it shows; the verdict
+      check too, for group 53200's line only; 28a's importer still runs the verdict check over every shipped
+      line, as the design says)
 - 🔄 **[14m] A clean data pipeline you can see (S2.5.31).** Every government file DotAmi imports is checked
   offline on every pull request, so a changed file can't slip in unnoticed.
   - [x] 31a (phase 2): `npm run data:check`, every importer's check run offline inside `ci:quality`; it

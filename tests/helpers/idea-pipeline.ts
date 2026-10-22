@@ -22,7 +22,8 @@ import type { CFENodeId } from "@/lib/engines/cfe/v2026";
 import { PROVINCE_LABELS, PROVINCES, type EmploymentStatus, type Province, type Scenario } from "@/lib/scenarios/types";
 
 import { ROAD_IDS, type Idea, type PeopleType } from "../fixtures/ideas/v1";
-import { officialFeeAmounts, quotedOfficialAmounts, type AmountLedger } from "./number-provenance";
+import { officialFeeAmounts, quotedOfficialAmounts, type AmountLedger, type PublishedWageRow } from "./number-provenance";
+import type { QuotedLines } from "./official-quotes";
 import type { TextPiece } from "./text-pieces";
 
 /**
@@ -102,6 +103,11 @@ export interface CockpitRun {
   ledger: AmountLedger;
   /** The words of the person's own date in this run ("19 months from today"), which no-times allows. */
   dateWords: string[];
+  /**
+   * The government's requirement lines the run's screens read from the shipped file, by job group (About this
+   * job, 25h, from 28a's import). Only these can pass no-times as quoted official text, and only on that row.
+   */
+  quotedLines: QuotedLines;
 }
 
 export interface IdeaRun {
@@ -330,8 +336,8 @@ function runCockpit(
     targetMonthSetOn: null,
   };
   const at = (part: string) => `${way} › ${part}`;
-  const add: AddPiece = (where, text, kind = "dotami") => {
-    if (text) pieces.push({ where: at(where), text, kind });
+  const add: AddPiece = (where, text, kind = "dotami", wageRow) => {
+    if (text) pieces.push({ where: at(where), text, kind, ...(wageRow ? { wageRow } : {}) });
   };
 
   // --- As the cockpit first opens.
@@ -480,17 +486,25 @@ function runCockpit(
       quotedThresholds: quotedOfficialAmounts(),
       // A sum adds official fees and the person's quotes; savings are only ever the start of a difference.
       addable: [...roadFees, ...(line ? [own.quoteCents] : [])],
+      // The government's published wage rows the run's screens read (About this job, 25h, from the wage file,
+      // 25i). None yet: no screen shows a wage. A wage is never in `addable`, so it can't turn up in a sum.
+      publishedWageRows: [],
     },
     dateWords: months === undefined ? [] : [monthsFromToday(months)],
+    // None yet: no screen quotes a requirement line until 28a ships them and 25h shows them.
+    quotedLines: [],
   };
 }
 
 /**
  * Collects one piece of a screen's text: `where` is its place on screen (without the way in, which the
- * caller adds), `kind` whose words they are (DotAmi's unless said otherwise). Nothing is collected for an
- * empty or missing text.
+ * caller adds), `kind` whose words they are (DotAmi's unless said otherwise), `wageRow` the published wage
+ * row a piece of *About this job*'s wage row shows (its figures are cited only there, and only with it).
+ * The government's requirement lines are added as one piece with their label (`quotedRun` in
+ * tests/helpers/official-quotes.ts), as the screen draws them. Nothing is collected for an empty or
+ * missing text.
  */
-export type AddPiece = (where: string, text: string | null | undefined, kind?: TextPiece["kind"]) => void;
+export type AddPiece = (where: string, text: string | null | undefined, kind?: TextPiece["kind"], wageRow?: PublishedWageRow) => void;
 
 /** The cockpit's own words for one run of road evaluation: each step's reason, the badges and the gauges. */
 export function piecesOfEvaluation(add: AddPiece, when: string, evaluation: RoadEvaluation, input: RoadEvaluationInput) {

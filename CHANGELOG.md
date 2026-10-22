@@ -34,6 +34,56 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - **`npm run data:check`**, a step of `npm run ci:quality` and of CI on every pull request: every importer's
   government files checked against their pins and its generated module rebuilt and compared, offline. A changed
   byte in a government file, or a hand edit to a generated module, now fails the pull request.
+- **Tests: the gate knows a published wage and a quoted government requirement** (29i, 29k; for *About this
+  job*, before it is built). No change on screen. A wage the government publishes for a job group is now a kind
+  of number the "every number cited or the person's own" check accepts, but only on *About this job*'s wage row,
+  only beside the row it comes from, and only when that row carries its source code, the geography level the
+  code gives, and its reference period (`tests/helpers/number-provenance.ts`); a wage is never one of the lines
+  a total adds up, so a wage put into a cost, a total or a gauge fails. The government's "Employment
+  requirements" lines (*"a one- or two-year hairstyling apprenticeship"*) pass the no-times check by one rule
+  for their kind of source instead of one entry per line: only inside quote marks, under the label that says
+  they are the government's words, on *About this job*'s requirements row, and only lines the run read
+  word for word from the shipped file for the group the label names (`tests/helpers/official-quotes.ts`;
+  until the importer ships those lines, none pass anywhere). The same words without the label or the quote
+  marks, on any other screen, or a sentence of DotAmi's own put in quote marks under the label, still fail.
+  The verdict check gets the same treatment for the one requirement line the design allows (group 53200's
+  *"strongly recommended"*), under its label only. The browser sweep now takes out only a catalog citation's
+  own quote before its no-times check, where it used to take out anything in quote marks. Over all 2,122
+  requirement lines of the elements file (the copy of 2026-10-15), 404 hold a time and 1 a verdict phrase as
+  DotAmi's words; drawn on the requirements row with the group's lines read, none is caught, and planted on a
+  plan step, or with nothing read, all 404 are.
+- **The government's job titles, imported** (task 28a). Two files, each pinned by its SHA-256 and checked by
+  `npm run data:check`: OaSIS 2025's "Example Titles" (18,666 titles for the 900 jobs, Employment and Social
+  Development Canada, Open Government Licence – Canada; `lib/engines/oasis/v2026/titles.ts`) and Statistics
+  Canada's NOC 2021 Version 1.0 elements file (each of the 516 job groups' example titles and its "Employment
+  requirements", word for word, as the government's own lines; `lib/engines/noc/v2021/`), under the Statistics
+  Canada Open Licence with its notice ("Adapted from Statistics Canada, …"), the maintainer's call 4 of
+  2026-10-21. Both are listed on `/licences`. Plumbing, with no change on screen yet: they feed *What's closest
+  to your work?* and *About this job*.
+- **The search behind *What's closest to your work?*** (the engine half of task 28b;
+  `lib/engines/oasis/v2026/title-search.ts`), with no screen yet. The person's words are looked for in the
+  government's example titles and the job names (research 28f's rule H: a word matches a title word with the
+  same first five letters, so "plumbing" finds Plumbers); jobs are grouped by how many of the words their titles
+  hold, in the government's code order inside each group, never ranked; each result names the title it
+  matched. DotAmi's own short word list (`lib/engines/oasis/v2026/dotami-word-list.ts`: filler words and
+  business words left out and named, and a few everyday words such as "salon" or "dayhome" pointed at one of a
+  job's own government titles) is the maintainer's to approve line by line, and anything it finds sits in its
+  own last group, said to be DotAmi's. On the 220 test ideas with an expected job, the expected job is in the
+  group shown first for 153 (today's search finds 20), and 4 get no result at all (today 187).
+- **Roads name the jobs they're written for, and Alberta's wage regions are data** (task 25e's phase 2 part,
+  [docs/architecture/research-kit.md](docs/architecture/research-kit.md) § 5.3). Plumbing, with no change on
+  screen yet. *From apprentice to your own shop* says it is written for 72311 Cabinetmakers, and *Starting any
+  business in Alberta* says it is written for no particular job; the road checks refuse a job code the
+  government's list doesn't have. One function gives the roads written for the job a person picked, in the
+  order they were written, and none when none is, without falling back to the general road (for Pick a future's
+  road match, next). The job is still only the person's own pick: nothing picks it from a road. A job-links
+  file holds an entry only for a job a road is written for (today Cabinetmakers), with its industry and place
+  lists left empty until the lists they come from are in DotAmi; every other job gets a line saying so.
+  Alberta's eight economic regions, with Statistics Canada's codes and names as published, are now data for
+  the "Which region are you in?" question, with their source and credit line in the source registry and on
+  /licences; reading the person's answer never works a region out from their area. The industry code list
+  (NAICS) moved to phase 3 with the industry question, as the maintainer decided. Nothing DotAmi keeps, sends or
+  asks changes.
 ### Fixed
 - **Your answer to "Are you buying equipment, a vehicle or tools?" on a future picked on Pick a future is
   kept** (the maintainer's "Yes, fix both", 2026-10-20). Pick a future saves equipment as not said, since it

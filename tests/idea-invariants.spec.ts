@@ -21,6 +21,8 @@ import { SHOWN_WORDS_GAPS } from "./fixtures/ideas/known-gaps";
 import { fakeIdDigits, IDEAS_V1 } from "./fixtures/ideas/v1";
 import { checkRun, reachesTheEnd, sameOutput, type InvariantId } from "./helpers/idea-invariants";
 import { runDigest, runIdea, type IdeaRun } from "./helpers/idea-pipeline";
+import { WAGE_ROW_PLACE, type PublishedWageRow } from "./helpers/number-provenance";
+import { quotedRun } from "./helpers/official-quotes";
 import { findTimeWords, OFFICIAL_TIME_ALLOWANCES, YOUR_DATE_ALLOWANCES } from "./helpers/time-words";
 
 // An Alberta business the corpus expects on road 0, and a cabinetmaker it expects on road 1.
@@ -69,6 +71,68 @@ describe("the harness's checks catch what they guard", () => {
   it("4. a time in DotAmi's words", () => {
     expect(added(road0Idea, "no-time-words", plant("This step takes about 3 weeks."))).toBe(1);
     expect(added(road0Idea, "no-time-words", plant("The fastest way to open."))).toBe(1);
+  });
+
+  // About this job (25h) isn't built yet: these plant its pieces the way the harness will collect them, so
+  // the gate is ready before the panel is (29i, 29k).
+  it("3. a published wage passes on About this job's wage row with its row, and nowhere else", () => {
+    const row: PublishedWageRow = {
+      noc: "72311",
+      regionCode: "ER4830",
+      sourceCode: "EI 2023-24 ER NOC5",
+      level: "economic-region",
+      period: "2023-2024",
+      per: "hour",
+      lowCents: 1_800,
+      medianCents: 2_300,
+      highCents: 3_000,
+    };
+    const wage = "Hourly · low $18.00 · median $23.00 · high $30.00";
+    const onTheRow = `typed › ${WAGE_ROW_PLACE} › figures`;
+    const withRow = (run: IdeaRun) => void (run.typed!.ledger = { ...run.typed!.ledger, publishedWageRows: [row] });
+    // With its row (source code, level, period), read from the wage file: cited.
+    expect(
+      added(road0Idea, "amounts-cited", (run) => {
+        withRow(run);
+        run.pieces.push({ where: onTheRow, text: wage, kind: "dotami", wageRow: row });
+      }),
+    ).toBe(0);
+    // Controls: shown without its row, or put into the money gauge, the wages are uncited (one failure per
+    // place on screen, as the harness counts them).
+    expect(
+      added(road0Idea, "amounts-cited", (run) => {
+        withRow(run);
+        run.pieces.push({ where: onTheRow, text: wage, kind: "dotami" });
+      }),
+    ).toBe(1);
+    expect(
+      added(road0Idea, "amounts-cited", (run) => {
+        withRow(run);
+        run.pieces.push({ where: "typed › gauges › money", text: "$23.00 your numbers (1 line)", kind: "dotami", wageRow: row });
+      }),
+    ).toBe(1);
+  });
+
+  it("4. the government's requirement lines pass under their label, and fail as DotAmi's own words", () => {
+    const label = "The government's words, quoted in full for job group 63210 Hairstylists and barbers:";
+    const line =
+      "Completion of a one- or two-year hairstyling apprenticeship program or completion of a college or other program in hairstyling combined with on-the-job training is usually required.";
+    const where = "typed › about this job › rules";
+    // What the run read from the shipped elements file for the group it shows (28a's import, once 25h shows it).
+    const read = (run: IdeaRun) => void (run.typed!.quotedLines = [{ kind: "noc-employment-requirements", group: "63210", lines: [line] }]);
+    const piece = (at: string, text: string) => (run: IdeaRun) => {
+      read(run);
+      run.pieces.push({ where: at, text, kind: "dotami" });
+    };
+    expect(added(road0Idea, "no-time-words", piece(where, quotedRun(label, [line])))).toBe(0);
+    // Controls: the line in quote marks without its label, and the line as DotAmi's own sentence under it.
+    expect(added(road0Idea, "no-time-words", piece(where, `“${line}”`))).toBe(1);
+    expect(added(road0Idea, "no-time-words", piece(where, `${label} ${line}`))).toBe(1);
+    // Controls (the review of #195): the labelled run on a plan step, a sentence of DotAmi's own in quote marks
+    // under the label on the rules row, and the real line on the rules row when the run read nothing from the file.
+    expect(added(road0Idea, "no-time-words", piece("typed › plan › planted", quotedRun(label, [line])))).toBe(1);
+    expect(added(road0Idea, "no-time-words", piece(where, quotedRun(label, ["Most people finish in two years."])))).toBe(1);
+    expect(added(road0Idea, "no-time-words", (run) => void run.pieces.push({ where, text: quotedRun(label, [line]), kind: "dotami" }))).toBe(1);
   });
 
   it("5. a fork side that never reaches the end of its road", () => {
