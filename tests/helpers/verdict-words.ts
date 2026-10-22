@@ -1,3 +1,5 @@
+import { withoutLabelledQuotes, type QuotedSourceId } from "./official-quotes";
+
 /**
  * The verdict words, in one place (CLAUDE.md: "Information and options, never a verdict"; the app never
  * says "you should", never ranks options by what it thinks matters to the person).
@@ -18,7 +20,9 @@
  * quotes of an official page that a citation carries, shown as that page's words, never as DotAmi's.
  * Each says why it is allowed. tests/verdict-words.spec.ts checks each one is still a quote of a
  * citation in the catalogs (so a stale allowance can't sit here unnoticed), and that no other quote in
- * the catalogs needs one.
+ * the catalogs needs one. An allowance with a `sourceKind` is a line of official text quoted by kind
+ * (the government's requirement lines on About this job), allowed only under that kind's label; the
+ * importer that ships those lines (28a) is where its word-for-word check belongs.
  */
 
 /** Single words that make one of DotAmi's own sentences a verdict (the widest list the words files were checked against). */
@@ -102,6 +106,12 @@ export interface OfficialQuoteAllowance {
   where: string;
   /** Why it may show on a screen. */
   why: string;
+  /**
+   * Set for a line of official text quoted by source kind (tests/helpers/official-quotes.ts), not by a
+   * catalog's citation: then the line is taken out only where it stands in quote marks inside a run that opens
+   * with that kind's label, never on its own in quote marks elsewhere.
+   */
+  sourceKind?: QuotedSourceId;
 }
 
 export const OFFICIAL_QUOTE_ALLOWANCES: readonly OfficialQuoteAllowance[] = [
@@ -115,16 +125,37 @@ export const OFFICIAL_QUOTE_ALLOWANCES: readonly OfficialQuoteAllowance[] = [
     where: "Alberta's Register a business name page, quoted on the apprentice road's Open your own shop step (lib/engines/roads/v2026/apprentice-to-own-shop-ab.ts)",
     why: "The province pointing people to a lawyer, in its own words (its grammar kept as written). It is the opposite of DotAmi choosing for the person, and it is shown as the page's quote.",
   },
+  {
+    // The one line of the 2,122 that `findVerdicts` catches (docs/ui-spec/cockpit/about-this-job.md, "How the
+    // quoted lines pass the screen checks", run on 2026-10-20 over the copy of 2026-10-15). The file ends the line
+    // with a space, which the screen trims.
+    text: "A background combining athletic training and college or university studies is strongly recommended.",
+    where: "NOC 2021 Version 1.0 elements file, group 53200 Athletes, Employment requirements: quoted on About this job's first row (task 25h)",
+    why: "The government's own requirement line for the job group, quoted in full under the label that says it is the government's words. Nothing is reworded or left out of the quote, and DotAmi says nothing about it.",
+    sourceKind: "noc-employment-requirements",
+  },
 ];
+
+/** The allowances quoted by source kind, by kind, as normalised words. */
+const bySourceKind = new Map<QuotedSourceId, Set<string>>();
+for (const allowance of OFFICIAL_QUOTE_ALLOWANCES) {
+  if (!allowance.sourceKind) continue;
+  const words = bySourceKind.get(allowance.sourceKind) ?? new Set<string>();
+  words.add(normalise(allowance.text).trim());
+  bySourceKind.set(allowance.sourceKind, words);
+}
 
 /**
  * The verdict phrases in a text, once the allowed official quotes are taken out of it. An allowance is
  * taken out only where it stands inside quote marks, as a source's quote is shown; the same words written
- * as a line of DotAmi's own, unquoted, are still caught.
+ * as a line of DotAmi's own, unquoted, are still caught. An allowance with a source kind is taken out only
+ * inside that kind's labelled run (tests/helpers/official-quotes.ts); every other line of the run is still
+ * read, so the label lets nothing else through.
  */
 export function findVerdicts(text: string): string[] {
-  let rest = normalise(text);
+  let rest = withoutLabelledQuotes(text, (quote) => bySourceKind.get(quote.kind)?.has(quote.text.trim()) ?? false);
   for (const allowance of OFFICIAL_QUOTE_ALLOWANCES) {
+    if (allowance.sourceKind) continue;
     const words = normalise(allowance.text);
     for (const [open, close] of QUOTE_MARKS) rest = rest.split(`${open}${words}${close}`).join(" ");
   }

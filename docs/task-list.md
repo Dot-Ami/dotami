@@ -488,12 +488,15 @@ placed in phase 3.
   - The test gate learns these endings ([14j]'s harness, reopened for phase 2):
     - [ ] 29h: the harness picks a job as a recorded click and accepts the honest "not written yet" ending;
       a job the person didn't pick still fails
-    - [ ] 29i: a number kind for a published job fact (a wage with its source row); a wage without its row
-      fails, and a wage is never added into a total
+    - [x] 29i: a number kind for a published job fact (a wage with its source row); a wage without its row
+      fails, and a wage is never added into a total (`tests/helpers/number-provenance.ts`; About this job's
+      pieces carry their row when 25h adds them)
     - [ ] 29j: a federal-only road counted honestly, the browser sweep reading any road, and a written way
       for a new screen to get its clutter budget
-    - [ ] 29k: quoted official requirement text, shown word for word as a labelled quote, passes the
+    - [x] 29k: quoted official requirement text, shown word for word as a labelled quote, passes the
       no-times check by one rule (the maintainer's ruling), while DotAmi's own words still fail on any time
+      (`tests/helpers/official-quotes.ts`; the verdict check too, for group 53200's line only; 28a's importer
+      still runs the verdict check over every shipped line, as the design says)
 - 🔄 **[14m] A clean data pipeline you can see (S2.5.31).** Every government file DotAmi imports is checked
   offline on every pull request, so a changed file can't slip in unnoticed.
   - [x] 31a (phase 2): `npm run data:check`, every importer's check run offline inside `ci:quality`; it

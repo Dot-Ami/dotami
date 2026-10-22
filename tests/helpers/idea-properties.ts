@@ -444,6 +444,8 @@ function ledgerOf(input: RoadEvaluationInput): AmountLedger {
     ],
     quotedThresholds: quotedOfficialAmounts(),
     addable: [...roadFees, ...quotes],
+    // No generated screen shows a published wage (About this job isn't part of road evaluation or the plan).
+    publishedWageRows: [],
   };
 }
 

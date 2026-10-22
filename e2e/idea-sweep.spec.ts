@@ -23,8 +23,10 @@
  *
  * - no verdict phrase (tests/helpers/verdict-words.ts `findVerdicts`, as e2e/no-verdict.spec.ts reads);
  * - no time words (tests/helpers/time-words.ts `findTimeWords`, with its allowances) in what DotAmi writes:
- *   a source's own words, drawn in quote marks (the plan's citation quotes, which the harness tags
- *   `official-quote` and never reads as DotAmi's), are taken out first; a known gap in a words file is let
+ *   a source's own words, drawn in quote marks (the plan's citation quotes, word for word as a catalog's
+ *   citation carries them, which the harness tags `official-quote` and never reads as DotAmi's), are taken
+ *   out first, and the government's requirement lines only under their label (tests/helpers/
+ *   official-quotes.ts); anything else in quote marks is read as DotAmi's; a known gap in a words file is let
  *   through here only while it is listed in tests/fixtures/ideas/known-gaps.ts (none since 2026-10-20);
  * - the clutter measurer (e2e/clutter-measure.ts, the same code as e2e/clutter-budget.spec.ts): no drawn block
  *   without a region mark on any screen; and where the screen's state is the one e2e/budgets.ts measures (the
@@ -39,6 +41,8 @@
 import { expect, test, type Page } from "@playwright/test";
 
 import { COCKPIT_FOLDS_KEY } from "../lib/cockpit/folds";
+import { allCatalogCitations } from "../lib/engines/all-citations";
+import { toolCheckQuotes } from "../lib/engines/shared/citation-check";
 import { generalRoadV2026, roadApprenticeToOwnShopAB } from "../lib/engines/roads/v2026";
 import { parseIntentFallback } from "../lib/journey/intent-fallback";
 import { PROVINCES, type Province } from "../lib/scenarios/types";
@@ -194,14 +198,20 @@ function dotamiOnly(text: string, s: Sweep, statements: readonly string[]): stri
   return rest;
 }
 
+/** Every quote a tool found on an official page, from every catalog, as a screen's text reads it. */
+const CITATION_QUOTES = new Set(allCatalogCitations().flatMap(({ citation }) => toolCheckQuotes(citation).map((q) => normaliseSpaces(q).trim())));
+
 /**
- * Without the words a screen draws in quote marks: a source's own words beside a step or a cost line (the
- * plan's citation quotes, with the CRA's "within 29 days" and the trade's "1360 hours"), which the harness
- * collects as `official-quote` (tests/helpers/idea-pipeline.ts `addSource`) and never holds to the no-times
- * check. For the time check only: the verdict check keeps its own short list of quotes allowed to carry one.
- * A sentence of DotAmi's own written inside quote marks is skipped here too; the words files' scan reads it.
+ * Without a source's own words drawn in quote marks beside a step or a cost line (the plan's citation quotes,
+ * with the CRA's "within 29 days" and the trade's "1360 hours"), which the harness collects as
+ * `official-quote` (tests/helpers/idea-pipeline.ts `addSource`) and never holds to the no-times check. Only a
+ * quote a catalog's citation carries, word for word, is taken out (since 29k: before, anything in quote marks
+ * was). The government's requirement lines on About this job are taken out by `findTimeWords` itself, by
+ * source kind, only under their label (tests/helpers/official-quotes.ts). Anything else in quote marks is read
+ * as DotAmi's words. For the time check only: the verdict check keeps its own short list of quotes allowed to
+ * carry one.
  */
-const withoutQuotedWords = (text: string) => text.replace(/“[^”]*”/g, PIECE);
+const withoutCitationQuotes = (text: string) => text.replace(/“([^”]*)”/g, (whole, inner: string) => (CITATION_QUOTES.has(inner.trim()) ? PIECE : whole));
 
 /** The budget for this screen and the one it is held to, with Windows' extra where Chromium there counts more. */
 function budgetFor(screen: ScreenId): Clutter | null {
@@ -220,7 +230,7 @@ async function read(s: Sweep, where: string, held: ScreenId | null = null) {
   const ours = dotamiOnly(text, s, await theirStatements(s.page));
   const at = `${s.idea.id} › ${where}`;
   for (const found of findVerdicts(ours)) s.findings.push({ where: at, what: `verdict: ${found}` });
-  for (const found of findTimeWords(withoutQuotedWords(ours))) s.findings.push({ where: at, what: `time: ${found}` });
+  for (const found of findTimeWords(withoutCitationQuotes(ours))) s.findings.push({ where: at, what: `time: ${found}` });
 
   await s.page.evaluate(async () => {
     await document.fonts.ready;

@@ -34,6 +34,20 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - **`npm run data:check`**, a step of `npm run ci:quality` and of CI on every pull request: every importer's
   government files checked against their pins and its generated module rebuilt and compared, offline. A changed
   byte in a government file, or a hand edit to a generated module, now fails the pull request.
+- **Tests: the gate knows a published wage and a quoted government requirement** (29i, 29k; for *About this
+  job*, before it is built). No change on screen. A wage the government publishes for a job group is now a kind
+  of number the "every number cited or the person's own" check accepts, but only on *About this job*'s wage row,
+  only beside the row it comes from, and only when that row carries its source code, the geography level the
+  code gives, and its reference period (`tests/helpers/number-provenance.ts`); a wage is never one of the lines
+  a total adds up, so a wage put into a cost, a total or a gauge fails. The government's "Employment
+  requirements" lines (*"a one- or two-year hairstyling apprenticeship"*) pass the no-times check by one rule
+  for their kind of source instead of one entry per line: only inside quote marks, under the label that says
+  they are the government's words (`tests/helpers/official-quotes.ts`). The same words without the label or
+  the quote marks are DotAmi's own and still fail. The verdict check gets the same treatment for the one
+  requirement line the design allows (group 53200's *"strongly recommended"*), under its label only. The
+  browser sweep now takes out only a catalog citation's own quote before its no-times check, where it used to
+  take out anything in quote marks. Over all 2,122 requirement lines of the elements file (the copy of
+  2026-10-15), 404 hold a time and 1 a verdict phrase as DotAmi's words, and none under the label.
 ### Fixed
 - **Your answer to "Are you buying equipment, a vehicle or tools?" on a future picked on Pick a future is
   kept** (the maintainer's "Yes, fix both", 2026-10-20). Pick a future saves equipment as not said, since it
