@@ -45,7 +45,7 @@ from the box as the intake's Year 3 box and the *I'd incorporate at* box save th
 `targetRevenueY3` and takes **only the third-year target** off the not-said list. Today one id, `sales-targets`,
 covers both targets (`lib/scenarios/types.ts:95`), so the build splits it into `sales-target-year-1` and
 `sales-target-year-3` (ids are forever: a saved `sales-targets` is read as both, as PR #190 reads `equipment`
-with `withSaid`). The first-year target stays *Not said* on the rail. A number above the save's own cap on a
+with `withSaid`, except a first-year number already kept with Keep; see the end of *Tests the build adds*). The first-year target stays *Not said* on the rail. A number above the save's own cap on a
 sales number ($1,000,000,000, `SALES_DOLLARS_MAX` in `lib/db/scenario-state-json.ts`) is refused in the box
 with *DotAmi keeps numbers up to $1,000,000,000. Write a smaller one.*, as is a what-if above it (added after
 the review of PR #198: the save refused it, so every later save of the idea failed).
@@ -148,7 +148,15 @@ off the not-said list, `sales-target-year-3` is still on it, and the rail's rows
 and *Target Y3* as *Not said*; run against today's `keepWhatIf`, it fails (the year-1 target stays not said). A
 browser test keeps a what-if on a picked future, reloads, and reads the same amount on the rail and on *Your
 plan*. A saved `sales-targets` (from before the split) is read as both ids, so an old future still reads *Not
-said* for both until each is given.
+said* for both until each is given, with one exception (the maintainer, 2026-10-22: "if there are any bugs,
+theey need to be fixed"): where **Keep** was already pressed before the fix, the old future holds
+`sales-targets` with a first-year number above 0, and it reads exactly as a **Keep** after the fix
+(`sales-target-year-1` said, `sales-target-year-3` not). Before the split a first-year number above 0 reached a
+list holding `sales-targets` only through **Keep**: Pick a future saved 0, **Take back** saved 0, and the intake
+makes a new idea with no list. So the number is one the person told DotAmi, never one DotAmi derived. It is
+done where the list is read (`lib/scenarios/not-said.ts` `cleanNotSaid`, given the idea's `targetRevenueY1`),
+not by a data update. Tests: `tests/cockpit-told.spec.ts` and `tests/db-roundtrip.spec.ts` build the old
+future as the old code saved it and compare it with one kept after the fix.
 
 ## Not in this version
 

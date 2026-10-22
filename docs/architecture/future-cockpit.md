@@ -231,7 +231,8 @@ each choice that differs from the table above says why.
     asks all three) clears it. *(2026-10-21: `sales-targets` was split into `sales-target-year-1` and
     `sales-target-year-3`, so each year comes off the list on its own: Keep on the what-if gives the first,
     the cockpit's "Your third-year sales estimate" the third, and the rail and the playbook read each year's
-    own id. A saved `sales-targets` is read as both; `lib/scenarios/not-said.ts`,
+    own id. A saved `sales-targets` is read as both, except a first-year number above 0 beside it, which only
+    the old Keep could put there, so that year reads as said (the maintainer, 2026-10-22); `lib/scenarios/not-said.ts`,
     [ui-spec/cockpit/incorporating-estimate.md](../ui-spec/cockpit/incorporating-estimate.md).)*
 
   The job closest to the person's work (decision 5) comes with the OaSIS import; *Pick a future* doesn't
@@ -1738,7 +1739,7 @@ column. The occupation code's shape waits on the OaSIS import (§ 13). *(2026-10
 `sales-targets`), so nothing reads them as said; § 1, The way in as built. Since 2026-10-20 an answer to
 the equipment question in the cockpit takes `equipment` off the list, and taking it back puts it on again.
 Since 2026-10-21 the sales targets have one id per year, `sales-target-year-1` and `sales-target-year-3`
-(`sales-targets` read as both): Keep on the what-if and the cockpit's third-year estimate box each take their
+(`sales-targets` read as both, except a first-year number the old Keep kept, read as said): Keep on the what-if and the cockpit's third-year estimate box each take their
 own year off the list, and taking the number back puts it on again.)* *(2026-10-12: the skills pull
 request adds the job picked, `Venture.occupationCode` and `occupationPickedAt`; § 6, Skills as built.)*
 

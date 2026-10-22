@@ -346,7 +346,7 @@ describe("a future picked on Pick a future: the third-year sales estimate, so In
     // The list Pick a future saved until 2026-10-21, as the data file still holds it for those futures.
     const before = ["venture-type", "equipment", LEGACY_SALES_TARGETS];
     const both = ["venture-type", "equipment", "sales-target-year-1", "sales-target-year-3"];
-    expect(cleanNotSaid(before)).toEqual(both);
+    expect(cleanNotSaid(before, 0)).toEqual(both);
     const old = parseScenarioInput(JSON.parse(JSON.stringify({ scenario: { ...picked(), profile: { ...picked().profile, notSaid: before } } })))!;
     expect(old.profile.notSaid).toEqual(both);
     expect(profileRows(old.profile).slice(2).map((r) => r.value)).toEqual(["Not said", "Not said"]);
@@ -390,6 +390,67 @@ describe("a future picked on Pick a future: Keep on the what-if", () => {
     const kept = keepWhatIf(picked(), 45_000);
     expect(withoutIdeaAnswer(kept, "idea:sales-year-1")!).toEqual(picked());
     expect(profileRows(withoutIdeaAnswer(kept, "idea:sales-year-1")!.profile).slice(2).map((r) => r.value)).toEqual(["Not said", "Not said"]);
+  });
+
+  // The maintainer, 2026-10-22, on futures where Keep was pressed before this fix: "if there are any bugs,
+  // theey need to be fixed". Built exactly as the code before the fix (main at b118ade) built them: Pick a
+  // future's list with one id for both targets (lib/front-door/start-future.ts, NOT_SAID_FIELDS then
+  // ["venture-type", "equipment", "sales-targets"]), and the old Keep (lib/cockpit/told.ts:361-363), which set
+  // the first-year sales and left the list as it was.
+  describe("a future where Keep was pressed before the fix", () => {
+    const OLD_LIST = ["venture-type", "equipment", LEGACY_SALES_TARGETS];
+    const oldPicked = (): Scenario => ({ ...picked(), profile: { ...picked().profile, notSaid: OLD_LIST } as unknown as Scenario["profile"] });
+    const oldKeep = (scenario: Scenario, dollars: number): Scenario => ({ ...scenario, profile: { ...scenario.profile, targetRevenueY1: dollars } });
+    const keptBefore = () => oldKeep(oldPicked(), 45_000);
+    const keptAfter = () => keepWhatIf(picked(), 45_000);
+    const asked = (scenario: Scenario) => notToldYet(on(scenario), evaluateRoad(on(scenario))).map((r) => r.id);
+    const plan = (scenario: Scenario) => renderPlaybookMarkdown(buildPlaybookSkeleton(cfeCatalogV2026.nodes, scenario));
+    const save = (scenario: Scenario) => parseScenarioInput(JSON.parse(JSON.stringify({ scenario })))!;
+
+    it("reads the kept number as told on the rail, the plan, the told list and Not told yet, exactly as a Keep after the fix", () => {
+      const before = keptBefore();
+      const after = keptAfter();
+      // As it opens from a save's body: the same profile a Keep after the fix saves.
+      expect(save(before).profile).toEqual(save(after).profile);
+      expect(save(before).profile.notSaid).toEqual(["venture-type", "equipment", "sales-target-year-3"]);
+      // And read as it is, with no save in between (a tab still holding it): the same screens.
+      expect(profileRows(before.profile)).toEqual(profileRows(after.profile));
+      expect(profileRows(before.profile).slice(2)).toEqual([
+        { label: "Target Y1", value: "$45,000" },
+        { label: "Target Y3", value: "Not said" },
+      ]);
+      expect(plan(before)).toEqual(plan(after));
+      expect(plan(before)).toContain("- **Target revenue Y1 (CAD):** 45,000");
+      expect(plan(before)).toContain("- **Target revenue Y3 (CAD):** not said");
+      expect(asked(before)).toEqual(asked(after));
+      expect(asked(before)).toContain("sales-year-3");
+      expect(evaluateRoad(on(before)).answers).toEqual(evaluateRoad(on(after)).answers);
+    });
+
+    it("taken back, the first-year sales are not said again; the number alone never makes anything said", () => {
+      const back = withoutIdeaAnswer(keptBefore(), "idea:sales-year-1")!;
+      expect(back.profile.targetRevenueY1).toBe(0);
+      expect(profileRows(back.profile).slice(2).map((r) => r.value)).toEqual(["Not said", "Not said"]);
+      expect(save(back).profile).toEqual(save(picked()).profile);
+      // Only a first-year number above 0 on the old list reads as told: the old list with 0 is both years not
+      // said, and the third year is never read from the first.
+      expect(cleanNotSaid(OLD_LIST, 0)).toEqual(["venture-type", "equipment", "sales-target-year-1", "sales-target-year-3"]);
+      expect(cleanNotSaid(OLD_LIST, 45_000)).toEqual(["venture-type", "equipment", "sales-target-year-3"]);
+      // The new ids are read as written, whatever the number: a list naming the first year keeps it not said.
+      expect(cleanNotSaid(["sales-target-year-1", "sales-target-year-3"], 45_000)).toEqual(["sales-target-year-1", "sales-target-year-3"]);
+    });
+
+    it("an idea from the intake is unchanged: it has no list, and its typed numbers read as before", () => {
+      const intake = inventedIdea({ targetRevenueY1: 45_000, targetRevenueY3: 90_000 });
+      expect(intake.profile.notSaid).toBeUndefined();
+      expect(save(intake).profile.notSaid).toBeUndefined();
+      expect(profileRows(intake.profile).slice(2)).toEqual([
+        { label: "Target Y1", value: "$45,000" },
+        { label: "Target Y3", value: "$90,000" },
+      ]);
+      expect(cleanNotSaid(undefined, 45_000)).toEqual([]);
+      expect(cleanNotSaid([], 45_000)).toEqual([]);
+    });
   });
 });
 

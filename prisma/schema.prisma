@@ -161,7 +161,7 @@ model Venture {
   /// The idea's answers it was saved without, because nobody was asked (a future picked on *Pick a
   /// future*, 2026-10-12): a JSON list of lib/scenarios/types.ts NOT_SAID_FIELDS ("venture-type",
   /// "equipment", "sales-target-year-1", "sales-target-year-3"; until 2026-10-21 one "sales-targets",
-  /// still read as both). Their columns keep the intake's starting values; this list stops
+  /// still read as both, except a first-year target above 0 kept by the old Keep, read as said). Their columns keep the intake's starting values; this list stops
   /// anything saying the person told DotAmi them. [] for every other idea; a save with no list clears it.
   notSaid          Json             @default("[]")
   /// The job the person picked as closest to the work they'd do themselves, an OaSIS profile code ("72311.00"),

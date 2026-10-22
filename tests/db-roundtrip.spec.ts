@@ -16,7 +16,7 @@ import path from "node:path";
 import type { PrismaClient } from "@prisma/client";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
-import { answerEquipment } from "@/lib/cockpit/told";
+import { answerEquipment, keepWhatIf } from "@/lib/cockpit/told";
 import { createDatabaseClient } from "@/lib/db/client";
 import { ensureVentureFromScenario } from "@/lib/db/ensure-venture-from-scenario";
 import { toStringList } from "@/lib/db/json-list";
@@ -115,6 +115,48 @@ describe("database round trip (SQLite)", () => {
     const back = (await loadVentureScenarioById(prisma, ventureId))!;
     expect(back.profile.capitalPurchasePlanned).toBeUndefined();
     expect(back.profile).toEqual(opened.profile);
+  });
+
+  // The maintainer, 2026-10-22: a picked future where Keep was pressed before the fix to Keep must read right
+  // too. Its row is written here exactly as the code before the fix (main at b118ade) wrote it: Pick a
+  // future's old list, with one id for both targets, and the old Keep (lib/cockpit/told.ts:361-363 there),
+  // which set the first-year sales and left the list; saved by ensureVentureFromScenario, which this fix
+  // doesn't change, and the old save route's parser kept "sales-targets" as it was.
+  it("a picked future kept before the fix to Keep reads the kept number as told, and Take back makes it not said", async () => {
+    const picked = scenarioForPickedFuture({ road: generalRoadV2026, place: "CA-AB", name: "" }, `picked-${randomUUID()}`);
+    const oldProfile = { ...picked.profile, notSaid: ["venture-type", "equipment", "sales-targets"], targetRevenueY1: 45_000 };
+    const { ventureId } = await ensureVentureFromScenario(
+      prisma,
+      { ...picked, profile: oldProfile as unknown as Scenario["profile"] },
+      firstSaveForPickedFuture(generalRoadV2026, null),
+    );
+    const row = await prisma.venture.findUniqueOrThrow({ where: { id: ventureId } });
+    expect({ notSaid: row.notSaid, targetRevenueY1: row.targetRevenueY1 }).toEqual({
+      notSaid: ["venture-type", "equipment", "sales-targets"],
+      targetRevenueY1: 45_000,
+    });
+
+    // A future kept after the fix, saved the cockpit's way, to compare with.
+    const now = scenarioForPickedFuture({ road: generalRoadV2026, place: "CA-AB", name: "" }, `picked-${randomUUID()}`);
+    const save = async (scenario: Scenario) => {
+      const parsed = parseScenarioInput(JSON.parse(JSON.stringify({ scenario })));
+      expect(parsed).not.toBeNull();
+      return ensureVentureFromScenario(prisma, parsed!, firstSaveForPickedFuture(generalRoadV2026, null));
+    };
+    const { ventureId: nowId } = await save(keepWhatIf(now, 45_000));
+
+    const old = (await loadVentureScenarioById(prisma, ventureId))!;
+    const kept = (await loadVentureScenarioById(prisma, nowId))!;
+    expect(old.profile.notSaid).toEqual(["venture-type", "equipment", "sales-target-year-3"]);
+    expect(old.profile).toEqual(kept.profile);
+    // Read right without a data update: the row is as it was until the idea's next save.
+    expect((await prisma.venture.findUniqueOrThrow({ where: { id: ventureId } })).notSaid).toEqual(["venture-type", "equipment", "sales-targets"]);
+
+    // Taken back on the told list: not said again, exactly as the future was picked.
+    await save(withoutIdeaAnswer(old, "idea:sales-year-1")!);
+    const back = (await loadVentureScenarioById(prisma, ventureId))!;
+    expect(back.profile.targetRevenueY1).toBe(0);
+    expect(back.profile.notSaid).toEqual(["venture-type", "equipment", "sales-target-year-1", "sales-target-year-3"]);
   });
 
   it("saving the same scenario twice updates it instead of adding a second row", async () => {

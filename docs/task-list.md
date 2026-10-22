@@ -529,7 +529,7 @@ placed in phase 3.
     asks for "Your third-year sales estimate" (before "I'd incorporate at"), the step's panel holds that box
     above the "I'd incorporate at" box, and taking the estimate back puts the future as it was picked; the
     not-said id `sales-targets` split into `sales-target-year-1` and `sales-target-year-3`, an old saved
-    `sales-targets` read as both (234 of the 234 test ideas picked on the general road can now light it;
+    `sales-targets` read as both, except a first-year number already kept with Keep, read as said (234 of the 234 test ideas picked on the general road can now light it;
     0 before). The same pull request fixes the what-if **Keep** bug (the maintainer's call of 2026-10-21):
     **Keep** now also marks the first-year target as said, so the rail and the plan show the number the road
     reads, and the third-year target stays "Not said". On an intake idea the same row asks a blank Year 3, and

@@ -67,7 +67,11 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   said* for it. Now Keep also marks the first-year target as said: the rail, *Your plan* and the export show
   the kept number, and the third-year target stays *Not said* until you give it. To do this, the one
   "not said" mark both sales targets shared was split into one per year (`lib/scenarios/not-said.ts`); a future
-  picked before this change still reads both years as not said.
+  picked before this change still reads both years as not said. **Futures saved before this change where you
+  had already pressed Keep** (the maintainer, 2026-10-22: "if there are any bugs, theey need to be fixed") now
+  read right too: the rail, *Your plan*, its export and *Not told yet* show the kept first-year number as told,
+  exactly as after a Keep today, and taking it back makes it *Not said* again. This is how what is saved is
+  read; nothing in the data file is rewritten (the old mark is replaced only when the idea is next saved).
 
 ### Changed
 - **No span of time on the front door or Your destination** (the maintainer's pick of 2026-10-20, "Reword

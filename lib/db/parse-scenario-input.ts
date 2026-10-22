@@ -72,7 +72,8 @@ function parseProfile(raw: unknown): VentureProfile | null {
     ? (p.stage as VentureStage)
     : "idea";
   // The answers a picked future was saved without (2026-10-12). No list is none: the intake asks them all.
-  const notSaid = cleanNotSaid(p.notSaid);
+  // Read with the first-year sales kept below, so an old "sales-targets" reads as Keep left it (not-said.ts).
+  const notSaid = cleanNotSaid(p.notSaid, Math.round(p.targetRevenueY1));
 
   return {
     name: p.name.trim(),
