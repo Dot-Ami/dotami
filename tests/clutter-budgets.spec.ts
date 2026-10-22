@@ -9,7 +9,7 @@
  */
 import { execFileSync } from "node:child_process";
 import { createHash } from "node:crypto";
-import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
@@ -123,6 +123,32 @@ describe("the clutter budgets (e2e/budgets.ts)", () => {
     // The check sees a first row busier than its screen.
     const busier: ClutterTable = { "futures-area": { phone: { ...BASELINE.futures!.phone!, controls: BASELINE.futures!.phone!.controls + 1 } } };
     expect(looserThan(asWhole, busier)).toEqual([`futures-area phone: controls ${BASELINE.futures!.phone!.controls + 1} > ${BASELINE.futures!.phone!.controls}`]);
+  });
+
+  it("measure every part of Pick a future's three steps, on Pick a future and on the intake page (the PR #202 review)", () => {
+    // The steps' parts as each opens: 2a and 2b, and step 3's three cases (A, a road written for the job; B, no
+    // road written for it; C, the job skipped), on both pages; outside Alberta, Pick a future's step 2.
+    for (const screen of [
+      "futures-area",
+      "futures-region",
+      "futures-outside",
+      "futures-road-written",
+      "futures-road",
+      "futures-road-skipped",
+      "intake-area",
+      "intake-region",
+      "intake-road-written",
+      "intake-road",
+    ]) {
+      expect(ADDED_SCREENS as readonly string[], screen).toContain(screen);
+    }
+    // The intake's case C counts 6 controls on a tablet, over the intake's 5: it gets no row (a row there would
+    // be busier than its screen) and waits on the maintainer, as spec 03 says for a count over the limit.
+    expect(ADDED_SCREENS as readonly string[]).not.toContain("intake-road-skipped");
+    // And the browser gate measures each screen it has a budget for: a row nothing measures would hold nothing.
+    const gate = readFileSync(path.join(process.cwd(), "e2e", "clutter-budget.spec.ts"), "utf8");
+    const measured = new Set([...gate.matchAll(/measureAtEverySize\(page, testInfo, "([\w-]+)"/g)].map((m) => m[1]));
+    expect(SCREENS.filter((s) => !measured.has(s))).toEqual([]);
   });
 
   it("are never above the baseline, and the smallest text never below it", () => {

@@ -527,7 +527,9 @@ placed in phase 3.
       fails, and a wage is never added into a total (`tests/helpers/number-provenance.ts`; About this job's
       pieces carry their row when 25h adds them)
     - [ ] 29j: a federal-only road counted honestly, the browser sweep reading any road, and a written way
-      for a new screen to get its clutter budget
+      for a new screen to get its clutter budget (the written way is in PR #202: `FIRST_MEASURED` in
+      `e2e/budgets.ts`, used for the three steps' parts, 2a, 2b and step 3's cases A, B and C on both pages;
+      the intake's case C counts 6 controls on a tablet, over the intake's 5, and waits on the maintainer)
     - [x] 29k: quoted official requirement text, shown word for word as a labelled quote, passes the
       no-times check by one rule (the maintainer's ruling), while DotAmi's own words still fail on any time
       (`tests/helpers/official-quotes.ts`: only on About this job's requirements row, and only lines the run

@@ -33,11 +33,21 @@ export const ADDED_SCREENS = [
   // Pick a future's three steps (2026-10-22; docs/ui-spec/futures/02-where-you-are.md, 03-road-match.md): step 1
   // is measured as `futures` (the page opens on it); these are the parts after it, on Pick a future and on the
   // intake page (the typed way ends on the same steps).
+  // Step 3 has three cases (03-road-match.md): `futures-road-written` is case A (a road written for the job, under
+  // "Written for your pick of job"), `futures-road` case B (no road written for it), `futures-road-skipped` case C
+  // (the job skipped); on the intake page likewise. The intake's case C isn't here: it counts 6 controls on a
+  // tablet, over the intake's 5, so it waits on the maintainer (the pull request shows the screen; spec 03, "If CI
+  // measures more, the pull request shows the maintainer that screen instead of raising the row").
   "futures-area",
   "futures-region",
   "futures-outside",
+  "futures-road-written",
   "futures-road",
+  "futures-road-skipped",
   "intake-steps",
+  "intake-area",
+  "intake-region",
+  "intake-road-written",
   "intake-road",
 ] as const;
 
@@ -51,8 +61,13 @@ export const ADDED_SCREEN_PART_OF: Record<AddedScreenId, (typeof BASELINE_SCREEN
   "futures-area": "futures",
   "futures-region": "futures",
   "futures-outside": "futures",
+  "futures-road-written": "futures",
   "futures-road": "futures",
+  "futures-road-skipped": "futures",
   "intake-steps": "intake",
+  "intake-area": "intake",
+  "intake-region": "intake",
+  "intake-road-written": "intake",
   "intake-road": "intake",
 };
 
@@ -125,13 +140,24 @@ export const BASELINE: ClutterTable = {
  * job with no written road: the no-road block, About this job's place, the other futures), each on Pick a
  * future after a job pick; and on the intake page, step 1 and step 3 case B, inside the intake's own region with
  * the preview rail put away. Measured on 2026-10-22 (see the pull request for the run).
+ *
+ * The same day (the PR #202 review: only case B had a row), step 3's case A (a road written for the job, under
+ * "Written for your pick of job") and case C (the job skipped) on Pick a future, and the intake page's 2a, 2b
+ * and case A, each at or under its screen's baseline row. The intake's case C has no row: on a tablet it counts
+ * 6 controls (the Not here yet? box and the footer's link both reach the first window), over the intake's 5, so
+ * it is shown to the maintainer instead (see `ADDED_SCREENS`).
  */
 export const FIRST_MEASURED: Partial<Record<AddedScreenId, Partial<Record<WidthId, Clutter>>>> = {
   "futures-area": { phone: m(4, 5, 5, 10.5), tablet: m(4, 5, 5, 10.5), laptop: m(4, 5, 5, 10.5) },
   "futures-region": { phone: m(4, 5, 5, 10.5), tablet: m(4, 5, 5, 10.5), laptop: m(4, 5, 5, 10.5) },
   "futures-outside": { phone: m(4, 4, 5, 10.5), tablet: m(4, 4, 5, 10.5), laptop: m(4, 4, 5, 10.5) },
+  "futures-road-written": { phone: m(6, 5, 6, 10.5), tablet: m(6, 5, 6, 10.5), laptop: m(6, 4, 6, 10.5) },
   "futures-road": { phone: m(6, 3, 6, 10.5), tablet: m(6, 6, 6, 10.5), laptop: m(6, 3, 6, 10.5) },
+  "futures-road-skipped": { phone: m(6, 4, 6, 10.5), tablet: m(6, 7, 6, 10.5), laptop: m(6, 6, 6, 10.5) },
   "intake-steps": { phone: m(3, 5, 5, 10.5), tablet: m(3, 5, 5, 10.5), laptop: m(3, 5, 5, 10.5) },
+  "intake-area": { phone: m(3, 5, 5, 10.5), tablet: m(3, 5, 5, 10.5), laptop: m(3, 5, 5, 10.5) },
+  "intake-region": { phone: m(3, 5, 5, 10.5), tablet: m(3, 5, 5, 10.5), laptop: m(3, 5, 5, 10.5) },
+  "intake-road-written": { phone: m(3, 3, 6, 10.5), tablet: m(3, 4, 6, 10.5), laptop: m(3, 3, 6, 10.5) },
   "intake-road": { phone: m(3, 2, 6, 10.5), tablet: m(3, 5, 6, 10.5), laptop: m(3, 2, 6, 10.5) },
 };
 
@@ -232,8 +258,13 @@ export const BUDGETS: ClutterTable = {
   "futures-area": { phone: m(4, 5, 5, 10.5), tablet: m(4, 5, 5, 10.5), laptop: m(4, 5, 5, 10.5) },
   "futures-region": { phone: m(4, 5, 5, 10.5), tablet: m(4, 5, 5, 10.5), laptop: m(4, 5, 5, 10.5) },
   "futures-outside": { phone: m(4, 4, 5, 10.5), tablet: m(4, 4, 5, 10.5), laptop: m(4, 4, 5, 10.5) },
+  "futures-road-written": { phone: m(6, 5, 6, 10.5), tablet: m(6, 5, 6, 10.5), laptop: m(6, 4, 6, 10.5) },
   "futures-road": { phone: m(6, 3, 6, 10.5), tablet: m(6, 6, 6, 10.5), laptop: m(6, 3, 6, 10.5) },
+  "futures-road-skipped": { phone: m(6, 4, 6, 10.5), tablet: m(6, 7, 6, 10.5), laptop: m(6, 6, 6, 10.5) },
   "intake-steps": { phone: m(3, 5, 5, 10.5), tablet: m(3, 5, 5, 10.5), laptop: m(3, 5, 5, 10.5) },
+  "intake-area": { phone: m(3, 5, 5, 10.5), tablet: m(3, 5, 5, 10.5), laptop: m(3, 5, 5, 10.5) },
+  "intake-region": { phone: m(3, 5, 5, 10.5), tablet: m(3, 5, 5, 10.5), laptop: m(3, 5, 5, 10.5) },
+  "intake-road-written": { phone: m(3, 3, 6, 10.5), tablet: m(3, 4, 6, 10.5), laptop: m(3, 3, 6, 10.5) },
   "intake-road": { phone: m(3, 2, 6, 10.5), tablet: m(3, 5, 6, 10.5), laptop: m(3, 2, 6, 10.5) },
 };
 

@@ -330,6 +330,63 @@ test("the intake's step 1 stays within its clutter budget", async ({ page }, tes
   await measureAtEverySize(page, testInfo, "intake-steps", () => intakeSteps(page));
 });
 
+// Step 3's other two cases (the PR #202 review: only case B had a row): A, a road written for the picked job, with
+// its group "Written for your pick of job"; C, the job skipped, every future in one group.
+test("Pick a future's step 3 for a job with a written road stays within its clutter budget", async ({ page }, testInfo) => {
+  await answerDestination(page);
+  await measureAtEverySize(page, testInfo, "futures-road-written", async () => {
+    await stepOneAnswered(page, CABINETMAKERS);
+    await answerWhereInAlberta(page, "cma-825", "4830");
+    await expect(page.getByRole("heading", { name: pickWords.writtenForJobHeading, level: 2 })).toBeVisible();
+  });
+});
+
+test("Pick a future's step 3 with the job skipped stays within its clutter budget", async ({ page }, testInfo) => {
+  await answerDestination(page);
+  await measureAtEverySize(page, testInfo, "futures-road-skipped", async () => {
+    await load(page, "/futures", (p) => p.getByRole("searchbox", { name: jobStepWords.boxLabel }));
+    await skipTheJob(page);
+  });
+});
+
+// The intake's step 2, each part as it opens (the PR #202 review: neither had a row).
+test("the intake's area question stays within its clutter budget", async ({ page }, testInfo) => {
+  await measureAtEverySize(page, testInfo, "intake-area", async () => {
+    await intakeSteps(page);
+    await pickTheJob(page, CABINETMAKERS);
+    await expect(page.getByRole("combobox", { name: whereStepWords.area.label })).toBeVisible();
+  });
+});
+
+test("the intake's region question stays within its clutter budget", async ({ page }, testInfo) => {
+  await measureAtEverySize(page, testInfo, "intake-region", async () => {
+    await intakeSteps(page);
+    await pickTheJob(page, CABINETMAKERS);
+    await page.getByRole("combobox", { name: whereStepWords.area.label }).selectOption("cma-825");
+    await page.getByRole("button", { name: whereStepWords.area.next, exact: true }).click();
+    await expect(page.getByRole("combobox", { name: whereStepWords.region.label })).toBeVisible();
+  });
+});
+
+test("the intake's step 3 for a job with a written road stays within its clutter budget", async ({ page }, testInfo) => {
+  await measureAtEverySize(page, testInfo, "intake-road-written", async () => {
+    await intakeSteps(page);
+    await pickTheJob(page, CABINETMAKERS);
+    await answerWhereInAlberta(page, "cma-825", "4830");
+    await expect(page.getByRole("heading", { name: pickWords.writtenForJobHeading, level: 2 })).toBeVisible();
+  });
+});
+
+// Waits on the maintainer (2026-10-22): measured on Windows at 3 controls on a phone, 5 on a laptop and 6 on a
+// tablet (← Back, the word mark, both Look inside, the Not here yet? box, the footer's link), over the intake's
+// 5, so it has no row (e2e/budgets.ts, ADDED_SCREENS). Ready to run once the maintainer decides the screen.
+test.fixme("the intake's step 3 with the job skipped stays within its clutter budget", async ({ page }, testInfo) => {
+  await measureAtEverySize(page, testInfo, "intake-road-skipped" as ScreenId, async () => {
+    await intakeSteps(page);
+    await skipTheJob(page);
+  });
+});
+
 test("the intake's step 3 for a job with no written road stays within its clutter budget", async ({ page }, testInfo) => {
   await measureAtEverySize(page, testInfo, "intake-road", async () => {
     await intakeSteps(page);
