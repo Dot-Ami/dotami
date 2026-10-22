@@ -95,6 +95,27 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   /licences; reading the person's answer never works a region out from their area. The industry code list
   (NAICS) moved to phase 3 with the industry question, as the maintainer decided. Nothing DotAmi keeps, sends or
   asks changes.
+- **Outside Alberta, the federal steps that apply everywhere, and your province named** ([14l], tasks 28d and
+  29j; [docs/ui-spec/futures/04-outside-alberta.md](docs/ui-spec/futures/04-outside-alberta.md)). A new road,
+  *The federal steps for any business in Canada* (`road-federal-steps-ca`), is *Starting any business in
+  Alberta* without Alberta: the same map stages and federal *before you open* steps, built from road 0's own
+  parts so the two can't drift apart, less *Register your business name* (all alberta.ca) and the two lines and
+  the links that rest on an Alberta page (WCB Alberta on *Hire first employee*, registering a name on *Service
+  vs. productize*); 13 steps. *Pick a future* lists it only for a person in Canada outside Alberta, first, under
+  *Written for all of Canada*, saying "The federal steps only. Ontario's own steps aren't written yet"; the two
+  Alberta futures sit behind one button, *Show the 2 futures written for Alberta*, and still say "Written for
+  Alberta. You said Ontario." when shown. On that road the cockpit's goal bar and *Your plan* say "Future: The
+  federal steps for any business in Canada · Ontario's own steps aren't written yet", and each step shows its
+  federal sources and the person's own province's, with a line such as "1 source for other provinces isn't
+  shown." where it left one out. The rules and tax cards are unchanged (they still pick Ontario's and British
+  Columbia's own entries), and so is the list of provinces whose rules the catalogs carry (the maintainer's
+  call). *Your destination* now counts the federal road as written for a place outside Alberta ("1 future listed
+  is written for Yukon."). The idea harness and the browser sweep run it for the corpus's 155 business ideas
+  outside Alberta; the known gap "the road drawn isn't written for the idea's place" on Pick a future went from
+  190 ideas to 13 (the ones whose note under *Not here yet?* still opens the Alberta road; a question for the
+  maintainer). The two new screens have clutter budgets of their own, by a written rule: a screen added after
+  the 2026-10-17 baseline starts no looser than the screen it stands beside. Nothing DotAmi keeps changes: a
+  picked future keeps the road's id, as before.
 ### Fixed
 - **Your answer to "Are you buying equipment, a vehicle or tools?" on a future picked on Pick a future is
   kept** (the maintainer's "Yes, fix both", 2026-10-20). Pick a future saves equipment as not said, since it

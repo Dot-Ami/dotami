@@ -9,7 +9,8 @@ Type: a card, a fold button, the goal bar's line, a sources line
 Last updated: 2026-10-20 (designed before it is built, task 28g, for task 28d. The approved plan's phase 2: the
 federal steps that apply everywhere, plus "Written for Alberta" with the person's own province named; full BC
 and Ontario roads come in phase 4. Updated 2026-10-21 for the maintainer's call 2: no region question outside
-Alberta for now; *About this job* shows the province-wide wage figure.)
+Alberta for now; *About this job* shows the province-wide wage figure. Built 2026-10-21, task 28d with 29j: see
+*As built* at the end.)
 
 Mockup: `C:\dotami-wt\designs-phase2\04-outside-alberta.html` (an invented person in Ottawa, corpus idea
 `idea-v1-0004`, picking Bakers).
@@ -154,4 +155,36 @@ under it.
 ## Checked against the rules
 
 Every string in the words block was run through `VERDICT_WORDS`, `findVerdicts` and `findTimeWords` on
-2026-10-20: no finding.
+2026-10-20: no finding. Since 2026-10-21 `tests/road-federal-steps.spec.ts` runs them on every change.
+
+## As built (2026-10-21, task 28d with 29j)
+
+- **The road:** `lib/engines/roads/v2026/federal-steps-ca.ts`, built by `roadFromCfe` from road 0's own parts
+  (`roadZeroParts` in `starting-any-business-ab.ts`), so a change to road 0's federal steps reaches it. The
+  build's rule, as the spec asks: a *before you open* step stays when its sources or its *done when* lines hold a
+  federal (`CA`) page. The step list it ends with (13; road 0 has 14): *Employee/Apprentice baseline*, *Sole Prop
+  activation*, *Voluntary GST registration*, *Mandatory GST registration*, *Incorporating*, *Incorporation for
+  liability/SR&ED*, *Hire first employee*, *Service vs. productize*, *Retained earnings planning*, *SR&ED
+  deepening*, *Look up your permits and licences (BizPaL)*, *A separate bank account for the business, if it has
+  a name other than yours*, *Keep your records from day one*. Left out: *Register your business name, if you use
+  one*, and every *done when* line, cost line and official link resting on an Alberta page (two lines:
+  `dw-start-hire-wcb`, `dw-start-service-name`). Road 0's step and line ids are kept, and its two forks stay the
+  map's own toggles (`forksAreTheMapToggles`).
+- **Sources filtered when drawn**, not in the catalog: the road keeps each step's sources as road 0 has them;
+  the step panel and *Your plan* draw the federal ones and the idea's own province's (`citationsForPlace`) and
+  say *<n> sources for other provinces aren't shown.* On map stages the heading keeps its own words, *Sources for
+  this stage · n*.
+- **Pick a future:** `components/front-door/futures-list.tsx` (step 3's list only). The back link and the
+  no-road block are steps 2 and 3's other tasks (28b, 28c) and are not in this change.
+- **Your destination** counts the federal road for a place outside Alberta: *1 future listed is written for
+  Yukon.* where it said *No future listed is written for Yukon yet …* (the receipt counts roads written for the
+  place or for all of Canada, unchanged).
+- **Not here yet?** still keeps the note and opens road 0 anywhere ([03-road-match.md](./03-road-match.md), "as
+  today"). For 13 corpus ideas outside Alberta that is a road not written for their place, said by the goal bar's
+  *Map drawn: … written for AB; this idea is in …*; whether it should open the federal steps there is asked of
+  the maintainer in the pull request (`tests/fixtures/ideas/known-gaps.ts`).
+- **About this job** outside Alberta (its province-wide wage row, Tradesecrets left out) is task 25h's.
+- **Clutter** (`e2e/budgets.ts`, two new rows by the written way, `ADDED_SCREENS`; measured with Chromium on
+  Windows, phone, tablet, laptop): *Pick a future* in Ontario (`futures-outside-alberta`) 6, 6, 6 regions and
+  5, 7, 5 controls, at or under *Pick a future* in Alberta (6 regions; 5, 7, 6 controls); the cockpit on the
+  federal road (`cockpit-federal`) 7, 8, 8 regions and 17, 29, 27 controls, the same as `cockpit-road-0`.

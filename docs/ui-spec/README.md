@@ -1,6 +1,6 @@
 # UI behavior specs
 
-Last updated: 2026-10-17 (the layout rule and the clutter limit, below; the same day, the cockpit's calm first view and its regions as built, S2.5.30c, and the type scale, S2.5.30d); 2026-06-10
+Last updated: 2026-10-21 (how a new screen gets its clutter limit, task 29j); 2026-10-17 (the layout rule and the clutter limit, below; the same day, the cockpit's calm first view and its regions as built, S2.5.30c, and the type scale, S2.5.30d); 2026-06-10
 
 Per-page catalogs of **what each interactive control does and why** — purpose-first, backend wiring deferred until Phase 5.
 
@@ -68,6 +68,10 @@ lowered can't be raised back later (CI compares with main; locally, with where t
 `origin/main`). A screen over its limit fails the browser
 suite. To add a region, take one away first; a new screen arrives with its own `data-region` marks and its
 own row in `e2e/budgets.ts`. The test saves a screenshot of each screen at each width with its results.
+Since 2026-10-21 (task 29j) a new screen gets its row the written way in `e2e/budgets.ts` (`ADDED_SCREENS`):
+it names the measured screen it is a state or a sibling of, starts no looser than that screen's baseline and
+its limit on main, and has no baseline row of its own (the baseline stays the record of 2026-10-17); from then
+on its limit only goes down, like every other.
 
 The test starts a server of its own, from the suite's build, over a data folder of its own
 (`prisma/e2e-clutter/`, holding only the two demo ventures), so what it measures doesn't depend on what

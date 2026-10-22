@@ -503,9 +503,12 @@ placed in phase 3.
     yet", with *About this job* and the general road; no silent fallback for a new idea; a job with no written
     road saves nothing until a future is opened (the maintainer's call of 2026-10-21; a kind of saved idea with
     no road may come in phase 3 with the career road)
-  - [ ] 28d: outside Alberta, the federal steps that apply everywhere, plus "Written for Alberta" with the
+  - [x] 28d: outside Alberta, the federal steps that apply everywhere, plus "Written for Alberta" with the
     person's own province named; Alberta-only steps and pages left out (full B.C. and Ontario roads come
-    later)
+    later). Built 2026-10-21 (`lib/engines/roads/v2026/federal-steps-ca.ts`, 13 steps; *Pick a future* lists it
+    first outside Alberta, Alberta's two folded; the goal bar, the plan and each step's sources name the
+    province). Open: whether *Not here yet?* should open the federal steps outside Alberta (asked in the pull
+    request)
   - [ ] 28e (phase 3): one career road for any job
   - The test gate learns these endings ([14j]'s harness, reopened for phase 2):
     - [ ] 29h: the harness picks a job as a recorded click and accepts the honest "not written yet" ending;
@@ -513,8 +516,10 @@ placed in phase 3.
     - [x] 29i: a number kind for a published job fact (a wage with its source row); a wage without its row
       fails, and a wage is never added into a total (`tests/helpers/number-provenance.ts`; About this job's
       pieces carry their row when 25h adds them)
-    - [ ] 29j: a federal-only road counted honestly, the browser sweep reading any road, and a written way
-      for a new screen to get its clutter budget
+    - [x] 29j: a federal-only road counted honestly, the browser sweep reading any road, and a written way
+      for a new screen to get its clutter budget (2026-10-21: the corpus's 155 business ideas outside Alberta
+      expect the federal road; the picked way's "road written for the place" gap 190 → 13 ideas; the sweep
+      opens any catalog road and fails on one without a budget; `ADDED_SCREENS` in `e2e/budgets.ts`)
     - [x] 29k: quoted official requirement text, shown word for word as a labelled quote, passes the
       no-times check by one rule (the maintainer's ruling), while DotAmi's own words still fail on any time
       (`tests/helpers/official-quotes.ts`: only on About this job's requirements row, and only lines the run
