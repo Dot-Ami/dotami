@@ -92,23 +92,28 @@ describe("the import can be redone", () => {
 });
 
 /**
- * Requirement lines the screens' verdict check catches, which About this job (task 25h) may show only once each
- * has its official-quote allowance in tests/helpers/verdict-words.ts. The allowance is added with the panel
- * that shows the line, not here: e2e/no-verdict.spec.ts requires every allowance to be seen on a screen, and
- * no screen shows these lines yet (docs/ui-spec/cockpit/about-this-job.md, "How the quoted lines pass").
+ * Requirement lines the screens' verdict check catches when shown as quotes, and the allowance each now has.
+ * About this job (task 25h) may show such a line only with its official-quote allowance in
+ * tests/helpers/verdict-words.ts. Since the test gate's quoted-text rule (#195, 2026-10-21) the one known line
+ * has its allowance bound to the source kind "noc-employment-requirements", so it passes only as a labelled
+ * quote of that file, and e2e/no-verdict.spec.ts doesn't ask to see it on a screen before 25h shows it.
  */
-const LINES_AWAITING_AN_ALLOWANCE = [
+const LINES_NEEDING_AN_ALLOWANCE = [
   ["53200", "A background combining athletic training and college or university studies is strongly recommended."],
 ];
 
 describe("every requirement line against the screens' verdict check, as a quote", () => {
   it("catches only the line known to need an allowance (group 53200 Athletes: “strongly recommended”), so a new one can't come in unseen", () => {
-    // Shown as About this job shows them: each line inside its own quote marks.
-    const allowed = new Set(OFFICIAL_QUOTE_ALLOWANCES.map((a) => a.text));
-    const caught = nocData.requirements.filter(([, line]) => findVerdicts(`“${line}”`).length > 0 && !allowed.has(line));
-    expect(caught).toEqual(LINES_AWAITING_AN_ALLOWANCE);
-    // The line is the government's, word for word, in its group.
-    expect(nocRequirements("53200")).toContain(LINES_AWAITING_AN_ALLOWANCE[0]![1]);
+    // Shown as About this job shows them: each line inside its own quote marks, with no allowance at all.
+    const caught = nocData.requirements.filter(([, line]) => findVerdicts(`“${line}”`).length > 0);
+    const withoutAllowance = caught.filter(([, line]) => !OFFICIAL_QUOTE_ALLOWANCES.some((a) => a.text === line));
+    expect(withoutAllowance).toEqual([]);
+    const known = new Set(LINES_NEEDING_AN_ALLOWANCE.map(([, line]) => line));
+    expect(caught.filter(([, line]) => !known.has(line))).toEqual([]);
+    // The line is the government's, word for word, in its group, and its allowance is bound to this file's kind.
+    expect(nocRequirements("53200")).toContain(LINES_NEEDING_AN_ALLOWANCE[0]![1]);
+    const allowance = OFFICIAL_QUOTE_ALLOWANCES.find((a) => a.text === LINES_NEEDING_AN_ALLOWANCE[0]![1]);
+    expect(allowance?.sourceKind).toBe("noc-employment-requirements");
   });
 });
 
