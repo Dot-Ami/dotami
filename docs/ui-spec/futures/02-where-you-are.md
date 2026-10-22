@@ -14,6 +14,12 @@ Alberta*.)
 
 Mockup: `C:\dotami-wt\designs-phase2\02-where-you-are.html`.
 
+> **Built 2026-10-22 (task 23g).** As designed: 2a and 2b in Alberta, the screen that asks nothing outside it,
+> both answers kept at **Look inside** in `Venture.landscapeArea` / `economicRegion` with their days (migration
+> `20261022000000_where_you_are`), shown on *Your plan*, deleted with the idea. **Next →** moves focus to the
+> next part's drop-down. The `kept` line shows on 2a and 2b. *About this job*'s **Change** comes with task 25h.
+> See [_index.md](./_index.md), *As built, 2026-10-22*.
+
 ## When it is asked
 
 Right after a job is picked in step 1, once, before the futures. **Skip** on step 1 skips this step too: with

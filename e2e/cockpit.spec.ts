@@ -320,17 +320,18 @@ test("skills: road 0's legal requirement on its step, and the government's list 
   // The Skills list: one optional question and a search box.
   const skills = page.getByRole("region", { name: "Skills on this road" });
   await expect(skills.getByText("Pick the job closest to the work you'd do yourself")).toBeVisible();
-  const search = skills.getByRole("searchbox", { name: "Search jobs by name or code" });
+  // The same search as Pick a future's first step (2026-10-22, one picker): the government's example titles.
+  const search = skills.getByRole("searchbox", { name: "The work, in your own words" });
   // The job names searched are the government's, so the licence's line is there before any pick.
   await expect(skills.getByText("Contains information licensed under the Open Government Licence – Canada.")).toBeVisible();
-  // More match than are shown: the screen says so, with the count.
+  // More in a group than are shown: the screen says so, with the count.
   await search.fill("manager");
-  await expect(skills.getByText(/^Showing 10 of \d+ jobs that match\. Type more of the name or the code to narrow it\.$/)).toBeVisible();
-  // Every word typed, each anywhere in the name.
+  await expect(skills.getByText(/^Showing the first 50 of \d+ in this group, in code order\. Add a word to narrow it\.$/).first()).toBeVisible();
+  // Every word typed, grouped by how many of them a job's titles hold.
   await search.fill("restaurant manager");
-  await expect(skills.getByRole("button", { name: "Restaurant and food service managers · 60030.00" })).toBeVisible();
+  await expect(skills.getByRole("button", { name: "Pick Restaurant and food service managers, 60030.00", exact: true })).toBeVisible();
   await search.fill("cabinet");
-  await skills.getByRole("button", { name: "Cabinetmakers · 72311.00" }).click();
+  await skills.getByRole("button", { name: "Pick Cabinetmakers, 72311.00", exact: true }).click();
 
   // The government's list for that job: every row tagged, the licence's line, no rating anywhere.
   await expect(skills.getByText(/^Cabinetmakers · 72311\.00 · picked \d{4}-\d{2}-\d{2}$/)).toBeVisible();
@@ -356,8 +357,8 @@ test("skills: road 0's legal requirement on its step, and the government's list 
 
   // Change it: the search again, another job, and the mark on Numeracy carries over (one id per skill).
   await skills.getByRole("button", { name: "Change", exact: true }).click();
-  await skills.getByRole("searchbox", { name: "Search jobs by name or code" }).fill("72310");
-  await skills.getByRole("button", { name: "Carpenters · 72310.00" }).click();
+  await skills.getByRole("searchbox", { name: "The work, in your own words" }).fill("72310");
+  await skills.getByRole("button", { name: "Pick Carpenters, 72310.00", exact: true }).click();
   await expect(skills.getByText(/^Carpenters · 72310\.00 · picked /)).toBeVisible();
   await expect(gauge(page, "Skills")).toContainText(/your pick of job: 1 have · 0 learning · 0 not yet, of \d+ listed/);
 

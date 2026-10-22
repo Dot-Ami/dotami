@@ -29,6 +29,7 @@ import { waitForReact } from "../tests/helpers/react-ready";
 import { findVerdicts } from "../tests/helpers/verdict-words";
 
 import { lookCloser, showLegend, showRail, showRoadAhead, showWhatIfBar } from "./cockpit-calm";
+import { openTheMapFromTheIntake, skipTheJob } from "./three-steps";
 
 const GENERAL = generalRoadV2026.label;
 const APPRENTICE = roadApprenticeToOwnShopAB.label;
@@ -147,6 +148,8 @@ test("the whole journey: front door → destination → pick a future → the co
   // ---- Pick a future: both written futures, in the order written, never ranked.
   await page.getByRole("link", { name: "Pick a future →" }).click();
   await expect(page).toHaveURL(/\/futures$/);
+  // Pick a future opens on its first step since 2026-10-22: skipped, every future is listed with no job to match.
+  await skipTheJob(page);
   const cards = page.getByRole("list", { name: "Written futures" }).getByRole("listitem");
   await expect(cards.getByRole("heading", { level: 2 })).toHaveText([GENERAL, APPRENTICE]);
   await expect(page.getByText("In the order they were written, not ranked. More futures are being written.")).toBeVisible();
@@ -343,7 +346,7 @@ test("the other way in: \"I already have an idea\" → the intake → the cockpi
   await expect(page.getByRole("heading", { name: /Did we get this/ })).toBeVisible();
   await button(page, "Looks right →").click();
   await page.getByText("Current employment", { exact: true }).locator("xpath=following-sibling::select").selectOption("self-employed");
-  await button(page, "Open my map →").click();
+  await openTheMapFromTheIntake(page);
 
   // Road 0, drawn whole: its steps, counted from the road's own data, and the idea's sentence on top, dated.
   // (The intake opens the cockpit on the tab's own idea, so the address carries no idea id.)

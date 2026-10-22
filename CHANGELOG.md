@@ -95,6 +95,26 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   /licences; reading the person's answer never works a region out from their area. The industry code list
   (NAICS) moved to phase 3 with the industry question, as the maintainer decided. Nothing DotAmi keeps, sends or
   asks changes.
+- **Pick a future asks three things before any road is drawn: what's closest to your work, where you are, and
+  which future** ([14l] tasks 28b and 29h, [14g] task 23g; docs/ui-spec/futures/01, 02 and 03). *What's
+  closest to your work?* searches the government's example job titles for your own words and lists the jobs that
+  hold them, grouped by how many of your words each job's titles hold, in the government's code order inside
+  each group, with jobs found only through DotAmi's own word list in a last group of their own; nothing is
+  picked until you click a job, and *Skip this question* is always there. In Alberta, *Where you are* then asks
+  which area you're in (Calgary, Edmonton, Lethbridge, Red Deer, somewhere else in Alberta, or I don't know), and
+  then which of Alberta's eight economic regions, listed as Statistics Canada publishes them: the region is never
+  worked out from the area. Outside Alberta that step asks nothing and says why. The futures then list the road
+  written for your pick of job first, under its own heading; for a job no road is written for, the step says
+  so (*No road is written for Barbers (63210.02) yet.*), holds the place *About this job* fills in its own pull
+  request, and lists the general road, saying it isn't written for that job; nothing is saved until you open a
+  future. The typed way, *I already have an idea*, now ends on the same three steps on the intake page in place
+  of **Open my map** (the maintainer's call 1 of 2026-10-21), so a typed idea is saved on the road the person
+  opened. The cockpit's **Pick a job** runs the same search. The words you type are searched on DotAmi's own
+  server on your computer and never kept; the job, the area and the region are kept with the idea, each with
+  its day, only when you open a future (four new optional columns on the idea, through a migration that adds
+  them and changes nothing else), shown on *Your plan*, and deleted with the idea. The idea harness plays the
+  person's job pick as a recorded click and accepts the honest "not written yet" ending, and the browser idea
+  sweep plays the three steps.
 ### Fixed
 - **Your answer to "Are you buying equipment, a vehicle or tools?" on a future picked on Pick a future is
   kept** (the maintainer's "Yes, fix both", 2026-10-20). Pick a future saves equipment as not said, since it

@@ -16,6 +16,11 @@ question outside Alberta.)
 Mockup: `C:\dotami-wt\designs-phase2\03-road-match.html` (a job with no road; a smaller frame below shows a job
 with one).
 
+> **Built 2026-10-22, in part (tasks 28b, 29h).** Case A, case C and the step on the intake page as designed.
+> Case B as designed except *About this job*'s rows: a marked place holds them until task 25h's pull request
+> fills it (never a silent fallback). The goal bar's lines (*After Look inside*) are task 28c's. See
+> [_index.md](./_index.md), *As built, 2026-10-22*.
+
 ## The rule
 
 A road whose `codes.occupations` (task 25e) holds the picked job's 5-digit NOC code comes first, under its own

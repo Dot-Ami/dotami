@@ -16,7 +16,18 @@ import { pathToFileURL } from "node:url";
 
 import { describe, expect, it } from "vitest";
 
-import { BASELINE, BUDGETS, SCREENS, WIDTHS, WINDOWS_EXTRA, type ClutterTable } from "../e2e/budgets";
+import {
+  ADDED_SCREEN_PART_OF,
+  ADDED_SCREENS,
+  BASELINE,
+  BASELINE_SCREENS,
+  BUDGETS,
+  FIRST_ROWS,
+  SCREENS,
+  WIDTHS,
+  WINDOWS_EXTRA,
+  type ClutterTable,
+} from "../e2e/budgets";
 
 /**
  * The baseline as recorded on 2026-10-17. The baseline is a record, so it never changes: this fails on any edit
@@ -76,27 +87,42 @@ function mainCommit(): string | null {
 }
 
 /** `e2e/budgets.ts` as it is at `commit`, loaded from a copy; null when that commit has no such file. */
-async function budgetsAt(commit: string): Promise<{ BASELINE: ClutterTable; BUDGETS: ClutterTable } | null> {
+async function budgetsAt(commit: string): Promise<{ BASELINE: ClutterTable; BUDGETS: ClutterTable; FIRST_ROWS?: ClutterTable } | null> {
   const source = git("show", `${commit}:e2e/budgets.ts`);
   if (source === null) return null;
   const dir = mkdtempSync(path.join(tmpdir(), "dotami-budgets-"));
   try {
     const file = path.join(dir, "budgets.ts");
     writeFileSync(file, source);
-    return (await import(pathToFileURL(file).href)) as { BASELINE: ClutterTable; BUDGETS: ClutterTable };
+    return (await import(pathToFileURL(file).href)) as { BASELINE: ClutterTable; BUDGETS: ClutterTable; FIRST_ROWS?: ClutterTable };
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }
 }
 
 describe("the clutter budgets (e2e/budgets.ts)", () => {
-  it("have a baseline and a budget for every screen at every size, and nothing else", () => {
-    for (const table of [BASELINE, BUDGETS]) {
-      expect(Object.keys(table).sort()).toEqual([...SCREENS].sort());
-      for (const screen of SCREENS) {
+  it("have a baseline or a first row, and a budget, for every screen at every size, and nothing else", () => {
+    for (const [table, screens] of [
+      [BASELINE, BASELINE_SCREENS],
+      [FIRST_ROWS as ClutterTable, ADDED_SCREENS],
+      [BUDGETS, SCREENS],
+    ] as const) {
+      expect(Object.keys(table).sort()).toEqual([...screens].sort());
+      for (const screen of screens) {
         expect(Object.keys(table[screen] ?? {}).sort(), screen).toEqual([...sizes].sort());
       }
     }
+  });
+
+  it("start an added screen at its first row, no busier than the screen it is a part of (the written way, 2026-10-22)", () => {
+    expect(looserThan(FIRST_ROWS, BUDGETS)).toEqual([]);
+    // Each added screen's first row against the baseline of the whole screen it is a part of, as if it were that
+    // screen (the whole screen's own budget may be lower: Pick a future's opens on step 1, the calmest part).
+    const asWhole: ClutterTable = Object.fromEntries(ADDED_SCREENS.map((s) => [s, BASELINE[ADDED_SCREEN_PART_OF[s]]]));
+    expect(looserThan(asWhole, FIRST_ROWS)).toEqual([]);
+    // The check sees a first row busier than its screen.
+    const busier: ClutterTable = { "futures-area": { phone: { ...BASELINE.futures!.phone!, controls: BASELINE.futures!.phone!.controls + 1 } } };
+    expect(looserThan(asWhole, busier)).toEqual([`futures-area phone: controls ${BASELINE.futures!.phone!.controls + 1} > ${BASELINE.futures!.phone!.controls}`]);
   });
 
   it("are never above the baseline, and the smallest text never below it", () => {
@@ -121,6 +147,10 @@ describe("the clutter budgets (e2e/budgets.ts)", () => {
     expect(BASELINE, `BASELINE differs from main's (${main.slice(0, 7)}); it is a record and never changes`).toEqual(
       before.BASELINE,
     );
+    // A first row is a record too, once it is on main.
+    for (const [screen, row] of Object.entries(before.FIRST_ROWS ?? {})) {
+      expect(FIRST_ROWS[screen as keyof typeof FIRST_ROWS], `FIRST_ROWS["${screen}"] differs from main's; it is a record and never changes`).toEqual(row);
+    }
   });
 
   it("catch a budget lowered and then raised back up, even to the baseline", () => {

@@ -17,6 +17,11 @@ call 1: the typed way ends on the same three steps.)
 Mockup: `C:\dotami-wt\designs-phase2\01-whats-closest-to-your-work.html` (outside the repo; laptop width,
 then phone width).
 
+> **Built 2026-10-22 (task 28b).** As designed, in `components/front-door/job-and-road-steps.tsx` and
+> `job-search.tsx`, on Pick a future, the intake's typed way and the cockpit's skills list; the search runs on
+> DotAmi's own server (`POST /api/jobs/search`). What differs or was added is listed in
+> [_index.md](./_index.md), *As built, 2026-10-22*.
+
 ## Where it sits, on both ways in
 
 The three steps are one flow, asked **before any road is drawn**, so the road match (step 3) can use the pick:

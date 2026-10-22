@@ -25,6 +25,41 @@ Last updated: 2026-10-13 (the first written future listed; design: docs/architec
 > province by province once each province's region list is checked against Statistics Canada's own pages;
 > (3) a job with no written road saves nothing (a kind of saved idea with no road may come in phase 3, with
 > the career road).
+>
+> **As built, 2026-10-22 (tasks 28b, 23g, 29h).** The three steps are one component,
+> `components/front-door/job-and-road-steps.tsx` (the search box and results: `job-search.tsx`; a card:
+> `future-card.tsx`), drawn on `/futures` and, on the typed way, on the intake page after Screen B; the flow's
+> state and its back link are `lib/front-door/three-steps.ts`, step 3's order `lib/front-door/road-match.ts`
+> (`roadsWrittenForJob`, then every other listed road, in the order written). Where the build differs from the
+> design, or adds to it:
+> - **The search runs on DotAmi's own server** (`POST /api/jobs/search`, `searchJobTitles`), so the titles file
+>   never goes into a page's code; the words typed are sent in the request's body, never in an address, and
+>   nothing keeps them. Pick a future, the intake and the cockpit's skills list all call it: one picker.
+> - **Words added** (`lib/front-door/words.ts`): a line while the search runs and one if it can't run; the
+>   group heading with its count; the matched line for a job found by its own name or a typed code
+>   (*Matched the job's name “…”*, *Matched the job's code …*), so neither reads as an example title; *Your
+>   area: not answered* on 2b when 2a was left on *Choose one*; the Statistics Canada link's name saying it opens
+>   outside DotAmi; step 3's kicker *3 of 3 · Pick a future*; and the intake's button, *Next: the work closest to
+>   yours →*.
+> - **A job with no written road (case B):** the honest heading, its lines and *Nothing is saved until you open a
+>   future.*, then **a marked place for *About this job*** (`data-about-this-job-slot`, an amber dashed line:
+>   *About this job isn't built yet. What the government publishes about <job> shows here once it is.*), which
+>   task 25h's pull request fills with the four rows; then the other futures, road 0's card saying it isn't
+>   written for the job. The design's opening sentence, *Here is what the government publishes about this
+>   job.*, is held in the words file for 25h, so it never shows without the rows.
+> - **The goal bar's lines saying why a road is drawn** (03, *After Look inside*) are task 28c's, not built here.
+> - **Kept:** the job, the area and the region, each with its day, by the save that creates the idea at
+>   **Look inside** (02, *What is kept*); `Venture.landscapeArea`, `landscapeAreaSetAt`, `economicRegion`,
+>   `economicRegionSetAt` are new (migration `20261022000000_where_you_are`, four added columns). A save that
+>   fails opens nothing and says so, on both pages.
+> - **Clutter** (`e2e/budgets.ts`; regions / controls in the first window at 375, 768 and 1280 px / text
+>   sizes): step 1 is measured as `futures`, lowered from 6 / 5, 7, 6 / 6 to **4 / 5, 5, 5 / 5**; the later
+>   parts have rows of their own (`FIRST_ROWS`, the written way for a new screen's first row): 2a
+>   `futures-area` 4 / 5, 5, 5 / 5; 2b `futures-region` 4 / 5, 5, 5 / 5 (6 once *I don't know* shows the
+>   Statistics Canada link, as designed); outside Alberta `futures-outside` 4 / 4, 4, 4 / 5; step 3 case B
+>   `futures-road` 6 / 3, 6, 3 / 6; on the intake page step 1 `intake-steps` 3 / 5, 5, 5 / 5 and step 3 case B
+>   `intake-road` 3 / 2, 5, 2 / 6 (the intake's baseline is 6 text sizes; its budget, measured on Screen A, 5).
+>   Measured in Chromium on Windows and checked by CI's Ubuntu run in the pull request.
 
 ## Page job
 
