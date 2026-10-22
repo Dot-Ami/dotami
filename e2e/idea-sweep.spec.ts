@@ -66,8 +66,9 @@ import { findVerdicts } from "../tests/helpers/verdict-words";
 import { jobGroupOf, oasisJobByCode } from "../lib/engines/oasis/v2026";
 
 import { ABOUT_JOB, aboutJobPanel, readAboutJob, saveIdea } from "./about-job-read";
-import { BUDGETS, WINDOWS_EXTRA, type Clutter, type ScreenId } from "./budgets";
+import type { ScreenId } from "./budgets";
 import { measurePage, type Measured } from "./clutter-measure";
+import { budgetFor, clutterBreaches } from "./clutter-rule";
 import { cockpitSettled, lookCloser, pickJob, showRail } from "./cockpit-calm";
 
 // --- Which ideas.
@@ -227,14 +228,6 @@ const CITATION_QUOTES = new Set(allCatalogCitations().flatMap(({ citation }) => 
  */
 const withoutCitationQuotes = (text: string) => text.replace(/“([^”]*)”/g, (whole, inner: string) => (CITATION_QUOTES.has(inner.trim()) ? PIECE : whole));
 
-/** The budget for this screen and the one it is held to, with Windows' extra where Chromium there counts more. */
-function budgetFor(screen: ScreenId): Clutter | null {
-  const gate = BUDGETS[screen]?.laptop;
-  if (!gate) return null;
-  const extra = process.platform === "win32" ? (WINDOWS_EXTRA[screen]?.laptop ?? {}) : {};
-  return { ...gate, regions: gate.regions + (extra.regions ?? 0), controls: gate.controls + (extra.controls ?? 0), textSizes: gate.textSizes + (extra.textSizes ?? 0) };
-}
-
 /**
  * Reads the screen as it is now: its words for verdicts and times, and its layout with the clutter measurer.
  * `held` names the budget the screen is held to, when its state is the one the budget was measured on.
@@ -251,14 +244,10 @@ async function read(s: Sweep, where: string, held: ScreenId | null = null) {
   });
   const m: Measured = await s.page.evaluate(measurePage);
   s.measured.push(`${where}: ${m.regions} regions, ${m.controls} controls, ${m.textSizes} text sizes, smallest ${m.smallestTextPx}px${held ? ` (held to ${held})` : ""}`);
-  for (const block of m.unmarkedBlocks) s.findings.push({ where: at, what: `clutter: a drawn block with no region mark, inside none: ${block}` });
-  const budget = held ? budgetFor(held) : null;
-  if (budget) {
-    if (m.regions > budget.regions) s.findings.push({ where: at, what: `clutter: ${m.regions} regions, budget ${budget.regions} (${m.regionNames.join(", ")})` });
-    if (m.controls > budget.controls) s.findings.push({ where: at, what: `clutter: ${m.controls} controls in the first window, budget ${budget.controls} (${m.controlNames.join(" | ")})` });
-    if (m.textSizes > budget.textSizes) s.findings.push({ where: at, what: `clutter: ${m.textSizes} text sizes, budget ${budget.textSizes} (${m.sizesPx.join(", ")} px)` });
-    if (m.smallestTextPx < budget.smallestTextPx) s.findings.push({ where: at, what: `clutter: the smallest text is ${m.smallestTextPx}px, budget ${budget.smallestTextPx}px` });
-  }
+  // The clutter spec's own rule (e2e/clutter-rule.ts), at the laptop width the sweep runs at: the unmarked blocks
+  // always, the budget only when the screen is in the state it was measured on.
+  const budget = held ? budgetFor(held, "laptop") : null;
+  for (const breach of clutterBreaches(m, budget)) s.findings.push({ where: at, what: `clutter: ${breach}` });
 }
 
 // --- The two ways in.

@@ -25,6 +25,20 @@ export function toolCheckedTargets(
     citation: { url: string; lastVerified?: string; toolCheck?: { checkedOn: string; quotes: readonly string[] } };
   }[],
 ): QuoteTarget[];
+/** What one page of a run over every tool check came to. */
+export interface CheckedPage {
+  where: string;
+  url: string;
+  /** "answered": the server answered `status` instead of the page; "unreachable": no answer at all. */
+  outcome: "found" | "words-missing" | "answered" | "unreachable" | "pdf";
+  status: number;
+}
+
+export interface CheckQuotesRun {
+  checkedOn: string;
+  pages: CheckedPage[];
+}
+
 export function main(
   argv: string[],
   options?: {
@@ -32,5 +46,6 @@ export function main(
     collect?: () => Promise<QuoteTarget[]>;
     log?: (line: string) => void;
     today?: string;
+    onResult?: (found: CheckQuotesRun) => void;
   },
 ): Promise<number>;

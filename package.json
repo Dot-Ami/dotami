@@ -24,6 +24,8 @@
     "seed": "tsx prisma/seed.ts",
     "eval:intent": "tsx scripts/eval-intent.mjs",
     "data:check": "node scripts/data-check.mjs",
+    "quality:report": "node scripts/quality-report.mjs",
+    "quality:line": "node scripts/quality-report.mjs --line",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "ci:quality": "npm run prisma:generate && npm run data:check && npm run typecheck && npm run lint && npm run test && npm run build"
