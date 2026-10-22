@@ -143,15 +143,17 @@ export const BASELINE: ClutterTable = {
  *
  * The same day (the PR #202 review: only case B had a row), step 3's case A (a road written for the job, under
  * "Written for your pick of job") and case C (the job skipped) on Pick a future, and the intake page's 2a, 2b
- * and case A, each at or under its screen's baseline row. The intake's case C has no row: on a tablet it counts
- * 6 controls (the Not here yet? box and the footer's link both reach the first window), over the intake's 5, so
- * it is shown to the maintainer instead (see `ADDED_SCREENS`).
+ * and case A, each at or under its screen's baseline row, as CI's Ubuntu run measured them (run 39748625442).
+ * Chromium on Windows counts the same but one place, case A on Pick a future at laptop size: 4 controls where
+ * Ubuntu has 5 (its Look inside reaches the first window on Ubuntu), so the row is Ubuntu's 5. The intake's case C
+ * has no row: on a tablet it counts 6 controls on Windows (the Not here yet? box and the footer's link both reach
+ * the first window), over the intake's 5, so it is shown to the maintainer instead (see `ADDED_SCREENS`).
  */
 export const FIRST_MEASURED: Partial<Record<AddedScreenId, Partial<Record<WidthId, Clutter>>>> = {
   "futures-area": { phone: m(4, 5, 5, 10.5), tablet: m(4, 5, 5, 10.5), laptop: m(4, 5, 5, 10.5) },
   "futures-region": { phone: m(4, 5, 5, 10.5), tablet: m(4, 5, 5, 10.5), laptop: m(4, 5, 5, 10.5) },
   "futures-outside": { phone: m(4, 4, 5, 10.5), tablet: m(4, 4, 5, 10.5), laptop: m(4, 4, 5, 10.5) },
-  "futures-road-written": { phone: m(6, 5, 6, 10.5), tablet: m(6, 5, 6, 10.5), laptop: m(6, 4, 6, 10.5) },
+  "futures-road-written": { phone: m(6, 5, 6, 10.5), tablet: m(6, 5, 6, 10.5), laptop: m(6, 5, 6, 10.5) },
   "futures-road": { phone: m(6, 3, 6, 10.5), tablet: m(6, 6, 6, 10.5), laptop: m(6, 3, 6, 10.5) },
   "futures-road-skipped": { phone: m(6, 4, 6, 10.5), tablet: m(6, 7, 6, 10.5), laptop: m(6, 6, 6, 10.5) },
   "intake-steps": { phone: m(3, 5, 5, 10.5), tablet: m(3, 5, 5, 10.5), laptop: m(3, 5, 5, 10.5) },
@@ -258,7 +260,7 @@ export const BUDGETS: ClutterTable = {
   "futures-area": { phone: m(4, 5, 5, 10.5), tablet: m(4, 5, 5, 10.5), laptop: m(4, 5, 5, 10.5) },
   "futures-region": { phone: m(4, 5, 5, 10.5), tablet: m(4, 5, 5, 10.5), laptop: m(4, 5, 5, 10.5) },
   "futures-outside": { phone: m(4, 4, 5, 10.5), tablet: m(4, 4, 5, 10.5), laptop: m(4, 4, 5, 10.5) },
-  "futures-road-written": { phone: m(6, 5, 6, 10.5), tablet: m(6, 5, 6, 10.5), laptop: m(6, 4, 6, 10.5) },
+  "futures-road-written": { phone: m(6, 5, 6, 10.5), tablet: m(6, 5, 6, 10.5), laptop: m(6, 5, 6, 10.5) },
   "futures-road": { phone: m(6, 3, 6, 10.5), tablet: m(6, 6, 6, 10.5), laptop: m(6, 3, 6, 10.5) },
   "futures-road-skipped": { phone: m(6, 4, 6, 10.5), tablet: m(6, 7, 6, 10.5), laptop: m(6, 6, 6, 10.5) },
   "intake-steps": { phone: m(3, 5, 5, 10.5), tablet: m(3, 5, 5, 10.5), laptop: m(3, 5, 5, 10.5) },
