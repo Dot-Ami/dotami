@@ -20,6 +20,7 @@ import type { CheckQuotesRun, FetchedPage } from "../scripts/check-quotes.mjs";
 import {
   clutterNumbers,
   harnessNumbers,
+  onGeneralRoad,
   qualityLine,
   qualityMarkdown,
   searchNumbers,
@@ -29,7 +30,7 @@ import {
 import { parseArgs } from "../scripts/quality-report.mjs";
 import { BUDGETS } from "../e2e/budgets";
 import { KNOWN_GAPS } from "./fixtures/ideas/known-gaps";
-import { IDEAS_V1, type Idea } from "./fixtures/ideas/v1";
+import { IDEAS_V1, ROAD_IDS, type Idea } from "./fixtures/ideas/v1";
 import { STILL_DEAD } from "./fixtures/still-dead-pages";
 import { runHarness, type HarnessResult } from "./helpers/idea-harness-run";
 import type { Failure } from "./helpers/idea-invariants";
@@ -71,19 +72,60 @@ describe("the harness numbers", () => {
     };
     const h = harnessNumbers(result, []);
     expect(h.ideas).toBe(3);
-    expect(h.written).toBe(2);
-    expect(h.typed).toEqual({ "written-for-it": 1, "general-none-written": 1, "general-other-written": 0, "other-road": 0, "stops-before": 1 });
+    expect(h.ownRoad).toBe(1);
+    expect(h.generalWritten).toBe(1);
+    expect(h.typed).toEqual({
+      "own-road": 1,
+      "general-its-road": 0,
+      "general-own-written": 0,
+      "general-none-written": 1,
+      "other-road": 0,
+      "stops-before": 1,
+    });
     // The picked way only exists with a province picked: the third idea isn't counted there.
-    expect(h.picked).toEqual({ "written-for-it": 1, "general-none-written": 0, "general-other-written": 0, "other-road": 1, "stops-before": 0 });
+    expect(h.picked).toEqual({
+      "own-road": 1,
+      "general-its-road": 0,
+      "general-own-written": 0,
+      "general-none-written": 0,
+      "other-road": 1,
+      "stops-before": 0,
+    });
     expect(h.passing).toBe(3);
     expect(h.clean).toBe(3);
   });
 
-  it("an idea drawn on the general road though another road is written for it is counted as that", () => {
+  it("an idea drawn on the general road though a road of its own is written for it is counted as that", () => {
     const h = harnessNumbers({ runs: [runOf(road1Idea, drawnOn(generalRoadV2026.id), null)], failures: [], elapsedMs: 0, unlisted: [], passingNow: [] }, []);
-    expect(h.typed["general-other-written"]).toBe(1);
-    expect(h.typed["written-for-it"]).toBe(0);
+    expect(h.typed["general-own-written"]).toBe(1);
+    expect(h.typed["own-road"]).toBe(0);
   });
+
+  it("never counts the general road as reaching a road of its own, though road 0 is written for that idea", () => {
+    // Road 0 IS the general road: every idea can land there, so an idea written for road 0 that lands there
+    // says nothing about routing. It is counted on the general road, not as reaching a road of its own.
+    const h = harnessNumbers({ runs: [runOf(road0Idea, drawnOn(generalRoadV2026.id), null)], failures: [], elapsedMs: 0, unlisted: [], passingNow: [] }, []);
+    expect(h.typed["own-road"]).toBe(0);
+    expect(h.typed["general-its-road"]).toBe(1);
+    expect(h.ownRoad).toBe(0);
+    expect(onGeneralRoad(h.typed)).toBe(1);
+  });
+
+  it("on the real harness, only an idea drawn on a road other than the general road reaches a road of its own", () => {
+    // Every road-1 idea, plus a few road-0 and none-written ones, through the real pipeline.
+    const ideas = [
+      ...IDEAS_V1.filter((idea) => idea.road === "road-1"),
+      ...IDEAS_V1.filter((idea) => idea.road === "road-0").slice(0, 5),
+      ...IDEAS_V1.filter((idea) => idea.road === "none-written-yet").slice(0, 5),
+    ];
+    const result = runHarness(ideas, KNOWN_GAPS);
+    const h = harnessNumbers(result, KNOWN_GAPS);
+    const ownDrawn = result.runs.filter((run) => run.typed && run.typed.road.id !== generalRoadV2026.id && run.idea.road !== "none-written-yet");
+    expect(h.typed["own-road"]).toBe(ownDrawn.filter((run) => run.typed!.road.id === ROAD_IDS[run.idea.road as "road-1"]).length);
+    expect(onGeneralRoad(h.typed)).toBe(result.runs.filter((run) => run.typed?.road.id === generalRoadV2026.id).length);
+    expect(h.typed["stops-before"]).toBe(result.runs.filter((run) => !run.typed).length);
+    expect(h.ownRoad).toBe(IDEAS_V1.filter((idea) => idea.road === "road-1").length);
+  }, 60_000);
 
   it("a failure no known gap names takes its idea off the pass rate; a known gap only off the clean count", () => {
     const known = failure(noneIdea, "no-verdict");
@@ -303,9 +345,10 @@ describe("the report and the Quality line", () => {
       passingNow: 0,
       knownGaps: { planned: 2, bug: 1 },
       silentFallbacks: { typed: 3, picked: 0, ideas: 3, list: ["idea-v1-0001: typed: planted"] },
-      written: 4,
-      typed: { "written-for-it": 3, "general-none-written": 5, "general-other-written": 1, "other-road": 0, "stops-before": 1 },
-      picked: { "written-for-it": 4, "general-none-written": 4, "general-other-written": 0, "other-road": 2, "stops-before": 0 },
+      ownRoad: 2,
+      generalWritten: 3,
+      typed: { "own-road": 1, "general-its-road": 2, "general-own-written": 1, "general-none-written": 5, "other-road": 0, "stops-before": 1 },
+      picked: { "own-road": 2, "general-its-road": 3, "general-own-written": 0, "general-none-written": 3, "other-road": 2, "stops-before": 0 },
     },
     search: { ideas: 10, withJob: 8, firstGroup: 5, anyGroup: 6, notListed: 1, noResults: 1, noResultsAll: 2 },
     clutter: {
@@ -334,6 +377,8 @@ describe("the report and the Quality line", () => {
     expect(md).toContain("10 of 10 (100%) ideas pass the harness");
     expect(md).toContain("7 of 10 (70.0%) ideas hold every rule with no known gap");
     expect(md).toContain("### Silent fallbacks: 3");
+    expect(md).toContain("| the general road, which is the road written for it (road 0) | 2 | 3 |");
+    expect(md).toContain("| on the general road, all told | 8 of 10 (80.0%) | 6 of 10 (60.0%) |");
     expect(md).toContain("- idea-v1-0001: typed: planted");
     expect(md).toContain("| in the first group shown (the open one) | 5 of 8 (62.5%) |");
     expect(md).toContain("1 of 2 screen sizes within their budget");
@@ -362,7 +407,7 @@ describe("the report and the Quality line", () => {
     expect(line).not.toContain("\n");
     for (const part of [
       "passes 10 of 10 invented ideas (100%; 7 with no known gap)",
-      "3 of 4 ideas with a road written for them reach it (6 ideas end on the general road)",
+      `typed in, 8 of 10 ideas end on the general road (“${generalRoadV2026.label}”, which any idea can reach) and 1 stops before any road is shown; 1 of the 2 ideas with a road of their own written for them reaches it`,
       "3 silent fallbacks",
       "first group for 5 of 8 ideas (any group 6, no job found 1)",
       "1 of 2 screen sizes within their clutter budget",

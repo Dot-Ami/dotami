@@ -39,17 +39,35 @@ import type { CockpitRun } from "../../tests/helpers/idea-pipeline";
 
 // ---- The idea harness ------------------------------------------------------------------------------------
 
-/** Where one way in ended, as the report counts it. */
-export const ROAD_ENDS = ["written-for-it", "general-none-written", "general-other-written", "other-road", "stops-before"] as const;
+/**
+ * Where one way in ended, as the report counts it. Road 0 ("Starting any business in Alberta") IS the general
+ * road, the one any idea lands on when no other road is drawn, so an idea written for road 0 that lands there
+ * says nothing about whether ideas reach the road written for them: it gets its own row, and only a road other
+ * than the general road counts as "a road of its own".
+ */
+export const ROAD_ENDS = [
+  "own-road",
+  "general-its-road",
+  "general-own-written",
+  "general-none-written",
+  "other-road",
+  "stops-before",
+] as const;
 export type RoadEnd = (typeof ROAD_ENDS)[number];
 
 export const ROAD_END_WORDS: Record<RoadEnd, string> = {
-  "written-for-it": "the road written for it",
+  "own-road": "the road of its own written for it (not the general road)",
+  "general-its-road": "the general road, which is the road written for it (road 0)",
+  "general-own-written": "the general road, though a road of its own is written for it",
   "general-none-written": "the general road (no road written for it yet)",
-  "general-other-written": "the general road, though another road is written for it",
-  "other-road": "another road",
-  "stops-before": "stops before the cockpit",
+  "other-road": "another road, not the general road",
+  "stops-before": "stops before any road is shown",
 };
+
+const GENERAL_ENDS: readonly RoadEnd[] = ["general-its-road", "general-own-written", "general-none-written"];
+
+/** Every idea that ended on the general road, whatever road is written for it. */
+export const onGeneralRoad = (ends: Record<RoadEnd, number>) => GENERAL_ENDS.reduce((n, end) => n + ends[end], 0);
 
 export interface HarnessNumbers {
   ideas: number;
@@ -64,18 +82,25 @@ export interface HarnessNumbers {
   knownGaps: { planned: number; bug: number };
   /** Ideas drawn on a road that isn't theirs with nothing saying so, each way in; `ideas` counts each idea once. */
   silentFallbacks: { typed: number; picked: number; ideas: number; list: string[] };
-  /** Ideas a road is written for (road 0 or road 1 in the corpus). */
-  written: number;
+  /** Ideas with a road of their own written for them: a road other than the general road (road 1 in the corpus). */
+  ownRoad: number;
+  /** Ideas whose written road is the general road itself (road 0 in the corpus). */
+  generalWritten: number;
   typed: Record<RoadEnd, number>;
   picked: Record<RoadEnd, number>;
 }
 
+/** The road written for an idea, or null when none is written yet. */
+const writtenFor = (idea: Idea) => (idea.road === "none-written-yet" ? null : ROAD_IDS[idea.road]);
+
 function roadEnd(idea: Idea, run: CockpitRun | null): RoadEnd {
   if (!run) return "stops-before";
-  const writtenFor = idea.road === "none-written-yet" ? null : ROAD_IDS[idea.road];
-  if (writtenFor && run.road.id === writtenFor) return "written-for-it";
-  if (run.road.id === generalRoadV2026.id) return writtenFor ? "general-other-written" : "general-none-written";
-  return "other-road";
+  const written = writtenFor(idea);
+  if (run.road.id === generalRoadV2026.id) {
+    if (!written) return "general-none-written";
+    return written === generalRoadV2026.id ? "general-its-road" : "general-own-written";
+  }
+  return written && run.road.id === written ? "own-road" : "other-road";
 }
 
 const zeroEnds = () => Object.fromEntries(ROAD_ENDS.map((end) => [end, 0])) as Record<RoadEnd, number>;
@@ -108,7 +133,11 @@ export function harnessNumbers(result: HarnessResult, gaps: readonly KnownGap[] 
       ideas: new Set(fallbacks.map((f) => f.ideaId)).size,
       list: fallbacks.map((f) => `${f.ideaId}: ${f.detail}`),
     },
-    written: result.runs.filter((run) => run.idea.road !== "none-written-yet").length,
+    ownRoad: result.runs.filter((run) => {
+      const written = writtenFor(run.idea);
+      return written !== null && written !== generalRoadV2026.id;
+    }).length,
+    generalWritten: result.runs.filter((run) => writtenFor(run.idea) === generalRoadV2026.id).length,
     typed,
     picked,
   };
@@ -339,6 +368,8 @@ export function countQuality(args: { today: string; folder: string; clutterOnly?
 
 const pct = (part: number, whole: number) => (whole === 0 ? "–" : `${((100 * part) / whole).toFixed(part === whole ? 0 : 1)}%`);
 const of = (part: number, whole: number) => `${part} of ${whole} (${pct(part, whole)})`;
+/** The verb that agrees with a count: "1 stops", "3 stop". */
+const verb = (n: number, one: string, many: string) => (n === 1 ? one : many);
 
 /** test-results/quality.md: every number, with what it counts. */
 export function qualityMarkdown(q: QualityNumbers): string {
@@ -372,13 +403,14 @@ export function qualityMarkdown(q: QualityNumbers): string {
       ...(h.silentFallbacks.list.length > 0 ? [""] : []),
       "### Where each idea ends",
       "",
-      `${h.written} of ${h.ideas} ideas have a road written for them (road 0 or road 1). The picked way counts only ideas that name a province or territory; on it the person clicks a card, so "another road" there is the road they picked.`,
+      `The general road (“${generalRoadV2026.label}”, road 0) is the one any idea lands on when no other road is drawn, so landing there is never counted as reaching a road of its own. ${h.ownRoad} of ${h.ideas} ideas have a road of their own written for them (road 1); ${h.generalWritten} more have the general road itself written for them. The picked way counts only ideas that name a province or territory; on it the person clicks a card, so "another road" there is the road they picked.`,
       "",
     );
-    table(
-      ["Ends on", "Typed way in", "Picked way in"],
-      ROAD_ENDS.map((end) => [ROAD_END_WORDS[end], h.typed[end], h.picked[end]]),
-    );
+    const pickedTotal = ROAD_ENDS.reduce((n, end) => n + h.picked[end], 0);
+    table(["Ends on", "Typed way in", "Picked way in"], [
+      ...ROAD_ENDS.map((end) => [ROAD_END_WORDS[end], h.typed[end], h.picked[end]]),
+      ["on the general road, all told", of(onGeneralRoad(h.typed), h.ideas), of(onGeneralRoad(h.picked), pickedTotal)],
+    ]);
   }
 
   lines.push("## Corpus coverage of the job search", "");
@@ -474,7 +506,7 @@ export function qualityLine(q: QualityNumbers): string {
   if (h) {
     parts.push(
       `the idea harness passes ${h.passing} of ${h.ideas} invented ideas (${pct(h.passing, h.ideas)}; ${h.clean} with no known gap)`,
-      `${h.typed["written-for-it"]} of ${h.written} ideas with a road written for them reach it (${h.typed["general-none-written"] + h.typed["general-other-written"]} ideas end on the general road)`,
+      `typed in, ${onGeneralRoad(h.typed)} of ${h.ideas} ideas end on the general road (“${generalRoadV2026.label}”, which any idea can reach) and ${h.typed["stops-before"]} ${verb(h.typed["stops-before"], "stops", "stop")} before any road is shown; ${h.typed["own-road"]} of the ${h.ownRoad} ideas with a road of their own written for them ${verb(h.typed["own-road"], "reaches", "reach")} it`,
       `${h.silentFallbacks.ideas} silent fallback${h.silentFallbacks.ideas === 1 ? "" : "s"}`,
     );
   } else parts.push("the idea harness not counted");
