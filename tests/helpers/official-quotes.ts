@@ -60,7 +60,7 @@ export const QUOTED_SOURCE_KINDS: readonly QuotedSourceKind[] = [
     label: /The government's words, quoted in full for job group (\d{5}) [^:“”¶]{1,120}:/g,
     place: REQUIREMENT_LINES_PLACE,
     where:
-      "About this job, row 1 (docs/ui-spec/cockpit/about-this-job.md; planned, task 25h; the label is `aboutJobWords.rules.lead` in lib/about-job/words.ts once it is built)",
+      "About this job, row 1 (docs/ui-spec/cockpit/about-this-job.md; task 25h; the label is `aboutJobWords.rules.lead` in lib/about-job/words.ts)",
     why: "The government's own requirement lines for the picked job group, quoted in full and in its order, labelled as its words. The durations in them (a four-year apprenticeship) are the government's, and DotAmi writes nothing about them.",
   },
 ];
@@ -91,8 +91,10 @@ export interface QuoteContext {
 }
 
 // After the label, or after the line before: spaces or the sweep's block mark, then an optional sub-heading
-// (a capitalised short run with no sentence punctuation), then one quoted line.
-const NEXT_LINE = /(?:\s|¶)*(?:[A-Z][^“”¶.:;!?]{0,60}?(?:\s|¶)+)?“([^”]*)”/y;
+// (a capitalised short run with no sentence punctuation), then one quoted line. The file's longest sub-heading
+// is 75 characters (40010's "Government managers in health policy development and program administration",
+// counted by tests/about-job.spec.ts), so up to 100 are read as one; the sub-heading itself stays in the text.
+const NEXT_LINE = /(?:\s|¶)*(?:[A-Z][^“”¶.:;!?]{0,100}?(?:\s|¶)+)?“([^”]*)”/y;
 
 /**
  * Every quoted line that stands in a labelled run, in a text already normalised with `normaliseSpaces`.

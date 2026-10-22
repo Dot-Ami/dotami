@@ -170,6 +170,19 @@ describe("POST /api/futures/<id>/job: the job closest to the person's work", () 
     expect((await read()).body.future).toMatchObject({ job: null });
   });
 
+  it("gives About this job for the picked job on the next read (built on the server), and none while no job is picked", async () => {
+    expect((await read()).body).toMatchObject({ aboutJob: null });
+    await routes.job(post(`/api/futures/${ventureId}/job`, { code: "72311.00" }), params(ventureId));
+    const about = (await read()).body.aboutJob as { job: unknown; group: unknown; wages: { context: unknown }; area: unknown };
+    expect(about.job).toEqual({ code: "72311.00", label: "Cabinetmakers" });
+    expect(about.group).toEqual({ code: "72311", title: "Cabinetmakers" });
+    // The idea keeps no region or area yet: read as not picked.
+    expect(about.wages.context).toEqual({ kind: "not-picked" });
+    expect(about.area).toBeNull();
+    await routes.job(post(`/api/futures/${ventureId}/job`, { code: null }), params(ventureId));
+    expect((await read()).body).toMatchObject({ aboutJob: null });
+  });
+
   it("refuses a code that isn't a job, and a body without one, with nothing kept", async () => {
     for (const body of [{ code: "99999.99" }, { code: 72311 }, {}]) {
       expect((await routes.job(post(`/api/futures/${ventureId}/job`, body), params(ventureId))).status).toBe(400);
