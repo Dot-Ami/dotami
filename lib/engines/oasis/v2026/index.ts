@@ -25,11 +25,13 @@ export type { OasisData, OasisFamily } from "./types";
  * built"; the maintainer's decision 5 of 2026-10-11). A catalog like every other: code, never rows in the
  * database, and read-only.
  *
- * It counts as a source only through the person's own pick of job: nothing here links a business, a
- * road or a step to a job. A screen asks the person to pick the job closest to the work they'd do, and
- * shows that job's list, every item tagged "your pick of job". The ratings stay in ./data.ts: a list item
- * carries a name, its group, the tag and its citation, and nothing else, so no rating reaches a screen
- * while the maintainer's item 20 (names only, or the ratings too) is open.
+ * It counts as a source only through the person's own pick of job: nothing here links a business or a
+ * step to a job. Roads name the job groups they are written for (`Road.codes.occupations`, checked
+ * against `isOasisJobGroup` below), and those are read only from the person's pick, one way: from their
+ * pick to the roads, never a job worked out from a road. A screen asks the person to pick the job closest
+ * to the work they'd do, and shows that job's list, every item tagged "your pick of job". The ratings
+ * stay in ./data.ts: a list item carries a name, its group, the tag and its citation, and nothing else,
+ * so no rating reaches a screen while the maintainer's item 20 (names only, or the ratings too) is open.
  */
 
 /** The tag every item of a job's list carries, on screen and in the data. */
