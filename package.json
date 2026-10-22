@@ -23,9 +23,10 @@
     "prisma:deploy": "node scripts/prisma.mjs migrate deploy",
     "seed": "tsx prisma/seed.ts",
     "eval:intent": "tsx scripts/eval-intent.mjs",
+    "data:check": "node scripts/data-check.mjs",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "ci:quality": "npm run prisma:generate && npm run typecheck && npm run lint && npm run test && npm run build"
+    "ci:quality": "npm run prisma:generate && npm run data:check && npm run typecheck && npm run lint && npm run test && npm run build"
   },
   "engines": {
     "node": ">=22.13.0"
