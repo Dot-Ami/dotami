@@ -331,10 +331,10 @@ placed in phase 3.
   [architecture/lens-comparisons.md](architecture/lens-comparisons.md) § 10.
   2026-10-17, the maintainer: no times anywhere, and the Lens may state a number only when it comes from
   DotAmi, a cost link it found or its calculator, never made up (§ 6.4; a calculator and a cost-link tool added).
-- ⬜ **[14i] One research kit for every job.** A list of every outside source and its terms, one import
+- 🔄 **[14i] One research kit for every job.** A list of every outside source and its terms, one import
   for the government's job and business data, code keys on every road, and a script that hands whoever
   writes a new road an empty, cited outline, so nothing is built again for each job. Asked for
-  2026-10-15. Design written, nothing built; the maintainer's nine calls (K1–K9) answered 2026-10-16
+  2026-10-15. Design written; the maintainer's nine calls (K1–K9) answered 2026-10-16
   (corrected 2026-10-20: this line still said it waited on them; K3 is on hold for research):
   [architecture/research-kit.md](architecture/research-kit.md) § 10.
   2026-10-17, the maintainer: "NO TIMES!", so the kit has no typed times and that task is dropped (§ 5.5).
@@ -347,10 +347,19 @@ placed in phase 3.
     period and source may appear, outlook ratings don't; CLAUDE.md, future-cockpit.md decision 2, § 12 and § 13
     and research-kit.md say the same, and so do CONTRIBUTING.md, [14b] above and other-ways-to-build.md § 11
     (docs only)
-  - [ ] 25b: the source registry ("connector cards"): every outside source with its access, who holds the
-    key, what may be kept, its licence and credit line, and a validator
-  - [ ] 25c: one shared import core (encoding, table id, period, licence and next-release date as data),
-    with the OaSIS importer moved onto it
+  - [x] 25b, its first part: the source registry ("connector cards", `lib/engines/research-kit/v2026/`) and its
+    validator, with a card for each government file phases 2 and 3 ship, the two ad libraries, and the
+    never-fetch list (Job Bank's pages, YellowPages.ca, Canada411, Google Maps' consumer site, DOZR, Kijiji, Meta,
+    and Google's Ads Transparency Center, whose terms couldn't be read: the maintainer's call of 2026-10-21; still
+    a link you open yourself)
+  - [ ] 25b, the rest (phase 3; corrected 2026-10-20: 25b was ticked whole): cards for the other sources in
+    research-kit.md § 3.2 (Overture Maps, Calgary's and Edmonton's business-licence lists, OpenStreetMap, Google
+    Places, Grounding Lite, Yelp, Semrush, Ahrefs, Similarweb, Apollo, ZoomInfo), a "not offered" kind for
+    Apollo, ZoomInfo, Ahrefs, Similarweb and the S2.5.26 finds, 22n's rent-price places (Rogers Rent-All,
+    Protospace, ENTS) and the 22n list as a view over the registry; the live look-ups wait on the Lens's
+    connector powers ([9g]), the place lists on S2.5.26, the rent-price places on their replies
+  - [x] 25c: one shared import core (encoding, table id, period, licence and next-release date as data),
+    with the OaSIS importer moved onto it unchanged (`scripts/lib/import-kit.mjs`)
   - [ ] 25e: code keys on roads (the jobs a road is written for), job links, the 2022 industry code list
     (NAICS) and an economic-region key
   - [ ] 25i: wages only, from Job Bank's open-data wage file (never its pages), each row with its geography
@@ -498,9 +507,9 @@ placed in phase 3.
       for a new screen to get its clutter budget
     - [ ] 29k: quoted official requirement text, shown word for word as a labelled quote, passes the
       no-times check by one rule (the maintainer's ruling), while DotAmi's own words still fail on any time
-- ⬜ **[14m] A clean data pipeline you can see (S2.5.31).** Every government file DotAmi imports is checked
+- 🔄 **[14m] A clean data pipeline you can see (S2.5.31).** Every government file DotAmi imports is checked
   offline on every pull request, so a changed file can't slip in unnoticed.
-  - [ ] 31a (phase 2): `npm run data:check`, every importer's check run offline inside `ci:quality`; it
+  - [x] 31a (phase 2): `npm run data:check`, every importer's check run offline inside `ci:quality`; it
     fails on a checksum mismatch or a changed regenerated file
   - [ ] Phase 3: importers for the business counts, the census table linking jobs to industries
     (98-10-0594-01), Red Seal's tools appendix and Job Bank's postings, each with pins, licence, period and

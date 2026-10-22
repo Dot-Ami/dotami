@@ -197,7 +197,12 @@ CSV files in English and French, under the [Open Government Licence – Canada](
   `data/oasis-2025-v1.0/` into `lib/engines/oasis/v2026/data.ts`; `--check` (and a test) fails if the
   module isn't exactly what the files make, and `--download` fetches a new copy, keeping a file only when
   its SHA-256 is the one pinned in the script (a new version means updating the pin on purpose). Never edit the module by
-  hand, and never show a rating until the maintainer decides to (names only today).
+  hand, and never show a rating until the maintainer decides to (names only today). `npm run data:check` (part of
+  `npm run ci:quality`, and a CI step) runs every importer's `--check` offline. The importer is one small adapter on
+  the research kit's import core, `scripts/lib/import-kit.mjs`, which takes the dataset's licence and credit line
+  from its card in the source registry, `lib/engines/research-kit/v2026/registry.ts`
+  ([docs/architecture/research-kit.md](docs/architecture/research-kit.md) § 5.2 and § 5.4). A new importer gets a
+  card there first, then an adapter, then a line in `IMPORTERS` in `scripts/data-check.mjs`.
 - **Its licence travels with it.** The imported lists stay in their own data file carrying the
   licence's attribution line — *"Contains information licensed under the Open Government Licence –
   Canada."* — and are not copied into catalog text under CC BY-SA, because nobody has checked yet how

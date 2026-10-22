@@ -10,6 +10,7 @@
  * saturated, room for you, opportunity, gap, market share, per person, top, best-rated:
  * tests/helpers/verdict-words.ts).
  */
+import { linksOn } from "@/lib/engines/research-kit/v2026/views";
 
 /** A page the person opens themselves, in their own browser. No search words and nothing about them in the address. */
 export interface PlainLink {
@@ -21,12 +22,10 @@ export interface PlainLink {
  * The two ad libraries (competitive-landscape.md § 4.6): where anyone can look at a business's ads. Links only:
  * DotAmi fetches nothing from them (Meta needs its written permission for automated collection, and Google's
  * Center's terms weren't readable by our tools, § 4.6), and adds no search words, so the address says nothing
- * about the person or their idea.
+ * about the person or their idea. A view over the source registry (the cards on its "ad-libraries" list in
+ * lib/engines/research-kit/v2026/registry.ts, which also hold each library's terms and the day they were read).
  */
-export const AD_LIBRARIES: readonly PlainLink[] = [
-  { label: "Meta's Ad Library", url: "https://www.facebook.com/ads/library/" },
-  { label: "Google's Ads Transparency Center", url: "https://adstransparency.google.com/" },
-];
+export const AD_LIBRARIES: readonly PlainLink[] = linksOn("ad-libraries");
 
 /**
  * The pages the "not published" line was read from, on 15 October 2026 (competitive-landscape.md § 4.6): Meta's

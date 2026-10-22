@@ -10,6 +10,30 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+- **One list of outside sources and their terms** (the research kit's source registry,
+  `lib/engines/research-kit/v2026/registry.ts`; [docs/architecture/research-kit.md](docs/architecture/research-kit.md)
+  § 5.2). Plumbing, with no change on screen: one card for each government file the kit ships in this phase and
+  the next (the job and skills files, the job titles, the wage file, the industry code list, the business counts
+  and census tables marked as later), the two ad libraries, and the sites whose terms bar scripts (Job Bank's
+  pages, YellowPages.ca, Canada411, Google Maps, DOZR, Kijiji, Meta), plus Google's Ads Transparency Center,
+  never fetched because its terms couldn't be read (the maintainer's call, 2026-10-21; still a link you open
+  yourself). The other sources the design names (the
+  live look-ups on a person's own account, the place lists, Apollo and ZoomInfo, and the rent-price places) get
+  their cards in phase 3. Each says how DotAmi may reach it,
+  what may be kept, its licence and credit line, and the words on its own terms page that decided it, with the
+  day (most were found word for word by the quote checker on 2026-10-20). A test refuses a card with a field
+  missing, an unknown licence, a vendor's estimate feeding a total, or a site whose terms bar scripts marked as
+  something DotAmi fetches. It makes possible: every new data source checked the same way before it ships, and
+  one never-fetch list the Lens will obey. The ad-library links in *Others in this line of work* now come from it.
+- **One way to import government data** (`scripts/lib/import-kit.mjs`, § 5.4): each file read in its own text
+  encoding, its pinned checksum checked, its licence line taken from the registry, and a plain "A newer … may be
+  out." once a source's stated next release has come. The OaSIS skills import now runs on it and makes the same
+  module, byte for byte. It makes possible: the job titles, wages and industry list of the next tasks, each as
+  one small file.
+- **`npm run data:check`**, a step of `npm run ci:quality` and of CI on every pull request: every importer's
+  government files checked against their pins and its generated module rebuilt and compared, offline. A changed
+  byte in a government file, or a hand edit to a generated module, now fails the pull request.
 ### Fixed
 - **Your answer to "Are you buying equipment, a vehicle or tools?" on a future picked on Pick a future is
   kept** (the maintainer's "Yes, fix both", 2026-10-20). Pick a future saves equipment as not said, since it
