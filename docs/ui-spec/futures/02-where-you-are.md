@@ -101,7 +101,7 @@ whereStepWords = {
     heading: "Where you are in <province>",
     notAsked: "In this version DotAmi asks which area and which region you're in only in Alberta, so nothing is asked here for <province>.",
     why: "Job Bank publishes wages by economic region. DotAmi lists a province's regions only once its list has been checked against Statistics Canada's own pages, and Alberta's is the one checked so far.",
-    wageRow: "About this job shows <province>'s province-wide wage figure, labelled as one.",
+    wageRow: "About this job shows the wage row Job Bank gives for <place> as a whole, labelled with the level the government's own code gives it.",
     next: "Next: the futures →",
   },
   kept: "Both answers are kept with this future once you open it, on this computer only. You can change your region later from About this job in the cockpit.",
@@ -127,20 +127,24 @@ question 5).
     here for Ontario.*
   - *Job Bank publishes wages by economic region. DotAmi lists a province's regions only once its list has
     been checked against Statistics Canada's own pages, and Alberta's is the one checked so far.*
-  - *About this job shows Ontario's province-wide wage figure, labelled as one.*
+  - *About this job shows the wage row Job Bank gives for Ontario as a whole, labelled with the level the
+    government's own code gives it.* (The line never says "province-wide": the label comes from the row's
+    source code, which can read *Economic region: …* or *Level not stated* for the row of a whole province or
+    territory; [../cockpit/about-this-job.md](../cockpit/about-this-job.md), row 2, *Outside Alberta*.)
   - **Next: the futures →**. The nav's back link reads **← Change your pick of job**, as on 2a.
   - The `kept` line isn't drawn: nothing is asked, so nothing is kept from this step.
 - **The same screen for every province and territory outside Alberta**, including Prince Edward Island, Yukon,
   the Northwest Territories and Nunavut, which have one code each in the wage file (`ER1110`, `ER6010`,
-  `ER6110`, `ER6210`, research 25s). Their *About this job* row is that one code's row, labelled by its own
-  source code as every row is.
+  `ER6110`, `ER6210`, research 25s) and no two-digit row. Their *About this job* row is that one code's row,
+  labelled by its own source code as every row is, so it can read *Yukon-wide figure*, *Economic region:
+  Yukon* or *Level not stated*; the line says *for Yukon as a whole*, never *province-wide*.
 - **What is kept:** `economicRegion` and `landscapeArea` stay null (not asked). Nothing is guessed for the
-  person: the province-wide row is shown because the question isn't asked in their province, and *About this
-  job* says so ([../cockpit/about-this-job.md](../cockpit/about-this-job.md), row 2).
+  person: the row for the whole province or territory is shown because the question isn't asked there, and
+  *About this job* says so ([../cockpit/about-this-job.md](../cockpit/about-this-job.md), row 2).
 - **Adding a province later:** when a province's list has been checked against Statistics Canada's pages, the
   build adds 2b for that province (its regions in code order, plus **I don't know**, which then shows that
-  province's province-wide row), with the check's date and source in the region catalog (25e), and *About this
-  job*'s **Change** appears for it. Each province is its own change, with its own check; none is added from the
+  whole province's row), with the check's date and source in the region catalog (25e), and *About this job*'s
+  **Change** appears for it. Each province is its own change, with its own check; none is added from the
   wage file's list alone.
 
 ## What is kept, and where

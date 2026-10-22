@@ -85,10 +85,11 @@ same federal steps with Alberta's own. Outside Canada is unchanged: the flow sto
   rules and tax cards still include Ontario's; the goal bar's line speaks of steps only, never of rules.
 - **About this job** opens from **Look closer** as on any road. Outside Alberta no region is asked (decided
   2026-10-21, the maintainer's call 2, "province-wide"; [02-where-you-are.md](./02-where-you-are.md), *Outside
-  Alberta*), so its wage row is always the province-wide row, labelled by its own source code (*Ontario-wide
-  figure*), with the line *DotAmi asks your region only in Alberta for now, so this is Ontario's province-wide
-  row.* and no **Change**. Its *Where to look yourself* row leaves out Alberta's trade list (Tradesecrets) and
-  says why ([../cockpit/about-this-job.md](../cockpit/about-this-job.md)).
+  Alberta*), so its wage row is always the one the wage file gives for the province as a whole, labelled by its
+  own source code (*Ontario-wide figure* for a `PR` code), with the line *DotAmi asks your region only in
+  Alberta for now, so this is the row the wage file gives for Ontario as a whole, with the level its own code
+  gives it.* and no **Change**. Its *Where to look yourself* row leaves out Alberta's trade list (Tradesecrets)
+  and says why ([../cockpit/about-this-job.md](../cockpit/about-this-job.md)).
 
 ## Words
 

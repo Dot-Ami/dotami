@@ -11,7 +11,8 @@ Last updated: 2026-10-20 (designed before it is built, task 28g, for task 25h. T
 ships **without** business counts, the rules row quotes the job's Employment requirements word for word as the
 government's words, and *Where to look yourself* links Job Bank's general search page with the job's name and
 code shown as text to copy, never the job in a web address; of 2026-10-21, call 2: outside Alberta no region is
-asked and the wage row is the province-wide one, said on screen. Design:
+asked and the wage row is the one for the province or territory as a whole, labelled by its own source
+code, said on screen. Design:
 [../../architecture/research-kit.md](../../architecture/research-kit.md) § 4.2.)
 
 Mockup: `C:\dotami-wt\designs-phase2\05-about-this-job.html` (an invented cabinetmaker in Calgary, corpus idea
@@ -105,15 +106,26 @@ inside its own quote marks.)
   answer, the province's own row (*You said you don't know your region.* / *Your region isn't picked.*), with
   **Change** opening the region drop-down in place (the same list and why-line as Pick a future's step 2b).
 - **Outside Alberta** (decided 2026-10-21, the maintainer's call 2, "province-wide"): no region is asked, so
-  the row is always the province's own row (the two-digit `ER<pp>` code, as Alberta's is `ER48`; the build's
-  importer reads which code each province has, research 25s), and there is no **Change**. Its label comes from
-  its source code as every row's does, so a `PR` row reads *Ontario-wide figure*. Under the
-  label: *DotAmi asks your region only in Alberta for now, so this is Ontario's province-wide row.* Prince
-  Edward Island, Yukon, the Northwest Territories and Nunavut have one code each in the wage file (`ER1110`,
-  `ER6010`, `ER6110`, `ER6210`, research 25s), which is the row shown, labelled by its own source code, with
-  the same line. When a province's region list has been checked against Statistics Canada's own pages and its
-  question added ([../futures/02-where-you-are.md](../futures/02-where-you-are.md), *Outside Alberta*), that
-  province gets the Alberta behaviour above: its region's row, *I don't know*, and **Change**.
+  the row is always the one the wage file gives for the province or territory as a whole, and there is no
+  **Change**. That is its two-digit `ER<pp>` row (as Alberta's is `ER48`), or, for Prince Edward Island, Yukon,
+  the Northwest Territories and Nunavut, which have no `ER<pp>` row and one code each (`ER1110`, `ER6010`,
+  `ER6110`, `ER6210`, each named after the place itself, research 25s), that one code's row. The build's
+  importer reads which code each place has and never assumes an `ER<pp>` row exists.
+  - **Its label comes from its source code, as every row's does, never from this rule.** A `PR` code reads
+    *Ontario-wide figure* (*Yukon-wide figure* for a territory). In the 2025 file (counted 2026-10-21) the
+    same row can instead carry an `ER` code (`Census 2021 ER NOC5`, on 10 rows of Yukon, the Northwest
+    Territories and Nunavut: *Economic region: Yukon*) or no level token (`CIHI 2023-24`, `JUDGE 2024`,
+    `Yukon 2023-24`, and `LFS 2023-24 ATL NOC5` on the four Atlantic provinces' rows: *Level not stated*), and
+    then that is what the label says. No province's or territory's own row carries a `CAN` code in that file;
+    if a later file has one, it reads *Canada-wide figure* like any other.
+  - **Under the label:** *DotAmi asks your region only in Alberta for now, so this is the row the wage file
+    gives for Ontario as a whole, with the level its own code gives it.* The line says which row is shown and
+    why, never its level, so it can't contradict a label that reads *Canada-wide figure*, *Economic region: …*
+    or *Level not stated*. It never says "province-wide", and never calls a territory a province (*the row the
+    wage file gives for Nunavut as a whole*).
+  - When a province's region list has been checked against Statistics Canada's own pages and its
+    question added ([../futures/02-where-you-are.md](../futures/02-where-you-are.md), *Outside Alberta*), that
+    province gets the Alberta behaviour above: its region's row, *I don't know*, and **Change**.
 - **When the region's row is shown under the region but its code says province** (Hairstylists and barbers
   under Calgary, `LFS 2023-24 PR NOC5`): *Shown under Calgary, but the government's code for this row says it is
   an Alberta-wide figure.*
@@ -196,7 +208,7 @@ aboutJobWords = {
     yourRegion: "Your region: <region> (your pick)",
     dontKnow: "You said you don't know your region.",
     notPicked: "Your region isn't picked.",
-    outsideAlberta: "DotAmi asks your region only in Alberta for now, so this is <province>'s province-wide row.",
+    outsideAlberta: "DotAmi asks your region only in Alberta for now, so this is the row the wage file gives for <place> as a whole, with the level its own code gives it.",
     change: "Change",
     shownUnder: "Shown under <region>, but the government's code for this row says it is a <province>-wide figure.",
     notPublished: "Not published for <region>.",
