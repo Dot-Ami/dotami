@@ -5,6 +5,8 @@
  * that DotAmi's list is kept apart from the government's titles, and its measure on the idea corpus, with a
  * floor so a later change can't quietly lower it.
  */
+import { readFileSync } from "node:fs";
+
 import { describe, expect, it } from "vitest";
 
 import { oasisData } from "@/lib/engines/oasis/v2026/data";
@@ -21,6 +23,7 @@ import {
 import { oasisTitles } from "@/lib/engines/oasis/v2026/titles";
 
 import { IDEAS_V1 } from "./fixtures/ideas/v1";
+import { measureJobSearch } from "./helpers/job-search-corpus";
 
 const kinds = (r: JobSearch) => r.groups.map((g) => `${g.kind}:${g.total}`);
 const codesIn = (r: JobSearch, kind: string) => r.groups.find((g) => g.kind === kind)?.jobs.map((j) => j.code) ?? [];
@@ -178,8 +181,7 @@ describe("DotAmi's word list, kept apart from the government's titles", () => {
     expect(new Set(EVERYDAY_WORDS.map((l) => `${l.words}|${l.job}`)).size).toBe(EVERYDAY_WORDS.length);
   });
 
-  it("carries the header that says the maintainer approves every line", async () => {
-    const { readFileSync } = await import("node:fs");
+  it("carries the header that says the maintainer approves every line", () => {
     const text = readFileSync("lib/engines/oasis/v2026/dotami-word-list.ts", "utf8");
     expect(text).toContain("THE MAINTAINER APPROVES EVERY LINE OF THIS FILE.");
     expect(text).toContain("These are DotAmi's words, not the government's.");
@@ -189,49 +191,38 @@ describe("DotAmi's word list, kept apart from the government's titles", () => {
 // ---- The idea corpus ---------------------------------------------------------------------------------
 
 /**
- * The corpus measure (research 28f's, on tests/fixtures/ideas/v1.ts): each idea with an expected job is
- * searched by its `work` words, and found when one of its expected jobs is in the open group (rule H's own
- * view), or anywhere in a group. The floors are this pull request's measure (2026-10-21); a change that
- * lowers one fails here and has to say why, and a change that raises one raises the floor.
+ * The corpus measure (research 28f's, on tests/fixtures/ideas/v1.ts), counted once in
+ * tests/helpers/job-search-corpus.ts, which the idea harness's coverage report and the quality report read
+ * too: each idea with an expected job is searched by its `work` words with the screen's own cap per group, and
+ * found when one of its expected jobs is in the open group (rule H's own view), or in any group as listed;
+ * the same counted past the cap, for the record. The floors are the measure of 2026-10-21 (the group listed
+ * in full since 2026-10-22); a change that lowers one fails here and has to say why, and a change that raises
+ * one raises the floor.
  */
 describe("on the idea corpus", () => {
-  const ideas = IDEAS_V1.filter((idea) => (idea.jobs ?? []).length > 0);
-  const found = (codes: readonly string[], jobs: readonly string[]) => jobs.some((c) => codes.includes(c));
-  const measure = () => {
-    let today = 0;
-    let todayZero = 0;
-    let open = 0;
-    let open50 = 0;
-    let anyGroup = 0;
-    let zero = 0;
-    for (const idea of ideas) {
-      const jobs = idea.jobs ?? [];
-      const old = searchOasisJobs(idea.work, 50);
-      if (found(old.jobs.map((j) => j.code), jobs)) today += 1;
-      if (old.total === 0) todayZero += 1;
-      const all = searchJobTitles(idea.work, Number.POSITIVE_INFINITY);
-      if (found(openGroupCodes(all), jobs)) open += 1;
-      if (found(openGroupCodes(searchJobTitles(idea.work, 50)), jobs)) open50 += 1;
-      if (found(all.groups.flatMap((g) => g.jobs.map((j) => j.code)), jobs)) anyGroup += 1;
-      if (all.total === 0) zero += 1;
-    }
-    return { ideas: ideas.length, today, todayZero, open, open50, anyGroup, zero };
-  };
-
   it("finds the expected job for many more ideas than today's search, and leaves almost none with nothing", () => {
-    const m = measure();
+    const m = measureJobSearch();
     // The receipt, printed so the pull request can quote it.
     console.log(`job-title-search corpus measure: ${JSON.stringify(m)}`);
-    expect(m.ideas).toBeGreaterThanOrEqual(220);
+    expect(m.withJob).toBeGreaterThanOrEqual(220);
     // Today's search (job names and codes, every word): the before.
-    expect(m.today).toBe(20);
-    expect(m.todayZero).toBe(187);
-    // The floors.
-    expect(m.open).toBeGreaterThanOrEqual(153);
-    expect(m.open50).toBeGreaterThanOrEqual(150);
-    expect(m.anyGroup).toBeGreaterThanOrEqual(184);
-    expect(m.zero).toBeLessThanOrEqual(4);
+    expect(m.cockpitList).toBe(20);
+    expect(m.cockpitListNone).toBe(187);
+    // The floors, as the screen lists the jobs (each group's first JOB_SEARCH_GROUP_CAP).
+    expect(m.firstGroup).toBeGreaterThanOrEqual(150);
+    expect(m.anyGroup).toBeGreaterThanOrEqual(172);
+    expect(m.noResults).toBeLessThanOrEqual(4);
+    // Counted past the cap.
+    expect(m.firstGroupUncapped).toBeGreaterThanOrEqual(153);
+    expect(m.anyGroupUncapped).toBeGreaterThanOrEqual(184);
   }, 60_000);
+
+  it("counts with the screen's own cap, never a number of its own", () => {
+    // A cap typed here as a number would leave the floors standing when the screen's cap changed.
+    const text = readFileSync("tests/helpers/job-search-corpus.ts", "utf8");
+    expect(text).toContain("searchJobTitles(idea.work, JOB_SEARCH_GROUP_CAP)");
+    expect(text).not.toMatch(/searchJobTitles\([^)]*\b\d+\)/);
+  });
 
   it("keeps every group kind in the fixed order on every corpus idea", () => {
     for (const idea of IDEAS_V1) {

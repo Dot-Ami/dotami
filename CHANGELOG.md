@@ -95,6 +95,25 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   /licences; reading the person's answer never works a region out from their area. The industry code list
   (NAICS) moved to phase 3 with the industry question, as the maintainer decided. Nothing DotAmi keeps, sends or
   asks changes.
+- **Quality numbers on every CI run, and a Quality line for the release notes** ([14n], task 32a; the plan's
+  S2.5.32, "best results without analytics"). For the people building DotAmi, with no change in the app:
+  `npm run quality:report` prints, and writes to `test-results/quality.md`, what the tests already compute,
+  counted on 2026-10-22: where each of the 367 invented test ideas ends when typed in (323 on the general road,
+  *Starting any business in Alberta*, which any idea can reach; 44 stop before any road is shown; 0 of the 11
+  ideas with a road of their own written for them reach it), the ideas shown a road that isn't theirs with
+  nothing on screen saying so (37 today; phase 2 aims for 0), how often "What's closest to your work?" lists
+  the job an idea expects (in the group it opens for 150 of 220, anywhere in its lists for 172, no job at all
+  for 4; the cockpit's older job list, 20), how busy each screen looks at each width from the last browser run,
+  source health (each citation by who checked it, sources whose stated next release date has passed, the 5
+  citations on government pages that answered "page not found", and, only when a builder asks with `--live`,
+  a live run of the quote checker), and how the ideas pass the idea test (140 break none of its rules; the
+  other 227 only rules listed as known and not yet fixed). The clutter is counted with the clutter test's own
+  rule and the job search with the count its floor test holds, so the report can't print a number the tests
+  don't. CI prints it after the tests and after the browser run, and on the run's summary page; no number fails
+  anything yet. `npm run quality:line` gives the one Quality line, in plain words, each release adds here;
+  a part the run didn't count (the job search, the clutter, the sources, or the live quote check) says so in
+  the line. Made on a builder's Windows machine, its clutter part counts with the Windows allowance, so it
+  can differ from CI's. Nothing comes from the people using DotAmi, and nothing is sent anywhere.
 ### Fixed
 - **Your answer to "Are you buying equipment, a vehicle or tools?" on a future picked on Pick a future is
   kept** (the maintainer's "Yes, fix both", 2026-10-20). Pick a future saves equipment as not said, since it

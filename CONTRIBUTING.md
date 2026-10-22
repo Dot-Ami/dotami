@@ -296,6 +296,10 @@ a citation without an official URL or without a person's read or a tool check, a
 that cannot resolve. Green is the floor, not the bar: a tool check proves only that the quoted words are on the page, and the maintainer chooses which sources to read.
 The scenarios those deterministic tests lock are described in
 [docs/verification/golden-scenarios.md](docs/verification/golden-scenarios.md).
+To see what your change did to the quality numbers (the idea harness's pass rate, where test ideas end,
+silent fallbacks, the job search against the test ideas, clutter per screen, source health), run
+**`npm run quality:report`** (after `npm run test:browser` for the clutter part). CI prints the same report
+on every pull request; no number fails anything yet.
 
 One PR per topic. A PR that adds a node and also reformats three files is two PRs. To keep
 that from happening by accident, the repository ships `.editorconfig` and a Prettier config:
