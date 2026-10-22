@@ -11,8 +11,8 @@
  * Each idea goes in both ways the app has: typed into "I already have an idea" (the intake's screens, then
  * Pick a future's three steps on the intake page, the cockpit, the plan), and, for an idea with a province or
  * territory, picked on *Pick a future* after *Your destination*. Both ways play the three steps (task 29h) as the
- * corpus harness records the person's clicks for the idea (`stepsChoice`): the expected job typed by its code and
- * clicked, or Skip; the area and the region in Alberta; then the card, the "Not here yet?" note, or leaving at
+ * corpus harness records the person's clicks for the idea (`stepsChoice`): the expected job found from the person's
+ * words (the kind of work, or the job's own name) and clicked, or Skip; the area and the region in Alberta; then the card, the "Not here yet?" note, or leaving at
  * "No road is written for <job> yet" with nothing saved. An idea with nothing typed stops at the box, and one
  * outside Canada at the intake's place question; the sweep checks those honest ends too.
  *
@@ -61,7 +61,7 @@ import { findVerdicts } from "../tests/helpers/verdict-words";
 import { BUDGETS, WINDOWS_EXTRA, type Clutter, type ScreenId } from "./budgets";
 import { measurePage, type Measured } from "./clutter-measure";
 import { cockpitSettled, showRail } from "./cockpit-calm";
-import { pickTheJob } from "./three-steps";
+import { findTheJobByWords } from "./three-steps";
 
 // --- Which ideas.
 
@@ -356,7 +356,7 @@ async function typedWay(s: Sweep) {
 
 /**
  * Pick a future's three steps (task 29h), played as the corpus harness records the person's clicks for this idea
- * (`stepsChoice`): the job typed by its code and clicked, or Skip; in Alberta the area and the region; then the
+ * (`stepsChoice`): the job found from the person's words and clicked, or Skip; in Alberta the area and the region; then the
  * card, the "Not here yet?" note, or leaving at "No road is written for <job> yet" (nothing saved). Each part is
  * read as it opens. Step 1 on Pick a future is the state the `futures` budget measures, so it is held to it.
  * Returns whether a future was opened.
@@ -368,7 +368,9 @@ async function playTheSteps(s: Sweep, way: "typed" | "picked", steps: StepsRun):
   if (steps.job === null) {
     await button(page, jobStepWords.skip).click();
   } else {
-    await pickTheJob(page, steps.job);
+    // Through the word search, as the person plays it: typed words, never the job's code.
+    await findTheJobByWords(page, steps.job, steps.search!);
+    s.measured.push(`${way}: step 1, found ${steps.job.code} by typing “${steps.search!.typed}” (${steps.search!.by})`);
     if (steps.area !== null && steps.region !== null) {
       const area = page.getByRole("combobox", { name: whereStepWords.area.label });
       await expect(area).toBeVisible();

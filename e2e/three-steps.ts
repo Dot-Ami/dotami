@@ -8,7 +8,9 @@
  */
 import { expect, type Page } from "@playwright/test";
 
+import type { JobSearchGroupKind } from "../lib/engines/oasis/v2026/title-search";
 import { generalRoadV2026 } from "../lib/engines/roads/v2026";
+import { showGroupName } from "../lib/front-door/job-search-lines";
 import { intakeStepsWords, jobStepWords, pickWords, whereStepWords } from "../lib/front-door/words";
 import { waitForReact } from "../tests/helpers/react-ready";
 
@@ -29,6 +31,27 @@ export async function pickTheJob(page: Page, job: { code: string; label: string 
   await waitForReact(box);
   await box.fill(job.code);
   await page.getByRole("button", { name: jobStepWords.pickName(job.label, job.code), exact: true }).click();
+}
+
+/**
+ * Step 1 played from the person's words, as the idea harness records it (tests/helpers/idea-pipeline.ts
+ * `findTheJob`): type the words, open the group listing the job when it is shown folded, click the job. A word
+ * search that can't list the job fails here, where typing its code wouldn't (the PR #202 review).
+ */
+export async function findTheJobByWords(
+  page: Page,
+  job: { code: string; label: string },
+  search: { typed: string; group: JobSearchGroupKind; groupOpen: boolean; groupTotal: number },
+) {
+  const box = page.getByRole("searchbox", { name: jobStepWords.boxLabel });
+  await waitForReact(box);
+  await box.fill(search.typed);
+  if (!search.groupOpen) {
+    await page.getByRole("button", { name: showGroupName({ kind: search.group, total: search.groupTotal }), exact: true }).click();
+  }
+  const pick = page.getByRole("button", { name: jobStepWords.pickName(job.label, job.code), exact: true });
+  await expect(pick).toBeVisible();
+  await pick.click();
 }
 
 /** Step 2 in Alberta: the area (2a), then the region (2b), each the person's own pick (a value, or "" for Choose one). */

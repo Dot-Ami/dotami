@@ -320,7 +320,9 @@ placed in phase 3.
     against Statistics Canada's own pages, as Alberta's eight were (the maintainer's call of 2026-10-21).
     Built 2026-10-22 with 28b: both questions on Pick a future's step 2, kept on the idea at Look inside
     (`Venture.landscapeArea`, `economicRegion`, each with its day; migration `20261022000000_where_you_are`),
-    shown on *Your plan*; *About this job* reads the region when 25h adds it
+    shown on *Your plan*; *About this job* reads the region when 25h adds it. Until then step 2 names About
+    this job nowhere (its "change your region later", "Alberta-wide figure" and outside-Alberta wage-row lines
+    are held; spec 02's as-built note)
   - [ ] Phase 3: the business counts for the area and industry (Statistics Canada table 33-10-1176), the
     industry question, *Where to look* as a dated, checked list, and the rest of the panel
 - ⬜ **[14h] Ask the Lens "what's cheapest, fastest, strongest?"** The Lens, and a *Sort by one thing you
@@ -517,7 +519,10 @@ placed in phase 3.
   - The test gate learns these endings ([14j]'s harness, reopened for phase 2):
     - [x] 29h: the harness picks a job as a recorded click and accepts the honest "not written yet" ending;
       a job the person didn't pick still fails (`tests/helpers/idea-pipeline.ts` `stepsChoice`; the browser
-      idea sweep plays the three steps too, 2026-10-22)
+      idea sweep plays the three steps too, 2026-10-22). Both find the job through step 1's search from the
+      person's words (the kind of work, then the job's own name), never by its code, so a broken word search
+      fails them (PR #202 review; all 220 corpus ideas with a job find it: 172 from the kind of work, 48 from
+      the job's name)
     - [x] 29i: a number kind for a published job fact (a wage with its source row); a wage without its row
       fails, and a wage is never added into a total (`tests/helpers/number-provenance.ts`; About this job's
       pieces carry their row when 25h adds them)

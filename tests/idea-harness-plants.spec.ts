@@ -26,7 +26,24 @@ const plants = vi.hoisted(() => ({
   emptyNext: false,
   /** "I'd incorporate at" keeps nothing: the cockpit's save of it leaves the idea as it was. */
   dropIncorporateAt: false,
+  /**
+   * Step 1's search finds nothing for any words (the PR #202 review's plant): only a typed code still finds its
+   * job. The person types words, never a code, so they can't find their job.
+   */
+  wordsFindNothing: false,
 }));
+
+vi.mock("@/lib/engines/oasis/v2026/title-search", async (importOriginal) => {
+  const real = await importOriginal<typeof import("@/lib/engines/oasis/v2026/title-search")>();
+  return {
+    ...real,
+    searchJobTitles: (...args: Parameters<typeof real.searchJobTitles>) => {
+      const search = real.searchJobTitles(...args);
+      const aCode = /^\d/.test(args[0].trim());
+      return plants.wordsFindNothing && !aCode ? { ...search, state: "no-match" as const, groups: [], total: 0 } : search;
+    },
+  };
+});
 
 vi.mock("@/lib/scenarios/branches", async (importOriginal) => {
   const real = await importOriginal<typeof import("@/lib/scenarios/branches")>();
@@ -113,6 +130,7 @@ afterEach(() => {
   plants.moveToAlberta = false;
   plants.emptyNext = false;
   plants.dropIncorporateAt = false;
+  plants.wordsFindNothing = false;
 });
 
 describe("the harness fails on a planted product regression", () => {
@@ -151,6 +169,25 @@ describe("the harness fails on a planted product regression", () => {
       `${ROAD_1_IDEA.id} · ends:no-silent-fallback · typed › step 3`,
       `${ROAD_1_IDEA.id} · ends:no-silent-fallback · picked › step 3`,
     ]);
+  });
+
+  it("a job search that can't find the person's job from their words (step 1 is played through the search)", () => {
+    // Unplanted, the cabinetmaker types the kind of work and finds Cabinetmakers in the group shown open.
+    expect(stepsChoice(ROAD_1_IDEA, "picked").search).toEqual({
+      typed: ROAD_1_IDEA.work,
+      by: "work",
+      group: "all",
+      groupOpen: true,
+      groupTotal: expect.any(Number),
+    });
+    plants.wordsFindNothing = true;
+    // Planted, neither the work's words nor the job's own name lists it: the run stops, naming the job, on both
+    // ways in, as a person who can't find their job can't pick it.
+    expect(() => stepsChoice(ROAD_1_IDEA, "picked")).toThrow(/72311\.00/);
+    expect(() => stepsChoice(ROAD_1_IDEA, "typed")).toThrow(/72311\.00/);
+    expect(() => runIdea(ROAD_1_IDEA)).toThrow(/72311\.00/);
+    // An idea that names no job skips step 1, so the plant changes nothing for it.
+    expect(() => runIdea(ROAD_0_IDEA)).not.toThrow();
   });
 
   it("a job picked for the person by road evaluation's input", () => {

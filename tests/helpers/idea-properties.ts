@@ -497,6 +497,7 @@ export function invariantFailures(run: GeneratedRun): Failure[] {
     // Pick a future is played, so step 3's checks have nothing to read.
     steps: {
       job: input.job ? { code: input.job.code, label: input.job.label } : null,
+      search: null,
       area: null,
       region: null,
       match: "skipped",

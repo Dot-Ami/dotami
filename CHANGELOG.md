@@ -112,9 +112,12 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   opened. The cockpit's **Pick a job** runs the same search. The words you type are searched on DotAmi's own
   server on your computer and never kept; the job, the area and the region are kept with the idea, each with
   its day, only when you open a future (four new optional columns on the idea, through a migration that adds
-  them and changes nothing else), shown on *Your plan*, and deleted with the idea. The idea harness plays the
-  person's job pick as a recorded click and accepts the honest "not written yet" ending, and the browser idea
-  sweep plays the three steps.
+  them and changes nothing else), shown on *Your plan*, and deleted with the idea. When every word typed is on
+  DotAmi's filler or business-word list (*my own shop*), the step says nothing was searched, under the *Not
+  searched* line, and never that no government title holds those words. *Where you are* promises nothing about
+  *About this job* until About this job reads the answers kept here. The idea harness and the browser idea sweep
+  find each person's job through the search from their own words (the kind of work, or the job's own name), never
+  by its code, and accept the honest "not written yet" ending; the sweep plays the three steps.
 ### Fixed
 - **Your answer to "Are you buying equipment, a vehicle or tools?" on a future picked on Pick a future is
   kept** (the maintainer's "Yes, fix both", 2026-10-20). Pick a future saves equipment as not said, since it

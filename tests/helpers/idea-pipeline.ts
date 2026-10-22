@@ -11,6 +11,8 @@ import { firstSaveForPickedFuture, scenarioForPickedFuture } from "@/lib/front-d
 import { roadForFuture, SHIPPED_ROADS_CATALOG, type SkillMarkValue, type StepStatus } from "@/lib/futures/types";
 import { firstSaveFromIntake, withTheSteps } from "@/lib/journey/first-save";
 import { oasisJobByCode, oasisListForJob, type JobList } from "@/lib/engines/oasis/v2026";
+import { searchJobTitles, type JobSearchGroupKind, type JobSearchHit } from "@/lib/engines/oasis/v2026/title-search";
+import { leftOutLine, searchStatusLine } from "@/lib/front-door/job-search-lines";
 import { ALBERTA_ECONOMIC_REGIONS, DONT_KNOW_REGION, economicRegionsCreditLine } from "@/lib/engines/research-kit/v2026/economic-regions";
 import { roadJobNames } from "@/lib/front-door/road-jobs";
 import { roadJobGroups, roadMatch, type RoadMatchCase } from "@/lib/front-door/road-match";
@@ -46,8 +48,8 @@ import type { TextPiece } from "./text-pieces";
  *   with no written road, where the person leaves and nothing is saved. For every idea with a province or
  *   territory.
  *
- * The three steps (task 29h): the person's job pick is a recorded click, the corpus's expected job (`idea.jobs`,
- * the first), or Skip when it names none; in Alberta, the area and the region are recorded clicks too, each its
+ * The three steps (task 29h): the person's job pick is a recorded click on the corpus's expected job (`idea.jobs`,
+ * the first), found through step 1's search from the person's words (`findTheJob`), or Skip when it names none; in Alberta, the area and the region are recorded clicks too, each its
  * own (the region never follows from the area). Step 3 lists the roads written for the picked job first
  * (lib/front-door/road-match.ts), and its words are collected like every screen's.
  *
@@ -95,6 +97,12 @@ export type IntakeEnd =
 export interface StepsRun {
   /** The person's job pick (a recorded click: the corpus's expected job), or null: Skip. */
   job: { code: string; label: string } | null;
+  /**
+   * How the person found that job on step 1, through the search the screen runs: what they typed (the kind of work,
+   * or, when that doesn't list the job, the job's own name), the group listing it, whether that group is shown
+   * open (a closed one is a click away) and how many jobs it holds. Null after Skip.
+   */
+  search: { typed: string; by: "work" | "job name"; group: JobSearchGroupKind; groupOpen: boolean; groupTotal: number } | null;
   /** In Alberta, after a job pick: the area and the region clicked, each the person's own; null otherwise. */
   area: string | null;
   region: string | null;
@@ -738,8 +746,10 @@ const stateOf = (steps: StepsRun): StepsState => ({ part: "road", job: steps.job
 /**
  * What the invented person clicks on the three steps (task 29h), a fixed record per idea and way in:
  *
- * 1. **Your work**: the corpus's expected job (`idea.jobs`, the first), as a recorded click, or Skip when the idea
- *    names none. Only ever a job the government's list holds.
+ * 1. **Your work**: the corpus's expected job (`idea.jobs`, the first), found through the search the screen runs
+ *    (`searchJobTitles`, never looked up by its code): the person types the kind of work (`idea.work`), and when
+ *    that doesn't list the job, tries again with the job's own name, as the no-match line suggests. A job neither
+ *    lists can't be picked, so the run stops there with an error naming it. Skip when the idea names no job.
  * 2. **Where you are** (Alberta, after a job pick): an area and a region, each picked by the idea's number from
  *    its own drop-down, so neither follows from the other, as on screen.
  * 3. **Pick a future**: the road written for the picked job when there is one (listed first). Otherwise the road
@@ -751,8 +761,10 @@ const stateOf = (steps: StepsRun): StepsState => ({ part: "road", job: steps.job
  */
 export function stepsChoice(idea: Idea, way: "typed" | "picked"): StepsRun {
   const n = Number(idea.id.slice(-4));
-  const found = idea.jobs?.[0] ? oasisJobByCode(idea.jobs[0]) : undefined;
-  const job = found ? { code: found.code, label: found.label } : null;
+  const expected = idea.jobs?.[0] ? oasisJobByCode(idea.jobs[0]) : undefined;
+  const found = expected ? findTheJob(idea, expected.code, expected.label) : null;
+  const job = found ? { code: found.hit.code, label: found.hit.label } : null;
+  const search = found?.search ?? null;
   const province = isProvince(idea.place) ? idea.place : null;
   const where = job !== null && asksWhere(province);
   const regions = [...ALBERTA_ECONOMIC_REGIONS.map((r) => r.code), DONT_KNOW_REGION];
@@ -770,7 +782,30 @@ export function stepsChoice(idea: Idea, way: "typed" | "picked"): StepsRun {
   else if (n % 3 === 1) click = card(ROAD_IDS["road-1"]);
   else if (n % 3 === 2 && idea.words.trim().length > 0) click = { by: "not-here", roadId: generalRoadV2026.id };
   else click = match.case === "no-road" ? { by: "left" } : card(generalRoadV2026.id);
-  return { job, area, region, match: match.case, offered, click };
+  return { job, search, area, region, match: match.case, offered, click };
+}
+
+/**
+ * Step 1 as the person plays it: type words into the search, find the job among the groups the screen lists (the
+ * first 50 of each), click it. First the kind of work in their own words, then, if that doesn't list it, the job's
+ * own name. Throws when neither does: the person can't pick a job the search doesn't list, and the harness must
+ * not pick it for them by its code (the PR #202 review: a broken word search passed every idea run).
+ */
+function findTheJob(idea: Idea, code: string, name: string): { hit: JobSearchHit; search: NonNullable<StepsRun["search"]> } {
+  for (const [typed, by] of [
+    [idea.work, "work"],
+    [name, "job name"],
+  ] as const) {
+    const result = searchJobTitles(typed);
+    if (result.state !== "results") continue;
+    for (const group of result.groups) {
+      const hit = group.jobs.find((h) => h.code === code);
+      if (hit) return { hit, search: { typed, by, group: group.kind, groupOpen: group.open, groupTotal: group.total } };
+    }
+  }
+  throw new Error(
+    `${idea.id}: step 1's search lists ${code} (${name}) neither for the kind of work, “${idea.work}”, nor for the job's own name, so the person can't pick it`,
+  );
 }
 
 /** The picked way's click on step 3, when it opens a road (the e2e idea sweep's), or null when the person leaves. */
@@ -794,6 +829,12 @@ function piecesOfSteps(pieces: TextPiece[], way: "typed" | "picked", idea: Idea,
   add("work › skip hint", jobStepWords.skipHint);
   add("work › not kept", jobStepWords.notKept);
   add("work › source", jobStepWords.source);
+  // The lines drawn around the search the person ran to find their job.
+  if (steps.search) {
+    const search = searchJobTitles(steps.search.typed);
+    add("work › status", searchStatusLine(search));
+    add("work › not searched", leftOutLine(search));
+  }
   // 2. Where you are, only after a job pick.
   if (steps.job) {
     add("where › picked", whereStepWords.picked(steps.job.label, steps.job.code));
