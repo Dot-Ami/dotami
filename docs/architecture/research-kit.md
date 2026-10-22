@@ -445,6 +445,16 @@ output, `tests/oasis-import.spec.ts` and the module it writes are unchanged, byt
 data:check` (`scripts/data-check.mjs`) runs every importer's `--check` offline and is a step of
 `npm run ci:quality` and of CI.
 
+**As built (2026-10-21, task 28a).** Two more adapters on the core, both in `data:check` and both cards now
+marked `now`: `scripts/import-oasis-titles.mjs` (OaSIS 2025 "Example Titles", 18,666 titles keyed to the 900
+OaSIS codes, into `lib/engines/oasis/v2026/titles.ts`) and `scripts/import-noc.mjs` (the NOC 2021 Version 1.0
+elements file: each of the 516 job groups' title, its example titles and its "Employment requirements" word for
+word, into `lib/engines/noc/v2021/data.ts`, with Statistics Canada's notice, reference date 2021). The core
+gained `parseCsv` and `expectHeader`. Statistics Canada's site answered a script with a "Security Check" page on
+2026-10-21, so the committed elements file is the 2026-10-15 copy research 28f measured
+(`data/noc-2021-v1.0/README.md`); its `--download` writes nothing until the site answers scripts again. The
+search over the titles (28b's engine) is `lib/engines/oasis/v2026/title-search.ts`.
+
 **Still to build (phase 3).** The S2.5.23f counts import will be built on the core; no importer for it exists
 yet. As far as the research saw (reported, not confirmed; 23f checks
 it), the census-metropolitan-area table goes down to 4-digit industry groups and counts only businesses with

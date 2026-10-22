@@ -490,11 +490,15 @@ placed in phase 3.
     The maintainer's calls on them, 2026-10-21: the typed way ends on the same three steps; no region question
     outside Alberta for now; a job with no written road saves nothing; the what-if **Keep** bug is fixed with
     the *Incorporating* fix)
-  - [ ] 28a: import the classification's elements file (example job titles and "Employment requirements")
-    on the shared import core, with its checksum, licence and credit line
+  - [x] 28a: import the classification's elements file (example job titles and "Employment requirements")
+    on the shared import core, with its checksum, licence and credit line; and the OaSIS "Example Titles"
+    file beside it (`scripts/import-noc.mjs`, `scripts/import-oasis-titles.mjs`; both in `npm run data:check`
+    and on `/licences`)
   - [ ] 28b: *What's closest to your work?*: the person searches the example titles and picks the job;
     matches in code order, labelled "matches your words · your pick"; *Skip* allowed; nothing set without a
-    click
+    click. The search itself is built (`lib/engines/oasis/v2026/title-search.ts`, with DotAmi's word list the
+    maintainer approves line by line): 153 of 220 corpus ideas find their job in the group shown first, against
+    20 today. The screen is still to build.
   - [ ] 28c: the road written for the picked job comes first; otherwise "No road is written for this job
     yet", with *About this job* and the general road; no silent fallback for a new idea; a job with no written
     road saves nothing until a future is opened (the maintainer's call of 2026-10-21; a kind of saved idea with
