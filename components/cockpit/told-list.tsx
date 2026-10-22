@@ -241,7 +241,8 @@ export function QuestionBox({
   canSave: boolean;
   /** Keeps the answer: a month "2029-05", whole dollars, cents, or an option's id. Resolves to an error, or null. */
   onSave: (value: string | number) => Promise<string | null>;
-  onDontKnow: () => void;
+  /** I don't know; left out, the box has none (the Incorporating step's own estimate box). */
+  onDontKnow?: () => void;
 }) {
   const id = useId();
   const [text, setText] = useState(
@@ -282,7 +283,9 @@ export function QuestionBox({
       <p id={`${id}-title`} className="text-body font-semibold text-paper">
         {title}
       </p>
-      <p className="text-small text-stone">{why}</p>
+      <p id={`${id}-why`} className="text-small text-stone">
+        {why}
+      </p>
       {control.kind === "choice" ? (
         <fieldset aria-labelledby={`${id}-title`} className="flex flex-wrap gap-x-3 gap-y-1">
           {control.options.map((option) => (
@@ -304,6 +307,7 @@ export function QuestionBox({
             min={control.kind === "month" ? control.min : undefined}
             value={text}
             onChange={(e) => setText(e.target.value)}
+            aria-describedby={`${id}-why`}
             aria-invalid={problem ? true : undefined}
             className="w-40 rounded-sm border border-rule bg-ink2 px-2 py-1 font-mono text-body text-paper outline-hidden focus:border-maple-soft"
           />
@@ -319,9 +323,12 @@ export function QuestionBox({
         <button type="submit" disabled={!canSave || busy} className="rounded-full border border-maple bg-maple px-2.5 py-0.5 text-body text-[#fff8ee] disabled:opacity-50">
           {words.questions.box.save}
         </button>
-        <button type="button" onClick={onDontKnow} className={small}>
-          {words.questions.box.dontKnow}
-        </button>
+        {/* A box drawn where nothing is being asked (a step panel's own box) has no I don't know. */}
+        {onDontKnow ? (
+          <button type="button" onClick={onDontKnow} className={small}>
+            {words.questions.box.dontKnow}
+          </button>
+        ) : null}
       </div>
     </form>
   );

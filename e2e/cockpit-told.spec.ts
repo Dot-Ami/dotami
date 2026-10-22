@@ -277,7 +277,7 @@ test("on a future picked on Pick a future, the equipment answer is kept after a 
   const ventureId = ((await saved.json()) as { ventureId: string }).ventureId;
   const keptRow = () =>
     withE2eDb((db) => db.venture.findUniqueOrThrow({ where: { id: ventureId }, select: { capitalPurchasePlanned: true, notSaid: true } }));
-  expect(await keptRow()).toEqual({ capitalPurchasePlanned: false, notSaid: ["venture-type", "equipment", "sales-targets"] });
+  expect(await keptRow()).toEqual({ capitalPurchasePlanned: false, notSaid: ["venture-type", "equipment", "sales-target-year-1", "sales-target-year-3"] });
 
   await page.goto(`/cockpit?venture=${ventureId}`);
   await showRail(page);
@@ -301,7 +301,7 @@ test("on a future picked on Pick a future, the equipment answer is kept after a 
   await expect(page.getByText(/^Saved · /)).toBeVisible();
 
   // The data file holds it, and only equipment came off the not-said list.
-  await expect.poll(keptRow).toEqual({ capitalPurchasePlanned: true, notSaid: ["venture-type", "sales-targets"] });
+  await expect.poll(keptRow).toEqual({ capitalPurchasePlanned: true, notSaid: ["venture-type", "sales-target-year-1", "sales-target-year-3"] });
   await page.reload();
   await expect(told(page).getByText(said, { exact: true })).toBeVisible();
   await showAll();
@@ -312,9 +312,117 @@ test("on a future picked on Pick a future, the equipment answer is kept after a 
   // Equipment always has a line in road evaluation (answered or not), so the receipt names the line it is back to.
   await expect(told(page).getByRole("status")).toContainText("Because buying equipment, a vehicle or tools is not answered yet, so the rules read it as no");
   await expect(page.getByText(/^Saved · /)).toBeVisible();
-  await expect.poll(keptRow).toEqual({ capitalPurchasePlanned: false, notSaid: ["venture-type", "equipment", "sales-targets"] });
+  await expect.poll(keptRow).toEqual({ capitalPurchasePlanned: false, notSaid: ["venture-type", "equipment", "sales-target-year-1", "sales-target-year-3"] });
   await page.reload();
   await expect(told(page).getByText(said, { exact: true })).toHaveCount(0);
   await showAll();
   await expect(notTold(page).getByText(question)).toBeVisible();
+});
+
+/** A future saved the way Pick a future saves one on the general road ("Not here yet?"); returns its id. */
+async function savePickedFuture(page: Page, name: string): Promise<string> {
+  const scenario = scenarioForPickedFuture({ road: generalRoadV2026, place: "CA-AB", name }, `picked-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`);
+  const saved = await page.request.post("/api/scenario/save", { data: { scenario, ...firstSaveForPickedFuture(generalRoadV2026, null) } });
+  expect(saved.ok()).toBe(true);
+  return ((await saved.json()) as { ventureId: string }).ventureId;
+}
+
+/** The rail's value for one of the idea's lines ("Target Y1", "Target Y3"). */
+const railValue = (page: Page, label: string) => page.getByText(label, { exact: true }).locator("xpath=..");
+
+// The Incorporating fix (docs/ui-spec/cockpit/incorporating-estimate.md; the maintainer's "fix both",
+// 2026-10-20): a future picked on Pick a future kept no third-year estimate and nothing asked for one, so
+// Incorporating could never light there.
+test("on a future picked on Pick a future, the third-year estimate and “I'd incorporate at” light Incorporating; taken back, the future is as picked", async ({ page }) => {
+  const ventureId = await savePickedFuture(page, "Invented — picked estimate test");
+  const keptRow = () =>
+    withE2eDb((db) => db.venture.findUniqueOrThrow({ where: { id: ventureId }, select: { targetRevenueY3: true, notSaid: true } }));
+  // As Pick a future saved it: no estimate, and both sales targets not said.
+  const asPicked = { targetRevenueY3: 0, notSaid: ["venture-type", "equipment", "sales-target-year-1", "sales-target-year-3"] };
+
+  await page.goto(`/cockpit?venture=${ventureId}`);
+  await showRail(page);
+  await showRoadAhead(page);
+  const estimate = "Your third-year sales estimate";
+  // A row's line starts with its question; the estimate's own line names this one too, in lower case.
+  const incorporateAt = /^The yearly sales at which you'd incorporate/;
+  const showAll = async () => {
+    const more = notTold(page).getByRole("button", { name: /^\d+ more$/ });
+    if ((await more.count()) > 0) await more.click();
+  };
+  await expect(stage(page, "Incorporating")).toHaveAccessibleName(/check first/);
+
+  // Asked first, before "I'd incorporate at", which changes nothing without it.
+  await showAll();
+  await expect(notTold(page).getByText(incorporateAt)).toHaveCount(0);
+  const estimateRow = notTold(page).getByRole("listitem").filter({ hasText: estimate });
+  await estimateRow.getByRole("button", { name: /^Answer/ }).click();
+  await estimateRow.getByLabel("Dollars of sales in your third year").fill("120000");
+  await estimateRow.getByRole("button", { name: "Save", exact: true }).click();
+  // On its own it changes nothing on the road, and the box says so; the next question is the one it opens.
+  await expect(told(page).getByRole("status")).toContainText("Saved. Nothing on the road changed.");
+  await expect(told(page).getByText("You told us third-year sales of $120,000", { exact: true })).toBeVisible();
+  await expect(railValue(page, "Target Y3")).toContainText("$120,000");
+  await expect(railValue(page, "Target Y1")).toContainText("Not said");
+  await expect.poll(keptRow).toEqual({ targetRevenueY3: 120_000, notSaid: ["venture-type", "equipment", "sales-target-year-1"] });
+
+  await showAll();
+  const ownRow = notTold(page).getByRole("listitem").filter({ hasText: incorporateAt });
+  await ownRow.getByRole("button", { name: /^Answer/ }).click();
+  await ownRow.getByLabel("Dollars of yearly sales").fill("100000");
+  await ownRow.getByRole("button", { name: "Save", exact: true }).click();
+  await expect(told(page).getByRole("status")).toContainText("Because you told us you'd incorporate at $100,000 of yearly sales");
+  await expect(stage(page, "Incorporating")).toHaveAccessibleName(/applies as answered/);
+
+  // The step's own panel holds both boxes: the estimate shown with Change your number, above "I'd incorporate at".
+  await page.reload();
+  await expect(stage(page, "Incorporating")).toHaveAccessibleName(/applies as answered/);
+  await stage(page, "Incorporating").click();
+  const panelEstimate = stepPanel(page).getByRole("group", { name: estimate });
+  await expect(panelEstimate).toContainText("This step lights when your third-year sales estimate reaches your own “I'd incorporate at” number. Both are yours.");
+  await expect(panelEstimate).toContainText("$120,000");
+  await panelEstimate.getByRole("button", { name: "Change your number" }).click();
+  await panelEstimate.getByLabel("Dollars of sales in your third year").fill("90000");
+  await panelEstimate.getByRole("button", { name: "Save", exact: true }).click();
+  // Under the person's own number now: the step goes back to check first, and the receipt says so.
+  await expect(stepPanel(page).getByRole("status")).toContainText("Because you told us third-year sales of $90,000");
+  await expect(stage(page, "Incorporating")).toHaveAccessibleName(/check first/);
+  await expect.poll(keptRow).toEqual({ targetRevenueY3: 90_000, notSaid: ["venture-type", "equipment", "sales-target-year-1"] });
+
+  // Taken back: as when picked. Not said on the rail, asked again, and "I'd incorporate at" no longer asked.
+  await page.reload();
+  await told(page).getByRole("listitem").filter({ hasText: "You told us third-year sales of $90,000" }).getByRole("button", { name: /^Take back/ }).click();
+  await expect(told(page).getByRole("status")).toContainText(/took back your third-year sales number|Nothing on the road changed/);
+  await expect.poll(keptRow).toEqual(asPicked);
+  await page.reload();
+  await expect(railValue(page, "Target Y3")).toContainText("Not said");
+  await showAll();
+  await expect(notTold(page).getByText(estimate)).toBeVisible();
+  await expect(notTold(page).getByText(incorporateAt)).toHaveCount(0);
+});
+
+// The what-if Keep bug (the maintainer's call 6, 2026-10-21): on a picked future, Keep set the first-year
+// sales the road reads, but the rail and the plan still said "Not said" for them.
+test("on a future picked on Pick a future, Keep on the what-if shows the kept first-year sales on the rail and the plan; the third year stays not said", async ({ page }) => {
+  const ventureId = await savePickedFuture(page, "Invented — picked keep test");
+  const keptRow = () =>
+    withE2eDb((db) => db.venture.findUniqueOrThrow({ where: { id: ventureId }, select: { targetRevenueY1: true, notSaid: true } }));
+
+  await page.goto(`/cockpit?venture=${ventureId}`);
+  await showRail(page);
+  await showWhatIfBar(page);
+  await expect(railValue(page, "Target Y1")).toContainText("Not said");
+  await whatIf(page).getByLabel("Try first-year sales of $").fill("45000");
+  await whatIf(page).getByRole("button", { name: "Try", exact: true }).click();
+  await whatIf(page).getByRole("button", { name: "Keep", exact: true }).click();
+  await expect(page.getByText(/^Saved · /)).toBeVisible();
+  await page.reload();
+  await expect(railValue(page, "Target Y1")).toContainText("$45,000");
+  await expect(railValue(page, "Target Y3")).toContainText("Not said");
+  // The data file: the first-year target came off the not-said list, the third-year one didn't.
+  await expect.poll(keptRow).toEqual({ targetRevenueY1: 45_000, notSaid: ["venture-type", "equipment", "sales-target-year-3"] });
+  await expect(told(page).getByText("You told us first-year sales of $45,000", { exact: true })).toBeVisible();
+  // Your plan reads the same number (its told row ends with where the day is kept).
+  await page.goto(`/plan?venture=${ventureId}`);
+  await expect(page.getByText(/^You told us first-year sales of \$45,000 · /)).toBeVisible();
 });

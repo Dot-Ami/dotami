@@ -208,14 +208,14 @@ describe("a picked future keeps what it was saved without as not said (review, 2
   it("the kind of venture, equipment and sales targets: listed as not said, and equipment read back unanswered", async () => {
     const scenario = scenarioForPickedFuture({ road: roadApprenticeToOwnShopAB, place: "CA-AB", name: "" }, randomUUID());
     const { ventureId } = (await (await routes.save(post("/api/scenario/save", { scenario }))).json()) as { ventureId: string };
-    expect((await prisma.venture.findUniqueOrThrow({ where: { id: ventureId } })).notSaid).toEqual(["venture-type", "equipment", "sales-targets"]);
+    expect((await prisma.venture.findUniqueOrThrow({ where: { id: ventureId } })).notSaid).toEqual(["venture-type", "equipment", "sales-target-year-1", "sales-target-year-3"]);
     const loaded = await loadVentureScenarioById(prisma, ventureId);
-    expect(loaded?.profile.notSaid).toEqual(["venture-type", "equipment", "sales-targets"]);
+    expect(loaded?.profile.notSaid).toEqual(["venture-type", "equipment", "sales-target-year-1", "sales-target-year-3"]);
     expect(loaded?.profile.capitalPurchasePlanned).toBeUndefined();
 
     // The cockpit's own saves carry the list back, so it stays.
     expect((await routes.save(post("/api/scenario/save", { scenario: loaded }))).status).toBe(200);
-    expect((await prisma.venture.findUniqueOrThrow({ where: { id: ventureId } })).notSaid).toEqual(["venture-type", "equipment", "sales-targets"]);
+    expect((await prisma.venture.findUniqueOrThrow({ where: { id: ventureId } })).notSaid).toEqual(["venture-type", "equipment", "sales-target-year-1", "sales-target-year-3"]);
 
     // A save with no list (the intake, which asks all three) clears it, and its answers are the person's.
     const answered = { ...loaded!, profile: { ...loaded!.profile, notSaid: undefined, type: "product" as const, capitalPurchasePlanned: true } };

@@ -9,7 +9,11 @@ Type: a *Not told yet* row, a number box, a take-back
 Last updated: 2026-10-21 (designed before it is built, task 28g, for the *Incorporating* fix. The maintainer,
 2026-10-20: fix both known bugs, and the *Incorporating* one needs a design here. **Decided 2026-10-21 (the
 maintainer, call 6, "fix"):** the what-if **Keep** bug on a picked future is fixed in the **same** pull request
-as the *Incorporating* fix; its part is *The what-if Keep bug* below.)
+as the *Incorporating* fix; its part is *The what-if Keep bug* below. **Built 2026-10-21** in that one pull
+request, as written here: `lib/cockpit/told.ts` `notToldYet`, `answerSalesYear3` and `keepWhatIf`,
+`lib/scenarios/not-said.ts` `withSalesTarget`, and `components/cockpit/step-panel.tsx` `ThirdYearEstimate`. The
+estimate's row is asked only where a pair of answers, the estimate and "I'd incorporate at", could change the
+road; on its own the estimate changes nothing, so the idea harness counts it with the question it opens.)
 
 No mockup: it changes one row and one box on screens that already exist.
 

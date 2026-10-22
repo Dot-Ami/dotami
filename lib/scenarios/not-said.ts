@@ -1,18 +1,33 @@
 import { NOT_SAID_FIELDS, type NotSaidField, type VentureProfile } from "./types";
 
 /**
+ * The one id both sales targets were listed under until 2026-10-21. Ids are forever, so a future picked
+ * before the split, still holding it in the data file, reads it as both years not said.
+ */
+export const LEGACY_SALES_TARGETS = "sales-targets";
+
+/**
  * Reads a not-said list (`VentureProfile.notSaid`) from anywhere it arrives, a save's body or the data
  * file's JSON column: only the known ids, each once, in the order `NOT_SAID_FIELDS` lists them. Anything
  * else is dropped, never guessed into one. An empty result means every answer was the person's.
  */
 export function cleanNotSaid(value: unknown): NotSaidField[] {
   if (!Array.isArray(value)) return [];
-  return NOT_SAID_FIELDS.filter((field) => value.includes(field));
+  const legacy = value.includes(LEGACY_SALES_TARGETS);
+  return NOT_SAID_FIELDS.filter(
+    (field) => value.includes(field) || (legacy && (field === "sales-target-year-1" || field === "sales-target-year-3")),
+  );
+}
+
+/** The not-said id of one year's sales target (`targetRevenueY1` or `targetRevenueY3`). */
+export function salesTargetField(year: 1 | 3): NotSaidField {
+  return year === 1 ? "sales-target-year-1" : "sales-target-year-3";
 }
 
 /** Whether the idea was saved without this answer (a future picked on Pick a future, 2026-10-12). */
 export function isNotSaid(profile: Pick<VentureProfile, "notSaid">, field: NotSaidField): boolean {
-  return profile.notSaid?.includes(field) ?? false;
+  // Read through cleanNotSaid, so a list still holding the old "sales-targets" answers for both years.
+  return cleanNotSaid(profile.notSaid).includes(field);
 }
 
 /**
@@ -38,4 +53,16 @@ export function withNotSaidAgain(profile: VentureProfile, field: NotSaidField): 
   const list = cleanNotSaid(profile.notSaid);
   if (list.length === 0 || list.includes(field)) return profile;
   return { ...profile, notSaid: cleanNotSaid([...list, field]) };
+}
+
+/**
+ * One year's sales target set to the person's own whole-dollar number (the cockpit's box for the third year,
+ * Keep on the what-if for the first). A number above 0 is said, so that year comes off the not-said list and
+ * the rail and the plan show the number road evaluation reads. 0 is none, as the intake keeps a skipped
+ * box: on a picked future the year goes back on the list, so the idea reads as it was before.
+ */
+export function withSalesTarget(profile: VentureProfile, year: 1 | 3, dollars: number): VentureProfile {
+  const field = salesTargetField(year);
+  const set = year === 1 ? { targetRevenueY1: dollars } : { targetRevenueY3: dollars };
+  return dollars > 0 ? { ...withSaid(profile, field), ...set } : withNotSaidAgain({ ...profile, ...set }, field);
 }

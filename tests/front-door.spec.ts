@@ -335,7 +335,7 @@ describe("a picked future becomes an idea on its road, with nothing made up", ()
   it("the kind of venture, equipment and the sales targets are kept as not said, never as answers", () => {
     // Nobody on this way in is asked them (review, 2026-10-12): they are listed as not said, and equipment
     // has no answer at all, so nothing reads the intake's starting values as the person's.
-    expect(scenario.profile.notSaid).toEqual(["venture-type", "equipment", "sales-targets"]);
+    expect(scenario.profile.notSaid).toEqual(["venture-type", "equipment", "sales-target-year-1", "sales-target-year-3"]);
     expect(scenario.profile.capitalPurchasePlanned).toBeUndefined();
     // An intake idea has none.
     const fromIntake = buildScenarioFromIntake(

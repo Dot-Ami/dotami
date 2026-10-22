@@ -1,5 +1,5 @@
 import { buildPlan, type PlanView } from "@/lib/cockpit/plan";
-import { answerEquipment, compareEndings, forksToCompare, notToldYet, type KeptAnswers, type NotToldRow } from "@/lib/cockpit/told";
+import { answerEquipment, answerSalesYear3, compareEndings, forksToCompare, notToldYet, type KeptAnswers, type NotToldRow } from "@/lib/cockpit/told";
 import { cockpitInput, gaugeView, nextOnYourRoad, stepBadges, type KeptFuture } from "@/lib/cockpit/view";
 import { generalRoadV2026, roadsV2026, skillItemsV2026, type Road } from "@/lib/engines/roads/v2026";
 import type { FigureView } from "@/lib/figures/types";
@@ -127,6 +127,8 @@ function ownNumbers(idea: Idea) {
     savingsCents: 500_000 + (n % 7) * 125_000,
     quoteCents: 150_000 + (n % 5) * 35_000,
     incomeWantedCents: 5_000_000 + (n % 4) * 1_000_000,
+    // Whole dollars, as the cockpit's box keeps a third-year sales estimate.
+    salesYear3Dollars: 60_000 + (n % 6) * 20_000,
   };
 }
 
@@ -253,6 +255,9 @@ function answersTo(row: NotToldRow, road: Road, evaluation: RoadEvaluation, idea
     case "equipment":
       // The cockpit's own answer (its one-question box saves through the same function).
       return [true, false].map((yes) => (k: Kept) => void (k.scenario = answerEquipment(k.scenario, yes)));
+    case "sales-year-3":
+      // The person's own estimate, through the box's own save.
+      return [(k: Kept) => void (k.scenario = answerSalesYear3(k.scenario, own.salesYear3Dollars))];
     case "incorporate-at": {
       // The rule compares the answer with the person's own third-year estimate: their estimate itself first
       // (reaching it lights the step), then numbers under and over one, for an estimate left blank.
@@ -344,8 +349,23 @@ function runCockpit(
     for (const answerIt of answersTo(row, road, freshEval, idea, kept.scenario)) {
       const k = clone(kept);
       answerIt(k);
-      const changes = roadReceipt(freshEval, evaluateRoad(inputOf(road, roadChosen, k))).length;
+      const afterInput = inputOf(road, roadChosen, k);
+      const afterEval = evaluateRoad(afterInput);
+      const changes = roadReceipt(freshEval, afterEval).length;
       if (changes > 0) return { id: row.id, changes };
+      // An answer that changes nothing on its own can still open the question it is compared with: the
+      // third-year sales estimate opens "I'd incorporate at" (docs/ui-spec/cockpit/incorporating-estimate.md,
+      // its receipt "Saved. Nothing on the road changed."). The two answered together count, one question
+      // deep, so a question that only ever leads to more questions that change nothing still fails.
+      const opened = notToldYet(afterInput, afterEval).filter((next) => !freshNotTold.some((r) => r.id === next.id));
+      for (const next of opened) {
+        for (const answerNext of answersTo(next, road, afterEval, idea, k.scenario)) {
+          const both = clone(k);
+          answerNext(both);
+          const together = roadReceipt(freshEval, evaluateRoad(inputOf(road, roadChosen, both))).length;
+          if (together > 0) return { id: row.id, changes: together };
+        }
+      }
     }
     return { id: row.id, changes: 0 };
   });

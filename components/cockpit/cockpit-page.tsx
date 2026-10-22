@@ -11,7 +11,7 @@ import { GoalBar } from "@/components/cockpit/goal-bar";
 import { LandscapePanel } from "@/components/cockpit/landscape-panel";
 import { NextOnYourRoad } from "@/components/cockpit/next-on-your-road";
 import { OverlaySwitches } from "@/components/cockpit/overlay-switches";
-import { StepPanel } from "@/components/cockpit/step-panel";
+import { StepPanel, ThirdYearEstimate } from "@/components/cockpit/step-panel";
 import { StructureLadderRail } from "@/components/cockpit/structure-ladder-rail";
 import { TemplatesRail } from "@/components/cockpit/templates-rail";
 import { LEGEND_ID, roadAheadColumnIds, StrategyMap } from "@/components/cockpit/strategy-map";
@@ -31,6 +31,7 @@ import { profileRows, ventureLine } from "@/lib/cockpit/profile-rows";
 import {
   answerEquipment,
   answerReceipt,
+  answerSalesYear3,
   compareEndings,
   forksToCompare,
   keepWhatIf,
@@ -478,6 +479,16 @@ export function CockpitPage({ initialScenario, pinned = false, example }: Cockpi
     changeScenario(updateScenarioBranch(scenario, decision.id, optionId), place);
   }
 
+  /** The idea's third-year sales estimate, or null where it holds none (0, or not said on a picked future). */
+  const thirdYearEstimate =
+    scenario.profile.targetRevenueY3 > 0 && !isNotSaid(scenario.profile, "sales-target-year-3") ? scenario.profile.targetRevenueY3 : null;
+
+  /** The estimate given in the Incorporating step's own panel: kept like the box's, its receipt in the panel. */
+  function handleThirdYearEstimate(dollars: number) {
+    changeScenario(answerSalesYear3(scenario, dollars), "step");
+    return Promise.resolve(null);
+  }
+
   /** The person's own "I'd incorporate at $___" (2026-10-11): theirs, saved like a branch pick. */
   function handleIncorporateAtChange(value: number | null) {
     // Saved as the person types, so no receipt per keystroke; the one-question box gives one on Save.
@@ -773,6 +784,12 @@ export function CockpitPage({ initialScenario, pinned = false, example }: Cockpi
         value: answered === undefined ? null : answered ? "yes" : "no",
       };
       save = (value) => viaScenario(answerEquipment(scenario, value === "yes"));
+    } else if (question === "sales-year-3") {
+      // The person's own third-year estimate, the number Incorporating compares (2026-10-21).
+      title = q.salesYear3.question;
+      why = q.salesYear3.why;
+      control = { kind: "dollars", label: q.salesYear3.box, value: thirdYearEstimate };
+      save = (dollars) => viaScenario(answerSalesYear3(scenario, Number(dollars)));
     } else if (question === "incorporate-at") {
       title = q.incorporateAt.question;
       why = q.incorporateAt.why;
@@ -1326,6 +1343,8 @@ export function CockpitPage({ initialScenario, pinned = false, example }: Cockpi
                     province={scenario.profile.province}
                     ownNumber={scenario.state.incorporateAt ?? null}
                     onOwnNumberChange={handleIncorporateAtChange}
+                    // Drawn only on a step that asks for the person's own number: Incorporating, the one that compares the two.
+                    ownNumberLead={<ThirdYearEstimate value={thirdYearEstimate} canSave={canSave} onSave={handleThirdYearEstimate} />}
                     onClose={() => {
                       setSelectedNodeId(null);
                       setRightPanel(null);

@@ -19,6 +19,7 @@ import { WhatIfBar } from "@/components/cockpit/what-if-bar";
 import {
   answerEquipment,
   answerReceipt,
+  answerSalesYear3,
   compareEndings,
   forksToCompare,
   keepWhatIf,
@@ -27,15 +28,19 @@ import {
   toldRows,
   type KeptAnswers,
 } from "@/lib/cockpit/told";
+import { profileRows } from "@/lib/cockpit/profile-rows";
 import { cockpitWords } from "@/lib/cockpit/words";
 import { parseScenarioInput } from "@/lib/db/parse-scenario-input";
-import type { CFENodeId } from "@/lib/engines/cfe/v2026";
+import { cfeCatalogV2026, type CFENodeId } from "@/lib/engines/cfe/v2026";
 import { generalRoadV2026, roadApprenticeToOwnShopAB, skillItemsV2026 } from "@/lib/engines/roads/v2026";
 import type { FigureView } from "@/lib/figures/types";
 import { scenarioForPickedFuture } from "@/lib/front-door/start-future";
+import { buildPlaybookSkeleton } from "@/lib/playbook/build-skeleton";
+import { renderPlaybookMarkdown } from "@/lib/playbook/render-markdown";
 import { evaluateRoad, roadReceipt, withoutAnswer, withoutIdeaAnswer, type RoadEvaluationInput } from "@/lib/roads";
 import { clearScenarioBranch, defaultActiveBranches, setIncorporateAt, updateScenarioBranch, type BranchDecisionId } from "@/lib/scenarios/branches";
 import { isBranchDecided } from "@/lib/scenarios/graph";
+import { cleanNotSaid, LEGACY_SALES_TARGETS } from "@/lib/scenarios/not-said";
 import type { Scenario } from "@/lib/scenarios/types";
 
 import { input, inventedIdea, roadWithRuledFork, RULED_FORK, skillItems, TODAY } from "./helpers/road-to-evaluate";
@@ -210,6 +215,151 @@ describe("withoutAnswer: one answer taken away, and nothing else", () => {
   });
 });
 
+// The Incorporating fix (docs/ui-spec/cockpit/incorporating-estimate.md; the maintainer's "fix both",
+// 2026-10-20). A future picked on Pick a future keeps no third-year sales estimate and nothing in the cockpit
+// asked for one, so Incorporating, which compares that estimate with the person's own "I'd incorporate at",
+// could never light there.
+describe("a future picked on Pick a future: the third-year sales estimate, so Incorporating can light", () => {
+  const picked = () => scenarioForPickedFuture({ road: generalRoadV2026, place: "CA-AB", name: "" }, "picked-estimate");
+  const on = (scenario: Scenario) => input({ road: generalRoadV2026, roadChosen: true, skillItems: [], scenario });
+  const asked = (i: RoadEvaluationInput) => notToldYet(i, evaluateRoad(i)).map((r) => r.id);
+  const incorporating = (i: RoadEvaluationInput) => evaluateRoad(i).steps.find((s) => s.stepId === INCORPORATING)!.state;
+
+  it("“Not told yet” asks for the estimate, in its own words, just before “I'd incorporate at” would be", () => {
+    const fresh = on(picked());
+    const ids = asked(fresh);
+    expect(ids).toContain("sales-year-3");
+    // Not asked yet: without an estimate no "I'd incorporate at" changes anything.
+    expect(ids).not.toContain("incorporate-at");
+    expect(ids.indexOf("sales-year-3")).toBeGreaterThan(ids.indexOf("equipment"));
+    const row = notToldYet(fresh, evaluateRoad(fresh)).find((r) => r.id === "sales-year-3");
+    expect(row).toMatchObject({
+      answer: "box",
+      question: "Your third-year sales estimate",
+      unlocks: "“Incorporating” able to light, once you also give the yearly sales at which you'd incorporate",
+    });
+  });
+
+  it("answered, only the third-year target comes off the not-said list, “I'd incorporate at” is asked next, and with both the step lights", () => {
+    const fresh = on(picked());
+    const estimated = on(answerSalesYear3(fresh.scenario, 120_000));
+    expect(estimated.scenario.profile.targetRevenueY3).toBe(120_000);
+    expect(estimated.scenario.profile.notSaid).toEqual(["venture-type", "equipment", "sales-target-year-1"]);
+    // On its own it changes nothing on the road (the box then says so), and opens the question it is compared with.
+    expect(answerReceipt(fresh, estimated)).toEqual([]);
+    expect(asked(estimated)).not.toContain("sales-year-3");
+    expect(asked(estimated)).toContain("incorporate-at");
+    expect(incorporating(estimated)).toBe("check-first");
+    const both = on(setIncorporateAt(estimated.scenario, 100_000));
+    expect(incorporating(both)).toBe("applies");
+    expect(asked(both)).not.toContain("incorporate-at");
+    expect(answerReceipt(estimated, both).join(" ")).toMatch(/you told us you'd incorporate at \$100,000 of yearly sales/);
+    // The other way round (the panel's "I'd incorporate at" box takes a number at any time): the estimate
+    // is still asked, and its receipt names it.
+    const ownFirst = on(setIncorporateAt(fresh.scenario, 100_000));
+    expect(asked(ownFirst)).toContain("sales-year-3");
+    const lit = on(answerSalesYear3(ownFirst.scenario, 120_000));
+    expect(incorporating(lit)).toBe("applies");
+    expect(answerReceipt(ownFirst, lit).join(" ")).toMatch(/you told us third-year sales of \$120,000/);
+  });
+
+  it("the save keeps the estimate, and the first-year target stays not said", () => {
+    const sent = JSON.parse(JSON.stringify({ scenario: answerSalesYear3(picked(), 120_000) }));
+    const saved = parseScenarioInput(sent)!;
+    expect(saved.profile.targetRevenueY3).toBe(120_000);
+    expect(saved.profile.notSaid).toEqual(["venture-type", "equipment", "sales-target-year-1"]);
+    expect(asked(on(saved))).not.toContain("sales-year-3");
+  });
+
+  it("taken back, the future is exactly as it was when picked: not said again, asked again, and “I'd incorporate at” goes", () => {
+    const answered = answerSalesYear3(picked(), 120_000);
+    const back = withoutIdeaAnswer(answered, "idea:sales-year-3")!;
+    expect(back).toEqual(picked());
+    // With the person's own "I'd incorporate at" kept: only the estimate goes, and its question comes back.
+    const withOwn = setIncorporateAt(answered, 100_000);
+    const backOwn = withoutIdeaAnswer(withOwn, "idea:sales-year-3")!;
+    expect(backOwn.profile).toEqual(picked().profile);
+    expect(backOwn.state.incorporateAt).toBe(100_000);
+    expect(asked(on(backOwn))).toContain("sales-year-3");
+    expect(asked(on(withoutIdeaAnswer(answered, "idea:sales-year-3")!))).not.toContain("incorporate-at");
+    // The told row's "what it unlocked" is the same change read the other way.
+    expect(withoutAnswer(on(answered), "idea:sales-year-3")!.scenario).toEqual(back);
+  });
+
+  it("the rail and the plan show the estimate once given, the first year still not said, and Not said again after Take back", () => {
+    const answered = answerSalesYear3(picked(), 120_000);
+    expect(profileRows(answered.profile).slice(2)).toEqual([
+      { label: "Target Y1", value: "Not said" },
+      { label: "Target Y3", value: "$120,000" },
+    ]);
+    const md = renderPlaybookMarkdown(buildPlaybookSkeleton(cfeCatalogV2026.nodes, answered));
+    expect(md).toContain("- **Target revenue Y1 (CAD):** not said");
+    expect(md).toContain("- **Target revenue Y3 (CAD):** 120,000");
+    expect(profileRows(withoutIdeaAnswer(answered, "idea:sales-year-3")!.profile).slice(2).map((r) => r.value)).toEqual(["Not said", "Not said"]);
+  });
+
+  it("isn't asked where it can change nothing: Incorporation timing on the other side, a road without Incorporating, an idea with an estimate", () => {
+    const otherSide = on(updateScenarioBranch(picked(), "incorporationTiming", "stage-3b-incorporation-liability-sred"));
+    expect(asked(otherSide)).not.toContain("sales-year-3");
+    const apprentice = scenarioForPickedFuture({ road: roadApprenticeToOwnShopAB, place: "CA-AB", name: "" }, "picked-apprentice");
+    const onApprentice = input({ road: roadApprenticeToOwnShopAB, roadChosen: true, skillItems: [], scenario: apprentice });
+    expect(asked(onApprentice)).not.toContain("sales-year-3");
+    const intake = input({ road: generalRoadV2026, roadChosen: false, skillItems: [], scenario: inventedIdea({ targetRevenueY3: 90_000 }) });
+    expect(asked(intake)).not.toContain("sales-year-3");
+    expect(asked(intake)).toContain("incorporate-at");
+  });
+
+  it("a future saved before the split, with one id for both targets, reads both years as not said", () => {
+    // The list Pick a future saved until 2026-10-21, as the data file still holds it for those futures.
+    const before = ["venture-type", "equipment", LEGACY_SALES_TARGETS];
+    const both = ["venture-type", "equipment", "sales-target-year-1", "sales-target-year-3"];
+    expect(cleanNotSaid(before)).toEqual(both);
+    const old = parseScenarioInput(JSON.parse(JSON.stringify({ scenario: { ...picked(), profile: { ...picked().profile, notSaid: before } } })))!;
+    expect(old.profile.notSaid).toEqual(both);
+    expect(profileRows(old.profile).slice(2).map((r) => r.value)).toEqual(["Not said", "Not said"]);
+    expect(asked(on(old))).toContain("sales-year-3");
+    // Read as it is, without a save in between: still both years, and Keep takes off only the first.
+    const raw = { ...picked().profile, notSaid: before } as unknown as Scenario["profile"];
+    expect(profileRows(raw).slice(2).map((r) => r.value)).toEqual(["Not said", "Not said"]);
+    expect(keepWhatIf({ ...picked(), profile: raw }, 45_000).profile.notSaid).toEqual(["venture-type", "equipment", "sales-target-year-3"]);
+  });
+});
+
+// The what-if Keep bug (docs/ui-spec/cockpit/incorporating-estimate.md, the maintainer's call 6, 2026-10-21):
+// on a picked future, Keep set the first-year sales the road reads, but left them on the not-said list, so
+// the rail and the plan still said "Not said" for the number the road was reading.
+describe("a future picked on Pick a future: Keep on the what-if", () => {
+  const picked = () => scenarioForPickedFuture({ road: generalRoadV2026, place: "CA-AB", name: "" }, "picked-keep");
+  const on = (scenario: Scenario) => input({ road: generalRoadV2026, roadChosen: true, skillItems: [], scenario });
+
+  it("makes the what-if the idea's own first-year sales and marks them said; the third year stays not said", () => {
+    const kept = keepWhatIf(picked(), 45_000);
+    expect(kept.profile.targetRevenueY1).toBe(45_000);
+    // The rail and the plan show the number the road reads.
+    expect(profileRows(kept.profile).slice(2)).toEqual([
+      { label: "Target Y1", value: "$45,000" },
+      { label: "Target Y3", value: "Not said" },
+    ]);
+    expect(kept.profile.notSaid).toEqual(["venture-type", "equipment", "sales-target-year-3"]);
+    const md = renderPlaybookMarkdown(buildPlaybookSkeleton(cfeCatalogV2026.nodes, kept));
+    expect(md).toContain("- **Target revenue Y1 (CAD):** 45,000");
+    expect(md).toContain("- **Target revenue Y3 (CAD):** not said");
+    expect(evaluateRoad(on(kept)).answers.find((a) => a.id === "idea:sales-year-1")).toMatchObject({
+      given: true,
+      said: "you told us first-year sales of $45,000",
+    });
+    // The save keeps both.
+    const saved = parseScenarioInput(JSON.parse(JSON.stringify({ scenario: kept })))!;
+    expect(saved.profile.notSaid).toEqual(["venture-type", "equipment", "sales-target-year-3"]);
+  });
+
+  it("taken back, the first-year sales are not said again, as the future was picked", () => {
+    const kept = keepWhatIf(picked(), 45_000);
+    expect(withoutIdeaAnswer(kept, "idea:sales-year-1")!).toEqual(picked());
+    expect(profileRows(withoutIdeaAnswer(kept, "idea:sales-year-1")!.profile).slice(2).map((r) => r.value)).toEqual(["Not said", "Not said"]);
+  });
+});
+
 // The idea harness's bug of 2026-10-17 (the maintainer's "Yes, fix both", 2026-10-20): on a future picked on
 // Pick a future, equipment is saved as not said. The box's answer set the field but left equipment on the
 // not-said list, so road evaluation still read it as unanswered, "Not told yet" kept asking, and the save
@@ -228,7 +378,7 @@ describe("a future picked on Pick a future: the equipment answer", () => {
       const after = on(answerEquipment(before.scenario, yes));
       expect(after.scenario.profile.capitalPurchasePlanned).toBe(yes);
       // Only equipment comes off: the kind of venture and the sales targets were still never asked.
-      expect(after.scenario.profile.notSaid).toEqual(["venture-type", "sales-targets"]);
+      expect(after.scenario.profile.notSaid).toEqual(["venture-type", "sales-target-year-1", "sales-target-year-3"]);
       expect(asked(after), String(yes)).not.toContain("equipment");
       expect(equipmentAnswer(after)).toMatchObject({
         given: true,
@@ -246,7 +396,7 @@ describe("a future picked on Pick a future: the equipment answer", () => {
       const sent = JSON.parse(JSON.stringify({ scenario: answerEquipment(picked(), yes) }));
       const saved = parseScenarioInput(sent)!;
       expect(saved.profile.capitalPurchasePlanned, String(yes)).toBe(yes);
-      expect(saved.profile.notSaid, String(yes)).toEqual(["venture-type", "sales-targets"]);
+      expect(saved.profile.notSaid, String(yes)).toEqual(["venture-type", "sales-target-year-1", "sales-target-year-3"]);
       expect(asked(on(saved)), String(yes)).not.toContain("equipment");
     }
   });
@@ -408,8 +558,9 @@ describe("Not told yet", () => {
   // The second review of PR #182 (2026-10-17): a future picked on road 0 keeps no third-year estimate and
   // nothing in the cockpit asks for one, so the row going away hid the dead end rather than fixing it. The
   // step's own words (its card and its panel's "Your answers") now say the light needs that estimate too,
-  // instead of inviting a number no answer could make count. Giving one is the maintainer's call
-  // (docs/task-list.md, "Still listed for the maintainer"); this pins what the words say until then.
+  // instead of inviting a number no answer could make count. Since 2026-10-21 the cockpit asks for the
+  // estimate ("a future picked on Pick a future: the third-year sales estimate", above); until it is given
+  // the step still says what is missing, which this pins.
   it("on a future picked on road 0, Incorporating says it needs a third-year estimate the idea doesn't have", () => {
     const picked = scenarioForPickedFuture({ road: generalRoadV2026, place: "CA-AB", name: "" }, "picked-road-0");
     expect(picked.profile.targetRevenueY3).toBe(0);

@@ -13,7 +13,7 @@ import {
 } from "@/lib/roads";
 import { branchDecisions, updateScenarioBranch, type BranchDecisionId } from "@/lib/scenarios/branches";
 import { isBranchDecided } from "@/lib/scenarios/graph";
-import { withSaid } from "@/lib/scenarios/not-said";
+import { isNotSaid, withSaid, withSalesTarget } from "@/lib/scenarios/not-said";
 import type { Scenario } from "@/lib/scenarios/types";
 
 import { cockpitWords as words } from "./words";
@@ -57,7 +57,7 @@ export interface KeptAnswers {
 }
 
 /** Which question the one-question box asks. */
-export type BoxQuestion = "date" | "savings" | "structure" | "equipment" | "incorporate-at" | `map-pick:${string}`;
+export type BoxQuestion = "date" | "savings" | "structure" | "equipment" | "sales-year-3" | "incorporate-at" | `map-pick:${string}`;
 
 /** Where "Change" goes for a row. */
 export type ToldChange =
@@ -197,6 +197,10 @@ function changeFor(id: string): ToldChange {
       return { kind: "box", question: "structure" };
     case "idea:equipment":
       return { kind: "box", question: "equipment" };
+    // The third-year estimate is asked in the cockpit's box since 2026-10-21 (a picked future has no intake
+    // to go back to); the first-year number is still the intake's, or Keep on the what-if.
+    case "idea:sales-year-3":
+      return { kind: "box", question: "sales-year-3" };
     case "idea:incorporate-at":
       return { kind: "box", question: "incorporate-at" };
     case "idea:figures":
@@ -254,6 +258,7 @@ export type NotToldId =
   | "skills"
   | "structure"
   | "equipment"
+  | "sales-year-3"
   | "incorporate-at"
   | `ending:${string}`
   | `map-pick:${string}`;
@@ -274,7 +279,8 @@ const INCORPORATING_STEP = "stage-3a-incorporation-80k-net";
  * Each answer DotAmi asks for here that the person hasn't given, in the fixed order it asks them, never
  * by importance: the month, the savings, the cost lines not priced, the skills not marked, an ending at
  * each fork of this road with no pick, road 0's map picks still on their default, the structure the map
- * assumes, buying equipment, and road 0's own "I'd incorporate at" number.
+ * assumes, buying equipment, the third-year sales estimate Incorporating compares, and road 0's own "I'd
+ * incorporate at" number.
  */
 export function notToldYet(input: RoadEvaluationInput, evaluation: RoadEvaluation): NotToldRow[] {
   const q = words.questions;
@@ -311,15 +317,43 @@ export function notToldYet(input: RoadEvaluationInput, evaluation: RoadEvaluatio
   if (notGiven("idea:structure")) rows.push({ id: "structure", question: q.structure.question, unlocks: q.structure.unlocks, answer: "box" });
   if (notGiven("idea:equipment")) rows.push({ id: "equipment", question: q.equipment.question, unlocks: q.equipment.unlocks, answer: "box" });
   const incorporating = input.road.steps.find((s) => s.id === INCORPORATING_STEP);
-  // Asked only when some answer would change the road (the design's "a Not told yet row once a sales number
-  // is kept", § 3); its line says what the number is compared with. The step's own panel still takes the
-  // number at any time, and without a third-year estimate the step says it needs one too. That is not a fix:
-  // a future picked on road 0 keeps no estimate and nothing in the cockpit asks for one, so there the step
-  // can't light at all (docs/task-list.md, "Still listed for the maintainer"; the second review of PR #182).
+  // Incorporating compares two numbers that are both the person's: their third-year sales estimate and their
+  // own "I'd incorporate at". A future picked on Pick a future keeps no estimate, so it is asked here first
+  // (docs/ui-spec/cockpit/incorporating-estimate.md, 2026-10-21); until then the step could never light
+  // there. Each is asked only where some answer would change the road, so the estimate comes first and the
+  // other number once there is an estimate to compare it with.
+  if (onRoad0 && incorporating && !hasThirdYearEstimate(input) && salesYear3ChangesSomething(input, evaluation)) {
+    rows.push({ id: "sales-year-3", question: q.salesYear3.question, unlocks: q.salesYear3.unlocks, answer: "box" });
+  }
   if (onRoad0 && incorporating && (input.scenario.state.incorporateAt ?? null) === null && incorporateAtChangesSomething(input, evaluation)) {
     rows.push({ id: "incorporate-at", question: q.incorporateAt.question, unlocks: q.incorporateAt.unlocks(incorporating.label), answer: "box" });
   }
   return rows;
+}
+
+/** Whether the idea holds the person's own third-year sales estimate: above 0 and not on the not-said list. */
+function hasThirdYearEstimate(input: RoadEvaluationInput): boolean {
+  const profile = input.scenario.profile;
+  return profile.targetRevenueY3 > 0 && !isNotSaid(profile, "sales-target-year-3");
+}
+
+/**
+ * True when a third-year estimate could change the road. The rule that reads it (lib/brain/evaluate.ts
+ * computeNodeStates) compares it with the person's own "I'd incorporate at", so the two are tried together:
+ * the person's number where they gave one, else the estimate itself as both (an estimate that reaches the
+ * number lights the step). With Incorporation timing on the other side every pair leaves the road as it
+ * was, so the estimate isn't asked there. On its own, before "I'd incorporate at" is given, the estimate
+ * changes nothing; what it opens is that question (its receipt then says nothing changed).
+ */
+function salesYear3ChangesSomething(input: RoadEvaluationInput, evaluation: RoadEvaluation): boolean {
+  const own = input.scenario.state.incorporateAt ?? null;
+  const estimate = own ?? 1;
+  const tried: Scenario = {
+    ...input.scenario,
+    profile: withSalesTarget(input.scenario.profile, 3, estimate),
+    state: { ...input.scenario.state, incorporateAt: own ?? estimate },
+  };
+  return roadReceipt(evaluation, evaluateRoad({ ...input, scenario: tried })).length > 0;
 }
 
 /**
@@ -357,9 +391,14 @@ export function parseWhatIf(text: string): number | null {
   return Number.isSafeInteger(dollars) ? dollars : null;
 }
 
-/** "Keep": the what-if becomes the idea's own first-year sales (the intake's Year 1 field), never a figure. */
+/**
+ * "Keep": the what-if becomes the idea's own first-year sales (the intake's Year 1 field), never a figure.
+ * On a picked future it also takes the first-year target off the not-said list (2026-10-21): until then
+ * road evaluation read the kept number while the rail and the plan still said "Not said" for it. The
+ * third-year target is left as it was.
+ */
 export function keepWhatIf(scenario: Scenario, dollars: number): Scenario {
-  return { ...scenario, profile: { ...scenario.profile, targetRevenueY1: dollars } };
+  return { ...scenario, profile: withSalesTarget(scenario.profile, 1, dollars) };
 }
 
 // --- The idea's own answers, given in the one-question box
@@ -371,6 +410,15 @@ export function keepWhatIf(scenario: Scenario, dollars: number): Scenario {
  */
 export function answerEquipment(scenario: Scenario, yes: boolean): Scenario {
   return { ...scenario, profile: { ...withSaid(scenario.profile, "equipment"), capitalPurchasePlanned: yes } };
+}
+
+/**
+ * The person's own third-year sales estimate, typed in whole dollars in the one-question box or the
+ * Incorporating step's panel, saved as the intake's Year 3 box saves it (no agree prompt: it is the person's
+ * typed number, never a figure). On a picked future only the third-year target comes off the not-said list.
+ */
+export function answerSalesYear3(scenario: Scenario, dollars: number): Scenario {
+  return { ...scenario, profile: withSalesTarget(scenario.profile, 3, dollars) };
 }
 
 // --- Compare the two endings

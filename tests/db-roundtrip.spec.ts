@@ -99,14 +99,14 @@ describe("database round trip (SQLite)", () => {
     const { ventureId } = await save(picked);
     const opened = (await loadVentureScenarioById(prisma, ventureId))!;
     expect(opened.profile.capitalPurchasePlanned).toBeUndefined();
-    expect(opened.profile.notSaid).toEqual(["venture-type", "equipment", "sales-targets"]);
+    expect(opened.profile.notSaid).toEqual(["venture-type", "equipment", "sales-target-year-1", "sales-target-year-3"]);
 
     for (const yes of [true, false]) {
       await save(answerEquipment(opened, yes));
       const kept = (await loadVentureScenarioById(prisma, ventureId))!;
       expect(kept.profile.capitalPurchasePlanned, String(yes)).toBe(yes);
       // Only equipment is the person's now; the two this way in never asks stay not said.
-      expect(kept.profile.notSaid, String(yes)).toEqual(["venture-type", "sales-targets"]);
+      expect(kept.profile.notSaid, String(yes)).toEqual(["venture-type", "sales-target-year-1", "sales-target-year-3"]);
     }
 
     // Taken back on the told list: not said again, exactly as the future was picked.
