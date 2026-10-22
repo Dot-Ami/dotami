@@ -185,7 +185,9 @@ CSV files in English and French, under the [Open Government Licence – Canada](
 - **Only through the person's own pick of job.** The person picks "the job closest to the work you'd
   do yourself", and the list for that job is shown tagged *your pick of job*. No entry, road or step
   may link a business or a future to a job by itself: no official source says which skills a business
-  needs.
+  needs. A road may say which jobs it is written for (`codes.occupations`, since 2026-10-21), so the road
+  written for the person's pick can be offered; that only ever runs from their pick to the road, never
+  from a road to their job ([docs/engines/roads.md](docs/engines/roads.md) rule 14).
 - **Cited by dataset version and record date,** like any other source: the dataset's title and version
   (at the time of writing, *OaSIS 2025 Version 1.0*: unlike the older *OaSIS 2022 Version 1.0*, it has
   a Knowledge file), the file it came from (the import reads the Skills and Knowledge files, with the

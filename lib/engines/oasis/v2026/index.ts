@@ -78,6 +78,21 @@ export function oasisJobByCode(code: string): OasisJob | undefined {
   return row ? { code: row[0], label: row[1] } : undefined;
 }
 
+/**
+ * The 5-digit NOC 2021 job group a job's code belongs to: its first five digits ("72311.00" → "72311"). A
+ * group can hold several OaSIS jobs (63210 holds Hairstylists, 63210.01, and Barbers, 63210.02).
+ */
+export function jobGroupOf(code: string): string {
+  return code.slice(0, 5);
+}
+
+const jobGroups = new Set(oasisJobs.map((job) => jobGroupOf(job.code)));
+
+/** True for a 5-digit job group with at least one job on the government's list ("72311"; not "72311.00"). */
+export function isOasisJobGroup(noc: string): boolean {
+  return /^\d{5}$/.test(noc) && jobGroups.has(noc);
+}
+
 /** What a search finds: the first `limit` jobs that match, and how many match in all. */
 export interface OasisJobSearch {
   jobs: OasisJob[];

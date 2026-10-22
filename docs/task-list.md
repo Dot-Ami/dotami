@@ -354,8 +354,13 @@ placed in phase 3.
     connector powers ([9g]), the place lists on S2.5.26, the rent-price places on their replies
   - [x] 25c: one shared import core (encoding, table id, period, licence and next-release date as data),
     with the OaSIS importer moved onto it unchanged (`scripts/lib/import-kit.mjs`)
-  - [ ] 25e: code keys on roads (the jobs a road is written for), job links, the 2022 industry code list
-    (NAICS) and an economic-region key
+  - [x] 25e, its phase 2 part: the jobs each road is written for (road 1: 72311 Cabinetmakers; road 0: no
+    particular job), unknown job codes refused, the roads written for a picked job (none is an answer, no
+    fall back), a job-links file with an entry only for a job a road is written for, and Alberta's eight
+    economic regions as data for the region question, with their source and credit line
+  - [ ] 25e, the rest (phase 3, with the industry question; the maintainer's call of 2026-10-20): the 2022
+    industry code list (NAICS) imported and checked, the job links' industry candidates checked against it,
+    and the census table that cites them (NAICS 2017 at sector level) checked against the 2022 sectors
   - [ ] 25i: wages only, from Job Bank's open-data wage file (never its pages), each row with its geography
     level and period; no outlooks
   - [ ] 25h: *About this job* for any job, in the right-hand panel from *Look closer*: the job's rules quoted
