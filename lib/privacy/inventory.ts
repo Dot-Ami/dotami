@@ -84,6 +84,13 @@ export interface TableEntry {
    * trading under their own name. The page shows it under the entry.
    */
   aboutOthers?: string;
+  /**
+   * Answers kept in the table that a spec names on lines of their own (2026-10-22: Where you are's area and
+   * region, docs/ui-spec/futures/02-where-you-are.md), each with what it holds in words and the exact columns
+   * it covers (the test checks the columns are real). The page shows each under the entry, as its name and
+   * the sentence.
+   */
+  lines?: readonly { name: string; holds: string; columns: readonly string[] }[];
 }
 
 /**
@@ -233,7 +240,21 @@ export const TABLES: readonly TableEntry[] = [
     model: "Venture",
     name: "Your ideas",
     holds:
-      "Each business idea you saved: its name, province, your first- and third-year revenue estimates, your employment status, the tags and goals marked on the intake, how far along it is, and your notes on it. Since 2026-10-11 it can also hold the road it is drawn on, the ending you picked at each fork of that road and your own month and year to get there, each with the moment you set it; the cockpit sets your month (since 2026-10-12), Pick a future sets the road (since 2026-10-12), and the cockpit's “This is mine”, under “Compare the two endings”, sets the ending at a fork of any road but the general one (since 2026-10-12; the general road's endings are kept with its map). A future picked on Pick a future also keeps your answer to “a business of your own, a job or career, or both?” with the moment it was kept, and its employment status as “not said”, since that way in doesn't ask it; so are its kind of venture, whether you're buying equipment and its revenue estimates, listed by name as not said, so nothing shows the starting values in their place as yours. Each comes off that list once you give it in the cockpit: equipment in its question box, the first-year estimate with Keep on the what-if, and the third-year estimate in its question box or on the Incorporating step (since 2026-10-21). Since 2026-10-12 the province is written in the file as its international code (CA-AB for Alberta), and an idea can hold the job you picked as closest to your work (a government job code) and the day. Asked on Pick a future and at the end of the intake (since 2026-10-22), and changed from the cockpit's skills list. The words you typed to find it aren't kept. Since 2026-10-22 an idea in Alberta can also hold the area you picked (one of Alberta's four census metropolitan areas, somewhere else in Alberta, or I don't know) and the day: kept with the idea on this computer and shown on Your plan; nothing reads it in this version. And the economic region you picked, or I don't know, and the day: kept with the idea on this computer and shown on Your plan; About this job will read it to choose which published wage row to show. Both are asked once, right after the job pick, never worked out from anything else, and deleted with the idea.",
+      "Each business idea you saved: its name, province, your first- and third-year revenue estimates, your employment status, the tags and goals marked on the intake, how far along it is, and your notes on it. Since 2026-10-11 it can also hold the road it is drawn on, the ending you picked at each fork of that road and your own month and year to get there, each with the moment you set it; the cockpit sets your month (since 2026-10-12), Pick a future sets the road (since 2026-10-12), and the cockpit's “This is mine”, under “Compare the two endings”, sets the ending at a fork of any road but the general one (since 2026-10-12; the general road's endings are kept with its map). A future picked on Pick a future also keeps your answer to “a business of your own, a job or career, or both?” with the moment it was kept, and its employment status as “not said”, since that way in doesn't ask it; so are its kind of venture, whether you're buying equipment and its revenue estimates, listed by name as not said, so nothing shows the starting values in their place as yours. Each comes off that list once you give it in the cockpit: equipment in its question box, the first-year estimate with Keep on the what-if, and the third-year estimate in its question box or on the Incorporating step (since 2026-10-21). Since 2026-10-12 the province is written in the file as its international code (CA-AB for Alberta), and an idea can hold the job you picked as closest to your work (a government job code) and the day. Asked on Pick a future and at the end of the intake (since 2026-10-22), and changed from the cockpit's skills list. The words you typed to find it aren't kept. Since 2026-10-22 an idea in Alberta can also hold your area and your economic region, on their own lines below: each asked once, right after the job pick, and never worked out from anything else.",
+    lines: [
+      {
+        name: "Your area",
+        holds:
+          "The area you picked (one of Alberta's four census metropolitan areas, somewhere else in Alberta, or I don't know) and the day. Kept with the idea on this computer; shown on Your plan; deleted with it. Nothing reads it in this version.",
+        columns: ["landscapeArea", "landscapeAreaSetAt"],
+      },
+      {
+        name: "Your economic region",
+        holds:
+          "The economic region you picked, or I don't know, and the day. Kept with the idea on this computer; shown on Your plan; deleted with it. Nothing reads it in this version.",
+        columns: ["economicRegion", "economicRegionSetAt"],
+      },
+    ],
     removedBy:
       "Delete, at the bottom of this page, with “Your ideas” ticked: every idea at once, with its notes, links, map progress and figures, wiped from the file. Expense records attached to an idea stay, as “not attached yet”, unless “Your expense records” is ticked too. Nothing deletes a single idea yet.",
   },

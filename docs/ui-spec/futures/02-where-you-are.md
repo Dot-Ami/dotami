@@ -186,11 +186,19 @@ says only what is true: the region can be changed later.
 **Privacy inventory lines** (`lib/privacy/inventory.ts`; the privacy test fails until each exists):
 
 - *Your area*: *"The area you picked (one of Alberta's four census metropolitan areas, somewhere else in Alberta,
-  or I don't know) and the day. Kept with the idea on this computer; shown on Your plan; deleted and exported
-  with it. Nothing reads it in this version."*
+  or I don't know) and the day. Kept with the idea on this computer; shown on Your plan; deleted with it.
+  Nothing reads it in this version."*
 - *Your economic region*: *"The economic region you picked, or I don't know, and the day. Kept with the idea on
-  this computer; About this job reads it to choose which published wage row to show. Deleted and exported with
-  the idea."*
+  this computer; shown on Your plan; deleted with it. Nothing reads it in this version."*
+
+As built (2026-10-22, the PR #202 review): each is a line of its own under *Your ideas* on *What DotAmi knows
+about you* (`lines` on the `Venture` entry), and `tests/privacy-inventory.spec.ts` reads the two lines above
+back and fails unless the inventory has them word for word, with the columns each covers. The words differ
+from the design in three places: no "exported", because DotAmi has no way to export an idea yet (nothing in
+the code does); both say they're shown on *Your plan*, as built; and the region's line doesn't name About this
+job, which reads no kept region at this build. Like step 2's own words about About this job (held, above), the
+design's *"About this job reads it to choose which published wage row to show"* comes back in the change that
+wires the kept region into About this job.
 
 **Privacy log, under [Unreleased], in the build's pull request:** *"Asks: which area and which economic region
 you're in, once, right after you pick a job. Keeps: your answers and the day, on this computer only; deleted
@@ -224,7 +232,9 @@ window, and `e2e/clutter-budget.spec.ts` leaves nothing out. The counts below in
   (`BUDGETS.intake`). The step sits inside the intake's own `intake` region with the preview rail put away,
   so 2a and 2b each count 3 regions (nav, intake, site footer) and the same 5 controls (the intake's
   **← Back** in place of the back link). With the Statistics Canada link held back until *I don't know*, 2b
-  is at the intake's 5 at all three widths, not over it.
+  is at the intake's 5 at all three widths, not over it. As built (the PR #202 review), the gate measures both
+  parts on the intake page as `intake-area` and `intake-region` (`e2e/budgets.ts`): 3 regions, 5 controls and 5
+  text sizes at every width, as designed.
 - **Outside Alberta** (the screen with no question): the same 4 regions on Pick a future (3 on the intake
   page); controls: the back link, the word mark, **Next: the futures →**, the footer's link: **4**, at every
   width, on both pages.

@@ -43,7 +43,7 @@ person is asked).
   and your economic region (2026-10-22).** Asks: the job closest to your work, on Pick a future and at the end of
   the intake. Skip allowed. Keeps: only the job you click, on this computer. Asks: which area and which economic
   region you're in, once, right after you pick a job (in Alberta only for now). Keeps: your answers and the day,
-  on this computer only; deleted and exported with the idea. Nothing is sent. The job goes in the idea's existing
+  on this computer only; deleted with the idea (DotAmi has no way to export an idea yet). Nothing is sent. The job goes in the idea's existing
   columns (`Venture.occupationCode`, `occupationPickedAt`); the area and the region in four new optional columns
   (`Venture.landscapeArea`, `landscapeAreaSetAt`, `economicRegion`, `economicRegionSetAt`; a hand-written migration
   of four plain column additions,
