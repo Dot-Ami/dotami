@@ -5,7 +5,7 @@
  *
  * - Cabinetmakers on the apprentice road in Alberta: the item is the menu's last panel item (the job has a
  *   written road), the four rows stand in their fixed order, the government's four lines are quoted under their
- *   lead line, the wage row is Alberta's own (no region is kept yet) with its level, period and the fixed line,
+ *   lead line, the wage row is Alberta's own (this idea keeps no region) with its level, period and the fixed line,
  *   the three links are the sites' own general pages, focus moves to the heading and back to *Look closer*.
  * - Athletes (53200) on road 0: the item comes first (no written road for the job), and the one requirement line
  *   `findVerdicts` catches shows in quote marks under its lead line, where its allowance lifts it; the same line
@@ -134,7 +134,7 @@ test("Cabinetmakers on the apprentice road: the four rows in order, the governme
   expect(await quote.locator("p").nth(1).textContent()).toContain("program  or A combination");
   await expect(rules).toContainText("Statistics Canada, National Occupational Classification 2021 Version 1.0, Employment requirements, read 2026-10-15.");
 
-  // 2. Alberta's own row (no region is kept yet), labelled by its source code, with the fixed lines.
+  // 2. Alberta's own row (this idea keeps no region), labelled by its source code, with the fixed lines.
   const wages = row(page, "wages");
   expect(await textOf(wages)).toBe(
     [

@@ -8,10 +8,13 @@
  */
 import { expect, test, type Page } from "@playwright/test";
 
+import { aboutJobWords } from "../lib/about-job/words";
 import { generalRoadV2026, roadApprenticeToOwnShopAB } from "../lib/engines/roads/v2026";
 import { intakeStepsWords, jobStepWords, pickWords, whereStepWords } from "../lib/front-door/words";
 import { waitForReact } from "../tests/helpers/react-ready";
 
+import { ABOUT_JOB, aboutJobPanel, readAboutJob } from "./about-job-read";
+import { lookCloser } from "./cockpit-calm";
 import { answerWhereInAlberta, pickTheJob, skipTheJob } from "./three-steps";
 
 const Q1 = /what do you want your work and life to look like/i;
@@ -200,7 +203,7 @@ test("in Alberta: the job, then the area, then the region (never worked out from
   await expect(lookup).toHaveCount(0);
   await region.selectOption("dont-know");
   await expect(lookup).toHaveAttribute("target", "_blank");
-  // About this job doesn't read the region yet and has no Change (task 25h, its own pull request), so step 2
+  // About this job has no Change yet, and step 2's lines about it are held for their own change, so step 2
   // promises nothing about it, with or without "I don't know".
   await expect(page.getByText(/About this job/)).toHaveCount(0);
   await region.selectOption("4860");
@@ -247,6 +250,34 @@ test("in Alberta: the job, then the area, then the region (never worked out from
   await expect(page.getByText(`Your economic region: Edmonton · picked ${today}`, { exact: true })).toBeVisible();
 });
 
+test("About this job, opened from Look closer, reads the area and region given in the three steps: Calgary's own wage row, said to be their pick", async ({ page }) => {
+  await toPickAFuture(page);
+  await pickTheJob(page, CABINETMAKERS);
+  await answerWhereInAlberta(page, "cma-825", "4830");
+  await page.getByRole("button", { name: pickWords.lookInsideName(roadApprenticeToOwnShopAB.label), exact: true }).click();
+  await expect(page).toHaveURL(/\/cockpit\?venture=/);
+
+  // The job came from the steps, not the cockpit's own pick: Look closer offers About this job at once.
+  const goalBar = page.getByRole("region", { name: "Your goal and gauges" });
+  await lookCloser(page, ABOUT_JOB, goalBar);
+  const panel = aboutJobPanel(page);
+  await expect(panel).toBeVisible();
+
+  // The wage row is Calgary's own (ER4830, 18 / 23 / 30 in the 2025 file), labelled by its code, and says the
+  // region is the person's pick; not Alberta's row, and not "isn't picked".
+  const wages = panel.locator('[data-about-row="wages"]');
+  await expect(wages.locator("[data-wage-row]")).toHaveAttribute("data-wage-row", "ER4830");
+  await expect(wages).toContainText(aboutJobWords.wages.levelRegion("Calgary"));
+  await expect(wages).toContainText(aboutJobWords.wages.yourRegion("Calgary"));
+  await expect(wages).toContainText(aboutJobWords.wages.hourly("$18.00", "$23.00", "$30.00"));
+  await expect(wages).not.toContainText(aboutJobWords.wages.notPicked);
+  await expect(wages).not.toContainText(aboutJobWords.wages.levelProvince("Alberta"));
+  // The area by its drop-down's name, the person's pick.
+  await expect(panel.locator('[data-about-row="counts"]')).toContainText(aboutJobWords.counts.yourArea("Calgary"));
+  // Held to the same screen checks as every About this job: no verdict, no time words, every figure the file's own row.
+  expect(await readAboutJob(page, "three steps, Calgary", "72311")).toEqual([]);
+});
+
 test("a job with no written road: the step says so, holds About this job's place, lists the general road, and saves nothing until a future is opened", async ({ page }) => {
   await toPickAFuture(page);
   const before = await ventureCount(page);
@@ -281,7 +312,7 @@ test("outside Alberta: step 2 asks nothing and says why; Skip lists every future
   await pickTheJob(page, CABINETMAKERS);
   await expect(page.getByRole("heading", { level: 1, name: whereStepWords.outside.heading("Ontario") })).toBeVisible();
   await expect(page.getByText(whereStepWords.outside.notAsked("Ontario"), { exact: true })).toBeVisible();
-  // No promise about About this job's wage row until About this job reads the place (task 25h).
+  // No promise about About this job's wage row: step 2's lines about it are held for their own change.
   await expect(page.getByText(/About this job/)).toHaveCount(0);
   await shotsAtEveryWidth(page, "futures-outside");
   await expect(page.getByRole("combobox")).toHaveCount(0);

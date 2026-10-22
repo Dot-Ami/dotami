@@ -1,6 +1,8 @@
 import { nocGroup, nocRequirements, NOC_ATTRIBUTION, NOC_URL } from "@/lib/engines/noc/v2021";
 import { jobGroupOf, oasisJobByCode, oasisJobs } from "@/lib/engines/oasis/v2026";
-import { regionNameOnScreen, type RegionPicked } from "@/lib/engines/research-kit/v2026/economic-regions";
+import { regionNameOnScreen, regionThePersonPicked, type RegionPicked } from "@/lib/engines/research-kit/v2026/economic-regions";
+import { asksWhere } from "@/lib/front-door/three-steps";
+import { areaLabel } from "@/lib/front-door/where";
 import { SOURCES } from "@/lib/engines/research-kit/v2026/registry";
 import { createWageLookup, wages as shippedWages, type WageLookup, type WageRow } from "@/lib/engines/wages/v2026";
 
@@ -131,25 +133,29 @@ export interface AboutJobInput {
 }
 
 /**
- * *About this job* for a saved future as GET /api/futures/<id> reads it: its picked job, its province, and the
- * region and area the person gave. Null while no job is picked (the panel isn't offered then), or when the
- * future's place isn't a province or territory DotAmi knows.
+ * *About this job* for a saved future as GET /api/futures/<id> reads it (`readFuture`'s view): its picked job,
+ * its province, and the area and region the person gave at Pick a future's step 2 (`Venture.landscapeArea`,
+ * `Venture.economicRegion`; docs/ui-spec/futures/02-where-you-are.md). Null while no job is picked (the panel
+ * isn't offered then), or when the future's place isn't a province or territory DotAmi knows.
  *
- * The region and the area are not kept on the idea yet: their columns (`Venture.economicRegion`,
- * `Venture.landscapeArea`) come with Pick a future's step 2 (docs/ui-spec/futures/02-where-you-are.md, its own
- * pull request). Until then the route passes `kept` as null, which reads as "Your region isn't picked." and the
- * province's own row, as the spec says for no answer; wiring the column in is one line in the route.
+ * Both are read only as kept: the region is the person's own answer (their region's row, or "I don't know"),
+ * never worked out from the area; none kept reads as "Your region isn't picked." and the province's own row. The
+ * area is shown back by its drop-down's name, and only where it is asked (Alberta), as is the region.
  */
-export function aboutJobForFuture(
-  future: { job: { code: string } | null; place: string | null },
-  kept: { region: RegionPicked; area: string | null } | null,
-): AboutJobView | null {
+export function aboutJobForFuture(future: {
+  job: { code: string } | null;
+  place: string | null;
+  area: { value: string } | null;
+  region: { value: string } | null;
+}): AboutJobView | null {
   if (!future.job || !future.place?.startsWith("CA-")) return null;
+  const province = future.place.slice(3);
+  const asked = asksWhere(province);
   return aboutThisJob({
     jobCode: future.job.code,
-    province: future.place.slice(3),
-    region: kept?.region ?? { kind: "not-picked" },
-    area: kept?.area ?? null,
+    province,
+    region: asked ? regionThePersonPicked(future.region?.value ?? null, province) : { kind: "not-picked" },
+    area: asked ? areaLabel(future.area?.value ?? null) : null,
   });
 }
 

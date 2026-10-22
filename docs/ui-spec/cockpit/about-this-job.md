@@ -19,12 +19,14 @@ code, said on screen. Design:
 **As built (2026-10-22, task 25h).** In the cockpit, as below, with these differences, each for the maintainer
 to see:
 
-- **The region isn't kept yet.** `Venture.economicRegion` and `landscapeArea` come with Pick a future's step 2
-  ([../futures/02-where-you-are.md](../futures/02-where-you-are.md), its own pull request). The panel takes the
-  region and the area as inputs (`aboutJobForFuture` in `lib/about-job/view.ts`), and GET /api/futures/<id>
-  passes none for now, so the wage row is the province's own with *Your region isn't picked.*, the counts row
-  says *Your area isn't picked.*, and **Change** isn't drawn (nothing can be kept until the column exists).
-  Wiring the column in is one line in `app/api/futures/[id]/route.ts`; **Change** joins with it.
+- **The region and the area as kept, and no Change yet.** GET /api/futures/<id> hands the panel the idea's
+  `Venture.economicRegion` and `landscapeArea` as Pick a future's step 2 kept them
+  ([../futures/02-where-you-are.md](../futures/02-where-you-are.md); `aboutJobForFuture` in
+  `lib/about-job/view.ts`), in Alberta only: a picked region shows its own row with *Your region: Calgary (your
+  pick)*, *I don't know* and no answer the province's own row with their lines, and the counts row names the
+  area by its drop-down's name (*Your area: Calgary (your pick). Nothing reads it yet.*). The region is never
+  worked out from the area: an area with no region kept reads *Your region isn't picked.* **Change** isn't drawn
+  yet; it comes with step 2's held lines about this panel, in their own change.
 - **Read on the server.** The NOC lines and the wage file (about 2 MB each) are read by GET /api/futures/<id>,
   which hands the panel its rows as `aboutJob`; no browser file imports them (`tests/about-job.spec.ts` walks
   the imports).

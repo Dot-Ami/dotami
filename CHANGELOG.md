@@ -133,8 +133,11 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   names the area and the region on lines of their own under *Your ideas*. While a search waits, the line under
   the box says *Looking in the government's example titles…*. When every word typed is on
   DotAmi's filler or business-word list (*my own shop*), the step says nothing was searched, under the *Not
-  searched* line, and never that no government title holds those words. *Where you are* promises nothing about
-  *About this job* until About this job reads the answers kept here. The idea harness and the browser idea sweep
+  searched* line, and never that no government title holds those words. In Alberta, *About this job* reads the
+  answers kept here: it shows the published wage row for the region you picked (Alberta's own row for *I don't
+  know* or no answer) and shows your area back; outside Alberta it shows the province's or territory's row as
+  before. *Where you are* doesn't yet say you can change your region from *About this job*: that button comes
+  later. The idea harness and the browser idea sweep
   find each person's job through the search from their own words (the kind of work, or the job's own name), never
   by its code, and accept the honest "not written yet" ending; the sweep plays the three steps.
 - **Quality numbers on every CI run, and a Quality line for the release notes** ([14n], task 32a; the plan's

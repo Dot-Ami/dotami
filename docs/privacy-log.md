@@ -53,7 +53,10 @@ person is asked).
   job with no written road saves nothing unless a future is opened. The words typed to find a job go to DotAmi's
   own server on this computer (`POST /api/jobs/search`, which searches the government's example titles that ship
   with the app and keeps nothing) and are never kept; nothing leaves the computer. *Your plan* shows the area and
-  the region back; Delete with "Your ideas" ticked removes them with the idea
+  the region back. *About this job* reads them as kept, on DotAmi's own server on this computer
+  (`GET /api/futures/<id>`): the region to choose which published wage row to show (your region's own row; for I
+  don't know or no answer, Alberta's), and the area to show it back; it keeps nothing new, and the region is never
+  worked out from the area. Delete with "Your ideas" ticked removes them with the idea
   ([`lib/privacy/inventory.ts`](../lib/privacy/inventory.ts), *Your ideas*).
 
 - **A future picked on Pick a future can now hold your third-year sales estimate, and your kept first-year

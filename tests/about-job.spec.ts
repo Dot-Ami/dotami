@@ -478,13 +478,58 @@ describe("the controls: the screen checks still catch what they should", () => {
   });
 });
 
+describe("About this job for a saved future: the person's own answers, as kept on the idea", () => {
+  const CABINETMAKERS = { code: "72311.00" };
+  /** The geography code and figures of the row the panel shows, or the kind when it shows no figures. */
+  const shownRow = (view: AboutJobView) =>
+    view.wages.shown.kind === "row"
+      ? { code: view.wages.shown.row.geography.code, low: view.wages.shown.row.low, median: view.wages.shown.row.median, high: view.wages.shown.row.high }
+      : view.wages.shown.kind;
+
+  it("a picked region: the region's own row, said to be their pick; the area by its drop-down's name", () => {
+    const calgary = aboutJobForFuture({ job: CABINETMAKERS, place: "CA-AB", area: { value: "cma-825" }, region: { value: "4830" } })!;
+    expect(calgary.wages.context).toEqual({ kind: "region", region: "Calgary" });
+    expect(shownRow(calgary)).toEqual({ code: "ER4830", low: "18", median: "23", high: "30" });
+    expect(calgary.area).toBe("Calgary");
+    // Each region its own row: Edmonton's, with the area left at Calgary (the region is the person's own answer,
+    // never worked out from the area).
+    const edmonton = aboutJobForFuture({ job: CABINETMAKERS, place: "CA-AB", area: { value: "cma-825" }, region: { value: "4860" } })!;
+    expect(edmonton.wages.context).toEqual({ kind: "region", region: "Edmonton" });
+    expect(shownRow(edmonton)).toEqual({ code: "ER4860", low: "18", median: "23", high: "29" });
+    expect(edmonton.area).toBe("Calgary");
+  });
+
+  it("an area with no region kept reads as no region, never one worked out from the area", () => {
+    const view = aboutJobForFuture({ job: CABINETMAKERS, place: "CA-AB", area: { value: "cma-825" }, region: null })!;
+    expect(view.wages.context).toEqual({ kind: "not-picked" });
+    expect(shownRow(view)).toEqual({ code: "ER48", low: "18", median: "23", high: "30" });
+    expect(view.area).toBe("Calgary");
+  });
+
+  it("“I don't know” keeps the province's own row and says it is because they said so", () => {
+    const view = aboutJobForFuture({ job: CABINETMAKERS, place: "CA-AB", area: { value: "dont-know" }, region: { value: "dont-know" } })!;
+    expect(view.wages.context).toEqual({ kind: "dont-know" });
+    expect(shownRow(view)).toEqual({ code: "ER48", low: "18", median: "23", high: "30" });
+    expect(view.area).toBe("I don't know");
+  });
+
+  it("outside Alberta: the place's own row whatever is kept, and no area (neither is asked there)", () => {
+    // A kept Alberta answer on an Ontario idea (a hand-edited file) changes nothing.
+    const view = aboutJobForFuture({ job: CABINETMAKERS, place: "CA-ON", area: { value: "cma-825" }, region: { value: "4830" } })!;
+    expect(view.wages.context).toEqual({ kind: "outside-alberta", place: "Ontario" });
+    expect(shownRow(view)).toMatchObject({ code: "ER35" });
+    expect(view.area).toBeNull();
+  });
+});
+
 describe("the data stays on the server", () => {
   it("aboutJobForFuture reads the future's job and place; no job, no panel", () => {
-    expect(aboutJobForFuture({ job: null, place: "CA-AB" }, null)).toBeNull();
-    expect(aboutJobForFuture({ job: { code: "72311.00" }, place: null }, null)).toBeNull();
-    const view = aboutJobForFuture({ job: { code: "72311.00" }, place: "CA-AB" }, null)!;
+    expect(aboutJobForFuture({ job: null, place: "CA-AB", area: null, region: null })).toBeNull();
+    expect(aboutJobForFuture({ job: { code: "72311.00" }, place: null, area: null, region: null })).toBeNull();
+    const view = aboutJobForFuture({ job: { code: "72311.00" }, place: "CA-AB", area: null, region: null })!;
     expect(view.wages.context).toEqual({ kind: "not-picked" });
-    expect(aboutJobForFuture({ job: { code: "99999.99" }, place: "CA-AB" }, null)).toBeNull();
+    expect(view.area).toBeNull();
+    expect(aboutJobForFuture({ job: { code: "99999.99" }, place: "CA-AB", area: null, region: null })).toBeNull();
   });
 
   /** Every module a file imports for real (type-only imports are erased), resolved to repository paths. */

@@ -31,6 +31,7 @@ import { jobStepWords, pickWords, whereStepWords } from "@/lib/front-door/words"
 import { readFuture } from "@/lib/futures/future";
 import { SHIPPED_ROADS_CATALOG } from "@/lib/futures/types";
 import { withTheSteps } from "@/lib/journey/first-save";
+import { ALBERTA_AREAS } from "@/lib/places/alberta-areas";
 import { demoScenarios } from "../prisma/seed-data";
 import { fileUrl, migratedFile } from "./helpers/migrated-db";
 
@@ -78,6 +79,18 @@ describe("the flow: one part at a time, the back link one part back, answers kep
     expect(back(FIRST_STEP, "AB")).toBeNull();
     expect(backLabel(FIRST_STEP, "AB", "← Your destination")).toBe("← Your destination");
     expect(answersOf(s, "AB")).toEqual({ job: "72311.00", area: "cma-825", region: "4830" });
+  });
+
+  it("leaving 2a never fills the region: every area, and Choose one, goes on to 2b with the region as it was", () => {
+    // The region is the person's own answer (spec 02): no area picks one, even an area wholly inside one region
+    // (Calgary, Lethbridge, Red Deer). Before this, a region planted from the area was caught only in the browser.
+    for (const area of [...ALBERTA_AREAS.map((a) => a.value), null]) {
+      const left = next({ ...picked("AB"), area });
+      expect(left, String(area)).toEqual({ part: "region", job: CABINETMAKERS, area, region: null });
+      expect(answersOf(left, "AB"), String(area)).toEqual({ job: CABINETMAKERS.code, area, region: null });
+      // A region picked earlier (then Back to 2a) stays the one they picked, whatever area they pick now.
+      expect(next({ ...picked("AB"), area, region: "4860" }), String(area)).toMatchObject({ part: "region", region: "4860" });
+    }
   });
 
   it("outside Alberta: one part that asks nothing, so no area and no region are ever handed to the save", () => {
@@ -276,10 +289,11 @@ describe("the steps as drawn", () => {
     expect(html).not.toContain(esc(whereStepWords.kept));
   });
 
-  it("step 2 promises nothing About this job doesn't do in this version: it reads no kept region and has no Change yet", () => {
-    // About this job (task 25h, its own pull request) shows the province's row until the kept answers are wired to
-    // it, and draws no Change. So step 2 says nothing about it: not "change your region later from About this
-    // job", not "About this job shows the Alberta-wide figure", not the outside-Alberta wage row line.
+  it("step 2 promises nothing about About this job yet: its lines are held, and the panel has no Change", () => {
+    // About this job reads the kept region and area (its region's own row), but draws no Change yet, and step 2's
+    // three lines about it are held for their own change (with Change). So step 2 says nothing about it: not
+    // "change your region later from About this job", not "About this job shows the Alberta-wide figure", not the
+    // outside-Alberta wage row line.
     const parts = {
       "2a": draw("futures", { part: "area", job: CABINETMAKERS, area: null, region: null }),
       "2b": draw("futures", { part: "region", job: CABINETMAKERS, area: "cma-825", region: null }),

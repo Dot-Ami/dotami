@@ -56,8 +56,8 @@ export const aboutJobWords = {
     outsideAlberta: (place: string) =>
       `DotAmi asks your region only in Alberta for now, so this is the row the wage file gives for ${place} as a whole, with the level its own code gives it.`,
     /**
-     * The region's Change, which opens the region drop-down in place. Drawn once the idea keeps a region
-     * (`Venture.economicRegion`, Pick a future's step 2b, its own pull request); until then nothing can be kept.
+     * The region's Change, which opens the region drop-down in place. Not drawn yet: it comes with step 2's held
+     * lines about this panel, in their own change (the panel reads the kept `Venture.economicRegion` already).
      */
     change: "Change",
     /** "an Alberta-wide figure", as the spec's example reads (its words block writes "a <province>-wide"). */

@@ -186,19 +186,20 @@ says only what is true: the region can be changed later.
 **Privacy inventory lines** (`lib/privacy/inventory.ts`; the privacy test fails until each exists):
 
 - *Your area*: *"The area you picked (one of Alberta's four census metropolitan areas, somewhere else in Alberta,
-  or I don't know) and the day. Kept with the idea on this computer; shown on Your plan; deleted with it.
-  Nothing reads it in this version."*
+  or I don't know) and the day. Kept with the idea on this computer; shown on Your plan and in About this job;
+  deleted with it. Nothing else reads it in this version."*
 - *Your economic region*: *"The economic region you picked, or I don't know, and the day. Kept with the idea on
-  this computer; shown on Your plan; deleted with it. Nothing reads it in this version."*
+  this computer; shown on Your plan; deleted with it. About this job reads it to choose which published wage
+  row to show."*
 
 As built (2026-10-22, the PR #202 review): each is a line of its own under *Your ideas* on *What DotAmi knows
 about you* (`lines` on the `Venture` entry), and `tests/privacy-inventory.spec.ts` reads the two lines above
 back and fails unless the inventory has them word for word, with the columns each covers. The words differ
-from the design in three places: no "exported", because DotAmi has no way to export an idea yet (nothing in
-the code does); both say they're shown on *Your plan*, as built; and the region's line doesn't name About this
-job, which reads no kept region at this build. Like step 2's own words about About this job (held, above), the
-design's *"About this job reads it to choose which published wage row to show"* comes back in the change that
-wires the kept region into About this job.
+from the design in two places: no "exported", because DotAmi has no way to export an idea yet (nothing in
+the code does); and both say they're shown on *Your plan*, as built. Since About this job reads the kept
+region and area (2026-10-22, GET /api/futures/<id>), the region's line names it with the design's words, and
+the area's line says it is shown there (*Your area: Calgary (your pick). Nothing reads it yet.*). Step 2's own
+words about About this job stay held (above), with its **Change**.
 
 **Privacy log, under [Unreleased], in the build's pull request:** *"Asks: which area and which economic region
 you're in, once, right after you pick a job. Keeps: your answers and the day, on this computer only; deleted
