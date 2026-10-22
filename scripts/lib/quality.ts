@@ -23,7 +23,7 @@ import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
 import path from "node:path";
 
 import { allCatalogCitations } from "@/lib/engines/all-citations";
-import { openGroupCodes, searchJobTitles } from "@/lib/engines/oasis/v2026/title-search";
+import { JOB_SEARCH_GROUP_CAP } from "@/lib/engines/oasis/v2026/title-search";
 import { catalogFreshness } from "@/lib/engines/research-kit/v2026/freshness";
 import { SOURCES } from "@/lib/engines/research-kit/v2026/registry";
 import type { CheckedBy, SourceCard } from "@/lib/engines/research-kit/v2026/types";
@@ -36,6 +36,7 @@ import { KNOWN_GAPS, type KnownGap } from "../../tests/fixtures/ideas/known-gaps
 import { IDEAS_V1, ROAD_IDS, type Idea } from "../../tests/fixtures/ideas/v1";
 import { STILL_DEAD } from "../../tests/fixtures/still-dead-pages";
 import { ideaId, runHarness, type HarnessResult } from "../../tests/helpers/idea-harness-run";
+import { COCKPIT_LIST_MEASURE_LIMIT, measureJobSearch, type JobSearchCorpusMeasure } from "../../tests/helpers/job-search-corpus";
 import type { CockpitRun } from "../../tests/helpers/idea-pipeline";
 
 // ---- The idea harness ------------------------------------------------------------------------------------
@@ -146,44 +147,14 @@ export function harnessNumbers(result: HarnessResult, gaps: readonly KnownGap[] 
 
 // ---- The job search, against the corpus ------------------------------------------------------------------
 
-export interface SearchNumbers {
-  /** Ideas in the corpus, and those with an expected job. */
-  ideas: number;
-  withJob: number;
-  /** Of those with an expected job: in the first group shown (open), in any group, found nowhere though jobs were. */
-  firstGroup: number;
-  anyGroup: number;
-  notListed: number;
-  /** Of those with an expected job: the search found no job at all. */
-  noResults: number;
-  /** Of every idea: the search found no job at all for its kind of work. */
-  noResultsAll: number;
-}
+export type SearchNumbers = JobSearchCorpusMeasure;
 
-/** The search the screen runs, on each idea's kind of work, each group as the screen lists it (the first 50). */
+/**
+ * The job search against the corpus: the one count in tests/helpers/job-search-corpus.ts, whose floors
+ * tests/job-title-search.spec.ts holds, so the report can't print a number the test doesn't.
+ */
 export function searchNumbers(ideas: readonly Idea[] = IDEAS_V1): SearchNumbers {
-  let firstGroup = 0;
-  let anyGroup = 0;
-  let noResults = 0;
-  let noResultsAll = 0;
-  let withJob = 0;
-  for (const idea of ideas) {
-    const result = searchJobTitles(idea.work);
-    const none = result.state !== "results";
-    if (none) noResultsAll += 1;
-    const expected = idea.jobs ?? [];
-    if (expected.length === 0) continue;
-    withJob += 1;
-    if (none) {
-      noResults += 1;
-      continue;
-    }
-    const open = openGroupCodes(result);
-    const all = result.groups.flatMap((g) => g.jobs.map((j) => j.code));
-    if (expected.some((code) => open.includes(code))) firstGroup += 1;
-    if (expected.some((code) => all.includes(code))) anyGroup += 1;
-  }
-  return { ideas: ideas.length, withJob, firstGroup, anyGroup, notListed: withJob - anyGroup - noResults, noResults, noResultsAll };
+  return measureJobSearch(ideas);
 }
 
 // ---- Clutter, from the last browser run ------------------------------------------------------------------
@@ -411,16 +382,22 @@ export function qualityMarkdown(q: QualityNumbers): string {
   if (!s) lines.push("Not counted in this run (`--clutter-only`).", "");
   else {
     lines.push(
-      `"What's closest to your work?" (searchJobTitles) on each idea's kind of work, each group as the screen lists it. ${s.withJob} of ${s.ideas} ideas name an expected job.`,
+      `"What's closest to your work?" (searchJobTitles) on each idea's kind of work, each group as the screen lists it (its first ${JOB_SEARCH_GROUP_CAP} jobs). ${s.withJob} of ${s.ideas} ideas name an expected job. Counted once in tests/helpers/job-search-corpus.ts, whose floors tests/job-title-search.spec.ts holds.`,
       "",
     );
     table(
       ["The expected job", "Ideas"],
       [
         ["in the first group shown (the open one)", of(s.firstGroup, s.withJob)],
-        ["in any group", of(s.anyGroup, s.withJob)],
+        ["in any group, as listed", of(s.anyGroup, s.withJob)],
         ["not listed, though other jobs were", of(s.notListed, s.withJob)],
         ["no job found at all", of(s.noResults, s.withJob)],
+        [`in the first group, counting past its first ${JOB_SEARCH_GROUP_CAP}`, of(s.firstGroupUncapped, s.withJob)],
+        [`in any group, counting past each group's first ${JOB_SEARCH_GROUP_CAP}`, of(s.anyGroupUncapped, s.withJob)],
+        [
+          `among the first ${COCKPIT_LIST_MEASURE_LIMIT} results of the cockpit's older job list (searchOasisJobs, by job name or code), the before`,
+          of(s.cockpitList, s.withJob),
+        ],
       ],
     );
     lines.push(`Across every idea, ${of(s.noResultsAll, s.ideas)} find no job at all.`, "");

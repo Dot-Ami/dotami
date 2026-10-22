@@ -33,6 +33,7 @@ import { KNOWN_GAPS } from "./fixtures/ideas/known-gaps";
 import { IDEAS_V1, ROAD_IDS, type Idea } from "./fixtures/ideas/v1";
 import { STILL_DEAD } from "./fixtures/still-dead-pages";
 import { runHarness, type HarnessResult } from "./helpers/idea-harness-run";
+import { measureJobSearch } from "./helpers/job-search-corpus";
 import type { Failure } from "./helpers/idea-invariants";
 import type { CockpitRun, IdeaRun } from "./helpers/idea-pipeline";
 
@@ -188,8 +189,15 @@ describe("the job search numbers", () => {
       planted("zzzz qqqq", ["72310.00"]), // no job at all
       planted("zzzz qqqq"), // no expected job: counted only across every idea
     ]);
-    expect(s).toEqual({ ideas: 5, withJob: 4, firstGroup: 1, anyGroup: 2, notListed: 1, noResults: 1, noResultsAll: 2 });
+    expect(s).toMatchObject({ ideas: 5, withJob: 4, firstGroup: 1, anyGroup: 2, notListed: 1, noResults: 1, noResultsAll: 2 });
   });
+
+  it("are the count the job search's floors hold, not one of their own", () => {
+    // tests/job-title-search.spec.ts holds its floors on measureJobSearch; the report must print that count.
+    expect(searchNumbers()).toEqual(measureJobSearch());
+    const text = readFileSync(path.join(process.cwd(), "scripts", "lib", "quality.ts"), "utf8");
+    expect(text).not.toContain("searchJobTitles(");
+  }, 60_000);
 });
 
 // ---- Clutter ---------------------------------------------------------------------------------------------
@@ -378,7 +386,19 @@ describe("the report and the Quality line", () => {
       typed: { "own-road": 1, "general-its-road": 2, "general-own-written": 1, "general-none-written": 5, "other-road": 0, "stops-before": 1 },
       picked: { "own-road": 2, "general-its-road": 3, "general-own-written": 0, "general-none-written": 3, "other-road": 2, "stops-before": 0 },
     },
-    search: { ideas: 10, withJob: 8, firstGroup: 5, anyGroup: 6, notListed: 1, noResults: 1, noResultsAll: 2 },
+    search: {
+      ideas: 10,
+      withJob: 8,
+      firstGroup: 5,
+      anyGroup: 6,
+      notListed: 1,
+      noResults: 1,
+      noResultsAll: 2,
+      firstGroupUncapped: 6,
+      anyGroupUncapped: 7,
+      cockpitList: 2,
+      cockpitListNone: 5,
+    },
     clutter: {
       folder: "test-results",
       rows: [
@@ -409,6 +429,8 @@ describe("the report and the Quality line", () => {
     expect(md).toContain("| on the general road, all told | 8 of 10 (80.0%) | 6 of 10 (60.0%) |");
     expect(md).toContain("- idea-v1-0001: typed: planted");
     expect(md).toContain("| in the first group shown (the open one) | 5 of 8 (62.5%) |");
+    expect(md).toContain("| in any group, counting past each group's first 50 | 7 of 8 (87.5%) |");
+    expect(md).toContain("results of the cockpit's older job list (searchOasisJobs, by job name or code), the before | 2 of 8 (25.0%) |");
     expect(md).toContain("1 of 2 screen sizes within their budget");
     expect(md).toContain("| front-door | 375 px | 4 / 4 | 9 / 7 | 8 / 8 | 9.5 / 9.5 | **no** |");
     expect(md).toContain("- front-door at 375 px: 9 controls in the first window, budget 7");
