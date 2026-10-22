@@ -170,6 +170,20 @@ model Venture {
   occupationCode   String?
   /// The moment the person picked that job; null while there is none.
   occupationPickedAt DateTime?
+  /// The answer to "Which area are you in?" on Pick a future's second step (2026-10-22; lib/places/alberta-areas.ts):
+  /// one of Alberta's four census metropolitan areas ("cma-825" Calgary, "cma-835" Edmonton, "cma-810" Lethbridge,
+  /// "cma-830" Red Deer), "ab-elsewhere" or "dont-know". Kept for the official counts of businesses by area, which
+  /// aren't in this version, so nothing reads it yet. Null when not asked (no job picked, outside Alberta) or left
+  /// on "Choose one". Never set by DotAmi.
+  landscapeArea    String?
+  /// The moment that answer was kept; null with it.
+  landscapeAreaSetAt DateTime?
+  /// The answer to "Which region are you in?" (2026-10-22; lib/engines/research-kit/v2026/economic-regions.ts): an
+  /// economic region's four-digit code ("4830") or "dont-know". Never worked out from the area. Null when not asked
+  /// (no job picked, and every place outside Alberta in this version) or left on "Choose one".
+  economicRegion   String?
+  /// The moment that answer was kept; null with it.
+  economicRegionSetAt DateTime?
   createdAt        DateTime         @default(now())
   updatedAt        DateTime         @updatedAt
   user             User             @relation(fields: [userId], references: [id], onDelete: Cascade)

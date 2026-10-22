@@ -61,6 +61,11 @@ export async function ensureVentureFromScenario(
       // (2026-10-12): a later save of the map never moves either.
       ...(firstSave.roadId ? { roadId: firstSave.roadId, roadChosenAt: new Date() } : {}),
       ...(firstSave.lookingFor ? { lookingFor: firstSave.lookingFor, lookingForSetAt: new Date() } : {}),
+      // The three steps' answers (2026-10-22), each with its moment, on creation only like the road: the job
+      // the person clicked, and in Alberta their area and their region. A later save never moves them.
+      ...(firstSave.job ? { occupationCode: firstSave.job, occupationPickedAt: new Date() } : {}),
+      ...(firstSave.area ? { landscapeArea: firstSave.area, landscapeAreaSetAt: new Date() } : {}),
+      ...(firstSave.region ? { economicRegion: firstSave.region, economicRegionSetAt: new Date() } : {}),
     },
     update: {
       name: scenario.profile.name,

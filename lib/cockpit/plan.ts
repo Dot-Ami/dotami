@@ -8,6 +8,7 @@ import { evaluateRoad, type RoadEvaluationInput, type StepEvaluation } from "@/l
 import type { BranchDecisionId } from "@/lib/scenarios/branches";
 import { isBranchDecided } from "@/lib/scenarios/graph";
 import { generalRoadV2026 } from "@/lib/engines/roads/v2026";
+import { areaLabel, regionLabel } from "@/lib/front-door/where";
 
 import { dayOfMoment, toldDay, toldRows, type KeptAnswers } from "./told";
 import { gaugeView } from "./view";
@@ -42,6 +43,11 @@ export interface PlanArgs {
   roadChosenOn: string | null;
   /** The day the person picked their job for the government's list, or null. */
   jobPickedOn: string | null;
+  /**
+   * The person's answers on Pick a future's step 2, Where you are (2026-10-22), each with its day; left out or
+   * null when not asked. Shown back as kept; nothing on the road reads them.
+   */
+  where?: { area: { value: string; setOn: string | null } | null; region: { value: string; setOn: string | null } | null };
   /** The person's own day, YYYY-MM-DD: the day the plan is made. */
   today: string;
 }
@@ -92,6 +98,8 @@ export interface PlanView {
   road: {
     future: string;
     picked: string;
+    /** Your area and your region as you picked them, one line each; empty when neither was asked. */
+    where: string[];
     endings: string[];
     gauges: { label: string; value: string; lines: string[] }[];
   };
@@ -107,6 +115,16 @@ export interface PlanView {
   money: { sums: string[]; byStep: { step: string; note: string | null; lines: PlanCostLine[] }[]; none: string | null };
   told: { rows: { said: string; day: string; unlocked: string[] }[]; none: string | null };
   notAdvice: string;
+}
+
+/** The plan's lines for Where you are: each answer kept, as its drop-down named it, with its day. */
+function whereLines(where: PlanArgs["where"], province: string): string[] {
+  const lines: string[] = [];
+  const area = where?.area ? areaLabel(where.area.value) : null;
+  if (area) lines.push(words.plan.whereArea(area, where!.area!.setOn));
+  const region = where?.region ? regionLabel(where.region.value, province) : null;
+  if (region) lines.push(words.plan.whereRegion(region, where!.region!.setOn));
+  return lines;
 }
 
 function source(c: EngineCitation): PlanSource {
@@ -267,6 +285,7 @@ export function buildPlan(args: PlanArgs): PlanView {
     road: {
       future: writtenHere ? words.goal.future(road.label) : words.goal.drawnOnly(road.label, road.provinces, place),
       picked: input.roadChosen ? words.plan.roadChosen(args.roadChosenOn) : words.plan.roadDefault,
+      where: whereLines(args.where, input.scenario.profile.province),
       endings: endings.length > 0 ? endings : [words.plan.noForks],
       // The invitations are left out: there is nothing to click on paper.
       gauges: (["steps", "skills", "money", "date"] as const).map((id) => ({

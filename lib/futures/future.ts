@@ -1,6 +1,8 @@
 import type { Prisma, PrismaClient } from "@prisma/client";
 
 import { oasisJobByCode } from "@/lib/engines/oasis/v2026";
+import { regionThePersonPicked } from "@/lib/engines/research-kit/v2026/economic-regions";
+import { isAlbertaArea } from "@/lib/places/alberta-areas";
 import { generalRoadV2026, type Road } from "@/lib/engines/roads/v2026";
 import { LOOKING_FOR, type LookingFor } from "@/lib/front-door/questions";
 import { requireVenture } from "@/lib/figures/store";
@@ -62,6 +64,14 @@ export interface FutureView {
    * on the list.
    */
   job: { code: string; label: string; pickedOn: string | null } | null;
+  /**
+   * Where you are, as the person answered it on Pick a future's second step (2026-10-22;
+   * docs/ui-spec/futures/02-where-you-are.md): the area and the economic region, each with the day kept; null
+   * for a question not asked or not answered. Read as kept, never worked out: the region is never filled in
+   * from the area. A stored value the questions don't offer reads as null.
+   */
+  area: { value: string; setOn: string | null } | null;
+  region: { value: string; setOn: string | null } | null;
 }
 
 /** A pick as stored on the future: the step and the moment it was picked. */
@@ -109,6 +119,10 @@ export async function readFuture(prisma: PrismaClient, ventureId: string, catalo
       lookingForSetAt: true,
       occupationCode: true,
       occupationPickedAt: true,
+      landscapeArea: true,
+      landscapeAreaSetAt: true,
+      economicRegion: true,
+      economicRegionSetAt: true,
       scenarioState: { select: { activeBranches: true } },
     },
   });
@@ -153,6 +167,11 @@ export async function readFuture(prisma: PrismaClient, ventureId: string, catalo
     lookingFor,
     lookingForOn: lookingFor === null ? null : dayOf(row.lookingForSetAt),
     job: job ? { ...job, pickedOn: dayOf(row.occupationPickedAt) } : null,
+    area: isAlbertaArea(row.landscapeArea) ? { value: row.landscapeArea, setOn: dayOf(row.landscapeAreaSetAt) } : null,
+    region:
+      row.economicRegion !== null && regionThePersonPicked(row.economicRegion, row.province === "AB" ? "AB" : null).kind !== "not-on-the-list"
+        ? { value: row.economicRegion, setOn: dayOf(row.economicRegionSetAt) }
+        : null,
   };
 }
 
