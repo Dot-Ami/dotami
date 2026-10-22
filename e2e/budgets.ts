@@ -23,8 +23,15 @@ export const SCREENS = [
   "cockpit-road-0",
   "cockpit-road-1",
   "plan",
+  "cockpit-about-job",
 ] as const;
 export type ScreenId = (typeof SCREENS)[number];
+
+/**
+ * The screens added after the baseline was recorded (2026-10-17), each with its first row in `FIRST_MEASURED`
+ * instead of the baseline, which never changes. The baseline's screens are the rest of `SCREENS`.
+ */
+export const ADDED_SCREENS = ["cockpit-about-job"] as const satisfies readonly ScreenId[];
 
 /** The three window sizes: a phone, a tablet standing up, and a small laptop (the suite's own default). */
 export const WIDTHS = [
@@ -76,6 +83,20 @@ export const BASELINE: ClutterTable = {
   "cockpit-road-0": { phone: m(8, 19, 12, 8), tablet: m(9, 42, 15, 8), laptop: m(9, 37, 15, 8) },
   "cockpit-road-1": { phone: m(8, 17, 10, 8.5), tablet: m(9, 38, 14, 8.5), laptop: m(9, 27, 14, 8.5) },
   plan: { phone: m(10, 2, 10, 10), tablet: m(10, 2, 10, 10), laptop: m(10, 2, 10, 10) },
+};
+
+/**
+ * The first row of each screen added after the baseline (`ADDED_SCREENS`): what CI's Browser tests job (Chromium
+ * on Ubuntu, the gate) counted the first time the screen ran there. A record like the baseline: never raised
+ * (`tests/clutter-budgets.spec.ts` compares it with main's), and its budget starts equal to it.
+ *
+ * About this job (2026-10-22, task 25h; docs/ui-spec/cockpit/about-this-job.md, "The budget"), the first: open
+ * on road 1 for a picked job (Cabinetmakers), its regions the first visit's plus the panel slot the layout rule
+ * already counts. On a phone the sheet covers the road, so its controls are the sheet's (the spec's ceiling:
+ * road 1's 14 there).
+ */
+export const FIRST_MEASURED: ClutterTable = {
+  "cockpit-about-job": { phone: m(8, 2, 5, 9.5), tablet: m(9, 28, 5, 9.5), laptop: m(9, 23, 5, 9.5) },
 };
 
 /**
@@ -153,6 +174,9 @@ export const BASELINE: ClutterTable = {
  * with it (run 39418090969; Chromium on Windows counts the same for these three screens at all three sizes): Mara's example 26 to 23 on a
  * tablet (21 on a laptop and 11 on a phone, as budgeted), the cockpit on road 0 18, 32 and 29 to 17, 29 and
  * 27, and on road 1 28 and 25 to 25 and 23 on a tablet and a laptop (14 on a phone, as budgeted).
+ *
+ * A screen added after the baseline (`ADDED_SCREENS`) starts at its first row in `FIRST_MEASURED` and only goes
+ * down from there, like the rest.
  */
 export const BUDGETS: ClutterTable = {
   "front-door": { phone: m(4, 7, 6, 9.5), tablet: m(4, 11, 6, 9.5), laptop: m(4, 11, 6, 9.5) },
@@ -165,6 +189,7 @@ export const BUDGETS: ClutterTable = {
   "cockpit-road-0": { phone: m(7, 17, 4, 9.5), tablet: m(8, 29, 5, 9.5), laptop: m(8, 27, 5, 9.5) },
   "cockpit-road-1": { phone: m(7, 14, 4, 9.5), tablet: m(8, 25, 5, 9.5), laptop: m(8, 23, 5, 9.5) },
   plan: { phone: m(10, 2, 5, 10.5), tablet: m(10, 2, 5, 10.5), laptop: m(10, 2, 5, 10.5) },
+  "cockpit-about-job": { phone: m(8, 2, 5, 9.5), tablet: m(9, 28, 5, 9.5), laptop: m(9, 23, 5, 9.5) },
 };
 
 /** What Chromium on Windows may count over a budget: only regions, controls and text sizes, never fewer. */
