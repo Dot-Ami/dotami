@@ -14,105 +14,79 @@
  * - On every screen of it: no verdict, and no time in DotAmi's words (the quoted lines lifted only on the rules
  *   row and only as the lines the shipped file holds for the group); nothing leaves the computer.
  *
- * Screenshots at 375, 768 and 1280 px are attached to the run, and saved to `ABOUT_JOB_SHOTS` when it names a
- * folder (how the pull request's pictures in docs/media/phase-2/ were made).
+ * - On every screen of it, every dollar figure is the wage file's own row on its own wage block, labelled with
+ *   the level its source code gives (e2e/about-job-read.ts, the reading the idea sweep gives the panel too).
+ *
+ * Screenshots at 375, 768 and 1280 px, the panel as it opens and then scrolled to each later row, are attached
+ * to the run, and saved to `ABOUT_JOB_SHOTS` when it names a folder (how the pull request's pictures in
+ * docs/media/phase-2/ were made).
  */
 import { copyFileSync, mkdirSync } from "node:fs";
 import path from "node:path";
 
-import type { PrismaClient } from "@prisma/client";
 import { expect, test, type Locator, type Page, type Request, type TestInfo } from "@playwright/test";
 
-import { createDatabaseClient } from "../lib/db/client";
 import { nocRequirements } from "../lib/engines/noc/v2021";
 import { generalRoadV2026, roadApprenticeToOwnShopAB } from "../lib/engines/roads/v2026";
-import { REQUIREMENT_LINES_PLACE } from "../tests/helpers/official-quotes";
-import { findTimeWords } from "../tests/helpers/time-words";
-import { OFFICIAL_QUOTE_ALLOWANCES, findVerdicts } from "../tests/helpers/verdict-words";
+import { OFFICIAL_QUOTE_ALLOWANCES } from "../tests/helpers/verdict-words";
 
+import { readAboutJob, saveIdea } from "./about-job-read";
 import { lookCloser, lookCloserItems, pickJob } from "./cockpit-calm";
 
 const REGION = "About this job";
+const ROWS = ["rules", "wages", "counts", "links"] as const;
 const goalBar = (page: Page) => page.getByRole("region", { name: "Your goal and gauges" });
 const panel = (page: Page) => page.getByRole("region", { name: REGION });
-const row = (page: Page, id: "rules" | "wages" | "counts" | "links") => panel(page).locator(`[data-about-row="${id}"]`);
-
-/** The run's own data file, to put an idea on a written road the way Pick a future does. */
-async function withE2eDb<T>(fn: (db: PrismaClient) => Promise<T>): Promise<T> {
-  const file = path.join(process.cwd(), "prisma", "e2e", "dotami.db").split(path.sep).join("/");
-  const db = createDatabaseClient({ url: `file:${file}` });
-  try {
-    return await fn(db);
-  } finally {
-    await db.$disconnect();
-  }
-}
-
-/** An invented idea, saved the way the intake saves one, on a written future; returns the cockpit's address. */
-async function saveIdea(page: Page, name: string, province: "AB" | "ON", roadId: string): Promise<string> {
-  const scenario = {
-    id: `about-job-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-    profile: {
-      name,
-      type: "service",
-      province,
-      targetRevenueY1: 20_000,
-      targetRevenueY3: 0,
-      structure: "sole-prop",
-      structureSource: "assumed",
-      employmentStatus: "employee",
-      hireFirst: false,
-      activityTags: ["Trades"],
-      stage: "idea",
-    },
-    state: {
-      activeBranches: { gstTiming: "stage-2a-voluntary-gst-registration", incorporationTiming: "stage-3a-incorporation-80k-net" },
-    },
-  };
-  const saved = await page.request.post("/api/scenario/save", { data: { scenario } });
-  expect(saved.ok()).toBe(true);
-  const { ventureId } = (await saved.json()) as { ventureId: string };
-  // The road, as Pick a future keeps it, so the cockpit opens on it (as e2e/landscape.spec.ts does).
-  await withE2eDb((db) => db.venture.update({ where: { id: ventureId }, data: { roadId, roadChosenAt: new Date() } }));
-  return `/cockpit?venture=${ventureId}`;
-}
+const row = (page: Page, id: (typeof ROWS)[number]) => panel(page).locator(`[data-about-row="${id}"]`);
 
 /** The text of a part of the panel as drawn (what a person sees), spaces made one. */
 const textOf = async (part: Locator) => (await part.innerText()).replace(/\s+/g, " ").trim();
 
-/** What the screen checks find in the open panel: verdicts anywhere, time words outside the rules row's quote. */
-async function findingsIn(page: Page, group: string): Promise<string[]> {
-  const found: string[] = [];
-  for (const v of findVerdicts(await panel(page).innerText())) found.push(`verdict: ${v}`);
-  const read = [{ kind: "noc-employment-requirements" as const, group, lines: nocRequirements(group) }];
-  for (const t of findTimeWords(await row(page, "rules").innerText(), [], { where: `cockpit › ${REQUIREMENT_LINES_PLACE}`, read })) {
-    found.push(`time (rules): ${t}`);
-  }
-  for (const part of ["wages", "counts", "links"] as const) for (const t of findTimeWords(await row(page, part).innerText())) found.push(`time (${part}): ${t}`);
-  // The kicker, the heading and the footer: everything in the panel outside its four rows.
-  const outside = await panel(page).evaluate((el) => {
-    const copy = el.cloneNode(true) as HTMLElement;
-    copy.querySelectorAll("[data-about-row]").forEach((r) => r.remove());
-    return copy.innerText ?? copy.textContent ?? "";
-  });
-  for (const t of findTimeWords(outside)) found.push(`time (around the rows): ${t}`);
-  return found;
-}
+/**
+ * What the screen checks find in the open panel (e2e/about-job-read.ts, the same reading the idea sweep gives
+ * it): verdicts anywhere, time words outside the rules row's labelled quote, every figure on its own wage row.
+ */
+const findingsIn = (page: Page, group: string) => readAboutJob(page, "about this job spec", group);
 
-/** Screenshots of the open panel at the three widths, attached, and copied to ABOUT_JOB_SHOTS when set. */
+/** Where the page and every scrolled box in it stand: a shot after a scroll that moved nothing would repeat one. */
+const scrolledTo = (page: Page) =>
+  page.evaluate(() =>
+    [window.scrollY, ...[...document.querySelectorAll<HTMLElement>("*")].filter((el) => el.scrollTop > 0).map((el) => el.scrollTop)].join(","),
+  );
+
+/**
+ * Screenshots of the open panel at the three widths, attached, and copied to ABOUT_JOB_SHOTS when set: the panel
+ * as it opens (`<name>-<width>.png`), then scrolled to each later row in turn (`<name>-<width>-<row>.png`), a
+ * scroll that moves nothing taking no shot. Every row has its heading in the window in at least one shot.
+ */
 async function shots(page: Page, testInfo: TestInfo, name: string, open: () => Promise<void>) {
+  const into = process.env.ABOUT_JOB_SHOTS;
   for (const width of [375, 768, 1280]) {
     await page.setViewportSize({ width, height: width === 375 ? 812 : width === 768 ? 1024 : 720 });
     await open();
     await page.evaluate(() => document.fonts.ready);
-    const file = testInfo.outputPath(`${name}-${width}.png`);
-    await page.screenshot({ path: file });
-    await testInfo.attach(`${name}-${width}.png`, { path: file, contentType: "image/png" });
-    const into = process.env.ABOUT_JOB_SHOTS;
-    if (into) {
-      mkdirSync(into, { recursive: true });
-      copyFileSync(file, path.join(into, `${name}-${width}.png`));
+    const shown = new Set<string>();
+    let at = "";
+    for (const [i, id] of ROWS.entries()) {
+      if (i > 0) await row(page, id).evaluate((el) => el.scrollIntoView({ block: "start" }));
+      const now = await scrolledTo(page);
+      // The rows whose headings are in the window now.
+      for (const each of ROWS) {
+        const box = await row(page, each).locator("h3").boundingBox();
+        if (box && box.y >= 0 && box.y + box.height <= (page.viewportSize()?.height ?? 0)) shown.add(each);
+      }
+      if (i > 0 && now === at) continue;
+      at = now;
+      const file = `${name}-${width}${i === 0 ? "" : `-${id}`}.png`;
+      const out = testInfo.outputPath(file);
+      await page.screenshot({ path: out });
+      await testInfo.attach(file, { path: out, contentType: "image/png" });
+      if (into) {
+        mkdirSync(into, { recursive: true });
+        copyFileSync(out, path.join(into, file));
+      }
     }
+    expect([...shown].sort(), `${name} at ${width}: a row never in the window`).toEqual([...ROWS].sort());
   }
   await page.setViewportSize({ width: 1280, height: 720 });
 }
