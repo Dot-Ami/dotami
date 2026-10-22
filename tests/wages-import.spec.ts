@@ -7,7 +7,7 @@
  * missing row is reported missing, never filled from a neighbour.
  */
 import { createHash } from "node:crypto";
-import { existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { afterEach, describe, expect, it, vi } from "vitest";
@@ -324,12 +324,37 @@ describe("--download keeps the file only when it is the pinned one, in its encod
     expect(said).toContain(`${FILE.name} is declared UTF-8 but isn't valid UTF-8`);
   });
 
-  it("rebuilds nothing from a copy that lost its byte-order mark", async () => {
+  // A copy without the mark has the pinned text (the fingerprint drops the mark), so the pin alone can't refuse
+  // it; the mark is checked before anything is written (the README's "anything else is not written").
+  it("writes nothing, and rebuilds nothing, from a copy that lost its byte-order mark", async () => {
     const dir = makeRoot();
     serve(committedBytes().subarray(3));
     const { code, said } = await run(dir);
     expect(code).toBe(1);
+    expect(written(dir)).toEqual([]);
     expect(existsSync(path.join(dir, WAGE_MODULE_PATH))).toBe(false);
-    expect(said).toContain("should be UTF-8 with a byte-order mark, and has no byte-order mark");
+    expect(said).toContain(`${FILE.name} should be UTF-8 with a byte-order mark, and has no byte-order mark, so it was not written`);
+    expect(said).not.toContain(`downloaded ${FILE.name}`);
+  });
+
+  it("leaves the official file in place when a copy without the mark comes down over it", async () => {
+    const dir = makeRoot();
+    mkdirSync(path.join(dir, WAGE_DATA_DIR), { recursive: true });
+    writeFileSync(path.join(dir, WAGE_DATA_DIR, FILE.name), committedBytes());
+    serve(committedBytes().subarray(3));
+    const { code } = await run(dir);
+    expect(code).toBe(1);
+    expect(readFileSync(path.join(dir, WAGE_DATA_DIR, FILE.name)).equals(committedBytes())).toBe(true);
+  });
+
+  it("--check names a committed copy that lost its byte-order mark", async () => {
+    const dir = makeRoot();
+    mkdirSync(path.join(dir, WAGE_DATA_DIR), { recursive: true });
+    writeFileSync(path.join(dir, WAGE_DATA_DIR, FILE.name), committedBytes().subarray(3));
+    const lines: string[] = [];
+    const code = await main(["--check"], { root: dir, log: (line) => lines.push(line) });
+    expect(code).toBe(1);
+    expect(lines.join("\n")).toContain(`${FILE.name} should be UTF-8 with a byte-order mark, and has no byte-order mark`);
+    expect(lines.join("\n")).toContain("nothing was rebuilt");
   });
 });

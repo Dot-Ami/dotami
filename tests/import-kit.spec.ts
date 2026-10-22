@@ -103,6 +103,12 @@ describe("an importer is refused when it doesn't fit the registry", () => {
     expect(() => defineImport({ ...spec, sourceId: "oasis-2025", files: [{ ...file, sha256: "abc" }] })).toThrow(/isn't a SHA-256/);
     expect(() => defineImport({ ...spec, sourceId: "oasis-2025", files: [{ ...file, encoding: "utf-16" as "utf-8" }] })).toThrow(/unknown encoding/);
   });
+
+  it("for a byte-order mark asked of a file that isn't UTF-8", () => {
+    expect(() => defineImport({ ...spec, sourceId: "oasis-2025", files: [{ ...file, encoding: "latin1", bom: true }] })).toThrow(
+      /only a UTF-8 file can be asked to start with a byte-order mark/,
+    );
+  });
 });
 
 // ---- A whole run of an invented importer, over a throwaway folder ------------------------------------------

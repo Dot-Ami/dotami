@@ -429,8 +429,10 @@ download Job Bank's 2025 wage file from open.canada.ca, pinned by checksum like 
 (`2a71-das-wage2025opendata-esdc-all-19nov2025-vf.csv`, revised 2025-11-19), committed as downloaded under
 `data/job-bank-wages-2025/` (17,981,889 bytes; git stores it compressed, about 1 MB, and keeping the whole file
 lets `npm run data:check` rebuild the module from it offline on every pull request; the folder's README says
-what the file holds). It refuses a file that isn't its pin, isn't UTF-8 (refused before it is written), or has
-lost its byte-order mark (refused at the rebuild). It writes `lib/engines/wages/v2026/data.ts`: every one of the
+what the file holds). It refuses a file that isn't its pin, isn't UTF-8, or has lost its byte-order mark, and
+`--download` refuses each of these before it is written. The pin alone can't catch the lost mark (the
+fingerprint drops it), so the file is declared `bom: true` and the core checks for the mark when it reads a
+file, downloaded or committed. It writes `lib/engines/wages/v2026/data.ts`: every one of the
 44,376 rows (516 job groups in each of 86 geographies), with the job group, the geography code and the file's
 province code and name, the source code word for word, the method, hourly or annual, low / median / high as the
 file's own text (empty stays empty), the reference period, the English comment and the revision date. The

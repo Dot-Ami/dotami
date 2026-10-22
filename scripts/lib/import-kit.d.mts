@@ -22,6 +22,8 @@ export interface ImportFile<Key extends string = string> {
   name: string;
   sha256: string;
   encoding: Encoding;
+  /** A UTF-8 file that must start with a byte-order mark; one without it is refused (and never downloaded over the committed one). */
+  bom?: boolean;
 }
 
 export interface ImportSpec<Key extends string = string> {

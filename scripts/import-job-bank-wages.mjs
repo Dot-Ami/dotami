@@ -11,7 +11,8 @@
 //   node scripts/import-job-bank-wages.mjs              Rebuilds the module from data/job-bank-wages-2025/.
 //   node scripts/import-job-bank-wages.mjs --check      Rebuilds it in memory and fails if the committed module differs.
 //   node scripts/import-job-bank-wages.mjs --download   Fetches the file first; it is written only when its SHA-256
-//                                                       is the one pinned in WAGE_FILES, then the module is rebuilt.
+//                                                       is the one pinned in WAGE_FILES and it starts with its
+//                                                       byte-order mark, then the module is rebuilt.
 //
 // One small adapter on the research kit's import core (scripts/lib/import-kit.mjs), which does the reading,
 // pins, header, --check and --download. What is left here is the wage file's own: its pin, and how its rows
@@ -35,7 +36,8 @@ export const WAGE_MODULE_PATH = "lib/engines/wages/v2026/data.ts";
  * The one file, as published on the dataset's page (its address is on the registry card "job-bank-wages").
  * `sha256` pins it: the fingerprint of its text, taken as `fingerprint` takes it (byte-order mark dropped, line
  * endings evened out). Downloaded 2026-10-21: 17,981,889 bytes, UTF-8 with a byte-order mark and "\r\n" line
- * endings (git stores "\n"), 44,376 rows.
+ * endings (git stores "\n"), 44,376 rows. `bom` makes the import core refuse a copy without the mark, before a
+ * download is written: the pin alone can't, since the fingerprint drops the mark.
  * A new file from the government means updating this by hand, on purpose.
  */
 const WAGES = defineImport({
@@ -52,6 +54,7 @@ const WAGES = defineImport({
       name: "2a71-das-wage2025opendata-esdc-all-19nov2025-vf.csv",
       sha256: "9be9c52da5f9a5329f3a1d0a7130035c07a9b4af8aca7cba91d8057e46199441",
       encoding: "utf-8",
+      bom: true,
     },
   ],
   build: (texts) => buildWageModule(texts),
@@ -129,8 +132,8 @@ const DAY = /^\d{4}-\d{2}-\d{2}$/;
  * empty (null), and a row the file doesn't have is not made up.
  */
 export function readWageFile(text, { name = WAGE_FILES[0].name } = {}) {
-  // The import core has already refused bytes that aren't UTF-8; this file also starts with a byte-order mark,
-  // and one without it isn't the file as published.
+  // The import core has already refused bytes that aren't UTF-8, or that lack the mark (`bom: true` above); this
+  // check stays so the reader refuses such text on its own too: one without the mark isn't the file as published.
   if (!text.startsWith("﻿")) throw new Error(`${name} should be UTF-8 with a byte-order mark, and has no byte-order mark`);
   const [header, ...rows] = parseCsv(evenText(text));
   const at = {};

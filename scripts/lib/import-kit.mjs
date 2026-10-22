@@ -5,7 +5,7 @@
 // to turn their text into a module. This core then:
 //   - reads each file in its own encoding: UTF-8, with or without a byte-order mark (the invisible marker some
 //     files start with), or Latin-1 (some Statistics Canada files, and the Canadian Occupational Projection
-//     System's);
+//     System's); a UTF-8 file marked `bom: true` must start with the mark, checked before a download is written;
 //   - fingerprints each file's text and checks it against its pin;
 //   - writes the module's licence header from the registry card: its credit line (with the table id and
 //     reference period filled in, when the card's line asks for them) and its licence;
@@ -172,14 +172,25 @@ export function defineImport(spec, { cards = SOURCES } = {}) {
     if (!listed) throw new Error(`${spec.name}: ${f.name} isn't one of the files on the card ${card.id}`);
     if (!SHA256.test(f.sha256)) throw new Error(`${spec.name}: the pin for ${f.name} isn't a SHA-256`);
     if (!ENCODINGS.includes(f.encoding)) throw new Error(`${spec.name}: ${f.name} has an unknown encoding "${f.encoding}"`);
-    return { key: f.key, name: f.name, url: listed.url, sha256: f.sha256, encoding: f.encoding };
+    if (f.bom && f.encoding !== "utf-8") throw new Error(`${spec.name}: ${f.name} is ${f.encoding}; only a UTF-8 file can be asked to start with a byte-order mark`);
+    return { key: f.key, name: f.name, url: listed.url, sha256: f.sha256, encoding: f.encoding, bom: f.bom === true };
   });
   const { name, label, script, pinsName, dataDir, modulePath, tableId, referencePeriod, build } = spec;
   const where = (root, f) => path.join(root, dataDir, f.name);
 
+  /**
+   * A file's text from its bytes, in its own encoding; throws, naming the file, when a file marked `bom` has no
+   * byte-order mark. The fingerprint drops the mark, so a copy without it matches the pin: this is what refuses it.
+   */
+  function textOf(bytes, f) {
+    const text = decode(bytes, f.encoding, f.name);
+    if (f.bom && !text.startsWith("﻿")) throw new Error(`${f.name} should be UTF-8 with a byte-order mark, and has no byte-order mark`);
+    return text;
+  }
+
   /** The files' text, read from the data folder, each in its own encoding. */
   function readTexts(root = ROOT) {
-    return Object.fromEntries(files.map((f) => [f.key, decode(readFileSync(where(root, f)), f.encoding, f.name)]));
+    return Object.fromEntries(files.map((f) => [f.key, textOf(readFileSync(where(root, f)), f)]));
   }
 
   /** What is wrong with the committed files against their pins: a missing file, or one whose SHA-256 differs. */
@@ -188,7 +199,7 @@ export function defineImport(spec, { cards = SOURCES } = {}) {
     for (const f of files) {
       let got;
       try {
-        got = fingerprint(decode(readFileSync(where(root, f)), f.encoding, f.name));
+        got = fingerprint(textOf(readFileSync(where(root, f)), f));
       } catch (error) {
         problems.push(`${dataDir}/${f.name} couldn't be read (${error instanceof Error ? error.message : String(error)})`);
         continue;
@@ -214,8 +225,15 @@ export function defineImport(spec, { cards = SOURCES } = {}) {
         const response = await fetch(f.url, { redirect: "follow", headers: { "user-agent": `DotAmi ${label} import (developer script)` } });
         if (!response.ok) return `${f.name}: the server answered ${response.status}`;
         const bytes = Buffer.from(await response.arrayBuffer());
-        // Read as readTexts reads the committed copy (its encoding, byte-order mark kept for evenText to drop).
-        const got = fingerprint(decode(bytes, f.encoding, f.name));
+        // Read as readTexts reads the committed copy (its encoding, byte-order mark kept for evenText to drop),
+        // before anything is written: bytes the rebuild would refuse never land over the committed file.
+        let text;
+        try {
+          text = textOf(bytes, f);
+        } catch (error) {
+          return `${error instanceof Error ? error.message : String(error)}, so it was not written`;
+        }
+        const got = fingerprint(text);
         if (got !== f.sha256) {
           // main() adds ". Nothing was rebuilt.", so the message ends without a full stop.
           return [

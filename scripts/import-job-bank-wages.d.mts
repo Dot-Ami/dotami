@@ -5,7 +5,7 @@ import type { RunOptions } from "./lib/import-kit.mjs";
 
 export const WAGE_DATA_DIR: string;
 export const WAGE_MODULE_PATH: string;
-export const WAGE_FILES: readonly { key: "wages"; name: string; url: string; sha256: string; encoding: "utf-8" | "latin1" }[];
+export const WAGE_FILES: readonly { key: "wages"; name: string; url: string; sha256: string; encoding: "utf-8" | "latin1"; bom: boolean }[];
 
 export function evenText(text: string): string;
 export function fingerprint(text: string): string;
