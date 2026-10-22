@@ -93,7 +93,8 @@ export const BASELINE: ClutterTable = {
  * About this job (2026-10-22, task 25h; docs/ui-spec/cockpit/about-this-job.md, "The budget"), the first: open
  * on road 1 for a picked job (Cabinetmakers), its regions the first visit's plus the panel slot the layout rule
  * already counts. On a phone the sheet covers the road, so its controls are the sheet's (the spec's ceiling:
- * road 1's 14 there).
+ * road 1's 14 there). CI run 39732926050 counted 8, 2, 5 and 9.5 px on a phone, 9, 28, 5 and 9.5 px on a tablet
+ * and 9, 23, 5 and 9.5 px on a laptop, the same as Chromium on Windows.
  */
 export const FIRST_MEASURED: ClutterTable = {
   "cockpit-about-job": { phone: m(8, 2, 5, 9.5), tablet: m(9, 28, 5, 9.5), laptop: m(9, 23, 5, 9.5) },

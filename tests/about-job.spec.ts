@@ -72,14 +72,15 @@ function drawn(view: AboutJobView, part?: string): string {
     const end = html.indexOf("data-about-row=", start + 10);
     html = html.slice(start, end === -1 ? undefined : end);
   }
-  return html
-    .replace(/<\/(p|h2|h3|li|blockquote|div|button)>/g, "\n")
-    .replace(/<[^>]+>/g, "")
-    .replace(/&#x27;/g, "'")
-    .replace(/&quot;/g, '"')
-    .replace(/&lt;/g, "<")
-    .replace(/&gt;/g, ">")
-    .replace(/&amp;/g, "&");
+  // Read token by token (a tag, or the text between two tags), never by stripping tags out of the markup: only
+  // the text between tags is kept, its entities decoded, and a block's closing tag ends a line.
+  const entities: Record<string, string> = { "&#x27;": "'", "&quot;": '"', "&lt;": "<", "&gt;": ">", "&amp;": "&" };
+  let text = "";
+  for (const token of html.matchAll(/<(\/?)([a-z0-9]+)[^>]*>|([^<]+)/g)) {
+    if (token[3] !== undefined) text += token[3].replace(/&(?:#x27|quot|lt|gt|amp);/g, (e) => entities[e]!);
+    else if (token[1] === "/" && /^(p|h2|h3|li|blockquote|div|button)$/.test(token[2]!)) text += "\n";
+  }
+  return text;
 }
 
 /** The figures of a row, in cents, from the file's own text. */
