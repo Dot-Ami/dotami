@@ -179,9 +179,12 @@ Every string in the words block was run through `VERDICT_WORDS`, `findVerdicts` 
   and road 1 every source is kept, as the step panel shows them.
 - **Pick a future:** `components/front-door/futures-list.tsx` (step 3's list only). The back link and the
   no-road block are steps 2 and 3's other tasks (28b, 28c) and are not in this change.
-- **Your destination** counts the federal road for a place outside Alberta: *1 future listed is written for
-  Yukon.* where it said *No future listed is written for Yukon yet …* (the receipt counts roads written for the
-  place or for all of Canada, unchanged).
+- **Your destination** counts the federal road for a place outside Alberta apart from the place's own: *1 future
+  listed is written for all of Canada; none is written for Yukon yet.* where it said *No future listed is written
+  for Yukon yet …* (`placeReceipt` in `lib/front-door/receipts.ts`, words in `lib/front-door/words.ts`). The first
+  build counted it as written for the place (*1 future listed is written for Yukon.*), which the federal card
+  contradicted (*Yukon's own steps aren't written yet*); the second review (2026-10-22) split the count. Alberta
+  is unchanged (*2 futures listed are written for Alberta.*): the federal road isn't listed there.
 - **Not here yet?** still keeps the note and opens road 0 anywhere ([03-road-match.md](./03-road-match.md), "as
   today"). For 13 corpus ideas outside Alberta that is a road not written for their place, said by the goal bar's
   *Map drawn: … written for AB; this idea is in …*; whether it should open the federal steps there is asked of

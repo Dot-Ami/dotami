@@ -20,7 +20,7 @@ import { profileRows, ventureLine } from "@/lib/cockpit/profile-rows";
 import { withKept } from "@/lib/front-door/draft";
 import { futureCards, groupedForPlace, LISTED_ROAD_IDS, listedRoads, sourcesLine } from "@/lib/front-door/futures";
 import { DESTINATION_PLACES, DESTINATION_QUESTIONS, LOOKING_FOR, type LookingFor } from "@/lib/front-door/questions";
-import { destinationReceipt, incomeReceipt, lookingForReceipt, placeReceipt, roadIncludes } from "@/lib/front-door/receipts";
+import { destinationReceipt, incomeReceipt, lookingForReceipt, placeName, placeReceipt, roadIncludes } from "@/lib/front-door/receipts";
 import { firstSaveForPickedFuture, scenarioForPickedFuture } from "@/lib/front-door/start-future";
 import { destinationWords, frontDoorWords, incomePromptWords, pickWords } from "@/lib/front-door/words";
 import { parseFirstSave, parseScenarioInput } from "@/lib/db/parse-scenario-input";
@@ -144,21 +144,45 @@ describe("the receipts: worked out from the answer and the catalogs, never a ver
   });
 
   it("the place: whose rules are written, and how many futures listed are written for it", () => {
-    const listed = (province: "AB" | "BC" | "YT") => listedRoads(roadsV2026, province);
+    const listed = (province: "AB" | "BC" | "ON" | "YT") => listedRoads(roadsV2026, province);
     expect(placeReceipt("CA-AB", listed("AB"))).toBe("Alberta's rules and the federal rules apply. 2 futures listed are written for Alberta.");
     expect(placeReceipt("CA-AB", [{ provinces: ["AB"] }])).toBe("Alberta's rules and the federal rules apply. 1 future listed is written for Alberta.");
     expect(placeReceipt("CA-AB", [{ provinces: ["AB"] }, { provinces: ["AB"] }])).toBe(
       "Alberta's rules and the federal rules apply. 2 futures listed are written for Alberta.",
     );
-    // Outside Alberta the federal steps are listed too, written for all of Canada (task 28d, 2026-10-21).
-    expect(placeReceipt("CA-BC", listed("BC"))).toBe("British Columbia's rules and the federal rules apply. 1 future listed is written for British Columbia.");
-    expect(placeReceipt("CA-YT", listed("YT"))).toBe("The federal rules apply; Yukon's own rules aren't written yet. 1 future listed is written for Yukon.");
+    // Outside Alberta the federal steps are listed too, written for all of Canada (task 28d, 2026-10-21). The
+    // receipt counts them apart from the place's own, so it agrees with the federal card ("Yukon's own steps
+    // aren't written yet"): a second review on 2026-10-22 found "1 future listed is written for Yukon" there.
+    expect(placeReceipt("CA-BC", listed("BC"))).toBe(
+      "British Columbia's rules and the federal rules apply. 1 future listed is written for all of Canada; none is written for British Columbia yet.",
+    );
+    expect(placeReceipt("CA-ON", listed("ON"))).toBe(
+      "Ontario's rules and the federal rules apply. 1 future listed is written for all of Canada; none is written for Ontario yet.",
+    );
+    expect(placeReceipt("CA-YT", listed("YT"))).toBe(
+      "The federal rules apply; Yukon's own rules aren't written yet. 1 future listed is written for all of Canada; none is written for Yukon yet.",
+    );
+    // Not one receipt outside Alberta says a future is written for the place itself, as the card says.
+    for (const province of ["BC", "ON", "YT"] as const) {
+      const place = `CA-${province}` as const;
+      expect(placeReceipt(place, listed(province)), province).not.toMatch(/listed (is|are) written for (British Columbia|Ontario|Yukon)\./);
+      expect(pickWords.federalOnly(placeName(place))).toContain(`${placeName(place)}'s own steps aren't written yet`);
+    }
     // Without it (before task 28d), every place outside Alberta read "No future listed …".
     expect(placeReceipt("CA-BC", listed("BC").filter((r) => r.id !== roadFederalStepsCA.id))).toBe(
       "British Columbia's rules and the federal rules apply. No future listed is written for British Columbia yet: the ones shown are written for other places, and each says which.",
     );
-    // A road written for all of Canada counts for every place.
-    expect(placeReceipt("CA-YT", [{ provinces: ["CA"] }])).toBe("The federal rules apply; Yukon's own rules aren't written yet. 1 future listed is written for Yukon.");
+    // A road written for all of Canada is counted as that, never as written for the place.
+    expect(placeReceipt("CA-YT", [{ provinces: ["CA"] }])).toBe(
+      "The federal rules apply; Yukon's own rules aren't written yet. 1 future listed is written for all of Canada; none is written for Yukon yet.",
+    );
+    expect(placeReceipt("CA-YT", [{ provinces: ["CA"] }, { provinces: ["CA"] }])).toBe(
+      "The federal rules apply; Yukon's own rules aren't written yet. 2 futures listed are written for all of Canada; none is written for Yukon yet.",
+    );
+    // Both kinds listed (none is today): each counted under its own name.
+    expect(placeReceipt("CA-AB", [{ provinces: ["AB"] }, { provinces: ["AB"] }, { provinces: ["CA"] }])).toBe(
+      "Alberta's rules and the federal rules apply. 2 futures listed are written for Alberta, and 1 for all of Canada.",
+    );
   });
 
   it("the income: agreed with its day, through the one money formatter; turned down, and what that leaves; skipped", () => {

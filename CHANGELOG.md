@@ -109,8 +109,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   federal sources and the person's own province's, with a line such as "1 source for other provinces isn't
   shown." where it left one out; *Export* lists the same sources with the same line. The rules and tax cards
   are unchanged (they still pick Ontario's and British Columbia's own entries), and so is the list of provinces whose rules the catalogs carry (the maintainer's
-  call). *Your destination* now counts the federal road as written for a place outside Alberta ("1 future listed
-  is written for Yukon."). The idea harness and the browser sweep run it for the corpus's 156 business ideas
+  call). *Your destination* now counts the federal road for a place outside Alberta as written for all of Canada,
+  apart from the place's own, so it agrees with the card ("1 future listed is written for all of Canada; none is
+  written for Yukon yet."). The idea harness and the browser sweep run it for the corpus's 156 business ideas
   outside Alberta, now marked as ideas the federal road is written for; the known gap "the road drawn isn't
   written for the idea's place" on Pick a future went from 190 ideas to 22, mostly because the test's invented
   person now clicks the federal card for those ideas. The 22 left are 13 whose note under *Not here yet?* still

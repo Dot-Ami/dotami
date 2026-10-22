@@ -87,6 +87,12 @@ export const destinationWords = {
       n === 0
         ? `No future listed is written for ${name} yet: the ones shown are written for other places, and each says which.`
         : `${plural(n, "future listed is", "futures listed are")} written for ${name}.`,
+    // A road written for all of Canada ("CA") is counted apart from the place's own, so the receipt agrees
+    // with the federal card's "<place>'s own steps aren't written yet" (pickWords.federalOnly).
+    futuresForCanadaOnly: (canada: number, name: string) =>
+      `${plural(canada, "future listed is", "futures listed are")} written for all of Canada; none is written for ${name} yet.`,
+    futuresForPlaceAndCanada: (own: number, canada: number, name: string) =>
+      `${plural(own, "future listed is", "futures listed are")} written for ${name}, and ${canada} for all of Canada.`,
     incomeAgreed: (cents: number, day: string) =>
       `Your target: ${formatMoney(cents)} a year, before tax, agreed ${day}. Nothing compares it with anything.`,
     // Turning it down keeps the row, marked discarded (lib/futures/person-figures.ts), so it is never "not kept".

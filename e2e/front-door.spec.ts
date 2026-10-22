@@ -214,9 +214,10 @@ test("a returning person in a fresh tab: words and income already kept count as 
   await expect(receipts.filter({ hasText: "listed" }).first()).toHaveText("Of the 2 futures listed, 2 include a business of your own.");
   await page.getByRole("combobox", { name: Q3 }).selectOption("CA-YT");
   await page.getByRole("button", { name: "Use this place" }).click();
-  // Outside Alberta the federal steps are listed too, written for all of Canada (task 28d).
+  // Outside Alberta the federal steps are listed too, written for all of Canada (task 28d), and counted as that,
+  // never as written for Yukon: the card below says Yukon's own steps aren't written yet.
   await expect(receipts.filter({ hasText: "federal rules" })).toHaveText(
-    "The federal rules apply; Yukon's own rules aren't written yet. 1 future listed is written for Yukon.",
+    "The federal rules apply; Yukon's own rules aren't written yet. 1 future listed is written for all of Canada; none is written for Yukon yet.",
   );
 
   // Skipping the income now keeps nothing new, and says the target agreed before still stands.

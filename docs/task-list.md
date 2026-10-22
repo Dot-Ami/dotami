@@ -507,7 +507,8 @@ placed in phase 3.
     person's own province named; Alberta-only steps and pages left out (full B.C. and Ontario roads come
     later). Built 2026-10-21 (`lib/engines/roads/v2026/federal-steps-ca.ts`, 13 steps; *Pick a future* lists it
     first outside Alberta, Alberta's two folded; the goal bar, the plan and each step's sources name the
-    province; Export lists the same sources, 2026-10-22). Open, both asked in the pull request: whether *Not
+    province; Export lists the same sources, 2026-10-22; *Your destination* counts it as written for all of
+    Canada, apart from the place's own, 2026-10-22). Open, both asked in the pull request: whether *Not
     here yet?* should open the federal steps outside Alberta, and whether an Alberta future picked from outside
     Alberta, after its card said so, is an honest end
   - [ ] 28e (phase 3): one career road for any job
