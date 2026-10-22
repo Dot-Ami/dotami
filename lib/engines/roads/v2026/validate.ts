@@ -1,6 +1,7 @@
 import { amountAsWritten, quotesAmount } from "../../shared/amounts";
 import { citationCheckProblems, howChecked, newestRead } from "../../shared/citation-check";
 import type { EngineCitation } from "../../shared/types";
+import { isOasisJobGroup } from "../../oasis/v2026";
 import type { CatalogCostLine, CostLineAsShown, Road, SkillItem } from "./types";
 
 /**
@@ -18,6 +19,8 @@ export function roadProblems(road: Road, skillItems: readonly SkillItem[], now: 
   const stepIds = new Set(road.steps.map((s) => s.id));
   const forkIds = new Set(road.forks.map((f) => f.id));
   const skillIds = new Set(skillItems.map((s) => s.id));
+
+  problems.push(...roadCodeProblems(road));
 
   // Ids: unique across the whole road, because storage keys on them (a tick on a done-when line,
   // a quote on a cost line) and two things answering to one id would mix up what the person said.
@@ -133,6 +136,39 @@ export function roadJoinProblems(roads: readonly Road[]): string[] {
     } else if (!target.columns.some((c) => c.id === columnId)) {
       problems.push(`Road "${road.id}" joins road "${roadId}" at a column it doesn't have: "${columnId}".`);
     }
+  }
+  return problems;
+}
+
+/**
+ * The checks on the jobs a road says it is written for (`Road.codes`, research-kit.md § 5.3): each one a
+ * 5-digit job group on the government's list (OaSIS 2025, lib/engines/oasis/v2026/), each named once, and a
+ * road written for no job saying so in words ("no-particular-job") rather than with an empty list. A road may
+ * name only codes the list knows, so the road match (`roadsWrittenForJob`) can never offer a road for a code
+ * no person could pick.
+ */
+export function roadCodeProblems(road: Road): string[] {
+  const problems: string[] = [];
+  // Contributor files arrive as data, so the shape is checked too, not left to the type.
+  const codes = (road as { codes?: Road["codes"] }).codes;
+  if (!codes) return [`Road "${road.id}" names no codes: say which jobs it is written for, or "no-particular-job".`];
+  const { occupations } = codes;
+  if (occupations === "no-particular-job") return problems;
+  if (!Array.isArray(occupations)) {
+    return [`Road "${road.id}" names its jobs as neither a list of codes nor "no-particular-job".`];
+  }
+  if (occupations.length === 0) {
+    problems.push(`Road "${road.id}" names an empty list of jobs: say "no-particular-job" if it is written for none.`);
+  }
+  const seen = new Set<string>();
+  for (const noc of occupations) {
+    if (typeof noc !== "string" || !/^\d{5}$/.test(noc)) {
+      problems.push(`Road "${road.id}" names a job code that isn't five digits: "${String(noc)}".`);
+    } else if (!isOasisJobGroup(noc)) {
+      problems.push(`Road "${road.id}" names a job the government's list doesn't have: "${noc}".`);
+    }
+    if (seen.has(noc)) problems.push(`Road "${road.id}" names the job "${noc}" twice.`);
+    seen.add(noc);
   }
   return problems;
 }

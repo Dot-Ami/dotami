@@ -23,3 +23,19 @@ export interface OasisData {
   descriptors: readonly OasisDescriptorRow[];
   occupations: readonly OasisOccupationRow[];
 }
+
+/**
+ * The three kinds of title in the government's "Example Titles" file: the titles its profile pages list as
+ * examples, the wider index of titles, and titles the profile includes from elsewhere.
+ */
+export type OasisTitleType = "Example" | "Index" | "Inclusion";
+
+/** [job code ("63210.02"), title type, title ("barber")], as scripts/import-oasis-titles.mjs writes them. */
+export type OasisTitleRow = readonly [code: string, type: OasisTitleType, title: string];
+
+/** The government's example job titles, in ./titles.ts. */
+export interface OasisTitlesData {
+  /** The file the import read, with the SHA-256 of its text (no byte-order mark, "\n" line endings). */
+  files: readonly { name: string; sha256: string }[];
+  titles: readonly OasisTitleRow[];
+}

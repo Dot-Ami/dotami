@@ -35,6 +35,7 @@ import {
   productionPackages,
   SEPARATOR,
 } from "../desktop/notices.mjs";
+import { economicRegionsCreditLine } from "@/lib/engines/research-kit/v2026/economic-regions";
 import { NOTICES_FILE, parseNotices, readNotices } from "@/lib/licences/notices";
 
 import { importedModules, moduleName, readSource, rootSourceFiles, sourceFiles, SOURCE_FILES } from "./helpers/source-scan";
@@ -52,7 +53,7 @@ function fakePackage(nodeModules: string, name: string, version: string, opts: {
   return dir;
 }
 
-/** A checkout-shaped folder with the pieces collectNotices always reads (Tailwind, the two fonts, the OaSIS and wage data's licences). */
+/** A checkout-shaped folder with the pieces collectNotices always reads (Tailwind, the two fonts, the OaSIS, NOC, economic regions and wage data's licences). */
 function fakeCheckout(name: string, dependencies: Record<string, string>) {
   const root = path.join(temp, name);
   const modules = path.join(root, "node_modules");
@@ -64,6 +65,10 @@ function fakeCheckout(name: string, dependencies: Record<string, string>) {
     mkdirSync(path.join(root, "lib", "engines", engine, "v2026"), { recursive: true });
     writeFileSync(path.join(root, "lib", "engines", engine, "v2026", "LICENCE.txt"), "Contains information licensed under the Open Government Licence – Canada.");
   }
+  mkdirSync(path.join(root, "lib", "engines", "noc", "v2021"), { recursive: true });
+  writeFileSync(path.join(root, "lib", "engines", "noc", "v2021", "LICENCE.txt"), "Adapted from Statistics Canada.");
+  mkdirSync(path.join(root, "lib", "engines", "research-kit", "v2026"), { recursive: true });
+  writeFileSync(path.join(root, "lib", "engines", "research-kit", "v2026", "LICENCE-economic-regions.txt"), "Adapted from Statistics Canada.");
   fakePackage(modules, "tailwindcss", "4.0.0");
   return { root, modules };
 }
@@ -145,6 +150,8 @@ describe("collectNotices: what the generator lists, and what stops it", () => {
       "font:Inter (font)",
       "font:JetBrains Mono (font)",
       "data:OaSIS 2025 Version 1.0 (data from Employment and Social Development Canada)",
+      "data:NOC 2021 Version 1.0 (data from Statistics Canada)",
+      "data:Variant of SGC 2021 for Economic Regions, Alberta (data from Statistics Canada)",
       "data:Job Bank wages 2025 (data from Employment and Social Development Canada)",
     ]);
     expect(entries[0].texts).toEqual([{ file: "LICENSE", text: "Copyright (c) app authors\nMIT terms" }]);
@@ -267,8 +274,10 @@ describe("the list for this checkout", () => {
 
   // Slow on purpose: it scans every bundled file once (~250 files, each a full syntax-tree scan in
   // tests/helpers/source-scan.ts), ~2 s alone and past vitest's 5-second default under a full
-  // `npm run ci:quality` run (2026-10-11). Nothing is kept from an earlier test to reuse.
-  it("lists every package the bundled code or the style sheet imports, even a development tool", { timeout: 20_000 }, () => {
+  // `npm run ci:quality` run (2026-10-11). Nothing is kept from an earlier test to reuse. Since 2026-10-21 the
+  // generated data modules (the OaSIS titles, NOC 2021 and Job Bank wages, together about 5.7 MB) are scanned
+  // too: ~8.5 s alone and past 20 seconds under a full run, so the limit is 60 seconds.
+  it("lists every package the bundled code or the style sheet imports, even a development tool", { timeout: 60_000 }, () => {
     const bundled = [...sourceFiles(["app", "components", "lib"], SOURCE_FILES), ...rootSourceFiles().filter((f) => /^(middleware|instrumentation)/.test(f))];
     const imported = new Set(
       bundled.flatMap((file) =>
@@ -305,15 +314,39 @@ describe("the list for this checkout", () => {
     const data = entries.filter((e) => e.kind === "data");
     expect(data.map((e) => [e.name, e.licence])).toEqual([
       ["OaSIS 2025 Version 1.0 (data from Employment and Social Development Canada)", "OGL-Canada-2.0"],
+      ["NOC 2021 Version 1.0 (data from Statistics Canada)", "Statistics-Canada-Open-Licence"],
+      ["Variant of SGC 2021 for Economic Regions, Alberta (data from Statistics Canada)", "Statistics-Canada-Open-Licence"],
       ["Job Bank wages 2025 (data from Employment and Social Development Canada)", "OGL-Canada-2.0"],
     ]);
-    for (const entry of data) {
+    // The two Open Government Licence entries: OaSIS (first) and the wages (last).
+    const ogl = [data[0]!, data[3]!];
+    for (const entry of ogl) {
       expect(entry.texts[0]!.file).toBe("LICENCE.txt");
       expect(entry.texts[0]!.text).toContain("Contains information licensed under the Open Government Licence – Canada.");
       expect(entry.texts[0]!.text).toContain("https://open.canada.ca/en/open-government-licence-canada");
     }
-    expect(data[1]!.texts[0]!.text).toContain("2a71-das-wage2025opendata-esdc-all-19nov2025-vf.csv");
-    expect(parseNotices(formatNotices(data, { version: "0.0.0-test", desktop: false })).entries.map((e) => e.kind)).toEqual(["data", "data"]);
+    // The example job titles (2026-10-21) ship from the same dataset, under the same licence file.
+    expect(ogl[0]!.texts[0]!.text).toContain("example-titles_oasis_2025_v1.0.csv");
+    expect(ogl[1]!.texts[0]!.text).toContain("2a71-das-wage2025opendata-esdc-all-19nov2025-vf.csv");
+    expect(parseNotices(formatNotices(data, { version: "0.0.0-test", desktop: false })).entries.map((e) => e.kind)).toEqual(["data", "data", "data", "data"]);
+  });
+
+  it("lists the NOC 2021 job groups as data that ships, with Statistics Canada's notice (2026-10-21, the maintainer's call 4)", () => {
+    const noc = entries.filter((e) => e.kind === "data" && e.name.startsWith("NOC"));
+    expect(noc.map((e) => [e.name, e.licence])).toEqual([["NOC 2021 Version 1.0 (data from Statistics Canada)", "Statistics-Canada-Open-Licence"]]);
+    expect(noc[0]!.texts[0]!.file).toBe("LICENCE.txt");
+    expect(noc[0]!.texts[0]!.text.replace(/\s+/g, " ")).toContain(
+      "Adapted from Statistics Canada, National Occupational Classification (NOC) 2021 Version 1.0, 2021. This does not constitute an endorsement by Statistics Canada of this product.",
+    );
+    expect(noc[0]!.texts[0]!.text).toContain("https://www.statcan.gc.ca/en/reference/licence");
+  });
+
+  it("lists Alberta's economic regions as data that ships, with the credit line the registry card gives (task 25e, 2026-10-21)", () => {
+    const regions = entries.find((e) => e.kind === "data" && e.name.startsWith("Variant of SGC 2021"))!;
+    expect(regions.texts[0]!.file).toBe("LICENCE-economic-regions.txt");
+    // The same line the registry card owes, with its reference year filled in, so the two can't drift apart.
+    expect(regions.texts[0]!.text.split("\n")[0]).toBe(economicRegionsCreditLine());
+    expect(regions.texts[0]!.text).toContain("https://www.statcan.gc.ca/en/reference/licence");
   });
 
   it("follows what desktop/package.mjs copies into the installed app", () => {

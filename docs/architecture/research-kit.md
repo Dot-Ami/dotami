@@ -355,7 +355,9 @@ A source is marked `lens-live` only after that vendor's terms for agent use have
 
 A test fails on a missing field, and fails if any `vendor-estimate` source feeds a gauge or a total.
 
-**As built (2026-10-20, task 25b).** Fifteen cards: OaSIS's four files today; in phase 2 the OaSIS Example
+**As built (2026-10-20, task 25b).** Fifteen cards (sixteen since 2026-10-21: task 25e added Statistics Canada's
+economic-region variant, typed for Alberta and shipped now, and moved the NAICS 2022 list to phase 3 with the
+industry question; § 5.3, *As built*): OaSIS's four files today; in phase 2 the OaSIS Example
 Titles file, the NOC 2021 elements file, Job Bank's wage file (marked `now` since 2026-10-21, when task 25i
 imported it, § 5.4) and the NAICS 2022 list; in phase 3 the business
 counts and census table 98-10-0594 (marked as later); Meta's Ad Library and Google's Ads Transparency Center
@@ -396,6 +398,27 @@ whose price reuse waits on their replies.
   picker, labelled *suggested for this job · your pick*, with the full list below. The person still makes the
   pick.
 
+**As built (2026-10-21, task 25e's phase 2 part).** No industry code list yet: NAICS and the industry question
+wait for phase 3 (the maintainer's call of 2026-10-20), so the `naics-2022` card is marked phase 3 and nothing
+names an industry code.
+- `Road.codes.occupations` holds 5-digit job groups ([lib/engines/roads/v2026/types.ts](../../lib/engines/roads/v2026/types.ts)):
+  road 1 carries `72311`; road 0 says `"no-particular-job"` in words. `roadCodeProblems` in
+  [validate.ts](../../lib/engines/roads/v2026/validate.ts) refuses a code with no job in the OaSIS list, one
+  that isn't five digits, one named twice, and an empty list. `roadsWrittenForJob` (the road match of
+  [../ui-spec/futures/03-road-match.md](../ui-spec/futures/03-road-match.md)) gives the roads written for the
+  person's pick, in the order written, and none when none is, with no fall back.
+- [job-links.ts](../../lib/engines/research-kit/v2026/job-links.ts) has one entry, 72311, the one job a road is
+  written for. Its industry and place lists are empty until the NAICS list (phase 3) and the place lists
+  (S2.5.26) come, since a candidate can't be checked against a list DotAmi doesn't have; the census table that
+  would cite them is NAICS 2017 at sector level, so its import checks the sectors against the 2022 list first.
+  Every other job gets a line saying no road is written for it, never an empty entry.
+- The economic-region key is **asked, not mapped**: Statistics Canada publishes no city-to-region file (research
+  25s), and the Edmonton area spans two regions. [economic-regions.ts](../../lib/engines/research-kit/v2026/economic-regions.ts)
+  holds Alberta's eight regions (4810 to 4880, names as published) from the `sgc-2021-economic-regions` card,
+  for the region question ([../ui-spec/futures/02-where-you-are.md](../ui-spec/futures/02-where-you-are.md));
+  `regionThePersonPicked` reads the person's kept answer and takes no area. Outside Alberta no region is
+  listed for now (the maintainer's call 2 of 2026-10-21).
+
 ### 5.4 One import core
 
 `scripts/lib/import-kit.mjs` takes over what `import-oasis.mjs` already does:
@@ -423,9 +446,19 @@ output, `tests/oasis-import.spec.ts` and the module it writes are unchanged, byt
 data:check` (`scripts/data-check.mjs`) runs every importer's `--check` offline and is a step of
 `npm run ci:quality` and of CI.
 
+**As built (2026-10-21, task 28a).** Two more adapters on the core, both in `data:check` and both cards now
+marked `now`: `scripts/import-oasis-titles.mjs` (OaSIS 2025 "Example Titles", 18,666 titles keyed to the 900
+OaSIS codes, into `lib/engines/oasis/v2026/titles.ts`) and `scripts/import-noc.mjs` (the NOC 2021 Version 1.0
+elements file: each of the 516 job groups' title, its example titles and its "Employment requirements" word for
+word, into `lib/engines/noc/v2021/data.ts`, with Statistics Canada's notice, reference date 2021). The core
+gained `parseCsv` and `expectHeader`. Statistics Canada's site answered a script with a "Security Check" page on
+2026-10-21, so the committed elements file is the 2026-10-15 copy research 28f measured
+(`data/noc-2021-v1.0/README.md`); its `--download` writes nothing until the site answers scripts again. The
+search over the titles (28b's engine) is `lib/engines/oasis/v2026/title-search.ts`.
+
 **As built (2026-10-21, task 25i): the wage file.** The maintainer's word of 2026-10-21: "Yes, the build may
 download Job Bank's 2025 wage file from open.canada.ca, pinned by checksum like the other government files."
-`scripts/import-job-bank-wages.mjs` is the second adapter on the core. It reads the 2025 file
+`scripts/import-job-bank-wages.mjs` is the fourth adapter on the core (after OaSIS and task 28a's two). It reads the 2025 file
 (`2a71-das-wage2025opendata-esdc-all-19nov2025-vf.csv`, revised 2025-11-19), committed as downloaded under
 `data/job-bank-wages-2025/` (17,981,889 bytes; git stores it compressed, about 1 MB, and keeping the whole file
 lets `npm run data:check` rebuild the module from it offline on every pull request; the folder's README says

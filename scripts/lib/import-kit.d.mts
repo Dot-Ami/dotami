@@ -12,6 +12,8 @@ export function importAppModule(relative: string): Promise<Record<string, unknow
 export function decode(bytes: Uint8Array, encoding: Encoding, name?: string): string;
 export function evenText(text: string): string;
 export function fingerprint(text: string): string;
+export function parseCsv(text: string, separator?: string): string[][];
+export function expectHeader(rows: readonly (readonly string[])[], expected: readonly string[], name: string): void;
 export function commentLines(text: string, width?: number): string[];
 export function sourceCard(id: string, cards?: readonly SourceCard[]): SourceCard;
 export function creditLine(card: SourceCard, inputs?: { tableId?: string; referencePeriod?: string }): string;
