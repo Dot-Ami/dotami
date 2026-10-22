@@ -210,6 +210,9 @@ export const jobStepWords = {
   wordStart: "A word matches a title word that starts with the same five letters, so “plumbing” finds “plumber”.",
   noMatch: (words: string) =>
     `No government example title holds any of these words: ${words}. Try another word for the same work, or skip this question.`,
+  // Every word typed was left out (the "Only left-out words" state): nothing was looked for, so nothing is said
+  // about the government's titles.
+  nothingSearched: "Nothing was searched, so no job is listed. Try a word for the work itself, or skip this question.",
   englishOnly: "Titles are searched in English in this version.",
   picked: (job: string, code: string) => `Your pick of job: ${job} · ${code}`,
   changePick: "← Change your pick of job",
@@ -248,8 +251,9 @@ export const whereStepWords = {
     order: "Listed in Statistics Canada's code order.",
     choose: "Choose one",
     dontKnow: "I don't know",
-    dontKnowNote:
-      "With “I don't know”, About this job shows the Alberta-wide figure, and a link to Statistics Canada's list of the towns in each region shows here.",
+    // The design's note also says "About this job shows the Alberta-wide figure"; that half waits until About this
+    // job (task 25h) reads the region kept here, so the screen never promises what the app can't do yet.
+    dontKnowNote: "With “I don't know”, a link to Statistics Canada's list of the towns in each region shows here.",
     lookup: "Which towns are in each region? Statistics Canada's list ↗",
     lookupName: "Which towns are in each region? Statistics Canada's list, opens outside DotAmi",
     next: "Next: the futures →",
@@ -259,11 +263,13 @@ export const whereStepWords = {
     notAsked: (province: string) =>
       `In this version DotAmi asks which area and which region you're in only in Alberta, so nothing is asked here for ${province}.`,
     why: "Job Bank publishes wages by economic region. DotAmi lists a province's regions only once its list has been checked against Statistics Canada's own pages, and Alberta's is the one checked so far.",
-    wageRow: (place: string) =>
-      `About this job shows the wage row Job Bank gives for ${place} as a whole, labelled with the level the government's own code gives it.`,
+    // The design's `wageRow` line ("About this job shows the wage row Job Bank gives for <place> as a whole…")
+    // waits until About this job (task 25h) is in the app, so it isn't drawn yet.
     next: "Next: the futures →",
   },
-  kept: "Both answers are kept with this future once you open it, on this computer only. You can change your region later from About this job in the cockpit.",
+  // The design's line ends "You can change your region later from About this job in the cockpit."; that sentence
+  // waits until About this job (task 25h) reads the kept region and draws its Change.
+  kept: "Both answers are kept with this future once you open it, on this computer only.",
 } as const;
 
 /** The intake's Screen B button, which opens the three steps on the intake page (2026-10-22, the maintainer's call 1). */

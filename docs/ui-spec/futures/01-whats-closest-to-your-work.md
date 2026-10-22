@@ -21,6 +21,14 @@ then phone width).
 > `job-search.tsx`, on Pick a future, the intake's typed way and the cockpit's skills list; the search runs on
 > DotAmi's own server (`POST /api/jobs/search`). What differs or was added is listed in
 > [_index.md](./_index.md), *As built, 2026-10-22*.
+>
+> **Only left-out words, as built (PR #202 review).** The table below says this state shows "the no-match
+> line". Filled with the left-out words, that line would say *No government example title holds any of these
+> words: “my”, “own”, “shop”*, which is false (*barber shop manager* holds *shop*), and with no words it reads
+> badly. So this state's status line is its own (`nothingSearched`): *Nothing was searched, so no job is listed.
+> Try a word for the work itself, or skip this question.*, with *Not searched: …* above it as designed, and
+> without the English-only line (nothing was looked for, so there is no miss to explain). The no-match line now
+> only ever names words that were searched. The lines live in `lib/front-door/job-search-lines.ts`.
 
 ## Where it sits, on both ways in
 
@@ -146,6 +154,8 @@ jobStepWords = {
   leftOut: "Not searched: <words>. Each is on DotAmi's list of filler words or of words that name a business rather than the work.",
   wordStart: "A word matches a title word that starts with the same five letters, so “plumbing” finds “plumber”.",
   noMatch: "No government example title holds any of these words: <words>. Try another word for the same work, or skip this question.",
+  // Added as built (PR #202 review): the "Only left-out words" state's status line.
+  nothingSearched: "Nothing was searched, so no job is listed. Try a word for the work itself, or skip this question.",
   englishOnly: "Titles are searched in English in this version.",
   picked: "Your pick of job: <job> · <code>",
   changePick: "← Change your pick of job",
@@ -170,7 +180,7 @@ meaning, and it passes the check.
 | **Empty** | Nothing typed (as the step opens, on both ways in) | *Type a word or two about the work. The jobs whose titles hold your words show here.* No list, no groups. This is the state the clutter limit measures |
 | **Too short** | One or two letters | *Type at least 3 letters.* |
 | **No match** | Every searched word is in no title, name or code, and in no line of DotAmi's word list | *No government example title holds any of these words: “infirmière”. Try another word for the same work, or skip this question.* and *Titles are searched in English in this version.* (research 28f's misses: French words such as *infirmière*, and *dayhome*, *maple syrup*, *ride-share* until DotAmi's list has a line for them; with *dayhome*'s line, *dayhome* finds Home child care providers · 44100.01 under *Jobs found only through DotAmi's word list*) |
-| **Only left-out words** | Every word typed is on the filler or business list (*my own shop*) | The no-match line, with *Not searched: “my”, “own”, “shop”. …* above it |
+| **Only left-out words** | Every word typed is on the filler or business list (*my own shop*) | The no-match line, with *Not searched: “my”, “own”, “shop”. …* above it. **As built:** its own line instead, *Nothing was searched, so no job is listed. Try a word for the work itself, or skip this question.*, since the no-match line would say no title holds words that were never searched (see the note at the top) |
 
 ## What is new on the screen vs today
 

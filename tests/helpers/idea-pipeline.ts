@@ -811,7 +811,6 @@ function piecesOfSteps(pieces: TextPiece[], way: "typed" | "picked", idea: Idea,
       add("where › outside › heading", whereStepWords.outside.heading(placeLabel));
       add("where › outside › not asked", whereStepWords.outside.notAsked(placeLabel));
       add("where › outside › why", whereStepWords.outside.why);
-      add("where › outside › wage row", whereStepWords.outside.wageRow(placeLabel));
     }
   }
   // 3. Pick a future: the pick line, the case's own lines and each card as the page writes it.

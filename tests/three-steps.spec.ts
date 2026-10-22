@@ -19,8 +19,10 @@ import { __resetRateLimitStateForTests } from "@/lib/api/rate-limit";
 import { createDatabaseClient } from "@/lib/db/client";
 import { ensureVentureFromScenario } from "@/lib/db/ensure-venture-from-scenario";
 import { parseFirstSave } from "@/lib/db/parse-scenario-input";
+import { searchJobTitles } from "@/lib/engines/oasis/v2026/title-search";
 import { generalRoadV2026, roadApprenticeToOwnShopAB, roadsV2026 } from "@/lib/engines/roads/v2026";
 import { listedRoads } from "@/lib/front-door/futures";
+import { leftOutLine, onlyLeftOutWords, searchStatusLine, showsEnglishOnly } from "@/lib/front-door/job-search-lines";
 import { roadJobNames } from "@/lib/front-door/road-jobs";
 import { roadMatch } from "@/lib/front-door/road-match";
 import { answersOf, back, backLabel, FIRST_STEP, next, pickedJob, skipped, type StepsState } from "@/lib/front-door/three-steps";
@@ -165,6 +167,30 @@ describe("the words shown back", () => {
   });
 });
 
+describe("the search's lines (lib/front-door/job-search-lines.ts, drawn by components/front-door/job-search.tsx)", () => {
+  it("only left-out words: says nothing was searched, never that no government title holds them", () => {
+    const search = searchJobTitles("my own shop");
+    expect(search.state).toBe("no-match");
+    expect(onlyLeftOutWords(search)).toBe(true);
+    expect(searchStatusLine(search)).toBe(jobStepWords.nothingSearched);
+    expect(searchStatusLine(search)).not.toContain("No government example title");
+    expect(leftOutLine(search)).toBe(jobStepWords.leftOut("“my”, “own”, “shop”"));
+    // Nothing was looked for, so the English-only line, a reason for a miss, isn't drawn either.
+    expect(showsEnglishOnly(search)).toBe(false);
+    // Why the no-match line would be false here: a government example title holds "shop".
+    const barber = searchJobTitles("barber shop").groups.flatMap((g) => g.jobs);
+    expect(barber.some((hit) => hit.code === "60040.00" && /\bshop\b/i.test(hit.matched?.title ?? ""))).toBe(true);
+  });
+
+  it("words searched and found nowhere: the no-match line names only the words searched", () => {
+    const search = searchJobTitles("my infirmière");
+    expect(onlyLeftOutWords(search)).toBe(false);
+    expect(searchStatusLine(search)).toBe(jobStepWords.noMatch("“infirmiere”"));
+    expect(leftOutLine(search)).toBe(jobStepWords.leftOut("“my”"));
+    expect(showsEnglishOnly(search)).toBe(true);
+  });
+});
+
 describe("the search's route (POST /api/jobs/search)", () => {
   afterEach(() => __resetRateLimitStateForTests());
   const post = (body: unknown) =>
@@ -237,6 +263,22 @@ describe("the steps as drawn", () => {
     expect(html).toContain(esc(whereStepWords.outside.notAsked("Ontario")));
     expect(html).not.toContain("<select");
     expect(html).not.toContain(esc(whereStepWords.kept));
+  });
+
+  it("step 2 promises nothing About this job doesn't do in this version: it reads no kept region and has no Change yet", () => {
+    // About this job (task 25h, its own pull request) shows the province's row until the kept answers are wired to
+    // it, and draws no Change. So step 2 says nothing about it: not "change your region later from About this
+    // job", not "About this job shows the Alberta-wide figure", not the outside-Alberta wage row line.
+    const parts = {
+      "2a": draw("futures", { part: "area", job: CABINETMAKERS, area: null, region: null }),
+      "2b": draw("futures", { part: "region", job: CABINETMAKERS, area: "cma-825", region: null }),
+      "2b, I don't know": draw("futures", { part: "region", job: CABINETMAKERS, area: "cma-825", region: "dont-know" }),
+      "outside Alberta": draw("futures", { part: "outside", job: CABINETMAKERS, area: null, region: null }, "CA-ON"),
+    };
+    for (const [part, html] of Object.entries(parts)) expect(html, part).not.toContain("About this job");
+    // What step 2 keeps is still said, on 2a and 2b.
+    expect(parts["2a"]).toContain(esc(whereStepWords.kept));
+    expect(parts["2b"]).toContain(esc(whereStepWords.kept));
   });
 
   it("2b: Statistics Canada's list is drawn only once “I don't know” is picked", () => {

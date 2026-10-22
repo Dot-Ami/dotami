@@ -78,6 +78,19 @@ test("step 1 searches the government's example titles, grouped and labelled, and
   await expect(page.getByText(jobStepWords.englishOnly, { exact: true })).toBeVisible();
   await expect(page.getByRole("status")).toContainText("No government example title holds any of these words: “infirmiere”");
 
+  // "my own shop": every word left out, so nothing was searched. The screen says so, with Not searched above it,
+  // and never that no government title holds them ("barber shop manager" holds "shop").
+  await box.fill("my own shop");
+  const notSearched = page.getByText(/^Not searched: “my”, “own”, “shop”\./);
+  const status = page.getByRole("status");
+  await expect(status).toHaveText(jobStepWords.nothingSearched);
+  await expect(status).not.toContainText("No government example title");
+  await expect(notSearched).toBeVisible();
+  await expect(page.getByText(jobStepWords.englishOnly, { exact: true })).toHaveCount(0);
+  const above = await notSearched.evaluate((el, line) => !!(el.compareDocumentPosition(line!) & Node.DOCUMENT_POSITION_FOLLOWING), await status.elementHandle());
+  expect(above, "Not searched is drawn above the status line").toBe(true);
+  await shotsAtEveryWidth(page, "futures-left-out");
+
   // "my own barber shop": the filler and business words are left out and said; Barbers is listed, not picked.
   await box.fill("my own barber shop");
   await expect(page.getByText(/^Not searched: “my”, “own”, “shop”\./)).toBeVisible();
@@ -122,6 +135,7 @@ test("in Alberta: the job, then the area, then the region (never worked out from
   const area = page.getByRole("combobox", { name: whereStepWords.area.label });
   await expect(area).toHaveValue("");
   await expect(area.locator("option")).toHaveText(["Choose one", "Calgary", "Edmonton", "Lethbridge", "Red Deer", "Somewhere else in Alberta", "I don't know"]);
+  await shotsAtEveryWidth(page, "futures-area");
   await area.selectOption("cma-825");
   await page.getByRole("button", { name: whereStepWords.area.next, exact: true }).click();
 
@@ -129,6 +143,7 @@ test("in Alberta: the job, then the area, then the region (never worked out from
   await expect(page.getByText(whereStepWords.area.shownBack("Calgary"), { exact: true })).toBeVisible();
   const region = page.getByRole("combobox", { name: whereStepWords.region.label });
   await expect(region).toHaveValue("");
+  await shotsAtEveryWidth(page, "futures-region");
   await expect(region.locator("option")).toHaveText([
     "Choose one",
     "Lethbridge–Medicine Hat",
@@ -146,6 +161,9 @@ test("in Alberta: the job, then the area, then the region (never worked out from
   await expect(lookup).toHaveCount(0);
   await region.selectOption("dont-know");
   await expect(lookup).toHaveAttribute("target", "_blank");
+  // About this job doesn't read the region yet and has no Change (task 25h, its own pull request), so step 2
+  // promises nothing about it, with or without "I don't know".
+  await expect(page.getByText(/About this job/)).toHaveCount(0);
   await region.selectOption("4860");
   await expect(lookup).toHaveCount(0);
   // Back goes back one part and keeps the answer given; Next keeps the region given too.
@@ -224,7 +242,9 @@ test("outside Alberta: step 2 asks nothing and says why; Skip lists every future
   await pickTheJob(page, CABINETMAKERS);
   await expect(page.getByRole("heading", { level: 1, name: whereStepWords.outside.heading("Ontario") })).toBeVisible();
   await expect(page.getByText(whereStepWords.outside.notAsked("Ontario"), { exact: true })).toBeVisible();
-  await expect(page.getByText(whereStepWords.outside.wageRow("Ontario"), { exact: true })).toBeVisible();
+  // No promise about About this job's wage row until About this job reads the place (task 25h).
+  await expect(page.getByText(/About this job/)).toHaveCount(0);
+  await shotsAtEveryWidth(page, "futures-outside");
   await expect(page.getByRole("combobox")).toHaveCount(0);
   await expect(page.getByText(whereStepWords.kept, { exact: true })).toHaveCount(0);
   await page.getByRole("button", { name: whereStepWords.outside.next, exact: true }).click();

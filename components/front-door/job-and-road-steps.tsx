@@ -130,7 +130,6 @@ export function JobAndRoadSteps({
         <div {...mark("step")} className="max-w-2xl space-y-3">
           <p className="text-lead text-paper-dim">{whereStepWords.outside.notAsked(name)}</p>
           <p className="text-body text-stone">{whereStepWords.outside.why}</p>
-          <p className="text-body text-stone">{whereStepWords.outside.wageRow(name)}</p>
           <div className="flex justify-end pt-2">
             <Pill variant="maple" onClick={() => setState(next(state))}>
               {whereStepWords.outside.next}

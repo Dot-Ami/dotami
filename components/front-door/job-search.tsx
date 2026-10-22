@@ -2,8 +2,17 @@
 
 import { useEffect, useId, useRef, useState } from "react";
 
-import type { JobMatch, JobSearch, JobSearchGroup, JobSearchHit } from "@/lib/engines/oasis/v2026/title-search";
+import type { JobSearch, JobSearchHit } from "@/lib/engines/oasis/v2026/title-search";
 import { OASIS_ATTRIBUTION, OASIS_LICENCE_URL } from "@/lib/engines/oasis/v2026/licence";
+import {
+  groupHeading,
+  leftOutLine,
+  matchedLine,
+  onlyLeftOutWords,
+  searchStatusLine,
+  showGroupName,
+  showsEnglishOnly,
+} from "@/lib/front-door/job-search-lines";
 import { jobStepWords as words } from "@/lib/front-door/words";
 import { cn } from "@/lib/utils/cn";
 
@@ -74,6 +83,10 @@ export function JobSearchBox({
 
   const search = answer && answer.query === query ? answer.search : null;
   const typed = query.trim() !== "";
+  const notSearched = search ? leftOutLine(search) : null;
+  // When every word typed was left out, *Not searched* comes first: it is the reason nothing is listed.
+  const notSearchedFirst = search !== null && onlyLeftOutWords(search);
+  const notSearchedLine = notSearched ? <p className="text-body text-stone">{notSearched}</p> : null;
 
   return (
     <div className={compact ? "space-y-1.5" : "space-y-3"}>
@@ -99,15 +112,14 @@ export function JobSearchBox({
         </p>
       </div>
 
+      {notSearchedFirst ? notSearchedLine : null}
       {/* One polite line that says what the list holds after each pause in typing (not on every key). */}
       <p role="status" className="text-body text-stone">
-        {!typed ? (compact ? "" : words.empty) : failed ? words.searchFailed : search ? statusLine(search) : ""}
+        {!typed ? (compact ? "" : words.empty) : failed ? words.searchFailed : search ? searchStatusLine(search) : ""}
       </p>
 
-      {search && search.leftOut.length > 0 ? (
-        <p className="text-body text-stone">{words.leftOut(search.leftOut.map((w) => `“${w.word}”`).join(", "))}</p>
-      ) : null}
-      {search?.state === "no-match" ? <p className="text-body text-stone">{words.englishOnly}</p> : null}
+      {notSearchedFirst ? null : notSearchedLine}
+      {search && showsEnglishOnly(search) ? <p className="text-body text-stone">{words.englishOnly}</p> : null}
       {search?.state === "results" ? <Groups key={query} search={search} disabled={disabled} compact={compact} onPick={onPick} /> : null}
 
       {search?.state === "results" ? (
@@ -128,42 +140,6 @@ export function JobSearchBox({
       )}
     </div>
   );
-}
-
-/** What the status line says for a search that ran. */
-function statusLine(search: JobSearch): string {
-  if (search.state === "too-short") return words.tooShort;
-  if (search.state === "no-match") {
-    const named = search.searched.length > 0 ? search.searched : search.leftOut.map((w) => w.word);
-    return words.noMatch(named.map((w) => `“${w}”`).join(", "));
-  }
-  if (search.state !== "results") return "";
-  const count = (kind: JobSearchGroup["kind"]) => search.groups.find((g) => g.kind === kind)?.total ?? 0;
-  const list = count("word-list");
-  return list > 0
-    ? words.statusWithList(search.total, count("all"), count("all-but-one"), count("some"), list)
-    : words.status(search.total, count("all"), count("all-but-one"), count("some"));
-}
-
-/** Each group's heading: a true statement about the government's titles, or, last, about DotAmi's list. */
-function groupHeading(group: JobSearchGroup, searchedWords: number): string {
-  switch (group.kind) {
-    case "all":
-      return searchedWords === 1 ? words.groupOne : words.groupAll;
-    case "all-but-one":
-      return words.groupAllButOne;
-    case "some":
-      return words.groupSome;
-    case "word-list":
-      return words.groupList;
-  }
-}
-
-/** The button that opens a folded group, saying what it shows. */
-function showGroupName(group: JobSearchGroup): string {
-  if (group.kind === "all-but-one") return words.showGroup(group.total);
-  if (group.kind === "word-list") return words.showGroupList(group.total);
-  return words.showGroupSome(group.total);
 }
 
 /** The groups that hold a job: the first open, each later one a button that opens it in place. */
@@ -239,13 +215,6 @@ function Groups({
       })}
     </div>
   );
-}
-
-/** Where a job's words were found, in plain words: an example title, the job's name, or its code. */
-function matchedLine(match: JobMatch): string {
-  if (match.from === "job name") return words.matchedName(match.title);
-  if (match.from === "job code") return words.matchedCode(match.title);
-  return words.matched(match.title);
 }
 
 /** One job: a button with its name and code, and under it where the person's words were found, heard before the click. */

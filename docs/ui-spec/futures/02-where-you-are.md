@@ -19,6 +19,15 @@ Mockup: `C:\dotami-wt\designs-phase2\02-where-you-are.html`.
 > `20261022000000_where_you_are`), shown on *Your plan*, deleted with the idea. **Next →** moves focus to the
 > next part's drop-down. The `kept` line shows on 2a and 2b. *About this job*'s **Change** comes with task 25h.
 > See [_index.md](./_index.md), *As built, 2026-10-22*.
+>
+> **Held until About this job reads these answers (PR #202 review).** Three of the words below describe *About
+> this job*, which isn't in the app at this build, and which, as its own pull request (#201, task 25h) stands,
+> still passes no kept region to its wage row and draws no **Change**. So the screen doesn't say them yet: the
+> `kept` line stops after "on this computer only." (no "You can change your region later from About this job in
+> the cockpit."); `dontKnowNote` says only that Statistics Canada's list shows here (no "About this job shows the
+> Alberta-wide figure"); and the outside-Alberta `wageRow` line isn't drawn. They come back, word for word, in the
+> change that wires the kept area and region into About this job and draws its **Change**.
+> `tests/three-steps.spec.ts` holds step 2 to naming About this job nowhere until then.
 
 ## When it is asked
 
