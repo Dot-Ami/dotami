@@ -37,6 +37,22 @@ const codesOf = (r: JobSearch) => r.groups.flatMap((g) => g.jobs.map((j) => j.co
 const holds = (codes: readonly string[], expected: readonly string[]) => expected.some((code) => codes.includes(code));
 
 /**
+ * Of the ideas given by number, those whose expected job the search no longer lists (in any group, as the screen
+ * lists them), as "<number>: <work>". `search` is the screen's own unless a planted control passes another.
+ */
+export function ideasNoLongerListed(
+  numbers: readonly number[],
+  search: (work: string) => JobSearch = (work) => searchJobTitles(work, JOB_SEARCH_GROUP_CAP),
+  ideas: readonly Idea[] = IDEAS_V1,
+): string[] {
+  return numbers.flatMap((n) => {
+    const idea = ideas.find((i) => i.id === `idea-v1-${String(n).padStart(4, "0")}`);
+    if (!idea) return [`${n}: no such idea`];
+    return holds(codesOf(search(idea.work)), idea.jobs ?? []) ? [] : [`${n}: ${idea.work}`];
+  });
+}
+
+/**
  * The one count of the job search against the corpus (research 28f's measure, on tests/fixtures/ideas/v1.ts):
  * the floors in tests/job-title-search.spec.ts, the idea harness's coverage report and the quality report all
  * read it, so they can't print different numbers under the same name. Each idea is searched by its `work`

@@ -100,7 +100,8 @@ test("step 1 searches the government's example titles, grouped and labelled, and
   const barbers = page.getByRole("button", { name: jobStepWords.pickName(BARBERS.label, BARBERS.code), exact: true });
   await expect(barbers).toBeVisible();
   await expect(page.getByRole("heading", { level: 3, name: new RegExp(`^${jobStepWords.groupOne}, \\d+$`) })).toBeVisible();
-  await expect(page.getByText(jobStepWords.groupOrder).first()).toBeVisible();
+  // "barber" is held word for word (Barbers, the barber shop manager) and as a word start ("barbed wire"): two parts.
+  await expect(page.getByText(jobStepWords.partsOrder, { exact: true })).toBeVisible();
   await expect(barbers).toHaveAccessibleDescription(/Matched the government's example title “barber/);
   // Still step 1: a single result is a button the person clicks, never picked for them.
   await expect(page.getByRole("heading", { name: jobStepWords.heading, level: 1 })).toBeVisible();
@@ -112,10 +113,25 @@ test("step 1 searches the government's example titles, grouped and labelled, and
   await later.click();
   await expect(page.getByRole("heading", { level: 3, name: new RegExp(`^${jobStepWords.groupSome}, \\d+$`) })).toBeFocused();
 
+  // Whole words first (a-call-11): inside the open group, the exact word's part, then the word start's, both open.
+  await box.fill("I build custom kitchen cabinets");
+  await expect(page.getByRole("heading", { level: 4, name: `${jobStepWords.partExact}, 14` })).toBeVisible();
+  await expect(page.getByRole("heading", { level: 4, name: `${jobStepWords.partWordStart}, 71` })).toBeVisible();
+  await expect(page.getByText(jobStepWords.partsOrder, { exact: true })).toBeVisible();
+  // Before: 64th of 85 in one group, past the first 50, so not listed. Now in the exact part, without a click.
+  await expect(page.getByRole("button", { name: "Pick Cabinetmakers, 72311.00", exact: true })).toBeVisible();
+  await expect(page.getByText(jobStepWords.cappedPart(50, 71), { exact: true })).toBeVisible();
+  await box.fill("wedding photography");
+  await expect(page.getByRole("button", { name: "Pick Photographers, 53110.00", exact: true })).toBeVisible();
+  await expect(page.getByRole("heading", { level: 4, name: `${jobStepWords.partWordStart}, 18` })).toBeVisible();
+  await shotsAtEveryWidth(page, "futures-whole-words-first");
+
   // DotAmi's word list: "dayhome" finds a job only through it, in its own last group, headed as DotAmi's.
   await box.fill("dayhome");
   await expect(page.getByRole("heading", { level: 3, name: new RegExp(`^${jobStepWords.groupList}, \\d+$`) })).toBeVisible();
   await expect(page.getByText(jobStepWords.listChip, { exact: true }).first()).toBeVisible();
+  // The word list's group has no parts: its order line is the code order's.
+  await expect(page.getByText(jobStepWords.groupOrder, { exact: true })).toBeVisible();
 
   // The search ran on DotAmi's own server, as a POST: the words are in no web address.
   const searched: string[] = [];

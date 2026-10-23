@@ -1,4 +1,4 @@
-import type { JobMatch, JobSearch, JobSearchGroup } from "@/lib/engines/oasis/v2026/title-search";
+import type { JobMatch, JobSearch, JobSearchGroup, JobSearchPartKind } from "@/lib/engines/oasis/v2026/title-search";
 
 import { jobStepWords as words } from "./words";
 
@@ -65,6 +65,16 @@ export function groupHeading(group: JobSearchGroup, searchedWords: number): stri
     case "word-list":
       return words.groupList;
   }
+}
+
+/** A part's heading inside its group (whole words first, a-call-11): a plain fact about how the titles hold the words. */
+export function partHeading(part: JobSearchPartKind): string {
+  return part === "exact" ? words.partExact : words.partWordStart;
+}
+
+/** The order line under a group's heading: the parts' order when it holds both, the code order otherwise. */
+export function groupOrderLine(group: Pick<JobSearchGroup, "parts">): string {
+  return group.parts.length > 1 ? words.partsOrder : words.groupOrder;
 }
 
 /** The button that opens a folded group, saying what it shows. */

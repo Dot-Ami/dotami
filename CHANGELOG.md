@@ -223,8 +223,21 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   province. Each check fails on a planted fault. Three things they found today are listed rather than skipped;
   none has a story yet, and each waits on the maintainer's call: in Alberta, *Hire first employee* on the general road lists Ontario's and
   British Columbia's employment-standards pages as its sources; a misspelt word in the kind of work finds the job
-  only by its own name (84 of the 220 test ideas with a job); and "à Regina" in French names no province.
+  only by its own name (84 of the 220 test ideas with a job); and "à Regina" in French names no province (fixed
+  2026-10-23, below).
 ### Fixed
+- **A place said in French is read as a place, the way one said in English is** (the maintainer's call a-call-14,
+  2026-10-23). When the words you type at the door name your place, the place question starts on it, for you to
+  keep or change. In French, a city that is also a first name (Regina, Victoria, Brandon, Hamilton) was never read
+  as the place: "je suis adjointe administrative à Regina" started the question empty, where "in Regina" starts
+  it on Saskatchewan. The provinces' French names (Colombie-Britannique, Nouveau-Brunswick, Nouvelle-Écosse,
+  Terre-Neuve, Île-du-Prince-Édouard, Territoires du Nord-Ouest) weren't read at all, and "de Winnipeg à Regina"
+  proposed Manitoba where two provinces are named (the person picks). Now "à", "au", "aux", "en" and "dans" before
+  a place count as "in", "at" and "to" do, and the French names count, with or without accents and hyphens.
+  Lloydminster still names no province, and a first name is still a person ("Victoria et moi…"). Nothing is
+  derived: the person still sees the place and can change it (`lib/journey/intent-fallback.ts`;
+  `tests/intent-fallback.spec.ts`; the French rewording gaps go from 1 to 0, and a planted control in
+  `tests/rewording-plants.spec.ts` brings it back).
 - **Your answer to "Are you buying equipment, a vehicle or tools?" on a future picked on Pick a future is
   kept** (the maintainer's "Yes, fix both", 2026-10-20). Pick a future saves equipment as not said, since it
   never asks it. Answering in the cockpit's one-question box showed the answer for a moment, but left
@@ -274,6 +287,18 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   written for the job listed after another on step 3 was counted among the ideas but on neither way in.
 
 ### Changed
+- **"What's closest to your work?" lists whole-word matches first** (the maintainer's call a-call-11,
+  2026-10-23). Inside each group of jobs, the jobs with one government title that has your exact words now come
+  first, under *One of their titles has your exact words*, and those whose title only has a word that starts like yours come
+  after, under *Their titles have a word that starts like yours*; each part in the government's code order and
+  showing its first 50, and the closest group opens with both parts. Nothing is scored or picked: the part is a
+  plain fact about the match. Typing "I build custom kitchen cabinets" now lists Cabinetmakers on row 10 without
+  a click (before, it was 64th of 85 in one group and not listed); "bookkeeping for small businesses" lists
+  Accounting technicians and bookkeepers on row 2 (was 13), "wedding photography" Photographers on row 3 (was
+  11). On the 220 test ideas that name a job: 152 find it in the open group (was 150), 181 anywhere listed (was
+  172), and none that was listed drops out (`lib/engines/oasis/v2026/title-search.ts`,
+  `components/front-door/job-search.tsx`; `tests/job-title-search.spec.ts` holds the new floors and every idea
+  listed before, with a planted control). The cockpit's **Pick a job** runs the same search.
 - **About this job in place for a job with no road, your region's Change, and the batch 4 calls** (tasks 28c and
   28h, the maintainer's calls of 2026-10-22). On Pick a future and at the end of the typed way, a job with no road
   written for it now shows *About this job*'s four rows right inside step 3, opened by "Here is what the government

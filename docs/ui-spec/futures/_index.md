@@ -55,6 +55,11 @@ Last updated: 2026-10-13 (the first written future listed; design: docs/architec
 >   sources the person will be shown inside, the federal card's through the step panel's own filter (call 34); and
 >   step 2's three lines about *About this job* are drawn again, now that it reads the region and has its
 >   **Change** (02, top).
+> - **Since 2026-10-23 (the maintainer's call a-call-11): whole words first** on step 1. Inside each group, two
+>   labelled parts, *One of their titles has your exact words* and *Their titles have a word that starts like yours*,
+>   in code order inside each, the closest group open with both (01, top). Four words added (`partExact`,
+>   `partWordStart`, `partsOrder`, `cappedPart`). Nothing new is kept; the clutter rows are unchanged (they are
+>   measured as the step opens, before anything is typed).
 > - **Kept:** the job, the area and the region, each with its day, by the save that creates the idea at
 >   **Look inside** (02, *What is kept*); `Venture.landscapeArea`, `landscapeAreaSetAt`, `economicRegion`,
 >   `economicRegionSetAt` are new (migration `20261022000000_where_you_are`, four added columns). A save that

@@ -159,6 +159,52 @@ describe("a province only when the words name one place in Canada", () => {
   });
 });
 
+// The maintainer's call a-call-14 (2026-10-23): French place words are read as places, the way English ones are.
+describe("a place said in French, the way one said in English is read", () => {
+  it("reads a name-like city after a French place word, as after an English one", () => {
+    const cases: [string, string][] = [
+      ["je suis adjointe administrative à Regina le reste de l'année", "SK"], // 32, in French
+      ["un salon de thé à Victoria", "BC"],
+      ["une entreprise de toiture à Brandon", "MB"],
+      ["je répare des vélos à Hamilton", "ON"],
+      ["un atelier dans Hamilton", "ON"],
+      ["pas d'accent: je donne des cours de yoga a Victoria, Colombie-Britannique", "BC"],
+    ];
+    for (const [text, province] of cases) expect(parseIntentFallback(text).province, text).toBe(province);
+  });
+
+  it("reads the provinces' French names, with or without their accents and hyphens", () => {
+    const cases: [string, string][] = [
+      ["une boulangerie au Québec", "QC"],
+      ["une boulangerie au Quebec", "QC"],
+      ["un food truck en Alberta", "AB"],
+      ["un studio de yoga en Colombie-Britannique", "BC"],
+      ["un studio de yoga en colombie britannique", "BC"],
+      ["une ferme au Nouveau-Brunswick", "NB"],
+      ["la pêche en Nouvelle-Écosse", "NS"],
+      ["la peche en Nouvelle Ecosse", "NS"],
+      ["des visites guidées à Terre-Neuve", "NL"],
+      ["un gîte à l'Île-du-Prince-Édouard", "PE"],
+      ["un gite a l'ile du prince edouard", "PE"],
+      ["des tours de motoneige dans les Territoires du Nord-Ouest", "NT"],
+    ];
+    for (const [text, province] of cases) expect(parseIntentFallback(text).province, text).toBe(province);
+  });
+
+  it("still reads a first name as a person in French, and still names no province for Lloydminster or two places", () => {
+    for (const text of [
+      "Victoria et moi voulons ouvrir une boulangerie", // Victoria is a person here
+      "ma sœur Regina fait des gâteaux",
+      "je cultive une terre neuve près de chez moi", // new land, not the province
+      "a Victoria sponge cake business", // the English article "a" puts no one anywhere
+      "je veux ouvrir une boulangerie à Lloydminster",
+      "de Winnipeg à Regina", // two provinces: the person picks
+    ]) {
+      expect(parseIntentFallback(text).province, text).toBeNull();
+    }
+  });
+});
+
 describe("a kind of work only when the words say it is the person's own", () => {
   const tagsOf = (text: string) => parseIntentFallback(text).activityTags;
 

@@ -13,7 +13,9 @@ import { oasisData } from "@/lib/engines/oasis/v2026/data";
 import { BUSINESS_WORDS, EVERYDAY_WORDS, FILLER_WORDS } from "@/lib/engines/oasis/v2026/dotami-word-list";
 import { searchOasisJobs } from "@/lib/engines/oasis/v2026";
 import {
+  JOB_SEARCH_GROUP_CAP,
   JOB_SEARCH_GROUP_KINDS,
+  JOB_SEARCH_PART_KINDS,
   openGroupCodes,
   searchJobTitles,
   searchWords,
@@ -21,9 +23,11 @@ import {
   type JobSearch,
 } from "@/lib/engines/oasis/v2026/title-search";
 import { oasisTitles } from "@/lib/engines/oasis/v2026/titles";
+import { jobStepWords } from "@/lib/front-door/words";
 
+import { LISTED_BEFORE_WHOLE_WORDS_FIRST } from "./fixtures/ideas/job-search-listed";
 import { IDEAS_V1 } from "./fixtures/ideas/v1";
-import { measureJobSearch } from "./helpers/job-search-corpus";
+import { ideasNoLongerListed, measureJobSearch } from "./helpers/job-search-corpus";
 
 const kinds = (r: JobSearch) => r.groups.map((g) => `${g.kind}:${g.total}`);
 const codesIn = (r: JobSearch, kind: string) => r.groups.find((g) => g.kind === kind)?.jobs.map((j) => j.code) ?? [];
@@ -74,10 +78,13 @@ describe("the four states with nothing to pick, or something", () => {
 });
 
 describe("the government's titles, grouped by how many of the person's words they hold", () => {
-  it("finds a job through its example titles, not only its name: “plumbing” finds Plumbers through “plumber apprentice”", () => {
+  it("finds a job through its example titles, not only its name: “plumbing” finds Plumbers through “plumbing installer”", () => {
     const r = searchJobTitles("plumbing");
     expect(r.state).toBe("results");
-    expect(hit(r, "72300.00")?.matched).toEqual({ title: "plumber apprentice", from: "Example" });
+    // Whole words first (a-call-11): the title named is the first holding the person's exact word; before, the
+    // first holding a word that starts like it ("plumber apprentice").
+    expect(hit(r, "72300.00")?.matched).toEqual({ title: "plumbing installer", from: "Index" });
+    expect(hit(r, "72300.00")?.part).toBe("exact");
     // Today's search, over the job names only, finds no job for it.
     expect(searchOasisJobs("plumbing").total).toBe(0);
   });
@@ -104,22 +111,101 @@ describe("the government's titles, grouped by how many of the person's words the
     }
   });
 
-  it("lists each group in the government's code order, never ranked, and says how many it holds past the first 50", () => {
+  it("lists each part of a group in the government's code order, never ranked, and says how many it holds past the first 50", () => {
     const r = searchJobTitles("manager");
     const all = r.groups[0]!;
     expect(all.total).toBeGreaterThan(50);
-    expect(all.jobs).toHaveLength(50);
+    // Each part lists its first 50: the exact word "manager" in 50 (of more), "management" and the like after.
+    expect(all.parts.map((p) => p.kind)).toEqual(["exact", "word-start"]);
+    expect(all.parts[0]!.total).toBeGreaterThan(50);
+    expect(all.jobs.filter((j) => j.part === "exact")).toHaveLength(50);
+    expect(all.jobs.filter((j) => j.part === "word-start")).toHaveLength(Math.min(50, all.parts[1]!.total));
     const order = oasisData.occupations.map(([code]) => code);
     for (const g of [...r.groups, ...searchJobTitles("taco food truck").groups, ...searchJobTitles("heavy duty truck mechanic").groups]) {
-      const codes = g.jobs.map((j) => j.code);
-      expect(codes).toEqual([...codes].sort((a, b) => order.indexOf(a) - order.indexOf(b)));
+      for (const part of [...g.parts.map((p) => p.kind), null]) {
+        const codes = g.jobs.filter((j) => j.part === part).map((j) => j.code);
+        expect(codes).toEqual([...codes].sort((a, b) => order.indexOf(a) - order.indexOf(b)));
+      }
     }
-    expect(searchJobTitles("manager", 5).groups[0]!.jobs).toHaveLength(5);
+    expect(searchJobTitles("manager", 5).groups[0]!.jobs).toHaveLength(10);
   });
 
-  it("gives each result only what the screen shows: its name and code, the count of words, the title and where it came from", () => {
+  it("gives each result only what the screen shows: its name and code, the count of words, the title, where it came from and its part", () => {
     const keys = Object.keys(hit(searchJobTitles("barber"), "63210.02")!).sort();
-    expect(keys).toEqual(["code", "label", "matched", "moreTitles", "viaWordList", "wordsHeld"]);
+    expect(keys).toEqual(["code", "label", "matched", "moreTitles", "part", "viaWordList", "wordsHeld"]);
+  });
+});
+
+describe("whole words first: inside each group, the exact word, then a word that starts like it (a-call-11)", () => {
+  it("puts the jobs whose title holds the exact word first, the word starts after, and the group's parts add up", () => {
+    const r = searchJobTitles("barber");
+    const all = r.groups[0]!;
+    expect(all.parts).toEqual([
+      { kind: "exact", total: 2 },
+      { kind: "word-start", total: 1 },
+    ]);
+    // Barbers and the barber shop manager hold "barber"; the barbed wire machine tender holds a word that starts like it.
+    expect(all.jobs.map((j) => [j.code, j.part, j.matched?.title])).toEqual([
+      ["60040.00", "exact", "barber shop manager"],
+      ["63210.02", "exact", "barber apprentice"],
+      ["94107.00", "word-start", "barbed wire machine tender"],
+    ]);
+  });
+
+  it("keeps every part's jobs together, exact first, and their totals the group's, on every corpus idea", () => {
+    for (const idea of IDEAS_V1) {
+      for (const g of searchJobTitles(idea.work).groups) {
+        expect(g.parts.reduce((sum, p) => sum + p.total, 0), idea.work).toBe(g.kind === "word-list" ? 0 : g.total);
+        const order = g.jobs.map((j) => (j.part === null ? 2 : JOB_SEARCH_PART_KINDS.indexOf(j.part)));
+        expect(order, idea.work).toEqual([...order].sort((a, b) => a - b));
+      }
+    }
+  }, 60_000);
+
+  it("names, in the exact-word part, a title that holds the person's words word for word", () => {
+    for (const q of ["plumbing", "cake decorating", "I build custom kitchen cabinets", "wedding photography", "manager"]) {
+      const r = searchJobTitles(q);
+      for (const j of r.groups.flatMap((g) => g.jobs).filter((x) => x.part === "exact")) {
+        const words = new Set(searchWords(j.matched!.title));
+        expect(r.searched.filter((w) => words.has(w)).length, `${q}: ${j.code} “${j.matched!.title}”`).toBe(j.wordsHeld);
+      }
+    }
+  });
+
+  it("labels the exact part with its rule: one title holds all the counted words exactly, not just one of them", () => {
+    // Review of #206: "registered nurse" files General duty registered nurses under the word-start part, though its
+    // titles hold each word word for word: "nurse" in "general duty nurse", "registered" in the job's name (where
+    // "nurses" only starts like "nurse"). The old label, "Their titles have your exact word", was true of it too, so
+    // the screen didn't say why it sat second.
+    const r = searchJobTitles("registered nurse");
+    const nurses = hit(r, "31301.01")!;
+    expect(nurses.part).toBe("word-start");
+    const titles = [nurses.label, ...oasisTitles.titles.filter(([code]) => code === "31301.01").map(([, , title]) => title)].map(
+      (title) => new Set(searchWords(title)),
+    );
+    expect(titles.some((w) => w.has("registered"))).toBe(true);
+    expect(titles.some((w) => w.has("nurse"))).toBe(true);
+    expect(titles.some((w) => w.has("registered") && w.has("nurse"))).toBe(false);
+    // So the label says the rule: one title, all the words.
+    expect(jobStepWords.partExact).toBe("One of their titles has your exact words");
+  });
+
+  it("opens the closest group whole: “I build custom kitchen cabinets” shows Cabinetmakers on row 10 without a click", () => {
+    // Before (main 694007d): every job in one "at least one" group of 85 in code order, Cabinetmakers 64th, past the
+    // first 50, so not listed at all. Its titles hold "custom" ("custom wood furniture maker") word for word.
+    const r = searchJobTitles("I build custom kitchen cabinets");
+    expect(r.groups.map((g) => [g.kind, g.open, g.parts])).toEqual([
+      [
+        "some",
+        true,
+        [
+          { kind: "exact", total: 14 },
+          { kind: "word-start", total: 71 },
+        ],
+      ],
+    ]);
+    expect(openGroupCodes(r).indexOf("72311.00") + 1).toBe(10);
+    expect(hit(r, "72311.00")!.part).toBe("exact");
   });
 });
 
@@ -134,6 +220,7 @@ describe("DotAmi's word list, kept apart from the government's titles", () => {
       wordsHeld: 0,
       matched: null,
       moreTitles: 0,
+      part: null,
       viaWordList: [{ word: "salon", title: "hairstylist" }],
     });
     // Jobs whose own titles hold "salon" are found through those titles, not the list.
@@ -208,13 +295,31 @@ describe("on the idea corpus", () => {
     // Today's search (job names and codes, every word): the before.
     expect(m.cockpitList).toBe(20);
     expect(m.cockpitListNone).toBe(187);
-    // The floors, as the screen lists the jobs (each group's first JOB_SEARCH_GROUP_CAP).
-    expect(m.firstGroup).toBeGreaterThanOrEqual(150);
-    expect(m.anyGroup).toBeGreaterThanOrEqual(172);
+    // The floors, as the screen lists the jobs (each part's first JOB_SEARCH_GROUP_CAP, the closest group open
+    // whole): 150 and 172 before whole words first (main 694007d), 152 and 181 with it (a-call-11, 2026-10-23).
+    expect(m.firstGroup).toBeGreaterThanOrEqual(152);
+    expect(m.anyGroup).toBeGreaterThanOrEqual(181);
     expect(m.noResults).toBeLessThanOrEqual(4);
     // Counted past the cap.
     expect(m.firstGroupUncapped).toBeGreaterThanOrEqual(153);
     expect(m.anyGroupUncapped).toBeGreaterThanOrEqual(184);
+  }, 60_000);
+
+  it("still lists every idea it listed before whole words first (a-call-11: no idea that was listed drops out)", () => {
+    expect(LISTED_BEFORE_WHOLE_WORDS_FIRST).toHaveLength(172);
+    expect(ideasNoLongerListed(LISTED_BEFORE_WHOLE_WORDS_FIRST)).toEqual([]);
+  }, 60_000);
+
+  it("fails when a listed idea drops out (a planted control: the group capped at 50 in all, not each part)", () => {
+    // The mistake this check exists for: both parts shown, but cut at 50 jobs together, so a word-start part
+    // after a full exact part lists nothing.
+    const cappedWhole = (work: string): JobSearch => {
+      const r = searchJobTitles(work, JOB_SEARCH_GROUP_CAP);
+      return { ...r, groups: r.groups.map((g) => ({ ...g, jobs: g.jobs.slice(0, JOB_SEARCH_GROUP_CAP) })) };
+    };
+    const dropped = ideasNoLongerListed(LISTED_BEFORE_WHOLE_WORDS_FIRST, cappedWhole);
+    console.log(`planted control, ideas no longer listed: ${dropped.length} (${dropped.slice(0, 3).join("; ")}…)`);
+    expect(dropped.length).toBeGreaterThan(0);
   }, 60_000);
 
   it("counts with the screen's own cap, never a number of its own", () => {

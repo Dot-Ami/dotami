@@ -232,6 +232,13 @@ export const jobStepWords = {
   groupList: "Jobs found only through DotAmi's word list, not by a government title",
   groupCount: (heading: string, n: number) => `${heading}, ${n}`,
   groupOrder: "In the government's code order, not ranked.",
+  // Whole words first (the maintainer's call a-call-11, 2026-10-23): a group's two labelled parts, the order line
+  // said in place of groupOrder when a group holds both, and the cap's line under a part. partExact says the
+  // rule: ONE title holds all the counted words exactly (a word-start job may still hold one of them exactly).
+  partExact: "One of their titles has your exact words",
+  partWordStart: "Their titles have a word that starts like yours",
+  partsOrder: "Your exact words first, then words that start like yours, each part in the government's code order. Not ranked.",
+  cappedPart: (shown: number, total: number) => `Showing the first ${shown} of ${total} in this part, in code order. Add a word to narrow it.`,
   showGroup: (n: number) => `Show the ${n} jobs whose example titles have all but one of your words`,
   showGroupSome: (n: number) => `Show the ${n} jobs whose example titles have at least one of your words`,
   showGroupList: (n: number) => `Show the ${n} jobs found only through DotAmi's word list`,
