@@ -327,9 +327,10 @@ test("skills: road 0's legal requirement on its step, and the government's list 
   const search = skills.getByRole("searchbox", { name: "The work, in your own words" });
   // The job names searched are the government's, so the licence's line is there before any pick.
   await expect(skills.getByText("Contains information licensed under the Open Government Licence – Canada.")).toBeVisible();
-  // More in a group than are shown: the screen says so, with the count.
+  // More in a part than are shown: the screen says so, with the count (since whole words first, a-call-11, the
+  // cap is each part's: "manager" word for word holds more than 50 jobs).
   await search.fill("manager");
-  await expect(skills.getByText(/^Showing the first 50 of \d+ in this group, in code order\. Add a word to narrow it\.$/).first()).toBeVisible();
+  await expect(skills.getByText(/^Showing the first 50 of \d+ in this part, in code order\. Add a word to narrow it\.$/).first()).toBeVisible();
   // Every word typed, grouped by how many of them a job's titles hold.
   await search.fill("restaurant manager");
   await expect(skills.getByRole("button", { name: "Pick Restaurant and food service managers, 60030.00", exact: true })).toBeVisible();
