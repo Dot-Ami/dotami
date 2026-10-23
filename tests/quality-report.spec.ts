@@ -162,6 +162,20 @@ describe("the harness numbers", () => {
     expect(h.silentFallbacks.list).toHaveLength(3);
   });
 
+  it("counts a fallback on step 3 (the road written for the job listed after another) on its way in too", () => {
+    // tests/helpers/idea-invariants.ts names that fallback "typed › step 3" or "picked › step 3": it is still the
+    // typed or picked way's, so the two counts add up to every fallback found.
+    const result: HarnessResult = {
+      runs: [runOf(road1Idea, null, null)],
+      failures: [failure(road1Idea, "ends:no-silent-fallback", "typed › step 3"), failure(road1Idea, "ends:no-silent-fallback", "picked › step 3")],
+      elapsedMs: 0,
+      unlisted: [],
+      passingNow: [],
+    };
+    const h = harnessNumbers(result, []);
+    expect(h.silentFallbacks).toMatchObject({ typed: 1, picked: 1, ideas: 1 });
+  });
+
   it("counts the known gaps of the ideas run, by kind", () => {
     const ideas = IDEAS_V1.slice(0, 10);
     const h = harnessNumbers(runHarness(ideas, KNOWN_GAPS), KNOWN_GAPS);

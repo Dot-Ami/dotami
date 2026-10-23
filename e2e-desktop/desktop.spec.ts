@@ -128,13 +128,40 @@ async function launchTo(which: "encrypt-ask" | "lost-key", dir = dataDir): Promi
   return electronApp.windows().find(isIt)!;
 }
 
+/**
+ * [8i] Clicks a button whose answer closes its own start-up window: desktop/main.mjs `askInWindow` closes the
+ * window as soon as the answer arrives. Playwright's click waits for the window to acknowledge the mouse-up, and
+ * a window closed by that same click sometimes never does: on CI the click then waited at "performing click
+ * action" for its whole 30 s and the test failed, though the button had been clicked (run 39876293335, the first
+ * start's "Preparing DotAmi…" test, twice in one job; run 39539308119, a missing data file's test, through
+ * launch()). What the answer does is close the window, so that is what this waits for: the button is still clicked
+ * for real (visible, enabled and steady first), and once the window has closed a click still waiting on it is let
+ * go. If the window doesn't close, this fails, as before.
+ */
+async function clickClosingItsWindow(window: Page, name: string): Promise<void> {
+  const closed = window.waitForEvent("close", { timeout: 60_000 });
+  closed.catch(() => {});
+  const clicked = window
+    .getByRole("button", { name, exact: true })
+    .click()
+    .catch((error: unknown) => {
+      // The click's own wait ends when the window it clicked in is gone: that is the answer arriving.
+      if (!window.isClosed()) throw error;
+    });
+  await Promise.race([closed, clicked]);
+  await closed;
+}
+
 /** [8i] Answers the window before the first encryption, then waits for the main window. */
 async function answerEncryptAsk(ask: Page, button: "Encrypt now" | "Not now" | "Never…"): Promise<Page> {
   await expect(ask.getByRole("heading", { name: "Lock your data file with a key?" })).toBeVisible();
-  await ask.getByRole("button", { name: button, exact: true }).click();
   if (button === "Never…") {
+    // "Never…" asks once more in the same window, so this click doesn't close it.
+    await ask.getByRole("button", { name: button, exact: true }).click();
     await expect(ask.getByRole("heading", { name: "Never lock the data file?" })).toBeVisible();
-    await ask.getByRole("button", { name: "Keep it unencrypted" }).click();
+    await clickClosingItsWindow(ask, "Keep it unencrypted");
+  } else {
+    await clickClosingItsWindow(ask, button);
   }
   return mainWindow(app!);
 }

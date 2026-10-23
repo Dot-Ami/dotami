@@ -152,7 +152,12 @@ A road may name where it carries on after its last column: `joins: { roadId, col
     ending somewhere honest (every fork side reaches the road's end or its join, every question asked
     changes something), nothing derived, and the same output for the same input. It fails on any failure
     the known-gaps list (`tests/fixtures/ideas/known-gaps.ts`) doesn't name, and on any gap it names that
-    now passes, so a road that fixes a gap takes those ideas off the list in the same pull request. What
+    now passes, so a road that fixes a gap takes those ideas off the list in the same pull request. A
+    silent fallback (an idea drawn on a future not written for it, with nothing on screen saying so) fails
+    it even when listed (the maintainer's call 32, 2026-10-22). Two more tests read every road with no new
+    data: `tests/province-swap.spec.ts` runs the same ideas in all 13 provinces and territories and fails on
+    another province's step, source, cost line or wage row; `tests/rewording.spec.ts` rewords the corpus and
+    fails when the province the words name, the job found or the roads change. What
     it saw is written to `test-results/idea-coverage.md`. `npm run quality:report` (task 32a,
     `scripts/quality-report.mjs`) counts the same run into the quality numbers CI prints: the pass rate,
     where each idea ends (a road of its own written for it, the general road, another road, or before any

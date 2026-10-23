@@ -209,6 +209,21 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   a part the run didn't count (the job search, the clutter, the sources, or the live quote check) says so in
   the line. Made on a builder's Windows machine, its clutter part counts with the Windows allowance, so it
   can differ from CI's. Nothing comes from the people using DotAmi, and nothing is sent anywhere.
+- **Silent fallbacks now fail the tests** (the maintainer's call 32, 2026-10-22). The idea harness fails when any
+  test idea lands on a future not written for it with nothing on screen saying so, even if someone lists it as a
+  known gap; today's count is 0, and a planted fault (the save dropping the road the person opened) makes it fail.
+  Tests only: nothing a person sees changes.
+- **The same idea in every province and territory, and the test ideas reworded** (tasks 37a and 37b, tests only).
+  Four test ideas run in all 13 places, each way in: no other province's step, source, cost line, way to
+  incorporate or wage row may show, every source, fee and way to incorporate written for the person's own
+  province must show, and the federal steps stay the same everywhere. Every test idea is also
+  reworded (capitals, lower case, a typo, another word order, emoji, no accents, its city swapped for its
+  province, and 14 in French): the province the words name, the job found by the person's own words and the
+  roads offered must stay the same, and Lloydminster, on the Alberta–Saskatchewan border, never names one
+  province. Each check fails on a planted fault. Three things they found today are listed rather than skipped;
+  none has a story yet, and each waits on the maintainer's call: in Alberta, *Hire first employee* on the general road lists Ontario's and
+  British Columbia's employment-standards pages as its sources; a misspelt word in the kind of work finds the job
+  only by its own name (84 of the 220 test ideas with a job); and "à Regina" in French names no province.
 ### Fixed
 - **Your answer to "Are you buying equipment, a vehicle or tools?" on a future picked on Pick a future is
   kept** (the maintainer's "Yes, fix both", 2026-10-20). Pick a future saves equipment as not said, since it
@@ -247,6 +262,16 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   read right too: the rail, *Your plan*, its export and *Not told yet* show the kept first-year number as told,
   exactly as after a Keep today, and taking it back makes it *Not said* again. This is how what is saved is
   read; nothing in the data file is rewritten (the old mark is replaced only when the idea is next saved).
+- **The idea harness's time budget no longer fails a run for being slowed by others** (tests only). Its 60-second
+  budget is now held on the run's own CPU time, not the clock on the wall, which under the full parallel test run
+  had reached 60.5 and 65.7 seconds for the same work; and a run keeps each step 1 search's answer for its own
+  length, so the harness takes about 27 seconds alone on a builder's machine instead of 36.
+- **A desktop test that sometimes hung on "Encrypt now"** (tests only). Clicking an answer in the window that asks
+  whether to lock the data file closes that window, and the test's click sometimes waited for an
+  acknowledgement the closed window never sent. The test now waits for the window to close, which is what the
+  answer does; the app was not changed.
+- **The quality report counts step 3's own silent fallbacks on their way in** (tests and report only). A road
+  written for the job listed after another on step 3 was counted among the ideas but on neither way in.
 
 ### Changed
 - **About this job in place for a job with no road, your region's Change, and the batch 4 calls** (tasks 28c and

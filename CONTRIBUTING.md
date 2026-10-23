@@ -299,7 +299,8 @@ The scenarios those deterministic tests lock are described in
 To see what your change did to the quality numbers (the idea harness's pass rate, where test ideas end,
 silent fallbacks, the job search against the test ideas, clutter per screen, source health), run
 **`npm run quality:report`** (after `npm run test:browser` for the clutter part). CI prints the same report
-on every pull request; no number fails anything yet.
+on every pull request; no number fails anything yet, except silent fallbacks: since 2026-10-22 the idea
+harness fails when any idea lands on a future not written for it with nothing on screen saying so.
 
 One PR per topic. A PR that adds a node and also reformats three files is two PRs. To keep
 that from happening by accident, the repository ships `.editorconfig` and a Prettier config:

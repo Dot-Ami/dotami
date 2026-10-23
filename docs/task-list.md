@@ -563,6 +563,26 @@ placed in phase 3.
       read from the shipped file, so 25h hands the harness 28a's lines for the group it shows; the verdict
       check too, for group 53200's line only; 28a's importer still runs the verdict check over every shipped
       line, as the design says)
+    - [x] 37a (moved here from S2.5.37: it needs no new data): the same idea, job and answers in all 13
+      provinces and territories (`tests/province-swap.spec.ts`, four ideas, both ways in): no other province's
+      step, source, *done when* line, link, cost line, way to incorporate or wage row; the federal set the same
+      in every run on a road built from the map; *About this job*'s wage row the place's own; every source,
+      *done when* line, fee and way to incorporate the catalogs write for the run's own province shown. A filter
+      that ignores the place (the ways to incorporate, a step's sources, the wage look-up) fails naming what
+      leaked and where; one that leaves out the person's own province (a step's sources, the ways to
+      incorporate) fails naming what is missing and where. Found 2026-10-22, listed in
+      `tests/fixtures/ideas/accuracy-gaps.ts` with no story yet, waiting on the maintainer's call: in Alberta,
+      road 0's *Hire first employee* shows Ontario's and British Columbia's employment-standards pages
+    - [x] 37b (moved here too): the corpus reworded (capitals, lower case, a typo, another order, emoji, no
+      accents, the city swapped for its province, French; `tests/rewording.spec.ts`) keeps the province the
+      words name, the job found by the person's words on step 1, and step 3's roads; Lloydminster never sets a
+      single province; "Calgary"/"calgary" and "Québec"/"Quebec" are planted controls. Found 2026-10-22, listed
+      with no story yet, waiting on the maintainer's call: a misspelt word in the kind of work finds the job only by its own name (84 of 220
+      ideas), and "à Regina" in French names no province (the parser reads a city that is also a first name
+      only after an English place word)
+    - [x] The idea harness's time budget (60 s) is held on the run's own CPU time, not the wall clock, and a
+      run keeps step 1's search answers for its own length: about 36 s alone before, 27 s after on this
+      machine; under the full parallel run the wall clock had reached 60.5 s and 65.7 s
 - 🔄 **[14m] A clean data pipeline you can see (S2.5.31).** Every government file DotAmi imports is checked
   offline on every pull request, so a changed file can't slip in unnoticed.
   - [x] 31a (phase 2): `npm run data:check`, every importer's check run offline inside `ci:quality`; it
@@ -583,7 +603,10 @@ placed in phase 3.
     fails anything yet. Silent fallbacks
     counted on 2026-10-21: 37 ideas (the aim, 0, is phase 2's end). Counted on 2026-10-22, typed in: 323 of
     367 ideas on the general road, 44 before any road, 0 of the 11 ideas with a road of their own (road 1)
-    reach it
+    reach it. Since 2026-10-22 (the maintainer's call 32) silent fallbacks do fail: the idea harness fails
+    when any idea lands on a future not written for it with nothing on screen saying so, even one a known gap
+    lists (`silentFallbackProblems` in `tests/helpers/idea-harness-run.ts`, with planted controls); the
+    report counts step 3's own fallbacks on their way in too
   - [ ] 32b: the maintainer's first monthly walk, three test ideas plus one of the maintainer's own, with
     the findings turned into issues or test ideas
 - 🔄 **[14o] Phase 2's fixes and releases.** The maintainer's calls of 2026-10-20.

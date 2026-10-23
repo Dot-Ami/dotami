@@ -228,7 +228,8 @@ the typed way it also carries the intake's answers, as **Open my map** does toda
 
 The cockpit's goal bar; the idea harness (task 29h: the picked way ends on a road drawn with a line saying why,
 or on this step's honest no-road ending; `ends:road-drawn` accepts both); the coverage report (silent fallbacks
-= 0, task 28c's measure).
+= 0, task 28c's measure). *As built (2026-10-22, the maintainer's call 32):* the idea harness fails on any silent
+fallback, even one a known gap lists (`silentFallbackProblems`, tests/helpers/idea-harness-run.ts), so the 0 holds.
 
 ## Not in this version
 
