@@ -225,6 +225,59 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   British Columbia's employment-standards pages as its sources; a misspelt word in the kind of work finds the job
   only by its own name (84 of the 220 test ideas with a job); and "à Regina" in French names no province.
 ### Fixed
+- **Nothing you answer on Your destination sits in the window's storage any more** (the pre-release screen
+  review of 2026-10-23). Your words, business or career or both, your province or territory and the income you
+  agreed to were also written to the tab's `sessionStorage` (`dotami-journey-v3`), where Delete couldn't reach
+  them. Now they are held in the page's memory only: your words and the income are in the data file as soon as
+  you give them, as before, and business-or-career and the place are kept with the idea when you pick a future
+  (`Venture.lookingFor`, `Venture.province`, as before); until then a reload or a new window asks those two
+  again, and their receipts say so. A copy an older DotAmi left in the window is dropped when a page opens.
+  Delete takes the words held in memory with *Your statements*, the income with *The yearly income you said you
+  want*, and everything with *Your ideas* (`lib/journey/window-storage.ts`, `components/shared/journey-provider.tsx`,
+  `components/your-data/delete-menu.tsx`). Tests: `tests/prerelease-honesty.spec.ts` (with a planted write of
+  an answer to `sessionStorage` that the same scan catches) and a browser test in `e2e/front-door.spec.ts`.
+- **The map no longer says *done* and *now* for things you never told DotAmi.** On every idea the map's own
+  lists put *Employee/Apprentice baseline* first and *Sole Prop activation* next, and their chips read *done*
+  and *now*, as if that were where the person was. They now read *starting point* and *first stage*; *done*,
+  *doing* and *not for me* appear only where you marked a step, and the legend says so (*Stage chip = where it
+  sits on the map; doing, done or not for me only when you mark it*). *Next on your road* and the Steps gauge
+  start at the baseline until you mark it done (`lib/scenarios/graph.ts`, `lib/cockpit/view.ts`). On *Your
+  futures*, an idea saved without a kind of venture (a future picked on *Pick a future*) says *type not said*
+  instead of *Service* (`lib/db/ventures.ts`, `lib/ventures/words.ts`).
+- **Time words the no-times check missed.** The apprentice road's last column *First years on your own* is now
+  *Running your own shop*; the legend's *check first — confirm, time-boxed, or one fork away* now says *has an
+  end date*; the ride-share Lens line no longer paraphrases GI-196 as "with 30 days to apply" but points to its
+  own words under the card's sources. The check (`tests/helpers/time-words.ts`) now catches "first years",
+  "the early months", "time-boxed" and the like. Corporations Canada's fee lines ("It will cost $200 and will
+  take 1 day.") were drawn in bare quotation marks on the Incorporating step's ways to incorporate and on *Your
+  plan*; they are now inside the one official-quote component, after *Words found on the page:*
+  (`components/shared/page-quotes.tsx`). No amount changed.
+- **The front door.** Its three example chips are in the words file (`frontDoorWords.examplePrompts`), and the
+  second now reads *I'm already running a business — show me the write-off rules for it* instead of *optimize my
+  write-offs*, which read as a promise about your taxes. *Your futures* and *Open cockpit* show only once an idea
+  is saved; with nothing saved both opened empty pages (`lib/front-door/saved-idea.ts`).
+- **Changing your place on a saved idea changes that idea** (S2.5.33, bug 33a; the maintainer's calls of
+  2026-10-22 and 2026-10-23). *Change* on *You told us your place is …* in the cockpit's *What you've told
+  DotAmi* opened the intake, whose save is always a new idea: the person ended with two ideas, the first still in
+  the old province. It now opens the cockpit's one-question box, asking *Which province or territory are you
+  in?* in Your destination's own words, with the thirteen provinces and territories in a drop-down, and saves the
+  answer with this idea. The rules and tax cards, the fees, the step sources and the map follow at once, and the
+  receipt says what changed ("Because you told us your place is Ontario, …"). A road written for Alberta stays
+  drawn, saying *Map drawn: … · written for AB; this idea is in ON* (call 35). Once the place isn't Alberta, the
+  area and region picked in Alberta are shown nowhere (About this job, Your plan), though the idea keeps them for
+  a later history of places (a-call-9); About this job is read again after the save. The idea count stays 1
+  (`e2e/place-change.spec.ts`: on the old code the box never opened, the Change went to the intake;
+  `tests/places-and-programs.spec.ts`: on the old code a moved idea's plan still said *Your area: Calgary*). The
+  other answers the intake asks (the kind of venture, work situation, kinds of work, sales, hire-first) still
+  open the intake; see the pull request's questions.
+- **Every road shows a step's sources for your own place** (the maintainer's call a-call-12). On road 0 in
+  Alberta, *Hire first employee* listed Ontario's and British Columbia's employment-standards pages as its
+  sources: a road written for particular provinces showed every source. Every road now shows the federal pages
+  and the person's own province's, with the existing line *"N sources for other provinces aren't shown."*, in the
+  step panel, Your plan, the Export and Pick a future's source counts (`lib/engines/roads/v2026/index.ts`
+  `citationsForPlace`). *Hire first employee* now cites Alberta's own *Employment standards* page, checked by a
+  tool on 2026-10-23 and labelled so until a person reads it (it is on the reading list in
+  docs/engines/citations.md). The province swap's `PLACE_GAPS` list is empty: the test passes with no known gap.
 - **Your answer to "Are you buying equipment, a vehicle or tools?" on a future picked on Pick a future is
   kept** (the maintainer's "Yes, fix both", 2026-10-20). Pick a future saves equipment as not said, since it
   never asks it. Answering in the cockpit's one-question box showed the answer for a moment, but left
@@ -274,6 +327,13 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   written for the job listed after another on step 3 was counted among the ideas but on neither way in.
 
 ### Changed
+- **Two ended programs are off** (the maintainer's call a-call-1, before release 0.5.0). The *Alberta Investor
+  Tax Credit* (its page answers page not found) and the *Canada-Alberta Job Grant* (its page now opens the
+  Canada-Alberta Productivity Grant) are gone from the programs catalog and from every screen. The Job Grant
+  showed on road 0's map panels as a near-miss saying it "requires incorporation (CCPC)", which its page never
+  said; each panel's *Elsewhere on your map* count is one lower. The reason and the day each page was read are
+  kept (`RETIRED_GRANT_PROGRAMS`, docs/engines/grants.md *Retired programs*). The Productivity Grant is added
+  only after the maintainer reads its amounts.
 - **About this job in place for a job with no road, your region's Change, and the batch 4 calls** (tasks 28c and
   28h, the maintainer's calls of 2026-10-22). On Pick a future and at the end of the typed way, a job with no road
   written for it now shows *About this job*'s four rows right inside step 3, opened by "Here is what the government

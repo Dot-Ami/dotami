@@ -16,15 +16,13 @@ import { useLayoutEffect, useRef, useState } from "react";
  * the headline and three doors. The first, *Start from where I want to be*, opens /start. The second is
  * the 2026-07-02 workshop's front door, unchanged: the free-text box captures the situation in the
  * person's own words, and the chips below only fill it with example phrasings. The third opens the invented
- * example future, Mara (since 2026-10-13; docs/ui-spec/example/_index.md), and says it is invented.
+ * example future, Mara (since 2026-10-13; docs/ui-spec/example/_index.md), and says it is invented. The
+ * chips' words are in the words file (`frontDoorWords.examplePrompts`, since 2026-10-23).
+ *
+ * *Your futures* and *Open cockpit* are offered only once an idea is saved (`hasSavedIdea`, read on the server
+ * when the page is drawn, 2026-10-23): with nothing saved both opened empty pages.
  */
-const EXAMPLE_PROMPTS = [
-  "I want to monetize a hobby",
-  "I'm already running a business — optimize my write-offs",
-  "I don't know what to start yet — show me what's available",
-] as const;
-
-export function LandingPage() {
+export function LandingPage({ hasSavedIdea }: { hasSavedIdea: boolean }) {
   const router = useRouter();
   const { setIntake, resetJourney } = useJourney();
   const [text, setText] = useState("");
@@ -81,17 +79,7 @@ export function LandingPage() {
         className="flex shrink-0 flex-wrap items-center justify-between gap-4 border-b border-rule-soft px-4 py-5 sm:px-8 md:px-14"
       >
         <WordMark />
-        <div className="flex flex-wrap items-center gap-5">
-          <GhostLink href="/ventures" tone="stone">
-            {frontDoorWords.nav.futures}
-          </GhostLink>
-          <GhostLink href="/cockpit" tone="stone">
-            {frontDoorWords.nav.cockpit}
-          </GhostLink>
-          <GhostLink href="/settings" tone="stone">
-            {frontDoorWords.nav.settings}
-          </GhostLink>
-        </div>
+        <FrontDoorNav hasSavedIdea={hasSavedIdea} />
       </header>
 
       <main className="flex min-h-0 flex-1 flex-col items-center overflow-y-auto px-4 py-8 sm:px-8 md:px-14">
@@ -155,7 +143,7 @@ export function LandingPage() {
                 </p>
               ) : null}
               <div className="flex flex-wrap items-center gap-2">
-                {EXAMPLE_PROMPTS.map((prompt) => (
+                {frontDoorWords.examplePrompts.map((prompt) => (
                   <button
                     key={prompt}
                     type="button"
@@ -187,6 +175,30 @@ export function LandingPage() {
           </ul>
         </section>
       </main>
+    </div>
+  );
+}
+
+/**
+ * The front door's links. *Your futures* and *Open cockpit* only once an idea is saved (2026-10-23): for a
+ * brand-new person both opened empty pages. *Settings* always.
+ */
+export function FrontDoorNav({ hasSavedIdea }: { hasSavedIdea: boolean }) {
+  return (
+    <div className="flex flex-wrap items-center gap-5">
+      {hasSavedIdea ? (
+        <>
+          <GhostLink href="/ventures" tone="stone">
+            {frontDoorWords.nav.futures}
+          </GhostLink>
+          <GhostLink href="/cockpit" tone="stone">
+            {frontDoorWords.nav.cockpit}
+          </GhostLink>
+        </>
+      ) : null}
+      <GhostLink href="/settings" tone="stone">
+        {frontDoorWords.nav.settings}
+      </GhostLink>
     </div>
   );
 }

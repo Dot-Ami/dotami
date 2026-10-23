@@ -45,7 +45,9 @@ carries on a taxi business to be registered (s.240(1.1)), and its definition of 
 (s.123(1)) takes in passenger rides arranged through an electronic platform. The CRA says it in
 plain words on its sharing-economy page ("The $30,000 small supplier threshold does not apply for
 commercial ridesharing services."), and GI-196 says registration takes effect the day the driver
-starts making taxable supplies, with 30 days to apply. Before this, DotAmi had no driver kind of
+starts making taxable supplies, and when the driver has to apply ("before the thirtieth day after that
+particular day"). Since 2026-10-23 the Lens line no longer paraphrases that as "with 30 days to apply": it
+points to GI-196's own words under the card's sources. Before this, DotAmi had no driver kind of
 work and only the general $30,000 rule, so a driver expecting less than $30,000 was told on a
 green card that most businesses "need not register yet".
 

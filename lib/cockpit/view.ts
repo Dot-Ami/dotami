@@ -133,9 +133,13 @@ export function setAsideOnMap(place: MapPlace): boolean {
   return place.from === "you" ? place.status === "not-for-me" : place.status === "ghost";
 }
 
-/** A card whose chip says done: the person marked it, or (with no status of theirs) the map worked it out. */
+/**
+ * A card whose chip says done: only one the person marked done (2026-10-23). The map's own "complete" list
+ * (the employee baseline, on every idea) is where the map starts, not something the person did, so it
+ * no longer keeps a step off "Next on your road"; its chip says "starting point" (lib/scenarios/graph.ts).
+ */
 function doneOnMap(place: MapPlace): boolean {
-  return place.from === "you" ? place.status === "done" : place.status === "complete";
+  return place.from === "you" && place.status === "done";
 }
 
 /**

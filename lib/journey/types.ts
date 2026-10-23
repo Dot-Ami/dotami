@@ -56,7 +56,8 @@ export interface IntakeDraft {
   /** Latest intent-parse result — Screen A renders/edits it; null once confirmed. */
   intentParse?: IntentParseResult | null;
   /**
-   * *Your destination*'s answers in this tab (2026-10-12; lib/front-door/draft.ts). Optional, so a draft
+   * *Your destination*'s answers (2026-10-12; lib/front-door/draft.ts), held in memory only: never written to
+   * window storage (2026-10-23, lib/journey/window-storage.ts). Optional, so a draft
    * saved before it reads the same; reset with the rest of the journey by the front door's Map it.
    */
   destination?: DestinationDraft;

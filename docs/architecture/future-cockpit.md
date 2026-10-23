@@ -697,7 +697,9 @@ answer, before and after it or with and without it. Choices made while building 
   today's general road).
 - **Change and Take back.** *Change* goes to where the answer is given: the step (status, ticks, a
   quote), the Skills list (marks), *Compare* (an ending), the one-question box (the month, savings, the
-  structure, buying equipment, *I'd incorporate at*, a map pick), the intake (the idea's other answers)
+  place, the structure, buying equipment, *I'd incorporate at*, a map pick), the intake (the idea's other answers;
+  the place moved to the box on 2026-10-23, S2.5.33's bug 33a: the intake's save is always a new idea, so its
+  Change made a second idea and left the first in the old province)
   or the idea's figures on *Your ideas* (agreed business figures). *Take back* removes the answer the
   same way `withoutAnswer` does: a mark or a status through its route with *I don't know* / none; ticks
   emptied; a quote or savings retracted through `/api/figures/retract` (kept in the history as
@@ -1313,7 +1315,8 @@ Road 1, *From apprentice to your own shop (Alberta)*, is written into the catalo
 made while writing it, each for a reason:
 
 - **Four columns, one fork.** *Finish your training* · *Certified* (the fork: *Stay employed* or *Open
-  your own shop*) · *Open the doors* · *First years on your own*. The example trade is Cabinetmaker,
+  your own shop*) · *Open the doors* · *Running your own shop* (*First years on your own* until
+  2026-10-23: a span of time in DotAmi's own words). The example trade is Cabinetmaker,
   Alberta's official name for it. Alberta's pages list three ways to the certificate (apprenticeship,
   Trades Qualifier on work experience, Trades Qualifier with a certificate from outside Alberta); they
   are steps side by side in the first column that all lead to the certificate, not a fork, because a

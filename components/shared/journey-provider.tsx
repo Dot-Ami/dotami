@@ -16,6 +16,7 @@ import {
   type IntakeDraft,
   type JourneyState,
 } from "@/lib/journey/types";
+import { forWindowStorage, fromWindowStorage } from "@/lib/journey/window-storage";
 
 interface JourneyContextValue {
   intake: IntakeDraft;
@@ -34,21 +35,27 @@ interface JourneyContextValue {
 
 const JourneyContext = createContext<JourneyContextValue | null>(null);
 
-function readStoredState(): Partial<JourneyState> | null {
+/** The journey as this tab's window storage holds it (exported for tests/prerelease-honesty.spec.ts). */
+export function readJourneyFromWindow(): Partial<JourneyState> | null {
   if (typeof window === "undefined") return null;
   try {
     const raw = sessionStorage.getItem(JOURNEY_STORAGE_KEY);
     if (!raw) return null;
-    return JSON.parse(raw) as Partial<JourneyState>;
+    // Your destination's answers are never read from the window, even where an older copy wrote them
+    // (lib/journey/window-storage.ts); the first write after loading then takes them out of it.
+    return fromWindowStorage(JSON.parse(raw) as Partial<JourneyState>);
   } catch {
     return null;
   }
 }
 
-function writeStoredState(state: JourneyState) {
+/** Writes the journey to this tab's window storage, without Your destination's answers. */
+export function writeJourneyToWindow(state: JourneyState) {
   if (typeof window === "undefined") return;
   try {
-    sessionStorage.setItem(JOURNEY_STORAGE_KEY, JSON.stringify(state));
+    // Without Your destination's answers: they stay in this page's memory, and in the data file where
+    // the design keeps them (lib/journey/window-storage.ts).
+    sessionStorage.setItem(JOURNEY_STORAGE_KEY, JSON.stringify(forWindowStorage(state)));
   } catch {
     // ignore quota errors
   }
@@ -60,7 +67,7 @@ export function JourneyProvider({ children }: { children: ReactNode }) {
   const [hydrated, setHydrated] = useState(false);
 
   useEffect(() => {
-    const stored = readStoredState();
+    const stored = readJourneyFromWindow();
     if (stored?.intake) setIntakeState({ ...defaultIntakeDraft(), ...stored.intake });
     if (stored?.scenario) setScenarioState(stored.scenario);
     setHydrated(true);
@@ -68,7 +75,7 @@ export function JourneyProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (!hydrated) return;
-    writeStoredState({ intake, scenario });
+    writeJourneyToWindow({ intake, scenario });
   }, [hydrated, intake, scenario]);
 
   const setIntake = useCallback(

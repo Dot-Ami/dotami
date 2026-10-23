@@ -86,6 +86,16 @@ export const TIME_PATTERNS: readonly { phrase: string; pattern: RegExp }[] = [
   { phrase: "timeline", pattern: /\btime[- ]?lines?\b/i },
   { phrase: "time to", pattern: /\btime to (?:open|launch|start|finish|complete|get|market|revenue|profit)\b/i },
   { phrase: "ETA", pattern: /\b(?:ETA|estimated time|time estimate)\b/i },
+  // A span of time named without a number (the pre-release review, 2026-10-23: the apprentice road's column
+  // "First years on your own" passed every pattern above): "first years", "the early months", "your opening
+  // weeks", "the first few years". Plural only: "first-year" and "the first year" name a tax year or a
+  // what-if year ("your first-year sales estimate"), not a wait.
+  {
+    phrase: "a span of time in words",
+    pattern: new RegExp(`\\b(?:first|early|earliest|opening|initial|last|final)\\s+(?:few\\s+|couple of\\s+)?${UNIT}s\\b`, "i"),
+  },
+  // "time-boxed", "time-limited", "time-bound", "timeboxed" (the legend said "time-boxed" until 2026-10-23).
+  { phrase: "time-boxed", pattern: /\btime[- ]?(?:boxed|limited|bound|box)\b/i },
 ];
 
 /** Words DotAmi may write about time, and why. */

@@ -324,3 +324,64 @@ test("the first written future, picked on Pick a future, opens in the cockpit on
   };
   expect(kept.future).toMatchObject({ roadId: road.id, roadChosen: true, lookingFor: "business", place: "CA-AB" });
 });
+
+/** Everything this page's window storage holds, as text (both stores, every key). */
+const windowStorage = (page: Page) =>
+  page.evaluate(() => {
+    const dump = (s: Storage) => Object.fromEntries(Array.from({ length: s.length }, (_, i) => [s.key(i)!, s.getItem(s.key(i)!)]));
+    return JSON.stringify({ local: dump(localStorage), session: dump(sessionStorage) });
+  });
+
+test("Your destination's answers never sit in window storage; a new window asks 2 and 3 again, and the idea picked keeps them (2026-10-23)", async ({ page, context }) => {
+  // Nothing about the person in window storage: questions 2 and 3 are held in the page's memory until a future
+  // is picked, which keeps them with the idea in the data file (lib/journey/window-storage.ts).
+  await page.goto("/start");
+  const q1 = page.getByRole("textbox", { name: Q1 });
+  await expect(q1.or(page.getByRole("heading", { name: Q2, level: 2 })).first()).toBeVisible();
+  if (await q1.isVisible()) {
+    const dontKnow = page.getByRole("button", { name: "I don't know yet" });
+    await waitForReact(dontKnow);
+    await dontKnow.click();
+  }
+  const business = page.getByRole("button", { name: "A business of my own" });
+  await waitForReact(business);
+  await business.click();
+  await page.getByRole("combobox", { name: Q3 }).selectOption("CA-NS");
+  await page.getByRole("button", { name: "Use this place" }).click();
+  // The receipt's own line says where the two answers are until then.
+  await expect(page.getByText("Kept with the future you pick. Until then only this page holds it: a reload or a new window asks it again.")).toHaveCount(2);
+  const skip = page.getByRole("button", { name: "Skip" });
+  if (await skip.isVisible()) await skip.click();
+  await expect(page.getByRole("link", { name: "Pick a future →" })).toBeVisible();
+
+  // Answered on screen, and none of it in either store: not the place code, not the pick, not the draft.
+  const stored = await windowStorage(page);
+  expect(stored).not.toContain("CA-NS");
+  expect(stored).not.toContain("lookingFor");
+  expect(stored).not.toContain('\\"destination\\"');
+  // The journey itself is still written there (the scan is reading a real write, not an empty store).
+  expect(stored).toContain("dotami-journey-v3");
+
+  // A new window (its own window storage) asks questions 2 and 3 again; 1 and 4 come from the data file.
+  const second = await context.newPage();
+  await second.goto("/start");
+  await expect(second.getByRole("heading", { name: Q2, level: 2 })).toBeVisible();
+  await expect(second.getByRole("combobox", { name: Q3 })).toHaveCount(0);
+  await second.close();
+
+  // Picked, the answers are kept with the idea in the data file, and a new window reads them there.
+  await page.getByRole("link", { name: "Pick a future →" }).click();
+  await skipTheJob(page);
+  await page.getByRole("button", { name: `Look inside ${roadFederalStepsCA.label}` }).click();
+  await expect(page).toHaveURL(/\/cockpit\?venture=/);
+  const ventureId = new URL(page.url()).searchParams.get("venture")!;
+  const third = await context.newPage();
+  const kept = (await (await third.request.get(`/api/futures/${ventureId}`)).json()) as {
+    future: { lookingFor: string; place: string };
+  };
+  expect(kept.future).toMatchObject({ lookingFor: "business", place: "CA-NS" });
+  await third.goto(`/cockpit?venture=${encodeURIComponent(ventureId)}`);
+  await expect(third.getByRole("region", { name: "Your goal and gauges" })).toContainText("Nova Scotia");
+  await third.close();
+  expect(await windowStorage(page)).not.toContain("CA-NS");
+});

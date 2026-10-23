@@ -8,6 +8,7 @@ import { postJson } from "@/components/ventures/agree-prompt";
 import type { RecordRetentionEntry } from "@/lib/engines/compliance/v2026";
 import { howCheckedWords, isCheckFirst } from "@/lib/engines/shared/citation-check";
 import { afterStatementsDeleted } from "@/lib/journey/first-save";
+import { destinationAfterDelete } from "@/lib/journey/window-storage";
 import type { DeleteKindId, DeleteMenuEntry, KeptLink } from "@/lib/privacy/inventory";
 import { folderKeys, keptLinkKey, keptLinks, SAFETY_COPIES_KEY, SET_ASIDE_RECEIPTS_KEY } from "@/lib/privacy/kept-links";
 
@@ -144,9 +145,15 @@ export function DeleteMenu({ menu, counts, keptCounts, tableNames, notCleared, r
     setOutcome({ deleted: body.deleted, left: body.left, kept: body.kept, wiped: body.wiped, receiptFiles: body.receiptFiles });
     // The intake in progress can still hold a deleted idea; a Save on the map would bring it back.
     if (ticked.includes("ideas")) resetJourney();
-    // The sentence typed on the front door may still sit in this tab's draft: once the statements are
-    // deleted, a later "Open my map" must not write it back (lib/journey/first-save.ts).
-    else if (ticked.includes("statements")) setIntake(afterStatementsDeleted);
+    else {
+      // The sentence typed on the front door may still sit in this tab's draft: once the statements are
+      // deleted, a later "Open my map" must not write it back (lib/journey/first-save.ts).
+      if (ticked.includes("statements")) setIntake(afterStatementsDeleted);
+      // Your destination's answers held in this page's memory go with what they belong to: the words with
+      // the statements, the income with the income (lib/journey/window-storage.ts).
+      const deleted = [...ticked];
+      setIntake((prev) => ({ ...prev, destination: destinationAfterDelete(prev.destination, deleted) }));
+    }
     setTicked([]);
     setStep("done");
     router.refresh();

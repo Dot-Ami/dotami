@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 
 import { PrintButton } from "@/components/cockpit/print-button";
+import { PageQuotes } from "@/components/shared/page-quotes";
 import type { PlanSource, PlanStep, PlanView } from "@/lib/cockpit/plan";
 import { cockpitWords as words } from "@/lib/cockpit/words";
 
@@ -34,11 +35,8 @@ function Source({ source }: { source: PlanSource }) {
         {source.title} · <Address url={source.url} />
       </p>
       <p>{source.checked}</p>
-      {source.quotes.map((quote) => (
-        <p key={quote} className="italic">
-          “{quote}”
-        </p>
-      ))}
+      {/* The page's own words, after their label (the official-quote component, 2026-10-23). */}
+      <PageQuotes quotes={source.quotes} layout="lines" />
     </div>
   );
 }

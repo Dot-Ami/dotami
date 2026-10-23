@@ -69,7 +69,9 @@ import {
 } from "@/lib/scenarios/branches";
 import { isBranchDecided } from "@/lib/scenarios/graph";
 import { isNotSaid } from "@/lib/scenarios/not-said";
-import type { Scenario, VentureStructure } from "@/lib/scenarios/types";
+import { PROVINCE_LABELS, PROVINCES, type Province, type Scenario, type VentureStructure } from "@/lib/scenarios/types";
+import { DESTINATION_QUESTIONS } from "@/lib/front-door/questions";
+import { destinationWords } from "@/lib/front-door/words";
 import Link from "next/link";
 
 /**
@@ -409,6 +411,10 @@ export function CockpitPage({ initialScenario, pinned = false, example }: Cockpi
     if (result.ok) {
       setSaveState("saved");
       setSavedAt(new Date());
+      // A new place (the place row's Change, bug 33a): what the server builds from the place (About this job's
+      // rows, the area and region read only in Alberta) is read again, so nothing on screen keeps the old one.
+      const keptPlace = kept?.future.place ?? null;
+      if (keptPlace !== null && keptPlace !== `CA-${target.profile.province}`) void reload();
       // Only when no newer edit came in meanwhile: that edit's own save brings its receipt.
       if (waiting && pendingReceipt.current === waiting) {
         pendingReceipt.current = null;
@@ -780,6 +786,20 @@ export function CockpitPage({ initialScenario, pinned = false, example }: Cockpi
       why = q.savings.why;
       control = { kind: "money" };
       save = async (cents) => done(await proposeNumber({ kind: "savings-for-start", amountCents: cents }, "told"));
+    } else if (question === "place") {
+      // S2.5.33, bug 33a: the place is changed on this idea, saved with it like the structure, in Your destination's
+      // own words. The rules and tax cards, fees, sources and the map follow at once; About this job and Your plan
+      // read the new place once the save has answered (`persist` reloads what is kept).
+      const asked = DESTINATION_QUESTIONS.find((d) => d.id === "place")!;
+      title = asked.ask;
+      why = asked.why;
+      control = {
+        kind: "select",
+        options: PROVINCES.map((code) => ({ id: code, label: PROVINCE_LABELS[code] })),
+        value: scenario.profile.province,
+        choose: destinationWords.choosePlace,
+      };
+      save = (value) => viaScenario({ ...scenario, profile: { ...scenario.profile, province: value as Province } });
     } else if (question === "structure") {
       title = q.structure.question;
       why = q.structure.why;
