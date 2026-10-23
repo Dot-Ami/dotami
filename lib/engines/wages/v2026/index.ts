@@ -8,7 +8,8 @@ export type { WageBasis, WageData, WageDataRow, WageGeographyKind, WageGeography
 /**
  * Job Bank's published wages for each job group, from its 2025 open-data file (research note 25s; task 25i;
  * the maintainer's K5 B of 2026-10-16). A catalog like every other: code, never rows in the database, and
- * read-only. Nothing on a screen reads it yet; the *About this job* panel (25h) will.
+ * read-only. The *About this job* panel (25h) reads it, on the server only (lib/about-job/view.ts), so the
+ * module never reaches the browser.
  *
  * What a caller gets is the file's own row, word for word, and nothing worked out from another row: the level
  * comes from the row's source code (./levels.ts), never its region name, and a combination the file has no row
@@ -127,6 +128,19 @@ export function createWageLookup(data: WageData) {
     /** The geography code of a province's row as a whole, as the import read it, or undefined. */
     wholeProvinceCode(province: string): string | undefined {
       return wholeProvince.get(province);
+    },
+
+    /**
+     * The row for a job group in Canada as a whole (`ER00`), the row a note "at the national level" points to
+     * (task 25h). Missing when the file has none.
+     */
+    forCanada(noc: string): WageLookup {
+      return exact(noc, "ER00");
+    },
+
+    /** The file's English name for a geography code ("ER48" → "Alberta"), or undefined for a code it doesn't give. */
+    geographyName(code: string): string | undefined {
+      return geographies.get(code)?.name;
     },
   };
 }

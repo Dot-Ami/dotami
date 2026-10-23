@@ -24,7 +24,8 @@
  * suite's other files saved. *What DotAmi knows about you* is measured first, on that seed alone: it counts
  * everything in the data file. The cockpit is then measured on a fresh idea straight after *Pick a future*,
  * the designed first visit (docs/architecture/future-cockpit.md § 2, "First visit and return visits"), on
- * road 0 and on road 1, and *Your futures* with a fresh idea at the top of its list.
+ * road 0 and on road 1, and *Your futures* with a fresh idea at the top of its list. *About this job* is
+ * measured open on road 1, for a job picked the way a person picks one (task 25h).
  */
 import { execFileSync, spawn, type ChildProcess } from "node:child_process";
 import { existsSync, mkdirSync, rmSync, writeFileSync } from "node:fs";
@@ -35,8 +36,13 @@ import { expect, test, type Locator, type Page, type TestInfo } from "@playwrigh
 
 import { generalRoadV2026, roadApprenticeToOwnShopAB, roadFederalStepsCA } from "../lib/engines/roads/v2026";
 import { waitForReact } from "../tests/helpers/react-ready";
-import { BUDGETS, WIDTHS, WINDOWS_EXTRA, type Clutter, type ScreenId } from "./budgets";
+import { WIDTHS, type ScreenId } from "./budgets";
+import { intakeStepsWords, jobStepWords, pickWords, whereStepWords } from "../lib/front-door/words";
+
 import { measurePage, type Measured } from "./clutter-measure";
+import { budgetFor, clutterBreaches } from "./clutter-rule";
+import { lookCloser, pickJob } from "./cockpit-calm";
+import { answerWhereInAlberta, pickTheJob, skipTheJob } from "./three-steps";
 
 // Case-blind: the question starts with "What" since 2026-10-20 (it began "In a few years, what …").
 const Q1 = /what do you want your work and life to look like/i;
@@ -156,29 +162,14 @@ async function measureAtEverySize(page: Page, testInfo: TestInfo, screen: Screen
       `clutter ${label}: ${measured.regions} regions, ${measured.controls} controls, ${measured.textSizes} text sizes, smallest ${measured.smallestTextPx}px`,
     );
 
-    // Checked whatever the budgets say: a block without a mark isn't counted, so it must not be there.
-    expect
-      .soft(measured.unmarkedBlocks, `${label}: blocks with no data-region mark, inside no region (the region count can't see them)`)
-      .toEqual([]);
-
-    const gate = BUDGETS[screen]?.[size.id];
-    expect.soft(gate, `${label}: no budget in e2e/budgets.ts (measured ${JSON.stringify({ ...measured, controlNames: undefined })})`).toBeDefined();
-    if (!gate) continue;
     // The budgets are what CI (Ubuntu) measures; on Windows, where Chromium draws a few screens a little
-    // differently, the extra recorded for that screen is added (e2e/budgets.ts, WINDOWS_EXTRA).
-    const extra = process.platform === "win32" ? (WINDOWS_EXTRA[screen]?.[size.id] ?? {}) : {};
-    const budget: Clutter = {
-      ...gate,
-      regions: gate.regions + (extra.regions ?? 0),
-      controls: gate.controls + (extra.controls ?? 0),
-      textSizes: gate.textSizes + (extra.textSizes ?? 0),
-    };
-    expect.soft(measured.regions, `${label}: regions (${measured.regionNames.join(", ")})`).toBeLessThanOrEqual(budget.regions);
-    expect.soft(measured.controls, `${label}: controls in the first window (${measured.controlNames.join(" | ")})`).toBeLessThanOrEqual(
-      budget.controls,
-    );
-    expect.soft(measured.textSizes, `${label}: text sizes (${measured.sizesPx.join(", ")} px)`).toBeLessThanOrEqual(budget.textSizes);
-    expect.soft(measured.smallestTextPx, `${label}: the smallest text, px`).toBeGreaterThanOrEqual(budget.smallestTextPx);
+    // differently, the extra recorded for that screen is added (e2e/budgets.ts, WINDOWS_EXTRA). The rule lives
+    // in e2e/clutter-rule.ts, and the quality report counts "within" with the same rule.
+    const budget = budgetFor(screen, size.id);
+    expect.soft(budget, `${label}: no budget in e2e/budgets.ts (measured ${JSON.stringify({ ...measured, controlNames: undefined })})`).not.toBeNull();
+    // Checked whatever the budgets say: a block without a region mark isn't counted by the region count, so it
+    // must not be there; then each count against its budget, the names of what was counted in each breach.
+    expect.soft(clutterBreaches(measured, budget), `${label}: over the clutter limit`).toEqual([]);
   }
   // What was counted, beside the screenshots: the regions' names, every control's name and the sizes.
   const counted = testInfo.outputPath(`${screen}.json`);
@@ -201,7 +192,7 @@ async function load(page: Page, url: string, ready: (page: Page) => Locator) {
  * Alberta (or `place`), and question 4 skipped (keeps nothing) unless an income is already agreed. Ends on its
  * way on.
  */
-async function answerDestination(page: Page, place = "CA-AB") {
+async function answerDestination(page: Page, place: string = "CA-AB") {
   await page.goto("/start");
   const q1 = page.getByRole("textbox", { name: Q1 });
   await expect(q1.or(page.getByRole("heading", { name: Q2, level: 2 })).first()).toBeVisible();
@@ -227,6 +218,8 @@ async function pickFuture(page: Page, roadLabel: string, place = "CA-AB"): Promi
   await answerDestination(page, place);
   await page.getByRole("link", { name: "Pick a future →" }).click();
   await expect(page).toHaveURL(/\/futures$/);
+  // Pick a future opens on its first step (2026-10-22): skipped, every future is listed.
+  await skipTheJob(page);
   const lookInside = page.getByRole("button", { name: `Look inside ${roadLabel}` });
   await waitForReact(lookInside);
   await lookInside.click();
@@ -252,18 +245,156 @@ test("Your destination stays within its clutter budget", async ({ page }, testIn
 
 test("Pick a future stays within its clutter budget", async ({ page }, testInfo) => {
   await answerDestination(page);
-  await measureAtEverySize(page, testInfo, "futures", () =>
-    load(page, "/futures", (p) => p.getByRole("button", { name: `Look inside ${generalRoadV2026.label}` })),
-  );
+  // It opens on step 1 of its three steps, What's closest to your work? (2026-10-22), with nothing typed.
+  await measureAtEverySize(page, testInfo, "futures", () => load(page, "/futures", (p) => p.getByRole("searchbox", { name: jobStepWords.boxLabel })));
 });
 
-// Added 2026-10-21 (task 28d; e2e/budgets.ts ADDED_SCREENS): the same page for a person in Ontario, the federal
-// steps first and the two Alberta futures folded behind one button, as it opens.
+// Pick a future's later steps (docs/ui-spec/futures/02-where-you-are.md, 03-road-match.md), each as it opens.
+const CABINETMAKERS = { code: "72311.00", label: "Cabinetmakers" };
+/** A job no road is written for: step 3's case B, the longest. */
+const BARBERS = { code: "63210.02", label: "Barbers" };
+
+/** Pick a future, freshly loaded, then step 1 answered with `job`. */
+async function stepOneAnswered(page: Page, job: { code: string; label: string }) {
+  await load(page, "/futures", (p) => p.getByRole("searchbox", { name: jobStepWords.boxLabel }));
+  await pickTheJob(page, job);
+}
+
+test("Pick a future's area question stays within its clutter budget", async ({ page }, testInfo) => {
+  await answerDestination(page);
+  await measureAtEverySize(page, testInfo, "futures-area", async () => {
+    await stepOneAnswered(page, CABINETMAKERS);
+    await expect(page.getByRole("combobox", { name: whereStepWords.area.label })).toBeVisible();
+  });
+});
+
+test("Pick a future's region question stays within its clutter budget", async ({ page }, testInfo) => {
+  await answerDestination(page);
+  await measureAtEverySize(page, testInfo, "futures-region", async () => {
+    await stepOneAnswered(page, CABINETMAKERS);
+    await page.getByRole("combobox", { name: whereStepWords.area.label }).selectOption("cma-825");
+    await page.getByRole("button", { name: whereStepWords.area.next, exact: true }).click();
+    await expect(page.getByRole("combobox", { name: whereStepWords.region.label })).toBeVisible();
+  });
+});
+
+test("Pick a future's step 2 outside Alberta stays within its clutter budget", async ({ page }, testInfo) => {
+  await answerDestination(page, "CA-ON");
+  await measureAtEverySize(page, testInfo, "futures-outside", async () => {
+    await stepOneAnswered(page, CABINETMAKERS);
+    await expect(page.getByRole("button", { name: whereStepWords.outside.next, exact: true })).toBeVisible();
+  });
+});
+
+test("Pick a future's step 3 for a job with no written road stays within its clutter budget", async ({ page }, testInfo) => {
+  await answerDestination(page);
+  await measureAtEverySize(page, testInfo, "futures-road", async () => {
+    await stepOneAnswered(page, BARBERS);
+    await answerWhereInAlberta(page, "cma-825", "4830");
+    await expect(page.getByRole("heading", { name: pickWords.noRoad.heading(BARBERS.label, BARBERS.code) })).toBeVisible();
+  });
+});
+
+/** The intake to Screen B, answered, then its button into the three steps (the typed way's end, 2026-10-22). */
+async function intakeSteps(page: Page) {
+  await page.goto("/");
+  const box = page.getByPlaceholder(/What are you building/);
+  await waitForReact(box);
+  await box.fill("Custom kitchen cabinets in Calgary");
+  await page.getByRole("button", { name: "Map it →" }).click();
+  const confirm = page.getByRole("heading", { name: /Did we get this/ });
+  const aboutYou = page.getByRole("heading", { name: /about you/ });
+  await expect(aboutYou.or(confirm).first()).toBeVisible();
+  if (await aboutYou.isVisible()) await page.getByRole("button", { name: "Continue →" }).click();
+  await page.getByRole("button", { name: "Looks right →" }).click();
+  await page.getByRole("combobox", { name: "Province / territory", exact: true }).selectOption("AB");
+  await page.getByRole("combobox", { name: "Current employment", exact: true }).selectOption("self-employed");
+  await page.getByRole("button", { name: intakeStepsWords.next, exact: true }).click();
+  const search = page.getByRole("searchbox", { name: jobStepWords.boxLabel });
+  await expect(search).toBeVisible();
+  await waitForReact(search);
+}
+
+test("the intake's step 1 stays within its clutter budget", async ({ page }, testInfo) => {
+  await measureAtEverySize(page, testInfo, "intake-steps", () => intakeSteps(page));
+});
+
+// Step 3's other two cases (the PR #202 review: only case B had a row): A, a road written for the picked job, with
+// its group "Written for your pick of job"; C, the job skipped, every future in one group.
+test("Pick a future's step 3 for a job with a written road stays within its clutter budget", async ({ page }, testInfo) => {
+  await answerDestination(page);
+  await measureAtEverySize(page, testInfo, "futures-road-written", async () => {
+    await stepOneAnswered(page, CABINETMAKERS);
+    await answerWhereInAlberta(page, "cma-825", "4830");
+    await expect(page.getByRole("heading", { name: pickWords.writtenForJobHeading, level: 2 })).toBeVisible();
+  });
+});
+
+test("Pick a future's step 3 with the job skipped stays within its clutter budget", async ({ page }, testInfo) => {
+  await answerDestination(page);
+  await measureAtEverySize(page, testInfo, "futures-road-skipped", async () => {
+    await load(page, "/futures", (p) => p.getByRole("searchbox", { name: jobStepWords.boxLabel }));
+    await skipTheJob(page);
+  });
+});
+
+// The intake's step 2, each part as it opens (the PR #202 review: neither had a row).
+test("the intake's area question stays within its clutter budget", async ({ page }, testInfo) => {
+  await measureAtEverySize(page, testInfo, "intake-area", async () => {
+    await intakeSteps(page);
+    await pickTheJob(page, CABINETMAKERS);
+    await expect(page.getByRole("combobox", { name: whereStepWords.area.label })).toBeVisible();
+  });
+});
+
+test("the intake's region question stays within its clutter budget", async ({ page }, testInfo) => {
+  await measureAtEverySize(page, testInfo, "intake-region", async () => {
+    await intakeSteps(page);
+    await pickTheJob(page, CABINETMAKERS);
+    await page.getByRole("combobox", { name: whereStepWords.area.label }).selectOption("cma-825");
+    await page.getByRole("button", { name: whereStepWords.area.next, exact: true }).click();
+    await expect(page.getByRole("combobox", { name: whereStepWords.region.label })).toBeVisible();
+  });
+});
+
+test("the intake's step 3 for a job with a written road stays within its clutter budget", async ({ page }, testInfo) => {
+  await measureAtEverySize(page, testInfo, "intake-road-written", async () => {
+    await intakeSteps(page);
+    await pickTheJob(page, CABINETMAKERS);
+    await answerWhereInAlberta(page, "cma-825", "4830");
+    await expect(page.getByRole("heading", { name: pickWords.writtenForJobHeading, level: 2 })).toBeVisible();
+  });
+});
+
+// Waits on the maintainer (2026-10-22): measured on Windows at 3 controls on a phone, 5 on a laptop and 6 on a
+// tablet (← Back, the word mark, both Look inside, the Not here yet? box, the footer's link), over the intake's
+// 5, so it has no row (e2e/budgets.ts, ADDED_SCREENS). Ready to run once the maintainer decides the screen.
+test.fixme("the intake's step 3 with the job skipped stays within its clutter budget", async ({ page }, testInfo) => {
+  await measureAtEverySize(page, testInfo, "intake-road-skipped" as ScreenId, async () => {
+    await intakeSteps(page);
+    await skipTheJob(page);
+  });
+});
+
+test("the intake's step 3 for a job with no written road stays within its clutter budget", async ({ page }, testInfo) => {
+  await measureAtEverySize(page, testInfo, "intake-road", async () => {
+    await intakeSteps(page);
+    await pickTheJob(page, BARBERS);
+    await answerWhereInAlberta(page, "cma-825", "4830");
+    await expect(page.getByRole("heading", { name: pickWords.noRoad.heading(BARBERS.label, BARBERS.code) })).toBeVisible();
+  });
+});
+
+// Added 2026-10-21 (task 28d; e2e/budgets.ts ADDED_SCREENS): Pick a future for a person in Ontario, at step 3
+// with the job skipped (every future listed): the federal steps first and the two Alberta futures folded behind
+// one button.
 test("Pick a future outside Alberta stays within its clutter budget", async ({ page }, testInfo) => {
   await answerDestination(page, "CA-ON");
-  await measureAtEverySize(page, testInfo, "futures-outside-alberta", () =>
-    load(page, "/futures", (p) => p.getByRole("button", { name: `Look inside ${roadFederalStepsCA.label}` })),
-  );
+  await measureAtEverySize(page, testInfo, "futures-outside-alberta", async () => {
+    await load(page, "/futures", (p) => p.getByRole("searchbox", { name: jobStepWords.boxLabel }));
+    await skipTheJob(page);
+    await expect(page.getByRole("button", { name: pickWords.lookInsideName(roadFederalStepsCA.label), exact: true })).toBeVisible();
+  });
 });
 
 test("the intake stays within its clutter budget", async ({ page }, testInfo) => {
@@ -292,6 +423,20 @@ test("the cockpit on road 0, a first visit, stays within its clutter budget", as
 test("the cockpit on road 1, a first visit, stays within its clutter budget", async ({ page }, testInfo) => {
   const cockpit = await pickFuture(page, roadApprenticeToOwnShopAB.label);
   await measureAtEverySize(page, testInfo, "cockpit-road-1", () => load(page, cockpit, road));
+});
+
+// docs/ui-spec/cockpit/about-this-job.md, "The budget": opened only by the person's click, so the first-visit
+// rows above don't change; this row is measured with the panel open on road 1, for Cabinetmakers.
+test("About this job, open on road 1, stays within its clutter budget", async ({ page }, testInfo) => {
+  const cockpit = await pickFuture(page, roadApprenticeToOwnShopAB.label);
+  await pickJob(page, "Cabinetmakers", "72311.00");
+  await measureAtEverySize(page, testInfo, "cockpit-about-job", async () => {
+    await load(page, cockpit, road);
+    await lookCloser(page, "About this job");
+    await expect(page.getByRole("region", { name: "About this job" })).toBeVisible();
+    // Opening it moves focus to its heading.
+    await expect(page.getByRole("region", { name: "About this job" }).getByRole("heading", { level: 2 })).toBeFocused();
+  });
 });
 
 test("the cockpit on the federal road, a first visit from Ontario, stays within its clutter budget", async ({ page }, testInfo) => {

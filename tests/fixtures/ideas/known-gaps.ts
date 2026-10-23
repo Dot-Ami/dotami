@@ -46,23 +46,11 @@ export const SHOWN_WORDS_GAPS: readonly ShownWordsGap[] = [
 ];
 
 export const KNOWN_GAPS: readonly KnownGap[] = [
-  {
-    invariant: "ends:road-written-for-place",
-    subject: "typed",
-    kind: "planned",
-    story:
-      "The typed way ending on Pick a future's three steps (the maintainer's call 1 of 2026-10-21, docs/ui-spec/intake/_index.md; tasks 28b and 28c), where 28d's federal road is listed first outside Alberta",
-    why: "Every typed idea is drawn on road 0, which is written for Alberta only, wherever the idea is: “I already have an idea” still ends on Open my map, which saves no road. The plan's goal line says “written for AB; this idea is in …”, but every step still reads as Alberta's. Since 28d (2026-10-21) the federal steps exist and Pick a future lists them first outside Alberta; the typed way reaches them once it ends on the same three steps.",
-    ideas: [
-      3, 4, 5, 7, 9, 10, 11, 13, 15, 16, 18, 20, 22, 28, 29, 30, 32, 33, 35, 36, 37, 38, 40, 42, 43, 45, 47, 49, 50, 52, 53, 54, 56, 58, 59,
-      60, 61, 63, 64, 66, 67, 69, 73, 75, 76, 78, 79, 80, 82, 84, 85, 86, 88, 91, 92, 94, 96, 97, 98, 100, 101, 102, 103, 105, 107, 109,
-      111, 112, 113, 114, 115, 117, 119, 121, 123, 124, 126, 128, 129, 133, 135, 138, 140, 142, 145, 148, 150, 152, 154, 156, 158, 160, 161,
-      163, 164, 165, 166, 167, 169, 171, 172, 173, 177, 179, 181, 182, 184, 185, 186, 188, 189, 190, 192, 194, 197, 198, 199, 200, 202, 203,
-      206, 208, 210, 211, 212, 213, 245, 246, 247, 248, 249, 251, 254, 255, 260, 268, 269, 287, 288, 289, 290, 294, 295, 296, 297, 298, 299,
-      300, 301, 302, 303, 304, 305, 306, 307, 308, 309, 310, 311, 312, 313, 314, 315, 316, 317, 318, 319, 320, 321, 322, 323, 324, 332, 334,
-      337, 346, 351, 352, 353, 354, 355, 356, 357, 360, 361, 362, 363, 364, 365, 366,
-    ],
-  },
+  // Taken out on 2026-10-22 when the three steps and the federal road were joined (PR #202 with PR #200): the
+  // typed way's "road written for the place" entry (190 ideas: every typed idea drawn on road 0, wherever it is).
+  // The typed way now ends on Pick a future's three steps, which outside Alberta list the federal steps first, and
+  // its invented person opens the road written for the idea or, with none, the card the page shows first for the
+  // place (tests/helpers/idea-pipeline.ts `stepsChoice`), so each typed idea is drawn on a road written for its place.
   {
     invariant: "ends:road-written-for-place",
     subject: "picked",
@@ -71,7 +59,9 @@ export const KNOWN_GAPS: readonly KnownGap[] = [
     // 190 ideas until 28d (2026-10-21), now 13 here and 9 in the next entry. Of the 168 off: 156 because the
     // corpus now says the federal road is written for them (tests/fixtures/ideas/v1.ts, "road-federal"), so the
     // invented person clicks its card; 12 because, with no road written for them, they click the card the
-    // page shows first. The product change lists the federal card; the count moved with the clicks.
+    // page shows first. The product change lists the federal card; the count moved with the clicks. Joined with
+    // the three steps (PR #202, 2026-10-22) the same 13: an idea whose person leaves at "No road is written for
+    // <job> yet" saves nothing and draws no road, but none of these leaves there.
     why: "Outside Alberta, Pick a future lists the federal steps first (28d), and an idea picked there is drawn on a road written for its place. “Not here yet?” still keeps the note and opens road 0, the general road, anywhere, as its own spec says (docs/ui-spec/futures/03-road-match.md: “as today”): these are the ideas with no road written for them whose invented person keeps a note. The goal bar says “Map drawn: … written for AB; this idea is in …”, so it isn't silent; whether the note should open the federal steps there instead is the maintainer's call.",
     ideas: [188, 194, 197, 200, 203, 206, 212, 251, 287, 290, 308, 362, 365],
   },
@@ -83,22 +73,9 @@ export const KNOWN_GAPS: readonly KnownGap[] = [
     why: "Outside Alberta, Pick a future still offers Alberta's two futures behind one button (“Show the 2 futures written for Alberta”), each card saying “Written for Alberta. You said …”. A person who opens them and picks one is drawn on a road written for AB: the goal bar says “Map drawn: … written for AB; this idea is in …”, so it isn't silent, but every step is Alberta's. These are the ideas with no road written for them whose invented person opens the fold and clicks road 0's or road 1's card (tests/helpers/idea-pipeline.ts `pickedChoice`), so the path stays run; whether this end counts as honest, or the page should say more, is the maintainer's call.",
     ideas: [22, 199, 202, 208, 211, 289, 301, 361, 364],
   },
-  {
-    invariant: "ends:no-silent-fallback",
-    subject: "typed",
-    kind: "planned",
-    story: "S2.5.28c (honest road match)",
-    why: "Nothing matches a typed idea to a road, so an Alberta idea with no road written for it (a career, work the law forbids, words that don't say business or career) and a cabinetmaker idea (road 1 is written for it) all land on road 0 with only “No future picked: this idea is drawn on the general road.” 28c puts the road written for the picked job first, or says “No road is written for this job yet”.",
-    ideas: [
-      8, 46, 125, 180, 193, 250, 252, 272, 273, 274, 275, 276, 277, 278, 279, 280, 281, 282, 283, 284, 285, 286, 358, 359, 367,
-    ],
-  },
-  {
-    invariant: "ends:no-silent-fallback",
-    subject: "typed",
-    kind: "planned",
-    story: "S2.5.28c (honest road match) says so; the roads themselves are not planned yet (docs/architecture/use-cases.md, people 9 and 10)",
-    why: "An Alberta business that is closing, pausing, being sold, or behind on its filings is drawn on road 0, “Starting any business in Alberta”, with only “No future picked”. No road is written for closing or catching up: use-cases.md says of the closing steps “None of this exists yet” and lists catch-up paths as a need. 28c would say “No road is written for this yet” instead of drawing road 0 as if it were the road for them.",
-    ideas: [178, 183, 191, 195, 196, 201, 204, 205, 207, 209, 330, 331],
-  },
+  // Taken out on 2026-10-22 with the three steps (tasks 28b, 23g, 29h): the typed way's two silent-fallback
+  // entries (25 ideas drawn on road 0 with only "No future picked", and 12 closing, pausing, selling or catch-up
+  // ideas the same way). The typed way now ends on Pick a future's three steps, and the road drawn is the one the
+  // person opened on step 3, kept as their pick, with the step's own line saying why (the road written for their
+  // job first, "No road is written for <job> yet", or "You didn't pick a job").
 ];

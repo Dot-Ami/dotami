@@ -11,8 +11,13 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 const plants = vi.hoisted(() => ({
-  /** Pick a future's first save drops the road the person picked (the save carries no road id). */
+  /**
+   * The first save drops the road the person opened on step 3 (the save carries no road id). Since 2026-10-22 both
+   * ways in add the road through the three steps' save (`withTheSteps`), so the plant sits there.
+   */
   dropPickedRoad: false,
+  /** Step 3 lists the roads written for the person's pick of job last, after the others. */
+  writtenLast: false,
   /** Road evaluation's input picks a job for the person (the cabinetmakers' list) though they picked none. */
   deriveJob: false,
   /** The intake's scenario builder puts every idea in Alberta, whatever place the person answered. */
@@ -21,7 +26,24 @@ const plants = vi.hoisted(() => ({
   emptyNext: false,
   /** "I'd incorporate at" keeps nothing: the cockpit's save of it leaves the idea as it was. */
   dropIncorporateAt: false,
+  /**
+   * Step 1's search finds nothing for any words (the PR #202 review's plant): only a typed code still finds its
+   * job. The person types words, never a code, so they can't find their job.
+   */
+  wordsFindNothing: false,
 }));
+
+vi.mock("@/lib/engines/oasis/v2026/title-search", async (importOriginal) => {
+  const real = await importOriginal<typeof import("@/lib/engines/oasis/v2026/title-search")>();
+  return {
+    ...real,
+    searchJobTitles: (...args: Parameters<typeof real.searchJobTitles>) => {
+      const search = real.searchJobTitles(...args);
+      const aCode = /^\d/.test(args[0].trim());
+      return plants.wordsFindNothing && !aCode ? { ...search, state: "no-match" as const, groups: [], total: 0 } : search;
+    },
+  };
+});
 
 vi.mock("@/lib/scenarios/branches", async (importOriginal) => {
   const real = await importOriginal<typeof import("@/lib/scenarios/branches")>();
@@ -31,15 +53,27 @@ vi.mock("@/lib/scenarios/branches", async (importOriginal) => {
   };
 });
 
-vi.mock("@/lib/front-door/start-future", async (importOriginal) => {
-  const real = await importOriginal<typeof import("@/lib/front-door/start-future")>();
+vi.mock("@/lib/journey/first-save", async (importOriginal) => {
+  const real = await importOriginal<typeof import("@/lib/journey/first-save")>();
   return {
     ...real,
-    firstSaveForPickedFuture: (...args: Parameters<typeof real.firstSaveForPickedFuture>) => {
-      const save = real.firstSaveForPickedFuture(...args);
+    withTheSteps: (...args: Parameters<typeof real.withTheSteps>) => {
+      const save = real.withTheSteps(...args);
       if (!plants.dropPickedRoad) return save;
       const { roadId: _dropped, ...rest } = save;
       return rest;
+    },
+  };
+});
+
+vi.mock("@/lib/front-door/road-match", async (importOriginal) => {
+  const real = await importOriginal<typeof import("@/lib/front-door/road-match")>();
+  return {
+    ...real,
+    roadMatch: (...args: Parameters<typeof real.roadMatch>) => {
+      const match = real.roadMatch(...args);
+      // The two lists swapped: the other roads listed under "Written for your pick of job", the written one after.
+      return plants.writtenLast && match.case === "written" ? { ...match, forJob: match.others, others: match.forJob } : match;
     },
   };
 });
@@ -68,7 +102,7 @@ vi.mock("@/lib/scenarios/build-scenario-from-intake", async (importOriginal) => 
 
 import { IDEAS_V1 } from "./fixtures/ideas/v1";
 import { checkRun, gapKey, type InvariantId } from "./helpers/idea-invariants";
-import { pickedChoice, runIdea } from "./helpers/idea-pipeline";
+import { pickedChoice, runIdea, stepsChoice } from "./helpers/idea-pipeline";
 
 const idea = (id: string) => IDEAS_V1.find((i) => i.id === id)!;
 // An Alberta business written for road 0, a cabinetmaker written for road 1 (which also has known gaps on
@@ -91,41 +125,87 @@ function addedKeys(target: typeof ROAD_0_IDEA, plant: keyof typeof plants, invar
 
 afterEach(() => {
   plants.dropPickedRoad = false;
+  plants.writtenLast = false;
   plants.deriveJob = false;
   plants.moveToAlberta = false;
   plants.emptyNext = false;
   plants.dropIncorporateAt = false;
+  plants.wordsFindNothing = false;
 });
 
 describe("the harness fails on a planted product regression", () => {
-  it("a silent fallback on Pick a future: the road the person picked is dropped", () => {
-    // Road 0 picked: the cockpit still draws road 0, but as "No future picked", so only the picked way says so.
-    expect(addedKeys(ROAD_0_IDEA, "dropPickedRoad", "ends:no-silent-fallback")).toEqual([`${ROAD_0_IDEA.id} · ends:no-silent-fallback · picked`]);
-    // Road 1 picked: the typed way's own fallback (a known gap) must not hide the picked way's new one.
-    expect(addedKeys(ROAD_1_IDEA, "dropPickedRoad", "ends:no-silent-fallback")).toEqual([`${ROAD_1_IDEA.id} · ends:no-silent-fallback · picked`]);
+  it("a silent fallback on Pick a future: the road the person opened on step 3 is dropped", () => {
+    // Since 2026-10-22 both ways in end on the three steps, so dropping the road is a fallback on both: road 0
+    // still drawn, but as "No future picked", and road 1 not drawn at all.
+    for (const target of [ROAD_0_IDEA, ROAD_1_IDEA]) {
+      expect(addedKeys(target, "dropPickedRoad", "ends:no-silent-fallback")).toEqual([
+        `${target.id} · ends:no-silent-fallback · typed`,
+        `${target.id} · ends:no-silent-fallback · picked`,
+      ]);
+    }
   });
 
   it("a silent fallback on every click Pick a future offers, written for the idea or not", () => {
-    // Outside Alberta Pick a future lists the federal steps first (task 28d); in Alberta its two roads; and
-    // "Not here yet?" opens road 0 anywhere.
+    // Step 3 lists Alberta's two roads in Alberta; outside Alberta the federal steps first and Alberta's two folded
+    // (task 28d); and "Not here yet?" opens road 0 anywhere: a card after Skip, a card and the note for a job with
+    // no written road. The typed way opens the card the page shows first for the place for each.
     const clicks = [
+      [idea("idea-v1-0006"), { by: "card", roadId: "road-starting-any-business-ab" }], // Alberta, skipped
       [idea("idea-v1-0003"), { by: "card", roadId: "road-federal-steps-ca" }], // British Columbia, an app
+      [idea("idea-v1-0361"), { by: "card", roadId: "road-apprentice-to-own-shop-ab" }], // Ontario, folded, skipped
+      [idea("idea-v1-0022"), { by: "card", roadId: "road-starting-any-business-ab" }], // Ontario, folded, no road for the job
       [idea("idea-v1-0178"), { by: "card", roadId: "road-apprentice-to-own-shop-ab" }], // Alberta, closing a store
-      [idea("idea-v1-0180"), { by: "card", roadId: "road-starting-any-business-ab" }], // Alberta, back to a job
       [idea("idea-v1-0008"), { by: "not-here", roadId: "road-starting-any-business-ab" }], // Alberta, a career
       [idea("idea-v1-0188"), { by: "not-here", roadId: "road-starting-any-business-ab" }], // Newfoundland, closing a shop
     ] as const;
     for (const [target, click] of clicks) {
       expect(pickedChoice(target)).toEqual(click);
-      expect(addedKeys(target, "dropPickedRoad", "ends:no-silent-fallback")).toEqual([`${target.id} · ends:no-silent-fallback · picked`]);
+      expect(addedKeys(target, "dropPickedRoad", "ends:no-silent-fallback")).toEqual([
+        `${target.id} · ends:no-silent-fallback · typed`,
+        `${target.id} · ends:no-silent-fallback · picked`,
+      ]);
     }
   });
 
-  it("a job picked for the person by road evaluation's input", () => {
-    expect(addedKeys(ROAD_0_IDEA, "deriveJob", "nothing-derived:job")).toEqual([
-      `${ROAD_0_IDEA.id} · nothing-derived:job · typed`,
-      `${ROAD_0_IDEA.id} · nothing-derived:job · picked`,
+  it("the road written for the person's pick of job listed after the others on step 3 (task 29h)", () => {
+    // The cabinetmaker picked Cabinetmakers, 72311.00: road 1 is written for it and must come first, both ways in.
+    expect(stepsChoice(ROAD_1_IDEA, "picked")).toMatchObject({ job: { code: "72311.00" }, match: "written" });
+    expect(addedKeys(ROAD_1_IDEA, "writtenLast", "ends:no-silent-fallback")).toEqual([
+      `${ROAD_1_IDEA.id} · ends:no-silent-fallback · typed › step 3`,
+      `${ROAD_1_IDEA.id} · ends:no-silent-fallback · picked › step 3`,
     ]);
+  });
+
+  it("a job search that can't find the person's job from their words (step 1 is played through the search)", () => {
+    // Unplanted, the cabinetmaker types the kind of work and finds Cabinetmakers in the group shown open.
+    expect(stepsChoice(ROAD_1_IDEA, "picked").search).toEqual({
+      typed: ROAD_1_IDEA.work,
+      by: "work",
+      group: "all",
+      groupOpen: true,
+      groupTotal: expect.any(Number),
+    });
+    plants.wordsFindNothing = true;
+    // Planted, neither the work's words nor the job's own name lists it: the run stops, naming the job, on both
+    // ways in, as a person who can't find their job can't pick it.
+    expect(() => stepsChoice(ROAD_1_IDEA, "picked")).toThrow(/72311\.00/);
+    expect(() => stepsChoice(ROAD_1_IDEA, "typed")).toThrow(/72311\.00/);
+    expect(() => runIdea(ROAD_1_IDEA)).toThrow(/72311\.00/);
+    // An idea that names no job skips step 1, so the plant changes nothing for it.
+    expect(() => runIdea(ROAD_0_IDEA)).not.toThrow();
+  });
+
+  it("a job picked for the person by road evaluation's input", () => {
+    // A person who skipped the job question, and a plumber who picked another job (72300.00): the cabinetmakers'
+    // list in either cockpit is a job the person didn't pick (task 29h: "a job the person didn't pick still fails").
+    for (const target of [ROAD_0_IDEA, Y3_IDEA]) {
+      expect(addedKeys(target, "deriveJob", "nothing-derived:job")).toEqual([
+        `${target.id} · nothing-derived:job · typed`,
+        `${target.id} · nothing-derived:job · picked`,
+      ]);
+    }
+    // The cabinetmaker picked that very job, so the same list is theirs: nothing is added.
+    expect(addedKeys(ROAD_1_IDEA, "deriveJob", "nothing-derived:job")).toEqual([]);
   });
 
   it("Next on your road left empty while the road isn't done", () => {

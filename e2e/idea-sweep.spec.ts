@@ -8,11 +8,13 @@
  * week's number, so a given week's four are the same on every machine and can be rerun with
  * `IDEA_SWEEP_WEEK=2026-W42`. The thirteen are printed when the file loads and listed by the last test.
  *
- * Each idea goes in both ways the app has: typed into "I already have an idea" (the intake's screens, the
- * cockpit on road 0, the plan), and, for an idea with a province or territory, picked on *Pick a future* after
- * *Your destination* (the card the corpus harness's `pickedChoice` clicks for it, or the "Not here yet?" note,
- * then the cockpit and the plan). An idea with nothing typed stops at the box, and one outside Canada at the
- * intake's place question; the sweep checks those honest ends too.
+ * Each idea goes in both ways the app has: typed into "I already have an idea" (the intake's screens, then
+ * Pick a future's three steps on the intake page, the cockpit, the plan), and, for an idea with a province or
+ * territory, picked on *Pick a future* after *Your destination*. Both ways play the three steps (task 29h) as the
+ * corpus harness records the person's clicks for the idea (`stepsChoice`): the expected job found from the person's
+ * words (the kind of work, or the job's own name) and clicked, or Skip; the area and the region in Alberta; then the card, the "Not here yet?" note, or leaving at
+ * "No road is written for <job> yet" with nothing saved. An idea with nothing typed stops at the box, and one
+ * outside Canada at the intake's place question; the sweep checks those honest ends too.
  *
  * On every screen as it opens (and the cockpit with its rail shown, where the person's answers are listed),
  * three checks, over the page's text read the way the harness reads the app's words: line by line (a block's
@@ -26,14 +28,22 @@
  *   a source's own words, drawn in quote marks (the plan's citation quotes, word for word as a catalog's
  *   citation carries them, which the harness tags `official-quote` and never reads as DotAmi's), are taken
  *   out first; the government's requirement lines pass only under their label, on About this job, and only
- *   lines the shipped file holds (tests/helpers/official-quotes.ts; none on any screen this sweep opens yet,
- *   so it lifts none); anything else in quote marks is read as DotAmi's; a known gap in a words file is let
- *   through here only while it is listed in tests/fixtures/ideas/known-gaps.ts (none since 2026-10-20);
+ *   lines the shipped file holds for the job the run picked (tests/helpers/official-quotes.ts; read below);
+ *   anything else in quote marks is read as DotAmi's; a known gap in a words file is let through here only
+ *   while it is listed in tests/fixtures/ideas/known-gaps.ts (none since 2026-10-20);
  * - the clutter measurer (e2e/clutter-measure.ts, the same code as e2e/clutter-budget.spec.ts): no drawn block
  *   without a region mark on any screen; and where the screen's state is the one e2e/budgets.ts measures (the
  *   front door, Pick a future after Your destination, the cockpit's first visit on a picked future, the plan),
  *   its budget at laptop size. The intake's screens and a typed idea's cockpit carry the idea's own words and
  *   chips, which the budgets don't, so those are measured and printed, not held.
+ *
+ * Then, for an idea the corpus names a job for (`jobs`), on the future it picked: that job picked the way a
+ * person picks it, *About this job* (25h) opened from Look closer, and the panel read through the gate's checks
+ * (e2e/about-job-read.ts): no verdict; no time words, the government's requirement lines lifted only inside
+ * their labelled quote on the rules row and only as the shipped file holds them for that job group; every
+ * dollar figure a published wage on its own wage block, read back as the wage file's own row with the level its
+ * source code gives (a summed wage, a figure outside its row or a row labelled with another level is named);
+ * and its blocks through the clutter measurer. The last test plants each of those and shows it is caught.
  *
  * What it finds is a finding for the maintainer, listed in `SCREEN_GAPS` with its story, never fixed quietly:
  * the list is a ratchet, like the harness's known gaps (an idea's test fails on a listed gap it was expected
@@ -45,19 +55,27 @@ import { COCKPIT_FOLDS_KEY } from "../lib/cockpit/folds";
 import { allCatalogCitations } from "../lib/engines/all-citations";
 import { toolCheckQuotes } from "../lib/engines/shared/citation-check";
 import { generalRoadV2026, roadApprenticeToOwnShopAB, roadById, roadFederalStepsCA, roadsV2026 } from "../lib/engines/roads/v2026";
+import { placeName } from "../lib/front-door/receipts";
 import { parseIntentFallback } from "../lib/journey/intent-fallback";
+import type { PlaceCode } from "../lib/places/codes";
 import { PROVINCES, type Province } from "../lib/scenarios/types";
 import { SHOWN_WORDS_GAPS } from "../tests/fixtures/ideas/known-gaps";
 import { IDEAS_V1, type Idea } from "../tests/fixtures/ideas/v1";
-import { pickedChoice, SCREEN_WORK_SITUATION } from "../tests/helpers/idea-pipeline";
+import { intakeStepsWords, jobStepWords, pickWords, whereStepWords } from "../lib/front-door/words";
+import { pickedChoice, SCREEN_WORK_SITUATION, stepsChoice, type StepsRun } from "../tests/helpers/idea-pipeline";
 import { waitForReact } from "../tests/helpers/react-ready";
 import { normaliseSpaces } from "../tests/helpers/text-pieces";
 import { findTimeWords } from "../tests/helpers/time-words";
 import { findVerdicts } from "../tests/helpers/verdict-words";
 
-import { BUDGETS, WINDOWS_EXTRA, type Clutter, type ScreenId } from "./budgets";
+import { jobGroupOf, oasisJobByCode } from "../lib/engines/oasis/v2026";
+
+import { ABOUT_JOB, aboutJobPanel, readAboutJob, saveIdea } from "./about-job-read";
+import type { ScreenId } from "./budgets";
 import { measurePage, type Measured } from "./clutter-measure";
-import { cockpitSettled, showRail } from "./cockpit-calm";
+import { budgetFor, clutterBreaches } from "./clutter-rule";
+import { cockpitSettled, lookCloser, pickJob, showRail } from "./cockpit-calm";
+import { findTheJobByWords } from "./three-steps";
 
 // --- Which ideas.
 
@@ -221,8 +239,8 @@ const CITATION_QUOTES = new Set(allCatalogCitations().flatMap(({ citation }) => 
  * quote a catalog's citation carries, word for word, is taken out (since 29k: before, anything in quote marks
  * was). The government's requirement lines on About this job are taken out by `findTimeWords` itself, by
  * source kind, only under their label, at that panel's place and only lines the run read from the shipped file
- * (its third argument, tests/helpers/official-quotes.ts); the sweep passes none, since no screen it opens
- * quotes them yet (25h passes them when it adds the panel). Anything else in quote marks is read
+ * (its third argument, tests/helpers/official-quotes.ts); this whole-screen reading passes none, and the panel
+ * is read on its own, row by row, with them (e2e/about-job-read.ts). Anything else in quote marks is read
  * as DotAmi's words. For the time check only: the verdict check keeps its own short list of quotes allowed to
  * carry one.
  */
@@ -230,21 +248,14 @@ const withoutCitationQuotes = (text: string) => text.replace(/“([^”]*)”/g,
 
 /**
  * The cockpit budget a picked road's first visit is held to (e2e/budgets.ts), so the sweep reads any road the
- * catalog holds (task 29j): a road with no row here fails the last test below.
+ * catalog holds (task 29j): a road with no row here fails the last test below. The budget itself is the clutter
+ * spec's own rule (e2e/clutter-rule.ts `budgetFor`).
  */
 const HELD_FOR_ROAD: Readonly<Record<string, ScreenId>> = {
   [generalRoadV2026.id]: "cockpit-road-0",
   [roadApprenticeToOwnShopAB.id]: "cockpit-road-1",
   [roadFederalStepsCA.id]: "cockpit-federal",
 };
-
-/** The budget for this screen and the one it is held to, with Windows' extra where Chromium there counts more. */
-function budgetFor(screen: ScreenId): Clutter | null {
-  const gate = BUDGETS[screen]?.laptop;
-  if (!gate) return null;
-  const extra = process.platform === "win32" ? (WINDOWS_EXTRA[screen]?.laptop ?? {}) : {};
-  return { ...gate, regions: gate.regions + (extra.regions ?? 0), controls: gate.controls + (extra.controls ?? 0), textSizes: gate.textSizes + (extra.textSizes ?? 0) };
-}
 
 /**
  * Reads the screen as it is now: its words for verdicts and times, and its layout with the clutter measurer.
@@ -262,14 +273,10 @@ async function read(s: Sweep, where: string, held: ScreenId | null = null) {
   });
   const m: Measured = await s.page.evaluate(measurePage);
   s.measured.push(`${where}: ${m.regions} regions, ${m.controls} controls, ${m.textSizes} text sizes, smallest ${m.smallestTextPx}px${held ? ` (held to ${held})` : ""}`);
-  for (const block of m.unmarkedBlocks) s.findings.push({ where: at, what: `clutter: a drawn block with no region mark, inside none: ${block}` });
-  const budget = held ? budgetFor(held) : null;
-  if (budget) {
-    if (m.regions > budget.regions) s.findings.push({ where: at, what: `clutter: ${m.regions} regions, budget ${budget.regions} (${m.regionNames.join(", ")})` });
-    if (m.controls > budget.controls) s.findings.push({ where: at, what: `clutter: ${m.controls} controls in the first window, budget ${budget.controls} (${m.controlNames.join(" | ")})` });
-    if (m.textSizes > budget.textSizes) s.findings.push({ where: at, what: `clutter: ${m.textSizes} text sizes, budget ${budget.textSizes} (${m.sizesPx.join(", ")} px)` });
-    if (m.smallestTextPx < budget.smallestTextPx) s.findings.push({ where: at, what: `clutter: the smallest text is ${m.smallestTextPx}px, budget ${budget.smallestTextPx}px` });
-  }
+  // The clutter spec's own rule (e2e/clutter-rule.ts), at the laptop width the sweep runs at: the unmarked blocks
+  // always, the budget only when the screen is in the state it was measured on.
+  const budget = held ? budgetFor(held, "laptop") : null;
+  for (const breach of clutterBreaches(m, budget)) s.findings.push({ where: at, what: `clutter: ${breach}` });
 }
 
 // --- The two ways in.
@@ -296,10 +303,46 @@ const LOOKING_FOR_BUTTON: Record<Idea["lookingFor"], string> = {
   "not-said": "Both, or not sure",
 };
 
-/** The cockpit as it opens (the first visit) and with its rail shown, then the plan from Export. */
-async function cockpitAndPlan(s: Sweep, way: string, held: ScreenId | null) {
+/**
+ * *About this job* (25h), on the cockpit the idea's run just left: the job the corpus names for the idea
+ * (`jobs`, its first) picked the way a person picks it, then the panel opened from Look closer and read through
+ * the gate's checks (e2e/about-job-read.ts: verdicts, time words with the labelled-quote allowance, every
+ * figure a published wage on its own row), and its blocks through the clutter measurer. An idea that names no
+ * job opens no panel: the sweep picks nothing the corpus doesn't give it.
+ */
+async function aboutThisJob(s: Sweep, way: string, cockpit: string) {
+  const { page, idea } = s;
+  const code = idea.jobs?.[0];
+  if (!code) {
+    s.measured.push(`about this job (${way}): not opened (the idea names no job)`);
+    return;
+  }
+  const job = oasisJobByCode(code);
+  if (!job) throw new Error(`${idea.id} names job ${code}, which isn't on the government's list`);
+  await page.goto(cockpit);
+  await pickJob(page, job.label, job.code);
+  await lookCloser(page, ABOUT_JOB, goalBar(page));
+  await expect(aboutJobPanel(page)).toBeVisible();
+  const where = `cockpit (${way}), about this job for ${job.label} · ${job.code}`;
+  const at = `${idea.id} › ${where}`;
+  for (const what of await readAboutJob(page, at, jobGroupOf(job.code))) s.findings.push({ where: at, what });
+  await page.evaluate(async () => {
+    await document.fonts.ready;
+  });
+  const m: Measured = await page.evaluate(measurePage);
+  s.measured.push(`${where}: ${m.regions} regions, ${m.controls} controls, ${m.textSizes} text sizes, smallest ${m.smallestTextPx}px`);
+  for (const block of m.unmarkedBlocks) s.findings.push({ where: at, what: `clutter: a drawn block with no region mark, inside none: ${block}` });
+}
+
+/**
+ * The cockpit as it opens (the first visit) and with its rail shown, then the plan from Export; with
+ * `aboutJob`, then back to the cockpit for *About this job* (after the plan, so the screens before it are read
+ * in the state their budgets were measured on, with no job picked).
+ */
+async function cockpitAndPlan(s: Sweep, way: string, held: ScreenId | null, aboutJob = false) {
   const { page } = s;
   await expect(page).toHaveURL(/\/cockpit/);
+  const cockpit = page.url();
   await cockpitSettled(page);
   await expect(goalBar(page)).toBeVisible();
   // "Future: <road>" on a road written for the idea's place, "Map drawn: <road> · written for …" elsewhere.
@@ -314,6 +357,7 @@ async function cockpitAndPlan(s: Sweep, way: string, held: ScreenId | null) {
   await expect(page).toHaveURL(/\/plan\?venture=/);
   await expect(page.getByRole("region", { name: "What this plan is" })).toBeVisible();
   await read(s, `plan (${way})`, "plan");
+  if (aboutJob) await aboutThisJob(s, way, cockpit);
 }
 
 /** "I already have an idea": the box, the intake's screens, the cockpit on road 0, the plan. */
@@ -355,7 +399,7 @@ async function typedWay(s: Sweep) {
   if (!isProvince(idea.place)) {
     // Outside Canada or not said: the place question has no answer, the screen says why, and the map can't open.
     await expect(page.getByText("Canada is the first jurisdiction mapped; other countries are not on the map yet.")).toBeVisible();
-    await expect(button(page, "Open my map →")).toBeDisabled();
+    await expect(button(page, intakeStepsWords.next)).toBeDisabled();
     s.measured.push(`typed: stopped at the intake's place question (${idea.place})`);
     return;
   }
@@ -364,9 +408,88 @@ async function typedWay(s: Sweep) {
   await page.getByRole("textbox", { name: "Name it — optional", exact: true }).fill(`Invented — idea sweep ${idea.id} (typed)`);
   if (idea.y1) await page.getByLabel("Year 1 revenue").fill(String(idea.y1));
   if (idea.y3) await page.getByLabel("Year 3 revenue").fill(String(idea.y3));
-  await button(page, "Open my map →").click();
+  // Since 2026-10-22 the typed way ends on Pick a future's three steps, on the intake page (the maintainer's call 1).
+  await button(page, intakeStepsWords.next).click();
+  const opened = await playTheSteps(s, "typed", stepsChoice(idea, "typed"));
+  if (!opened) return;
   // A typed idea's cockpit carries its words in the goal bar: measured, not held (see the file's comment).
-  await cockpitAndPlan(s, "typed", null);
+  // About this job is read on the picked way; here only for an idea whose picked way ends with no road written
+  // for its job (nothing saved there), so every idea that reaches a cockpit still reads it once.
+  await cockpitAndPlan(s, "typed", null, stepsChoice(idea, "picked").click.by === "left");
+}
+
+/**
+ * Pick a future's three steps (task 29h), played as the corpus harness records the person's clicks for this idea
+ * (`stepsChoice`): the job found from the person's words and clicked, or Skip; in Alberta the area and the region; then the
+ * card, the "Not here yet?" note, or leaving at "No road is written for <job> yet" (nothing saved). Each part is
+ * read as it opens. Step 1 on Pick a future is the state the `futures` budget measures, so it is held to it.
+ * Returns whether a future was opened.
+ */
+async function playTheSteps(s: Sweep, way: "typed" | "picked", steps: StepsRun): Promise<boolean> {
+  const { page, idea } = s;
+  await expect(page.getByRole("heading", { name: jobStepWords.heading })).toBeVisible();
+  await read(s, `${way}: step 1, your work`, way === "picked" ? "futures" : null);
+  if (steps.job === null) {
+    await button(page, jobStepWords.skip).click();
+  } else {
+    // Through the word search, as the person plays it: typed words, never the job's code.
+    await findTheJobByWords(page, steps.job, steps.search!);
+    s.measured.push(`${way}: step 1, found ${steps.job.code} by typing “${steps.search!.typed}” (${steps.search!.by})`);
+    if (steps.area !== null && steps.region !== null) {
+      const area = page.getByRole("combobox", { name: whereStepWords.area.label });
+      await expect(area).toBeVisible();
+      await read(s, `${way}: step 2a, your area`);
+      await area.selectOption(steps.area);
+      await button(page, whereStepWords.area.next).click();
+      const region = page.getByRole("combobox", { name: whereStepWords.region.label });
+      await expect(region).toBeVisible();
+      await read(s, `${way}: step 2b, your region`);
+      await region.selectOption(steps.region);
+      await read(s, `${way}: step 2b, your region, answered`);
+      await button(page, whereStepWords.region.next).click();
+    } else {
+      // Outside Alberta: one short part that asks nothing and says why.
+      await expect(button(page, whereStepWords.outside.next)).toBeVisible();
+      await read(s, `${way}: step 2, outside Alberta`);
+      await button(page, whereStepWords.outside.next).click();
+    }
+  }
+  await expect(page.getByRole("heading", { name: pickWords.heading, level: 1 })).toBeVisible();
+  // Outside Alberta, Pick a future's step 3 with the job skipped is the state `futures-outside-alberta` measures
+  // (task 28d: the federal steps first, Alberta's two folded).
+  const outsideAlberta = steps.folded.length > 0;
+  const held: ScreenId | null = way === "picked" && outsideAlberta && steps.match === "skipped" ? "futures-outside-alberta" : null;
+  await read(s, `${way}: step 3 (${steps.match})`, held);
+  // The cards shown, in order, by their Look inside buttons; outside Alberta the Alberta ones are folded until the
+  // person opens them.
+  const lookInsides = page.getByRole("button", { name: /^Look inside / });
+  const label = (id: string) => pickWords.lookInsideName(roadById(id)!.label);
+  const shown = steps.offered.filter((id) => !steps.folded.includes(id)).map(label);
+  expect(await lookInsides.evaluateAll((all) => all.map((b) => b.getAttribute("aria-label"))), `${idea.id} › ${way}: step 3 lists the roads written for the picked job first`).toEqual(shown);
+  if (steps.click.by === "left") {
+    // The honest end for a job with no written road: the step says so, and nothing is saved.
+    const outsidePlace = outsideAlberta ? placeName(`CA-${idea.place}` as PlaceCode) : undefined;
+    await expect(page.getByRole("heading", { name: pickWords.noRoad.heading(steps.job!.label, steps.job!.code, outsidePlace) })).toBeVisible();
+    await expect(page.getByText(pickWords.noRoad.nothingSaved, { exact: true })).toBeVisible();
+    s.measured.push(`${way}: left at "No road is written for ${steps.job!.label} yet" (nothing saved)`);
+    return false;
+  }
+  const road = roadById(steps.click.roadId)!;
+  if (steps.click.by === "card") {
+    if (way === "picked") await page.getByRole("textbox", { name: "Name it (optional)" }).fill(`Invented — idea sweep ${idea.id} (picked)`);
+    // An Alberta future picked from outside Alberta: the person opens the fold first, as the page asks.
+    if (steps.folded.includes(road.id)) {
+      await button(page, pickWords.showAlberta(steps.folded.length)).click();
+      await expect(lookInsides.evaluateAll((all) => all.map((b) => b.getAttribute("aria-label")))).resolves.toEqual(steps.offered.map(label));
+      await read(s, `${way}: step 3, the Alberta futures shown`);
+    }
+    await page.getByRole("button", { name: pickWords.lookInsideName(road.label), exact: true }).click();
+  } else {
+    // "Not here yet?": the note is kept as one of the person's statements, and the general road opens.
+    await page.getByRole("textbox", { name: "Not here yet?" }).fill(idea.words);
+    await button(page, "Keep my note and look inside the general road").click();
+  }
+  return true;
 }
 
 /** Your destination, Pick a future, the person's click, the cockpit on the road picked, the plan. */
@@ -376,7 +499,6 @@ async function pickedWay(s: Sweep) {
     s.measured.push(`picked: not taken (${idea.place}: Pick a future needs a province or territory)`);
     return;
   }
-  const choice = pickedChoice(idea);
   await page.goto("/start");
   await expect(page.getByRole("heading", { level: 1 })).toHaveText("Your destination");
   await forgetTheCockpit(page);
@@ -410,30 +532,15 @@ async function pickedWay(s: Sweep) {
 
   await next.click();
   await expect(page).toHaveURL(/\/futures$/);
-  // Any road the catalog holds (task 29j): the page lists the ones for the person's place, the federal steps
-  // first outside Alberta, with Alberta's two behind one button there (task 28d).
-  const outsideAlberta = idea.place !== "AB";
-  const firstCard = outsideAlberta ? roadFederalStepsCA : generalRoadV2026;
-  const lookInside = page.getByRole("button", { name: `Look inside ${firstCard.label}` });
-  await waitForReact(lookInside);
-  await read(s, "pick a future", outsideAlberta ? "futures-outside-alberta" : "futures");
-  const road = roadById(choice.roadId)!;
-  const held = HELD_FOR_ROAD[road.id];
-  if (choice.by === "card") {
-    await page.getByRole("textbox", { name: "Name it (optional)" }).fill(`Invented — idea sweep ${idea.id} (picked)`);
-    const card = page.getByRole("button", { name: `Look inside ${road.label}` });
-    // An Alberta future picked from outside Alberta: the person opens the fold first, as the page asks.
-    if (!(await card.isVisible())) {
-      await page.getByRole("button", { name: /^Show the \d+ futures? written for Alberta$/ }).click();
-      await read(s, "pick a future, the Alberta futures shown");
-    }
-    await card.click();
-  } else {
-    // "Not here yet?": the note is kept as one of the person's statements, and the general road opens.
-    await page.getByRole("textbox", { name: "Not here yet?" }).fill(idea.words);
-    await button(page, "Keep my note and look inside the general road").click();
-  }
-  await cockpitAndPlan(s, `picked by ${choice.by}`, held);
+  await waitForReact(page.getByRole("searchbox", { name: jobStepWords.boxLabel }));
+  const steps = stepsChoice(idea, "picked");
+  if (!(await playTheSteps(s, "picked", steps))) return;
+  if (steps.click.by === "left") return;
+  // Any road the catalog holds (task 29j): its first visit is held to its own budget.
+  const held = HELD_FOR_ROAD[steps.click.roadId] ?? null;
+  // About this job once per idea, on the future the person picked (an idea that leaves at "No road is written
+  // for <job> yet" reads it on the typed way instead, see `typedWay`).
+  await cockpitAndPlan(s, `picked by ${steps.click.by}`, held, true);
 }
 
 // --- The tests.
@@ -473,7 +580,11 @@ test("the sweep ran thirteen ideas, nine fixed and four for the week, and every 
   // Each card path Pick a future offers outside Alberta is clicked by a fixed idea every week: the federal card
   // shown first, and an Alberta card behind "Show the 2 futures written for Alberta" (the fold `pickedWay` opens).
   const fixedOutsideAlberta = FIXED_IDEAS.map(ideaById).filter((idea) => isProvince(idea.place) && idea.place !== "AB");
-  const clicked = fixedOutsideAlberta.map((idea) => roadById(pickedChoice(idea).roadId)!);
+  // (An idea whose person leaves at "No road is written for <job> yet" clicks no card: pickedChoice is null.)
+  const clicked = fixedOutsideAlberta.flatMap((idea) => {
+    const choice = pickedChoice(idea);
+    return choice ? [roadById(choice.roadId)!] : [];
+  });
   expect(clicked.some((road) => road.id === roadFederalStepsCA.id), "no fixed idea outside Alberta clicks the federal card").toBe(true);
   expect(clicked.some((road) => !(road.provinces as readonly string[]).includes("CA")), "no fixed idea outside Alberta opens the Alberta futures and clicks one").toBe(true);
   console.log(`idea sweep, ${WEEK}, ran: ${ids.join(", ")}`);
@@ -509,4 +620,82 @@ test("the control: the same reading catches a verdict and a time put on a real s
   const what = s.findings.map((f) => f.what);
   expect(what.some((w) => w.startsWith("verdict: top pick:"))).toBe(true);
   expect(what.some((w) => w.startsWith("time: a duration:"))).toBe(true);
+});
+
+test("the control: About this job's reading catches an unlabelled quote, a line the file doesn't hold, a summed wage, a wrong level and a verdict", async ({ page }) => {
+  test.setTimeout(120_000);
+  // Cabinetmakers in Alberta, the province's own row (ER48), whose government lines name a four-year apprenticeship.
+  const cockpit = await saveIdea(page, `Invented — idea sweep control ${Date.now()}`, "AB", generalRoadV2026.id);
+  await page.goto(cockpit);
+  await pickJob(page, "Cabinetmakers", "72311.00");
+  const open = async () => {
+    await page.goto(cockpit);
+    await lookCloser(page, ABOUT_JOB, goalBar(page));
+    await expect(aboutJobPanel(page)).toBeVisible();
+  };
+  const at = "control › about this job";
+  await open();
+  // Untouched: nothing found, the government's own lines with their durations lifted inside their labelled quote.
+  expect(await readAboutJob(page, at, "72311")).toEqual([]);
+
+  const planted: { what: string; plant: (panel: HTMLElement) => void; found: RegExp }[] = [
+    {
+      what: "a sentence of DotAmi's own in quote marks, no label",
+      plant: (panel) => {
+        const line = document.createElement("p");
+        line.textContent = "“Most shops open within 2 years.”";
+        panel.querySelector("[data-about-row='counts']")!.append(line);
+      },
+      found: /^time \(counts\): a duration/,
+    },
+    {
+      what: "a line inside the government's quote that its file doesn't hold",
+      plant: (panel) => {
+        const line = document.createElement("p");
+        line.textContent = "“Completion takes 4 years.”";
+        panel.querySelector("blockquote")!.append(line);
+      },
+      found: /^time \(rules\): /,
+    },
+    {
+      what: "the median drawn as low plus high",
+      plant: (panel) => {
+        const figures = [...panel.querySelectorAll("[data-wage-row] p")].find((p) => p.textContent?.startsWith("Hourly"))!;
+        const [low, , high] = [...(figures.textContent ?? "").matchAll(/\$([\d.]+)/g)].map((m) => Number(m[1]));
+        figures.textContent = (figures.textContent ?? "").replace(/median \$[\d.]+/, `median $${(low + high).toFixed(2)}`);
+      },
+      found: /^amount: .*› wages › ER48: \$48\.00/,
+    },
+    {
+      what: "the province's row labelled as an economic region",
+      plant: (panel) => {
+        panel.querySelector("[data-wage-row] p")!.textContent = "Economic region: Calgary";
+      },
+      found: /^wage row ER48: the row says economic-region, but its source code .* gives province/,
+    },
+    {
+      what: "a wage in a sentence outside the wage row",
+      plant: (panel) => {
+        const line = document.createElement("p");
+        line.textContent = "A shop like this takes in $23.00 an hour.";
+        panel.querySelector("[data-about-row='counts']")!.append(line);
+      },
+      found: /^amount: .*outside the wage rows: \$23\.00/,
+    },
+    {
+      what: "a verdict",
+      plant: (panel) => {
+        const line = document.createElement("p");
+        line.textContent = "Top pick";
+        panel.querySelector("[data-about-row='links']")!.append(line);
+      },
+      found: /^verdict: top pick/,
+    },
+  ];
+  for (const { what, plant, found } of planted) {
+    await open();
+    await aboutJobPanel(page).evaluate(plant);
+    const findings = await readAboutJob(page, at, "72311");
+    expect(findings.some((f) => found.test(f)), `${what}: ${JSON.stringify(findings)}`).toBe(true);
+  }
 });

@@ -170,6 +170,65 @@ describe("POST /api/futures/<id>/job: the job closest to the person's work", () 
     expect((await read()).body.future).toMatchObject({ job: null });
   });
 
+  it("gives About this job for the picked job on the next read (built on the server), and none while no job is picked", async () => {
+    expect((await read()).body).toMatchObject({ aboutJob: null });
+    await routes.job(post(`/api/futures/${ventureId}/job`, { code: "72311.00" }), params(ventureId));
+    const about = (await read()).body.aboutJob as { job: unknown; group: unknown; wages: { context: unknown }; area: unknown };
+    expect(about.job).toEqual({ code: "72311.00", label: "Cabinetmakers" });
+    expect(about.group).toEqual({ code: "72311", title: "Cabinetmakers" });
+    // This idea keeps no region or area: read as not picked.
+    expect(about.wages.context).toEqual({ kind: "not-picked" });
+    expect(about.area).toBeNull();
+    await routes.job(post(`/api/futures/${ventureId}/job`, { code: null }), params(ventureId));
+    expect((await read()).body).toMatchObject({ aboutJob: null });
+  });
+
+  it("About this job reads the region and area the idea keeps (Pick a future's step 2): the region's own row; I don't know and outside Alberta the place's", async () => {
+    type About = { wages: { context: unknown; shown: { kind: string; row?: { geography: { code: string }; low: string; median: string; high: string } } }; area: unknown };
+    const about = async () => (await read()).body.aboutJob as About;
+    const rowOf = (a: About) => ({ code: a.wages.shown.row?.geography.code, low: a.wages.shown.row?.low, median: a.wages.shown.row?.median, high: a.wages.shown.row?.high });
+    const keep = (data: { province?: "AB" | "ON"; landscapeArea: string | null; economicRegion: string | null }) =>
+      prisma.venture.update({ where: { id: ventureId }, data });
+    await routes.job(post(`/api/futures/${ventureId}/job`, { code: "72311.00" }), params(ventureId));
+    try {
+      // Calgary picked as the area and as the region, each by the person (the route never derives one).
+      await keep({ landscapeArea: "cma-825", economicRegion: "4830" });
+      let a = await about();
+      expect(a.wages.context).toEqual({ kind: "region", region: "Calgary" });
+      expect(rowOf(a)).toEqual({ code: "ER4830", low: "18", median: "23", high: "30" });
+      expect(a.area).toBe("Calgary");
+
+      // Edmonton's region with the area left at Calgary: Edmonton's own row.
+      await keep({ landscapeArea: "cma-825", economicRegion: "4860" });
+      a = await about();
+      expect(a.wages.context).toEqual({ kind: "region", region: "Edmonton" });
+      expect(rowOf(a)).toEqual({ code: "ER4860", low: "18", median: "23", high: "29" });
+
+      // An area and no region: no region, never one worked out from the area.
+      await keep({ landscapeArea: "cma-825", economicRegion: null });
+      a = await about();
+      expect(a.wages.context).toEqual({ kind: "not-picked" });
+      expect(rowOf(a).code).toBe("ER48");
+
+      // I don't know: Alberta's own row, because they said so.
+      await keep({ landscapeArea: "dont-know", economicRegion: "dont-know" });
+      a = await about();
+      expect(a.wages.context).toEqual({ kind: "dont-know" });
+      expect(rowOf(a).code).toBe("ER48");
+      expect(a.area).toBe("I don't know");
+
+      // Outside Alberta nothing is asked: the province's own row, and no area, whatever the file holds.
+      await keep({ province: "ON", landscapeArea: "cma-825", economicRegion: "4830" });
+      a = await about();
+      expect(a.wages.context).toEqual({ kind: "outside-alberta", place: "Ontario" });
+      expect(rowOf(a).code).toBe("ER35");
+      expect(a.area).toBeNull();
+    } finally {
+      await keep({ province: "AB", landscapeArea: null, economicRegion: null });
+      await routes.job(post(`/api/futures/${ventureId}/job`, { code: null }), params(ventureId));
+    }
+  });
+
   it("refuses a code that isn't a job, and a body without one, with nothing kept", async () => {
     for (const body of [{ code: "99999.99" }, { code: 72311 }, {}]) {
       expect((await routes.job(post(`/api/futures/${ventureId}/job`, body), params(ventureId))).status).toBe(400);

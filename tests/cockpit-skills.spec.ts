@@ -11,6 +11,7 @@ import { describe, expect, it } from "vitest";
 
 import { SkillsListPanel } from "@/components/cockpit/gauge-panels";
 import { StepPanel } from "@/components/cockpit/step-panel";
+import { jobStepWords } from "@/lib/front-door/words";
 import { cockpitWords } from "@/lib/cockpit/words";
 import { gaugeView } from "@/lib/cockpit/view";
 import { OASIS_ATTRIBUTION, oasisDatasetCitation, oasisListForJob } from "@/lib/engines/oasis/v2026";
@@ -57,7 +58,11 @@ describe("the Skills list: your pick of job", () => {
     expect(html).toContain(esc(cockpitWords.lists.job.title));
     expect(html).toContain(esc(cockpitWords.lists.job.ask));
     expect(html).toContain(esc(cockpitWords.lists.job.optional));
-    expect(html).toContain(`aria-label="${cockpitWords.lists.job.search}"`);
+    // The one job picker (2026-10-22): the same box and words as Pick a future's first step, a search field
+    // named by its label, with nothing typed and nothing listed.
+    expect(html).toContain(`type="search"`);
+    expect(html).toContain(esc(jobStepWords.boxLabel));
+    expect(html).toContain(esc(jobStepWords.boxHint));
     // No row is drawn, so no row's tag (the optional line names the tag in its own words).
     expect(html).not.toContain(`>${cockpitWords.lists.job.tag}<`);
   });
@@ -120,11 +125,11 @@ describe("the words for the job's list", () => {
     expect(oasisDatasetCitation("knowledge", "72311.00").note).not.toMatch(NO_SOURCE);
   });
 
-  it("say when the search shows only some of the jobs that match", () => {
-    expect(cockpitWords.lists.job.more(10, 56)).toBe("Showing 10 of 56 jobs that match. Type more of the name or the code to narrow it.");
-    // The search reads the names and codes, so the no-match line says no name or code holds the words,
-    // not that no such job exists.
-    expect(cockpitWords.lists.job.noMatch).toBe("No job name or code holds those words.");
+  it("are the first step's words for the search, so there is one picker (2026-10-22)", () => {
+    // The old names-only search said "Showing 10 of 56 jobs that match" and "No job name or code holds those
+    // words"; both are gone with it, and the group's cap and the no-match line are the step's own.
+    expect(JSON.stringify(cockpitWords.lists.job)).not.toContain("Search jobs by name or code");
+    expect(jobStepWords.capped(50, 56)).toBe("Showing the first 50 of 56 in this group, in code order. Add a word to narrow it.");
   });
 });
 

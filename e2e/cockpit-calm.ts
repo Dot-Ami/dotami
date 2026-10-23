@@ -8,6 +8,7 @@
  */
 import { expect, type Locator, type Page } from "@playwright/test";
 
+import { jobStepWords } from "../lib/front-door/words";
 import { waitForReact } from "../tests/helpers/react-ready";
 
 // The folded road ahead's name goes on to say what it holds ("Show the road ahead: Incorporating · …").
@@ -134,4 +135,29 @@ export async function lookCloserItems(page: Page, within?: Locator): Promise<str
   await page.keyboard.press("Escape");
   await expect(page.getByRole("menu")).toHaveCount(0);
   return items.map((text) => text.trim());
+}
+
+/**
+ * Picks a job the way a person does (task 25h's tests): the Skills gauge opens the list, the job is searched
+ * by its code and clicked. Waits until the pick is kept and shown. `label` is the government's job name, `code`
+ * its OaSIS code ("Athletes", "53200.00").
+ *
+ * Since 2026-10-22 the cockpit runs the same search as Pick a future's first step (one picker; its words are
+ * lib/front-door/words.ts `jobStepWords`), and that step may already have picked the job: then it is shown as
+ * picked and nothing is clicked. Another job picked there is changed, as a person would, with Change.
+ */
+export async function pickJob(page: Page, label: string, code: string) {
+  await cockpitSettled(page);
+  await page.getByRole("region", { name: "Your goal and gauges" }).getByRole("button", { name: /^Skills/ }).click();
+  const skills = page.getByRole("region", { name: "Skills on this road" }).last();
+  // Picked: the list's line names the job, its code and the day ("Athletes · 53200.00 · picked 2026-10-21").
+  const picked = skills.getByText(`${label} · ${code} · picked`);
+  const search = skills.getByRole("searchbox", { name: jobStepWords.boxLabel });
+  const change = skills.getByRole("button", { name: "Change", exact: true });
+  await expect(picked.or(search).or(change).first()).toBeVisible();
+  if (await picked.isVisible()) return;
+  if (!(await search.isVisible())) await change.click();
+  await search.fill(code);
+  await skills.getByRole("button", { name: jobStepWords.pickName(label, code), exact: true }).click();
+  await expect(picked).toBeVisible();
 }

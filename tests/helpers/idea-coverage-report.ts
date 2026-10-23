@@ -1,5 +1,4 @@
-import { searchOasisJobs } from "@/lib/engines/oasis/v2026";
-import { openGroupCodes, searchJobTitles } from "@/lib/engines/oasis/v2026/title-search";
+import { JOB_SEARCH_GROUP_CAP } from "@/lib/engines/oasis/v2026/title-search";
 import { ACTIVITY_TAXONOMY } from "@/lib/journey/intent";
 import { PROVINCES } from "@/lib/scenarios/types";
 
@@ -7,6 +6,7 @@ import { IDEAS_V1, ODD_KINDS, PEOPLE_TYPES, ROAD_IDS, type Idea } from "../fixtu
 import type { KnownGap } from "../fixtures/ideas/known-gaps";
 import type { Failure } from "./idea-invariants";
 import type { IdeaRun } from "./idea-pipeline";
+import { COCKPIT_LIST_MEASURE_LIMIT, measureJobSearch } from "./job-search-corpus";
 
 /**
  * test-results/idea-coverage.md: what the idea harness saw on one run (S2.5.29b, and the measures of
@@ -81,23 +81,16 @@ export function coverageReport(args: {
   const parsed = runs.filter((run) => run.parse);
   const tagMisses = parsed.filter((run) => run.idea.tags.some((t) => !run.parse!.activityTags.includes(t)));
   const placeMisses = parsed.filter((run) => run.idea.named.length > 0 && run.parse!.province === null);
-  const withJobs = IDEAS_V1.filter((idea) => (idea.jobs ?? []).length > 0);
-  const jobFound = withJobs.filter((idea) => {
-    const found = searchOasisJobs(idea.work, 50).jobs.map((job) => job.code);
-    return (idea.jobs ?? []).some((code) => found.includes(code));
-  });
-  // The search "What's closest to your work?" runs (task 28b's engine): the expected job in the group shown open.
-  const titleFound = withJobs.filter((idea) => {
-    const found = openGroupCodes(searchJobTitles(idea.work, 50));
-    return (idea.jobs ?? []).some((code) => found.includes(code));
-  });
+  // Both job searches against the corpus, counted once (tests/helpers/job-search-corpus.ts), as the quality
+  // report and tests/job-title-search.spec.ts's floors count them.
+  const search = measureJobSearch(IDEAS_V1);
   lines.push(
     "## Today's parser and job search, against the words (information, not failures)",
     "",
     `- Kinds of work the words name that the keyword parser missed: ${tagMisses.length} of ${parsed.length} ideas.`,
     `- A province or territory the words name that the parser found none for: ${placeMisses.length} of ${parsed.filter((r) => r.idea.named.length > 0).length} ideas.`,
-    `- The expected job among today's job search results for the kind of work: ${jobFound.length} of ${withJobs.length} ideas with an expected job (S2.5.32's measure; the search the cockpit's job list uses).`,
-    `- The expected job in the open group of the government-titles search ("What's closest to your work?", first 50 of the group): ${titleFound.length} of ${withJobs.length} (tests/job-title-search.spec.ts holds its floor).`,
+    `- The expected job among the first ${COCKPIT_LIST_MEASURE_LIMIT} results of the cockpit's older job list (searchOasisJobs, by job name or code, research 28f's before): ${search.cockpitList} of ${search.withJob} ideas with an expected job.`,
+    `- The expected job in the open group of the government-titles search ("What's closest to your work?", the first ${JOB_SEARCH_GROUP_CAP} of each group, as listed): ${search.firstGroup} of ${search.withJob}; in any group as listed, ${search.anyGroup}; no job found, ${search.noResults} (tests/job-title-search.spec.ts holds the floors).`,
     "",
     "## Each idea",
     "",

@@ -31,7 +31,7 @@ screen may get. Every screen, and every feature added to one, follows these four
 |---|---|---|
 | The ways to get each cost line (already have it, buy, rent, lease; [architecture/other-ways-to-build.md](../architecture/other-ways-to-build.md)) | The step panel, folded inside each cost row | The cost row itself |
 | *Others in this line of work* ([cockpit/landscape.md](cockpit/landscape.md)) | The right-hand panel | The goal bar's *Look closer* menu (since 2026-10-17), and a step that opens a business |
-| *About this job* (the job's facts, wages and requirements; [architecture/research-kit.md](../architecture/research-kit.md) § 4) | The right-hand panel | The goal bar's *Look closer* menu, beside *Compare the two endings* and *Others in this line of work* (§ 4.2; the menu since 2026-10-17, S2.5.30c); and a job with no written road shows it by default (§ 4.1, K6 A): Pick a future's no-road block shows it in place, beside road 0 (S2.5.28c; the career road joins in phase 3, so it isn't offered in phase 2; designed 2026-10-20, [cockpit/about-this-job.md](cockpit/about-this-job.md), [futures/03-road-match.md](futures/03-road-match.md)) |
+| *About this job* (the job's facts, wages and requirements; [architecture/research-kit.md](../architecture/research-kit.md) § 4) | The right-hand panel | The goal bar's *Look closer* menu, beside *Compare the two endings* and *Others in this line of work* (§ 4.2; the menu since 2026-10-17, S2.5.30c); and a job with no written road shows it by default (§ 4.1, K6 A): Pick a future's no-road block shows it in place, beside road 0 (S2.5.28c; the career road joins in phase 3, so it isn't offered in phase 2; designed 2026-10-20, [cockpit/about-this-job.md](cockpit/about-this-job.md), [futures/03-road-match.md](futures/03-road-match.md); built in the cockpit 2026-10-22, task 25h) |
 | The Lens ([architecture/use-cases.md](../architecture/use-cases.md)) | The right-hand panel; on a phone, a sheet (`components/cockpit/use-sheet.ts`) | One button in the header, and *Ask the Lens about this* in the step panel |
 | *Sort by one thing you choose* ([architecture/lens-comparisons.md](../architecture/lens-comparisons.md)) | Inside the list it sorts | Only on *Your futures*, *Compare* and the alternatives on road 1's training column, nowhere else (S2.5.24f, lens-comparisons.md § 11; the 2026-10-17 plan's list named the first two) |
 
@@ -51,8 +51,9 @@ review found the blocks still drawn and the rule's own definition unchanged, so 
 ### The clutter limit (`e2e/clutter-budget.spec.ts`)
 
 A browser test opens the main screens (the front door, *Your destination*, *Pick a future*, the intake,
-the cockpit on road 0 and on road 1 as a first visit, *Your plan*, *Your futures*, *What DotAmi knows about
-you* and the example, Mara) at 375×812, 768×1024 and 1280×720, and measures four things on each:
+the cockpit on road 0 and on road 1 as a first visit, *About this job* open on road 1, *Your plan*, *Your
+futures*, *What DotAmi knows about you* and the example, Mara) at 375×812, 768×1024 and 1280×720, and
+measures four things on each:
 
 | Measure | What it counts |
 |---|---|
@@ -67,11 +68,12 @@ limit is above its baseline or above what it is on main, or the smallest text be
 lowered can't be raised back later (CI compares with main; locally, with where the branch left
 `origin/main`). A screen over its limit fails the browser
 suite. To add a region, take one away first; a new screen arrives with its own `data-region` marks and its
-own row in `e2e/budgets.ts`. The test saves a screenshot of each screen at each width with its results.
-Since 2026-10-21 (task 29j) a new screen gets its row the written way in `e2e/budgets.ts` (`ADDED_SCREENS`):
-it names the measured screen it is a state or a sibling of, starts no looser than that screen's baseline and
-its limit on main, and has no baseline row of its own (the baseline stays the record of 2026-10-17); from then
-on its limit only goes down, like every other.
+own row in `e2e/budgets.ts`, the written way (task 29j): listed in `ADDED_SCREENS` with the measured screen it
+is a part, a state or a sibling of (`ADDED_SCREEN_PART_OF`), its first row in `FIRST_MEASURED` is what CI's
+Browser tests job counts the first time the screen runs there, at or under that screen's baseline row. It has no
+baseline row of its own (the baseline stays the record of 2026-10-17); its first row is a record like the
+baseline, and its budget starts equal to it and only goes down, like every other. The test saves a screenshot of
+each screen at each width with its results.
 
 The test starts a server of its own, from the suite's build, over a data folder of its own
 (`prisma/e2e-clutter/`, holding only the two demo ventures), so what it measures doesn't depend on what

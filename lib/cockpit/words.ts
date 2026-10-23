@@ -214,13 +214,9 @@ export const cockpitWords = {
       ask: "Pick the job closest to the work you'd do yourself",
       optional:
         "Optional. DotAmi then shows the government's skills list for that job, each item tagged “your pick of job”. Change it or take it back here any time.",
-      search: "Search jobs by name or code",
-      /** The search reads names and codes only, so this says what it looked at, not that no such job exists. */
-      noMatch: "No job name or code holds those words.",
-      /** When more jobs match than the search shows. */
-      more: (shown: number, total: number) => `Showing ${shown} of ${total} jobs that match. Type more of the name or the code to narrow it.`,
-      /** A search result, and the job once picked. */
-      result: (label: string, code: string) => `${label} · ${code}`,
+      // The search's own words are the first step's (lib/front-door/words.ts jobStepWords), since 2026-10-22:
+      // the cockpit runs the same search as Pick a future, so there is one picker.
+      /** The job once picked. */
       picked: (label: string, code: string, day: string | null) => `${label} · ${code}${day ? ` · picked ${day}` : ""}`,
       change: "Change",
       cancel: "Cancel",
@@ -626,6 +622,9 @@ export const cockpitWords = {
     wordsNone: "No words of yours are kept for this idea.",
     roadChosen: (day: string | null) => (day ? `You picked this future on ${day}.` : "You picked this future."),
     roadDefault: "No future picked: this idea is drawn on the general road.",
+    // Where you are, as picked on Pick a future's step 2 (2026-10-22): shown back, read by no rule.
+    whereArea: (area: string, day: string | null) => `Your area: ${area}${day ? ` · picked ${day}` : ""}`,
+    whereRegion: (region: string, day: string | null) => `Your economic region: ${region}${day ? ` · picked ${day}` : ""}`,
     ending: (fork: string, pick: string) => `${quoted(fork)}: ${pick}`,
     noForks: "This road has no fork.",
     gauges: "The four gauges",

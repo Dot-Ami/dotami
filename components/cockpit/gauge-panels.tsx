@@ -6,10 +6,11 @@ import { AmountForm } from "@/components/cockpit/amount-form";
 import { CantKeepNote } from "@/components/cockpit/example-mode";
 import { ReceiptLines } from "@/components/cockpit/receipt-lines";
 import { MarkButtons, SkillRow } from "@/components/cockpit/step-panel";
+import { JobSearchBox } from "@/components/front-door/job-search";
 import { CitationLinks } from "@/components/shared/citation-links";
 import { Pill } from "@/components/ui";
 import { cockpitWords as words } from "@/lib/cockpit/words";
-import { OASIS_LICENCE_URL, searchOasisJobs, type JobList } from "@/lib/engines/oasis/v2026";
+import { OASIS_LICENCE_URL, type JobList } from "@/lib/engines/oasis/v2026";
 import type { Road, SkillItem } from "@/lib/engines/roads/v2026";
 import { formatMoney, formatMonth } from "@/lib/format/money-and-months";
 import type { SkillMarkView } from "@/lib/futures/skill-marks";
@@ -213,14 +214,11 @@ function JobSection({
   onPickJob: (code: string | null) => void;
 }) {
   const [changing, setChanging] = useState(false);
-  const [query, setQuery] = useState("");
   const searching = job === null || changing;
-  const { jobs: results, total } = searching ? searchOasisJobs(query) : { jobs: [], total: 0 };
 
   function pick(code: string | null) {
     onPickJob(code);
     setChanging(false);
-    setQuery("");
   }
 
   return (
@@ -230,34 +228,10 @@ function JobSection({
         <>
           <p className="text-body text-paper">{words.lists.job.ask}</p>
           <p className="mt-1 text-body text-stone">{words.lists.job.optional}</p>
-          <input
-            type="search"
-            aria-label={words.lists.job.search}
-            placeholder={words.lists.job.search}
-            value={query}
-            disabled={!canSave}
-            onChange={(e) => setQuery(e.target.value)}
-            className="mt-2 w-full rounded-sm border border-rule bg-ink2 px-2 py-1 text-body text-paper outline-hidden focus:border-maple-soft"
-          />
-          {query.trim() !== "" && results.length === 0 ? <p className="mt-1.5 text-body text-stone">{words.lists.job.noMatch}</p> : null}
-          {/* Ten at most are shown; say so when more match, so ten never read as all of them. */}
-          {total > results.length ? <p className="mt-1.5 text-body text-stone">{words.lists.job.more(results.length, total)}</p> : null}
-          {results.length > 0 ? (
-            <ul className="mt-1.5 space-y-1">
-              {results.map((r) => (
-                <li key={r.code}>
-                  <button
-                    type="button"
-                    disabled={!canSave}
-                    onClick={() => pick(r.code)}
-                    className="w-full rounded-sm border border-rule-soft bg-ink2 px-2 py-1 text-left text-body text-paper hover:border-maple-soft"
-                  >
-                    {words.lists.job.result(r.label, r.code)}
-                  </button>
-                </li>
-              ))}
-            </ul>
-          ) : null}
+          {/* The one job picker, the same search and words as Pick a future's first step (2026-10-22). */}
+          <div className="mt-2">
+            <JobSearchBox compact attribution={false} disabled={!canSave} onPick={(picked) => pick(picked.code)} />
+          </div>
           {changing ? (
             <Pill className="mt-1.5" size="small" variant="ghost" onClick={() => setChanging(false)}>
               {words.lists.job.cancel}

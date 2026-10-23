@@ -39,6 +39,26 @@ person is asked).
 
 ### What DotAmi keeps, and where
 
+- **The three steps on Pick a future and at the end of the intake keep the job you pick, and in Alberta your area
+  and your economic region (2026-10-22).** Asks: the job closest to your work, on Pick a future and at the end of
+  the intake. Skip allowed. Keeps: only the job you click, on this computer. Asks: which area and which economic
+  region you're in, once, right after you pick a job (in Alberta only for now). Keeps: your answers and the day,
+  on this computer only; deleted with the idea (DotAmi has no way to export an idea yet). Nothing is sent. The job goes in the idea's existing
+  columns (`Venture.occupationCode`, `occupationPickedAt`); the area and the region in four new optional columns
+  (`Venture.landscapeArea`, `landscapeAreaSetAt`, `economicRegion`, `economicRegionSetAt`; a hand-written migration
+  of four plain column additions,
+  [`prisma/migrations/20261022000000_where_you_are`](../prisma/migrations/20261022000000_where_you_are/migration.sql)).
+  All of it is written once, by the save that creates the idea at **Look inside**; until then the answers live in
+  the page's memory only, never in the window's storage, and a reload starts the steps again with nothing kept. A
+  job with no written road saves nothing unless a future is opened. The words typed to find a job go to DotAmi's
+  own server on this computer (`POST /api/jobs/search`, which searches the government's example titles that ship
+  with the app and keeps nothing) and are never kept; nothing leaves the computer. *Your plan* shows the area and
+  the region back. *About this job* reads them as kept, on DotAmi's own server on this computer
+  (`GET /api/futures/<id>`): the region to choose which published wage row to show (your region's own row; for I
+  don't know or no answer, Alberta's), and the area to show it back; it keeps nothing new, and the region is never
+  worked out from the area. Delete with "Your ideas" ticked removes them with the idea
+  ([`lib/privacy/inventory.ts`](../lib/privacy/inventory.ts), *Your ideas*).
+
 - **A future picked on Pick a future can now hold your third-year sales estimate, and your kept first-year
   what-if counts as told (2026-10-21).** The cockpit asks *Your third-year sales estimate* in *Not told yet* and
   on the Incorporating step, on the general road. The whole-dollar number you type goes in the idea's existing

@@ -6,8 +6,8 @@ import type { IntakeDraft, IntakeGoalId } from "@/lib/journey/types";
  * the person typed on the front door, word for word with the day they typed it, and the goal chips
  * as they stood on the intake. Until then both lived only in the browser tab and were lost when it closed.
  *
- * Only the intake's "Open my map" sends this; the cockpit's autosave never does. Every "Open my map"
- * makes a new idea, though, so the server's "only when the save creates the idea" isn't enough on its
+ * Only the intake's first save sends this (since 2026-10-22, step 3's Look inside at the end of the intake;
+ * until then "Open my map"); the cockpit's autosave never does. Every one makes a new idea, though, so the server's "only when the save creates the idea" isn't enough on its
  * own: the tab's draft also marks the sentence done once a save kept it, or once the person deleted
  * their statements (`afterFirstSave`, `afterStatementsDeleted`), and a done sentence is never sent again.
  * Design: docs/ui-spec/landing/01-free-text-entry.md § Persistence.
@@ -19,11 +19,40 @@ export interface FirstSave {
   goals?: IntakeGoalId[];
   /**
    * The road picked on *Pick a future* (a road id from the catalog), kept with the moment it was picked
-   * (2026-10-12). Left out by the intake, whose ideas start on today's general road.
+   * (2026-10-12). Since 2026-10-22 the intake's typed way ends on the same three steps, so its first save
+   * carries the road the person opened too (`withTheSteps`).
    */
   roadId?: string;
   /** The answer to "a business, a job or career, or both?" on *Your destination*, kept with its moment. */
   lookingFor?: LookingFor;
+  /**
+   * The three steps' answers (docs/ui-spec/futures/01-whats-closest-to-your-work.md, 02-where-you-are.md),
+   * each the person's own click, kept with its moment: the job picked as closest to their work (an OaSIS code,
+   * "72311.00"), and in Alberta the area and the economic region. Left out when skipped, not asked or left
+   * on "Choose one". The server keeps the area and the region only beside a job, and only where the questions
+   * are asked (lib/db/parse-scenario-input.ts `parseFirstSave`).
+   */
+  job?: string;
+  area?: string;
+  region?: string;
+}
+
+/** What the three steps hand to the save, as the person left them: null for a question skipped or not answered. */
+export interface StepAnswers {
+  job: string | null;
+  area: string | null;
+  region: string | null;
+}
+
+/** A first save with the three steps' answers and the road opened added; nothing is added for an answer not given. */
+export function withTheSteps(firstSave: FirstSave, roadId: string, answers: StepAnswers): FirstSave {
+  return {
+    ...firstSave,
+    roadId,
+    ...(answers.job ? { job: answers.job } : {}),
+    ...(answers.job && answers.area ? { area: answers.area } : {}),
+    ...(answers.job && answers.region ? { region: answers.region } : {}),
+  };
 }
 
 /** The first-save extras from the intake draft. `today` is the person's own day, used if the typing day is missing. */

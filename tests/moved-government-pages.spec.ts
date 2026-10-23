@@ -6,7 +6,7 @@
  * For 19 of them the same government body has the content at a new address, and the words each entry
  * relies on were found there by `node scripts/check-quotes.mjs` that day, so 23 citations on them
  * now point at the new page and carry that tool check. Three citations are left as they are, for a
- * person to decide (STILL_DEAD below): what each says may no longer be true, and no rule here rewrites
+ * person to decide (STILL_DEAD, tests/fixtures/still-dead-pages.ts): what each says may no longer be true, and no rule here rewrites
  * it.
  *
  * A read of the old page is not a read of the new one, so a moved citation drops its old read date
@@ -17,6 +17,8 @@ import { describe, expect, it } from "vitest";
 
 import { GOAL_EFFECTS } from "@/lib/brain/goal-effects";
 import { allCatalogCitations } from "@/lib/engines/all-citations";
+
+import { STILL_DEAD } from "./fixtures/still-dead-pages";
 
 const CRA = "https://www.canada.ca/en/revenue-agency/services";
 const SOLE_PROP = `${CRA}/tax/businesses/topics/sole-proprietorships-partnerships`;
@@ -119,29 +121,7 @@ const MOVED: { old: string; now: { where: string; url: string }[] }[] = [
   },
 ];
 
-/**
- * Dead on 2026-10-13 and left for a person: the Alberta Investor Tax Credit page (it answers page not
- * found; news reports say the program ended in 2019, not checked against an official page, so the
- * entry itself may be out of date), and the two sources of
- * the Retained earnings planning stage, titled "Paying dividends" and "Salary or dividends", whose one
- * old address was a corporation-return line about dividends received; no current CRA page on either
- * subject was found. Each stays exactly as it was until a person decides.
- */
-const STILL_DEAD: { url: string; where: string[] }[] = [
-  { url: "https://www.alberta.ca/alberta-investor-tax-credit", where: ["grants grant-abti"] },
-  {
-    url: MOVED[7].old,
-    where: [
-      "cfe stage-4-retained-earnings-planning",
-      "cfe stage-4-retained-earnings-planning",
-      "roads road-starting-any-business-ab stage-4-retained-earnings-planning",
-      "roads road-starting-any-business-ab stage-4-retained-earnings-planning",
-      // The federal steps (2026-10-21, task 28d) keep road 0's map stages as they are, this one's sources too.
-      "roads road-federal-steps-ca stage-4-retained-earnings-planning",
-      "roads road-federal-steps-ca stage-4-retained-earnings-planning",
-    ],
-  },
-];
+// The dead addresses left for a person: tests/fixtures/still-dead-pages.ts (the quality report counts them too).
 
 const listed = allCatalogCitations();
 const stillDeadUrls = new Set(STILL_DEAD.map((d) => d.url));
@@ -156,6 +136,8 @@ describe("government pages that moved", () => {
   });
 
   it("the ones left for a person are exactly these, unchanged", () => {
+    // The retained-earnings stage's one old address is the dividends-received line listed as moved above.
+    expect(STILL_DEAD[1].url).toBe(MOVED[7].old);
     for (const { url, where } of STILL_DEAD) {
       expect(listed.filter(({ citation }) => citation.url === url).map((l) => l.where).sort(), url).toEqual([...where].sort());
     }

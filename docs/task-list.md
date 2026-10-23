@@ -307,7 +307,7 @@ placed in phase 3.
   for each idea (the name as typed, a link, a note, the ads they saw with the day), kept on this computer,
   deleted with the idea ([ui-spec/cockpit/landscape.md](ui-spec/cockpit/landscape.md)). Still to build: the
   counts, the area and industry questions, *Where to look*, and Mara's landscape.
-  - [ ] 23g (phase 2 of the plan for any idea): ask the area once, right after the job pick (a fixed list of
+  - [x] 23g (phase 2 of the plan for any idea): ask the area once, right after the job pick (a fixed list of
     Alberta census metropolitan areas plus *Somewhere else in Alberta* and *I don't know*, each with a line
     saying why it's asked); it is kept for the business counts by area, and nothing reads it until they come
     (phase 3). The wage region for *About this job*
@@ -317,7 +317,12 @@ placed in phase 3.
     corrected 2026-10-20). The industry question waits for the counts (the maintainer's call of 2026-10-20).
     Outside Alberta neither question is asked for now: *About this job* shows the province-wide wage figure,
     and the region question is added province by province once each province's region list is checked
-    against Statistics Canada's own pages, as Alberta's eight were (the maintainer's call of 2026-10-21)
+    against Statistics Canada's own pages, as Alberta's eight were (the maintainer's call of 2026-10-21).
+    Built 2026-10-22 with 28b: both questions on Pick a future's step 2, kept on the idea at Look inside
+    (`Venture.landscapeArea`, `economicRegion`, each with its day; migration `20261022000000_where_you_are`),
+    shown on *Your plan*; *About this job* reads the region when 25h adds it. Until then step 2 names About
+    this job nowhere (its "change your region later", "Alberta-wide figure" and outside-Alberta wage-row lines
+    are held; spec 02's as-built note)
   - [ ] Phase 3: the business counts for the area and industry (Statistics Canada table 33-10-1176), the
     industry question, *Where to look* as a dated, checked list, and the rest of the panel
 - ⬜ **[14h] Ask the Lens "what's cheapest, fastest, strongest?"** The Lens, and a *Sort by one thing you
@@ -373,10 +378,17 @@ placed in phase 3.
     `data/job-bank-wages-2025/` into `lib/engines/wages/v2026/`, whose look-ups give the file's own row for a
     job in an economic region or a province as a whole, the level from its source code, and a missing row as
     missing. Not shown anywhere yet: *About this job* (25h) is the first screen to read it
-  - [ ] 25h: *About this job* for any job, in the right-hand panel from *Look closer*: the job's rules quoted
+  - [x] 25h: *About this job* for any job, in the right-hand panel from *Look closer*: the job's rules quoted
     word for word, the published wages labelled "Not what a shop earns, and not what you would earn", and
     *Where to look yourself* (Job Bank's general search, with the job's name and code to copy); no business
-    counts in this version, and it says so
+    counts in this version, and it says so. Built 2026-10-22 (`components/cockpit/about-this-job-panel.tsx`,
+    `lib/about-job/`, read on the server by GET /api/futures/<id>): the wage row is the province's own until
+    the person's region is kept (Pick a future's step 2, its own pull request; wiring it in is one line in
+    `app/api/futures/[id]/route.ts`), so its **Change** isn't drawn yet; its own clutter row
+    (`cockpit-about-job`, the first screen added after the baseline, `FIRST_MEASURED` in `e2e/budgets.ts`).
+    Pick a future's no-road block shows it in place with its own task (28c). The browser idea sweep (29e)
+    opens it for every swept idea that names a job and reads it through the gate's checks
+    (`e2e/about-job-read.ts`)
   - [ ] Phase 3: business counts for every industry (25d), the research-pack script (25f), the validator and
     writer's guide (25g), read tools (25k), a second road built with the kit (25l), the rest of the rule text
     (25r)
@@ -494,11 +506,15 @@ placed in phase 3.
     on the shared import core, with its checksum, licence and credit line; and the OaSIS "Example Titles"
     file beside it (`scripts/import-noc.mjs`, `scripts/import-oasis-titles.mjs`; both in `npm run data:check`
     and on `/licences`)
-  - [ ] 28b: *What's closest to your work?*: the person searches the example titles and picks the job;
+  - [x] 28b: *What's closest to your work?*: the person searches the example titles and picks the job;
     matches in code order, labelled "matches your words · your pick"; *Skip* allowed; nothing set without a
     click. The search itself is built (`lib/engines/oasis/v2026/title-search.ts`, with DotAmi's word list the
     maintainer approves line by line): 153 of 220 corpus ideas find their job in the group shown first, against
-    20 today. The screen is still to build.
+    20 before. Built 2026-10-22: step 1 of Pick a future's three steps, on Pick a future and at the end of the
+    intake (`components/front-door/job-and-road-steps.tsx`, searched on DotAmi's own server,
+    `POST /api/jobs/search`), and the cockpit's **Pick a job** runs the same search. Step 3 lists the road
+    written for the picked job first (spec 03, case A); a job with no road gets the honest line, a marked place
+    for *About this job* (25h fills it) and the general road, and saves nothing until a future is opened
   - [ ] 28c: the road written for the picked job comes first; otherwise "No road is written for this job
     yet", with *About this job* and the general road; no silent fallback for a new idea; a job with no written
     road saves nothing until a future is opened (the maintainer's call of 2026-10-21; a kind of saved idea with
@@ -513,18 +529,25 @@ placed in phase 3.
     Alberta, after its card said so, is an honest end
   - [ ] 28e (phase 3): one career road for any job
   - The test gate learns these endings ([14j]'s harness, reopened for phase 2):
-    - [ ] 29h: the harness picks a job as a recorded click and accepts the honest "not written yet" ending;
-      a job the person didn't pick still fails
+    - [x] 29h: the harness picks a job as a recorded click and accepts the honest "not written yet" ending;
+      a job the person didn't pick still fails (`tests/helpers/idea-pipeline.ts` `stepsChoice`; the browser
+      idea sweep plays the three steps too, 2026-10-22). Both find the job through step 1's search from the
+      person's words (the kind of work, then the job's own name), never by its code, so a broken word search
+      fails them (PR #202 review; all 220 corpus ideas with a job find it: 172 from the kind of work, 48 from
+      the job's name)
     - [x] 29i: a number kind for a published job fact (a wage with its source row); a wage without its row
       fails, and a wage is never added into a total (`tests/helpers/number-provenance.ts`; About this job's
       pieces carry their row when 25h adds them)
     - [x] 29j: a federal-only road counted honestly, the browser sweep reading any road, and a written way
       for a new screen to get its clutter budget (2026-10-21: the corpus's 156 business ideas outside Alberta
-      expect the federal road; the picked way's "road written for the place" gap 190 → 22 ideas, 13 whose note
-      opens road 0 and 9 that pick a folded Alberta card, mostly because the test's person now clicks the
-      federal card for those 156, not because of the product alone; the sweep opens any catalog road, fails on
-      one without a budget, and clicks a folded Alberta card every week with fixed idea 361; `ADDED_SCREENS` in
-      `e2e/budgets.ts`)
+      expect the federal road; the picked way's "road written for the place" gap fell from 190 ideas, mostly
+      because the test's person now clicks the federal card for those 156, not because of the product alone
+      (`tests/fixtures/ideas/known-gaps.ts` has today's count); the sweep opens any catalog road, fails on one
+      without a budget, and clicks a folded Alberta card every week with fixed idea 361. The written way:
+      `ADDED_SCREENS`, `ADDED_SCREEN_PART_OF` and `FIRST_MEASURED` in `e2e/budgets.ts`, used for About this job,
+      the three steps' parts (2a, 2b and step 3's cases A, B and C on both pages; the intake's case C counts 6
+      controls on a tablet, over the intake's 5, and waits on the maintainer), Pick a future outside Alberta and
+      the cockpit on the federal road)
     - [x] 29k: quoted official requirement text, shown word for word as a labelled quote, passes the
       no-times check by one rule (the maintainer's ruling), while DotAmi's own words still fail on any time
       (`tests/helpers/official-quotes.ts`: only on About this job's requirements row, and only lines the run
@@ -539,11 +562,19 @@ placed in phase 3.
     (98-10-0594-01), Red Seal's tools appendix and Job Bank's postings, each with pins, licence, period and
     next release; a link checker (31b); a weekly freshness check that opens one issue (31c); a *Where
     DotAmi's numbers come from* page (31d)
-- ⬜ **[14n] Best results without analytics (S2.5.32).** Nothing comes from the people using DotAmi;
+- 🔄 **[14n] Best results without analytics (S2.5.32).** Nothing comes from the people using DotAmi;
   quality is measured from the tests.
-  - [ ] 32a: each CI run writes the harness pass rate, how often the expected job is among the matches, how
+  - [x] 32a: each CI run writes the harness pass rate, how often the expected job is among the matches, how
     many ideas reach a written road, the general road or "not written yet", silent fallbacks (0), clutter
-    numbers per screen and width, and source health; each release's changelog gets a Quality line
+    numbers per screen and width, and source health; each release's changelog gets a Quality line.
+    `npm run quality:report` (scripts/quality-report.mjs) prints them and writes `test-results/quality.md`,
+    in CI after the tests (the quality job) and after the browser run (the clutter); `npm run quality:line`
+    gives the release's Quality line, which says so for any part the run didn't count (the live quote check
+    too) and, made on Windows, counts the clutter with the Windows allowance. Information only: no number
+    fails anything yet. Silent fallbacks
+    counted on 2026-10-21: 37 ideas (the aim, 0, is phase 2's end). Counted on 2026-10-22, typed in: 323 of
+    367 ideas on the general road, 44 before any road, 0 of the 11 ideas with a road of their own (road 1)
+    reach it
   - [ ] 32b: the maintainer's first monthly walk, three test ideas plus one of the maintainer's own, with
     the findings turned into issues or test ideas
 - 🔄 **[14o] Phase 2's fixes and releases.** The maintainer's calls of 2026-10-20.

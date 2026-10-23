@@ -151,6 +151,145 @@ export const pickWords = {
     // The note went in before the road was saved: say so, so it isn't kept twice by pressing again.
     keptNotOpened: "Your note is kept. The general road couldn't be opened: no database reachable.",
   },
+  // Step 3 of the three steps (docs/ui-spec/futures/03-road-match.md, 2026-10-22).
+  stepCount: "3 of 3 · Pick a future",
+  pickLine: (job: string, code: string) => `Your pick of job: ${job} · ${code}`,
+  pickTag: "your pick of job",
+  backToRegion: "← Back to your region",
+  backToWhere: "← Back to where you are",
+  backToWork: "← Back to your work",
+  writtenForJobHeading: "Written for your pick of job",
+  othersHeading: "The other futures, in the order they were written",
+  writtenForJob: (job: string, noc: string) => `Written for ${job} (${noc}).`,
+  noRoad: {
+    heading: (job: string, code: string) => `No road is written for ${job} (${code}) yet.`,
+    // The design's body opens with "Here is what the government publishes about this job.": that sentence is
+    // drawn with About this job's rows (task 25h), so it is never on screen without them.
+    governmentLead: "Here is what the government publishes about this job.",
+    body: (job: string) =>
+      `If you plan to run a business of your own, the general road below covers the tax and structure steps for any business in Alberta. It isn't written for ${job}, and opening it doesn't say you're starting a business.`,
+    nothingSaved: "Nothing is saved until you open a future. If you leave from here, DotAmi keeps nothing about this job.",
+    // The place About this job's rows go, until task 25h fills it: said, never left blank and never filled in.
+    aboutJobPending: (job: string) => `About this job isn't built yet. What the government publishes about ${job} shows here once it is.`,
+  },
+  road0NotForJob: (job: string) => `Not written for ${job}. It covers the tax and structure steps for any business in Alberta.`,
+  skipped: "You didn't pick a job, so no future is matched to one. These are all the futures written so far, in the order they were written.",
+  skippedNoneFor: "None is written yet for closing, pausing or selling a business, or for catching up on filings. Not here yet? keeps your note.",
+} as const;
+
+/**
+ * Step 1 of the three steps: What's closest to your work? (docs/ui-spec/futures/01-whats-closest-to-your-work.md),
+ * the same words on Pick a future, at the end of the intake and in the cockpit's skills list (one picker).
+ */
+export const jobStepWords = {
+  stepCount: "1 of 3 · Your work",
+  heading: "What's closest to your work?",
+  lead: "Type the work in your own words. DotAmi looks for them in the government's example job titles and lists the jobs that hold them. Nothing is picked until you click a job.",
+  yourIdea: (sentence: string) => `Your idea, in your words: “${sentence}”`,
+  boxLabel: "The work, in your own words",
+  boxHint: "A word or two works, such as “barber” or “cake decorating”.",
+  skip: "Skip this question",
+  skipHint: "Skipping picks no job. The futures are then listed with no job to match them to.",
+  empty: "Type a word or two about the work. The jobs whose titles hold your words show here.",
+  tooShort: "Type at least 3 letters.",
+  searching: "Looking in the government's example titles…",
+  searchFailed: "The search couldn't run: DotAmi's own server didn't answer. Try again, or skip this question.",
+  status: (n: number, all: number, allButOne: number, some: number) =>
+    `${plural(n, "job holds", "jobs hold")} your words: ${all} all of them, ${allButOne} all but one, ${some} at least one.`,
+  statusWithList: (n: number, all: number, allButOne: number, some: number, list: number) =>
+    `${plural(n, "job", "jobs")} found: ${all} whose titles hold all your words, ${allButOne} all but one, ${some} at least one, and ${list} only through DotAmi's word list.`,
+  groupAll: "Jobs whose example titles have all your words",
+  groupOne: "Jobs whose example titles have your word",
+  groupAllButOne: "Jobs whose example titles have all but one of your words",
+  groupSome: "Jobs whose example titles have at least one of your words",
+  groupList: "Jobs found only through DotAmi's word list, not by a government title",
+  groupCount: (heading: string, n: number) => `${heading}, ${n}`,
+  groupOrder: "In the government's code order, not ranked.",
+  showGroup: (n: number) => `Show the ${n} jobs whose example titles have all but one of your words`,
+  showGroupSome: (n: number) => `Show the ${n} jobs whose example titles have at least one of your words`,
+  showGroupList: (n: number) => `Show the ${n} jobs found only through DotAmi's word list`,
+  hideGroup: (n: number) => `Hide these ${n} jobs`,
+  capped: (shown: number, total: number) => `Showing the first ${shown} of ${total} in this group, in code order. Add a word to narrow it.`,
+  result: (job: string, code: string) => `${job} · ${code}`,
+  pickName: (job: string, code: string) => `Pick ${job}, ${code}`,
+  matched: (title: string) => `Matched the government's example title “${title}”`,
+  // A match on the job's own name or a typed code: said as what it is, never as an example title.
+  matchedName: (title: string) => `Matched the job's name “${title}”`,
+  matchedCode: (code: string) => `Matched the job's code ${code}`,
+  matchedMore: (n: number) => `and ${n} more of its titles`,
+  listChip: "DotAmi's word list",
+  viaList: (word: string, listWord: string) =>
+    `Your word “${word}” was matched through DotAmi's own word list (“${listWord}”), not by a government title.`,
+  leftOut: (words: string) =>
+    `Not searched: ${words}. Each is on DotAmi's list of filler words or of words that name a business rather than the work.`,
+  wordStart: "A word matches a title word that starts with the same five letters, so “plumbing” finds “plumber”.",
+  noMatch: (words: string) =>
+    `No government example title holds any of these words: ${words}. Try another word for the same work, or skip this question.`,
+  // Every word typed was left out (the "Only left-out words" state): nothing was looked for, so nothing is said
+  // about the government's titles.
+  nothingSearched: "Nothing was searched, so no job is listed. Try a word for the work itself, or skip this question.",
+  englishOnly: "Titles are searched in English in this version.",
+  picked: (job: string, code: string) => `Your pick of job: ${job} · ${code}`,
+  changePick: "← Change your pick of job",
+  source: "Job titles: OaSIS 2025 Version 1.0, Employment and Social Development Canada.",
+  licence: "The licence",
+  notKept: "The words you type here aren't kept. Only the job you pick is, once you open a future.",
+} as const;
+
+/**
+ * Step 2 of the three steps: Where you are (docs/ui-spec/futures/02-where-you-are.md): the area, then the
+ * economic region, in Alberta only for now; elsewhere one short screen that says why nothing is asked.
+ */
+export const whereStepWords = {
+  stepCount: "2 of 3 · Where you are",
+  heading: "Where you are in Alberta",
+  picked: (job: string, code: string) => `Your pick of job: ${job} · ${code}`,
+  area: {
+    label: "Which area are you in?",
+    why: "Kept with this future for the official counts of businesses by area, which aren't in this version. Until then nothing reads it.",
+    hint: "The four areas are Statistics Canada's census metropolitan areas: a city and the towns around it.",
+    choose: "Choose one",
+    calgary: "Calgary",
+    edmonton: "Edmonton",
+    lethbridge: "Lethbridge",
+    redDeer: "Red Deer",
+    elsewhere: "Somewhere else in Alberta",
+    dontKnow: "I don't know",
+    next: "Next →",
+    shownBack: (area: string) => `Your area: ${area}`,
+    notAnswered: "not answered",
+    back: "← Back to your area",
+  },
+  region: {
+    label: "Which region are you in?",
+    why: "Job Bank publishes wages by economic region, a larger map than a city's area. DotAmi doesn't work your region out from your area: the Edmonton area reaches into two regions, and “Somewhere else in Alberta” could be any of them.",
+    order: "Listed in Statistics Canada's code order.",
+    choose: "Choose one",
+    dontKnow: "I don't know",
+    // The design's note also says "About this job shows the Alberta-wide figure"; that half waits until About this
+    // job (task 25h) reads the region kept here, so the screen never promises what the app can't do yet.
+    dontKnowNote: "With “I don't know”, a link to Statistics Canada's list of the towns in each region shows here.",
+    lookup: "Which towns are in each region? Statistics Canada's list ↗",
+    lookupName: "Which towns are in each region? Statistics Canada's list, opens outside DotAmi",
+    next: "Next: the futures →",
+  },
+  outside: {
+    heading: (province: string) => `Where you are in ${province}`,
+    notAsked: (province: string) =>
+      `In this version DotAmi asks which area and which region you're in only in Alberta, so nothing is asked here for ${province}.`,
+    why: "Job Bank publishes wages by economic region. DotAmi lists a province's regions only once its list has been checked against Statistics Canada's own pages, and Alberta's is the one checked so far.",
+    // The design's `wageRow` line ("About this job shows the wage row Job Bank gives for <place> as a whole…")
+    // waits until About this job (task 25h) is in the app, so it isn't drawn yet.
+    next: "Next: the futures →",
+  },
+  // The design's line ends "You can change your region later from About this job in the cockpit."; that sentence
+  // waits until About this job (task 25h) reads the kept region and draws its Change.
+  kept: "Both answers are kept with this future once you open it, on this computer only.",
+} as const;
+
+/** The intake's Screen B button, which opens the three steps on the intake page (2026-10-22, the maintainer's call 1). */
+export const intakeStepsWords = {
+  next: "Next: the work closest to yours →",
 } as const;
 
 export const incomePromptWords = {

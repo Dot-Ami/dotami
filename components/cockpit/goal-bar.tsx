@@ -2,6 +2,7 @@
 
 import { FoldButton } from "@/components/cockpit/folding";
 import { LookCloserMenu, type LookCloserItem } from "@/components/cockpit/look-closer-menu";
+import { aboutJobWords } from "@/lib/about-job/words";
 import { goalRoadLine } from "@/lib/cockpit/road-line";
 import { gaugeView, type GaugeId } from "@/lib/cockpit/view";
 import { cockpitWords as words } from "@/lib/cockpit/words";
@@ -24,7 +25,8 @@ import type { Scenario } from "@/lib/scenarios/types";
  * there. The open bar stays on the page behind the line, hidden, the same as every other folded region.
  *
  * The calm first view (2026-10-17, S2.5.30c): what the bar can open in the right-hand panel (Compare, Others
- * in this line of work, and later About this job) shares one "Look closer" menu instead of a button each.
+ * in this line of work, and About this job once a job is picked) shares one "Look closer" menu instead of a
+ * button each.
  * The cockpit draws it under its header in one strip, but it is still a region of its own for the clutter
  * limit, as the layout rule defines one (docs/ui-spec/cockpit/07-goal-bar.md).
  *
@@ -48,6 +50,7 @@ export function GoalBar({
   onGauge,
   onCompare,
   onLandscape,
+  onAboutJob,
   folded = false,
   onToggleFold,
   person = null,
@@ -64,6 +67,12 @@ export function GoalBar({
    * The page gives it on every road, so the button shows wherever the bar is open.
    */
   onLandscape?: () => void;
+  /**
+   * Opens "About this job" in the right-hand panel (task 25h; docs/ui-spec/cockpit/about-this-job.md). Given only
+   * while the idea has a picked job; `jobHasRoad` says whether a road is written for that job, which decides
+   * where the item sits in the menu.
+   */
+  onAboutJob?: { open: () => void; jobHasRoad: boolean };
   /**
    * On an example whose target is a published statistic (2026-10-14): which one and when, said in place of
    * "agreed". Null otherwise.
@@ -118,9 +127,14 @@ export function GoalBar({
   // "Look closer": the things the bar opens in the right-hand panel, in one menu, in the order they came;
   // then what folds under the map (2026-10-20). In the folded line too, so the legend and the what-if bar
   // are never more than the menu away.
+  // About this job (task 25h), only when a job is picked: the last panel item for a job with a written road,
+  // the first for a job with none (docs/ui-spec/cockpit/about-this-job.md, "Where it opens").
+  const aboutJob: LookCloserItem[] = onAboutJob ? [{ id: "about-job", label: aboutJobWords.menuItem, onSelect: onAboutJob.open }] : [];
   const lookCloser: LookCloserItem[] = [
+    ...(onAboutJob && !onAboutJob.jobHasRoad ? aboutJob : []),
     ...(onCompare ? [{ id: "compare", label: words.compare.region, onSelect: onCompare }] : []),
     ...(onLandscape ? [{ id: "landscape", label: landscapeWords.open, onSelect: onLandscape }] : []),
+    ...(onAboutJob?.jobHasRoad ? aboutJob : []),
     ...toShow,
   ];
 

@@ -493,6 +493,18 @@ export function invariantFailures(run: GeneratedRun): Failure[] {
   const state = { input, evaluation: run.evaluation, notTold: run.notTold, next };
   const c: CockpitRun = {
     way: "typed",
+    // A generated run starts in the cockpit: the job is the generated person's own pick (or none), and no step of
+    // Pick a future is played, so step 3's checks have nothing to read.
+    steps: {
+      job: input.job ? { code: input.job.code, label: input.job.label } : null,
+      search: null,
+      area: null,
+      region: null,
+      match: "skipped",
+      offered: [],
+      click: { by: "card", roadId: input.road.id },
+    },
+    job: input.job?.code ?? null,
     pick: null,
     road: input.road,
     roadChosen: input.roadChosen,
@@ -520,7 +532,18 @@ export function invariantFailures(run: GeneratedRun): Failure[] {
     tags: [],
     road: input.road.id === ROAD_IDS["road-1"] ? "road-1" : input.road.id === ROAD_IDS["road-federal"] ? "road-federal" : "road-0",
   };
-  const ideaRun: IdeaRun = { idea, parse: null, draft: null, province: input.scenario.profile.province, intakeEnd: null, typed: c, picked: null, pieces: run.pieces };
+  const ideaRun: IdeaRun = {
+    idea,
+    parse: null,
+    draft: null,
+    province: input.scenario.profile.province,
+    intakeEnd: null,
+    typedSteps: null,
+    pickedSteps: null,
+    typed: c,
+    picked: null,
+    pieces: run.pieces,
+  };
   const failures: Failure[] = [];
   cockpitFailures(ideaRun, c, (invariant, subject, detail) => {
     if (!LEFT_TO_THE_HARNESS.includes(invariant)) failures.push({ ideaId: idea.id, invariant, subject, detail });

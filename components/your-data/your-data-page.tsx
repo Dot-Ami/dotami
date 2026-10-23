@@ -243,6 +243,14 @@ function TableRow({ table, ideasWithNotes }: { table: TableCount; ideasWithNotes
           {entry.aboutOthers}
         </p>
       ) : null}
+      {/* Answers a spec names on lines of their own (Your ideas: your area and your economic region), each under
+          its own name in the same small label style. */}
+      {(entry.lines ?? []).map((line) => (
+        <p key={line.name} className="mt-2 text-body text-paper-dim">
+          <span className="font-mono text-label uppercase tracking-[0.14em] text-stone">{line.name} · </span>
+          {line.holds}
+        </p>
+      ))}
       <Removal>{entry.removedBy}</Removal>
     </li>
   );

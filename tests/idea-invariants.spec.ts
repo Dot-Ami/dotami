@@ -12,6 +12,7 @@ import type { NotToldRow } from "@/lib/cockpit/told";
 import { cockpitWords } from "@/lib/cockpit/words";
 import { roadsV2026 } from "@/lib/engines/roads/v2026";
 
+import * as aboutJobFile from "@/lib/about-job/words";
 import * as cockpitFile from "@/lib/cockpit/words";
 import * as frontDoorFile from "@/lib/front-door/words";
 import * as landscapeFile from "@/lib/landscape/words";
@@ -188,6 +189,35 @@ describe("the harness's checks catch what they guard", () => {
         run.typed!.final.input = { ...run.typed!.final.input, job: { code: "72311.00", label: "Cabinetmakers", items: [] } };
       }),
     ).toBe(1);
+    // Task 29h: the cabinetmaker's own pick passes, and a job they didn't pick, in place of theirs, still fails.
+    expect(failures(runIdea(road1Idea), "nothing-derived:job")).toBe(0);
+    expect(
+      added(road1Idea, "nothing-derived:job", (run) => {
+        run.picked!.final.input = { ...run.picked!.final.input, job: { code: "72310.00", label: "Carpenters", items: [] } };
+      }),
+    ).toBe(1);
+  });
+
+  // Task 29h: the honest end of Pick a future's third step, for a job with no written road (the maintainer's call 3
+  // of 2026-10-21: nothing is saved, so no road is drawn).
+  const leaves = IDEAS_V1.find((idea) => idea.id === "idea-v1-0003")!; // a British Columbia app, job 21232.00
+
+  it("5. leaving at “No road is written for <job> yet” is an honest end; leaving anywhere else isn't", () => {
+    const run = runIdea(leaves);
+    expect(run.pickedSteps).toMatchObject({ job: { code: "21232.00" }, match: "no-road", click: { by: "left" } });
+    expect(run.picked).toBeNull();
+    expect(failures(run, "ends:road-drawn")).toBe(0);
+    // The same end where a road is written for the job, or with the no-road line not on the screen, fails.
+    expect(added(leaves, "ends:road-drawn", (r) => void (r.pickedSteps = { ...r.pickedSteps!, match: "written" }))).toBe(1);
+    expect(added(leaves, "ends:road-drawn", (r) => void (r.pieces = r.pieces.filter((p) => !p.where.startsWith("picked › steps › no road"))))).toBe(1);
+    expect(added(leaves, "ends:road-drawn", (r) => void (r.pickedSteps = { ...r.pickedSteps!, job: null, match: "skipped" }))).toBe(1);
+  });
+
+  it("5. step 3 listing another road before the one written for the person's pick of job", () => {
+    expect(failures(runIdea(road1Idea), "ends:no-silent-fallback")).toBe(0);
+    expect(
+      added(road1Idea, "ends:no-silent-fallback", (r) => void (r.picked!.steps = { ...r.picked!.steps, offered: [...r.picked!.steps.offered].reverse() })),
+    ).toBe(1);
   });
 
   it("7. two runs that differ", () => {
@@ -293,7 +323,13 @@ describe("the words no-times lets through", () => {
     // The harness reads what the lib functions it calls write; a screen also shows sentences straight from
     // these files (the front door's doors, the cockpit's help lines). Each plain string is read here; the
     // functions among them are read when the harness calls them, and whole screens by the browser sweep (29e).
-    const files = { "lib/front-door/words.ts": frontDoorFile, "lib/cockpit/words.ts": cockpitFile, "lib/landscape/words.ts": landscapeFile, "lib/roads/words.ts": roadsFile };
+    const files = {
+      "lib/front-door/words.ts": frontDoorFile,
+      "lib/cockpit/words.ts": cockpitFile,
+      "lib/landscape/words.ts": landscapeFile,
+      "lib/roads/words.ts": roadsFile,
+      "lib/about-job/words.ts": aboutJobFile,
+    };
     const withTimes = Object.entries(files).flatMap(([file, mod]) =>
       plainStrings(mod).flatMap(({ path, text }) => (findTimeWords(text).length > 0 ? [`${file} ${path}`] : [])),
     );

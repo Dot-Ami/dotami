@@ -24,11 +24,14 @@ place of a step, each a region named by its title with a × button named *Close*
   is typed). A skill of one's own is kept only with a mark. Then **Your pick of job** (2026-10-12): with
   none picked, *Pick the job closest to the work you'd do yourself*, the line *Optional. DotAmi then shows
   the government's skills list for that job, each item tagged “your pick of job”. Change it or take it back
-  here any time.*, and a search box (*Search jobs by name or code*) that lists up to ten of the
-  government's jobs holding every word typed, each anywhere in the name or at the start of the code, in
-  the dataset's order, each a button reading *Cabinetmakers · 72311.00* (*No job name or code holds those
-  words.* when none does; *Showing 10 of 56 jobs that match. Type more of the name or the code to narrow
-  it.* when more match than are shown); then the licence's line with its link, as below. With one picked: *Cabinetmakers · 72311.00 · picked 2026-10-12*, **Change**
+  here any time.*, and, since 2026-10-22, the same search as Pick a future's first step (one picker;
+  [../futures/01-whats-closest-to-your-work.md](../futures/01-whats-closest-to-your-work.md),
+  `components/front-door/job-search.tsx` in its compact form): the box *The work, in your own words*, the
+  government's example titles searched for the words typed, the jobs grouped by how many of the words their
+  titles hold, in code order, each a button named *Pick Cabinetmakers, 72311.00* with the title it matched under
+  it, at most 50 per group with *Showing the first 50 of n in this group, in code order. Add a word to narrow it.*
+  (until then it was a search of job names and codes, ten at most); then the licence's line with its link, as
+  below. With one picked: *Cabinetmakers · 72311.00 · picked 2026-10-12*, **Change**
   (the search again, with **Cancel**) and **Take back**; *This is the government's list for the job you
   picked. DotAmi doesn't say which skills a business needs.*; then **Skills** and
   **Knowledge**, each with its source once (the dataset's page, checked by a tool) and its items in the

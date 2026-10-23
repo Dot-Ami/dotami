@@ -11,6 +11,23 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [Unreleased]
 
 ### Added
+- **About this job** ([14i], task 25h; [docs/ui-spec/cockpit/about-this-job.md](docs/ui-spec/cockpit/about-this-job.md)).
+  Once you've picked the job closest to your work, the goal bar's *Look closer* menu has *About this job*, which
+  opens in the right-hand panel (on a phone, a sheet over the road). Four rows, always in this order: the
+  government's *Employment requirements* for the job's group, quoted word for word under a line saying they are
+  its words (Statistics Canada's NOC 2021); the wages Job Bank publishes for the group, the row labelled with the
+  level its own source code gives, its period and survey, and "Not what a shop earns, and not what you would
+  earn" (a region with no figures says so, with the government's note and the row it points to); a plain line
+  that business counts aren't in this version; and *Where to look yourself*: Job Bank's wage search, BizPaL and
+  (in Alberta) Tradesecrets, each the site's own general page, with the job's name and code shown as text to
+  copy, never in a link. Outside Alberta the wage row is the one for the province or territory as a whole, with
+  why under the row's label. It only shows: nothing on the road changes, and nothing new is kept. The government's files are read on
+  DotAmi's own server, so the large job and wage lists never load into the page. Until your region is kept
+  (Pick a future's next step, its own change) the wage row is the province's own, saying your region isn't
+  picked. The screen checks read it: no verdict, no time in DotAmi's own words (the government's quoted lines
+  pass only on this row, only as the shipped file holds them), and its own clutter limit. The browser idea
+  sweep opens it too, for every swept idea that names a job, and reads every wage figure back as the wage
+  file's own row (a summed wage, or a figure outside its row, is caught).
 - **One list of outside sources and their terms** (the research kit's source registry,
   `lib/engines/research-kit/v2026/registry.ts`; [docs/architecture/research-kit.md](docs/architecture/research-kit.md)
   § 5.2). Plumbing, with no change on screen: one card for each government file the kit ships in this phase and
@@ -120,6 +137,53 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   The two new screens have clutter budgets of their own, by a written rule: a screen added after
   the 2026-10-17 baseline starts no looser than the screen it stands beside. Nothing DotAmi keeps changes: a
   picked future keeps the road's id, as before.
+- **Pick a future asks three things before any road is drawn: what's closest to your work, where you are, and
+  which future** ([14l] tasks 28b and 29h, [14g] task 23g; docs/ui-spec/futures/01, 02 and 03). *What's
+  closest to your work?* searches the government's example job titles for your own words and lists the jobs that
+  hold them, grouped by how many of your words each job's titles hold, in the government's code order inside
+  each group, with jobs found only through DotAmi's own word list in a last group of their own; nothing is
+  picked until you click a job, and *Skip this question* is always there. In Alberta, *Where you are* then asks
+  which area you're in (Calgary, Edmonton, Lethbridge, Red Deer, somewhere else in Alberta, or I don't know), and
+  then which of Alberta's eight economic regions, listed as Statistics Canada publishes them: the region is never
+  worked out from the area. Outside Alberta that step asks nothing and says why. The futures then list the road
+  written for your pick of job first, under its own heading; for a job no road is written for, the step says
+  so (*No road is written for Barbers (63210.02) yet.*), holds the place *About this job* fills in its own pull
+  request, and lists the general road, saying it isn't written for that job; nothing is saved until you open a
+  future. The typed way, *I already have an idea*, now ends on the same three steps on the intake page in place
+  of **Open my map** (the maintainer's call 1 of 2026-10-21), so a typed idea is saved on the road the person
+  opened. The cockpit's **Pick a job** runs the same search. The words you type are searched on DotAmi's own
+  server on your computer and never kept; the job, the area and the region are kept with the idea, each with
+  its day, only when you open a future (four new optional columns on the idea, through a migration that adds
+  them and changes nothing else), shown on *Your plan*, and deleted with the idea; *What DotAmi knows about you*
+  names the area and the region on lines of their own under *Your ideas*. While a search waits, the line under
+  the box says *Looking in the government's example titles…*. When every word typed is on
+  DotAmi's filler or business-word list (*my own shop*), the step says nothing was searched, under the *Not
+  searched* line, and never that no government title holds those words. In Alberta, *About this job* reads the
+  answers kept here: it shows the published wage row for the region you picked (Alberta's own row for *I don't
+  know* or no answer) and shows your area back; outside Alberta it shows the province's or territory's row as
+  before. *Where you are* doesn't yet say you can change your region from *About this job*: that button comes
+  later. The idea harness and the browser idea sweep
+  find each person's job through the search from their own words (the kind of work, or the job's own name), never
+  by its code, and accept the honest "not written yet" ending; the sweep plays the three steps.
+- **Quality numbers on every CI run, and a Quality line for the release notes** ([14n], task 32a; the plan's
+  S2.5.32, "best results without analytics"). For the people building DotAmi, with no change in the app:
+  `npm run quality:report` prints, and writes to `test-results/quality.md`, what the tests already compute,
+  counted on 2026-10-22: where each of the 367 invented test ideas ends when typed in (323 on the general road,
+  *Starting any business in Alberta*, which any idea can reach; 44 stop before any road is shown; 0 of the 11
+  ideas with a road of their own written for them reach it), the ideas shown a road that isn't theirs with
+  nothing on screen saying so (37 today; phase 2 aims for 0), how often "What's closest to your work?" lists
+  the job an idea expects (in the group it opens for 150 of 220, anywhere in its lists for 172, no job at all
+  for 4; the cockpit's older job list, 20), how busy each screen looks at each width from the last browser run,
+  source health (each citation by who checked it, sources whose stated next release date has passed, the 5
+  citations on government pages that answered "page not found", and, only when a builder asks with `--live`,
+  a live run of the quote checker), and how the ideas pass the idea test (140 break none of its rules; the
+  other 227 only rules listed as known and not yet fixed). The clutter is counted with the clutter test's own
+  rule and the job search with the count its floor test holds, so the report can't print a number the tests
+  don't. CI prints it after the tests and after the browser run, and on the run's summary page; no number fails
+  anything yet. `npm run quality:line` gives the one Quality line, in plain words, each release adds here;
+  a part the run didn't count (the job search, the clutter, the sources, or the live quote check) says so in
+  the line. Made on a builder's Windows machine, its clutter part counts with the Windows allowance, so it
+  can differ from CI's. Nothing comes from the people using DotAmi, and nothing is sent anywhere.
 ### Fixed
 - **Your answer to "Are you buying equipment, a vehicle or tools?" on a future picked on Pick a future is
   kept** (the maintainer's "Yes, fix both", 2026-10-20). Pick a future saves equipment as not said, since it

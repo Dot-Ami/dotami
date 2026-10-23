@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 
+import type { AboutJobView } from "@/lib/about-job/types";
 import type { FigureView } from "@/lib/figures/types";
 import type { FutureView } from "@/lib/futures/future";
 import type { SkillMarkView } from "@/lib/futures/skill-marks";
@@ -16,6 +17,8 @@ export interface KeptForIdea {
   firstWords: { text: string; saidAt: string } | null;
   /** The person's newest answer to "where do you want to be", word for word with its day; null when none. */
   destination: { text: string; saidAt: string } | null;
+  /** About this job for the picked job, built on the server (lib/about-job/view.ts); null while none is picked. */
+  aboutJob?: AboutJobView | null;
 }
 
 /**

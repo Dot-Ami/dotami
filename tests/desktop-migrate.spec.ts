@@ -1467,3 +1467,77 @@ describe("desktop migrator — businesses you're watching (2026-10-17)", () => {
     expect(query<{ id: string }>(dbFile, `SELECT id FROM "SkillMark"`)).toEqual([{ id: "m1" }]);
   }, 60_000);
 });
+
+describe("desktop migrator — where you are: your area and your region (2026-10-22)", () => {
+  const whereMigration = localNames.find((name) => name.endsWith("_where_you_are"));
+
+  it("is four plain columns added to Venture: nothing is copied, dropped or renamed", () => {
+    expect(whereMigration, "no migration ending in _where_you_are").toBeDefined();
+    expect(statementsOf(whereMigration!)).toEqual([
+      `ALTER TABLE "Venture" ADD COLUMN "landscapeArea" TEXT`,
+      `ALTER TABLE "Venture" ADD COLUMN "landscapeAreaSetAt" DATETIME`,
+      `ALTER TABLE "Venture" ADD COLUMN "economicRegion" TEXT`,
+      `ALTER TABLE "Venture" ADD COLUMN "economicRegionSetAt" DATETIME`,
+    ]);
+  });
+
+  it("keeps every row of every table, with a safety copy first; ideas saved before it have neither answer, and Delete takes them", () => {
+    const before = path.join(dir, "migrations-before-where");
+    cpSync(migrations, before, { recursive: true });
+    for (const name of localNames.filter((n) => n >= whereMigration!)) {
+      rmSync(path.join(before, name), { recursive: true, force: true });
+    }
+    migrate(dbFile, before);
+    expect(columns(dbFile, "Venture")).not.toContain("landscapeArea");
+    expect(query<{ foreign_keys: number }>(dbFile, "PRAGMA foreign_keys")).toEqual([{ foreign_keys: 1 }]);
+
+    // An idea on road 1 with a job picked, an ending, a month, figures, a link, map and step progress; a second idea; a mark.
+    runSql(
+      dbFile,
+      `
+      INSERT INTO "User" (id, updatedAt) VALUES ('u1', 0);
+      INSERT INTO "Venture" (id, userId, name, type, province, targetRevenueY1, targetRevenueY3, employmentStatus, notes, roadId, roadChosenAt, forkPicks, targetMonth, targetMonthSetAt, occupationCode, occupationPickedAt, updatedAt)
+        VALUES ('v1', 'u1', 'Invented shop', 'SERVICE', 'CA-AB', 1000, 3000, 'APPRENTICE', 'note', 'road-apprentice-to-own-shop-ab', 5, '{}', '2029-05', 6, '72311.00', 7, 0),
+               ('v2', 'u1', 'Second idea', 'PRODUCT', 'CA-BC', 2000, 6000, 'EMPLOYEE', '', NULL, NULL, '{}', NULL, NULL, NULL, NULL, 0);
+      INSERT INTO "PersonStatement" (id, userId, text, saidAt, ventureId, kind) VALUES ('s1', 'u1', 'My own shop', 1, 'v1', 'destination');
+      INSERT INTO "VentureLink" (id, fromId, toId, kind, note) VALUES ('l1', 'v1', 'v2', 'SISTER', 'same customers');
+      INSERT INTO "ScenarioState" (id, ventureId, activeNodeIds, completedNodeIds, ghostedNodeIds, activeBranches, updatedAt)
+        VALUES ('p1', 'v1', '["a"]', '["b"]', '[]', '{}', 0);
+      INSERT INTO "Figure" (id, ventureId, kind, periodStart, periodEnd, amountCents, sourceKind, sourceLabel, status)
+        VALUES ('f1', 'v1', 'savings-for-start', 0, 0, 1200000, 'typed', 'typed by you', 'confirmed');
+      INSERT INTO "StepProgress" (id, ventureId, roadId, stepId, status, updatedAt)
+        VALUES ('sp1', 'v1', 'road-apprentice-to-own-shop-ab', 'step-shop-register-apprentice', 'done', 0);
+      INSERT INTO "SkillMark" (id, userId, skillItemId, mark) VALUES ('m1', 'u1', 'skill-ab-alberta-student-number', 'have');
+    `,
+    );
+    const tablesKept = ["User", "PersonStatement", "Venture", "VentureLink", "ScenarioState", "Figure", "StepProgress", "SkillMark", "WatchedBusiness"];
+    // The columns each table had before, so the comparison is about this change only.
+    const columnsBefore = Object.fromEntries(tablesKept.map((t) => [t, columns(dbFile, t).map(columnAsBefore).join(", ")]));
+    const everything = () => Object.fromEntries(tablesKept.map((t) => [t, query(dbFile, `SELECT ${columnsBefore[t]} FROM "${t}" ORDER BY 1`)]));
+    const held = everything();
+    expect(held.Venture).toHaveLength(2);
+
+    const { applied, backup } = migrate(dbFile, migrations, { backupDir: path.join(dir, "backups"), now: () => 29 });
+    expect(applied).toEqual(localNames.filter((n) => n >= whereMigration!));
+    expect(backup).not.toBeNull();
+
+    expect(everything()).toEqual(held);
+    expect(query(dbFile, `SELECT id, landscapeArea, landscapeAreaSetAt, economicRegion, economicRegionSetAt FROM "Venture" ORDER BY id`)).toEqual([
+      { id: "v1", landscapeArea: null, landscapeAreaSetAt: null, economicRegion: null, economicRegionSetAt: null },
+      { id: "v2", landscapeArea: null, landscapeAreaSetAt: null, economicRegion: null, economicRegionSetAt: null },
+    ]);
+    runSql(dbFile, `UPDATE "Venture" SET landscapeArea = 'cma-825', landscapeAreaSetAt = 8, economicRegion = '4830', economicRegionSetAt = 8 WHERE id = 'v1'`);
+    // The safety copy taken first holds the file as it was, without the new columns.
+    expect(columns(backup!, "Venture")).not.toContain("economicRegion");
+    expect(query(dbFile, "PRAGMA foreign_key_check")).toEqual([]);
+    expect(query(dbFile, "PRAGMA integrity_check")).toEqual([{ integrity_check: "ok" }]);
+    const status = prisma(["migrate", "status"], dbFile);
+    expect(status.out).toContain("Database schema is up to date");
+    expect(status.code).toBe(0);
+
+    // Deleting the idea takes its answers with it, and leaves the other idea and the person's marks.
+    runSql(dbFile, `DELETE FROM "Venture" WHERE id = 'v1'`);
+    expect(query<{ id: string }>(dbFile, `SELECT id FROM "Venture"`)).toEqual([{ id: "v2" }]);
+    expect(query<{ id: string }>(dbFile, `SELECT id FROM "SkillMark"`)).toEqual([{ id: "m1" }]);
+  }, 60_000);
+});
