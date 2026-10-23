@@ -1,6 +1,7 @@
 import { readJsonWithLimit, rejectedResponse, RequestRejectedError } from "@/lib/api/body-limit";
 import { checkRateLimit, clientKeyFromRequest, rateLimitResponse } from "@/lib/api/rate-limit";
 import { cfeCatalogV2026 } from "@/lib/engines/cfe/v2026";
+import { roadById } from "@/lib/engines/roads/v2026";
 import { buildPlaybookSkeleton } from "@/lib/playbook/build-skeleton";
 import type { Scenario } from "@/lib/scenarios/types";
 
@@ -70,7 +71,15 @@ export async function POST(request: Request) {
     return Response.json({ error: "scenario payload required" }, { status: 400 });
   }
 
-  const skeleton = buildPlaybookSkeleton([...cfeCatalogV2026.nodes], scenario);
+  // The road the cockpit draws, so the sources are the ones it shows (on the federal road, the idea's own
+  // province's and the federal ones, task 28d). Left out, every source, as before; one nobody wrote is refused.
+  const roadId = (bodyUnknown as { roadId?: unknown }).roadId;
+  const road = roadId === undefined ? undefined : typeof roadId === "string" ? roadById(roadId) : undefined;
+  if (roadId !== undefined && !road) {
+    return Response.json({ error: "unknown road" }, { status: 400 });
+  }
+
+  const skeleton = buildPlaybookSkeleton([...cfeCatalogV2026.nodes], scenario, road);
 
   return Response.json({ skeleton }, { headers: { "Cache-Control": "no-store" } });
 }

@@ -146,12 +146,17 @@ describe("the harness fails on a planted product regression", () => {
   });
 
   it("a silent fallback on every click Pick a future offers, written for the idea or not", () => {
-    // Step 3 lists both roads for any place in Canada, and "Not here yet?" opens road 0 anywhere: a card after
-    // Skip, a card and the note for a job with no written road. The typed way opens the general road for each.
+    // Step 3 lists Alberta's two roads in Alberta; outside Alberta the federal steps first and Alberta's two folded
+    // (task 28d); and "Not here yet?" opens road 0 anywhere: a card after Skip, a card and the note for a job with
+    // no written road. The typed way opens the card the page shows first for the place for each.
     const clicks = [
       [idea("idea-v1-0006"), { by: "card", roadId: "road-starting-any-business-ab" }], // Alberta, skipped
-      [idea("idea-v1-0004"), { by: "card", roadId: "road-apprentice-to-own-shop-ab" }], // Ontario, a bakery
+      [idea("idea-v1-0003"), { by: "card", roadId: "road-federal-steps-ca" }], // British Columbia, an app
+      [idea("idea-v1-0361"), { by: "card", roadId: "road-apprentice-to-own-shop-ab" }], // Ontario, folded, skipped
+      [idea("idea-v1-0022"), { by: "card", roadId: "road-starting-any-business-ab" }], // Ontario, folded, no road for the job
+      [idea("idea-v1-0178"), { by: "card", roadId: "road-apprentice-to-own-shop-ab" }], // Alberta, closing a store
       [idea("idea-v1-0008"), { by: "not-here", roadId: "road-starting-any-business-ab" }], // Alberta, a career
+      [idea("idea-v1-0188"), { by: "not-here", roadId: "road-starting-any-business-ab" }], // Newfoundland, closing a shop
     ] as const;
     for (const [target, click] of clicks) {
       expect(pickedChoice(target)).toEqual(click);

@@ -200,11 +200,12 @@ describe("the harness's checks catch what they guard", () => {
 
   // Task 29h: the honest end of Pick a future's third step, for a job with no written road (the maintainer's call 3
   // of 2026-10-21: nothing is saved, so no road is drawn).
-  const leaves = IDEAS_V1.find((idea) => idea.id === "idea-v1-0003")!; // a British Columbia app, job 21232.00
+  // (idea-v1-0003, a British Columbia app, opens the federal steps since they are written for it, task 28d.)
+  const leaves = IDEAS_V1.find((idea) => idea.id === "idea-v1-0117")!; // Ontario, no road written for it, job 73300.01
 
   it("5. leaving at “No road is written for <job> yet” is an honest end; leaving anywhere else isn't", () => {
     const run = runIdea(leaves);
-    expect(run.pickedSteps).toMatchObject({ job: { code: "21232.00" }, match: "no-road", click: { by: "left" } });
+    expect(run.pickedSteps).toMatchObject({ job: { code: "73300.01" }, match: "no-road", click: { by: "left" } });
     expect(run.picked).toBeNull();
     expect(failures(run, "ends:road-drawn")).toBe(0);
     // The same end where a road is written for the job, or with the no-road line not on the screen, fails.

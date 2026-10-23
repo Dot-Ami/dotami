@@ -77,7 +77,8 @@ export function placeName(place: PlaceCode): string {
 
 /**
  * Whose rules the catalogs have for the place (its own and the federal ones, or only the federal ones),
- * and how many futures are written for it: a road written for the place or for all of Canada ("CA").
+ * and how many futures listed are written for it, with the ones written for all of Canada ("CA") counted
+ * apart: the federal road's card says the place's own steps aren't written, so it never counts as the place's.
  */
 export function placeReceipt(place: PlaceCode, roads: readonly Pick<Road, "provinces">[]): string {
   const province = provinceOfPlace(place);
@@ -87,11 +88,17 @@ export function placeReceipt(place: PlaceCode, roads: readonly Pick<Road, "provi
       ? words.placeWritten(name)
       : words.placeFederalOnly(name);
   // A road's places are read as plain strings: it names only the places it is written for.
-  const writtenHere = roads.filter((road) => {
-    const places: readonly string[] = road.provinces;
-    return places.includes("CA") || (province !== null && places.includes(province));
-  }).length;
-  return `${rules} ${words.futuresFor(writtenHere, name)}`;
+  const placesOf = (road: Pick<Road, "provinces">): readonly string[] => road.provinces;
+  const forPlace = (road: Pick<Road, "provinces">) => province !== null && placesOf(road).includes(province);
+  const own = roads.filter(forPlace).length;
+  const canada = roads.filter((road) => !forPlace(road) && placesOf(road).includes("CA")).length;
+  const futures =
+    canada === 0
+      ? words.futuresFor(own, name)
+      : own === 0
+        ? words.futuresForCanadaOnly(canada, name)
+        : words.futuresForPlaceAndCanada(own, canada, name);
+  return `${rules} ${futures}`;
 }
 
 export function incomeReceipt(answer: IncomeAnswer): string {

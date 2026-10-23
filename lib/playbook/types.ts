@@ -28,6 +28,11 @@ export interface PlaybookSection {
   heading: string;
   nodes: PlaybookNodeSlice[];
   citations: PlaybookCitationRef[];
+  /**
+   * On a road written for all of Canada, how many of the section's sources were for other provinces and left
+   * out (as the step panel and the plan leave them out, task 28d); absent when none was.
+   */
+  sourcesLeftOut?: number;
 }
 
 export interface PlaybookDecisionSummary {

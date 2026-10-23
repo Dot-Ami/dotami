@@ -5,7 +5,7 @@ import { buildPlan, type PlanView } from "@/lib/cockpit/plan";
 import { notToldYet, type KeptAnswers, type NotToldRow } from "@/lib/cockpit/told";
 import { nextOnYourRoad } from "@/lib/cockpit/view";
 import type { CFENodeId } from "@/lib/engines/cfe/v2026";
-import { generalRoadV2026, roadApprenticeToOwnShopAB, roadById, skillItemsV2026, type Road } from "@/lib/engines/roads/v2026";
+import { forksAreTheMapToggles, generalRoadV2026, roadApprenticeToOwnShopAB, roadById, roadFederalStepsCA, skillItemsV2026, type Road } from "@/lib/engines/roads/v2026";
 import { BUSINESS_TOTAL_KINDS, type FigureView } from "@/lib/figures/types";
 import type { SkillMarkValue, StepStatus } from "@/lib/futures/types";
 import { ACTIVITY_TAXONOMY } from "@/lib/journey/intent";
@@ -60,8 +60,8 @@ import type { TextPiece } from "./text-pieces";
 export const PROPERTIES_TODAY = "2026-10-17";
 const AT_NOON = `${PROPERTIES_TODAY}T12:00:00.000Z`;
 
-/** The two written roads, by permanent id. */
-const ROAD_IDS_WRITTEN = [generalRoadV2026.id, roadApprenticeToOwnShopAB.id] as const;
+/** The written roads, by permanent id: the federal steps too since 2026-10-21 (task 29j, any road). */
+const ROAD_IDS_WRITTEN = [generalRoadV2026.id, roadApprenticeToOwnShopAB.id, roadFederalStepsCA.id] as const;
 const road = (id: string): Road => roadById(id)!;
 
 // --- The answer space, one arbitrary per answer.
@@ -294,7 +294,7 @@ export interface Generated {
 export function toInput(g: Generated): RoadEvaluationInput {
   const r = road(g.roadId);
   let forkPicks: RoadEvaluationInput["forkPicks"] = g.forkPicks;
-  if (r.id === generalRoadV2026.id) {
+  if (forksAreTheMapToggles(r)) {
     const branches: Record<string, string> = g.scenario.state.activeBranches;
     forkPicks = Object.fromEntries(
       r.forks.flatMap((fork) => (fork.sides.includes(branches[fork.id]) ? [[fork.id, { stepId: branches[fork.id], from: "map" as const }]] : [])),
@@ -343,7 +343,7 @@ export function generatedArb(options: GenerateOptions = {}): fc.Arbitrary<Genera
       return fc.record({ stepId: fc.constant(stepId), status: fc.option(status, { nil: null }), doneWhenIds: fc.subarray(step.doneWhen.map((d) => d.id)) });
     });
     const forkPicks: fc.Arbitrary<Generated["forkPicks"]> =
-      r.id === generalRoadV2026.id
+      forksAreTheMapToggles(r)
         ? fc.constant({})
         : fc
             .record(
@@ -502,6 +502,7 @@ export function invariantFailures(run: GeneratedRun): Failure[] {
       region: null,
       match: "skipped",
       offered: [],
+      folded: [],
       click: { by: "card", roadId: input.road.id },
     },
     job: input.job?.code ?? null,
@@ -530,7 +531,7 @@ export function invariantFailures(run: GeneratedRun): Failure[] {
     work: "generated",
     noc: null,
     tags: [],
-    road: input.road.id === ROAD_IDS["road-1"] ? "road-1" : "road-0",
+    road: input.road.id === ROAD_IDS["road-1"] ? "road-1" : input.road.id === ROAD_IDS["road-federal"] ? "road-federal" : "road-0",
   };
   const ideaRun: IdeaRun = {
     idea,
@@ -625,7 +626,7 @@ export function answerChoiceArb(g: Generated): fc.Arbitrary<AnswerChoice> {
     );
   }
   for (const fork of r.forks) {
-    const kind = r.id === generalRoadV2026.id ? "map-pick" : "fork";
+    const kind = forksAreTheMapToggles(r) ? "map-pick" : "fork";
     kinds.push(fc.constantFrom(...fork.sides).map((side) => ({ kind, forkId: fork.id, side })));
   }
   return fc.oneof(...kinds);

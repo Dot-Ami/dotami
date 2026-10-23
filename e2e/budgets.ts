@@ -9,6 +9,10 @@
  *   (the smallest text size can only go up): `tests/clutter-budgets.spec.ts` fails on a budget above the
  *   baseline or above main's. When a change makes a screen calmer, lower its budget in the same pull
  *   request, so the room it freed can't fill up again unseen; once that is on main, it can't be raised back.
+ *
+ * A screen added after the baseline was recorded (`ADDED_SCREENS`, since 2026-10-21) has no baseline row: the
+ * baseline is a record of one day. It gets its budget the written way below instead, and from then on its
+ * budget can only go down, like every other.
  */
 
 /** The screens the baseline of 2026-10-17 measured, in the order the spec opens them. */
@@ -52,6 +56,12 @@ export const ADDED_SCREENS = [
   "intake-region",
   "intake-road-written",
   "intake-road",
+  // Outside Alberta (2026-10-21, task 28d; docs/ui-spec/futures/04-outside-alberta.md): Pick a future's step 3 for
+  // a person in Ontario who skipped the job, every future listed (the federal steps first, under "Written for all
+  // of Canada", the two Alberta futures folded behind one button), a state of Pick a future; and the cockpit on
+  // the federal road, a first visit from Ontario, a sibling of the cockpit on road 0.
+  "futures-outside-alberta",
+  "cockpit-federal",
 ] as const;
 
 /** Every screen measured. */
@@ -59,7 +69,10 @@ export const SCREENS = [...BASELINE_SCREENS, ...ADDED_SCREENS] as const;
 export type ScreenId = (typeof SCREENS)[number];
 export type AddedScreenId = (typeof ADDED_SCREENS)[number];
 
-/** The baseline screen each added screen is a part of: its first row may not be busier than that screen's baseline row. */
+/**
+ * The baseline screen each added screen is a part, a state or a sibling of: its first row may not be busier than
+ * that screen's baseline row (a new screen starts at most as busy as the screen it stands beside).
+ */
 export const ADDED_SCREEN_PART_OF: Record<AddedScreenId, (typeof BASELINE_SCREENS)[number]> = {
   "cockpit-about-job": "cockpit-road-1",
   "futures-area": "futures",
@@ -73,6 +86,8 @@ export const ADDED_SCREEN_PART_OF: Record<AddedScreenId, (typeof BASELINE_SCREEN
   "intake-region": "intake",
   "intake-road-written": "intake",
   "intake-road": "intake",
+  "futures-outside-alberta": "futures",
+  "cockpit-federal": "cockpit-road-0",
 };
 
 /** The three window sizes: a phone, a tablet standing up, and a small laptop (the suite's own default). */
@@ -158,6 +173,11 @@ export const BASELINE: ClutterTable = {
  * Ubuntu has 5 (its Look inside reaches the first window on Ubuntu), so the row is Ubuntu's 5. The intake's case C
  * has no row: on a tablet it counts 6 controls on Windows (the Not here yet? box and the footer's link both reach
  * the first window), over the intake's 5, so it is shown to the maintainer instead (see `ADDED_SCREENS`).
+ *
+ * Outside Alberta (2026-10-21, task 28d; docs/ui-spec/futures/04-outside-alberta.md, "Regions and controls"):
+ * Pick a future's step 3 for a person in Ontario with the job skipped (`futures-outside-alberta`: the federal card
+ * and one fold button where an Albertan has two **Look inside**), at or under Pick a future's baseline; and the
+ * cockpit on the federal road (`cockpit-federal`), at or under road 0's, which it counts the same as.
  */
 export const FIRST_MEASURED: Partial<Record<AddedScreenId, Partial<Record<WidthId, Clutter>>>> = {
   "cockpit-about-job": { phone: m(8, 2, 5, 9.5), tablet: m(9, 28, 5, 9.5), laptop: m(9, 23, 5, 9.5) },
@@ -172,6 +192,8 @@ export const FIRST_MEASURED: Partial<Record<AddedScreenId, Partial<Record<WidthI
   "intake-region": { phone: m(3, 5, 5, 10.5), tablet: m(3, 5, 5, 10.5), laptop: m(3, 5, 5, 10.5) },
   "intake-road-written": { phone: m(3, 3, 6, 10.5), tablet: m(3, 4, 6, 10.5), laptop: m(3, 3, 6, 10.5) },
   "intake-road": { phone: m(3, 2, 6, 10.5), tablet: m(3, 5, 6, 10.5), laptop: m(3, 2, 6, 10.5) },
+  "futures-outside-alberta": { phone: m(6, 5, 6, 10.5), tablet: m(6, 7, 6, 10.5), laptop: m(6, 5, 6, 10.5) },
+  "cockpit-federal": { phone: m(7, 17, 4, 9.5), tablet: m(8, 29, 5, 9.5), laptop: m(8, 27, 5, 9.5) },
 };
 
 /**
@@ -283,6 +305,8 @@ export const BUDGETS: ClutterTable = {
   "intake-region": { phone: m(3, 5, 5, 10.5), tablet: m(3, 5, 5, 10.5), laptop: m(3, 5, 5, 10.5) },
   "intake-road-written": { phone: m(3, 3, 6, 10.5), tablet: m(3, 4, 6, 10.5), laptop: m(3, 3, 6, 10.5) },
   "intake-road": { phone: m(3, 2, 6, 10.5), tablet: m(3, 5, 6, 10.5), laptop: m(3, 2, 6, 10.5) },
+  "futures-outside-alberta": { phone: m(6, 5, 6, 10.5), tablet: m(6, 7, 6, 10.5), laptop: m(6, 5, 6, 10.5) },
+  "cockpit-federal": { phone: m(7, 17, 4, 9.5), tablet: m(8, 29, 5, 9.5), laptop: m(8, 27, 5, 9.5) },
 };
 
 /** What Chromium on Windows may count over a budget: only regions, controls and text sizes, never fewer. */

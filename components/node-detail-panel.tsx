@@ -34,6 +34,12 @@ interface NodeDetailPanelProps {
    * two lines and the cards (2026-10-12; docs/architecture/future-cockpit.md § 2). Nothing else changes.
    */
   children?: ReactNode;
+  /**
+   * Said under the sources, when the cockpit drew only some of them: on a road written for all of Canada, how
+   * many other provinces' pages it left out (task 28d, 2026-10-21). The `node` passed in then carries the
+   * sources drawn.
+   */
+  sourcesNote?: string | null;
 }
 
 /**
@@ -55,6 +61,7 @@ export function NodeDetailPanel({
   onOwnNumberChange,
   ownNumberLead,
   children,
+  sourcesNote = null,
 }: NodeDetailPanelProps) {
   const { routes, provinceNotWritten } = incorporationRoutesFor(node.id, province);
   return (
@@ -149,6 +156,7 @@ export function NodeDetailPanel({
 
       <Fold title={`Sources for this stage · ${node.citations.length}`}>
         <CitationLinks citations={node.citations} />
+        {sourcesNote ? <p className="mt-2 text-body text-stone">{sourcesNote}</p> : null}
       </Fold>
     </aside>
   );

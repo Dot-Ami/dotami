@@ -53,7 +53,9 @@ left; **Change** moves it to the question it opens.
   apply. <n> futures listed are written for Alberta."* For a place whose own rules aren't written: *"The
   federal rules apply; <place>'s own rules aren't written yet."* and, when no listed future is written
   for it, *"No future listed is written for <place> yet: the ones shown are written for other places,
-  and each says which."*
+  and each says which."* A future written for all of Canada (the federal steps, listed outside Alberta since
+  task 28d) is counted apart, never as the place's own: *"1 future listed is written for all of Canada; none is
+  written for <place> yet."*
 - **Keep it** (income), or Enter in the amount box: the amount is read with the same reader as every
   amount box (`12,500` or `12500.50`); one it can't read says so under the box and nothing is sent.
   Otherwise `POST /api/person-figures/propose { kind: "income-wanted", amountCents }` and the agree

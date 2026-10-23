@@ -1,12 +1,12 @@
 /**
- * The idea sweep (S2.5.29e): twelve ideas from the corpus (tests/fixtures/ideas/v1.ts), each taken from the
+ * The idea sweep (S2.5.29e): thirteen ideas from the corpus (tests/fixtures/ideas/v1.ts), each taken from the
  * front door to *Your plan* in a real browser on the production build, every screen read as it opens.
  *
- * Eight ideas are fixed (`FIXED_IDEAS`: across the kinds of person, places outside Alberta and outside Canada,
- * business and career, and the odd cases: French, two provinces, nothing typed) and four rotate by ISO week,
- * drawn from the rest of the corpus by a shuffle seeded with the week's number, so a given week's four are the
- * same on every machine and can be rerun with `IDEA_SWEEP_WEEK=2026-W42`. The twelve are printed when the file
- * loads and listed by the last test.
+ * Nine ideas are fixed (`FIXED_IDEAS`: across the kinds of person, places outside Alberta and outside Canada,
+ * business and career, an Alberta future picked from outside Alberta, and the odd cases: French, two provinces,
+ * nothing typed) and four rotate by ISO week, drawn from the rest of the corpus by a shuffle seeded with the
+ * week's number, so a given week's four are the same on every machine and can be rerun with
+ * `IDEA_SWEEP_WEEK=2026-W42`. The thirteen are printed when the file loads and listed by the last test.
  *
  * Each idea goes in both ways the app has: typed into "I already have an idea" (the intake's screens, then
  * Pick a future's three steps on the intake page, the cockpit, the plan), and, for an idea with a province or
@@ -54,13 +54,15 @@ import { expect, test, type Page } from "@playwright/test";
 import { COCKPIT_FOLDS_KEY } from "../lib/cockpit/folds";
 import { allCatalogCitations } from "../lib/engines/all-citations";
 import { toolCheckQuotes } from "../lib/engines/shared/citation-check";
-import { generalRoadV2026, roadApprenticeToOwnShopAB } from "../lib/engines/roads/v2026";
+import { generalRoadV2026, roadApprenticeToOwnShopAB, roadById, roadFederalStepsCA, roadsV2026 } from "../lib/engines/roads/v2026";
+import { placeName } from "../lib/front-door/receipts";
 import { parseIntentFallback } from "../lib/journey/intent-fallback";
+import type { PlaceCode } from "../lib/places/codes";
 import { PROVINCES, type Province } from "../lib/scenarios/types";
 import { SHOWN_WORDS_GAPS } from "../tests/fixtures/ideas/known-gaps";
-import { IDEAS_V1, ROAD_IDS, type Idea } from "../tests/fixtures/ideas/v1";
+import { IDEAS_V1, type Idea } from "../tests/fixtures/ideas/v1";
 import { intakeStepsWords, jobStepWords, pickWords, whereStepWords } from "../lib/front-door/words";
-import { SCREEN_WORK_SITUATION, stepsChoice, type StepsRun } from "../tests/helpers/idea-pipeline";
+import { pickedChoice, SCREEN_WORK_SITUATION, stepsChoice, type StepsRun } from "../tests/helpers/idea-pipeline";
 import { waitForReact } from "../tests/helpers/react-ready";
 import { normaliseSpaces } from "../tests/helpers/text-pieces";
 import { findTimeWords } from "../tests/helpers/time-words";
@@ -78,12 +80,24 @@ import { findTheJobByWords } from "./three-steps";
 // --- Which ideas.
 
 /**
- * The eight fixed ideas: a Calgary business on road 0 (1); a cabinetmaker apprentice on road 1 (46); an app in
+ * The nine fixed ideas: a Calgary business on road 0 (1); a cabinetmaker apprentice on road 1 (46); an app in
  * British Columbia, a city named with no province (3); a French idea in Quebec (10); a career in Alberta, a
  * regulated profession, which "Not here yet?" takes to the general road (8); a journeyman moving from one
- * province to another (193); nothing typed (130); and a bakery in England, outside Canada (216).
+ * province to another (193); nothing typed (130); a bakery in England, outside Canada (216); and fixing bikes
+ * in Ottawa (361), whose invented person opens "Show the 2 futures written for Alberta" and picks road 1, so
+ * the folded Alberta cards are clicked every week (added 2026-10-22, review of 28d).
  */
-export const FIXED_IDEAS = ["idea-v1-0001", "idea-v1-0046", "idea-v1-0003", "idea-v1-0010", "idea-v1-0008", "idea-v1-0193", "idea-v1-0130", "idea-v1-0216"] as const;
+export const FIXED_IDEAS = [
+  "idea-v1-0001",
+  "idea-v1-0046",
+  "idea-v1-0003",
+  "idea-v1-0010",
+  "idea-v1-0008",
+  "idea-v1-0193",
+  "idea-v1-0130",
+  "idea-v1-0216",
+  "idea-v1-0361",
+] as const;
 const ROTATING = 4;
 
 /** The ISO week of a day, as "YYYY-Www" (the week with the year's first Thursday is week 1). */
@@ -108,7 +122,7 @@ function seededRandom(seed: number): () => number {
   };
 }
 
-/** The four ideas that rotate: a seeded shuffle of the corpus minus the fixed eight, the first four. */
+/** The four ideas that rotate: a seeded shuffle of the corpus minus the fixed nine, the first four. */
 export function rotatingIdeas(week: string, count = ROTATING): string[] {
   const [year, w] = week.split("-W").map(Number);
   const random = seededRandom(year * 100 + w);
@@ -231,6 +245,17 @@ const CITATION_QUOTES = new Set(allCatalogCitations().flatMap(({ citation }) => 
  * carry one.
  */
 const withoutCitationQuotes = (text: string) => text.replace(/“([^”]*)”/g, (whole, inner: string) => (CITATION_QUOTES.has(inner.trim()) ? PIECE : whole));
+
+/**
+ * The cockpit budget a picked road's first visit is held to (e2e/budgets.ts), so the sweep reads any road the
+ * catalog holds (task 29j): a road with no row here fails the last test below. The budget itself is the clutter
+ * spec's own rule (e2e/clutter-rule.ts `budgetFor`).
+ */
+const HELD_FOR_ROAD: Readonly<Record<string, ScreenId>> = {
+  [generalRoadV2026.id]: "cockpit-road-0",
+  [roadApprenticeToOwnShopAB.id]: "cockpit-road-1",
+  [roadFederalStepsCA.id]: "cockpit-federal",
+};
 
 /**
  * Reads the screen as it is now: its words for verdicts and times, and its layout with the clutter measurer.
@@ -430,20 +455,34 @@ async function playTheSteps(s: Sweep, way: "typed" | "picked", steps: StepsRun):
     }
   }
   await expect(page.getByRole("heading", { name: pickWords.heading, level: 1 })).toBeVisible();
-  await read(s, `${way}: step 3 (${steps.match})`);
-  const offered = await page.getByRole("list", { name: pickWords.listLabel }).getByRole("heading", { level: 2 }).allInnerTexts();
-  const labels = steps.offered.map((id) => (id === ROAD_IDS["road-1"] ? roadApprenticeToOwnShopAB.label : generalRoadV2026.label));
-  expect(offered, `${idea.id} › ${way}: step 3 lists the roads written for the picked job first`).toEqual(labels);
+  // Outside Alberta, Pick a future's step 3 with the job skipped is the state `futures-outside-alberta` measures
+  // (task 28d: the federal steps first, Alberta's two folded).
+  const outsideAlberta = steps.folded.length > 0;
+  const held: ScreenId | null = way === "picked" && outsideAlberta && steps.match === "skipped" ? "futures-outside-alberta" : null;
+  await read(s, `${way}: step 3 (${steps.match})`, held);
+  // The cards shown, in order, by their Look inside buttons; outside Alberta the Alberta ones are folded until the
+  // person opens them.
+  const lookInsides = page.getByRole("button", { name: /^Look inside / });
+  const label = (id: string) => pickWords.lookInsideName(roadById(id)!.label);
+  const shown = steps.offered.filter((id) => !steps.folded.includes(id)).map(label);
+  expect(await lookInsides.evaluateAll((all) => all.map((b) => b.getAttribute("aria-label"))), `${idea.id} › ${way}: step 3 lists the roads written for the picked job first`).toEqual(shown);
   if (steps.click.by === "left") {
     // The honest end for a job with no written road: the step says so, and nothing is saved.
-    await expect(page.getByRole("heading", { name: pickWords.noRoad.heading(steps.job!.label, steps.job!.code) })).toBeVisible();
+    const outsidePlace = outsideAlberta ? placeName(`CA-${idea.place}` as PlaceCode) : undefined;
+    await expect(page.getByRole("heading", { name: pickWords.noRoad.heading(steps.job!.label, steps.job!.code, outsidePlace) })).toBeVisible();
     await expect(page.getByText(pickWords.noRoad.nothingSaved, { exact: true })).toBeVisible();
     s.measured.push(`${way}: left at "No road is written for ${steps.job!.label} yet" (nothing saved)`);
     return false;
   }
-  const road = steps.click.roadId === ROAD_IDS["road-1"] ? roadApprenticeToOwnShopAB : generalRoadV2026;
+  const road = roadById(steps.click.roadId)!;
   if (steps.click.by === "card") {
     if (way === "picked") await page.getByRole("textbox", { name: "Name it (optional)" }).fill(`Invented — idea sweep ${idea.id} (picked)`);
+    // An Alberta future picked from outside Alberta: the person opens the fold first, as the page asks.
+    if (steps.folded.includes(road.id)) {
+      await button(page, pickWords.showAlberta(steps.folded.length)).click();
+      await expect(lookInsides.evaluateAll((all) => all.map((b) => b.getAttribute("aria-label")))).resolves.toEqual(steps.offered.map(label));
+      await read(s, `${way}: step 3, the Alberta futures shown`);
+    }
     await page.getByRole("button", { name: pickWords.lookInsideName(road.label), exact: true }).click();
   } else {
     // "Not here yet?": the note is kept as one of the person's statements, and the general road opens.
@@ -497,7 +536,8 @@ async function pickedWay(s: Sweep) {
   const steps = stepsChoice(idea, "picked");
   if (!(await playTheSteps(s, "picked", steps))) return;
   if (steps.click.by === "left") return;
-  const held: ScreenId = steps.click.roadId === ROAD_IDS["road-1"] ? "cockpit-road-1" : "cockpit-road-0";
+  // Any road the catalog holds (task 29j): its first visit is held to its own budget.
+  const held = HELD_FOR_ROAD[steps.click.roadId] ?? null;
   // About this job once per idea, on the future the person picked (an idea that leaves at "No road is written
   // for <job> yet" reads it on the typed way instead, see `typedWay`).
   await cockpitAndPlan(s, `picked by ${steps.click.by}`, held, true);
@@ -533,10 +573,20 @@ for (const { idea, why } of SWEEP) {
   });
 }
 
-test("the sweep ran twelve ideas, eight fixed and four for the week, and every allowance is still a listed gap", () => {
+test("the sweep ran thirteen ideas, nine fixed and four for the week, and every allowance is still a listed gap", () => {
   const ids = SWEEP.map(({ idea }) => idea.id);
-  expect(new Set(ids).size).toBe(12);
-  expect(ids.slice(0, 8)).toEqual([...FIXED_IDEAS]);
+  expect(new Set(ids).size).toBe(FIXED_IDEAS.length + ROTATING);
+  expect(ids.slice(0, FIXED_IDEAS.length)).toEqual([...FIXED_IDEAS]);
+  // Each card path Pick a future offers outside Alberta is clicked by a fixed idea every week: the federal card
+  // shown first, and an Alberta card behind "Show the 2 futures written for Alberta" (the fold `pickedWay` opens).
+  const fixedOutsideAlberta = FIXED_IDEAS.map(ideaById).filter((idea) => isProvince(idea.place) && idea.place !== "AB");
+  // (An idea whose person leaves at "No road is written for <job> yet" clicks no card: pickedChoice is null.)
+  const clicked = fixedOutsideAlberta.flatMap((idea) => {
+    const choice = pickedChoice(idea);
+    return choice ? [roadById(choice.roadId)!] : [];
+  });
+  expect(clicked.some((road) => road.id === roadFederalStepsCA.id), "no fixed idea outside Alberta clicks the federal card").toBe(true);
+  expect(clicked.some((road) => !(road.provinces as readonly string[]).includes("CA")), "no fixed idea outside Alberta opens the Alberta futures and clicks one").toBe(true);
   console.log(`idea sweep, ${WEEK}, ran: ${ids.join(", ")}`);
   // The rotation is deterministic for a week, and changes between weeks.
   expect(rotatingIdeas(WEEK)).toEqual(rotatingIdeas(WEEK));
@@ -544,6 +594,8 @@ test("the sweep ran twelve ideas, eight fixed and four for the week, and every a
   for (const allowance of SCREEN_TIME_ALLOWANCES) {
     expect(SHOWN_WORDS_GAPS.map((g) => g.where), `${allowance.gap} is no longer a known gap: take its allowance out of the sweep`).toContain(allowance.gap);
   }
+  // Every road the catalog holds can be read: its first visit is held to a budget of its own.
+  for (const road of roadsV2026) expect(HELD_FOR_ROAD[road.id], `${road.id}: add it to HELD_FOR_ROAD`).toBeDefined();
   // Every listed gap is expected of some idea this week, so its ratchet (in the ideas' tests) is live.
   for (const gap of SCREEN_GAPS) {
     expect(SWEEP.some(({ idea }) => gap.expectedFor(idea)), `no idea this week is expected to show ${gap.found}: its ratchet checks nothing`).toBe(true);

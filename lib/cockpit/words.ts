@@ -32,6 +32,12 @@ export const cockpitWords = {
     drawnOnly: (roadLabel: string, roadPlaces: readonly string[], ideaPlace: string) =>
       `Map drawn: ${roadLabel} · written for ${roadPlaces.join(", ")}; this idea is in ${ideaPlace}`,
     /**
+     * A road written for all of Canada, on an idea whose province has no road of its own (task 28d): its
+     * steps are the federal ones, and the province's own aren't written yet. Of steps only, never of rules:
+     * the rules and tax cards still pick the province's own entries where the catalogs carry them.
+     */
+    federal: (roadLabel: string, province: string) => `Future: ${roadLabel} · ${province}'s own steps aren't written yet`,
+    /**
      * The goal bar's one menu for the things it can open in the right-hand panel (the calm first view,
      * 2026-10-17): Compare (where a fork's own pick moves steps), Others in this line of work, and later
      * About this job. Their own words stay with them (compare.region, lib/landscape/words.ts).
@@ -166,6 +172,9 @@ export const cockpitWords = {
     costsWaiting: (fork: string) => `Not counted yet: it waits on a pick at ${quoted(fork)}.`,
     notSaved: "This idea is not saved yet, so nothing here can be kept.",
     sources: (n: number) => `Sources for this step · ${n}`,
+    /** Under a step's sources on a road written for all of Canada: other provinces' pages it didn't draw (task 28d). */
+    sourcesOtherProvinces: (n: number) =>
+      n === 1 ? "1 source for other provinces isn't shown." : `${n} sources for other provinces aren't shown.`,
     officialLinks: "Official pages you open yourself",
     /** Under a step's own skills: the job's list is the job's, never tied to a step. */
     jobLine: (label: string, listed: number, marked: number) =>

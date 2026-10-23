@@ -46,36 +46,32 @@ export const SHOWN_WORDS_GAPS: readonly ShownWordsGap[] = [
 ];
 
 export const KNOWN_GAPS: readonly KnownGap[] = [
+  // Taken out on 2026-10-22 when the three steps and the federal road were joined (PR #202 with PR #200): the
+  // typed way's "road written for the place" entry (190 ideas: every typed idea drawn on road 0, wherever it is).
+  // The typed way now ends on Pick a future's three steps, which outside Alberta list the federal steps first, and
+  // its invented person opens the road written for the idea or, with none, the card the page shows first for the
+  // place (tests/helpers/idea-pipeline.ts `stepsChoice`), so each typed idea is drawn on a road written for its place.
   {
     invariant: "ends:road-written-for-place",
-    subject: "typed",
+    subject: "picked",
     kind: "planned",
-    story: "S2.5.28d (outside Alberta, honestly)",
-    why: "Every typed idea is drawn on road 0, which is written for Alberta only, wherever the idea is. The plan's goal line says “written for AB; this idea is in …”, but every step still reads as Alberta's. 28d draws the federal steps that apply everywhere and says “Written for Alberta” with the person's own province named.",
-    ideas: [
-      3, 4, 5, 7, 9, 10, 11, 13, 15, 16, 18, 20, 22, 28, 29, 30, 32, 33, 35, 36, 37, 38, 40, 42, 43, 45, 47, 49, 50, 52, 53, 54, 56, 58, 59,
-      60, 61, 63, 64, 66, 67, 69, 73, 75, 76, 78, 79, 80, 82, 84, 85, 86, 88, 91, 92, 94, 96, 97, 98, 100, 101, 102, 103, 105, 107, 109,
-      111, 112, 113, 114, 115, 117, 119, 121, 123, 124, 126, 128, 129, 133, 135, 138, 140, 142, 145, 148, 150, 152, 154, 156, 158, 160, 161,
-      163, 164, 165, 166, 167, 169, 171, 172, 173, 177, 179, 181, 182, 184, 185, 186, 188, 189, 190, 192, 194, 197, 198, 199, 200, 202, 203,
-      206, 208, 210, 211, 212, 213, 245, 246, 247, 248, 249, 251, 254, 255, 260, 268, 269, 287, 288, 289, 290, 294, 295, 296, 297, 298, 299,
-      300, 301, 302, 303, 304, 305, 306, 307, 308, 309, 310, 311, 312, 313, 314, 315, 316, 317, 318, 319, 320, 321, 322, 323, 324, 332, 334,
-      337, 346, 351, 352, 353, 354, 355, 356, 357, 360, 361, 362, 363, 364, 365, 366,
-    ],
+    story: "The maintainer's call, asked in 28d's pull request: should “Not here yet?” open the federal steps outside Alberta?",
+    // 190 ideas until 28d (2026-10-21), now 13 here and 9 in the next entry. Of the 168 off: 156 because the
+    // corpus now says the federal road is written for them (tests/fixtures/ideas/v1.ts, "road-federal"), so the
+    // invented person clicks its card; 12 because, with no road written for them, they click the card the
+    // page shows first. The product change lists the federal card; the count moved with the clicks. Joined with
+    // the three steps (PR #202, 2026-10-22) the same 13: an idea whose person leaves at "No road is written for
+    // <job> yet" saves nothing and draws no road, but none of these leaves there.
+    why: "Outside Alberta, Pick a future lists the federal steps first (28d), and an idea picked there is drawn on a road written for its place. “Not here yet?” still keeps the note and opens road 0, the general road, anywhere, as its own spec says (docs/ui-spec/futures/03-road-match.md: “as today”): these are the ideas with no road written for them whose invented person keeps a note. The goal bar says “Map drawn: … written for AB; this idea is in …”, so it isn't silent; whether the note should open the federal steps there instead is the maintainer's call.",
+    ideas: [188, 194, 197, 200, 203, 206, 212, 251, 287, 290, 308, 362, 365],
   },
   {
     invariant: "ends:road-written-for-place",
     subject: "picked",
     kind: "planned",
-    story: "S2.5.28d (outside Alberta, honestly)",
-    why: "Pick a future's third step lists both Alberta roads for every place in Canada, saying “Written for Alberta. You said …” on the card, and “Not here yet?” opens road 0 anywhere. Once picked, the cockpit draws every step as Alberta's, as on the typed way in. 28d draws the federal steps that apply everywhere and names the person's own province. (Since the three steps, 2026-10-22, an idea whose person leaves at “No road is written for <job> yet” saves nothing and draws no road, so it is off this list: 38 ideas.)",
-    ideas: [
-      4, 5, 7, 10, 11, 13, 16, 18, 20, 22, 28, 29, 32, 33, 35, 37, 38, 40, 42, 43, 47, 49, 50, 52, 53, 56, 58, 59, 61, 64, 67, 69, 73, 76,
-      79, 80, 82, 85, 86, 88, 91, 92, 94, 97, 98, 100, 101, 102, 103, 105, 107, 109, 112, 113, 115, 119, 121, 123, 124, 126, 128, 133, 135,
-      138, 140, 142, 145, 148, 150, 152, 154, 158, 160, 161, 163, 164, 165, 166, 167, 169, 172, 173, 179, 181, 182, 184, 185, 188, 190, 192,
-      194, 197, 199, 200, 202, 203, 206, 208, 210, 211, 212, 245, 246, 247, 248, 249, 251, 254, 260, 268, 269, 287, 289, 290, 295, 296, 298,
-      299, 301, 302, 304, 305, 307, 308, 310, 311, 312, 313, 314, 315, 316, 317, 319, 320, 322, 323, 332, 334, 337, 346, 352, 353, 354, 355,
-      356, 360, 361, 362, 363, 364, 365, 366,
-    ],
+    story: "The maintainer's call, asked in 28d's pull request: is an Alberta future picked from outside Alberta, after its card said so, an honest end?",
+    why: "Outside Alberta, Pick a future still offers Alberta's two futures behind one button (“Show the 2 futures written for Alberta”), each card saying “Written for Alberta. You said …”. A person who opens them and picks one is drawn on a road written for AB: the goal bar says “Map drawn: … written for AB; this idea is in …”, so it isn't silent, but every step is Alberta's. These are the ideas with no road written for them whose invented person opens the fold and clicks road 0's or road 1's card (tests/helpers/idea-pipeline.ts `pickedChoice`), so the path stays run; whether this end counts as honest, or the page should say more, is the maintainer's call.",
+    ideas: [22, 199, 202, 208, 211, 289, 301, 361, 364],
   },
   // Taken out on 2026-10-22 with the three steps (tasks 28b, 23g, 29h): the typed way's two silent-fallback
   // entries (25 ideas drawn on road 0 with only "No future picked", and 12 closing, pausing, selling or catch-up

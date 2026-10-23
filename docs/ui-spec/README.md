@@ -1,6 +1,6 @@
 # UI behavior specs
 
-Last updated: 2026-10-17 (the layout rule and the clutter limit, below; the same day, the cockpit's calm first view and its regions as built, S2.5.30c, and the type scale, S2.5.30d); 2026-06-10
+Last updated: 2026-10-21 (how a new screen gets its clutter limit, task 29j); 2026-10-17 (the layout rule and the clutter limit, below; the same day, the cockpit's calm first view and its regions as built, S2.5.30c, and the type scale, S2.5.30d); 2026-06-10
 
 Per-page catalogs of **what each interactive control does and why** — purpose-first, backend wiring deferred until Phase 5.
 
@@ -68,9 +68,12 @@ limit is above its baseline or above what it is on main, or the smallest text be
 lowered can't be raised back later (CI compares with main; locally, with where the branch left
 `origin/main`). A screen over its limit fails the browser
 suite. To add a region, take one away first; a new screen arrives with its own `data-region` marks and its
-own row in `e2e/budgets.ts`: listed in `ADDED_SCREENS`, its first row in `FIRST_MEASURED` is what CI's Browser
-tests job counts the first time the screen runs there, a record like the baseline, and its budget starts equal
-to it and only goes down (*About this job*, 2026-10-22, was the first). The test saves a screenshot of each screen at each width with its results.
+own row in `e2e/budgets.ts`, the written way (task 29j): listed in `ADDED_SCREENS` with the measured screen it
+is a part, a state or a sibling of (`ADDED_SCREEN_PART_OF`), its first row in `FIRST_MEASURED` is what CI's
+Browser tests job counts the first time the screen runs there, at or under that screen's baseline row. It has no
+baseline row of its own (the baseline stays the record of 2026-10-17); its first row is a record like the
+baseline, and its budget starts equal to it and only goes down, like every other. The test saves a screenshot of
+each screen at each width with its results.
 
 The test starts a server of its own, from the suite's build, over a data folder of its own
 (`prisma/e2e-clutter/`, holding only the two demo ventures), so what it measures doesn't depend on what

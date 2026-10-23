@@ -35,7 +35,9 @@ import { ALBERTA_AREAS } from "@/lib/places/alberta-areas";
 import { demoScenarios } from "../prisma/seed-data";
 import { fileUrl, migratedFile } from "./helpers/migrated-db";
 
-const LISTED = listedRoads(roadsV2026);
+// The roads Pick a future lists in Alberta (outside Alberta the federal steps too, task 28d: `listedAt`).
+const LISTED = listedRoads(roadsV2026, "AB");
+const listedAt = (place: "CA-AB" | "CA-ON" | "CA-YT") => listedRoads(roadsV2026, place === "CA-ON" ? "ON" : place === "CA-YT" ? "YT" : "AB");
 const CABINETMAKERS = { code: "72311.00", label: "Cabinetmakers" };
 const BARBERS = { code: "63210.02", label: "Barbers" };
 const NOW = new Date("2026-10-22T12:00:00Z");
@@ -237,10 +239,10 @@ describe("the search's route (POST /api/jobs/search)", () => {
 });
 
 describe("the steps as drawn", () => {
-  const roadJobs = roadJobNames(LISTED);
-  const draw = (host: "futures" | "intake", state: StepsState, place: "CA-AB" | "CA-ON" = "CA-AB") =>
+  const roadJobs = roadJobNames(listedAt("CA-ON"));
+  const draw = (host: "futures" | "intake", state: StepsState, place: "CA-AB" | "CA-ON" | "CA-YT" = "CA-AB") =>
     renderToStaticMarkup(
-      createElement(JobAndRoadSteps, { host, state, setState: () => {}, place, listed: LISTED, roadJobs, onLookInside: async () => false }),
+      createElement(JobAndRoadSteps, { host, state, setState: () => {}, place, listed: listedAt(place), roadJobs, onLookInside: async () => false }),
     );
   const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/'/g, "&#x27;").replace(/"/g, "&quot;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 
@@ -287,6 +289,46 @@ describe("the steps as drawn", () => {
     expect(html).toContain(esc(whereStepWords.outside.notAsked("Ontario")));
     expect(html).not.toContain("<select");
     expect(html).not.toContain(esc(whereStepWords.kept));
+  });
+
+  it("step 3's lines about the list below are true to it: Alberta's as written; outside Alberta the federal steps first and Alberta's folded (AB, ON, YT)", () => {
+    const at = (place: "CA-AB" | "CA-ON" | "CA-YT") => ({
+      skipped: draw("futures", skipped(), place),
+      // Outside Alberta every job has no road of its own (only the federal one is written for the place).
+      noRoad: draw("futures", { part: "road", job: place === "CA-AB" ? BARBERS : CABINETMAKERS, area: null, region: null }, place),
+    });
+    // Outside Alberta the card right below is the federal steps and Alberta's futures are folded, grouped, not one
+    // list in the order written: neither line may say otherwise.
+    for (const place of ["CA-ON", "CA-YT"] as const) {
+      const html = at(place);
+      expect(html.noRoad, place).not.toContain("the general road below covers");
+      expect(html.skipped, place).not.toContain("in the order they were written.");
+      expect(html.noRoad, place).toContain(esc(pickWords.noRoad.body(CABINETMAKERS.label, true)));
+      expect(html.skipped, place).toContain(esc(pickWords.skipped(true)));
+      // The folded apprentice road says it's written for Cabinetmakers, so the no-road lines must not say no future
+      // is: the heading names the person's own place, and the body says only the federal steps aren't written for it.
+      expect(html.noRoad, place).toContain(esc(pickWords.writtenForJob("Cabinetmakers", "72311")));
+      expect(html.noRoad, place).toContain(esc(pickWords.noRoad.heading(CABINETMAKERS.label, CABINETMAKERS.code, place === "CA-ON" ? "Ontario" : "Yukon")));
+      expect(html.noRoad, place).not.toContain("None of them is written for");
+      expect(html.noRoad, place).not.toContain(esc(pickWords.noRoad.heading(CABINETMAKERS.label, CABINETMAKERS.code)));
+    }
+    // In Alberta, unchanged.
+    const ab = at("CA-AB");
+    expect(ab.noRoad).toContain(
+      esc(
+        `If you plan to run a business of your own, the general road below covers the tax and structure steps for any business in Alberta. It isn't written for ${BARBERS.label}, and opening it doesn't say you're starting a business.`,
+      ),
+    );
+    expect(ab.skipped).toContain(esc("You didn't pick a job, so no future is matched to one. These are all the futures written so far, in the order they were written."));
+    expect(pickWords.noRoad.body(BARBERS.label, false)).toBe(
+      `If you plan to run a business of your own, the general road below covers the tax and structure steps for any business in Alberta. It isn't written for ${BARBERS.label}, and opening it doesn't say you're starting a business.`,
+    );
+    // Outside Alberta's words name the federal steps for all of Canada and the fold.
+    for (const line of [pickWords.noRoad.body(CABINETMAKERS.label, true), pickWords.skipped(true)]) {
+      expect(line).toContain("federal steps");
+      expect(line).toContain("written for all of Canada");
+      expect(line).toContain("folded below");
+    }
   });
 
   it("step 2 promises nothing about About this job yet: its lines are held, and the panel has no Change", () => {

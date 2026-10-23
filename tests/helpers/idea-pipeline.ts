@@ -1,9 +1,9 @@
 import { buildPlan, type PlanView } from "@/lib/cockpit/plan";
 import { answerEquipment, answerSalesYear3, compareEndings, forksToCompare, notToldYet, type KeptAnswers, type NotToldRow } from "@/lib/cockpit/told";
 import { cockpitInput, gaugeView, nextOnYourRoad, stepBadges, type KeptFuture } from "@/lib/cockpit/view";
-import { generalRoadV2026, roadsV2026, skillItemsV2026, type Road } from "@/lib/engines/roads/v2026";
+import { FEDERAL_ROAD_ID, forksAreTheMapToggles, generalRoadV2026, roadsV2026, skillItemsV2026, type Road } from "@/lib/engines/roads/v2026";
 import type { FigureView } from "@/lib/figures/types";
-import { futureCards, listedRoads, sourcesLine } from "@/lib/front-door/futures";
+import { futureCards, groupedForPlace, LISTED_ROAD_IDS, listedRoads, sourcesLine } from "@/lib/front-door/futures";
 import type { LookingFor as DoorLookingFor } from "@/lib/front-door/questions";
 import { destinationReceipt, incomeReceipt, lookingForReceipt, placeName, placeReceipt } from "@/lib/front-door/receipts";
 import { pickWords } from "@/lib/front-door/words";
@@ -107,8 +107,10 @@ export interface StepsRun {
   area: string | null;
   region: string | null;
   match: RoadMatchCase;
-  /** The roads step 3 lists, in the order it lists them. */
+  /** The roads step 3 lists, in the order it lists them (the folded ones last). */
   offered: string[];
+  /** Outside Alberta, the roads written for Alberta, behind "Show the 2 futures written for Alberta"; empty in Alberta. */
+  folded: string[];
   /** The person's click on step 3, or "left": the honest end for a job with no written road, where nothing is saved. */
   click: { by: "card" | "not-here"; roadId: string } | { by: "left" };
 }
@@ -450,8 +452,8 @@ function runCockpit(
   const fork = road.forks[0];
   if (fork) {
     answer("fork", (k) => {
-      if (road.id === generalRoadV2026.id) {
-        // Road 0's forks are the map's toggles: the person clicks the side that isn't the default.
+      if (forksAreTheMapToggles(road)) {
+        // Road 0's forks (and the federal road's, the same two) are the map's toggles: the person clicks the side that isn't the default.
         const other = fork.sides.find((side) => side !== k.scenario.state.activeBranches[fork.id as BranchDecisionId]) ?? fork.sides[0];
         k.scenario = updateScenarioBranch(k.scenario, fork.id as BranchDecisionId, other as CFENodeId);
       } else {
@@ -623,6 +625,7 @@ export function piecesOfPlan(add: AddPiece, p: PlanView) {
         add(`${w} › cost count`, s.costCount);
         s.officialLinks.forEach((l) => add(`${w} › official link`, l.label, "catalog"));
         s.sources.forEach((src) => addSource(w, src));
+        add(`${w} › sources left out`, s.sourcesLeftOut);
       }
     }
     for (const sk of p.skills.road) {
@@ -736,9 +739,26 @@ const DOOR_LOOKING_FOR: Record<Idea["lookingFor"], DoorLookingFor | null> = {
   "not-said": null,
 };
 
-/** The roads Pick a future lists, in the order written, and the titles of the jobs each is written for. */
-const LISTED = listedRoads(roadsV2026);
-const LISTED_JOBS = roadJobNames(LISTED);
+/**
+ * The roads Pick a future lists for the idea's place, in the order written (outside Alberta, the federal steps
+ * too, task 28d), and the titles of the jobs each road any place lists is written for.
+ */
+const listedFor = (idea: Idea) => listedRoads(roadsV2026, isProvince(idea.place) ? idea.place : null);
+const LISTED_JOBS = roadJobNames(roadsV2026.filter((road) => LISTED_ROAD_IDS.includes(road.id)));
+
+/**
+ * Step 3 as components/front-door/job-and-road-steps.tsx lays it out for this idea's place and job: in Alberta
+ * one list; outside Alberta (task 28d) the roads written for all of Canada first and the Alberta ones folded
+ * behind one button (`folded`), the job matched only against the roads written for the person's place.
+ */
+function stepThree(idea: Idea, job: string | null) {
+  const listed = listedFor(idea);
+  const groups = groupedForPlace(listed);
+  const outsideAlberta = groups.canada.length > 0;
+  const match = roadMatch(job, outsideAlberta ? groups.canada : listed);
+  const folded = outsideAlberta ? groups.elsewhere : [];
+  return { listed, outsideAlberta, match, folded };
+}
 
 /** The steps' answers as the screens hold them, for `answersOf` (lib/front-door/three-steps.ts). */
 const stateOf = (steps: StepsRun): StepsState => ({ part: "road", job: steps.job, area: steps.area, region: steps.region });
@@ -758,6 +778,14 @@ const stateOf = (steps: StepsRun): StepsState => ({ part: "road", job: steps.job
  *    saved: the honest end the maintainer's call 3 of 2026-10-21 designs), road 1's card, or the "Not here yet?"
  *    note. After Skip, the picked way clicks as before the steps (road 0, road 1 or the note, by number) and the
  *    typed way opens the road written for the idea, or road 0.
+ *
+ * Outside Alberta (task 28d) step 3 lists the federal steps first, under "Written for all of Canada", and
+ * Alberta's two behind one button, each saying "Written for Alberta. You said …"; a job there has no road of its
+ * own. "Not here yet?" keeps a note and opens the general road, road 0, anywhere. So outside Alberta the card the
+ * page shows first, the federal road's, stands where road 0's does in Alberta (the typed way's card, and the
+ * picked way's after Skip), and the picked way's Alberta card is road 1's or road 0's by the number's evenness,
+ * after opening the fold (both folded cards are clicked somewhere; the person was told on the card that it is
+ * written for Alberta, and the known gap "picked" lists what that draws).
  */
 export function stepsChoice(idea: Idea, way: "typed" | "picked"): StepsRun {
   const n = Number(idea.id.slice(-4));
@@ -770,19 +798,22 @@ export function stepsChoice(idea: Idea, way: "typed" | "picked"): StepsRun {
   const regions = [...ALBERTA_ECONOMIC_REGIONS.map((r) => r.code), DONT_KNOW_REGION];
   const area = where ? ALBERTA_AREAS[n % ALBERTA_AREAS.length]!.value : null;
   const region = where ? regions[n % regions.length]! : null;
-  const match = roadMatch(job?.code ?? null, LISTED);
-  const offered = [...match.forJob, ...match.others].map((road) => road.id);
+  const { match, outsideAlberta, folded } = stepThree(idea, job?.code ?? null);
+  const offered = [...match.forJob, ...match.others, ...folded].map((road) => road.id);
   const card = (roadId: string) => ({ by: "card" as const, roadId });
   const written = idea.road === "none-written-yet" ? null : ROAD_IDS[idea.road];
+  // The card the page shows first for the place where no road is written for the job: road 0 in Alberta, the
+  // federal steps elsewhere in Canada.
+  const firstCard = outsideAlberta ? FEDERAL_ROAD_ID : generalRoadV2026.id;
 
   let click: StepsRun["click"];
   if (match.case === "written") click = card(match.forJob[0]!.id);
   else if (written) click = card(written);
-  else if (way === "typed") click = card(generalRoadV2026.id);
-  else if (n % 3 === 1) click = card(ROAD_IDS["road-1"]);
+  else if (way === "typed") click = card(firstCard);
+  else if (n % 3 === 1) click = card(outsideAlberta && n % 2 === 0 ? generalRoadV2026.id : ROAD_IDS["road-1"]);
   else if (n % 3 === 2 && idea.words.trim().length > 0) click = { by: "not-here", roadId: generalRoadV2026.id };
-  else click = match.case === "no-road" ? { by: "left" } : card(generalRoadV2026.id);
-  return { job, search, area, region, match: match.case, offered, click };
+  else click = match.case === "no-road" ? { by: "left" } : card(firstCard);
+  return { job, search, area, region, match: match.case, offered, folded: folded.map((road) => road.id), click };
 }
 
 /**
@@ -859,20 +890,31 @@ function piecesOfSteps(pieces: TextPiece[], way: "typed" | "picked", idea: Idea,
   add("road › heading", pickWords.heading);
   add("road › order", pickWords.order);
   if (steps.job) add("road › pick line", pickWords.pickLine(steps.job.label, steps.job.code));
+  // Outside Alberta the futures not written for the job sit under the two groups' headings, not the others heading.
+  const { listed, outsideAlberta, folded } = stepThree(idea, steps.job?.code ?? null);
   if (steps.match === "written") {
     add("road › written heading", pickWords.writtenForJobHeading);
-    add("road › others heading", pickWords.othersHeading);
+    if (!outsideAlberta) add("road › others heading", pickWords.othersHeading);
   } else if (steps.match === "no-road" && steps.job) {
-    add("no road › heading", pickWords.noRoad.heading(steps.job.label, steps.job.code));
-    add("no road › body", pickWords.noRoad.body(steps.job.label));
+    add("no road › heading", pickWords.noRoad.heading(steps.job.label, steps.job.code, outsideAlberta && placeLabel ? placeLabel : undefined));
+    add("no road › body", pickWords.noRoad.body(steps.job.label, outsideAlberta));
     add("no road › about this job", pickWords.noRoad.aboutJobPending(steps.job.label));
     add("no road › nothing saved", pickWords.noRoad.nothingSaved);
-    add("road › others heading", pickWords.othersHeading);
+    if (!outsideAlberta) add("road › others heading", pickWords.othersHeading);
   } else {
-    add("road › skipped", pickWords.skipped);
+    add("road › skipped", pickWords.skipped(outsideAlberta));
     add("road › skipped none for", pickWords.skippedNoneFor);
   }
-  for (const card of futureCards(LISTED, skillItemsV2026)) {
+  if (outsideAlberta) {
+    add("road › canada heading", pickWords.canadaHeading);
+    if (folded.length > 0) {
+      add("road › alberta heading", pickWords.albertaHeading);
+      add("road › show the others", pickWords.showAlberta(folded.length));
+      add("road › hide the others", pickWords.hideAlberta);
+    }
+  }
+  // Each card as components/front-door/future-card.tsx writes it.
+  for (const card of futureCards(listed, skillItemsV2026)) {
     const at = `road › card ${card.roadId}`;
     add(at, card.label, "catalog");
     add(`${at} › kind`, pickWords.kind[card.kind]);
@@ -880,10 +922,11 @@ function piecesOfSteps(pieces: TextPiece[], way: "typed" | "picked", idea: Idea,
     const names = places.map((p) => (p === "CA" ? pickWords.allOfCanada : ((PROVINCE_LABELS as Record<string, string>)[p] ?? p))).join(", ");
     add(`${at} › written for`, pickWords.writtenFor(names));
     if (place && placeLabel && !places.includes("CA") && !places.includes(place)) add(`${at} › you said`, pickWords.youSaid(placeLabel));
+    if (placeLabel && places.includes("CA")) add(`${at} › federal only`, pickWords.federalOnly(placeLabel));
     add(`${at} › counts`, pickWords.counts(card.steps, card.skillsListed, card.officialFees, card.linesToPrice));
     for (const part of sourcesLine(card.sources)) add(`${at} › sources`, part.text);
     if (steps.job) {
-      const road = LISTED.find((r) => r.id === card.roadId)!;
+      const road = listed.find((r) => r.id === card.roadId)!;
       const groups = roadJobGroups(road);
       for (const code of groups) add(`${at} › job line`, pickWords.writtenForJob(LISTED_JOBS[road.id]?.find((g) => g.code === code)?.title ?? code, code));
       if (groups.length === 0 && steps.match === "no-road" && road.id === generalRoadV2026.id) add(`${at} › job line`, pickWords.road0NotForJob(steps.job.label));
@@ -905,8 +948,9 @@ function pickedWayIn(idea: Idea, pieces: TextPiece[], options: RunOptions): { st
   const words = idea.words.trim().length > 0 ? idea.words : null;
   if (words) add("destination › receipt", destinationReceipt({ kept: "saved", text: words, saidAt: HARNESS_TODAY }));
   const lookingFor = DOOR_LOOKING_FOR[idea.lookingFor];
-  if (lookingFor) add("looking for › receipt", lookingForReceipt(lookingFor, LISTED));
-  add("place › receipt", placeReceipt(placeCode(idea.place), LISTED));
+  const listed = listedFor(idea);
+  if (lookingFor) add("looking for › receipt", lookingForReceipt(lookingFor, listed));
+  add("place › receipt", placeReceipt(placeCode(idea.place), listed));
   add("income › receipt", incomeReceipt({ kind: "agreed", amountCents: own.incomeWantedCents, agreedOn: HARNESS_TODAY }));
   piecesOfSteps(pieces, "picked", idea, steps);
   // The no-road block's honest end: the person leaves, and nothing is saved, so no cockpit.

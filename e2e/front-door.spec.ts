@@ -217,8 +217,10 @@ test("a returning person in a fresh tab: words and income already kept count as 
   await expect(receipts.filter({ hasText: "listed" }).first()).toHaveText("Of the 2 futures listed, 2 include a business of your own.");
   await page.getByRole("combobox", { name: Q3 }).selectOption("CA-YT");
   await page.getByRole("button", { name: "Use this place" }).click();
+  // Outside Alberta the federal steps are listed too, written for all of Canada (task 28d), and counted as that,
+  // never as written for Yukon: the card below says Yukon's own steps aren't written yet.
   await expect(receipts.filter({ hasText: "federal rules" })).toHaveText(
-    "The federal rules apply; Yukon's own rules aren't written yet. No future listed is written for Yukon yet: the ones shown are written for other places, and each says which.",
+    "The federal rules apply; Yukon's own rules aren't written yet. 1 future listed is written for all of Canada; none is written for Yukon yet.",
   );
 
   // Skipping the income now keeps nothing new, and says the target agreed before still stands.
@@ -231,10 +233,25 @@ test("a returning person in a fresh tab: words and income already kept count as 
   // Pick a future opens on its first step since 2026-10-22: skipped, every future is listed with no job to match.
   await skipTheJob(page);
 
-  // Each card says it is written for Alberta, and that the person said Yukon.
-  const cards = page.getByRole("list", { name: "Written futures" }).getByRole("listitem");
+  // The federal steps first, written for all of Canada, saying Yukon's own steps aren't written yet (task 28d).
+  const canada = page.getByRole("list", { name: "Written for all of Canada" }).getByRole("listitem");
+  await expect(canada).toHaveCount(1);
+  await expect(canada).toContainText("The federal steps for any business in Canada");
+  await expect(canada).toContainText("Written for all of Canada.");
+  await expect(canada).toContainText("The federal steps only. Yukon's own steps aren't written yet; a step shows a Yukon page only where a federal step cites one.");
+  // Alberta's two behind one button; opened, each card says it is written for Alberta, and that the person said Yukon.
+  const show = page.getByRole("button", { name: "Show the 2 futures written for Alberta" });
+  await expect(show).toHaveAttribute("aria-expanded", "false");
+  const alberta = page.getByRole("list", { name: "Written for Alberta" });
+  await expect(alberta).toBeHidden();
+  await show.click();
+  const hide = page.getByRole("button", { name: "Hide the futures written for Alberta" });
+  await expect(hide).toHaveAttribute("aria-expanded", "true");
+  const cards = alberta.getByRole("listitem");
   await expect(cards).toHaveCount(2);
   for (const card of await cards.all()) await expect(card).toContainText("Written for Alberta. You said Yukon.");
+  await hide.click();
+  await expect(alberta).toBeHidden();
 
   const note = `Mobile sauna rentals (invented ${Date.now()})`;
   await page.getByRole("textbox", { name: "Not here yet?" }).fill(note);

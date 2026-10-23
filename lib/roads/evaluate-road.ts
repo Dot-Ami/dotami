@@ -3,6 +3,7 @@ import type { ConfirmedFigure, EvaluationResult, NodeStateColor } from "@/lib/br
 import type { JobList } from "@/lib/engines/oasis/v2026";
 import {
   costLineAsShown,
+  forksAreTheMapToggles,
   generalRoadV2026,
   type CostLineAsShown,
   type Fork,
@@ -430,7 +431,7 @@ export function evaluateRoad(input: RoadEvaluationInput): RoadEvaluation {
   );
 
   // On road 0 the rules colour every step the person hasn't marked not for me (see `progress`).
-  const onRoadZero = road.id === generalRoadV2026.id;
+  const onRoadZero = forksAreTheMapToggles(road);
   // Whether this road's own forks put a step off the path or leave it waiting on a pick. On another
   // road that reuses a road 0 step, that comes before the rules' colour: the rules know nothing of
   // this road's forks, and a step after the side not picked must not be drawn on the path.

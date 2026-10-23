@@ -112,6 +112,36 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   /licences; reading the person's answer never works a region out from their area. The industry code list
   (NAICS) moved to phase 3 with the industry question, as the maintainer decided. Nothing DotAmi keeps, sends or
   asks changes.
+- **Outside Alberta, the federal steps that apply everywhere, and your province named** ([14l], tasks 28d and
+  29j; [docs/ui-spec/futures/04-outside-alberta.md](docs/ui-spec/futures/04-outside-alberta.md)). A new road,
+  *The federal steps for any business in Canada* (`road-federal-steps-ca`), is *Starting any business in
+  Alberta* without Alberta: the same map stages and federal *before you open* steps, built from road 0's own
+  parts so the two can't drift apart, less *Register your business name* (all alberta.ca) and the two lines and
+  the links that rest on an Alberta page (WCB Alberta on *Hire first employee*, registering a name on *Service
+  vs. productize*); 13 steps. Step 3 of *Pick a future*'s three steps (and the end of the typed way) lists it
+  only for a person in Canada outside Alberta, first, under *Written for all of Canada*, saying "The federal
+  steps only. Ontario's own steps aren't written yet"; the two Alberta futures sit behind one button, *Show the
+  2 futures written for Alberta*, and still say "Written for Alberta. You said Ontario." when shown. Outside
+  Alberta every job is matched only against the futures written for the person's place, so for a picked job
+  the step says "No road is written for Cabinetmakers (72311.00) in Ontario yet." and that the federal steps
+  below are written for all of Canada, not for that job, while each folded Alberta card says what it's written
+  for; with the job skipped it says the futures are grouped. Typed-in ideas outside Alberta now end on these
+  same steps, so none ends on a road not written for its place (190 ideas before). On that road the cockpit's goal bar and *Your plan* say "Future: The
+  federal steps for any business in Canada · Ontario's own steps aren't written yet", and each step shows its
+  federal sources and the person's own province's, with a line such as "1 source for other provinces isn't
+  shown." where it left one out; *Export* lists the same sources with the same line. The rules and tax cards
+  are unchanged (they still pick Ontario's and British Columbia's own entries), and so is the list of provinces whose rules the catalogs carry (the maintainer's
+  call). *Your destination* now counts the federal road for a place outside Alberta as written for all of Canada,
+  apart from the place's own, so it agrees with the card ("1 future listed is written for all of Canada; none is
+  written for Yukon yet."). The idea harness and the browser sweep run it for the corpus's 156 business ideas
+  outside Alberta, now marked as ideas the federal road is written for; the known gap "the road drawn isn't
+  written for the idea's place" on Pick a future went from 190 ideas to 22, mostly because the test's invented
+  person now clicks the federal card for those ideas. The 22 left are 13 whose note under *Not here yet?* still
+  opens the Alberta road and 9 whose person opens the folded Alberta futures and picks one (both questions for
+  the maintainer); the browser sweep now has a ninth fixed idea that picks a folded Alberta future every week.
+  The two new screens have clutter budgets of their own, by a written rule: a screen added after
+  the 2026-10-17 baseline starts no looser than the screen it stands beside. Nothing DotAmi keeps changes: a
+  picked future keeps the road's id, as before.
 - **Pick a future asks three things before any road is drawn: what's closest to your work, where you are, and
   which future** ([14l] tasks 28b and 29h, [14g] task 23g; docs/ui-spec/futures/01, 02 and 03). *What's
   closest to your work?* searches the government's example job titles for your own words and lists the jobs that

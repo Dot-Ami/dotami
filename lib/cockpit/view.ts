@@ -1,7 +1,7 @@
 import { itemsForStep } from "@/lib/brain/node-items";
 import type { ConfirmedFigure } from "@/lib/brain/types";
 import type { JobList } from "@/lib/engines/oasis/v2026";
-import { generalRoadV2026, type Road, type SkillItem } from "@/lib/engines/roads/v2026";
+import { forksAreTheMapToggles, type Road, type SkillItem } from "@/lib/engines/roads/v2026";
 import { formatMoney } from "@/lib/format/money-and-months";
 import { BUSINESS_TOTAL_KINDS, COST_LINE_AMOUNT_FROM_LABELS, type FigureView } from "@/lib/figures/types";
 import type { PersonFigureView } from "@/lib/futures/person-figures";
@@ -79,7 +79,7 @@ export function cockpitInput(args: {
   // Road 0's forks are the map's toggles, read from the idea as the screen holds it (a click on a toggle
   // shows at once, before the map's autosave lands). Every other road's picks are kept on the future.
   let forkPicks: RoadEvaluationInput["forkPicks"];
-  if (args.road.id === generalRoadV2026.id) {
+  if (forksAreTheMapToggles(args.road)) {
     const branches: Record<string, string> = args.scenario.state.activeBranches;
     forkPicks = Object.fromEntries(
       args.road.forks.flatMap((fork) =>

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 
 import { useJourney } from "@/components/shared/journey-provider";
 import { GhostLink, WordMark } from "@/components/ui";
@@ -16,9 +16,6 @@ import { withTheSteps, type StepAnswers } from "@/lib/journey/first-save";
 import { saveScenario } from "@/lib/journey/save-scenario";
 
 import { JobAndRoadSteps, type RoadJobNames } from "./job-and-road-steps";
-
-/** The roads this page lists (road 0 and the first written future; lib/front-door/futures.ts). */
-const LISTED = listedRoads(roadsV2026);
 
 /**
  * *Pick a future* (`/futures`; docs/ui-spec/futures/_index.md). Since 2026-10-22 it opens on the three steps
@@ -40,6 +37,9 @@ export function PickFuturePage({ roadJobs }: { roadJobs: RoadJobNames }) {
 
   const place = draft.place;
   const province = place ? provinceOfPlace(place) : null;
+  // The roads this page lists for the person's place (lib/front-door/futures.ts): outside Alberta, the federal
+  // steps for any business in Canada too, first (task 28d).
+  const listed = useMemo(() => listedRoads(roadsV2026, province), [province]);
 
   /** Saves the idea on `road` with the steps' answers, then opens the cockpit on it; false when nothing was saved. */
   async function lookInside(road: Road, answers: StepAnswers, name: string): Promise<boolean> {
@@ -95,9 +95,9 @@ export function PickFuturePage({ roadJobs }: { roadJobs: RoadJobNames }) {
               state={steps}
               setState={setSteps}
               place={place}
-              listed={LISTED}
+              listed={listed}
               roadJobs={roadJobs}
-              introExtra={draft.lookingFor ? <p className="mt-1 text-body text-stone">{lookingForReceipt(draft.lookingFor, LISTED)}</p> : null}
+              introExtra={draft.lookingFor ? <p className="mt-1 text-body text-stone">{lookingForReceipt(draft.lookingFor, listed)}</p> : null}
               onLookInside={lookInside}
             />
           )}

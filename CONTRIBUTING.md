@@ -260,11 +260,11 @@ printed first); `IDEA_PROPERTIES_SEED=<number>` reruns one. A failure prints the
 the smallest counterexample fast-check shrank it to (the generated answers, with the road by its id),
 then the property's own words. `fast-check` is a development dependency that ships nowhere.
 
-**The idea sweep** (added 2026-10-17), `e2e/idea-sweep.spec.ts`, takes twelve corpus ideas from the
+**The idea sweep** (added 2026-10-17), `e2e/idea-sweep.spec.ts`, takes thirteen corpus ideas from the
 front door to *Your plan* in the browser, both ways in, and reads every screen as it opens for verdict
 words, time words and the clutter measurer. It reads the page the way the harness reads the app's words:
 block by block, with every idea's own words taken out, and, for the time check, without the source quotes
-a screen draws in quote marks (the harness's `official-quote` pieces). Eight ideas are fixed; four rotate
+a screen draws in quote marks (the harness's `official-quote` pieces). Nine ideas are fixed; four rotate
 by ISO week, so a week's run is the same on every machine: `IDEA_SWEEP_WEEK=2026-W42 npx playwright test
 e2e/idea-sweep.spec.ts` reruns that week's four. What it finds is listed in the file's `SCREEN_GAPS` with
 its story, never fixed quietly, and the last test fails on a listed gap no idea shows any more.

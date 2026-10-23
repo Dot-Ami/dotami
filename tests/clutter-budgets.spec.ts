@@ -102,6 +102,7 @@ async function budgetsAt(commit: string): Promise<{ BASELINE: ClutterTable; BUDG
 
 describe("the clutter budgets (e2e/budgets.ts)", () => {
   it("have a baseline or a first row, and a budget, for every screen at every size, and nothing else", () => {
+    // The baseline is the record of 2026-10-17: a screen added since has no row there, only its first row.
     for (const [table, screens] of [
       [BASELINE, BASELINE_SCREENS],
       [FIRST_MEASURED as ClutterTable, ADDED_SCREENS],

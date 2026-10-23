@@ -1,6 +1,8 @@
 import { jobGroupOf } from "../../oasis/v2026";
+import type { EngineCitation } from "../../shared/types";
 import type { Road, SkillItem } from "./types";
 import { roadApprenticeToOwnShopAB, skillItemsApprenticeToOwnShopAB } from "./apprentice-to-own-shop-ab";
+import { roadFederalStepsCA } from "./federal-steps-ca";
 import { roadStartingAnyBusinessAB, skillItemsStartingAnyBusinessAB } from "./starting-any-business-ab";
 
 export type {
@@ -23,15 +25,43 @@ export { costLineAsShown, newestReadDate, roadCodeProblems, roadJoinProblems, ro
 export { roadFromCfe } from "./from-cfe";
 export { roadApprenticeToOwnShopAB } from "./apprentice-to-own-shop-ab";
 export { roadStartingAnyBusinessAB } from "./starting-any-business-ab";
+export { FEDERAL_ROAD_ID, roadFederalStepsCA } from "./federal-steps-ca";
 
 /**
  * Every road, in the order added (never ranked: docs/architecture/future-cockpit.md, decision 3).
- * *Pick a future* (components/front-door/pick-future-page.tsx, 2026-10-12) lists them in this order.
+ * *Pick a future* (components/front-door/pick-future-page.tsx, 2026-10-12) lists them in this order, the ones
+ * written for all of Canada first for a person outside Alberta (lib/front-door/futures.ts).
  */
-export const roadsV2026: readonly Road[] = [roadStartingAnyBusinessAB, roadApprenticeToOwnShopAB];
+export const roadsV2026: readonly Road[] = [roadStartingAnyBusinessAB, roadApprenticeToOwnShopAB, roadFederalStepsCA];
 
 /** The road a saved future is drawn on when it names none: today's map. */
 export const generalRoadV2026: Road = roadStartingAnyBusinessAB;
+
+/**
+ * True on a road whose forks are the map's own two toggles (GST timing, Incorporation timing), kept with the
+ * map's answers (`ScenarioState.activeBranches`) rather than on the future: road 0, and the federal road built
+ * from the same map (2026-10-21). On every other road a fork's pick is the person's and kept on the future.
+ */
+export function forksAreTheMapToggles(road: Pick<Road, "id">): boolean {
+  return road.id === roadStartingAnyBusinessAB.id || road.id === roadFederalStepsCA.id;
+}
+
+/**
+ * A step's sources as a road written for all of Canada draws them for one idea (task 28d, 2026-10-21): the
+ * federal pages and the idea's own province's, in the road's order, and how many it left out (other
+ * provinces' pages), so the screen can say so and nothing is hidden without a word. On a road written for
+ * particular provinces every source is shown: the road is that place's, whoever opens it.
+ */
+export function citationsForPlace(
+  road: Pick<Road, "provinces">,
+  citations: readonly EngineCitation[],
+  place: string,
+): { shown: EngineCitation[]; leftOut: number } {
+  const places: readonly string[] = road.provinces;
+  if (!places.includes("CA")) return { shown: [...citations], leftOut: 0 };
+  const shown = citations.filter((citation) => citation.jurisdiction === "CA" || citation.jurisdiction === place);
+  return { shown, leftOut: citations.length - shown.length };
+}
 
 /**
  * Skill items, shared by every road so a person's mark carries across them: the first written future's

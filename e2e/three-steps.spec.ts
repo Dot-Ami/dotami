@@ -9,7 +9,7 @@
 import { expect, test, type Page } from "@playwright/test";
 
 import { aboutJobWords } from "../lib/about-job/words";
-import { generalRoadV2026, roadApprenticeToOwnShopAB } from "../lib/engines/roads/v2026";
+import { generalRoadV2026, roadApprenticeToOwnShopAB, roadFederalStepsCA } from "../lib/engines/roads/v2026";
 import { intakeStepsWords, jobStepWords, pickWords, whereStepWords } from "../lib/front-door/words";
 import { waitForReact } from "../tests/helpers/react-ready";
 
@@ -287,7 +287,7 @@ test("a job with no written road: the step says so, holds About this job's place
 
   const noRoad = page.getByRole("region", { name: pickWords.noRoad.heading(BARBERS.label, BARBERS.code) });
   await expect(noRoad).toBeVisible();
-  await expect(noRoad).toContainText(pickWords.noRoad.body(BARBERS.label));
+  await expect(noRoad).toContainText(pickWords.noRoad.body(BARBERS.label, false));
   await expect(noRoad).toContainText(pickWords.noRoad.nothingSaved);
   // About this job's rows come with their own pull request (task 25h): the place is marked, never filled silently.
   await expect(noRoad.locator(`[data-about-this-job-slot="${BARBERS.code}"]`)).toHaveText(pickWords.noRoad.aboutJobPending(BARBERS.label));
@@ -320,15 +320,28 @@ test("outside Alberta: step 2 asks nothing and says why; Skip lists every future
   await page.getByRole("button", { name: whereStepWords.outside.next, exact: true }).click();
   await expect(page.getByRole("button", { name: pickWords.backToWhere, exact: true })).toBeVisible();
 
-  // Back to the start, and Skip: every future, one group, in the order written, with the skipped lines.
+  // Step 3 with no road written for the job in Ontario: the body names what is right below it, the federal steps
+  // for all of Canada, and Alberta's futures folded under them (not "the general road below").
+  const noRoad = page.getByRole("region", { name: pickWords.noRoad.heading(CABINETMAKERS.label, CABINETMAKERS.code, "Ontario") });
+  await expect(noRoad).toContainText(pickWords.noRoad.body(CABINETMAKERS.label, true));
+  await expect(noRoad).not.toContainText("the general road below covers");
+  // The folded apprentice road is written for Cabinetmakers (in Alberta), so nothing above it may say no future is.
+  await expect(noRoad).not.toContainText("None of them is written for");
+
+  // Back to the start, and Skip: every future, with the skipped lines. Outside Alberta (task 28d) the federal steps
+  // first, under "Written for all of Canada", and Alberta's two folded under "Written for Alberta", each group in
+  // the order written, as the skipped line says.
   await page.getByRole("button", { name: pickWords.backToWhere, exact: true }).click();
   await page.getByRole("button", { name: jobStepWords.changePick, exact: true }).click();
   await skipTheJob(page);
+  await expect(page.getByText(pickWords.skipped(true), { exact: true })).toBeVisible();
+  await expect(page.getByText(pickWords.skipped(false), { exact: true })).toHaveCount(0);
   await expect(page.getByText(pickWords.skippedNoneFor, { exact: true })).toBeVisible();
-  await expect(page.getByRole("list", { name: pickWords.listLabel }).getByRole("heading", { level: 2 })).toHaveText([
-    generalRoadV2026.label,
-    roadApprenticeToOwnShopAB.label,
-  ]);
+  await expect(page.getByRole("list", { name: pickWords.canadaHeading }).getByRole("heading", { level: 3 })).toHaveText([roadFederalStepsCA.label]);
+  const alberta = page.getByRole("list", { name: pickWords.albertaHeading });
+  await expect(alberta).toBeHidden();
+  await page.getByRole("button", { name: pickWords.showAlberta(2), exact: true }).click();
+  await expect(alberta.getByRole("heading", { level: 3 })).toHaveText([generalRoadV2026.label, roadApprenticeToOwnShopAB.label]);
   await expect(page.getByRole("button", { name: pickWords.backToWork, exact: true })).toBeVisible();
 });
 
