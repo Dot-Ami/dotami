@@ -118,10 +118,15 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   Alberta* without Alberta: the same map stages and federal *before you open* steps, built from road 0's own
   parts so the two can't drift apart, less *Register your business name* (all alberta.ca) and the two lines and
   the links that rest on an Alberta page (WCB Alberta on *Hire first employee*, registering a name on *Service
-  vs. productize*); 13 steps. *Pick a future* lists it only for a person in Canada outside Alberta, first, under
-  *Written for all of Canada*, saying "The federal steps only. Ontario's own steps aren't written yet"; the two
-  Alberta futures sit behind one button, *Show the 2 futures written for Alberta*, and still say "Written for
-  Alberta. You said Ontario." when shown. On that road the cockpit's goal bar and *Your plan* say "Future: The
+  vs. productize*); 13 steps. Step 3 of *Pick a future*'s three steps (and the end of the typed way) lists it
+  only for a person in Canada outside Alberta, first, under *Written for all of Canada*, saying "The federal
+  steps only. Ontario's own steps aren't written yet"; the two Alberta futures sit behind one button, *Show the
+  2 futures written for Alberta*, and still say "Written for Alberta. You said Ontario." when shown. Outside
+  Alberta every job is matched only against the futures written for the person's place, so for a picked job
+  the step says "No road is written for Cabinetmakers (72311.00) in Ontario yet." and that the federal steps
+  below are written for all of Canada, not for that job, while each folded Alberta card says what it's written
+  for; with the job skipped it says the futures are grouped. Typed-in ideas outside Alberta now end on these
+  same steps, so none ends on a road not written for its place (190 ideas before). On that road the cockpit's goal bar and *Your plan* say "Future: The
   federal steps for any business in Canada · Ontario's own steps aren't written yet", and each step shows its
   federal sources and the person's own province's, with a line such as "1 source for other provinces isn't
   shown." where it left one out; *Export* lists the same sources with the same line. The rules and tax cards
