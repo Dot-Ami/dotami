@@ -51,6 +51,18 @@ const migrations = path.join(root, "prisma", "migrations");
 /** A receipt file DotAmi named: 32 random hex characters and one of its receipt types' extensions (backup.mjs). */
 const RECEIPT_FILE_NAME = new RegExp(`^[0-9a-f]{32}\\.(${Object.values(RECEIPT_EXTENSIONS).join("|")})$`);
 
+/**
+ * The launch secret (lib/http/launch-secret.ts, 2026-10-23): a fresh random one each time DotAmi
+ * starts. The server gets it in its environment (serverEnv) and refuses every request without it; this
+ * process adds it to every request DotAmi's own window makes (sendLaunchSecret), below the page, so no
+ * page script ever sees it. It is never written to a file or the log. Another Windows account on the
+ * computer can reach 127.0.0.1 but not this process's memory, so it can't learn it. A program running
+ * as the person can; that is the stated limit (docs/architecture/figures-privacy-review.md).
+ */
+const launchSecret = randomBytes(32).toString("base64url");
+/** The header's name; the same as LAUNCH_SECRET_HEADER in lib/http/launch-secret.ts (a unit test checks). */
+const LAUNCH_SECRET_HEADER = "x-dotami-launch-secret";
+
 app.setName("DotAmi");
 // Tests (and anyone who wants their data elsewhere) point the app at another folder. Must be set
 // before the single-instance lock, which is kept per data folder.
@@ -252,6 +264,7 @@ async function start() {
   await waitForServer(origin, 30_000);
   log.write(`[desktop] server answering; opening the window\n`);
   lockDown(origin);
+  sendLaunchSecret(origin);
   buildMenu(origin, dataDir);
   answerWindowCalls(origin);
 
@@ -331,12 +344,29 @@ function serverEnv(own) {
   const updates = updatesOn ? "github" : "";
   // A receipt key never comes from the shell either: only the one this app opened (receiptLockEnv).
   // Nor the data file's key, nor what the server is told about it ([8i]).
-  const { DOTAMI_RECEIPT_KEY: _fromShell, DOTAMI_DATABASE_KEY: _dbKey, DOTAMI_DATABASE_LOCK: _dbLock, DOTAMI_DATABASE_PLAIN_LEFT: _dbLeft, ...inherited } = process.env;
+  // Nor a launch secret: only the one this launch made, so a secret someone set in the shell is useless.
+  const {
+    DOTAMI_RECEIPT_KEY: _fromShell,
+    DOTAMI_DATABASE_KEY: _dbKey,
+    DOTAMI_DATABASE_LOCK: _dbLock,
+    DOTAMI_DATABASE_PLAIN_LEFT: _dbLeft,
+    DOTAMI_LAUNCH_SECRET: _shellSecret,
+    ...inherited
+  } = process.env;
   void _fromShell;
   void _dbKey;
   void _dbLock;
   void _dbLeft;
-  const env = { ...inherited, ...own, NODE_ENV: "production", NEXT_TELEMETRY_DISABLED: "1", DOTAMI_UPDATES: updates, DOTAMI_DESKTOP: "1" };
+  void _shellSecret;
+  const env = {
+    ...inherited,
+    ...own,
+    NODE_ENV: "production",
+    NEXT_TELEMETRY_DISABLED: "1",
+    DOTAMI_UPDATES: updates,
+    DOTAMI_DESKTOP: "1",
+    DOTAMI_LAUNCH_SECRET: launchSecret,
+  };
   delete env.ANTHROPIC_API_KEY;
   delete env.DOTAMI_DATA_DIR;
   delete env.DOTAMI_E2E_RATE_LIMITS;
@@ -964,13 +994,34 @@ async function waitForServer(origin, timeoutMs) {
   const deadline = Date.now() + timeoutMs;
   while (Date.now() < deadline) {
     try {
-      await fetch(origin, { method: "HEAD" });
+      // With the launch secret, as the window will ask; any answer at all means the server is up.
+      await fetch(origin, { method: "HEAD", headers: { [LAUNCH_SECRET_HEADER]: launchSecret } });
       return;
     } catch {
       await new Promise((r) => setTimeout(r, 150));
     }
   }
   throw new Error(`the server didn't answer on ${origin} within ${timeoutMs / 1000}s`);
+}
+
+/**
+ * Adds the launch secret to every request DotAmi's windows make to their own server, and to no other
+ * address (an update check to GitHub never carries it). It is added in Electron's network layer
+ * (session.webRequest, electronjs.org/docs/latest/api/web-request, read 2026-10-23), after the page has
+ * made the request, so the page's scripts can't read it; navigations, fetch calls, workers and
+ * downloads all go through it. Electron keeps one listener per event, and this is DotAmi's only one.
+ */
+function sendLaunchSecret(origin) {
+  session.defaultSession.webRequest.onBeforeSendHeaders((details, callback) => {
+    let ours = false;
+    try {
+      ours = new URL(details.url).origin === origin;
+    } catch {
+      ours = false;
+    }
+    if (!ours) return callback({});
+    callback({ requestHeaders: { ...details.requestHeaders, [LAUNCH_SECRET_HEADER]: launchSecret } });
+  });
 }
 
 /**

@@ -914,7 +914,7 @@ export const LOCAL_REQUESTS: readonly AllowedCall[] = [
   {
     file: "desktop/main.mjs",
     call: "fetch(origin",
-    why: "Waits for DotAmi's own server to start answering. origin is http://127.0.0.1:<port>, built a few lines earlier in the same file from the data folder's usual port when it is free, or any free port.",
+    why: "Waits for DotAmi's own server to start answering. origin is http://127.0.0.1:<port>, built a few lines earlier in the same file from the data folder's usual port when it is free, or any free port. It carries this launch's secret header (lib/http/launch-secret.ts), as the window does; the secret goes only to that local address.",
   },
   {
     file: "desktop/main.mjs",
