@@ -144,7 +144,16 @@ export function reword(idea: Idea, how: Rewording): { words: string; work: strin
       // one place the swapped words name. Words naming two places ("moving from Winnipeg to Regina", "Victoria and I
       // … in Halifax") or a place outside Canada say something else once a city becomes a province.
       if (!(PROVINCES as readonly string[]).includes(idea.place)) return null;
-      const named = (city: string) => new RegExp(`(?<!\\p{L})${city.replace(/\./g, "\\.")}(?!\\p{L})`, "u").test(idea.words);
+      // The city's name as a whole word: found as plain text, then the letters on either side checked (no pattern is
+      // built from the name, so a dot or a quote in it, "St. John's", means only itself).
+      const named = (city: string) => {
+        for (let at = idea.words.indexOf(city); at !== -1; at = idea.words.indexOf(city, at + 1)) {
+          const before = idea.words.slice(0, at);
+          const after = idea.words.slice(at + city.length);
+          if (!/\p{L}$/u.test(before) && !/^\p{L}/u.test(after)) return true;
+        }
+        return false;
+      };
       const cities = Object.keys(CITIES).filter(named);
       const provinces = Object.values(PROVINCE_LABELS).filter((label) => fold(idea.words).includes(fold(label)));
       if (cities.length !== 1 || provinces.length > 0) return null;
