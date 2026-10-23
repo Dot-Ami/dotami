@@ -39,11 +39,28 @@ person is asked).
 
 ### What DotAmi keeps, and where
 
+- **About this job's Change keeps your region, and About this job shows in place for a job with no written road
+  (2026-10-22, task 28h).** Asks: in Alberta, *Which region are you in?* again, from About this job's **Change**
+  in the cockpit, the same eight regions and *I don't know* as Pick a future's step 2b, opened on your own answer
+  (or *Choose one*). Keeps: the answer you keep with **Keep this answer** and the day, in the idea's existing
+  columns (`Venture.economicRegion`, `economicRegionSetAt`; no migration), on this computer only, through
+  `POST /api/futures/<id>/region` ([`lib/futures/region.ts`](../lib/futures/region.ts)): only an answer the list
+  offers, only for an idea in Alberta; the same answer again keeps its first day; the area is never set or changed
+  there. On Pick a future's step 3 and at the end of the intake, a job with no written road shows About this job's
+  rows in place: your job, your place, and in Alberta the area and region as picked so far go to DotAmi's own
+  server on this computer in the request's body (`POST /api/jobs/about`, never in an address), which reads the
+  government's files that ship with the app and keeps nothing; still nothing is saved until you open a future.
+  Nothing is sent off the computer. *What DotAmi knows about you* says both lines' answers also go in a backup
+  you save ([`lib/privacy/inventory.ts`](../lib/privacy/inventory.ts), *Your area*, *Your economic region*).
+
 - **The three steps on Pick a future and at the end of the intake keep the job you pick, and in Alberta your area
   and your economic region (2026-10-22).** Asks: the job closest to your work, on Pick a future and at the end of
   the intake. Skip allowed. Keeps: only the job you click, on this computer. Asks: which area and which economic
   region you're in, once, right after you pick a job (in Alberta only for now). Keeps: your answers and the day,
-  on this computer only; deleted with the idea (DotAmi has no way to export an idea yet). Nothing is sent. The job goes in the idea's existing
+  on this computer only; deleted with the idea. Nothing is sent. The cockpit's **Export** doesn't carry them (it
+  sends the idea's map answers and the road, `app/api/playbook`); a backup you save with the desktop app's **Back
+  up…** holds the whole data file, so it holds them, as it holds the rest of the idea (checked 2026-10-22, task 28h,
+  [`desktop/backup.mjs`](../desktop/backup.mjs)). The job goes in the idea's existing
   columns (`Venture.occupationCode`, `occupationPickedAt`); the area and the region in four new optional columns
   (`Venture.landscapeArea`, `landscapeAreaSetAt`, `economicRegion`, `economicRegionSetAt`; a hand-written migration
   of four plain column additions,

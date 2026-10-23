@@ -20,6 +20,7 @@ import { PROVINCE_LABELS, type Province } from "@/lib/scenarios/types";
 export function FutureCardItem({
   card,
   level = 2,
+  headingSize = "text-title",
   personPlace,
   personPlaceLabel,
   jobLine,
@@ -29,6 +30,8 @@ export function FutureCardItem({
   card: FutureCard;
   /** 2 in a list with no heading of its own; 3 under a group's heading. */
   level?: 2 | 3;
+  /** The heading's size: the title size, or on the intake page the lead size it already draws (call 37 of 2026-10-22). */
+  headingSize?: "text-title" | "text-lead";
   personPlace: Province | null;
   personPlaceLabel: string;
   jobLine?: string | null;
@@ -44,7 +47,7 @@ export function FutureCardItem({
   const writtenFor = card.writtenFor.map((p) => (p === "CA" ? words.allOfCanada : (PROVINCE_LABELS[p as Province] ?? p))).join(", ");
   return (
     <li aria-labelledby={headingId} className="flex flex-col gap-3 rounded-lg border border-rule bg-ink2 p-5">
-      <Heading id={headingId} className="font-serif text-title font-bold leading-snug tracking-tight text-paper">
+      <Heading id={headingId} className={`font-serif ${headingSize} font-bold leading-snug tracking-tight text-paper`}>
         {card.label}
       </Heading>
       <p className="font-mono text-small uppercase tracking-[0.14em] text-stone">{words.kind[card.kind]}</p>

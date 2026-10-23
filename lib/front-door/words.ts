@@ -150,6 +150,15 @@ export const pickWords = {
     button: "Keep my note and look inside the general road",
     // The note went in before the road was saved: say so, so it isn't kept twice by pressing again.
     keptNotOpened: "Your note is kept. The general road couldn't be opened: no database reachable.",
+    /**
+     * Outside Alberta the note opens the federal steps, written for all of Canada (the maintainer's call 33 of
+     * 2026-10-22), so its three lines name them in place of the general road.
+     */
+    federal: {
+      hint: "Say what you'd look into, in your own words. It is kept as one of your statements, and the federal steps open.",
+      button: "Keep my note and look inside the federal steps",
+      keptNotOpened: "Your note is kept. The federal steps couldn't be opened: no database reachable.",
+    },
   },
   // Step 3 of the three steps (docs/ui-spec/futures/03-road-match.md, 2026-10-22).
   stepCount: "3 of 3 · Pick a future",
@@ -168,8 +177,8 @@ export const pickWords = {
      */
     heading: (job: string, code: string, outsidePlace?: string) =>
       outsidePlace ? `No road is written for ${job} (${code}) in ${outsidePlace} yet.` : `No road is written for ${job} (${code}) yet.`,
-    // The design's body opens with "Here is what the government publishes about this job.": that sentence is
-    // drawn with About this job's rows (task 25h), so it is never on screen without them.
+    // The design's body opens with "Here is what the government publishes about this job.": since task 28c it opens
+    // About this job's rows, in place under the body, and is drawn only with them.
     governmentLead: "Here is what the government publishes about this job.",
     /**
      * What the list right below holds. In Alberta the general road; outside Alberta (task 28d) the federal steps,
@@ -181,8 +190,10 @@ export const pickWords = {
         ? `If you plan to run a business of your own, the federal steps below are written for all of Canada, not for ${job}. The futures written for Alberta are folded below them, and each card says what it's written for. Opening a future doesn't say you're starting a business.`
         : `If you plan to run a business of your own, the general road below covers the tax and structure steps for any business in Alberta. It isn't written for ${job}, and opening it doesn't say you're starting a business.`,
     nothingSaved: "Nothing is saved until you open a future. If you leave from here, DotAmi keeps nothing about this job.",
-    // The place About this job's rows go, until task 25h fills it: said, never left blank and never filled in.
-    aboutJobPending: (job: string) => `About this job isn't built yet. What the government publishes about ${job} shows here once it is.`,
+    // About this job's rows in place (task 28c): while they're read on DotAmi's own server, and if they can't be.
+    // Said, never left blank, and nothing drawn in their place.
+    aboutJobReading: (job: string) => `Reading what the government publishes about ${job}…`,
+    aboutJobFailed: (job: string) => `What the government publishes about ${job} couldn't be read: DotAmi's own server didn't answer.`,
   },
   road0NotForJob: (job: string) => `Not written for ${job}. It covers the tax and structure steps for any business in Alberta.`,
   /** After Skip. Outside Alberta the futures are grouped (the federal steps, then Alberta's folded), so the line says so. */
@@ -282,9 +293,9 @@ export const whereStepWords = {
     order: "Listed in Statistics Canada's code order.",
     choose: "Choose one",
     dontKnow: "I don't know",
-    // The design's note also says "About this job shows the Alberta-wide figure"; that half waits until About this
-    // job (task 25h) reads the region kept here, so the screen never promises what the app can't do yet.
-    dontKnowNote: "With “I don't know”, a link to Statistics Canada's list of the towns in each region shows here.",
+    // Brought back word for word (task 28h): About this job reads the region kept here, and shows Alberta's own row
+    // for "I don't know".
+    dontKnowNote: "With “I don't know”, About this job shows the Alberta-wide figure, and a link to Statistics Canada's list of the towns in each region shows here.",
     lookup: "Which towns are in each region? Statistics Canada's list ↗",
     lookupName: "Which towns are in each region? Statistics Canada's list, opens outside DotAmi",
     next: "Next: the futures →",
@@ -294,13 +305,13 @@ export const whereStepWords = {
     notAsked: (province: string) =>
       `In this version DotAmi asks which area and which region you're in only in Alberta, so nothing is asked here for ${province}.`,
     why: "Job Bank publishes wages by economic region. DotAmi lists a province's regions only once its list has been checked against Statistics Canada's own pages, and Alberta's is the one checked so far.",
-    // The design's `wageRow` line ("About this job shows the wage row Job Bank gives for <place> as a whole…")
-    // waits until About this job (task 25h) is in the app, so it isn't drawn yet.
+    // Brought back word for word (task 28h): About this job shows the place's own row outside Alberta.
+    wageRow: (place: string) =>
+      `About this job shows the wage row Job Bank gives for ${place} as a whole, labelled with the level the government's own code gives it.`,
     next: "Next: the futures →",
   },
-  // The design's line ends "You can change your region later from About this job in the cockpit."; that sentence
-  // waits until About this job (task 25h) reads the kept region and draws its Change.
-  kept: "Both answers are kept with this future once you open it, on this computer only.",
+  // Brought back word for word (task 28h): About this job's Change sets the region from the cockpit.
+  kept: "Both answers are kept with this future once you open it, on this computer only. You can change your region later from About this job in the cockpit.",
 } as const;
 
 /** The intake's Screen B button, which opens the three steps on the intake page (2026-10-22, the maintainer's call 1). */

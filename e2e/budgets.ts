@@ -42,9 +42,10 @@ export const ADDED_SCREENS = [
   // intake page (the typed way ends on the same steps).
   // Step 3 has three cases (03-road-match.md): `futures-road-written` is case A (a road written for the job, under
   // "Written for your pick of job"), `futures-road` case B (no road written for it), `futures-road-skipped` case C
-  // (the job skipped); on the intake page likewise. The intake's case C isn't here: it counts 6 controls on a
-  // tablet, over the intake's 5, so it waits on the maintainer (the pull request shows the screen; spec 03, "If CI
-  // measures more, the pull request shows the maintainer that screen instead of raising the row").
+  // (the job skipped); on the intake page likewise. The intake's case C (`intake-road-skipped`) counts 6 controls
+  // on a tablet, over the intake's 5: the maintainer's call 38 of 2026-10-22 accepts 6 there as that step's own
+  // limit, since it is the same step as Pick a future's case C, whose limit at that width is 7, so its row stands
+  // beside Pick a future's (`ADDED_SCREEN_PART_OF`).
   "futures-area",
   "futures-region",
   "futures-outside",
@@ -56,6 +57,7 @@ export const ADDED_SCREENS = [
   "intake-region",
   "intake-road-written",
   "intake-road",
+  "intake-road-skipped",
   // Outside Alberta (2026-10-21, task 28d; docs/ui-spec/futures/04-outside-alberta.md): Pick a future's step 3 for
   // a person in Ontario who skipped the job, every future listed (the federal steps first, under "Written for all
   // of Canada", the two Alberta futures folded behind one button), a state of Pick a future; and the cockpit on
@@ -86,6 +88,8 @@ export const ADDED_SCREEN_PART_OF: Record<AddedScreenId, (typeof BASELINE_SCREEN
   "intake-region": "intake",
   "intake-road-written": "intake",
   "intake-road": "intake",
+  // The same step as Pick a future's case C (call 38 of 2026-10-22): no busier than Pick a future's baseline.
+  "intake-road-skipped": "futures",
   "futures-outside-alberta": "futures",
   "cockpit-federal": "cockpit-road-0",
 };
@@ -194,6 +198,7 @@ export const FIRST_MEASURED: Partial<Record<AddedScreenId, Partial<Record<WidthI
   "intake-road": { phone: m(3, 2, 6, 10.5), tablet: m(3, 5, 6, 10.5), laptop: m(3, 2, 6, 10.5) },
   "futures-outside-alberta": { phone: m(6, 5, 6, 10.5), tablet: m(6, 7, 6, 10.5), laptop: m(6, 5, 6, 10.5) },
   "cockpit-federal": { phone: m(7, 17, 4, 9.5), tablet: m(8, 29, 5, 9.5), laptop: m(8, 27, 5, 9.5) },
+  "intake-road-skipped": { phone: m(3, 3, 5, 10.5), tablet: m(3, 6, 5, 10.5), laptop: m(3, 5, 5, 10.5) },
 };
 
 /**
@@ -280,6 +285,22 @@ export const FIRST_MEASURED: Partial<Record<AddedScreenId, Partial<Record<WidthI
  * back link, the word mark, the search box, Skip, the footer's link), five text sizes. Lowered from 6 regions, 5,
  * 7 and 6 controls and 6 text sizes to 4, 5, 5, 5 and 5, as docs/ui-spec/futures/01-whats-closest-to-your-work.md
  * designs; the cards, *Name it* and *Not here yet?* are step 3, measured as `futures-road`.
+ *
+ * 2026-10-22, the batch 4 follow-up (task 28h), the maintainer's calls on the batch 4 page:
+ * - Call 37, "Trim it to 5": the typed way's last step, both versions (`intake-road`, a job with no written road;
+ *   `intake-road-written`, a road written for the job), 6 to 5 text sizes. On the intake page step 3's headings
+ *   take the lead size the intake already draws instead of the title size (components/front-door/
+ *   job-and-road-steps.tsx), so the step shows the intake's own five sizes.
+ * - Call 38, "Accept 6 as this step's own limit": the typed way's last step with the job skipped
+ *   (`intake-road-skipped`), its first row in `FIRST_MEASURED`: 3, 6 and 5 controls on a phone, a tablet and a
+ *   laptop (on a tablet the whole step fits the window, so the Not here yet? box and the footer's link both count),
+ *   standing beside Pick a future's case C (`ADDED_SCREEN_PART_OF`), and 5 text sizes with call 37.
+ * - Pick a future outside Alberta (`futures-outside-alberta`): lowered to what CI's Ubuntu run counts on main
+ *   (run 39879574374, f6e9a81): 4, 6 and 4 controls, one fewer than its first row at every size (the row was
+ *   Windows' count before the steps were joined with the federal card).
+ * - Step 3 for a job with no written road, with About this job's rows in place (task 28c): the rows push the cards'
+ *   Look inside below a tablet's first window, so \`futures-road\` 6 to 3 and \`intake-road\` 5 to 2 controls there,
+ *   as CI's Ubuntu run counts them (run 39896985007); phone and laptop already at those counts.
  */
 export const BUDGETS: ClutterTable = {
   "front-door": { phone: m(4, 7, 6, 9.5), tablet: m(4, 11, 6, 9.5), laptop: m(4, 11, 6, 9.5) },
@@ -298,15 +319,16 @@ export const BUDGETS: ClutterTable = {
   "futures-region": { phone: m(4, 5, 5, 10.5), tablet: m(4, 5, 5, 10.5), laptop: m(4, 5, 5, 10.5) },
   "futures-outside": { phone: m(4, 4, 5, 10.5), tablet: m(4, 4, 5, 10.5), laptop: m(4, 4, 5, 10.5) },
   "futures-road-written": { phone: m(6, 5, 6, 10.5), tablet: m(6, 5, 6, 10.5), laptop: m(6, 5, 6, 10.5) },
-  "futures-road": { phone: m(6, 3, 6, 10.5), tablet: m(6, 6, 6, 10.5), laptop: m(6, 3, 6, 10.5) },
+  "futures-road": { phone: m(6, 3, 6, 10.5), tablet: m(6, 3, 6, 10.5), laptop: m(6, 3, 6, 10.5) },
   "futures-road-skipped": { phone: m(6, 4, 6, 10.5), tablet: m(6, 7, 6, 10.5), laptop: m(6, 6, 6, 10.5) },
   "intake-steps": { phone: m(3, 5, 5, 10.5), tablet: m(3, 5, 5, 10.5), laptop: m(3, 5, 5, 10.5) },
   "intake-area": { phone: m(3, 5, 5, 10.5), tablet: m(3, 5, 5, 10.5), laptop: m(3, 5, 5, 10.5) },
   "intake-region": { phone: m(3, 5, 5, 10.5), tablet: m(3, 5, 5, 10.5), laptop: m(3, 5, 5, 10.5) },
-  "intake-road-written": { phone: m(3, 3, 6, 10.5), tablet: m(3, 4, 6, 10.5), laptop: m(3, 3, 6, 10.5) },
-  "intake-road": { phone: m(3, 2, 6, 10.5), tablet: m(3, 5, 6, 10.5), laptop: m(3, 2, 6, 10.5) },
-  "futures-outside-alberta": { phone: m(6, 5, 6, 10.5), tablet: m(6, 7, 6, 10.5), laptop: m(6, 5, 6, 10.5) },
+  "intake-road-written": { phone: m(3, 3, 5, 10.5), tablet: m(3, 4, 5, 10.5), laptop: m(3, 3, 5, 10.5) },
+  "intake-road": { phone: m(3, 2, 5, 10.5), tablet: m(3, 2, 5, 10.5), laptop: m(3, 2, 5, 10.5) },
+  "futures-outside-alberta": { phone: m(6, 4, 6, 10.5), tablet: m(6, 6, 6, 10.5), laptop: m(6, 4, 6, 10.5) },
   "cockpit-federal": { phone: m(7, 17, 4, 9.5), tablet: m(8, 29, 5, 9.5), laptop: m(8, 27, 5, 9.5) },
+  "intake-road-skipped": { phone: m(3, 3, 5, 10.5), tablet: m(3, 6, 5, 10.5), laptop: m(3, 5, 5, 10.5) },
 };
 
 /** What Chromium on Windows may count over a budget: only regions, controls and text sizes, never fewer. */

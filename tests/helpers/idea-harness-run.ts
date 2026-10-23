@@ -1,4 +1,4 @@
-import { KNOWN_GAPS, type KnownGap } from "../fixtures/ideas/known-gaps";
+import { KNOWN_GAPS, NEVER_A_KNOWN_GAP, type KnownGap } from "../fixtures/ideas/known-gaps";
 import { IDEAS_V1, type Idea } from "../fixtures/ideas/v1";
 import { checkRun, gapKey, sameOutput, type Failure } from "./idea-invariants";
 import { runDigest, runIdea, type IdeaRun } from "./idea-pipeline";
@@ -26,6 +26,11 @@ export interface HarnessResult {
  * The harness spec (tests/idea-harness.spec.ts) asserts on it; the quality report (scripts/quality-report.mjs)
  * counts from it, so both read one computation.
  */
+/** The gaps the ratchet may hold: every listed gap but those of an invariant that may never be one (`NEVER_A_KNOWN_GAP`). */
+export function listableGaps(gaps: readonly KnownGap[]): KnownGap[] {
+  return gaps.filter((gap) => !NEVER_A_KNOWN_GAP.includes(gap.invariant));
+}
+
 export function runHarness(ideas: readonly Idea[] = IDEAS_V1, gaps: readonly KnownGap[] = KNOWN_GAPS): HarnessResult {
   const started = performance.now();
   const runs: IdeaRun[] = [];
@@ -37,7 +42,9 @@ export function runHarness(ideas: readonly Idea[] = IDEAS_V1, gaps: readonly Kno
     failures.push(...checkRun(run), ...sameOutput(idea.id, runDigest(run), runDigest(again)));
   }
   const elapsedMs = performance.now() - started;
-  const known = knownGapKeys(gaps);
+  // A silent fallback is never a known gap (the maintainer's call 32 of 2026-10-22): one listed anyway still counts
+  // as unlisted, so the harness fails on it whatever the list says.
+  const known = knownGapKeys(listableGaps(gaps));
   const found = new Set(failures.map(gapKey));
   // Only the ideas run: a gap of an idea left out of this run can't be said to pass.
   const ran = new Set(ideas.map((idea) => idea.id));

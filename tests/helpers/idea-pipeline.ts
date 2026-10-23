@@ -3,7 +3,7 @@ import { answerEquipment, answerSalesYear3, compareEndings, forksToCompare, notT
 import { cockpitInput, gaugeView, nextOnYourRoad, stepBadges, type KeptFuture } from "@/lib/cockpit/view";
 import { FEDERAL_ROAD_ID, forksAreTheMapToggles, generalRoadV2026, roadsV2026, skillItemsV2026, type Road } from "@/lib/engines/roads/v2026";
 import type { FigureView } from "@/lib/figures/types";
-import { futureCards, groupedForPlace, LISTED_ROAD_IDS, listedRoads, sourcesLine } from "@/lib/front-door/futures";
+import { futureCards, groupedForPlace, LISTED_ROAD_IDS, listedRoads, notHereRoad, sourcesLine } from "@/lib/front-door/futures";
 import type { LookingFor as DoorLookingFor } from "@/lib/front-door/questions";
 import { destinationReceipt, incomeReceipt, lookingForReceipt, placeName, placeReceipt } from "@/lib/front-door/receipts";
 import { pickWords } from "@/lib/front-door/words";
@@ -15,7 +15,7 @@ import { searchJobTitles, type JobSearchGroupKind, type JobSearchHit } from "@/l
 import { leftOutLine, searchStatusLine } from "@/lib/front-door/job-search-lines";
 import { ALBERTA_ECONOMIC_REGIONS, DONT_KNOW_REGION, economicRegionsCreditLine } from "@/lib/engines/research-kit/v2026/economic-regions";
 import { roadJobNames } from "@/lib/front-door/road-jobs";
-import { roadJobGroups, roadMatch, type RoadMatchCase } from "@/lib/front-door/road-match";
+import { cardJobLine, roadMatch, type RoadMatchCase } from "@/lib/front-door/road-match";
 import { answersOf, asksWhere, type StepsState } from "@/lib/front-door/three-steps";
 import { jobStepWords, whereStepWords } from "@/lib/front-door/words";
 import { ALBERTA_AREAS } from "@/lib/places/alberta-areas";
@@ -781,11 +781,12 @@ const stateOf = (steps: StepsRun): StepsState => ({ part: "road", job: steps.job
  *
  * Outside Alberta (task 28d) step 3 lists the federal steps first, under "Written for all of Canada", and
  * Alberta's two behind one button, each saying "Written for Alberta. You said …"; a job there has no road of its
- * own. "Not here yet?" keeps a note and opens the general road, road 0, anywhere. So outside Alberta the card the
- * page shows first, the federal road's, stands where road 0's does in Alberta (the typed way's card, and the
- * picked way's after Skip), and the picked way's Alberta card is road 1's or road 0's by the number's evenness,
- * after opening the fold (both folded cards are clicked somewhere; the person was told on the card that it is
- * written for Alberta, and the known gap "picked" lists what that draws).
+ * own. "Not here yet?" keeps a note and opens the general road in Alberta and, since the maintainer's call 33 of
+ * 2026-10-22, the federal steps elsewhere in Canada (`notHereRoad`). So outside Alberta the card the page shows
+ * first, the federal road's, stands where road 0's does in Alberta (the typed way's card, and the picked way's
+ * after Skip), and the picked way's Alberta card is road 1's or road 0's by the number's evenness, after opening
+ * the fold (both folded cards are clicked somewhere). That end is honest while both labels say so, the card's and
+ * the cockpit's (the maintainer's call 35 of 2026-10-22; tests/helpers/idea-invariants.ts `honestAlbertaPick`).
  */
 export function stepsChoice(idea: Idea, way: "typed" | "picked"): StepsRun {
   const n = Number(idea.id.slice(-4));
@@ -798,7 +799,7 @@ export function stepsChoice(idea: Idea, way: "typed" | "picked"): StepsRun {
   const regions = [...ALBERTA_ECONOMIC_REGIONS.map((r) => r.code), DONT_KNOW_REGION];
   const area = where ? ALBERTA_AREAS[n % ALBERTA_AREAS.length]!.value : null;
   const region = where ? regions[n % regions.length]! : null;
-  const { match, outsideAlberta, folded } = stepThree(idea, job?.code ?? null);
+  const { listed, match, outsideAlberta, folded } = stepThree(idea, job?.code ?? null);
   const offered = [...match.forJob, ...match.others, ...folded].map((road) => road.id);
   const card = (roadId: string) => ({ by: "card" as const, roadId });
   const written = idea.road === "none-written-yet" ? null : ROAD_IDS[idea.road];
@@ -811,7 +812,7 @@ export function stepsChoice(idea: Idea, way: "typed" | "picked"): StepsRun {
   else if (written) click = card(written);
   else if (way === "typed") click = card(firstCard);
   else if (n % 3 === 1) click = card(outsideAlberta && n % 2 === 0 ? generalRoadV2026.id : ROAD_IDS["road-1"]);
-  else if (n % 3 === 2 && idea.words.trim().length > 0) click = { by: "not-here", roadId: generalRoadV2026.id };
+  else if (n % 3 === 2 && idea.words.trim().length > 0) click = { by: "not-here", roadId: notHereRoad(listed, generalRoadV2026).id };
   else click = match.case === "no-road" ? { by: "left" } : card(firstCard);
   return { job, search, area, region, match: match.case, offered, folded: folded.map((road) => road.id), click };
 }
@@ -898,7 +899,9 @@ function piecesOfSteps(pieces: TextPiece[], way: "typed" | "picked", idea: Idea,
   } else if (steps.match === "no-road" && steps.job) {
     add("no road › heading", pickWords.noRoad.heading(steps.job.label, steps.job.code, outsideAlberta && placeLabel ? placeLabel : undefined));
     add("no road › body", pickWords.noRoad.body(steps.job.label, outsideAlberta));
-    add("no road › about this job", pickWords.noRoad.aboutJobPending(steps.job.label));
+    // About this job's rows in place (task 28c), opened by the design's lead sentence. The rows are the cockpit
+    // panel's own (tests/about-job.spec.ts reads every job group's, and the browser sweep reads them here too).
+    add("no road › about this job", pickWords.noRoad.governmentLead);
     add("no road › nothing saved", pickWords.noRoad.nothingSaved);
     if (!outsideAlberta) add("road › others heading", pickWords.othersHeading);
   } else {
@@ -914,7 +917,7 @@ function piecesOfSteps(pieces: TextPiece[], way: "typed" | "picked", idea: Idea,
     }
   }
   // Each card as components/front-door/future-card.tsx writes it.
-  for (const card of futureCards(listed, skillItemsV2026)) {
+  for (const card of futureCards(listed, skillItemsV2026, place)) {
     const at = `road › card ${card.roadId}`;
     add(at, card.label, "catalog");
     add(`${at} › kind`, pickWords.kind[card.kind]);
@@ -925,12 +928,9 @@ function piecesOfSteps(pieces: TextPiece[], way: "typed" | "picked", idea: Idea,
     if (placeLabel && places.includes("CA")) add(`${at} › federal only`, pickWords.federalOnly(placeLabel));
     add(`${at} › counts`, pickWords.counts(card.steps, card.skillsListed, card.officialFees, card.linesToPrice));
     for (const part of sourcesLine(card.sources)) add(`${at} › sources`, part.text);
-    if (steps.job) {
-      const road = listed.find((r) => r.id === card.roadId)!;
-      const groups = roadJobGroups(road);
-      for (const code of groups) add(`${at} › job line`, pickWords.writtenForJob(LISTED_JOBS[road.id]?.find((g) => g.code === code)?.title ?? code, code));
-      if (groups.length === 0 && steps.match === "no-road" && road.id === generalRoadV2026.id) add(`${at} › job line`, pickWords.road0NotForJob(steps.job.label));
-    }
+    // The card's job line, from the same function the screen draws it with (tests/future-card-honest-pick.spec.ts
+    // finds it, and the card's other labels, in what components/front-door/future-card.tsx draws).
+    add(`${at} › job line`, cardJobLine(listed.find((r) => r.id === card.roadId)!, steps.job, steps.match, LISTED_JOBS));
   }
 }
 
@@ -955,8 +955,8 @@ function pickedWayIn(idea: Idea, pieces: TextPiece[], options: RunOptions): { st
   piecesOfSteps(pieces, "picked", idea, steps);
   // The no-road block's honest end: the person leaves, and nothing is saved, so no cockpit.
   if (steps.click.by === "left") return { steps, run: null };
-  // "Not here yet?": the note is kept as one of the person's statements (not shown in the plan), and the
-  // general road opens the same way a card does.
+  // "Not here yet?": the note is kept as one of the person's statements (not shown in the plan), and its road (the
+  // general road in Alberta, the federal steps elsewhere) opens the same way a card does.
   if (steps.click.by === "not-here") add("not here › your note", idea.words, "person");
   const clicked = steps.click.roadId;
   const picked = roadsV2026.find((r) => r.id === clicked)!;

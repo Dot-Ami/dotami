@@ -146,6 +146,8 @@ test("Cabinetmakers on the apprentice road: the four rows in order, the governme
       "Low is in most cases the 10th percentile and high the 90th, as Job Bank's method page says.",
       "What workers in this job group were paid. Not what a shop earns, and not what you would earn.",
       "Job Bank wage file 2025, revised 2025-11-19. Contains information licensed under the Open Government Licence – Canada.",
+      // In Alberta, the region's Change at the row's end (task 28h).
+      "Change your region",
     ].join(" "),
   );
 
