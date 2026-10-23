@@ -102,7 +102,7 @@ function roadCitations(road: Road, skillItems: readonly SkillItem[], place: stri
   return [
     ...road.steps.flatMap((step) => [
       // A step's own sources as its panel shows them for the person's place (`citationsForPlace`, the step panel's
-      // filter): on a road written for all of Canada, the federal pages and the place's own; on any other road, all.
+      // filter): the federal pages and the place's own, on every road since 2026-10-23 (a-call-12).
       ...(place === null ? step.citations : citationsForPlace(road, step.citations, place).shown),
       ...step.doneWhen.map((line) => line.citation),
       ...step.costs.flatMap((cost) =>

@@ -1,6 +1,6 @@
 import { jobGroupOf } from "../../oasis/v2026";
 import type { EngineCitation } from "../../shared/types";
-import type { Road, SkillItem } from "./types";
+import type { CatalogCostLine, Road, RoadStep, SkillItem } from "./types";
 import { roadApprenticeToOwnShopAB, skillItemsApprenticeToOwnShopAB } from "./apprentice-to-own-shop-ab";
 import { roadFederalStepsCA } from "./federal-steps-ca";
 import { roadStartingAnyBusinessAB, skillItemsStartingAnyBusinessAB } from "./starting-any-business-ab";
@@ -47,20 +47,76 @@ export function forksAreTheMapToggles(road: Pick<Road, "id">): boolean {
 }
 
 /**
- * A step's sources as a road written for all of Canada draws them for one idea (task 28d, 2026-10-21): the
- * federal pages and the idea's own province's, in the road's order, and how many it left out (other
- * provinces' pages), so the screen can say so and nothing is hidden without a word. On a road written for
- * particular provinces every source is shown: the road is that place's, whoever opens it.
+ * A step's sources as any road draws them for one idea: the federal pages and the idea's own province's, in the
+ * road's order, and how many it left out (other provinces' pages), so the screen can say so and nothing is hidden
+ * without a word. First on the road written for all of Canada (task 28d, 2026-10-21); on every road since the
+ * maintainer's call a-call-12 (2026-10-23), so a person in Alberta on road 0 no longer sees Ontario's and British
+ * Columbia's employment-standards pages under Hire first employee. `road` is kept so every screen keeps asking
+ * through this one function (the step panel, the plan, the export and Pick a future's source counts); where a road
+ * is written for no longer changes what is shown.
  */
 export function citationsForPlace(
   road: Pick<Road, "provinces">,
   citations: readonly EngineCitation[],
   place: string,
 ): { shown: EngineCitation[]; leftOut: number } {
-  const places: readonly string[] = road.provinces;
-  if (!places.includes("CA")) return { shown: [...citations], leftOut: 0 };
+  void road;
   const shown = citations.filter((citation) => citation.jurisdiction === "CA" || citation.jurisdiction === place);
   return { shown, leftOut: citations.length - shown.length };
+}
+
+/**
+ * A step's own sources for the idea's place (`citationsForPlace`), with the count line's number grown by the
+ * pages `roadForPlace` left out of its *done when* lines, cost lines and official links. The step panel and the
+ * plan ask this, so one line says everything a step left out for another province.
+ */
+export function stepSourcesForPlace(
+  road: Pick<Road, "provinces">,
+  step: Pick<RoadStep, "citations" | "pagesLeftOutForPlace">,
+  place: string,
+): { shown: EngineCitation[]; leftOut: number } {
+  const { shown, leftOut } = citationsForPlace(road, step.citations, place);
+  return { shown, leftOut: leftOut + (step.pagesLeftOutForPlace ?? 0) };
+}
+
+/**
+ * A road as one idea's screens draw it (a-call-12, 2026-10-23; review of #207): every step keeps only the *done
+ * when* lines, cost lines and official links resting on a federal page or one for the idea's own province. A road
+ * written for Alberta, opened from Ontario (call 35), would otherwise list Alberta's name registry, its WCB line and
+ * its name fee. The same rule as the federal road's (./federal-steps-ca.ts), for any place, and counted: each step
+ * says how many pages it left out, in the line its sources already have (`stepSourcesForPlace`). Nothing is
+ * removed from the road itself: the steps, their order and their sources stay, and the storage checks a person's
+ * ticks and quotes against the whole road (`roadForFuture`), so moving back shows them again. In a road's own
+ * province, or on a road citing no other province, it changes nothing.
+ */
+export function roadForPlace(road: Road, place: string): Road {
+  const other = (citation: EngineCitation | undefined) => citation !== undefined && citation.jurisdiction !== "CA" && citation.jurisdiction !== place;
+  const costSource = (cost: CatalogCostLine) => (cost.kind === "official-fee" ? cost.citation : cost.nameSource);
+  // Every page the road cites for another province, by address, so a link to one goes with its citations.
+  const otherPages = new Set(
+    road.steps
+      .flatMap((step) => [...step.citations, ...step.doneWhen.map((line) => line.citation), ...step.costs.map(costSource)])
+      .filter(other)
+      .map((citation) => citation!.url),
+  );
+  if (otherPages.size === 0) return road;
+  return {
+    ...road,
+    steps: road.steps.map((step) => {
+      const doneWhen = step.doneWhen.filter((line) => !other(line.citation));
+      const costs = step.costs.filter((cost) => !other(costSource(cost)));
+      const officialLinks = step.officialLinks.filter((link) => !otherPages.has(link.url));
+      // The pages behind what was left out, once each, less those the step's own sources count already.
+      const counted = new Set(step.citations.filter(other).map((citation) => citation.url));
+      const leftOut = new Set([
+        ...step.doneWhen.filter((line) => other(line.citation)).map((line) => line.citation.url),
+        ...step.costs.flatMap((cost) => (other(costSource(cost)) ? [costSource(cost)!.url] : [])),
+        ...step.officialLinks.filter((link) => otherPages.has(link.url)).map((link) => link.url),
+      ]);
+      const pages = [...leftOut].filter((url) => !counted.has(url)).length;
+      return { ...step, doneWhen, costs, officialLinks, ...(pages > 0 ? { pagesLeftOutForPlace: pages } : {}) };
+    }),
+  };
 }
 
 /**

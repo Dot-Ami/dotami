@@ -122,10 +122,10 @@ function nodeToSlice(node: CFENode): PlaybookNodeSlice {
 function buildSectionForStage(stage: CFEStage, nodes: CFENode[], road: Pick<Road, "provinces"> | null, place: string): PlaybookSection {
   nodes.sort((a, b) => a.label.localeCompare(b.label));
 
-  // On a road written for all of Canada, the federal pages and the idea's own province's, as the step panel
-  // and the plan draw them (`citationsForPlace`, task 28d), with a count of the rest; otherwise every source.
+  // The federal pages and the idea's own province's, as the step panel and the plan draw them (`citationsForPlace`),
+  // with a count of the rest: on every road since the maintainer's call a-call-12 (2026-10-23), and with no road named.
   const merged = mergeCitations(nodes);
-  const { shown, leftOut } = road ? citationsForPlace(road, merged, place) : { shown: merged, leftOut: 0 };
+  const { shown, leftOut } = citationsForPlace(road ?? { provinces: [] }, merged, place);
 
   return {
     stageKey: stage,
@@ -137,9 +137,9 @@ function buildSectionForStage(stage: CFEStage, nodes: CFENode[], road: Pick<Road
 }
 
 /**
- * The export's skeleton for a scenario. `road` is the road the cockpit draws: on one written for all of Canada
- * the sources are drawn for the idea's own province, as everywhere else on screen; left out (or on any other
- * road), every source the map's stages cite.
+ * The export's skeleton for a scenario. `road` is the road the cockpit draws. The sources are drawn for the idea's
+ * own province on every road, as everywhere else on screen (a-call-12, 2026-10-23), so naming the road or not
+ * shows the same sources.
  */
 export function buildPlaybookSkeleton(cfeNodes: CFENode[], scenario: Scenario, road?: Pick<Road, "provinces">): PlaybookSkeleton {
   const nodeById = new Map(cfeNodes.map((n) => [n.id, n]));

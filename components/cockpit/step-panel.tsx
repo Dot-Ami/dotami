@@ -14,7 +14,7 @@ import { itemsForStep } from "@/lib/brain/node-items";
 import type { EvaluationResult } from "@/lib/brain/types";
 import { cockpitWords as words } from "@/lib/cockpit/words";
 import { cfeCatalogV2026 } from "@/lib/engines/cfe/v2026";
-import { citationsForPlace, type Road, type RoadStep, type SkillItem } from "@/lib/engines/roads/v2026";
+import { stepSourcesForPlace, type Road, type RoadStep, type SkillItem } from "@/lib/engines/roads/v2026";
 import type { EngineCitation } from "@/lib/engines/shared/types";
 import type { CostLineAmountFrom } from "@/lib/figures/types";
 import { formatMoney } from "@/lib/format/money-and-months";
@@ -92,9 +92,10 @@ export function StepPanel(props: StepPanelProps) {
   const items = itemsForStep(rules.unlocks, step);
   const node = cfeCatalogV2026.nodes.find((n) => n.id === step.id);
   const sections = <StepSections {...props} />;
-  // On a road written for all of Canada, the step's sources for the idea's own place, and a line saying how
-  // many other provinces' pages were left out (task 28d); on any other road, every source.
-  const sources = citationsForPlace(props.road, step.citations, province);
+  // The step's sources for the idea's own place, and a line saying how many other provinces' pages were left
+  // out (task 28d; on every road since the maintainer's call a-call-12, 2026-10-23), counting the pages the
+  // road drawn for this place left out of the step's done-when lines, cost lines and links (`roadForPlace`).
+  const sources = stepSourcesForPlace(props.road, step, province);
   const sourcesNote = sources.leftOut > 0 ? words.panel.sourcesOtherProvinces(sources.leftOut) : null;
 
   return (

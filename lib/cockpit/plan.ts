@@ -7,7 +7,7 @@ import type { SkillMarkValue } from "@/lib/futures/types";
 import { evaluateRoad, type RoadEvaluationInput, type StepEvaluation } from "@/lib/roads";
 import type { BranchDecisionId } from "@/lib/scenarios/branches";
 import { isBranchDecided } from "@/lib/scenarios/graph";
-import { citationsForPlace, forksAreTheMapToggles } from "@/lib/engines/roads/v2026";
+import { forksAreTheMapToggles, stepSourcesForPlace } from "@/lib/engines/roads/v2026";
 import { areaLabel, regionLabel } from "@/lib/front-door/where";
 
 import { goalRoadLine } from "./road-line";
@@ -86,7 +86,7 @@ export interface PlanStep {
   /** "n cost lines, under Start-up money", or null for a step with none. */
   costCount: string | null;
   officialLinks: { label: string; url: string }[];
-  /** The step's sources for the idea's place (on a road written for all of Canada, the federal ones and its province's). */
+  /** The step's sources for the idea's place: the federal ones and its province's, on every road (a-call-12). */
   sources: PlanSource[];
   /** How many sources for other provinces the list leaves out, said in a line; null when none is left out. */
   sourcesLeftOut: string | null;
@@ -181,7 +181,8 @@ export function buildPlan(args: PlanArgs): PlanView {
 
   function planStep(step: (typeof road.steps)[number], evaluated: StepEvaluation): PlanStep {
     const ticked = new Set(evaluated.doneWhen.tickedIds);
-    const sources = citationsForPlace(road, step.citations, place);
+    // Its own sources and the pages left out of its lines and links for the idea's place, in one count.
+    const sources = stepSourcesForPlace(road, step, place);
     return {
       id: step.id,
       label: step.label,
