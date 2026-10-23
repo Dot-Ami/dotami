@@ -23,6 +23,8 @@ const WIDTHS = [375, 768, 1280] as const;
 const told = (page: Page) => page.getByRole("region", { name: "What you've told DotAmi" });
 const goalBar = (page: Page) => page.getByRole("region", { name: "Your goal and gauges" });
 const aboutJob = (page: Page) => page.getByRole("region", { name: "About this job" });
+/** A link to one of Alberta's own pages (alberta.ca, the WCB's wcb.ab.ca). */
+const ALBERTA_LINKS = 'a[href*="alberta.ca"], a[href*=".ab.ca"]';
 
 /** How many ideas DotAmi keeps, as Your futures lists them. */
 async function ideaCount(page: Page): Promise<number> {
@@ -96,6 +98,16 @@ test("Change on the place row edits this idea: one idea, Ontario, the Alberta ro
 
   // The road written for Alberta stays drawn, and says so (call 35).
   await expect(goalBar(page)).toContainText("written for AB; this idea is in ON");
+  // Hire first employee lists no Alberta page now (its WCB-Alberta line rested on one), and counts what it left out:
+  // Alberta's and British Columbia's employment-standards pages, and the WCB's (review of #207).
+  await showRoadAhead(page);
+  await page.getByRole("button", { name: /^Hire first employee, / }).first().click();
+  const panel = page.getByRole("region", { name: "Step" });
+  // Under the folded sources, so attached rather than visible.
+  await expect(panel.getByText("3 sources for other provinces aren't shown.")).toBeAttached();
+  await expect(panel).not.toContainText("WCB-Alberta");
+  expect(await panel.locator(ALBERTA_LINKS).count()).toBe(0);
+  await panel.getByRole("button", { name: "Close", exact: true }).first().click();
   // About this job, read again after the save, shows no Alberta area.
   await lookCloser(page, "About this job", goalBar(page));
   await expect(aboutJob(page)).toBeVisible();
@@ -111,7 +123,45 @@ test("Change on the place row edits this idea: one idea, Ontario, the Alberta ro
   expect(plan).not.toContain("Your area");
   expect(plan).not.toContain("Your economic region");
   expect(plan).toContain("Ontario");
+  // And no Alberta page: not a done-when source, an official link, a source or the Alberta name fee (review of #207).
+  expect(await page.locator(ALBERTA_LINKS).count()).toBe(0);
+  expect(plan).not.toContain("WCB-Alberta");
+  expect(plan).not.toContain("Registry Agent Product Catalogue");
 });
+
+test("control: in Alberta, Your plan links Alberta's own pages, so the check above can see them", async ({ page }) => {
+  const ventureId = await albertaIdea(page);
+  await page.goto(`/plan?venture=${encodeURIComponent(ventureId)}`);
+  await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
+  expect(await page.locator(ALBERTA_LINKS).count()).toBeGreaterThan(5);
+  expect(await page.locator("body").innerText()).toContain("WCB-Alberta");
+});
+
+// The step panel the review fix changed: Hire first employee on road 0 after a move to Ontario, its sources opened.
+for (const width of WIDTHS) {
+  test(`screenshots at ${width} wide: Hire first employee after a move to Ontario`, async ({ page }) => {
+    test.skip(!SHOTS, "PLACE_SHOTS not set");
+    mkdirSync(SHOTS!, { recursive: true });
+    await page.setViewportSize({ width, height: 900 });
+    const ventureId = await albertaIdea(page);
+    await page.goto(`/cockpit?venture=${ventureId}`);
+    if (width < 768) await page.getByRole("button", { name: "Venture details", exact: true }).click();
+    else await showRail(page);
+    await told(page).getByRole("button", { name: "Change: you told us your place is Alberta" }).click();
+    await told(page).getByRole("combobox", { name: "Which province or territory are you in?" }).selectOption("ON");
+    await told(page).getByRole("button", { name: "Save", exact: true }).click();
+    await expect(told(page).getByRole("status")).toContainText("Because you told us your place is Ontario");
+    if (width < 768) await page.keyboard.press("Escape");
+    await showRoadAhead(page);
+    await page.getByRole("button", { name: /^Hire first employee, / }).first().click();
+    const panel = page.getByRole("region", { name: "Step" });
+    await panel.locator("summary", { hasText: /Sources for this stage · \d/ }).click();
+    const leftOut = panel.getByText("3 sources for other provinces aren't shown.");
+    await expect(leftOut).toBeVisible();
+    await leftOut.scrollIntoViewIfNeeded();
+    await page.screenshot({ path: path.join(SHOTS!, `hire-first-after-move-ontario-${width}.png`) });
+  });
+}
 
 // The changed screen for the pull request: the box open, then its receipt, at each width (only with PLACE_SHOTS).
 for (const width of WIDTHS) {

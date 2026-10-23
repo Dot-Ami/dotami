@@ -52,7 +52,7 @@ import type { CostLineAmountFrom, FigureView } from "@/lib/figures/types";
 import { useLocalToday } from "@/lib/figures/use-local-today";
 import type { CFENodeId } from "@/lib/engines/cfe/v2026";
 import { oasisListForJob } from "@/lib/engines/oasis/v2026";
-import { forksAreTheMapToggles, roadsV2026, roadsWrittenForJob, skillItemsV2026 } from "@/lib/engines/roads/v2026";
+import { forksAreTheMapToggles, roadForPlace, roadsV2026, roadsWrittenForJob, skillItemsV2026 } from "@/lib/engines/roads/v2026";
 import { templatesCatalogV2026 } from "@/lib/engines/templates/v2026";
 import type { ExampleFuture } from "@/lib/examples";
 import { exampleStory } from "@/lib/examples/story";
@@ -281,9 +281,14 @@ export function CockpitPage({ initialScenario, pinned = false, example }: Cockpi
   const reload = saved.reload;
   const ideaFigures = ventureId && figures ? { ideaId: ventureId, figures } : null;
 
-  // The road this idea is drawn on: its own when it names one the catalog has, else today's general road.
+  // The road this idea is drawn on: its own when it names one the catalog has, else today's general road,
+  // drawn for the idea's own place (`roadForPlace`, as road evaluation's input is: lib/cockpit/view.ts).
   const roadId = kept?.future.roadId ?? null;
-  const road = useMemo(() => roadForFuture(SHIPPED_ROADS_CATALOG, roadId), [roadId]);
+  const roadPlace = currentScenario?.profile.province ?? null;
+  const road = useMemo(() => {
+    const whole = roadForFuture(SHIPPED_ROADS_CATALOG, roadId);
+    return roadPlace ? roadForPlace(whole, roadPlace) : whole;
+  }, [roadId, roadPlace]);
   // The government's skills list for the job the person picked as closest to their work, or none.
   const jobCode = kept?.future.job?.code ?? null;
   const job = useMemo(() => (jobCode ? oasisListForJob(jobCode) : null), [jobCode]);

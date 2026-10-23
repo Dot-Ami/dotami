@@ -578,7 +578,9 @@ placed in phase 3.
       leaked and where; one that leaves out the person's own province (a step's sources, the ways to
       incorporate) fails naming what is missing and where. Found 2026-10-22 and fixed 2026-10-23 (the
       maintainer's call a-call-12): in Alberta, road 0's *Hire first employee* showed Ontario's and British
-      Columbia's employment-standards pages; every road now shows a step's sources for the person's own place,
+      Columbia's employment-standards pages; every road now shows a step's sources for the person's own place
+      (and, since the pull request's review, only the *done when* lines, cost lines and links resting on those
+      pages, the rest counted in the same line: `roadForPlace`),
       the step cites Alberta's own page (checked by a tool, waiting for a person's read), and `PLACE_GAPS` in
       `tests/fixtures/ideas/accuracy-gaps.ts` is empty
     - [x] 37b (moved here too): the corpus reworded (capitals, lower case, a typo, another order, emoji, no

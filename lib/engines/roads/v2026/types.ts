@@ -116,6 +116,12 @@ export interface RoadStep {
    * rule reads it and it changes no colour.
    */
   opensABusiness?: true;
+  /**
+   * Set only by `roadForPlace` (./index.ts), never in a road's file: how many other provinces' pages this step's
+   * *done when* lines, cost lines and official links rested on, left out for the idea's place (pages the step's
+   * own sources also cite are counted there, not again). The step's "N sources for other provinces" line adds it.
+   */
+  pagesLeftOutForPlace?: number;
 }
 
 export interface OnlyForKindsOfWork {

@@ -1,7 +1,7 @@
 import { itemsForStep } from "@/lib/brain/node-items";
 import type { ConfirmedFigure } from "@/lib/brain/types";
 import type { JobList } from "@/lib/engines/oasis/v2026";
-import { forksAreTheMapToggles, type Road, type SkillItem } from "@/lib/engines/roads/v2026";
+import { forksAreTheMapToggles, roadForPlace, type Road, type SkillItem } from "@/lib/engines/roads/v2026";
 import { formatMoney } from "@/lib/format/money-and-months";
 import { BUSINESS_TOTAL_KINDS, COST_LINE_AMOUNT_FROM_LABELS, type FigureView } from "@/lib/figures/types";
 import type { PersonFigureView } from "@/lib/futures/person-figures";
@@ -47,6 +47,8 @@ export interface KeptFuture {
  *    line's quote) reach the money sums through `agreedPlanning`, and a proposed number reaches nothing.
  *  - A step's status comes only from step progress, the person's own clicks. The map's active, done and
  *    set-aside lists are worked out from its toggles and are never passed in as statuses.
+ * The road is drawn for the idea's own place (`roadForPlace`, a-call-12): another province's done-when lines,
+ * cost lines and links are left out and counted, so the cockpit and the plan never list them.
  */
 export function cockpitInput(args: {
   road: Road;
@@ -93,7 +95,7 @@ export function cockpitInput(args: {
   }
 
   return {
-    road: args.road,
+    road: roadForPlace(args.road, args.scenario.profile.province),
     roadChosen: args.roadChosen,
     skillItems: args.skillItems,
     scenario: args.scenario,

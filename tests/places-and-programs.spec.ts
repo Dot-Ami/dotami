@@ -31,7 +31,7 @@ import { parseFirstSave } from "@/lib/db/parse-scenario-input";
 import { cfeCatalogV2026 } from "@/lib/engines/cfe/v2026";
 import { grantsCatalogV2026 } from "@/lib/engines/grants/v2026";
 import { RETIRED_GRANT_PROGRAMS } from "@/lib/engines/grants/v2026/programs";
-import { citationsForPlace, generalRoadV2026, roadsV2026 } from "@/lib/engines/roads/v2026";
+import { citationsForPlace, generalRoadV2026, roadForPlace, roadsV2026, stepSourcesForPlace } from "@/lib/engines/roads/v2026";
 import { readFuture } from "@/lib/futures/future";
 import { readPlan } from "@/lib/futures/read-plan";
 import { SHIPPED_ROADS_CATALOG } from "@/lib/futures/types";
@@ -126,6 +126,34 @@ describe("33a: no Alberta area or region shown once the idea's place isn't Alber
     const planted = buildPlan({ ...args, where: { area: { value: "cma-825", setOn: "2026-10-23" }, region: null } });
     expect(albertaLines(planted.road.where)).toEqual(["Your area: Calgary · picked 2026-10-23"]);
   });
+
+  /**
+   * Every Alberta page, and every line resting on one, in the plan's steps and money: done-when lines and their
+   * sources, official links, sources and cost lines. The road's own words (its name, its "written for AB" line,
+   * each step's name and one-line summary: call 35) are the road part, not looked at here.
+   */
+  const albertaPagesIn = (plan: ReturnType<typeof buildPlan>) => {
+    const pages = plan.steps.columns.flatMap((c) => c.steps).map((s) => ({ doneWhen: s.doneWhen, links: s.officialLinks, sources: s.sources }));
+    return [...JSON.stringify({ pages, money: plan.money }).matchAll(/[^"]*(?:alberta\.ca|\.ab\.ca|Alberta)[^"]*/g)].map((m) => m[0]);
+  };
+
+  it("review of #207: after a move to Ontario on road 0, no Alberta page or Alberta-only line in the plan's steps or money", async () => {
+    const id = await movedIdea("ON");
+    const plan = buildPlan((await readPlan(prisma, id, "2026-10-23"))!);
+    expect(albertaPagesIn(plan)).toEqual([]);
+    // What was left out is counted on the step, never dropped without a word: Register your business name rests
+    // on Alberta's pages only, so it says how many it left out.
+    const name = plan.steps.columns.flatMap((c) => c.steps).find((s) => s.id === "step-start-register-name")!;
+    expect(name.sourcesLeftOut).toMatch(/^\d+ sources? for other provinces/);
+  });
+
+  it("control: in Alberta the same check finds road 0's Alberta pages (alberta.ca, the WCB, the name fee)", async () => {
+    const id = await movedIdea("AB");
+    const found = albertaPagesIn(buildPlan((await readPlan(prisma, id, "2026-10-23"))!)).join("\n");
+    expect(found).toMatch(/alberta\.ca\/register-business-name/);
+    expect(found).toMatch(/wcb\.ab\.ca/);
+    expect(found).toMatch(/Registry Agent Product Catalogue/);
+  });
 });
 
 describe("a-call-12: every road draws a step's sources for the person's own place", () => {
@@ -149,6 +177,63 @@ describe("a-call-12: every road draws a step's sources for the person's own plac
         }
       }
     }
+  });
+
+  /** A step's done-when lines, cost lines and links that rest on a page for neither Canada nor `province`. */
+  const otherProvincePages = (road: ReturnType<typeof roadForPlace>, province: string) => {
+    // Every page the road cites anywhere (the written road, so a link can't escape by its lines being gone).
+    const cited = generalRoadV2026.steps
+      .concat(roadsV2026.flatMap((r) => r.steps))
+      .flatMap((s) => [...s.citations, ...s.doneWhen.map((l) => l.citation), ...s.costs.flatMap((c) => (c.kind === "official-fee" ? [c.citation] : c.nameSource ? [c.nameSource] : []))]);
+    const pagesFor = new Set(cited.filter((c) => c.jurisdiction !== "CA" && c.jurisdiction !== province).map((c) => c.url));
+    return road.steps.flatMap((step) => [
+      ...step.doneWhen.filter((l) => l.citation.jurisdiction !== "CA" && l.citation.jurisdiction !== province).map((l) => `${step.id} · done when · ${l.citation.url}`),
+      ...step.costs.flatMap((c) => {
+        const src = c.kind === "official-fee" ? c.citation : c.nameSource;
+        return src && src.jurisdiction !== "CA" && src.jurisdiction !== province ? [`${step.id} · cost · ${src.url}`] : [];
+      }),
+      ...step.officialLinks.filter((l) => pagesFor.has(l.url)).map((l) => `${step.id} · link · ${l.url}`),
+    ]);
+  };
+
+  it("review of #207: no road, drawn for any province or territory, keeps a done-when line, cost line or link on another province's page", () => {
+    for (const road of roadsV2026) {
+      for (const province of PROVINCES) expect(otherProvincePages(roadForPlace(road, province), province), `${road.id} in ${province}`).toEqual([]);
+    }
+  });
+
+  it("control: road 0 as written, drawn for Ontario, holds Alberta's name registry, WCB line and name fee", () => {
+    const found = otherProvincePages(generalRoadV2026, "ON").join("\n");
+    expect(found).toMatch(/step-start-register-name · done when · https:\/\/www\.alberta\.ca\/register-business-name/);
+    expect(found).toMatch(/branch-hire-first-employee · done when · https:\/\/www\.wcb\.ab\.ca\//);
+    expect(found).toMatch(/· cost · /);
+    expect(found).toMatch(/· link · https:\/\/www\.alberta\.ca\/find-business-registry/);
+  });
+
+  it("in a road's own province nothing changes, and what is left out elsewhere is counted on its step", () => {
+    for (const road of roadsV2026) {
+      for (const province of road.provinces.filter((p) => p !== "CA")) {
+        const drawn = roadForPlace(road, province);
+        for (const step of road.steps) {
+          const same = drawn.steps.find((s) => s.id === step.id)!;
+          expect([same.doneWhen, same.costs, same.officialLinks, same.pagesLeftOutForPlace], `${road.id} · ${step.id}`).toEqual([
+            step.doneWhen,
+            step.costs,
+            step.officialLinks,
+            undefined,
+          ]);
+        }
+      }
+    }
+    const inOntario = roadForPlace(generalRoadV2026, "ON");
+    expect(inOntario.steps.map((s) => s.id)).toEqual(generalRoadV2026.steps.map((s) => s.id));
+    const name = inOntario.steps.find((s) => s.id === "step-start-register-name")!;
+    expect(name.doneWhen).toEqual([]);
+    // Its own sources (all Alberta's) are counted by citationsForPlace; the pages only its lines and links rested on, here.
+    expect(stepSourcesForPlace(inOntario, name, "ON").leftOut).toBe(citationsForPlace(inOntario, name.citations, "ON").leftOut + (name.pagesLeftOutForPlace ?? 0));
+    expect(name.pagesLeftOutForPlace).toBeGreaterThan(0);
+    const hire = inOntario.steps.find((s) => s.id === "branch-hire-first-employee")!;
+    expect(hire.pagesLeftOutForPlace).toBe(1);
   });
 
   it("Alberta's employment-standards page: checked by a tool, its words recorded, no read date (waiting for a person)", () => {

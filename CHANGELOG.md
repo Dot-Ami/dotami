@@ -247,6 +247,12 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   `citationsForPlace`). *Hire first employee* now cites Alberta's own *Employment standards* page, checked by a
   tool on 2026-10-23 and labelled so until a person reads it (it is on the reading list in
   docs/engines/citations.md). The province swap's `PLACE_GAPS` list is empty: the test passes with no known gap.
+  The same goes for what rests on a page (review of the pull request): on a road written for Alberta opened from
+  another province, such as an Alberta idea moved to Ontario, the cockpit and Your plan still listed Alberta's
+  name-registry pages, the WCB-Alberta *done when* line and the Alberta name fee. Now a step's *done when* lines,
+  cost lines and official links resting on another province's page are left out too, and counted in the same
+  line (`roadForPlace` and `stepSourcesForPlace` in `lib/engines/roads/v2026/index.ts`). In a road's own province
+  nothing changes. Each step's name and one-line summary stay as the road wrote them.
 - **Your answer to "Are you buying equipment, a vehicle or tools?" on a future picked on Pick a future is
   kept** (the maintainer's "Yes, fix both", 2026-10-20). Pick a future saves equipment as not said, since it
   never asks it. Answering in the cockpit's one-question box showed the answer for a moment, but left

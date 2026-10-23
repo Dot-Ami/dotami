@@ -178,7 +178,13 @@ Every string in the words block was run through `VERDICT_WORDS`, `findVerdicts` 
   export lists the same sources with the same line under them (`lib/playbook/build-skeleton.ts`). Since
   2026-10-23 (the maintainer's call a-call-12) road 0 and road 1 draw them the same way, for the idea's own place:
   until then every source was kept there, so a person in Alberta saw Ontario's and British Columbia's
-  employment-standards pages under *Hire first employee*, which now cites Alberta's own.
+  employment-standards pages under *Hire first employee*, which now cites Alberta's own. The same day (review of
+  the pull request) a road opened from another province also leaves out each step's *done when* lines, cost lines
+  and official links resting on another province's page, by the federal road's rule, for any place
+  (`roadForPlace`, applied in `cockpitInput` and the cockpit's drawn road), and the step's line counts those
+  pages too (`stepSourcesForPlace`). The storage still checks ticks and quotes against the whole road, so moving
+  back shows them again. Steps are not removed: an Alberta idea moved to Ontario keeps *Register your business
+  name, if you use one*, with its summary as written, no *done when* lines and the count.
 - **Pick a future:** step 3 of the three steps (`components/front-door/job-and-road-steps.tsx` `RoadStep`, on
   Pick a future and at the end of the intake): the federal card under *Written for all of Canada*, then the
   Alberta futures folded under *Written for Alberta*, after the no-road block or the skipped lines; the federal

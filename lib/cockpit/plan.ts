@@ -7,7 +7,7 @@ import type { SkillMarkValue } from "@/lib/futures/types";
 import { evaluateRoad, type RoadEvaluationInput, type StepEvaluation } from "@/lib/roads";
 import type { BranchDecisionId } from "@/lib/scenarios/branches";
 import { isBranchDecided } from "@/lib/scenarios/graph";
-import { citationsForPlace, forksAreTheMapToggles } from "@/lib/engines/roads/v2026";
+import { forksAreTheMapToggles, stepSourcesForPlace } from "@/lib/engines/roads/v2026";
 import { areaLabel, regionLabel } from "@/lib/front-door/where";
 
 import { goalRoadLine } from "./road-line";
@@ -181,7 +181,8 @@ export function buildPlan(args: PlanArgs): PlanView {
 
   function planStep(step: (typeof road.steps)[number], evaluated: StepEvaluation): PlanStep {
     const ticked = new Set(evaluated.doneWhen.tickedIds);
-    const sources = citationsForPlace(road, step.citations, place);
+    // Its own sources and the pages left out of its lines and links for the idea's place, in one count.
+    const sources = stepSourcesForPlace(road, step, place);
     return {
       id: step.id,
       label: step.label,
