@@ -502,6 +502,7 @@ export function invariantFailures(run: GeneratedRun): Failure[] {
       region: null,
       match: "skipped",
       offered: [],
+      folded: [],
       click: { by: "card", roadId: input.road.id },
     },
     job: input.job?.code ?? null,

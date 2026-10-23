@@ -177,8 +177,21 @@ Every string in the words block was run through `VERDICT_WORDS`, `findVerdicts` 
   with the request (`app/api/playbook/route.ts`, a road nobody wrote is refused), and each section of the
   export lists the same sources with the same line under them (`lib/playbook/build-skeleton.ts`). On road 0
   and road 1 every source is kept, as the step panel shows them.
-- **Pick a future:** `components/front-door/futures-list.tsx` (step 3's list only). The back link and the
-  no-road block are steps 2 and 3's other tasks (28b, 28c) and are not in this change.
+- **Pick a future:** step 3 of the three steps (`components/front-door/job-and-road-steps.tsx` `RoadStep`, on
+  Pick a future and at the end of the intake): the federal card under *Written for all of Canada*, then the
+  Alberta futures folded under *Written for Alberta*, after the no-road block or the skipped lines; the federal
+  card's own line is drawn by `components/front-door/future-card.tsx`. Outside Alberta a job is matched only
+  against the roads written for the person's place, so every job there is case B. (First built as its own list,
+  `futures-list.tsx`, before the three steps; folded into step 3 when the two were joined, 2026-10-22.) The two
+  lines above the groups say what is below them there ([03-road-match.md](./03-road-match.md)'s words are
+  Alberta's, unchanged in Alberta): the no-road block's heading, which names the person's place (*No road is
+  written for <job> (<code>) in Ontario yet.*, because a folded Alberta future may be written for the job and
+  its card says so), its body, *If you plan to run a business of your own, the federal steps below are written
+  for all of Canada, not for <job>. The futures written for Alberta are folded below them, and each card says
+  what it's written for. Opening a future doesn't say you're starting a business.*, and the skipped
+  line, *You didn't pick a job, so no future is matched to one. These are all the futures written so far: the
+  federal steps, written for all of Canada, then the futures written for Alberta, folded below. Each group is in
+  the order it was written.* (`pickWords.noRoad.body`, `pickWords.skipped` in `lib/front-door/words.ts`).
 - **Your destination** counts the federal road for a place outside Alberta apart from the place's own: *1 future
   listed is written for all of Canada; none is written for Yukon yet.* where it said *No future listed is written
   for Yukon yet …* (`placeReceipt` in `lib/front-door/receipts.ts`, words in `lib/front-door/words.ts`). The first

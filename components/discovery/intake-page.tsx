@@ -50,8 +50,11 @@ const SCREEN_LABEL: Record<ScreenId, string> = {
   steps: pickWords.navLabel,
 };
 
-/** The roads Pick a future lists, which the steps at the end of the intake list too. */
-const LISTED = listedRoads(roadsV2026);
+/**
+ * The roads Pick a future lists for a person in `province`, which the steps at the end of the intake list too:
+ * outside Alberta, the federal steps for any business in Canada first (task 28d).
+ */
+const listedFor = (province: Province) => listedRoads(roadsV2026, province);
 
 const VENTURE_TYPES: { id: VentureType; label: string }[] = [
   { id: "service", label: "Service" },
@@ -272,7 +275,7 @@ export function IntakePage({
                 state={steps}
                 setState={setSteps}
                 place={`CA-${intake.province}` as PlaceCode}
-                listed={LISTED}
+                listed={listedFor(intake.province)}
                 roadJobs={roadJobs}
                 firstSentence={intake.manualEntry?.trim() ? intake.manualEntry : null}
                 onLookInside={(road, answers) => lookInside(road, answers)}

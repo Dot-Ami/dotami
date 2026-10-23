@@ -11,7 +11,7 @@ import {
   regionNameOnScreen,
 } from "@/lib/engines/research-kit/v2026/economic-regions";
 import { generalRoadV2026, skillItemsV2026, type Road } from "@/lib/engines/roads/v2026";
-import { futureCards, type FutureCard } from "@/lib/front-door/futures";
+import { futureCards, groupedForPlace, type FutureCard } from "@/lib/front-door/futures";
 import { placeName, provinceOfPlace } from "@/lib/front-door/receipts";
 import { roadJobGroups, roadMatch } from "@/lib/front-door/road-match";
 import { answersOf, next, pickedJob, skipped, type StepsState } from "@/lib/front-door/three-steps";
@@ -304,7 +304,18 @@ function RoadStep({
   const province = provinceOfPlace(place);
   const cards = useMemo(() => futureCards(listed, skillItemsV2026), [listed]);
   const cardOf = (road: Road): FutureCard => cards.find((c) => c.roadId === road.id)!;
-  const match = roadMatch(state.job?.code ?? null, listed);
+  // Outside Alberta (task 28d, docs/ui-spec/futures/04-outside-alberta.md) the list holds a road written for all
+  // of Canada: it comes first, under *Written for all of Canada*, and the roads written for Alberta are folded
+  // behind one button under *Written for Alberta*. A job is matched only against the roads written for the
+  // person's place: every road is Alberta's or the federal one today, so outside Alberta every job has no road of
+  // its own (case B), and a road written for Alberta is never "written for your pick of job" there.
+  const groups = groupedForPlace(listed);
+  const outsideAlberta = groups.canada.length > 0;
+  const match = roadMatch(state.job?.code ?? null, outsideAlberta ? groups.canada : listed);
+  const [albertaShown, setAlbertaShown] = useState(false);
+  const canadaId = useId();
+  const albertaId = useId();
+  const albertaListId = useId();
   const answers = answersOf(state, province);
   const [name, setName] = useState("");
   const [note, setNote] = useState("");
@@ -365,22 +376,63 @@ function RoadStep({
     return match.case === "no-road" && road.id === generalRoadV2026.id ? pickWords.road0NotForJob(state.job.label) : null;
   };
 
+  const card = (road: Road, level: 2 | 3 = 2) => (
+    <FutureCardItem
+      key={road.id}
+      card={cardOf(road)}
+      level={level}
+      personPlace={province}
+      personPlaceLabel={placeName(place)}
+      jobLine={jobLine(road)}
+      opening={opening}
+      onLookInside={() => void open(road)}
+    />
+  );
   const list = (roads: readonly Road[]) => (
     <ul aria-label={pickWords.listLabel} className="grid gap-4 md:grid-cols-2">
-      {roads.map((road) => (
-        <FutureCardItem
-          key={road.id}
-          card={cardOf(road)}
-          personPlace={province}
-          personPlaceLabel={placeName(place)}
-          jobLine={jobLine(road)}
-          opening={opening}
-          onLookInside={() => void open(road)}
-        />
-      ))}
+      {roads.map((road) => card(road))}
     </ul>
   );
   const groupHeading = (text: string) => <h2 className="font-serif text-title font-bold tracking-tight text-paper">{text}</h2>;
+
+  /**
+   * The futures not written for the picked job. In Alberta one list under the case's own heading; outside Alberta
+   * (task 28d) the federal steps first, under *Written for all of Canada*, then *Written for Alberta*, folded to one
+   * button so the person's own place comes first (one **Look inside** and the button, where there were two). Opened,
+   * the Alberta cards show as before, each with *Written for Alberta. You said …*. Nothing is ranked: each group
+   * keeps the order the futures were written in.
+   */
+  const others = (roads: readonly Road[], heading: string | null) =>
+    outsideAlberta ? (
+      <>
+        <div className="space-y-3">
+          <h2 id={canadaId} className="font-mono text-small uppercase tracking-[0.14em] text-stone">
+            {pickWords.canadaHeading}
+          </h2>
+          <ul aria-labelledby={canadaId} className="grid gap-4 md:grid-cols-2">
+            {roads.map((road) => card(road, 3))}
+          </ul>
+        </div>
+        {groups.elsewhere.length > 0 ? (
+          <div className="space-y-3">
+            <h2 id={albertaId} className="font-mono text-small uppercase tracking-[0.14em] text-stone">
+              {pickWords.albertaHeading}
+            </h2>
+            <Pill variant="ghost" aria-expanded={albertaShown} aria-controls={albertaListId} onClick={() => setAlbertaShown((shown) => !shown)}>
+              {albertaShown ? pickWords.hideAlberta : pickWords.showAlberta(groups.elsewhere.length)}
+            </Pill>
+            <ul id={albertaListId} hidden={!albertaShown} aria-labelledby={albertaId} className="grid gap-4 md:grid-cols-2">
+              {groups.elsewhere.map((road) => card(road, 3))}
+            </ul>
+          </div>
+        ) : null}
+      </>
+    ) : (
+      <>
+        {heading ? groupHeading(heading) : null}
+        {list(roads)}
+      </>
+    );
 
   const nameIt =
     host === "futures" ? (
@@ -424,34 +476,28 @@ function RoadStep({
           <>
             {groupHeading(pickWords.writtenForJobHeading)}
             {list(match.forJob)}
-            {match.others.length > 0 ? (
-              <>
-                {groupHeading(pickWords.othersHeading)}
-                {list(match.others)}
-              </>
-            ) : null}
+            {match.others.length > 0 || (outsideAlberta && groups.elsewhere.length > 0) ? others(match.others, pickWords.othersHeading) : null}
           </>
         ) : match.case === "no-road" && state.job ? (
           <>
             <section aria-labelledby={noRoadId} className="space-y-3 rounded-lg border border-rule bg-ink2 p-5">
               <h2 id={noRoadId} className="font-serif text-title font-bold tracking-tight text-paper">
-                {pickWords.noRoad.heading(state.job.label, state.job.code)}
+                {pickWords.noRoad.heading(state.job.label, state.job.code, outsideAlberta ? placeName(place) : undefined)}
               </h2>
-              <p className="text-body text-paper-dim">{pickWords.noRoad.body(state.job.label)}</p>
+              <p className="text-body text-paper-dim">{pickWords.noRoad.body(state.job.label, outsideAlberta)}</p>
               {/* About this job's rows go here, open by default (K6 A); task 25h's pull request fills this slot. */}
               <p data-about-this-job-slot={state.job.code} className="rounded-lg border border-dashed border-amber/60 px-4 py-3 text-body text-amber">
                 {pickWords.noRoad.aboutJobPending(state.job.label)}
               </p>
               <p className="text-body text-stone">{pickWords.noRoad.nothingSaved}</p>
             </section>
-            {groupHeading(pickWords.othersHeading)}
-            {list(match.others)}
+            {others(match.others, pickWords.othersHeading)}
           </>
         ) : (
           <>
-            <p className="text-body text-stone">{pickWords.skipped}</p>
+            <p className="text-body text-stone">{pickWords.skipped(outsideAlberta)}</p>
             <p className="text-body text-stone">{pickWords.skippedNoneFor}</p>
-            {list(match.others)}
+            {others(match.others, null)}
           </>
         )}
       </div>

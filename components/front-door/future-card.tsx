@@ -3,7 +3,7 @@
 import { useId } from "react";
 
 import { Pill } from "@/components/ui";
-import { sourcesLine, type FutureCard } from "@/lib/front-door/futures";
+import { sourcesLine, writtenForAllOfCanada, type FutureCard } from "@/lib/front-door/futures";
 import { pickWords as words } from "@/lib/front-door/words";
 import { PROVINCE_LABELS, type Province } from "@/lib/scenarios/types";
 
@@ -12,9 +12,14 @@ import { PROVINCE_LABELS, type Province } from "@/lib/scenarios/types";
  * it is written for, counts only, and how its sources were checked, with its **Look inside**. Since 2026-10-22
  * (step 3 of the three steps) a card can carry one more line about the person's pick of job (`jobLine`: *Written
  * for Cabinetmakers (72311).*, or *Not written for Barbers. …*), read as part of the card's description.
+ *
+ * The federal road's card (task 28d, docs/ui-spec/futures/04-outside-alberta.md) also says the person's own
+ * province's steps aren't on it. Its heading is a level 2 heading in one list, or level 3 under a group's own
+ * heading (outside Alberta: *Written for all of Canada*, *Written for Alberta*).
  */
 export function FutureCardItem({
   card,
+  level = 2,
   personPlace,
   personPlaceLabel,
   jobLine,
@@ -22,6 +27,8 @@ export function FutureCardItem({
   onLookInside,
 }: {
   card: FutureCard;
+  /** 2 in a list with no heading of its own; 3 under a group's heading. */
+  level?: 2 | 3;
   personPlace: Province | null;
   personPlaceLabel: string;
   jobLine?: string | null;
@@ -30,20 +37,23 @@ export function FutureCardItem({
 }) {
   const headingId = useId();
   const jobLineId = useId();
+  const Heading = level === 2 ? "h2" : "h3";
   // A road's places are read as plain strings: "CA" means it is written for all of Canada.
   const places: readonly string[] = card.writtenFor;
   const forYourPlace = places.includes("CA") || (personPlace !== null && places.includes(personPlace));
   const writtenFor = card.writtenFor.map((p) => (p === "CA" ? words.allOfCanada : (PROVINCE_LABELS[p as Province] ?? p))).join(", ");
   return (
     <li aria-labelledby={headingId} className="flex flex-col gap-3 rounded-lg border border-rule bg-ink2 p-5">
-      <h2 id={headingId} className="font-serif text-title font-bold leading-snug tracking-tight text-paper">
+      <Heading id={headingId} className="font-serif text-title font-bold leading-snug tracking-tight text-paper">
         {card.label}
-      </h2>
+      </Heading>
       <p className="font-mono text-small uppercase tracking-[0.14em] text-stone">{words.kind[card.kind]}</p>
       <p className="text-body text-stone">
         {words.writtenFor(writtenFor)}
         {forYourPlace ? null : <> {words.youSaid(personPlaceLabel)}</>}
       </p>
+      {/* The federal road's own line: the person's province's steps aren't on it (task 28d). */}
+      {writtenForAllOfCanada({ provinces: card.writtenFor }) ? <p className="text-body text-stone">{words.federalOnly(personPlaceLabel)}</p> : null}
       {jobLine ? (
         <p id={jobLineId} className="text-body text-paper-dim">
           {jobLine}

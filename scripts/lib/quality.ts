@@ -84,7 +84,10 @@ export interface HarnessNumbers {
   knownGaps: { planned: number; bug: number };
   /** Ideas drawn on a road that isn't theirs with nothing saying so, each way in; `ideas` counts each idea once. */
   silentFallbacks: { typed: number; picked: number; ideas: number; list: string[] };
-  /** Ideas with a road of their own written for them: a road other than the general road (road 1 in the corpus). */
+  /**
+   * Ideas with a road of their own written for them: a road other than the general road (in the corpus road 1 and,
+   * since task 28d, the federal steps for a business outside Alberta).
+   */
   ownRoad: number;
   /** Ideas whose written road is the general road itself (road 0 in the corpus). */
   generalWritten: number;
@@ -367,7 +370,7 @@ export function qualityMarkdown(q: QualityNumbers): string {
       ...(h.silentFallbacks.list.length > 0 ? [""] : []),
       "### Where each idea ends",
       "",
-      `The general road (“${generalRoadV2026.label}”, road 0) is the one any idea lands on when no other road is drawn, so landing there is never counted as reaching a road of its own. ${h.ownRoad} of ${h.ideas} ideas have a road of their own written for them (road 1); ${h.generalWritten} more have the general road itself written for them. The picked way counts only ideas that name a province or territory; on it the person clicks a card, so "another road" there is the road they picked.`,
+      `The general road (“${generalRoadV2026.label}”, road 0) is the one any idea lands on when no other road is drawn, so landing there is never counted as reaching a road of its own. ${h.ownRoad} of ${h.ideas} ideas have a road of their own written for them (road 1, or the federal steps for a business outside Alberta); ${h.generalWritten} more have the general road itself written for them. The picked way counts only ideas that name a province or territory; on it the person clicks a card, so "another road" there is the road they picked.`,
       "",
     );
     const pickedTotal = ROAD_ENDS.reduce((n, end) => n + h.picked[end], 0);

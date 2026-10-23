@@ -162,18 +162,34 @@ export const pickWords = {
   othersHeading: "The other futures, in the order they were written",
   writtenForJob: (job: string, noc: string) => `Written for ${job} (${noc}).`,
   noRoad: {
-    heading: (job: string, code: string) => `No road is written for ${job} (${code}) yet.`,
+    /**
+     * Outside Alberta the folded Alberta futures can include one written for this job (its card says so), so the
+     * heading names the person's own place: no road is written for the job *there* yet.
+     */
+    heading: (job: string, code: string, outsidePlace?: string) =>
+      outsidePlace ? `No road is written for ${job} (${code}) in ${outsidePlace} yet.` : `No road is written for ${job} (${code}) yet.`,
     // The design's body opens with "Here is what the government publishes about this job.": that sentence is
     // drawn with About this job's rows (task 25h), so it is never on screen without them.
     governmentLead: "Here is what the government publishes about this job.",
-    body: (job: string) =>
-      `If you plan to run a business of your own, the general road below covers the tax and structure steps for any business in Alberta. It isn't written for ${job}, and opening it doesn't say you're starting a business.`,
+    /**
+     * What the list right below holds. In Alberta the general road; outside Alberta (task 28d) the federal steps,
+     * written for all of Canada, with Alberta's futures folded under them, so the line names those instead. It says
+     * only the federal steps aren't written for the job: a folded Alberta future may be, and its card says so.
+     */
+    body: (job: string, outsideAlberta: boolean) =>
+      outsideAlberta
+        ? `If you plan to run a business of your own, the federal steps below are written for all of Canada, not for ${job}. The futures written for Alberta are folded below them, and each card says what it's written for. Opening a future doesn't say you're starting a business.`
+        : `If you plan to run a business of your own, the general road below covers the tax and structure steps for any business in Alberta. It isn't written for ${job}, and opening it doesn't say you're starting a business.`,
     nothingSaved: "Nothing is saved until you open a future. If you leave from here, DotAmi keeps nothing about this job.",
     // The place About this job's rows go, until task 25h fills it: said, never left blank and never filled in.
     aboutJobPending: (job: string) => `About this job isn't built yet. What the government publishes about ${job} shows here once it is.`,
   },
   road0NotForJob: (job: string) => `Not written for ${job}. It covers the tax and structure steps for any business in Alberta.`,
-  skipped: "You didn't pick a job, so no future is matched to one. These are all the futures written so far, in the order they were written.",
+  /** After Skip. Outside Alberta the futures are grouped (the federal steps, then Alberta's folded), so the line says so. */
+  skipped: (outsideAlberta: boolean) =>
+    outsideAlberta
+      ? "You didn't pick a job, so no future is matched to one. These are all the futures written so far: the federal steps, written for all of Canada, then the futures written for Alberta, folded below. Each group is in the order it was written."
+      : "You didn't pick a job, so no future is matched to one. These are all the futures written so far, in the order they were written.",
   skippedNoneFor: "None is written yet for closing, pausing or selling a business, or for catching up on filings. Not here yet? keeps your note.",
 } as const;
 

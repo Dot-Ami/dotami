@@ -19,7 +19,9 @@ export async function skipTheJob(page: Page) {
   const skip = page.getByRole("button", { name: jobStepWords.skip, exact: true });
   await waitForReact(skip);
   await skip.click();
-  await expect(page.getByText(pickWords.skipped, { exact: true })).toBeVisible();
+  // The skipped line is the place's own (outside Alberta it names the federal steps and the fold).
+  const line = page.getByText(pickWords.skipped(false), { exact: true }).or(page.getByText(pickWords.skipped(true), { exact: true }));
+  await expect(line).toBeVisible();
 }
 
 /**
@@ -69,9 +71,19 @@ export async function answerWhereInAlberta(page: Page, area: string, region: str
 /**
  * The intake's last screen on the typed way: **Next: the work closest to yours →**, Skip, then **Look inside**
  * the road named (the general road by default), which saves the idea and opens the map, as **Open my map** did.
+ * Outside Alberta the roads written for Alberta are folded behind one button (task 28d): the person opens it first.
  */
 export async function openTheMapFromTheIntake(page: Page, roadLabel: string = generalRoadV2026.label) {
   await page.getByRole("button", { name: intakeStepsWords.next, exact: true }).click();
   await skipTheJob(page);
-  await page.getByRole("button", { name: pickWords.lookInsideName(roadLabel), exact: true }).click();
+  await lookInsideRoad(page, roadLabel);
+}
+
+/** Step 3's **Look inside** for the road named, opening the folded Alberta futures first when it is behind them. */
+export async function lookInsideRoad(page: Page, roadLabel: string) {
+  const lookInside = page.getByRole("button", { name: pickWords.lookInsideName(roadLabel), exact: true });
+  const fold = page.getByRole("button", { name: /^Show the \d+ futures? written for Alberta$/ });
+  await expect(lookInside.or(fold).first()).toBeVisible();
+  if (!(await lookInside.isVisible())) await fold.click();
+  await lookInside.click();
 }
