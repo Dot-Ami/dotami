@@ -107,7 +107,7 @@ test("Change on the place row edits this idea: one idea, Ontario, the Alberta ro
   await expect(panel.getByText("3 sources for other provinces aren't shown.")).toBeAttached();
   await expect(panel).not.toContainText("WCB-Alberta");
   expect(await panel.locator(ALBERTA_LINKS).count()).toBe(0);
-  await panel.getByRole("button", { name: "Close", exact: true }).first().click();
+  await panel.getByRole("button", { name: "Close node detail panel" }).click();
   // About this job, read again after the save, shows no Alberta area.
   await lookCloser(page, "About this job", goalBar(page));
   await expect(aboutJob(page)).toBeVisible();
