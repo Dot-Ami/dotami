@@ -244,16 +244,19 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   wait on a pick at “Stay employed or open your own shop”, 2 official fees among them ($150)*, so $1,070 + $150
   is Compare's $1,220 (the Blue Seal fee and the $0 business number, on the steps after the fork).
 - **The vehicle loan-interest and lease caps are the amounts in force** (the maintainer's reading list, item
-  `writeoff-vehicle/interest-and-lease-caps`). The vehicle write-off card showed $250 and $600, the Income Tax
-  Act's own figures, which stand "or such other amount as may be prescribed". It now shows the amounts Income Tax
-  Regulations s.7307 prescribe: $350 for a car acquired after 2023 ($300 for one acquired after 2000 and before
+  `writeoff-vehicle/interest-and-lease-caps`). The vehicle write-off's catalog entry said $250 and $600, the Income
+  Tax Act's own figures, which stand "or such other amount as may be prescribed" (in its eligibility text, which
+  no screen draws today: the card's panel shows its tax line and sources). It now says the amounts Income
+  Tax Regulations s.7307 prescribe: $350 for a car acquired after 2023 ($300 for one acquired after 2000 and before
   2024), and $1,100 plus sales tax for a lease entered into after 2024, with s.7307 as a new source whose words a
-  tool found on the consolidated Regulations' page on 2026-10-23 (not read by a person yet).
+  tool found on the consolidated Regulations' page on 2026-10-23 (not read by a person yet), listed with its
+  words in the card's panel.
 - **The Canada Small Business Financing Program says what ISED's page says** (items `grant-csbfp/equipment-limit`
   and `grant-csbfp/365-days`). "Up to $500K specifically for equipment" became ISED's own words, quoted: up to
   $1,000,000 in term loans for any one borrower, of which no more than $500,000 for leasehold improvements and
   equipment together; security is taken on the assets financed. The line that equipment bought "within the past
-  365 days" can be rolled in is gone: none of ISED's program pages holds it. ISED's loans page is a new source,
+  365 days" can be rolled in is gone, from the entry and from the card's tax line on screen ("the 365-day
+  retroactive window means buying now does not forfeit the option"): none of ISED's program pages holds it. ISED's loans page is a new source,
   checked by a tool on 2026-10-23 (not read by a person yet).
 - **About this job says "as published" beside two wage levels that are the same** (gap 15). Ontario bakers'
   *low $17.60 · median $17.60* looked like a mistake; the line now ends *· low and median the same, as published*.
