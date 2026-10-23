@@ -203,9 +203,10 @@ test("in Alberta: the job, then the area, then the region (never worked out from
   await expect(lookup).toHaveCount(0);
   await region.selectOption("dont-know");
   await expect(lookup).toHaveAttribute("target", "_blank");
-  // About this job has no Change yet, and step 2's lines about it are held for their own change, so step 2
-  // promises nothing about it, with or without "I don't know".
-  await expect(page.getByText(/About this job/)).toHaveCount(0);
+  // Step 2's two lines about About this job, back word for word since About this job reads the region and draws
+  // its Change (task 28h).
+  await expect(page.getByText(whereStepWords.region.dontKnowNote, { exact: true })).toBeVisible();
+  await expect(page.getByText(whereStepWords.kept, { exact: true })).toBeVisible();
   await region.selectOption("4860");
   await expect(lookup).toHaveCount(0);
   // Back goes back one part and keeps the answer given; Next keeps the region given too.
@@ -278,7 +279,7 @@ test("About this job, opened from Look closer, reads the area and region given i
   expect(await readAboutJob(page, "three steps, Calgary", "72311")).toEqual([]);
 });
 
-test("a job with no written road: the step says so, holds About this job's place, lists the general road, and saves nothing until a future is opened", async ({ page }) => {
+test("a job with no written road: the step says so, shows About this job in place, lists the general road, and saves nothing until a future is opened", async ({ page }) => {
   await toPickAFuture(page);
   const before = await ventureCount(page);
   await pickTheJob(page, BARBERS);
@@ -289,8 +290,17 @@ test("a job with no written road: the step says so, holds About this job's place
   await expect(noRoad).toBeVisible();
   await expect(noRoad).toContainText(pickWords.noRoad.body(BARBERS.label, false));
   await expect(noRoad).toContainText(pickWords.noRoad.nothingSaved);
-  // About this job's rows come with their own pull request (task 25h): the place is marked, never filled silently.
-  await expect(noRoad.locator(`[data-about-this-job-slot="${BARBERS.code}"]`)).toHaveText(pickWords.noRoad.aboutJobPending(BARBERS.label));
+  // About this job's rows in place (task 28c), opened by the design's lead sentence: the panel's own rows, for the
+  // answers on screen (no region picked: Alberta's own row, said so), with no Close.
+  const slot = noRoad.locator(`[data-about-this-job-slot="${BARBERS.code}"]`);
+  await expect(slot.getByText(pickWords.noRoad.governmentLead, { exact: true })).toBeVisible();
+  await expect(slot.getByRole("heading", { level: 3, name: aboutJobWords.rules.heading })).toBeVisible();
+  await expect(slot.locator('[data-about-row="wages"]')).toContainText(aboutJobWords.wages.notPicked);
+  await expect(slot.locator('[data-about-row="counts"]')).toContainText(aboutJobWords.counts.areaNotPicked);
+  await expect(slot.getByRole("button", { name: aboutJobWords.close })).toHaveCount(0);
+  await expect(slot.getByText(/isn't built yet/)).toHaveCount(0);
+  expect(await readAboutJob(page, "three steps, no road, Barbers", "63210", slot)).toEqual([]);
+  await shotsAtEveryWidth(page, "futures-road-about-job");
   // No road listed as written for Barbers; the general road says it isn't.
   await expect(page.getByRole("heading", { level: 2, name: pickWords.writtenForJobHeading })).toHaveCount(0);
   await expect(page.getByRole("button", { name: pickWords.lookInsideName(generalRoadV2026.label), exact: true })).toHaveAccessibleDescription(
@@ -307,13 +317,99 @@ test("a job with no written road: the step says so, holds About this job's place
   expect(kept.future).toMatchObject({ roadId: generalRoadV2026.id, roadChosen: true, job: { code: BARBERS.code }, area: null, region: null });
 });
 
+test("in place for a job with no road: the region picked on step 2 chooses the wage row, and the goal bar says the road opened isn't written for the job", async ({ page }) => {
+  await toPickAFuture(page);
+  await pickTheJob(page, BARBERS);
+  await answerWhereInAlberta(page, "cma-825", "4830");
+  const slot = page.locator(`[data-about-this-job-slot="${BARBERS.code}"]`);
+  const wages = slot.locator('[data-about-row="wages"]');
+  await expect(wages).toContainText(aboutJobWords.wages.yourRegion("Calgary"));
+  await expect(slot.locator('[data-about-row="counts"]')).toContainText(aboutJobWords.counts.yourArea("Calgary"));
+  // Back to the region, "I don't know": the rows follow the answer on screen, Alberta's own row, said so.
+  await page.getByRole("button", { name: pickWords.backToRegion, exact: true }).click();
+  await page.getByRole("combobox", { name: whereStepWords.region.label }).selectOption("dont-know");
+  // Step 2's line, back word for word now that it's true (task 28h).
+  await expect(page.getByText(whereStepWords.region.dontKnowNote, { exact: true })).toBeVisible();
+  await expect(page.getByText(whereStepWords.kept, { exact: true })).toBeVisible();
+  await page.getByRole("button", { name: whereStepWords.region.next, exact: true }).click();
+  await expect(wages).toContainText(aboutJobWords.wages.dontKnow);
+  expect(await readAboutJob(page, "three steps, no road, Barbers, I don't know", "63210", slot)).toEqual([]);
+
+  await page.getByRole("button", { name: pickWords.lookInsideName(generalRoadV2026.label), exact: true }).click();
+  await expect(page).toHaveURL(/\/cockpit\?venture=/);
+  const goal = page.getByRole("region", { name: "Your goal and gauges" });
+  await expect(goal).toContainText(`Future: ${generalRoadV2026.label} · not written for your pick of job, ${BARBERS.label}`);
+  await shotsAtEveryWidth(page, "cockpit-goal-not-for-job");
+});
+
+test("About this job's Change keeps a region for the idea, in Alberta: the row follows, and it stays after a reload", async ({ page }) => {
+  await toPickAFuture(page);
+  await pickTheJob(page, CABINETMAKERS);
+  // An area, and the region left on Choose one: nothing is worked out from the area.
+  await answerWhereInAlberta(page, "cma-835", "");
+  await page.getByRole("button", { name: pickWords.lookInsideName(roadApprenticeToOwnShopAB.label), exact: true }).click();
+  await expect(page).toHaveURL(/\/cockpit\?venture=/);
+  const ventureId = new URL(page.url()).searchParams.get("venture")!;
+  const goalBar = page.getByRole("region", { name: "Your goal and gauges" });
+  // After Look inside, the road opened is the one written for the pick of job, and the goal bar says so.
+  await expect(goalBar).toContainText(`Future: ${roadApprenticeToOwnShopAB.label} · written for your pick of job`);
+  await lookCloser(page, ABOUT_JOB, goalBar);
+  const panel = aboutJobPanel(page);
+  const wages = panel.locator('[data-about-row="wages"]');
+  await expect(wages).toContainText(aboutJobWords.wages.notPicked);
+  await expect(wages.locator("[data-wage-row]")).toHaveAttribute("data-wage-row", "ER48");
+
+  await panel.getByRole("button", { name: aboutJobWords.wages.changeName, exact: true }).click();
+  const region = panel.getByRole("combobox", { name: whereStepWords.region.label });
+  await expect(region).toBeFocused();
+  // Opens on Choose one: nothing picked for the person, not even from their area (Edmonton).
+  await expect(region).toHaveValue("");
+  await expect(panel.getByRole("button", { name: aboutJobWords.wages.changeKeep, exact: true })).toBeDisabled();
+  await shotsAtEveryWidth(page, "cockpit-about-job-change");
+  await region.selectOption("4860");
+  await panel.getByRole("button", { name: aboutJobWords.wages.changeKeep, exact: true }).click();
+  // Edmonton's own row (ER4860, 18 / 23 / 29 in the 2025 file), said to be their pick.
+  await expect(wages.locator("[data-wage-row]")).toHaveAttribute("data-wage-row", "ER4860");
+  await expect(wages).toContainText(aboutJobWords.wages.yourRegion("Edmonton"));
+  await expect(wages).toContainText(aboutJobWords.wages.hourly("$18.00", "$23.00", "$29.00"));
+  expect(await readAboutJob(page, "cockpit, after Change, Edmonton", "72311")).toEqual([]);
+  const kept = (await (await page.request.get(`/api/futures/${ventureId}`)).json()) as { future: { region: { value: string } | null; area: { value: string } | null } };
+  expect(kept.future.region?.value).toBe("4860");
+  expect(kept.future.area?.value).toBe("cma-835");
+
+  // Cancel leaves it as it was.
+  await panel.getByRole("button", { name: aboutJobWords.wages.changeName, exact: true }).click();
+  await expect(panel.getByRole("combobox", { name: whereStepWords.region.label })).toHaveValue("4860");
+  await panel.getByRole("button", { name: aboutJobWords.wages.changeCancel, exact: true }).click();
+  await expect(wages.locator("[data-wage-row]")).toHaveAttribute("data-wage-row", "ER4860");
+
+  await page.reload();
+  await lookCloser(page, ABOUT_JOB, page.getByRole("region", { name: "Your goal and gauges" }));
+  await expect(aboutJobPanel(page).locator('[data-about-row="wages"]')).toContainText(aboutJobWords.wages.yourRegion("Edmonton"));
+});
+
+test("outside Alberta: Not here yet? keeps the note and opens the federal steps (call 33)", async ({ page }) => {
+  await toPickAFuture(page, "CA-ON");
+  await skipTheJob(page);
+  await expect(page.getByText(pickWords.notHere.federal.hint, { exact: true })).toBeVisible();
+  await page.getByRole("textbox", { name: pickWords.notHere.label }).fill("Invented — a note kept from Ontario");
+  await page.getByRole("button", { name: pickWords.notHere.federal.button, exact: true }).click();
+  await expect(page).toHaveURL(/\/cockpit\?venture=/);
+  const ventureId = new URL(page.url()).searchParams.get("venture")!;
+  const kept = (await (await page.request.get(`/api/futures/${ventureId}`)).json()) as { future: { roadId: string; roadChosen: boolean } };
+  expect(kept.future).toMatchObject({ roadId: roadFederalStepsCA.id, roadChosen: true });
+  await expect(page.getByRole("region", { name: "Your goal and gauges" })).toContainText(
+    `Future: ${roadFederalStepsCA.label} · Ontario's own steps aren't written yet`,
+  );
+});
+
 test("outside Alberta: step 2 asks nothing and says why; Skip lists every future with no job matched", async ({ page }) => {
   await toPickAFuture(page, "CA-ON");
   await pickTheJob(page, CABINETMAKERS);
   await expect(page.getByRole("heading", { level: 1, name: whereStepWords.outside.heading("Ontario") })).toBeVisible();
   await expect(page.getByText(whereStepWords.outside.notAsked("Ontario"), { exact: true })).toBeVisible();
-  // No promise about About this job's wage row: step 2's lines about it are held for their own change.
-  await expect(page.getByText(/About this job/)).toHaveCount(0);
+  // About this job's wage row outside Alberta, said word for word (held until task 28h made it true).
+  await expect(page.getByText(whereStepWords.outside.wageRow("Ontario"), { exact: true })).toBeVisible();
   await shotsAtEveryWidth(page, "futures-outside");
   await expect(page.getByRole("combobox")).toHaveCount(0);
   await expect(page.getByText(whereStepWords.kept, { exact: true })).toHaveCount(0);

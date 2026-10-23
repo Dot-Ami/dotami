@@ -515,18 +515,27 @@ placed in phase 3.
     `POST /api/jobs/search`), and the cockpit's **Pick a job** runs the same search. Step 3 lists the road
     written for the picked job first (spec 03, case A); a job with no road gets the honest line, a marked place
     for *About this job* (25h fills it) and the general road, and saves nothing until a future is opened
-  - [ ] 28c: the road written for the picked job comes first; otherwise "No road is written for this job
+  - [x] 28c: the road written for the picked job comes first; otherwise "No road is written for this job
     yet", with *About this job* and the general road; no silent fallback for a new idea; a job with no written
     road saves nothing until a future is opened (the maintainer's call of 2026-10-21; a kind of saved idea with
-    no road may come in phase 3 with the career road)
+    no road may come in phase 3 with the career road). Closed 2026-10-22 by 28h: *About this job*'s rows in place
+    on step 3's no-road block (Pick a future and the intake), and the goal bar's line saying why the road drawn is
+    the one drawn (written for your pick of job, not written for it, or saved before a road was picked)
+  - [x] 28h: the batch 4 follow-up (2026-10-22): 28c above; *About this job*'s **Change** for the region (Alberta
+    only, kept with its day) and step 2's three held lines about it drawn again; and the maintainer's calls on
+    the batch 4 page: a silent fallback can't be listed as a known gap (32), *Not here yet?* opens the federal
+    steps outside Alberta (33), the federal card counts only the pages that person is shown (34), an Alberta
+    future picked from outside Alberta is an honest end while both labels say so (35), the typed way's last
+    step at 5 text sizes (37) and, with the job skipped, its own row at 6 controls on a tablet (38). Known gaps
+    22 → 0 ideas (`tests/fixtures/ideas/known-gaps.ts`). Changing your place after a pick (the maintainer's note on calls 33 and 35: someone whose dream is to open shop somewhere else, or who picked by mistake) is its own story, not this one
   - [x] 28d: outside Alberta, the federal steps that apply everywhere, plus "Written for Alberta" with the
     person's own province named; Alberta-only steps and pages left out (full B.C. and Ontario roads come
     later). Built 2026-10-21 (`lib/engines/roads/v2026/federal-steps-ca.ts`, 13 steps; *Pick a future* lists it
     first outside Alberta, Alberta's two folded; the goal bar, the plan and each step's sources name the
     province; Export lists the same sources, 2026-10-22; *Your destination* counts it as written for all of
-    Canada, apart from the place's own, 2026-10-22). Open, both asked in the pull request: whether *Not
-    here yet?* should open the federal steps outside Alberta, and whether an Alberta future picked from outside
-    Alberta, after its card said so, is an honest end
+    Canada, apart from the place's own, 2026-10-22). Both questions asked in its pull request were answered by
+    the maintainer on 2026-10-22 and built in 28h: *Not here yet?* opens the federal steps outside Alberta, and
+    an Alberta future picked from outside Alberta is an honest end while its card and the cockpit both say so
   - [ ] 28e (phase 3): one career road for any job
   - The test gate learns these endings ([14j]'s harness, reopened for phase 2):
     - [x] 29h: the harness picks a job as a recorded click and accepts the honest "not written yet" ending;
@@ -546,7 +555,7 @@ placed in phase 3.
       without a budget, and clicks a folded Alberta card every week with fixed idea 361. The written way:
       `ADDED_SCREENS`, `ADDED_SCREEN_PART_OF` and `FIRST_MEASURED` in `e2e/budgets.ts`, used for About this job,
       the three steps' parts (2a, 2b and step 3's cases A, B and C on both pages; the intake's case C counts 6
-      controls on a tablet, over the intake's 5, and waits on the maintainer), Pick a future outside Alberta and
+      controls on a tablet, accepted as its own limit by the maintainer's call 38 of 2026-10-22), Pick a future outside Alberta and
       the cockpit on the federal road)
     - [x] 29k: quoted official requirement text, shown word for word as a labelled quote, passes the
       no-times check by one rule (the maintainer's ruling), while DotAmi's own words still fail on any time

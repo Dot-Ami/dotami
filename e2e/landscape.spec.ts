@@ -196,7 +196,8 @@ test("the apprentice road: open the panel, add, edit and remove businesses you'r
 test("today's Alberta road: the panel opens from the goal bar too", async ({ page }) => {
   const ventureId = await saveIdea(page, `Invented — landscape road 0 ${Date.now()}`);
   await page.goto(`/cockpit?venture=${ventureId}`);
-  await expect(goalBar(page)).toContainText(`Future: ${generalRoadV2026.label}`);
+  // Saved with no road picked: drawn on the general road, said why (task 28c).
+  await expect(goalBar(page)).toContainText(`Map drawn: ${generalRoadV2026.label} · the general road`);
   // From the goal bar's Look closer menu (since 2026-10-17).
   await lookCloser(page, REGION, goalBar(page));
   await expect(panel(page)).toBeVisible();

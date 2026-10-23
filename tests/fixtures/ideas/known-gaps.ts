@@ -45,34 +45,31 @@ export const SHOWN_WORDS_GAPS: readonly ShownWordsGap[] = [
   // Phase 2", so neither says a span of time any more.
 ];
 
+/**
+ * Invariants that may never be listed as a known gap (the maintainer's call 32 of 2026-10-22, "Yes, fail the tests
+ * above 0"): an idea drawn on a road that isn't the one written for it, or the one the person picked, with nothing
+ * on screen saying so. Its count is 0 since the three steps (PR #202), and the harness fails on any such failure
+ * because none can be listed (tests/idea-harness.spec.ts).
+ */
+export const NEVER_A_KNOWN_GAP: readonly InvariantId[] = ["ends:no-silent-fallback"];
+
 export const KNOWN_GAPS: readonly KnownGap[] = [
   // Taken out on 2026-10-22 when the three steps and the federal road were joined (PR #202 with PR #200): the
   // typed way's "road written for the place" entry (190 ideas: every typed idea drawn on road 0, wherever it is).
   // The typed way now ends on Pick a future's three steps, which outside Alberta list the federal steps first, and
   // its invented person opens the road written for the idea or, with none, the card the page shows first for the
   // place (tests/helpers/idea-pipeline.ts `stepsChoice`), so each typed idea is drawn on a road written for its place.
-  {
-    invariant: "ends:road-written-for-place",
-    subject: "picked",
-    kind: "planned",
-    story: "The maintainer's call, asked in 28d's pull request: should “Not here yet?” open the federal steps outside Alberta?",
-    // 190 ideas until 28d (2026-10-21), now 13 here and 9 in the next entry. Of the 168 off: 156 because the
-    // corpus now says the federal road is written for them (tests/fixtures/ideas/v1.ts, "road-federal"), so the
-    // invented person clicks its card; 12 because, with no road written for them, they click the card the
-    // page shows first. The product change lists the federal card; the count moved with the clicks. Joined with
-    // the three steps (PR #202, 2026-10-22) the same 13: an idea whose person leaves at "No road is written for
-    // <job> yet" saves nothing and draws no road, but none of these leaves there.
-    why: "Outside Alberta, Pick a future lists the federal steps first (28d), and an idea picked there is drawn on a road written for its place. “Not here yet?” still keeps the note and opens road 0, the general road, anywhere, as its own spec says (docs/ui-spec/futures/03-road-match.md: “as today”): these are the ideas with no road written for them whose invented person keeps a note. The goal bar says “Map drawn: … written for AB; this idea is in …”, so it isn't silent; whether the note should open the federal steps there instead is the maintainer's call.",
-    ideas: [188, 194, 197, 200, 203, 206, 212, 251, 287, 290, 308, 362, 365],
-  },
-  {
-    invariant: "ends:road-written-for-place",
-    subject: "picked",
-    kind: "planned",
-    story: "The maintainer's call, asked in 28d's pull request: is an Alberta future picked from outside Alberta, after its card said so, an honest end?",
-    why: "Outside Alberta, Pick a future still offers Alberta's two futures behind one button (“Show the 2 futures written for Alberta”), each card saying “Written for Alberta. You said …”. A person who opens them and picks one is drawn on a road written for AB: the goal bar says “Map drawn: … written for AB; this idea is in …”, so it isn't silent, but every step is Alberta's. These are the ideas with no road written for them whose invented person opens the fold and clicks road 0's or road 1's card (tests/helpers/idea-pipeline.ts `pickedChoice`), so the path stays run; whether this end counts as honest, or the page should say more, is the maintainer's call.",
-    ideas: [22, 199, 202, 208, 211, 289, 301, 361, 364],
-  },
+  // Taken out on 2026-10-22 with the maintainer's calls on the batch 4 page (task 28h), both "ends:road-written-for-
+  // place · picked" entries (22 ideas outside Alberta, 13 + 9):
+  // - Call 33, "Open the federal steps": "Not here yet?" now keeps the note and opens the federal steps outside
+  //   Alberta (`notHereRoad` in lib/front-door/futures.ts), a road written for all of Canada, so the 13 ideas whose
+  //   invented person keeps a note (188, 194, 197, 200, 203, 206, 212, 251, 287, 290, 308, 362, 365) are drawn on a
+  //   road written for their place.
+  // - Call 35, "Yes, it's honest: they were told and chose it": an Alberta future picked from outside Alberta is an
+  //   honest end while both labels stay on screen, the card's ("Written for Alberta. You said …", and its line about
+  //   the job picked) and the cockpit's ("Map drawn: … written for AB; this idea is in …"). The harness checks both
+  //   for each of the 9 ideas (22, 199, 202, 208, 211, 289, 301, 361, 364) and fails the end again without either
+  //   (tests/helpers/idea-invariants.ts `honestAlbertaPick`, planted in tests/idea-harness-plants.spec.ts).
   // Taken out on 2026-10-22 with the three steps (tasks 28b, 23g, 29h): the typed way's two silent-fallback
   // entries (25 ideas drawn on road 0 with only "No future picked", and 12 closing, pausing, selling or catch-up
   // ideas the same way). The typed way now ends on Pick a future's three steps, and the road drawn is the one the

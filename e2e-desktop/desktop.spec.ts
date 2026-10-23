@@ -46,6 +46,9 @@ let app: ElectronApplication | null = null;
 // from `npm run desktop:package`) instead of running this checkout with Electron.
 const packagedExe = process.env.DOTAMI_DESKTOP_EXE;
 
+/** An invented launch secret of the real length, set in the shell that starts the app. Not a real one. */
+const SHELL_LAUNCH_SECRET = "from-the-shell-0123456789-abcdefghijklmnopq";
+
 /** Starts the app on a data folder, without waiting for its window. */
 async function startApp(dir = dataDir): Promise<ElectronApplication> {
   // ANTHROPIC_API_KEY is set here on purpose: the app must not pass a key from the shell it was
@@ -64,6 +67,8 @@ async function startApp(dir = dataDir): Promise<ElectronApplication> {
       DOTAMI_E2E_RATE_LIMITS: "opt-in",
       DOTAMI_NO_UPDATE_CHECK: "1",
       DEBUG: "prisma*",
+      // A launch secret from the shell must never be the server's (the 403 test below proves it isn't).
+      DOTAMI_LAUNCH_SECRET: SHELL_LAUNCH_SECRET,
     },
   });
   return app;
@@ -455,11 +460,46 @@ test("the server leaves out what it never loads (sharp with libvips, TypeScript)
 
   // Next's image optimiser is the only code that would load sharp. The desktop build turns it off,
   // so its route answers "not found" before it gets that far. A page of the app answers first, to
-  // show the requests themselves reach the server.
+  // show the requests themselves reach the server. Both are asked from the window, which carries the
+  // launch secret (a request from outside the window is refused before it gets that far; below).
+  const status = (url: string) => page.evaluate(async (u) => (await fetch(u, { cache: "no-store" })).status, url);
+  expect(await status("/settings")).toBe(200);
+  expect(await status(`/_next/image?url=${encodeURIComponent("/settings")}&w=64&q=75`)).toBe(404);
+});
+
+test("only DotAmi's own window is answered: another program on this computer gets a 403, whatever it sends (2026-10-23)", async () => {
+  // The server listens on 127.0.0.1, which every Windows account on the computer shares. Until
+  // 2026-10-23 any program there could read every idea and, writing `Sec-Fetch-Site: same-origin`
+  // itself, confirm figures and change settings. "Another program" here is this test process, as a
+  // program under another account would be: it knows the port but not this launch's secret.
+  const page = await launch();
   const origin = new URL(page.url()).origin;
-  expect((await page.request.get(`${origin}/settings`)).status()).toBe(200);
-  const image = await page.request.get(`${origin}/_next/image?url=${encodeURIComponent("/settings")}&w=64&q=75`);
-  expect(image.status()).toBe(404);
+  const outside = (path: string, init: RequestInit = {}) => fetch(`${origin}${path}`, init);
+  const forged = { "content-type": "application/json", "sec-fetch-site": "same-origin" };
+
+  const ventures = await outside("/api/ventures");
+  expect(ventures.status).toBe(403);
+  expect(await ventures.json()).toEqual({ error: "DotAmi only answers its own window." });
+  expect((await outside("/api/settings?id=figure-reminders", { headers: forged })).status).toBe(403);
+  expect((await outside("/api/settings", { method: "PUT", headers: forged, body: JSON.stringify({ id: "figure-reminders", value: { cadences: ["monthly"] } }) })).status).toBe(
+    403,
+  );
+  expect((await outside("/api/figures/agree", { method: "POST", headers: forged, body: JSON.stringify({ ventureId: "x", figureIds: [] }) })).status).toBe(403);
+  expect((await outside("/settings")).status).toBe(403);
+  // A launch secret set in the shell that started the app is never the one the server takes
+  // (startApp sets one on purpose; desktop/main.mjs serverEnv).
+  expect((await outside("/api/ventures", { headers: { "x-dotami-launch-secret": SHELL_LAUNCH_SECRET } })).status).toBe(403);
+
+  // The window itself is answered, with the setting the forged write didn't change.
+  const fromWindow = await page.evaluate(async () => {
+    const res = await fetch("/api/settings?id=figure-reminders", { cache: "no-store" });
+    return { status: res.status, body: (await res.json()) as { value: { cadences: string[] } } };
+  });
+  expect(fromWindow.status).toBe(200);
+  expect(fromWindow.body.value.cadences).not.toContain("monthly");
+  expect(await page.evaluate(async () => (await fetch("/api/ventures", { cache: "no-store" })).status)).toBe(200);
+  // The secret never reaches the page: nothing the window can read holds it.
+  expect(await page.content()).not.toContain("x-dotami-launch-secret");
 });
 
 test("the rate limits are the real ones, even when the shell sets the browser tests' switch", async () => {

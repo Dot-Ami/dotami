@@ -43,13 +43,18 @@ Last updated: 2026-10-13 (the first written future listed; design: docs/architec
 >   area: not answered* on 2b when 2a was left on *Choose one*; the Statistics Canada link's name saying it opens
 >   outside DotAmi; step 3's kicker *3 of 3 · Pick a future*; and the intake's button, *Next: the work closest to
 >   yours →*.
-> - **A job with no written road (case B):** the honest heading, its lines and *Nothing is saved until you open a
->   future.*, then **a marked place for *About this job*** (`data-about-this-job-slot`, an amber dashed line:
->   *About this job isn't built yet. What the government publishes about <job> shows here once it is.*), which
->   task 25h's pull request fills with the four rows; then the other futures, road 0's card saying it isn't
->   written for the job. The design's opening sentence, *Here is what the government publishes about this
->   job.*, is held in the words file for 25h, so it never shows without the rows.
-> - **The goal bar's lines saying why a road is drawn** (03, *After Look inside*) are task 28c's, not built here.
+> - **A job with no written road (case B):** the honest heading, its lines, then *About this job*'s four rows in
+>   place (`data-about-this-job-slot`), opened by the design's sentence *Here is what the government publishes
+>   about this job.*, then *Nothing is saved until you open a future.*; then the other futures, road 0's card
+>   saying it isn't written for the job. (Until task 28c, 2026-10-22, the batch 4 follow-up, an amber placeholder
+>   held the rows' place; see 03, *As built (28c)*.)
+> - **The goal bar's lines saying why a road is drawn** (03, *After Look inside*), built with task 28c: written for
+>   your pick of job, not written for it, or saved before a road was picked.
+> - **Since the batch 4 follow-up (2026-10-22, the maintainer's calls on the batch 4 page):** *Not here yet?*
+>   opens the federal steps outside Alberta, with its three lines saying so (call 33); each card counts the
+>   sources the person will be shown inside, the federal card's through the step panel's own filter (call 34); and
+>   step 2's three lines about *About this job* are drawn again, now that it reads the region and has its
+>   **Change** (02, top).
 > - **Kept:** the job, the area and the region, each with its day, by the save that creates the idea at
 >   **Look inside** (02, *What is kept*); `Venture.landscapeArea`, `landscapeAreaSetAt`, `economicRegion`,
 >   `economicRegionSetAt` are new (migration `20261022000000_where_you_are`, four added columns). A save that

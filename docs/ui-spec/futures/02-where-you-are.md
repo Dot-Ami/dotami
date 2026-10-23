@@ -28,6 +28,14 @@ Mockup: `C:\dotami-wt\designs-phase2\02-where-you-are.html`.
 > Alberta-wide figure"); and the outside-Alberta `wageRow` line isn't drawn. They come back, word for word, in the
 > change that wires the kept area and region into About this job and draws its **Change**.
 > `tests/three-steps.spec.ts` holds step 2 to naming About this job nowhere until then.
+>
+> **Brought back 2026-10-22 (task 28h, the batch 4 follow-up).** About this job reads the kept region and area
+> (`GET /api/futures/<id>`), and in Alberta draws its **Change**, which keeps the region with its day
+> (`POST /api/futures/<id>/region`, `lib/futures/region.ts`). So the three held lines are true and are drawn again,
+> word for word as the words block below has them: the `kept` line ends "You can change your region later from
+> About this job in the cockpit."; `dontKnowNote` says "With “I don't know”, About this job shows the Alberta-wide
+> figure, and a link to Statistics Canada's list of the towns in each region shows here."; and outside Alberta the
+> `wageRow` line is drawn under the why-line. `tests/three-steps.spec.ts` now holds step 2 to all three.
 
 ## When it is asked
 
@@ -187,19 +195,27 @@ says only what is true: the region can be changed later.
 
 - *Your area*: *"The area you picked (one of Alberta's four census metropolitan areas, somewhere else in Alberta,
   or I don't know) and the day. Kept with the idea on this computer; shown on Your plan and in About this job;
-  deleted with it. Nothing else reads it in this version."*
-- *Your economic region*: *"The economic region you picked, or I don't know, and the day. Kept with the idea on
-  this computer; shown on Your plan; deleted with it. About this job reads it to choose which published wage
-  row to show."*
+  deleted with it. A backup you save (File → Back up…) holds the whole data file, so it holds this too. Nothing
+  else reads it in this version."*
+- *Your economic region*: *"The economic region you picked, or I don't know, and the day, from Pick a future's
+  step 2 or from About this job's Change. Kept with the idea on this computer; shown on Your plan and in About
+  this job; deleted with it. A backup you save (File → Back up…) holds the whole data file, so it holds this
+  too. About this job reads it to choose which published wage row to show."*
 
 As built (2026-10-22, the PR #202 review): each is a line of its own under *Your ideas* on *What DotAmi knows
 about you* (`lines` on the `Venture` entry), and `tests/privacy-inventory.spec.ts` reads the two lines above
 back and fails unless the inventory has them word for word, with the columns each covers. The words differ
-from the design in two places: no "exported", because DotAmi has no way to export an idea yet (nothing in
-the code does); and both say they're shown on *Your plan*, as built. Since About this job reads the kept
-region and area (2026-10-22, GET /api/futures/<id>), the region's line names it with the design's words, and
-the area's line says it is shown there (*Your area: Calgary (your pick). Nothing reads it yet.*). Step 2's own
-words about About this job stay held (above), with its **Change**.
+from the design in two places: no "exported", and both say they're shown on *Your plan*, as built. Since About
+this job reads the kept region and area (2026-10-22, GET /api/futures/<id>), the region's line names it with the
+design's words, and the area's line says it is shown there (*Your area: Calgary (your pick). Nothing reads it
+yet.*).
+
+Updated 2026-10-22, the batch 4 follow-up (task 28h): the region's line says it can come from About this job's
+**Change** and is shown there, and both lines say where else the answers go. Checked: the cockpit's **Export**
+(`app/api/playbook`, `lib/playbook`) sends the idea's answers to the map and the road's sources, not the job, the
+area or the region, so neither line says "exported"; the desktop app's **Back up…** (`desktop/backup.mjs`) writes
+the whole data file, rebuilt from its live rows, so a backup the person saves holds both, and both lines say so.
+Step 2's three lines about About this job are drawn again (see the note at the top).
 
 **Privacy log, under [Unreleased], in the build's pull request:** *"Asks: which area and which economic region
 you're in, once, right after you pick a job. Keeps: your answers and the day, on this computer only; deleted

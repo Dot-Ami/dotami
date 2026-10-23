@@ -16,10 +16,11 @@ question outside Alberta.)
 Mockup: `C:\dotami-wt\designs-phase2\03-road-match.html` (a job with no road; a smaller frame below shows a job
 with one).
 
-> **Built 2026-10-22, in part (tasks 28b, 29h).** Case A, case C and the step on the intake page as designed.
-> Case B as designed except *About this job*'s rows: a marked place holds them until task 25h's pull request
-> fills it (never a silent fallback). The goal bar's lines (*After Look inside*) are task 28c's. See
-> [_index.md](./_index.md), *As built, 2026-10-22*.
+> **Built 2026-10-22 (tasks 28b, 29h; case B's rows and the goal bar's lines with task 28c, in the batch 4
+> follow-up, 28h).** Case A, case C and the step on the intake page as designed. Case B as designed: the heading,
+> the body, then *About this job*'s rows in place, opened by the lead sentence *Here is what the government
+> publishes about this job.*, then *Nothing is saved until you open a future.* The goal bar's lines (*After Look
+> inside*) as designed. See *As built (28c)* below and [_index.md](./_index.md), *As built, 2026-10-22*.
 
 ## The rule
 
@@ -173,6 +174,32 @@ differently, with nothing taken away from what the person can do:
   second **Look inside** is below the first window. The intake's case C has no row: on a tablet the whole step fits the window, so the
   *Not here yet?* box and the footer's link both count, **6** controls, over the intake's 5 (3 on a phone, 5 on
   a laptop). As this section says, the pull request shows the maintainer that screen instead of raising a row.
+
+### As built (28c, 2026-10-22, the batch 4 follow-up)
+
+- **The rows in place** are the cockpit panel's own (`AboutThisJobRows` in
+  `components/cockpit/about-this-job-panel.tsx`), hosted by `components/front-door/about-job-in-place.tsx` in the
+  slot `data-about-this-job-slot`, built on DotAmi's own server for the answers on screen so far
+  (`POST /api/jobs/about`: the job, the place, and in Alberta the area and region as picked; the same view as
+  `lib/about-job/view.ts` builds for a saved idea; nothing kept; the region never worked out from the area). No
+  *Close*, and no **Change**: the region was answered one part back, and the nav's **← Back to your region** goes
+  there; the rows follow the answer on screen. While the rows are read the slot says *Reading what the government
+  publishes about <job>…*; if they can't be read, *What the government publishes about <job> couldn't be read:
+  DotAmi's own server didn't answer.* (new words, never an empty slot). The lead sentence shows only with the rows.
+- **The goal bar's lines** (`goalRoadLine` in `lib/cockpit/road-line.ts`, shared with *Your plan*): *Future: <road>
+  · written for your pick of job*; *Future: <road> · not written for your pick of job, <job>* (also for a road
+  written for another job than the one picked); *Future: <road>* with no job; and, for an idea kept with no road,
+  *Map drawn: <road> · the general road, because this idea was saved before a road was picked for it*. Outside
+  Alberta the place's own lines stay as spec 04 has them (*… · <province>'s own steps aren't written yet*, and *Map
+  drawn: … written for AB; this idea is in …*), which for an idea kept with no road outside Alberta is the line
+  shown, since it says the place.
+- **On the intake page** step 3's headings (the groups, the no-road heading, *Not here yet?* and each card's name)
+  take the lead size the intake already draws, not the title size, so the step shows the intake's five text sizes
+  (the maintainer's call 37 of 2026-10-22).
+- **Clutter** (`e2e/budgets.ts`): case B with the rows in place stays within `futures-road` and `intake-road` (see
+  the pull request for the counts); `intake-road` and `intake-road-written` lowered from 6 to 5 text sizes (call
+  37); case C on the intake page (`intake-road-skipped`) has its own row, 3, 6 and 5 controls, 6 on a tablet
+  accepted as its own limit (call 38), standing beside Pick a future's same step.
 
 ## How a screen reader hears it
 

@@ -140,16 +140,30 @@ describe("the clutter budgets (e2e/budgets.ts)", () => {
       "intake-region",
       "intake-road-written",
       "intake-road",
+      "intake-road-skipped",
     ]) {
       expect(ADDED_SCREENS as readonly string[], screen).toContain(screen);
     }
-    // The intake's case C counts 6 controls on a tablet, over the intake's 5: it gets no row (a row there would
-    // be busier than its screen) and waits on the maintainer, as spec 03 says for a count over the limit.
-    expect(ADDED_SCREENS as readonly string[]).not.toContain("intake-road-skipped");
     // And the browser gate measures each screen it has a budget for: a row nothing measures would hold nothing.
     const gate = readFileSync(path.join(process.cwd(), "e2e", "clutter-budget.spec.ts"), "utf8");
     const measured = new Set([...gate.matchAll(/measureAtEverySize\(page, testInfo, "([\w-]+)"/g)].map((m) => m[1]));
     expect(SCREENS.filter((s) => !measured.has(s))).toEqual([]);
+  });
+
+  it("hold the maintainer's calls of 2026-10-22 on the typed way's last step (calls 37 and 38)", () => {
+    // Call 37: both versions of the typed way's last step, trimmed to the intake's 5 text sizes, at every width.
+    for (const screen of ["intake-road", "intake-road-written"] as const) {
+      for (const size of sizes) expect(BUDGETS[screen]?.[size]?.textSizes, `${screen} ${size}`).toBe(5);
+    }
+    // Call 38: the job skipped, its own row, 6 controls on a tablet accepted as the step's own limit, standing
+    // beside Pick a future's same step (7 there), with 5 text sizes like the rest of the typed way's last step.
+    expect(ADDED_SCREEN_PART_OF["intake-road-skipped"]).toBe("futures");
+    expect(BUDGETS["intake-road-skipped"]?.tablet?.controls).toBe(6);
+    expect(BASELINE.futures?.tablet?.controls).toBe(7);
+    for (const size of sizes) expect(BUDGETS["intake-road-skipped"]?.[size]?.textSizes, size).toBe(5);
+    // The gate runs it (the PR #202 review left it as test.fixme).
+    const gate = readFileSync(path.join(process.cwd(), "e2e", "clutter-budget.spec.ts"), "utf8");
+    expect(gate).not.toMatch(/test\.fixme\(/);
   });
 
   it("are never above the baseline or a screen's first row, and the smallest text never below it", () => {

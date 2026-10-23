@@ -262,9 +262,20 @@ const HELD_FOR_ROAD: Readonly<Record<string, ScreenId>> = {
  * `held` names the budget the screen is held to, when its state is the one the budget was measured on.
  */
 async function read(s: Sweep, where: string, held: ScreenId | null = null) {
-  const text = await s.page.locator("body").innerText();
-  const ours = dotamiOnly(text, s, await theirStatements(s.page));
+  let text = await s.page.locator("body").innerText();
   const at = `${s.idea.id} › ${where}`;
+  // About this job's rows in place on step 3's no-road block (task 28c) are the panel's own: read on their own,
+  // row by row, through the panel's checks (the government's quoted lines lifted only there, every figure a
+  // published wage on its own row), and taken out of the whole-screen reading, as the panel is in the cockpit.
+  const slot = s.page.locator("[data-about-this-job-slot]");
+  if ((await slot.count()) > 0) {
+    const group = ((await slot.getAttribute("data-about-this-job-slot")) ?? "").slice(0, 5);
+    for (const what of await readAboutJob(s.page, at, group, slot)) s.findings.push({ where: `${at} › about this job in place`, what });
+    const rows = await slot.innerText();
+    if (!text.includes(rows)) s.findings.push({ where: at, what: "about this job in place: its rows couldn't be read apart from the screen" });
+    text = text.split(rows).join("\n");
+  }
+  const ours = dotamiOnly(text, s, await theirStatements(s.page));
   for (const found of findVerdicts(ours)) s.findings.push({ where: at, what: `verdict: ${found}` });
   for (const found of findTimeWords(withoutCitationQuotes(ours))) s.findings.push({ where: at, what: `time: ${found}` });
 
@@ -459,6 +470,8 @@ async function playTheSteps(s: Sweep, way: "typed" | "picked", steps: StepsRun):
   // (task 28d: the federal steps first, Alberta's two folded).
   const outsideAlberta = steps.folded.length > 0;
   const held: ScreenId | null = way === "picked" && outsideAlberta && steps.match === "skipped" ? "futures-outside-alberta" : null;
+  // A job with no written road: About this job's rows in place, once DotAmi's own server has answered (task 28c).
+  if (steps.match === "no-road") await expect(page.getByText(pickWords.noRoad.governmentLead, { exact: true })).toBeVisible();
   await read(s, `${way}: step 3 (${steps.match})`, held);
   // The cards shown, in order, by their Look inside buttons; outside Alberta the Alberta ones are folded until the
   // person opens them.
@@ -485,9 +498,10 @@ async function playTheSteps(s: Sweep, way: "typed" | "picked", steps: StepsRun):
     }
     await page.getByRole("button", { name: pickWords.lookInsideName(road.label), exact: true }).click();
   } else {
-    // "Not here yet?": the note is kept as one of the person's statements, and the general road opens.
+    // "Not here yet?": the note is kept as one of the person's statements, and its road opens: the general road in
+    // Alberta, the federal steps elsewhere in Canada (the maintainer's call 33 of 2026-10-22).
     await page.getByRole("textbox", { name: "Not here yet?" }).fill(idea.words);
-    await button(page, "Keep my note and look inside the general road").click();
+    await button(page, road.id === generalRoadV2026.id ? pickWords.notHere.button : pickWords.notHere.federal.button).click();
   }
   return true;
 }

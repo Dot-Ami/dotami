@@ -13,10 +13,10 @@ import path from "node:path";
 
 import { describe, expect, it } from "vitest";
 
-import { KNOWN_GAPS } from "./fixtures/ideas/known-gaps";
+import { KNOWN_GAPS, NEVER_A_KNOWN_GAP, type KnownGap } from "./fixtures/ideas/known-gaps";
 import { IDEAS_V1 } from "./fixtures/ideas/v1";
 import { coverageReport } from "./helpers/idea-coverage-report";
-import { ideaId, runHarness, silentFallbackProblems, threadCpuMs } from "./helpers/idea-harness-run";
+import { ideaId, listableGaps, runHarness, silentFallbackProblems, threadCpuMs } from "./helpers/idea-harness-run";
 import { gapKey, INVARIANTS, type Failure } from "./helpers/idea-invariants";
 
 /**
@@ -82,6 +82,15 @@ describe("the idea harness", () => {
     expect(keys.filter((key, i) => keys.indexOf(key) !== i)).toEqual([]);
   });
 
+  it("never lists a silent fallback as a known gap, so the harness fails on any one (the maintainer's call 32)", () => {
+    expect(NEVER_A_KNOWN_GAP).toEqual(["ends:no-silent-fallback"]);
+    expect(KNOWN_GAPS.filter((gap) => NEVER_A_KNOWN_GAP.includes(gap.invariant)).map((gap) => gap.invariant)).toEqual([]);
+    // Planted: a list naming a silent fallback has it taken out, so the run counts the failure as unlisted.
+    const planted: KnownGap = { invariant: "ends:no-silent-fallback", subject: "typed", kind: "bug", story: "planted", why: "planted", ideas: [1] };
+    expect(listableGaps([...KNOWN_GAPS, planted])).toEqual([...KNOWN_GAPS]);
+    // The run itself: tests/idea-harness-plants.spec.ts plants a silent fallback and lists it, and the run still fails.
+  });
+
   it(
     "runs every idea through today's pipeline: every failure is a known gap, and every known gap still fails",
     () => {
@@ -98,6 +107,8 @@ describe("the idea harness", () => {
       // A new failure: one the known gaps don't name. Fix it, or (a planned story, or a bug the maintainer
       // is told about) list it in known-gaps.ts with its story.
       expect(unlisted.map((f) => `${gapKey(f)}: ${f.detail}`)).toEqual([]);
+      // Call 32: no idea is drawn on a road not written for it, or not the one the person picked, with nothing saying so.
+      expect(failures.filter((f) => f.invariant === "ends:no-silent-fallback").map((f) => `${gapKey(f)}: ${f.detail}`)).toEqual([]);
       // A gap that passes now: take it off the list, so it can never come back unseen.
       expect(passingNow).toEqual([]);
       // Call 32: a silent fallback fails here even when a known gap lists it (the count must stay 0).

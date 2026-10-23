@@ -1,4 +1,5 @@
 import {
+  citationsForPlace,
   FEDERAL_ROAD_ID,
   generalRoadV2026,
   roadApprenticeToOwnShopAB,
@@ -55,6 +56,16 @@ export function groupedForPlace<R extends { readonly provinces: readonly string[
   return { canada: listed.filter(writtenForAllOfCanada), elsewhere: listed.filter((road) => !writtenForAllOfCanada(road)) };
 }
 
+/**
+ * The road *Not here yet?* opens once the note is kept (docs/ui-spec/futures/03-road-match.md): the general road,
+ * written for Alberta, where the page lists no road written for all of Canada (an Albertan); elsewhere in Canada
+ * the federal steps, written for all of Canada, the road listed first there (the maintainer's call 33 of
+ * 2026-10-22: "It should do this for now").
+ */
+export function notHereRoad<R extends { readonly id: string; readonly provinces: readonly string[] }>(listed: readonly R[], general: R): R {
+  return groupedForPlace(listed).canada[0] ?? general;
+}
+
 /** How many of a road's citations were checked each way (lib/engines/shared/citation-check.ts decides the kind). */
 export interface SourceCounts {
   /** Read by a person, on record. */
@@ -86,11 +97,13 @@ export interface FutureCard {
  * and the sources of its named lines' names, and the skill items it lists (their sources and the source
  * of the way to get each). Counted where they appear, so a page cited twice counts twice.
  */
-function roadCitations(road: Road, skillItems: readonly SkillItem[]): EngineCitation[] {
+function roadCitations(road: Road, skillItems: readonly SkillItem[], place: string | null): EngineCitation[] {
   const listed = new Set(road.steps.flatMap((step) => step.needs));
   return [
     ...road.steps.flatMap((step) => [
-      ...step.citations,
+      // A step's own sources as its panel shows them for the person's place (`citationsForPlace`, the step panel's
+      // filter): on a road written for all of Canada, the federal pages and the place's own; on any other road, all.
+      ...(place === null ? step.citations : citationsForPlace(road, step.citations, place).shown),
       ...step.doneWhen.map((line) => line.citation),
       ...step.costs.flatMap((cost) =>
         cost.kind === "official-fee" ? [cost.citation] : cost.nameSource ? [cost.nameSource] : [],
@@ -114,9 +127,16 @@ function countSources(citations: readonly EngineCitation[]): SourceCounts {
   return counts;
 }
 
+/**
+ * The cards for `roads`. With `place` (the person's province, "ON"), each card counts only the sources that person
+ * will be shown inside (the maintainer's call 34 of 2026-10-22): on the federal road, a step's own sources are the
+ * federal pages and the place's own, as the step panel draws them; on a road written for particular provinces every
+ * source shows, so the count is the same as without a place.
+ */
 export function futureCards(
   roads: readonly Road[],
   skillItems: readonly SkillItem[],
+  place: string | null = null,
 ): FutureCard[] {
   return roads.map((road) => {
     const costs = road.steps.flatMap((step) => step.costs);
@@ -129,7 +149,7 @@ export function futureCards(
       skillsListed: new Set(road.steps.flatMap((step) => step.needs)).size,
       officialFees: costs.filter((cost) => cost.kind === "official-fee").length,
       linesToPrice: costs.filter((cost) => cost.kind === "named").length,
-      sources: countSources(roadCitations(road, skillItems)),
+      sources: countSources(roadCitations(road, skillItems, place)),
     };
   });
 }

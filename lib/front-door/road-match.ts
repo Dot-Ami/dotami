@@ -1,4 +1,5 @@
-import { roadsWrittenForJob, type Road } from "@/lib/engines/roads/v2026";
+import { generalRoadV2026, roadsWrittenForJob, type Road } from "@/lib/engines/roads/v2026";
+import { pickWords } from "@/lib/front-door/words";
 
 /**
  * Step 3 of the three steps, the road match (docs/ui-spec/futures/03-road-match.md): which futures come first
@@ -38,4 +39,25 @@ export function roadMatch<R extends Road>(job: string | null, listed: readonly R
 /** The five-digit groups a road is written for, in the order its catalog lists them; none for a road written for no particular job. */
 export function roadJobGroups(road: Pick<Road, "codes">): readonly string[] {
   return road.codes.occupations === "no-particular-job" ? [] : road.codes.occupations;
+}
+
+/**
+ * A card's line about the person's pick of job on step 3: what the road is written for (*Written for
+ * Cabinetmakers (72311).*, one sentence per group, titles from `jobNames` or the code when a title is missing),
+ * or, when no listed road is written for the job, road 0's *Not written for <job>.* Null after Skip, and for any
+ * other road written for no particular job. Pick a future draws it (components/front-door/job-and-road-steps.tsx)
+ * and the idea harness reads the same line, so the harness can't model a card the screen doesn't draw.
+ */
+export function cardJobLine(
+  road: Pick<Road, "id" | "codes">,
+  job: { label: string } | null,
+  matchCase: RoadMatchCase,
+  jobNames: Readonly<Record<string, readonly { code: string; title: string }[]>>,
+): string | null {
+  if (!job) return null;
+  const groups = roadJobGroups(road);
+  if (groups.length > 0) {
+    return groups.map((code) => pickWords.writtenForJob(jobNames[road.id]?.find((g) => g.code === code)?.title ?? code, code)).join(" ");
+  }
+  return matchCase === "no-road" && road.id === generalRoadV2026.id ? pickWords.road0NotForJob(job.label) : null;
 }

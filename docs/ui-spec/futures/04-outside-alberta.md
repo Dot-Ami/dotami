@@ -198,16 +198,29 @@ Every string in the words block was run through `VERDICT_WORDS`, `findVerdicts` 
   build counted it as written for the place (*1 future listed is written for Yukon.*), which the federal card
   contradicted (*Yukon's own steps aren't written yet*); the second review (2026-10-22) split the count. Alberta
   is unchanged (*2 futures listed are written for Alberta.*): the federal road isn't listed there.
-- **Not here yet?** still keeps the note and opens road 0 anywhere ([03-road-match.md](./03-road-match.md), "as
-  today"). For 13 corpus ideas outside Alberta that is a road not written for their place, said by the goal bar's
-  *Map drawn: … written for AB; this idea is in …*; whether it should open the federal steps there is asked of
-  the maintainer in the pull request (`tests/fixtures/ideas/known-gaps.ts`).
+- **Not here yet?** keeps the note and, outside Alberta, opens the federal steps (the maintainer's call 33 of
+  2026-10-22, "It should do this for now"; `notHereRoad` in `lib/front-door/futures.ts`), with its three lines
+  saying so: *Say what you'd look into, in your own words. It is kept as one of your statements, and the federal
+  steps open.*, the button *Keep my note and look inside the federal steps*, and, if the road can't be opened,
+  *Your note is kept. The federal steps couldn't be opened: no database reachable.* In Alberta it opens road 0, as
+  before. The 13 corpus ideas outside Alberta that keep a note are now drawn on a road written for their place.
 - **An Alberta future picked from outside Alberta**, behind *Show the 2 futures written for Alberta*, still draws
-  an Alberta road, said the same way by the goal bar. The harness's invented person opens the fold and picks one
-  for 9 corpus ideas, listed as their own known gap (is that an honest end? the maintainer's call), and the
-  browser sweep does it every week with a fixed idea (361, fixing bikes in Ottawa, road 1).
+  an Alberta road, said by the goal bar's *Map drawn: … written for AB; this idea is in …*. The maintainer's call
+  35 of 2026-10-22: an honest end, "they were told and chose it", as long as both labels stay on screen. The
+  harness checks both for the 9 corpus ideas whose invented person does this (the card's *Written for Alberta.*
+  and *You said <province>.*, with its line about the job picked, and the cockpit's line;
+  `tests/helpers/idea-invariants.ts` `honestAlbertaPick`), and fails the end again without any one of them: *Written for Alberta.*, *You said <province>.*, the job line,
+  the cockpit's line (each planted in `tests/idea-harness-plants.spec.ts`). The job line is the screen's own
+  (`cardJobLine` in `lib/front-door/road-match.ts`), and `tests/future-card-honest-pick.spec.ts` finds every card label
+  the harness reads in what `components/front-door/future-card.tsx` draws. The browser sweep still does it every week with a fixed idea (361, fixing
+  bikes in Ottawa, road 1).
+- **The card's sources line** counts only the sources the person will be shown inside (the maintainer's call 34 of
+  2026-10-22): each step's own sources through `citationsForPlace`, the step panel's filter (`futureCards` with the
+  person's province). On road 0 and road 1 every source shows, so their cards count as before.
 - **About this job** outside Alberta (its province-wide wage row, Tradesecrets left out) is task 25h's.
 - **Clutter** (`e2e/budgets.ts`, two new rows by the written way, `ADDED_SCREENS`; measured with Chromium on
   Windows, phone, tablet, laptop): *Pick a future* in Ontario (`futures-outside-alberta`) 6, 6, 6 regions and
   5, 7, 5 controls, at or under *Pick a future* in Alberta (6 regions; 5, 7, 6 controls); the cockpit on the
   federal road (`cockpit-federal`) 7, 8, 8 regions and 17, 29, 27 controls, the same as `cockpit-road-0`.
+  Since the batch 4 follow-up (2026-10-22), `futures-outside-alberta`'s budget is what CI's Ubuntu run counts on main
+  (run 39879574374): 4, 6 and 4 controls, one fewer than its first row at every size.

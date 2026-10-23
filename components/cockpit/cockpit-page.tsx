@@ -1023,6 +1023,8 @@ export function CockpitPage({ initialScenario, pinned = false, example }: Cockpi
             onCompare={compareForks.length > 0 ? () => openCompare() : undefined}
             onLandscape={openLandscape}
             onAboutJob={aboutJob ? { open: openAboutJob, jobHasRoad: aboutJobHasRoad } : undefined}
+            // Why this road, once the idea's kept answers are read (task 28c); never on an example.
+            roadWhy={kept && !example ? { roadChosen: kept.future.roadChosen, job: kept.future.job } : undefined}
             folded={folds.goal}
             onToggleFold={() => toggle("goal")}
             person={example?.person ?? null}
@@ -1465,6 +1467,21 @@ export function CockpitPage({ initialScenario, pinned = false, example }: Cockpi
                     // Focus goes back where the panel was opened from, once the panel is gone.
                     requestAnimationFrame(focusLookCloser);
                   }}
+                  // The region's Change (task 28h): kept on the idea, then the panel is read again for the new row.
+                  // Only where the idea is saved; never on an example. The panel draws it in Alberta only.
+                  regionChange={
+                    canSave && !isExample && ventureId
+                      ? {
+                          current: kept?.future.region?.value ?? null,
+                          keep: async (region) => {
+                            const result = await postJson(`/api/futures/${encodeURIComponent(ventureId)}/region`, { region });
+                            if (!result.ok) return false;
+                            await reload();
+                            return true;
+                          },
+                        }
+                      : undefined
+                  }
                 />
               ) : null}
 

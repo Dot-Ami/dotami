@@ -366,7 +366,7 @@ export function qualityMarkdown(q: QualityNumbers): string {
       "",
       `### Silent fallbacks: ${h.silentFallbacks.ideas}`,
       "",
-      `Ideas drawn on a road that isn't theirs with nothing saying so: ${h.silentFallbacks.typed} on the typed way in, ${h.silentFallbacks.picked} on the picked way in. The aim is 0 once phase 2 is done.`,
+      `Ideas drawn on a road that isn't theirs with nothing saying so: ${h.silentFallbacks.typed} on the typed way in, ${h.silentFallbacks.picked} on the picked way in. The tests fail above 0 (the maintainer's call of 2026-10-22).`,
       "",
       ...h.silentFallbacks.list.map((line) => `- ${line}`),
       ...(h.silentFallbacks.list.length > 0 ? [""] : []),

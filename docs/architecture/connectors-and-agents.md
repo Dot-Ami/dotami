@@ -194,6 +194,13 @@ pick. Confirmation is a human click in the cockpit — that is the line between 
 proposed" and "the person said". Resources: the catalogs (read-only) so an agent can cite
 the same entry the card cites.
 
+**No way around it through the plain routes (2026-10-23).** In the desktop app every `/api/...` route,
+page and server action answers only requests that carry the launch secret DotAmi's own window sends
+(`lib/http/launch-secret.ts`). So an agent can't skip the MCP door's rules by calling `/api/...`
+directly: it gets a 403. Whatever the MCP door turns out to be, it has to be its own door with its
+own checks, not a second key to the window's routes. Same honest limit as everywhere: a program
+running as the person's own Windows account can read the secret from DotAmi's memory.
+
 ### D. The cockpit side
 
 A **Facts** section in the node detail and the left rail: proposed facts wait with a

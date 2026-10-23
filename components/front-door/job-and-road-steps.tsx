@@ -11,9 +11,9 @@ import {
   regionNameOnScreen,
 } from "@/lib/engines/research-kit/v2026/economic-regions";
 import { generalRoadV2026, skillItemsV2026, type Road } from "@/lib/engines/roads/v2026";
-import { futureCards, groupedForPlace, type FutureCard } from "@/lib/front-door/futures";
+import { futureCards, groupedForPlace, notHereRoad, type FutureCard } from "@/lib/front-door/futures";
 import { placeName, provinceOfPlace } from "@/lib/front-door/receipts";
-import { roadJobGroups, roadMatch } from "@/lib/front-door/road-match";
+import { cardJobLine, roadMatch } from "@/lib/front-door/road-match";
 import { answersOf, next, pickedJob, skipped, type StepsState } from "@/lib/front-door/three-steps";
 import { areaLabel } from "@/lib/front-door/where";
 import { jobStepWords, pickWords, whereStepWords } from "@/lib/front-door/words";
@@ -23,6 +23,7 @@ import { ALBERTA_AREAS } from "@/lib/places/alberta-areas";
 import type { PlaceCode } from "@/lib/places/codes";
 import { PROVINCE_LABELS } from "@/lib/scenarios/types";
 
+import { AboutJobInPlace } from "./about-job-in-place";
 import { FutureCardItem } from "./future-card";
 import { JobSearchBox } from "./job-search";
 
@@ -43,9 +44,13 @@ export type RoadJobNames = Record<string, readonly { code: string; title: string
  * saved before **Look inside**, nothing is kept in the window's storage, and a job with no written road saves
  * nothing unless a future is opened (the maintainer's call 3 of 2026-10-21).
  *
- * A job with no written road (case B): the honest line, then the place *About this job*'s rows go, marked as not
- * built yet. Task 25h's pull request fills that slot (`data-about-this-job-slot`); nothing is drawn in its place
- * silently, and no road is put there instead.
+ * A job with no written road (case B): the honest line, then *About this job*'s rows in place, opened by the
+ * design's lead sentence (task 28c; components/front-door/about-job-in-place.tsx, in the slot
+ * `data-about-this-job-slot`), read on DotAmi's own server for the answers on screen; nothing is drawn in their
+ * place silently, and no road is put there instead.
+ *
+ * On the intake page step 3's headings use the lead size the intake already draws, not the title size, so the
+ * typed way's last step shows the intake's five text sizes (the maintainer's call 37 of 2026-10-22).
  */
 export function JobAndRoadSteps({
   host,
@@ -130,6 +135,7 @@ export function JobAndRoadSteps({
         <div {...mark("step")} className="max-w-2xl space-y-3">
           <p className="text-lead text-paper-dim">{whereStepWords.outside.notAsked(name)}</p>
           <p className="text-body text-stone">{whereStepWords.outside.why}</p>
+          <p className="text-body text-stone">{whereStepWords.outside.wageRow(name)}</p>
           <div className="flex justify-end pt-2">
             <Pill variant="maple" onClick={() => setState(next(state))}>
               {whereStepWords.outside.next}
@@ -302,7 +308,8 @@ function RoadStep({
   const regions = host === "futures";
   const mark = (name: string) => (regions ? { "data-region": name } : {});
   const province = provinceOfPlace(place);
-  const cards = useMemo(() => futureCards(listed, skillItemsV2026), [listed]);
+  // Each card counts the sources this person will be shown inside (the maintainer's call 34 of 2026-10-22).
+  const cards = useMemo(() => futureCards(listed, skillItemsV2026, province), [listed, province]);
   const cardOf = (road: Road): FutureCard => cards.find((c) => c.roadId === road.id)!;
   // Outside Alberta (task 28d, docs/ui-spec/futures/04-outside-alberta.md) the list holds a road written for all
   // of Canada: it comes first, under *Written for all of Canada*, and the roads written for Alberta are folded
@@ -336,11 +343,16 @@ function RoadStep({
     }
   }
 
-  /** Keeps the note as one of the person's statements, then opens the general road the same way. */
+  // *Not here yet?* opens the general road in Alberta and the federal steps elsewhere in Canada (the maintainer's call
+  // 33 of 2026-10-22), and its words say which.
+  const noteRoad = notHereRoad(listed, generalRoadV2026);
+  const notHere = noteRoad.id === generalRoadV2026.id ? pickWords.notHere : { ...pickWords.notHere, ...pickWords.notHere.federal };
+
+  /** Keeps the note as one of the person's statements, then opens the note's road the same way. */
   async function keepNote() {
     const typed = note.trim();
     if (typed.length === 0 || opening) return;
-    setOpening(generalRoadV2026.id);
+    setOpening(noteRoad.id);
     setError(null);
     try {
       const res = await fetch("/api/person/statements", {
@@ -362,25 +374,20 @@ function RoadStep({
     // The note is kept: empty the box, so pressing again can't keep it twice.
     setNote("");
     setOpening(null);
-    await open(generalRoadV2026, pickWords.notHere.keptNotOpened);
+    await open(noteRoad, notHere.keptNotOpened);
   }
 
   /** A card's line about the person's pick of job: what each road is written for, or that road 0 isn't. */
-  const jobLine = (road: Road): string | null => {
-    if (!state.job) return null;
-    const groups = roadJobGroups(road);
-    if (groups.length > 0) {
-      const named = groups.map((code) => roadJobs[road.id]?.find((g) => g.code === code)?.title ?? code);
-      return groups.map((code, i) => pickWords.writtenForJob(named[i]!, code)).join(" ");
-    }
-    return match.case === "no-road" && road.id === generalRoadV2026.id ? pickWords.road0NotForJob(state.job.label) : null;
-  };
+  const jobLine = (road: Road): string | null => cardJobLine(road, state.job, match.case, roadJobs);
 
+  // On the intake page the headings take the lead size the intake already has (call 37); on Pick a future, the title size.
+  const titleSize = host === "intake" ? "text-lead" : "text-title";
   const card = (road: Road, level: 2 | 3 = 2) => (
     <FutureCardItem
       key={road.id}
       card={cardOf(road)}
       level={level}
+      headingSize={titleSize}
       personPlace={province}
       personPlaceLabel={placeName(place)}
       jobLine={jobLine(road)}
@@ -393,7 +400,7 @@ function RoadStep({
       {roads.map((road) => card(road))}
     </ul>
   );
-  const groupHeading = (text: string) => <h2 className="font-serif text-title font-bold tracking-tight text-paper">{text}</h2>;
+  const groupHeading = (text: string) => <h2 className={`font-serif ${titleSize} font-bold tracking-tight text-paper`}>{text}</h2>;
 
   /**
    * The futures not written for the picked job. In Alberta one list under the case's own heading; outside Alberta
@@ -481,14 +488,12 @@ function RoadStep({
         ) : match.case === "no-road" && state.job ? (
           <>
             <section aria-labelledby={noRoadId} className="space-y-3 rounded-lg border border-rule bg-ink2 p-5">
-              <h2 id={noRoadId} className="font-serif text-title font-bold tracking-tight text-paper">
+              <h2 id={noRoadId} className={`font-serif ${titleSize} font-bold tracking-tight text-paper`}>
                 {pickWords.noRoad.heading(state.job.label, state.job.code, outsideAlberta ? placeName(place) : undefined)}
               </h2>
               <p className="text-body text-paper-dim">{pickWords.noRoad.body(state.job.label, outsideAlberta)}</p>
-              {/* About this job's rows go here, open by default (K6 A); task 25h's pull request fills this slot. */}
-              <p data-about-this-job-slot={state.job.code} className="rounded-lg border border-dashed border-amber/60 px-4 py-3 text-body text-amber">
-                {pickWords.noRoad.aboutJobPending(state.job.label)}
-              </p>
+              {/* About this job's rows in place, open by default (K6 A; task 28c), for the answers on screen so far. */}
+              <AboutJobInPlace job={state.job} province={province} area={answers.area} region={answers.region} />
               <p className="text-body text-stone">{pickWords.noRoad.nothingSaved}</p>
             </section>
             {others(match.others, pickWords.othersHeading)}
@@ -505,10 +510,10 @@ function RoadStep({
       {match.case === "no-road" ? nameIt : null}
 
       <section {...mark("not-here")} aria-labelledby={noteId} className="space-y-3 rounded-lg border border-rule bg-ink2 p-5">
-        <h2 id={noteId} className="font-serif text-title font-bold tracking-tight text-paper">
-          {pickWords.notHere.label}
+        <h2 id={noteId} className={`font-serif ${titleSize} font-bold tracking-tight text-paper`}>
+          {notHere.label}
         </h2>
-        <p className="text-body text-stone">{pickWords.notHere.hint}</p>
+        <p className="text-body text-stone">{notHere.hint}</p>
         <textarea
           aria-labelledby={noteId}
           value={note}
@@ -519,7 +524,7 @@ function RoadStep({
         />
         <div className="flex justify-end">
           <Pill variant="ghost" onClick={() => void keepNote()} disabled={opening !== null || note.trim().length === 0}>
-            {pickWords.notHere.button}
+            {notHere.button}
           </Pill>
         </div>
       </section>

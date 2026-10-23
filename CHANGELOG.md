@@ -10,6 +10,26 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Security
+- **DotAmi's server now answers only DotAmi's own window, not another Windows account on the same
+  computer** (found 2026-10-23 by a research critic and checked against the code). Where the gap was: in the
+  desktop app, on the person's computer, only while DotAmi was open. The server listens on `127.0.0.1`,
+  and every Windows account on a computer shares that address, so a program running under another
+  standard account on a shared PC (a family member's, a guest's) could call `http://127.0.0.1:<port>/api/...`
+  and read the person's ideas, figures and expense records, and, by writing `Sec-Fetch-Site: same-origin`
+  itself, confirm figures and change settings, with no login. Windows' folder permissions and the encrypted
+  data file kept that account out of the files themselves. Nothing was sent anywhere, and there is no sign
+  it was ever used. Now each launch makes a fresh random 32-byte secret; DotAmi's window sends it with every
+  request, added by the desktop app below the page so no page script sees it, and every page, server action
+  and API route refuses a request without it (403). It is never written to a file or the log. Nothing
+  changes on the screen. **What it doesn't stop:** a program running as the person's own Windows account,
+  which can read DotAmi's memory and files; the privacy review says so. A copy run from source has no window
+  to send the secret, so it stays open to every program on the computer and says so in the terminal each
+  time it starts (`lib/http/launch-secret.ts`, `middleware.ts`, `desktop/main.mjs`, `scripts/next.mjs`;
+  [figures-privacy-review.md](docs/architecture/figures-privacy-review.md), [desktop-app.md](docs/architecture/desktop-app.md), part 5, The server).
+  Tests: `e2e/launch-secret.spec.ts` (on the old code the plain call got 200 and the ideas, and the forged
+  agree confirmed the figure), `tests/launch-secret.spec.ts`, and a desktop test in `e2e-desktop/desktop.spec.ts`.
+
 ### Added
 - **About this job** ([14i], task 25h; [docs/ui-spec/cockpit/about-this-job.md](docs/ui-spec/cockpit/about-this-job.md)).
   Once you've picked the job closest to your work, the goal bar's *Look closer* menu has *About this job*, which
@@ -254,6 +274,22 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   written for the job listed after another on step 3 was counted among the ideas but on neither way in.
 
 ### Changed
+- **About this job in place for a job with no road, your region's Change, and the batch 4 calls** (tasks 28c and
+  28h, the maintainer's calls of 2026-10-22). On Pick a future and at the end of the typed way, a job with no road
+  written for it now shows *About this job*'s four rows right inside step 3, opened by "Here is what the government
+  publishes about this job.", for the answers on screen (nothing kept until you open a future; read on DotAmi's own
+  server). After *Look inside*, the goal bar says why this road: "written for your pick of job", "not written for
+  your pick of job, <job>", or, for an idea kept with no road, "the general road, because this idea was saved before
+  a road was picked for it". In Alberta, *About this job* in the cockpit has *Change your region*: the same eight
+  regions and *I don't know*, kept with the day, and the wage row follows. Step 2's three lines about *About this
+  job* are back now that they're true. Outside Alberta, *Not here yet?* keeps your note and opens the federal steps;
+  the federal card counts only the sources you'll be shown inside; an Alberta future picked from outside Alberta
+  counts as an honest end while its card and the cockpit both say so (the card's *Written for Alberta.*, *You said
+  <province>.* and, with a pick of job, its job line, each with a test that fails when it is dropped, read from
+  what the card actually draws). The typed way's last step shows 5 text sizes
+  (its headings take a size the page already has), and with the job skipped it has its own clutter limit (6
+  controls on a tablet). The idea harness can no longer list a silent fallback as a known gap, and its known gaps
+  went from 22 ideas to 0.
 - **No span of time on the front door or Your destination** (the maintainer's pick of 2026-10-20, "Reword
   both"). The first door said "Say where you want to be in a few years, in your own words, …" and now says
   "Say where you want to be, in your own words, …"; Your destination's first question said "In a few years,

@@ -67,8 +67,11 @@ test("the cockpit: gauges, overlays, a step's status, your own skill, your savin
   const ventureId = await saveIdea(page, "Invented — cockpit test");
   await page.goto(`/cockpit?venture=${ventureId}`);
 
-  // The goal bar: the future by name and four gauges, counts only.
-  await expect(goalBar(page).getByText("Future: Starting any business in Alberta (tax and structure)")).toBeVisible();
+  // The goal bar: the road by name and four gauges, counts only. This idea is saved with no road picked, so the
+  // line says it is drawn on the general road and why (task 28c).
+  await expect(
+    goalBar(page).getByText("Map drawn: Starting any business in Alberta (tax and structure) · the general road, because this idea was saved before a road was picked for it"),
+  ).toBeVisible();
   await expect(gauge(page, "Steps")).toContainText(`0 of ${road0Steps} marked done`);
   // Road 0's one legal requirement (the GST/HST registration, from the compliance catalog), not marked yet.
   await expect(gauge(page, "Skills")).toContainText("1 not marked, out of 1 listed");
