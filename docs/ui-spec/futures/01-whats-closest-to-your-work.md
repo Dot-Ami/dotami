@@ -29,6 +29,21 @@ then phone width).
 > Try a word for the work itself, or skip this question.*, with *Not searched: …* above it as designed, and
 > without the English-only line (nothing was looked for, so there is no miss to explain). The no-match line now
 > only ever names words that were searched. The lines live in `lib/front-door/job-search-lines.ts`.
+>
+> **Whole words first, as built 2026-10-23 (the maintainer's call a-call-11; research lane "search gap",
+> option b).** Rules 5, 6 and 7 below are amended so: inside each group about the government's titles, the jobs
+> whose title holds the person's exact words come first, under the part heading *Their titles have your exact
+> word, n*; the jobs that reach the count only through a word that starts like one of theirs come after, under
+> *Their titles have a word that starts like yours, n*. Each part is in the government's code order and lists
+> its first 50. The closest group opens whole, both parts together. In the exact-word part, the title named
+> under a job is the first holding the words word for word (*plumbing* names *plumbing installer*, before
+> *plumber apprentice*). A group with both parts says *Your exact words first, then words that start like
+> yours, each part in the government's code order. Not ranked.* in place of *In the government's code order,
+> not ranked.*, and a part past 50 says *Showing the first 50 of n in this part, …*. The word-list group has no
+> parts. Nothing is scored: the part is a plain fact about the match. On the 220 corpus ideas that name a job:
+> 152 find it in the open group (was 150), 181 anywhere listed (was 172), 121 within the open view's first 10
+> rows (was 112); no idea that was listed drops out (`tests/job-title-search.spec.ts`). The screen's clutter
+> count, taken as the step opens with nothing typed, doesn't change.
 
 ## Where it sits, on both ways in
 
@@ -99,8 +114,11 @@ The page's step region (the same block that holds the cards today, so no region 
    hold one of two words, and whose other word came through the list, sits under *at least one of your
    words*, with the list's chip and line saying where the other word was matched.
 5. Inside a group, jobs are in the government's code order. Nothing is scored. The group is a plain count
-   of the person's own words, said on screen, never DotAmi's view of which job fits.
-6. **Which groups are open.** The first group that holds any job is shown open; each later group is one
+   of the person's own words, said on screen, never DotAmi's view of which job fits. **Amended 2026-10-23
+   (a-call-11, whole words first):** inside each group about the government's titles, two labelled parts,
+   the exact word first, the word start after, code order inside each (see the note at the top).
+6. **Which groups are open.** The first group that holds any job is shown open (since 2026-10-23, whole: both
+   its parts); each later group is one
    button, *Show the n jobs whose example titles have …*, which opens it in place (and **Hide these n jobs**
    folds it again). This is rule H's own view (look further only when the closer group is empty), with the
    rest one click away rather than hidden.
@@ -140,6 +158,11 @@ jobStepWords = {
   groupSome: "Jobs whose example titles have at least one of your words",
   groupList: "Jobs found only through DotAmi's word list, not by a government title",
   groupOrder: "In the government's code order, not ranked.",
+  // Added 2026-10-23 (a-call-11, whole words first)
+  partExact: "Their titles have your exact word",
+  partWordStart: "Their titles have a word that starts like yours",
+  partsOrder: "Your exact words first, then words that start like yours, each part in the government's code order. Not ranked.",
+  cappedPart: "Showing the first <shown> of <total> in this part, in code order. Add a word to narrow it.",
   showGroup: "Show the <n> jobs whose example titles have all but one of your words",
   showGroupSome: "Show the <n> jobs whose example titles have at least one of your words",
   showGroupList: "Show the <n> jobs found only through DotAmi's word list",
@@ -189,7 +212,7 @@ meaning, and it passes the check.
 | The cards show as the page opens | Step 1 shows as the page opens; the cards are step 3 |
 | *Name it (optional)* above the cards | Unchanged, on step 3 with the cards |
 | No job question | This step |
-| Job search only in the cockpit's skills list, by job name or code (20 of 219 corpus ideas find their job, research 28f) | The same search, over the government's example titles with rule H (167 of 219 uncapped, 153 under the app's 50-result cap, research 28f) and DotAmi's word list on top |
+| Job search only in the cockpit's skills list, by job name or code (20 of 219 corpus ideas find their job, research 28f) | The same search, over the government's example titles with rule H (167 of 219 uncapped, 153 under the app's 50-result cap, research 28f) and DotAmi's word list on top. As built on the 220-idea corpus: 150 in the open group under the cap (153 counted past it), 172 listed; with whole words first (2026-10-23), 152 and 181 |
 
 ## Regions and controls (the clutter limit, `e2e/budgets.ts`)
 

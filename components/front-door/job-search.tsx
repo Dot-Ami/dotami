@@ -6,9 +6,11 @@ import type { JobSearch, JobSearchHit } from "@/lib/engines/oasis/v2026/title-se
 import { OASIS_ATTRIBUTION, OASIS_LICENCE_URL } from "@/lib/engines/oasis/v2026/licence";
 import {
   groupHeading,
+  groupOrderLine,
   leftOutLine,
   matchedLine,
   onlyLeftOutWords,
+  partHeading,
   searchBoxStatusLine,
   showGroupName,
   showsEnglishOnly,
@@ -201,13 +203,33 @@ function Groups({
             >
               {words.groupCount(heading, group.total)}
             </h3>
-            <p className="text-body text-stone">{words.groupOrder}</p>
-            <ul className="mt-1.5 space-y-1.5">
-              {group.jobs.map((hit) => (
-                <JobButton key={hit.code} hit={hit} disabled={disabled} compact={compact} onPick={onPick} />
-              ))}
-            </ul>
-            {group.total > group.jobs.length ? <p className="mt-1.5 text-body text-stone">{words.capped(group.jobs.length, group.total)}</p> : null}
+            <p className="text-body text-stone">{groupOrderLine(group)}</p>
+            {group.parts.length === 0 ? (
+              <>
+                <ul className="mt-1.5 space-y-1.5">
+                  {group.jobs.map((hit) => (
+                    <JobButton key={hit.code} hit={hit} disabled={disabled} compact={compact} onPick={onPick} />
+                  ))}
+                </ul>
+                {group.total > group.jobs.length ? <p className="mt-1.5 text-body text-stone">{words.capped(group.jobs.length, group.total)}</p> : null}
+              </>
+            ) : (
+              // Whole words first (a-call-11): each part under its own heading, the whole group open together.
+              group.parts.map((part) => {
+                const hits = group.jobs.filter((hit) => hit.part === part.kind);
+                return (
+                  <div key={part.kind} className="mt-2">
+                    <h4 className="text-body font-semibold text-paper-dim">{words.groupCount(partHeading(part.kind), part.total)}</h4>
+                    <ul className="mt-1.5 space-y-1.5">
+                      {hits.map((hit) => (
+                        <JobButton key={hit.code} hit={hit} disabled={disabled} compact={compact} onPick={onPick} />
+                      ))}
+                    </ul>
+                    {part.total > hits.length ? <p className="mt-1.5 text-body text-stone">{words.cappedPart(hits.length, part.total)}</p> : null}
+                  </div>
+                );
+              })
+            )}
             {group.open ? null : (
               <button type="button" onClick={() => toggle(group.kind, false)} className="mt-1.5 border-b border-rule-soft text-body text-stone hover:text-paper">
                 {words.hideGroup(group.total)}
