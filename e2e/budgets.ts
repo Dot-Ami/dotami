@@ -298,6 +298,9 @@ export const FIRST_MEASURED: Partial<Record<AddedScreenId, Partial<Record<WidthI
  * - Pick a future outside Alberta (`futures-outside-alberta`): lowered to what CI's Ubuntu run counts on main
  *   (run 39879574374, f6e9a81): 4, 6 and 4 controls, one fewer than its first row at every size (the row was
  *   Windows' count before the steps were joined with the federal card).
+ * - Step 3 for a job with no written road, with About this job's rows in place (task 28c): the rows push the cards'
+ *   Look inside below a tablet's first window, so \`futures-road\` 6 to 3 and \`intake-road\` 5 to 2 controls there,
+ *   as CI's Ubuntu run counts them (run 39896985007); phone and laptop already at those counts.
  */
 export const BUDGETS: ClutterTable = {
   "front-door": { phone: m(4, 7, 6, 9.5), tablet: m(4, 11, 6, 9.5), laptop: m(4, 11, 6, 9.5) },
@@ -316,13 +319,13 @@ export const BUDGETS: ClutterTable = {
   "futures-region": { phone: m(4, 5, 5, 10.5), tablet: m(4, 5, 5, 10.5), laptop: m(4, 5, 5, 10.5) },
   "futures-outside": { phone: m(4, 4, 5, 10.5), tablet: m(4, 4, 5, 10.5), laptop: m(4, 4, 5, 10.5) },
   "futures-road-written": { phone: m(6, 5, 6, 10.5), tablet: m(6, 5, 6, 10.5), laptop: m(6, 5, 6, 10.5) },
-  "futures-road": { phone: m(6, 3, 6, 10.5), tablet: m(6, 6, 6, 10.5), laptop: m(6, 3, 6, 10.5) },
+  "futures-road": { phone: m(6, 3, 6, 10.5), tablet: m(6, 3, 6, 10.5), laptop: m(6, 3, 6, 10.5) },
   "futures-road-skipped": { phone: m(6, 4, 6, 10.5), tablet: m(6, 7, 6, 10.5), laptop: m(6, 6, 6, 10.5) },
   "intake-steps": { phone: m(3, 5, 5, 10.5), tablet: m(3, 5, 5, 10.5), laptop: m(3, 5, 5, 10.5) },
   "intake-area": { phone: m(3, 5, 5, 10.5), tablet: m(3, 5, 5, 10.5), laptop: m(3, 5, 5, 10.5) },
   "intake-region": { phone: m(3, 5, 5, 10.5), tablet: m(3, 5, 5, 10.5), laptop: m(3, 5, 5, 10.5) },
   "intake-road-written": { phone: m(3, 3, 5, 10.5), tablet: m(3, 4, 5, 10.5), laptop: m(3, 3, 5, 10.5) },
-  "intake-road": { phone: m(3, 2, 5, 10.5), tablet: m(3, 5, 5, 10.5), laptop: m(3, 2, 5, 10.5) },
+  "intake-road": { phone: m(3, 2, 5, 10.5), tablet: m(3, 2, 5, 10.5), laptop: m(3, 2, 5, 10.5) },
   "futures-outside-alberta": { phone: m(6, 4, 6, 10.5), tablet: m(6, 6, 6, 10.5), laptop: m(6, 4, 6, 10.5) },
   "cockpit-federal": { phone: m(7, 17, 4, 9.5), tablet: m(8, 29, 5, 9.5), laptop: m(8, 27, 5, 9.5) },
   "intake-road-skipped": { phone: m(3, 3, 5, 10.5), tablet: m(3, 6, 5, 10.5), laptop: m(3, 5, 5, 10.5) },
