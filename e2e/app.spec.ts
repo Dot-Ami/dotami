@@ -22,6 +22,7 @@ import { files as freshbooksFiles } from "../tests/fixtures/packages/freshbooks"
 import { files as sage50Files } from "../tests/fixtures/packages/sage-50-canadian";
 import { files as waveFiles } from "../tests/fixtures/packages/wave";
 import { files as xeroFiles } from "../tests/fixtures/packages/xero";
+import { launchSecretHeaders } from "./launch-secret";
 
 import { startAsAReturnVisit } from "./cockpit-calm";
 import { openTheMapFromTheIntake } from "./three-steps";
@@ -175,7 +176,8 @@ test("the sentence typed on the front door is kept with the idea, word for word 
   await expect(page).toHaveURL(/\/cockpit/);
 
   // A new window with nothing in its tab storage: what shows comes from the data file.
-  const context = await browser.newContext({ baseURL: new URL(page.url()).origin });
+  // A context made by hand doesn't take the config's headers: it is given the launch secret itself.
+  const context = await browser.newContext({ baseURL: new URL(page.url()).origin, extraHTTPHeaders: launchSecretHeaders() });
   const fresh = await context.newPage();
   await fresh.goto("/ventures");
   const card = fresh.getByRole("listitem").filter({ has: fresh.getByRole("heading", { name: "Invented — first words test", exact: true, level: 2 }) });
@@ -3091,9 +3093,11 @@ test("answers only on this computer's own address (DNS rebinding guard)", async 
   expect(await rawGet(baseURL!, "/", { Host: `evil.example:${port}` })).toBe(421);
   expect(await rawGet(baseURL!, "/ventures", { Host: `evil.example:${port}`, "next-router-prefetch": "1" })).toBe(421);
   expect(await rawGet(baseURL!, "/api/ventures", { Host: `evil.example:${port}`, purpose: "prefetch" })).toBe(421);
-  // This computer's own names still work.
-  expect(await rawGet(baseURL!, "/api/ventures", { Host: `127.0.0.1:${port}` })).toBe(200);
-  expect(await rawGet(baseURL!, "/api/ventures", { Host: `localhost:${port}` })).toBe(200);
+  // The window's launch secret doesn't get a rebound page past it: the address is checked first.
+  expect(await rawGet(baseURL!, "/api/ventures", { Host: `evil.example:${port}`, ...launchSecretHeaders() })).toBe(421);
+  // This computer's own names still work, for a caller with the launch secret (e2e/launch-secret.spec.ts).
+  expect(await rawGet(baseURL!, "/api/ventures", { Host: `127.0.0.1:${port}`, ...launchSecretHeaders() })).toBe(200);
+  expect(await rawGet(baseURL!, "/api/ventures", { Host: `localhost:${port}`, ...launchSecretHeaders() })).toBe(200);
 });
 
 test("the disclaimer footer is on the page and inside the window", async ({ page }) => {

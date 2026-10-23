@@ -134,6 +134,14 @@ reaching it through DNS rebinding. If you deliberately open it to your LAN
 `DOTAMI_ALLOWED_HOSTS=192.168.1.5,my-pc`), and know that there is no authentication in front of
 the app.
 
+**A copy run from source answers every program on this computer**, under any Windows account,
+while it runs; the terminal says so each time `npm run dev` or `npm run start` starts it. The desktop
+app doesn't: its server answers only DotAmi's own window, which sends a secret made fresh at each
+launch ([SECURITY.md](SECURITY.md)). Keep your own data in the desktop app. Setting
+`DOTAMI_LAUNCH_SECRET` (32 characters or more) turns the same guard on for a source copy; then only
+requests carrying it as the `x-dotami-launch-secret` header are answered, which is how the browser
+tests run.
+
 Upgrading from a PostgreSQL install (before 2026-09-28): see the CHANGELOG entry for that
 date before you pull — a fresh SQLite file starts empty.
 

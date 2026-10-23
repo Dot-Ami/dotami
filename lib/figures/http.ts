@@ -4,6 +4,7 @@ import { readJsonWithLimit, rejectedResponse, RequestRejectedError } from "@/lib
 import { checkRateLimit, clientKeyFromRequest, rateLimitResponse, type RateLimitOptions } from "@/lib/api/rate-limit";
 
 import { logRouteError } from "@/lib/api/log-error";
+import { launchGuardFromEnv, refuseWithoutLaunchSecret } from "@/lib/http/launch-secret";
 
 import { AccountInputError, AccountNotFoundError, BankRecordsOffError } from "./source-accounts";
 import { FigureInputError, VentureNotFoundError } from "./store";
@@ -32,16 +33,21 @@ export function bankSourcesFailure(route: string, error: unknown): Response {
 /**
  * Returns a 403 unless this request comes from DotAmi's own page, else null.
  *
- * Browsers stamp every request with `Sec-Fetch-Site`, and the app's own page is "same-origin".
- * A script, an importer, the Lens or an outside agent calling the API with fetch/curl from a
- * program sends no such header, so it is refused. Honest limit: a program running on the same
- * computer can simply write that header itself. The privacy review
- * (docs/architecture/figures-privacy-review.md, "Another program on this computer") says such a
- * program already has the person's own trust — it can read the database file. What this does
- * stop is DotAmi's own agent paths confirming figures for the person, and anything that isn't
- * the app's page. `message` is what a refused caller is told; the settings routes pass their own.
+ * Two checks. First the launch secret (lib/http/launch-secret.ts), which middleware.ts already
+ * demands of every request; checked here again so these routes stay closed even if the middleware's
+ * matcher ever changed. In the desktop app only DotAmi's window carries it, so another program on
+ * the computer (another Windows account's included) is refused, whatever headers it writes.
+ *
+ * Then `Sec-Fetch-Site`: browsers stamp every request with it, and the app's own page is
+ * "same-origin". DotAmi's own agent paths (an importer, the Lens) calling the API send no such
+ * header, so they can't confirm figures for the person. Honest limit: a program running as the
+ * SAME Windows user can read the secret from the app's memory and write both headers; the privacy
+ * review (docs/architecture/figures-privacy-review.md, "A program running as the person") says so.
+ * `message` is what a refused caller is told; the settings routes pass their own.
  */
 export function refuseUnlessFromAppPage(request: Request, message: string = AGREE_ONLY_MESSAGE): Response | null {
+  const noSecret = refuseWithoutLaunchSecret(request, launchGuardFromEnv(process.env));
+  if (noSecret) return noSecret;
   if (request.headers.get("sec-fetch-site")?.trim().toLowerCase() === "same-origin") return null;
   return NextResponse.json({ error: message }, { status: 403 });
 }

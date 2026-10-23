@@ -10,6 +10,26 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Security
+- **DotAmi's server now answers only DotAmi's own window, not another Windows account on the same
+  computer** (found 2026-10-23 by a research critic and checked against the code). Where the gap was: in the
+  desktop app, on the person's computer, only while DotAmi was open. The server listens on `127.0.0.1`,
+  and every Windows account on a computer shares that address, so a program running under another
+  standard account on a shared PC (a family member's, a guest's) could call `http://127.0.0.1:<port>/api/...`
+  and read the person's ideas, figures and expense records, and, by writing `Sec-Fetch-Site: same-origin`
+  itself, confirm figures and change settings, with no login. Windows' folder permissions and the encrypted
+  data file kept that account out of the files themselves. Nothing was sent anywhere, and there is no sign
+  it was ever used. Now each launch makes a fresh random 32-byte secret; DotAmi's window sends it with every
+  request, added by the desktop app below the page so no page script sees it, and every page, server action
+  and API route refuses a request without it (403). It is never written to a file or the log. Nothing
+  changes on the screen. **What it doesn't stop:** a program running as the person's own Windows account,
+  which can read DotAmi's memory and files; the privacy review says so. A copy run from source has no window
+  to send the secret, so it stays open to every program on the computer and says so in the terminal each
+  time it starts (`lib/http/launch-secret.ts`, `middleware.ts`, `desktop/main.mjs`, `scripts/next.mjs`;
+  [figures-privacy-review.md](docs/architecture/figures-privacy-review.md), [desktop-app.md](docs/architecture/desktop-app.md), part 5, The server).
+  Tests: `e2e/launch-secret.spec.ts` (on the old code the plain call got 200 and the ideas, and the forged
+  agree confirmed the figure), `tests/launch-secret.spec.ts`, and a desktop test in `e2e-desktop/desktop.spec.ts`.
+
 ### Added
 - **About this job** ([14i], task 25h; [docs/ui-spec/cockpit/about-this-job.md](docs/ui-spec/cockpit/about-this-job.md)).
   Once you've picked the job closest to your work, the goal bar's *Look closer* menu has *About this job*, which
