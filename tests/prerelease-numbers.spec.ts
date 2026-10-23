@@ -246,7 +246,13 @@ const quotesOf = (citations: readonly EngineCitation[]) => citations.flatMap((c)
 /** Dollar amounts as written, "$500K" whole. */
 const amountsIn = (text: string) => text.match(/\$[\d,]+(?:\.\d+)?[KkMm]?/g) ?? [];
 /** An amount found in the quotes as a whole amount: "$500" is not inside "$500,000". */
-const inQuotes = (quotes: string, amount: string) => new RegExp(`${amount.replace(/[$.]/g, "\\$&")}(?![\\d,.]*\\d|[KkMm])`).test(quotes);
+const inQuotes = (quotes: string, amount: string) => {
+  // Found as whole text, then not followed by more of a number ("$500" in "$500,000") or a K/M.
+  for (let at = quotes.indexOf(amount); at !== -1; at = quotes.indexOf(amount, at + 1)) {
+    if (!/^(?:[\d,.]*\d|[KkMm])/.test(quotes.slice(at + amount.length))) return true;
+  }
+  return false;
+};
 
 describe("4. The vehicle caps are the amounts the Regulations prescribe", () => {
   const vehicle = writeOffCategoriesV2026.find((c) => c.id === "writeoff-vehicle")!;
