@@ -17,6 +17,7 @@ import { roadApprenticeToOwnShopAB } from "../lib/engines/roads/v2026";
 import { waitForReact } from "../tests/helpers/react-ready";
 
 import { showRail } from "./cockpit-calm";
+import { openTheMapFromTheIntake, skipTheJob } from "./three-steps";
 
 const GENERAL = "Starting any business in Alberta (tax and structure)";
 const APPRENTICE = "From apprentice to your own shop (Alberta)";
@@ -105,6 +106,8 @@ test("door 1: four answers, each with its receipt and focus moving on, then the 
 
   await page.getByRole("link", { name: "Pick a future →" }).click();
   await expect(page).toHaveURL(/\/futures$/);
+  // Pick a future opens on its first step since 2026-10-22: skipped, every future is listed with no job to match.
+  await skipTheJob(page);
 
   // Road 0 and the first written future, in the order written (the maintainer's yes of 2026-10-13, design § 13).
   const cards = page.getByRole("list", { name: "Written futures" }).getByRole("listitem");
@@ -164,7 +167,7 @@ test("door 2 is today's box and intake; with an idea saved, the intake skips Abo
   await expect(page.getByRole("button", { name: "Trades", exact: true })).toHaveAttribute("aria-pressed", "true");
   await page.getByRole("button", { name: "Looks right →" }).click();
   await page.getByText("Current employment", { exact: true }).locator("xpath=following-sibling::select").selectOption("self-employed");
-  await page.getByRole("button", { name: "Open my map →" }).click();
+  await openTheMapFromTheIntake(page);
   await expect(page).toHaveURL(/\/cockpit/);
   await expect(page.getByRole("button", { name: /^Sole Prop activation, / })).toBeVisible();
 
@@ -225,6 +228,8 @@ test("a returning person in a fresh tab: words and income already kept count as 
     `Not given. Nothing here waits on it. Your target of $70,000, agreed ${today}, still stands; Delete on What DotAmi knows about you removes it.`,
   );
   await page.getByRole("link", { name: "Pick a future →" }).click();
+  // Pick a future opens on its first step since 2026-10-22: skipped, every future is listed with no job to match.
+  await skipTheJob(page);
 
   // Each card says it is written for Alberta, and that the person said Yukon.
   const cards = page.getByRole("list", { name: "Written futures" }).getByRole("listitem");
@@ -263,6 +268,8 @@ test("the first written future, picked on Pick a future, opens in the cockpit on
   if (await skip.isVisible()) await skip.click();
   await page.getByRole("link", { name: "Pick a future →" }).click();
   await expect(page).toHaveURL(/\/futures$/);
+  // Pick a future opens on its first step since 2026-10-22: skipped, every future is listed with no job to match.
+  await skipTheJob(page);
 
   await page.getByRole("button", { name: `Look inside ${APPRENTICE}` }).click();
   await expect(page).toHaveURL(/\/cockpit\?venture=/);

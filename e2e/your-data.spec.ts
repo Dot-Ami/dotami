@@ -120,7 +120,10 @@ test("what DotAmi knows lists every table and window key the inventory names, an
     const card = file.getByRole("listitem").filter({ has: page.getByRole("heading", { name: t.name, level: 3, exact: true }) });
     if (t.aboutOthers) await expect(card).toContainText(`About other people · ${t.aboutOthers}`);
     else await expect(card).not.toContainText("About other people");
+    // Answers named on lines of their own (Your ideas: your area and your economic region, 2026-10-22).
+    for (const line of t.lines ?? []) await expect(card).toContainText(`${line.name} · ${line.holds}`);
   }
+  expect(TABLES.find((t) => t.model === "Venture")!.lines?.map((l) => l.name)).toEqual(["Your area", "Your economic region"]);
 
   const computer = page.getByRole("region", { name: "On this computer, outside the data file" });
   // This run's data file is the throwaway prisma/e2e/dotami.db, the same one Settings shows.

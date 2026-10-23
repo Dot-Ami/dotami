@@ -1,4 +1,7 @@
+import { oasisJobByCode } from "@/lib/engines/oasis/v2026";
+import { DONT_KNOW_REGION, economicRegionsIn, REGION_QUESTION_PROVINCES } from "@/lib/engines/research-kit/v2026/economic-regions";
 import { roadsV2026 } from "@/lib/engines/roads/v2026";
+import { AREA_QUESTION_PROVINCES, isAlbertaArea } from "@/lib/places/alberta-areas";
 import { LOOKING_FOR, type LookingFor } from "@/lib/front-door/questions";
 import type { FirstSave } from "@/lib/journey/first-save";
 import { INTAKE_GOAL_IDS, type IntakeGoalId } from "@/lib/journey/types";
@@ -153,9 +156,10 @@ export function parseScenarioInput(data: unknown): Scenario | null {
  * on the front door and the goal picks. Whatever can't be kept honestly is left out, never cut or
  * changed: a sentence that is empty, longer than a statement holds, or dated in the future (one day of
  * slack, as the statements route allows, because the person's own day can be ahead of UTC); goals
- * other than the intake's own chips. The cockpit's autosaves send neither, which reads as `{}`.
+ * other than the intake's own chips. The cockpit's autosaves send neither, which reads as `{}`. `province` is
+ * the idea's own (the scenario's), which decides whether the area and region questions were asked at all.
  */
-export function parseFirstSave(data: unknown, now: Date): FirstSave {
+export function parseFirstSave(data: unknown, now: Date, province: Province | null = null): FirstSave {
   if (!data || typeof data !== "object") return {};
   const root = data as Record<string, unknown>;
   const out: FirstSave = {};
@@ -180,6 +184,23 @@ export function parseFirstSave(data: unknown, now: Date): FirstSave {
   if (Array.isArray(root.goals)) {
     const known = new Set<string>(INTAKE_GOAL_IDS);
     out.goals = [...new Set(root.goals.filter((g): g is IntakeGoalId => typeof g === "string" && known.has(g)))];
+  }
+
+  // The three steps' answers (2026-10-22; docs/ui-spec/futures/02-where-you-are.md, What is kept): only a job on
+  // the government's list; the area and the region only beside a job, only where the questions are asked
+  // (`province`, the idea's own), and only an answer the drop-down offers. Anything else is dropped, never
+  // guessed into one, and the region is never worked out from the area.
+  if (typeof root.job === "string" && oasisJobByCode(root.job)) {
+    out.job = root.job;
+    if (province !== null && AREA_QUESTION_PROVINCES.includes(province) && isAlbertaArea(root.area)) out.area = root.area;
+    if (
+      province !== null &&
+      REGION_QUESTION_PROVINCES.includes(province) &&
+      typeof root.region === "string" &&
+      (root.region === DONT_KNOW_REGION || economicRegionsIn(province).some((r) => r.code === root.region))
+    ) {
+      out.region = root.region;
+    }
   }
   return out;
 }

@@ -1,5 +1,6 @@
 "use client";
 
+import { JobAndRoadSteps, type RoadJobNames } from "@/components/front-door/job-and-road-steps";
 import { useJourney } from "@/components/shared/journey-provider";
 import { CitationLinks, StatusChip, worstStatus } from "@/components/shared/citation-links";
 import { PersonStatements } from "@/components/shared/person-statements";
@@ -9,7 +10,12 @@ import type { UnlockItem } from "@/lib/brain";
 import { ACTIVITY_TAXONOMY, applyIntentToDraft, type IntentParseResult } from "@/lib/journey/intent";
 import { parseIntentFallback } from "@/lib/journey/intent-fallback";
 import { saveScenario } from "@/lib/journey/save-scenario";
-import { afterFirstSave, firstSaveFromIntake } from "@/lib/journey/first-save";
+import { afterFirstSave, firstSaveFromIntake, withTheSteps, type StepAnswers } from "@/lib/journey/first-save";
+import { roadsV2026, type Road } from "@/lib/engines/roads/v2026";
+import { listedRoads } from "@/lib/front-door/futures";
+import type { PlaceCode } from "@/lib/places/codes";
+import { back as stepBack, FIRST_STEP, type StepsState } from "@/lib/front-door/three-steps";
+import { intakeStepsWords, pickWords } from "@/lib/front-door/words";
 import { INTAKE_GOAL_IDS, INTAKE_GOAL_LABELS, type IntakeDraft, type IntakeGoalId } from "@/lib/journey/types";
 import { STATEMENT_FULL_NOTE, STATEMENT_MAX_CHARS } from "@/lib/person/types";
 import { buildScenarioFromIntake } from "@/lib/scenarios/build-scenario-from-intake";
@@ -34,13 +40,18 @@ import { useMemo, useState } from "react";
  * component.
  */
 
-type ScreenId = "about" | "confirm" | "ground";
+type ScreenId = "about" | "confirm" | "ground" | "steps";
 
 const SCREEN_LABEL: Record<ScreenId, string> = {
   about: "1 of 3 · About you",
   confirm: "2 of 3 · Confirm",
   ground: "3 of 3 · Ground it",
+  // Pick a future's three steps, on this page since 2026-10-22: each step says its own "n of 3".
+  steps: pickWords.navLabel,
 };
+
+/** The roads Pick a future lists, which the steps at the end of the intake list too. */
+const LISTED = listedRoads(roadsV2026);
 
 const VENTURE_TYPES: { id: VentureType; label: string }[] = [
   { id: "service", label: "Service" },
@@ -98,10 +109,19 @@ function rankUnlocks(unlocks: UnlockItem[]): UnlockItem[] {
  * idea yet, "confirm" once they have one (issue #38), so a second idea doesn't pass through About you
  * again. Back from Screen A still opens it.
  */
-export function IntakePage({ firstScreen = "about" }: { firstScreen?: "about" | "confirm" }) {
+export function IntakePage({
+  firstScreen = "about",
+  roadJobs = {},
+}: {
+  firstScreen?: "about" | "confirm";
+  /** The job groups each listed road is written for, with their titles, read on the server (app/(journey)/intake/page.tsx). */
+  roadJobs?: RoadJobNames;
+}) {
   const router = useRouter();
   const { intake, setIntake, setScenario } = useJourney();
   const [screen, setScreen] = useState<ScreenId>(firstScreen);
+  // Pick a future's three steps, after Screen B (the maintainer's call 1 of 2026-10-21): in this page's memory only.
+  const [steps, setSteps] = useState<StepsState>(FIRST_STEP);
   const [freeText, setFreeText] = useState("");
   const [parsing, setParsing] = useState(false);
   const [opening, setOpening] = useState(false);
@@ -165,8 +185,14 @@ export function IntakePage({ firstScreen = "about" }: { firstScreen?: "about" | 
     }));
   }
 
-  async function openMap() {
-    if (intake.province === null || intake.employmentStatus === null || opening) return;
+  /**
+   * Step 3's Look inside, on the typed way (2026-10-22): saves the idea from the intake's answers on the road the
+   * person opened, with the steps' answers, then opens the map. Until then Screen B's "Open my map" did this on the
+   * general road with no road picked. A save that fails opens nothing (resolves false), as on Pick a future: the
+   * tab's copy would be drawn on the general road, not the road the person opened.
+   */
+  async function lookInside(road: Road, answers: StepAnswers): Promise<boolean> {
+    if (intake.province === null || intake.employmentStatus === null || opening) return false;
     const employmentStatus = intake.employmentStatus;
     if (intake.employmentStatus === "other") {
       saveEmploymentSuggestion(intake.employmentOther);
@@ -190,16 +216,19 @@ export function IntakePage({ firstScreen = "about" }: { firstScreen?: "about" | 
     );
     setScenario(scenario);
     // Issue #1: the venture reaches the database here, not only when someone finds "Save" on
-    // the cockpit rail. Fail-soft — with no database the tab copy still opens and the cockpit
-    // says so on its own save line.
+    // the cockpit rail. Since 2026-10-22 a save that fails opens nothing and step 3 says so, as on
+    // Pick a future: the tab's copy would be drawn without the road the person opened.
     setOpening(true);
     // This first save also keeps the sentence the person typed, word for word with its day, and the goal
     // chips, with the idea (lib/journey/first-save.ts). Later saves of the idea never carry them, and once
     // a save has kept the sentence this tab never sends it again: the next "Open my map" is a new idea.
-    const sent = firstSaveFromIntake(intake, new Date().toLocaleDateString("en-CA"));
+    const sent = withTheSteps(firstSaveFromIntake(intake, new Date().toLocaleDateString("en-CA")), road.id, answers);
     const saved = await saveScenario(scenario, sent);
     setIntake((prev) => afterFirstSave(prev, sent, saved));
+    setOpening(false);
+    if (!saved.ok) return false;
     router.push("/cockpit");
+    return true;
   }
 
   const coverage = evaluation.provinceCoverage;
@@ -215,7 +244,13 @@ export function IntakePage({ firstScreen = "about" }: { firstScreen?: "about" | 
         ) : (
           <button
             type="button"
-            onClick={() => setScreen(screen === "ground" ? "confirm" : "about")}
+            // On the steps the one back button goes back one part, and from the first part to Screen B.
+            onClick={() => {
+              if (screen !== "steps") return setScreen(screen === "ground" ? "confirm" : "about");
+              const previous = stepBack(steps, intake.province);
+              if (previous === null) setScreen("ground");
+              else setSteps(previous);
+            }}
             className="border-b border-rule-soft pb-0.5 text-body text-stone transition hover:opacity-80"
           >
             ← Back
@@ -227,10 +262,22 @@ export function IntakePage({ firstScreen = "about" }: { firstScreen?: "about" | 
         </p>
       </nav>
 
-      <div className="grid min-h-0 flex-1 grid-cols-1 lg:grid-cols-[1fr_420px]">
+      <div className={screen === "steps" ? "grid min-h-0 flex-1 grid-cols-1" : "grid min-h-0 flex-1 grid-cols-1 lg:grid-cols-[1fr_420px]"}>
         <div data-region="intake" className="overflow-y-auto bg-ink2 px-8 py-10 md:px-10">
-          <div className="mx-auto max-w-2xl space-y-8">
-            {screen === "about" ? (
+          <div className={screen === "steps" ? "mx-auto max-w-4xl space-y-6" : "mx-auto max-w-2xl space-y-8"}>
+            {screen === "steps" && intake.province !== null ? (
+              // The same three steps as Pick a future, inside this page's own region, the preview rail put away.
+              <JobAndRoadSteps
+                host="intake"
+                state={steps}
+                setState={setSteps}
+                place={`CA-${intake.province}` as PlaceCode}
+                listed={LISTED}
+                roadJobs={roadJobs}
+                firstSentence={intake.manualEntry?.trim() ? intake.manualEntry : null}
+                onLookInside={(road, answers) => lookInside(road, answers)}
+              />
+            ) : screen === "about" ? (
               <AboutScreen onContinue={() => setScreen("confirm")} />
             ) : screen === "confirm" ? (
               !hasInput ? (
@@ -494,10 +541,13 @@ export function IntakePage({ firstScreen = "about" }: { firstScreen?: "about" | 
                 <div className="flex items-center justify-end gap-4 pt-2">
                   <Pill
                     variant="maple"
-                    onClick={() => void openMap()}
-                    disabled={intake.province === null || intake.employmentStatus === null || opening}
+                    onClick={() => {
+                      setSteps(FIRST_STEP);
+                      setScreen("steps");
+                    }}
+                    disabled={intake.province === null || intake.employmentStatus === null}
                   >
-                    {opening ? "Opening…" : "Open my map →"}
+                    {intakeStepsWords.next}
                   </Pill>
                 </div>
                 {intake.province === null ? (
@@ -514,7 +564,7 @@ export function IntakePage({ firstScreen = "about" }: { firstScreen?: "about" | 
           </div>
         </div>
 
-        <PreviewRail unlocks={rankUnlocks(evaluation.unlocks)} coverage={coverage} />
+        {screen === "steps" ? null : <PreviewRail unlocks={rankUnlocks(evaluation.unlocks)} coverage={coverage} />}
       </div>
     </div>
   );

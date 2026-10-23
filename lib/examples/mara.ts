@@ -152,6 +152,9 @@ export const exampleMara: ExampleFuture = {
       lookingFor: "both-or-not-sure",
       lookingForOn: DAY,
       job: job ? { code: job.code, label: job.label, pickedOn: DAY } : null,
+      // Mara's story names no area or region: her example asks neither, so nothing is filled in.
+      area: null,
+      region: null,
     },
     progress: [
       {

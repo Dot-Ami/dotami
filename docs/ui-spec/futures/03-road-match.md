@@ -16,6 +16,11 @@ question outside Alberta.)
 Mockup: `C:\dotami-wt\designs-phase2\03-road-match.html` (a job with no road; a smaller frame below shows a job
 with one).
 
+> **Built 2026-10-22, in part (tasks 28b, 29h).** Case A, case C and the step on the intake page as designed.
+> Case B as designed except *About this job*'s rows: a marked place holds them until task 25h's pull request
+> fills it (never a silent fallback). The goal bar's lines (*After Look inside*) are task 28c's. See
+> [_index.md](./_index.md), *As built, 2026-10-22*.
+
 ## The rule
 
 A road whose `codes.occupations` (task 25e) holds the picked job's 5-digit NOC code comes first, under its own
@@ -161,6 +166,13 @@ differently, with nothing taken away from what the person can do:
   until the build adds a row for it. The build's pull request adds one, measured on case B with the job whose
   requirements text is shortest among the corpus's Alberta ideas (29j), at or under the intake's 5. If CI
   measures more, the pull request shows the maintainer that screen instead of raising the row.
+- **As built (the PR #202 review):** besides case B (`futures-road`, `intake-road`), the gate measures case A
+  (`futures-road-written`, `intake-road-written`, Cabinetmakers, under *Written for your pick of job*) and, on
+  Pick a future, case C (`futures-road-skipped`), each at or under its screen's baseline row (`e2e/budgets.ts`).
+  On the intake page case A counts 3, 4 and 3 controls (phone, tablet, laptop): on a phone and a laptop the
+  second **Look inside** is below the first window. The intake's case C has no row: on a tablet the whole step fits the window, so the
+  *Not here yet?* box and the footer's link both count, **6** controls, over the intake's 5 (3 on a phone, 5 on
+  a laptop). As this section says, the pull request shows the maintainer that screen instead of raising a row.
 
 ## How a screen reader hears it
 

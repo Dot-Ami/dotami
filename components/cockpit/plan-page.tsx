@@ -168,6 +168,9 @@ export function PlanPage({ view, backHref }: { view: PlanView; backHref: string 
         <Section id="road" index={1}>
           <p>{view.road.future}</p>
           <p>{view.road.picked}</p>
+          {view.road.where.map((line) => (
+            <p key={line}>{line}</p>
+          ))}
           <ul className="mt-2 list-disc pl-5">
             {view.road.endings.map((ending) => (
               <li key={ending}>{ending}</li>

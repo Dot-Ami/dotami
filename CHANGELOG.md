@@ -112,6 +112,34 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   /licences; reading the person's answer never works a region out from their area. The industry code list
   (NAICS) moved to phase 3 with the industry question, as the maintainer decided. Nothing DotAmi keeps, sends or
   asks changes.
+- **Pick a future asks three things before any road is drawn: what's closest to your work, where you are, and
+  which future** ([14l] tasks 28b and 29h, [14g] task 23g; docs/ui-spec/futures/01, 02 and 03). *What's
+  closest to your work?* searches the government's example job titles for your own words and lists the jobs that
+  hold them, grouped by how many of your words each job's titles hold, in the government's code order inside
+  each group, with jobs found only through DotAmi's own word list in a last group of their own; nothing is
+  picked until you click a job, and *Skip this question* is always there. In Alberta, *Where you are* then asks
+  which area you're in (Calgary, Edmonton, Lethbridge, Red Deer, somewhere else in Alberta, or I don't know), and
+  then which of Alberta's eight economic regions, listed as Statistics Canada publishes them: the region is never
+  worked out from the area. Outside Alberta that step asks nothing and says why. The futures then list the road
+  written for your pick of job first, under its own heading; for a job no road is written for, the step says
+  so (*No road is written for Barbers (63210.02) yet.*), holds the place *About this job* fills in its own pull
+  request, and lists the general road, saying it isn't written for that job; nothing is saved until you open a
+  future. The typed way, *I already have an idea*, now ends on the same three steps on the intake page in place
+  of **Open my map** (the maintainer's call 1 of 2026-10-21), so a typed idea is saved on the road the person
+  opened. The cockpit's **Pick a job** runs the same search. The words you type are searched on DotAmi's own
+  server on your computer and never kept; the job, the area and the region are kept with the idea, each with
+  its day, only when you open a future (four new optional columns on the idea, through a migration that adds
+  them and changes nothing else), shown on *Your plan*, and deleted with the idea; *What DotAmi knows about you*
+  names the area and the region on lines of their own under *Your ideas*. While a search waits, the line under
+  the box says *Looking in the government's example titles…*. When every word typed is on
+  DotAmi's filler or business-word list (*my own shop*), the step says nothing was searched, under the *Not
+  searched* line, and never that no government title holds those words. In Alberta, *About this job* reads the
+  answers kept here: it shows the published wage row for the region you picked (Alberta's own row for *I don't
+  know* or no answer) and shows your area back; outside Alberta it shows the province's or territory's row as
+  before. *Where you are* doesn't yet say you can change your region from *About this job*: that button comes
+  later. The idea harness and the browser idea sweep
+  find each person's job through the search from their own words (the kind of work, or the job's own name), never
+  by its code, and accept the honest "not written yet" ending; the sweep plays the three steps.
 - **Quality numbers on every CI run, and a Quality line for the release notes** ([14n], task 32a; the plan's
   S2.5.32, "best results without analytics"). For the people building DotAmi, with no change in the app:
   `npm run quality:report` prints, and writes to `test-results/quality.md`, what the tests already compute,

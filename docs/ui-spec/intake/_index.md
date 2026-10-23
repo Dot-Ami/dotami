@@ -19,6 +19,13 @@ database it reads as none, and the intake starts on *About you* as before); 2026
 > [02](../futures/02-where-you-are.md) and [03](../futures/03-road-match.md) § *Regions and controls*.
 > **Decided 2026-10-21 (the maintainer, call 1, "same-steps"):** the typed way ends on these three steps
 > instead of opening the map.
+>
+> **Built 2026-10-22.** Screen B's button reads **Next: the work closest to yours →** and opens the three steps
+> inside the `intake` region with the preview rail put away; the nav's **← Back** goes back one part, and from
+> step 1 to Screen B. The idea is saved at step 3's **Look inside**, on the road opened, with the intake's
+> answers and the steps' (`lib/journey/first-save.ts` `withTheSteps`); a save that fails opens nothing and says
+> so (before, the map opened on the tab's copy). Clutter rows `intake-steps` and `intake-road`
+> (`e2e/budgets.ts`).
 
 **Route:** `/intake`
 **Component:** [components/discovery/intake-page.tsx](../../../components/discovery/intake-page.tsx) (one file — both screens + preview rail)

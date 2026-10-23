@@ -9,14 +9,25 @@
  */
 import { execFileSync } from "node:child_process";
 import { createHash } from "node:crypto";
-import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
 
 import { describe, expect, it } from "vitest";
 
-import { ADDED_SCREENS, BASELINE, BUDGETS, FIRST_MEASURED, SCREENS, WIDTHS, WINDOWS_EXTRA, type ClutterTable } from "../e2e/budgets";
+import {
+  ADDED_SCREEN_PART_OF,
+  ADDED_SCREENS,
+  BASELINE,
+  BASELINE_SCREENS,
+  BUDGETS,
+  FIRST_MEASURED,
+  SCREENS,
+  WIDTHS,
+  WINDOWS_EXTRA,
+  type ClutterTable,
+} from "../e2e/budgets";
 
 /**
  * The baseline as recorded on 2026-10-17. The baseline is a record, so it never changes: this fails on any edit
@@ -90,19 +101,54 @@ async function budgetsAt(commit: string): Promise<{ BASELINE: ClutterTable; BUDG
 }
 
 describe("the clutter budgets (e2e/budgets.ts)", () => {
-  it("have a baseline (or, for a screen added since, a first row) and a budget for every screen at every size, and nothing else", () => {
-    const added = new Set<string>(ADDED_SCREENS);
-    const baselineScreens = SCREENS.filter((s) => !added.has(s));
+  it("have a baseline or a first row, and a budget, for every screen at every size, and nothing else", () => {
     for (const [table, screens] of [
-      [BASELINE, baselineScreens],
-      [FIRST_MEASURED, [...ADDED_SCREENS]],
-      [BUDGETS, [...SCREENS]],
+      [BASELINE, BASELINE_SCREENS],
+      [FIRST_MEASURED as ClutterTable, ADDED_SCREENS],
+      [BUDGETS, SCREENS],
     ] as const) {
       expect(Object.keys(table).sort()).toEqual([...screens].sort());
       for (const screen of screens) {
         expect(Object.keys(table[screen] ?? {}).sort(), screen).toEqual([...sizes].sort());
       }
     }
+  });
+
+  it("start an added screen at its first row, no busier than the screen it is a part of (the written way, 2026-10-22)", () => {
+    expect(looserThan(FIRST_MEASURED, BUDGETS)).toEqual([]);
+    // Each added screen's first row against the baseline of the whole screen it is a part of, as if it were that
+    // screen (the whole screen's own budget may be lower: Pick a future's opens on step 1, the calmest part).
+    const asWhole: ClutterTable = Object.fromEntries(ADDED_SCREENS.map((s) => [s, BASELINE[ADDED_SCREEN_PART_OF[s]]]));
+    expect(looserThan(asWhole, FIRST_MEASURED)).toEqual([]);
+    // The check sees a first row busier than its screen.
+    const busier: ClutterTable = { "futures-area": { phone: { ...BASELINE.futures!.phone!, controls: BASELINE.futures!.phone!.controls + 1 } } };
+    expect(looserThan(asWhole, busier)).toEqual([`futures-area phone: controls ${BASELINE.futures!.phone!.controls + 1} > ${BASELINE.futures!.phone!.controls}`]);
+  });
+
+  it("measure every part of Pick a future's three steps, on Pick a future and on the intake page (the PR #202 review)", () => {
+    // The steps' parts as each opens: 2a and 2b, and step 3's three cases (A, a road written for the job; B, no
+    // road written for it; C, the job skipped), on both pages; outside Alberta, Pick a future's step 2.
+    for (const screen of [
+      "futures-area",
+      "futures-region",
+      "futures-outside",
+      "futures-road-written",
+      "futures-road",
+      "futures-road-skipped",
+      "intake-area",
+      "intake-region",
+      "intake-road-written",
+      "intake-road",
+    ]) {
+      expect(ADDED_SCREENS as readonly string[], screen).toContain(screen);
+    }
+    // The intake's case C counts 6 controls on a tablet, over the intake's 5: it gets no row (a row there would
+    // be busier than its screen) and waits on the maintainer, as spec 03 says for a count over the limit.
+    expect(ADDED_SCREENS as readonly string[]).not.toContain("intake-road-skipped");
+    // And the browser gate measures each screen it has a budget for: a row nothing measures would hold nothing.
+    const gate = readFileSync(path.join(process.cwd(), "e2e", "clutter-budget.spec.ts"), "utf8");
+    const measured = new Set([...gate.matchAll(/measureAtEverySize\(page, testInfo, "([\w-]+)"/g)].map((m) => m[1]));
+    expect(SCREENS.filter((s) => !measured.has(s))).toEqual([]);
   });
 
   it("are never above the baseline or a screen's first row, and the smallest text never below it", () => {
@@ -135,8 +181,10 @@ describe("the clutter budgets (e2e/budgets.ts)", () => {
     expect(BASELINE, `BASELINE differs from main's (${main.slice(0, 7)}); it is a record and never changes`).toEqual(
       before.BASELINE,
     );
-    // A first row, once on main, is a record too: it never rises (a screen's first row can be added).
-    expect(looserThan(before.FIRST_MEASURED ?? {}, FIRST_MEASURED), `FIRST_MEASURED looser than on main (${main.slice(0, 7)})`).toEqual([]);
+    // A first row is a record too, once it is on main: it never changes (a new screen's first row can be added).
+    for (const [screen, row] of Object.entries(before.FIRST_MEASURED ?? {})) {
+      expect(FIRST_MEASURED[screen as keyof typeof FIRST_MEASURED], `FIRST_MEASURED["${screen}"] differs from main's; it is a record and never changes`).toEqual(row);
+    }
   });
 
   it("catch a budget lowered and then raised back up, even to the baseline", () => {

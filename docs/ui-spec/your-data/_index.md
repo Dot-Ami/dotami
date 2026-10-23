@@ -70,6 +70,10 @@ jump links, then five sections in this order:
    it out". So far only "Businesses you're watching" has one: a business can be one person trading
    under their own name, so a name or a note can be about its owner; it is what the person typed, kept
    for their own planning on this computer, and sent nowhere. The other cards have no such line.
+   A card can also name answers it keeps on lines of their own, in the same label style, before "What
+   takes it out": the answer's name, **·**, and a sentence (`lines` in `TABLES`). Since 2026-10-22 "Your
+   ideas" has two, **Your area ·** and **Your economic region ·**, worded as
+   [../futures/02-where-you-are.md](../futures/02-where-you-are.md) words them.
 3. **On this computer, outside the data file** — the data file's path with **Copy path**; the
    safety-copies folder and the log (desktop app only): how many files, how big, the day of the
    newest, the path with **Copy path** — only counted and dated, never opened (the log's row says
@@ -238,7 +242,7 @@ entry says so.
 
 `e2e/your-data.spec.ts`: a typed and agreed figure appears under "typed by you" with its agreed day;
 the response is `Cache-Control: no-store`; no amount in any URL; every inventory table and window key
-is on the page, and only the cards with an `aboutOthers` sentence show the "About other people" line; reached from Settings → Privacy; until Delete is opened there are no form controls and
+is on the page, and only the cards with an `aboutOthers` sentence show the "About other people" line; each card's own named lines (`lines`) are drawn on it, word for word; reached from Settings → Privacy; until Delete is opened there are no form controls and
 no forget button; no sideways scroll at 390 px wide; and the Delete menu's main path (see
 [delete-menu.md](delete-menu.md)). `tests/privacy-delete.spec.ts` covers what each box deletes, the
 one transaction, the count check and the wipe (a byte scan of the file), and (since 2026-10-17) that

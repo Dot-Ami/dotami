@@ -90,6 +90,9 @@ describe("the saved future: its road, the endings picked on it, the person's mon
       lookingForOn: null,
       // No job picked for the government's skills list.
       job: null,
+      // Where you are: asked only on Pick a future's steps, after a job pick (2026-10-22).
+      area: null,
+      region: null,
     });
     expect(Object.keys(future.forkPicks).sort()).toEqual(["gstTiming", "incorporationTiming"]);
   });

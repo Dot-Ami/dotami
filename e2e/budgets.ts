@@ -11,8 +11,8 @@
  *   request, so the room it freed can't fill up again unseen; once that is on main, it can't be raised back.
  */
 
-/** The screens measured, in the order the spec opens them. */
-export const SCREENS = [
+/** The screens the baseline of 2026-10-17 measured, in the order the spec opens them. */
+export const BASELINE_SCREENS = [
   "your-data",
   "front-door",
   "start",
@@ -23,15 +23,57 @@ export const SCREENS = [
   "cockpit-road-0",
   "cockpit-road-1",
   "plan",
-  "cockpit-about-job",
 ] as const;
-export type ScreenId = (typeof SCREENS)[number];
 
 /**
- * The screens added after the baseline was recorded (2026-10-17), each with its first row in `FIRST_MEASURED`
- * instead of the baseline, which never changes. The baseline's screens are the rest of `SCREENS`.
+ * Screens added after the baseline (the written way for a new screen's first row, below `FIRST_MEASURED`). Each is a
+ * part of a screen the baseline measured, named in `ADDED_SCREEN_PART_OF`.
  */
-export const ADDED_SCREENS = ["cockpit-about-job"] as const satisfies readonly ScreenId[];
+export const ADDED_SCREENS = [
+  // About this job (2026-10-22, task 25h; docs/ui-spec/cockpit/about-this-job.md, "The budget"): the cockpit on
+  // road 1 with the panel open for a picked job.
+  "cockpit-about-job",
+  // Pick a future's three steps (2026-10-22; docs/ui-spec/futures/02-where-you-are.md, 03-road-match.md): step 1
+  // is measured as `futures` (the page opens on it); these are the parts after it, on Pick a future and on the
+  // intake page (the typed way ends on the same steps).
+  // Step 3 has three cases (03-road-match.md): `futures-road-written` is case A (a road written for the job, under
+  // "Written for your pick of job"), `futures-road` case B (no road written for it), `futures-road-skipped` case C
+  // (the job skipped); on the intake page likewise. The intake's case C isn't here: it counts 6 controls on a
+  // tablet, over the intake's 5, so it waits on the maintainer (the pull request shows the screen; spec 03, "If CI
+  // measures more, the pull request shows the maintainer that screen instead of raising the row").
+  "futures-area",
+  "futures-region",
+  "futures-outside",
+  "futures-road-written",
+  "futures-road",
+  "futures-road-skipped",
+  "intake-steps",
+  "intake-area",
+  "intake-region",
+  "intake-road-written",
+  "intake-road",
+] as const;
+
+/** Every screen measured. */
+export const SCREENS = [...BASELINE_SCREENS, ...ADDED_SCREENS] as const;
+export type ScreenId = (typeof SCREENS)[number];
+export type AddedScreenId = (typeof ADDED_SCREENS)[number];
+
+/** The baseline screen each added screen is a part of: its first row may not be busier than that screen's baseline row. */
+export const ADDED_SCREEN_PART_OF: Record<AddedScreenId, (typeof BASELINE_SCREENS)[number]> = {
+  "cockpit-about-job": "cockpit-road-1",
+  "futures-area": "futures",
+  "futures-region": "futures",
+  "futures-outside": "futures",
+  "futures-road-written": "futures",
+  "futures-road": "futures",
+  "futures-road-skipped": "futures",
+  "intake-steps": "intake",
+  "intake-area": "intake",
+  "intake-region": "intake",
+  "intake-road-written": "intake",
+  "intake-road": "intake",
+};
 
 /** The three window sizes: a phone, a tablet standing up, and a small laptop (the suite's own default). */
 export const WIDTHS = [
@@ -86,18 +128,50 @@ export const BASELINE: ClutterTable = {
 };
 
 /**
- * The first row of each screen added after the baseline (`ADDED_SCREENS`): what CI's Browser tests job (Chromium
- * on Ubuntu, the gate) counted the first time the screen ran there. A record like the baseline: never raised
- * (`tests/clutter-budgets.spec.ts` compares it with main's), and its budget starts equal to it.
+ * A new screen's first row (the written way, 2026-10-22): `BASELINE` is a record of 2026-10-17 and never changes,
+ * so a screen added later can't be put in it. Its first row goes here instead, in the pull request that adds the
+ * screen, and is then a record like the baseline:
  *
- * About this job (2026-10-22, task 25h; docs/ui-spec/cockpit/about-this-job.md, "The budget"), the first: open
- * on road 1 for a picked job (Cabinetmakers), its regions the first visit's plus the panel slot the layout rule
- * already counts. On a phone the sheet covers the road, so its controls are the sheet's (the spec's ceiling:
- * road 1's 14 there). CI run 39732926050 counted 8, 2, 5 and 9.5 px on a phone, 9, 28, 5 and 9.5 px on a tablet
- * and 9, 23, 5 and 9.5 px on a laptop, the same as Chromium on Windows.
+ * - it is what the gate measures for the new screen as it opens (Chromium on Ubuntu, CI's Browser tests job),
+ *   with the pull request naming the run;
+ * - it is at or under the baseline row of the screen it is a part of (`ADDED_SCREEN_PART_OF`), so a part of a
+ *   screen is never allowed more than the screen itself (the smallest text at or over it);
+ * - once on main it never changes (`tests/clutter-budgets.spec.ts` compares it with main's), and the screen's
+ *   budget in `BUDGETS` starts at it and can only go down, as every budget does.
+ *
+ * About this job (2026-10-22, task 25h; docs/ui-spec/cockpit/about-this-job.md, "The budget"): open on road 1
+ * for a picked job (Cabinetmakers), a part of the cockpit on road 1, its regions the first visit's plus the panel
+ * slot the layout rule already counts. On a phone the sheet covers the road, so its controls are the sheet's (the
+ * spec's ceiling: road 1's 14 there). CI run 39732926050 counted 8, 2, 5 and 9.5 px on a phone, 9, 28, 5 and
+ * 9.5 px on a tablet and 9, 23, 5 and 9.5 px on a laptop, the same as Chromium on Windows.
+ *
+ * Pick a future's three steps (tasks 28b, 23g; docs/ui-spec/futures/02-where-you-are.md and 03-road-match.md,
+ * "Regions and controls"): area, region, the screen outside Alberta that asks nothing, and step 3 on case B (a
+ * job with no written road: the no-road block, About this job's place, the other futures), each on Pick a
+ * future after a job pick; and on the intake page, step 1 and step 3 case B, inside the intake's own region with
+ * the preview rail put away. Measured on 2026-10-22 (see the pull request for the run).
+ *
+ * The same day (the PR #202 review: only case B had a row), step 3's case A (a road written for the job, under
+ * "Written for your pick of job") and case C (the job skipped) on Pick a future, and the intake page's 2a, 2b
+ * and case A, each at or under its screen's baseline row, as CI's Ubuntu run measured them (run 39748625442).
+ * Chromium on Windows counts the same but one place, case A on Pick a future at laptop size: 4 controls where
+ * Ubuntu has 5 (its Look inside reaches the first window on Ubuntu), so the row is Ubuntu's 5. The intake's case C
+ * has no row: on a tablet it counts 6 controls on Windows (the Not here yet? box and the footer's link both reach
+ * the first window), over the intake's 5, so it is shown to the maintainer instead (see `ADDED_SCREENS`).
  */
-export const FIRST_MEASURED: ClutterTable = {
+export const FIRST_MEASURED: Partial<Record<AddedScreenId, Partial<Record<WidthId, Clutter>>>> = {
   "cockpit-about-job": { phone: m(8, 2, 5, 9.5), tablet: m(9, 28, 5, 9.5), laptop: m(9, 23, 5, 9.5) },
+  "futures-area": { phone: m(4, 5, 5, 10.5), tablet: m(4, 5, 5, 10.5), laptop: m(4, 5, 5, 10.5) },
+  "futures-region": { phone: m(4, 5, 5, 10.5), tablet: m(4, 5, 5, 10.5), laptop: m(4, 5, 5, 10.5) },
+  "futures-outside": { phone: m(4, 4, 5, 10.5), tablet: m(4, 4, 5, 10.5), laptop: m(4, 4, 5, 10.5) },
+  "futures-road-written": { phone: m(6, 5, 6, 10.5), tablet: m(6, 5, 6, 10.5), laptop: m(6, 5, 6, 10.5) },
+  "futures-road": { phone: m(6, 3, 6, 10.5), tablet: m(6, 6, 6, 10.5), laptop: m(6, 3, 6, 10.5) },
+  "futures-road-skipped": { phone: m(6, 4, 6, 10.5), tablet: m(6, 7, 6, 10.5), laptop: m(6, 6, 6, 10.5) },
+  "intake-steps": { phone: m(3, 5, 5, 10.5), tablet: m(3, 5, 5, 10.5), laptop: m(3, 5, 5, 10.5) },
+  "intake-area": { phone: m(3, 5, 5, 10.5), tablet: m(3, 5, 5, 10.5), laptop: m(3, 5, 5, 10.5) },
+  "intake-region": { phone: m(3, 5, 5, 10.5), tablet: m(3, 5, 5, 10.5), laptop: m(3, 5, 5, 10.5) },
+  "intake-road-written": { phone: m(3, 3, 6, 10.5), tablet: m(3, 4, 6, 10.5), laptop: m(3, 3, 6, 10.5) },
+  "intake-road": { phone: m(3, 2, 6, 10.5), tablet: m(3, 5, 6, 10.5), laptop: m(3, 2, 6, 10.5) },
 };
 
 /**
@@ -178,11 +252,17 @@ export const FIRST_MEASURED: ClutterTable = {
  *
  * A screen added after the baseline (`ADDED_SCREENS`) starts at its first row in `FIRST_MEASURED` and only goes
  * down from there, like the rest.
+ *
+ * 2026-10-22, Pick a future's three steps (tasks 28b, 23g): the page opens on step 1, *What's closest to your
+ * work?*, with nothing typed: the nav, the step's heading, the step and the site footer, and five controls (the
+ * back link, the word mark, the search box, Skip, the footer's link), five text sizes. Lowered from 6 regions, 5,
+ * 7 and 6 controls and 6 text sizes to 4, 5, 5, 5 and 5, as docs/ui-spec/futures/01-whats-closest-to-your-work.md
+ * designs; the cards, *Name it* and *Not here yet?* are step 3, measured as `futures-road`.
  */
 export const BUDGETS: ClutterTable = {
   "front-door": { phone: m(4, 7, 6, 9.5), tablet: m(4, 11, 6, 9.5), laptop: m(4, 11, 6, 9.5) },
   start: { phone: m(3, 5, 3, 10.5), tablet: m(3, 5, 3, 10.5), laptop: m(3, 5, 3, 10.5) },
-  futures: { phone: m(6, 5, 6, 10.5), tablet: m(6, 7, 6, 10.5), laptop: m(6, 6, 6, 10.5) },
+  futures: { phone: m(4, 5, 5, 10.5), tablet: m(4, 5, 5, 10.5), laptop: m(4, 5, 5, 10.5) },
   intake: { phone: m(4, 5, 5, 9.5), tablet: m(4, 5, 5, 9.5), laptop: m(4, 5, 5, 9.5) },
   ventures: { phone: m(4, 10, 7, 9.5), tablet: m(4, 19, 7, 9.5), laptop: m(4, 14, 7, 9.5) },
   "your-data": { phone: m(9, 7, 7, 9.5), tablet: m(9, 7, 7, 9.5), laptop: m(9, 7, 7, 9.5) },
@@ -190,7 +270,19 @@ export const BUDGETS: ClutterTable = {
   "cockpit-road-0": { phone: m(7, 17, 4, 9.5), tablet: m(8, 29, 5, 9.5), laptop: m(8, 27, 5, 9.5) },
   "cockpit-road-1": { phone: m(7, 14, 4, 9.5), tablet: m(8, 25, 5, 9.5), laptop: m(8, 23, 5, 9.5) },
   plan: { phone: m(10, 2, 5, 10.5), tablet: m(10, 2, 5, 10.5), laptop: m(10, 2, 5, 10.5) },
+  // Added screens start at their first row (FIRST_MEASURED) and can only go down from there.
   "cockpit-about-job": { phone: m(8, 2, 5, 9.5), tablet: m(9, 28, 5, 9.5), laptop: m(9, 23, 5, 9.5) },
+  "futures-area": { phone: m(4, 5, 5, 10.5), tablet: m(4, 5, 5, 10.5), laptop: m(4, 5, 5, 10.5) },
+  "futures-region": { phone: m(4, 5, 5, 10.5), tablet: m(4, 5, 5, 10.5), laptop: m(4, 5, 5, 10.5) },
+  "futures-outside": { phone: m(4, 4, 5, 10.5), tablet: m(4, 4, 5, 10.5), laptop: m(4, 4, 5, 10.5) },
+  "futures-road-written": { phone: m(6, 5, 6, 10.5), tablet: m(6, 5, 6, 10.5), laptop: m(6, 5, 6, 10.5) },
+  "futures-road": { phone: m(6, 3, 6, 10.5), tablet: m(6, 6, 6, 10.5), laptop: m(6, 3, 6, 10.5) },
+  "futures-road-skipped": { phone: m(6, 4, 6, 10.5), tablet: m(6, 7, 6, 10.5), laptop: m(6, 6, 6, 10.5) },
+  "intake-steps": { phone: m(3, 5, 5, 10.5), tablet: m(3, 5, 5, 10.5), laptop: m(3, 5, 5, 10.5) },
+  "intake-area": { phone: m(3, 5, 5, 10.5), tablet: m(3, 5, 5, 10.5), laptop: m(3, 5, 5, 10.5) },
+  "intake-region": { phone: m(3, 5, 5, 10.5), tablet: m(3, 5, 5, 10.5), laptop: m(3, 5, 5, 10.5) },
+  "intake-road-written": { phone: m(3, 3, 6, 10.5), tablet: m(3, 4, 6, 10.5), laptop: m(3, 3, 6, 10.5) },
+  "intake-road": { phone: m(3, 2, 6, 10.5), tablet: m(3, 5, 6, 10.5), laptop: m(3, 2, 6, 10.5) },
 };
 
 /** What Chromium on Windows may count over a budget: only regions, controls and text sizes, never fewer. */

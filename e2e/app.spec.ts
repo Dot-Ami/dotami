@@ -24,6 +24,7 @@ import { files as waveFiles } from "../tests/fixtures/packages/wave";
 import { files as xeroFiles } from "../tests/fixtures/packages/xero";
 
 import { startAsAReturnVisit } from "./cockpit-calm";
+import { openTheMapFromTheIntake } from "./three-steps";
 
 /**
  * One of the intake's dropdowns, found by the name a screen reader says for it ("Province /
@@ -64,7 +65,8 @@ test("one sentence becomes a saved map", async ({ page }) => {
 
   // Ground it: Calgary was read as Alberta; the map won't open until employment is chosen (#7).
   await expect(groupSelect(page, "Province / territory")).toHaveValue("AB");
-  const openMap = page.getByRole("button", { name: "Open my map →" });
+  // Since 2026-10-22 Screen B's button opens Pick a future's three steps on this page; the map opens from them.
+  const openMap = page.getByRole("button", { name: "Next: the work closest to yours →" });
   await expect(openMap).toBeDisabled();
   // The box "Other…" opens is named the same way.
   await groupSelect(page, "Current employment").selectOption("other");
@@ -73,7 +75,7 @@ test("one sentence becomes a saved map", async ({ page }) => {
   await expect(openMap).toBeEnabled();
   // The name box is named by its label too, not only by its placeholder.
   await expect(page.getByRole("textbox", { name: "Name it — optional", exact: true })).toBeVisible();
-  await openMap.click();
+  await openTheMapFromTheIntake(page);
 
   // The map, with named stage cards.
   await expect(page).toHaveURL(/\/cockpit/);
@@ -160,16 +162,16 @@ test("the sentence typed on the front door is kept with the idea, word for word 
   await page.getByRole("button", { name: "Looks right →" }).click();
   await groupSelect(page, "Current employment").selectOption("self-employed");
   await page.getByPlaceholder(/What the map should call this venture/).fill("Invented — first words test");
-  await page.getByRole("button", { name: "Open my map →" }).click();
+  await openTheMapFromTheIntake(page);
   await expect(page).toHaveURL(/\/cockpit/);
 
-  // Back through the intake from the map, in the same tab: "Open my map" makes a second idea, and the
+  // Back through the intake from the map, in the same tab: opening a future again makes a second idea, and the
   // sentence, already kept with the first, is not written again (review of 2026-10-11).
   await page.getByRole("link", { name: "Edit venture profile" }).click();
   await expect(page).toHaveURL(/\/intake/);
   await page.getByRole("button", { name: "Looks right →" }).click();
   await page.getByPlaceholder(/What the map should call this venture/).fill("Invented — first words test, again");
-  await page.getByRole("button", { name: "Open my map →" }).click();
+  await openTheMapFromTheIntake(page);
   await expect(page).toHaveURL(/\/cockpit/);
 
   // A new window with nothing in its tab storage: what shows comes from the data file.

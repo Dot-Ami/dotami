@@ -70,6 +70,7 @@ export async function readPlan(prisma: PrismaClient, ventureId: string, today: s
     incomeWanted,
     roadChosenOn: future.roadChosenOn,
     jobPickedOn: future.job?.pickedOn ?? null,
+    where: { area: future.area, region: future.region },
     today,
   };
 }

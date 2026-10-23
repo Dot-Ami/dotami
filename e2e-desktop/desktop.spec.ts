@@ -33,6 +33,7 @@ import { makePdf } from "../tests/helpers/make-pdf";
 import { heic } from "../tests/helpers/heic-files";
 import { pdf, png } from "../tests/helpers/receipt-files";
 import { waitForReact } from "../tests/helpers/react-ready";
+import { openTheMapFromTheIntake } from "../e2e/three-steps";
 import { wipePendingFile, writeWipePending } from "../desktop/wipe-pending.mjs";
 
 const root = path.resolve(__dirname, "..");
@@ -190,7 +191,8 @@ async function describeVenture(page: Page) {
   await page.getByRole("button", { name: "Continue →" }).click();
   await page.getByRole("button", { name: "Looks right →" }).click();
   await page.getByText("Current employment", { exact: true }).locator("xpath=following-sibling::select").selectOption("self-employed");
-  await page.getByRole("button", { name: "Open my map →" }).click();
+  // Since 2026-10-22 the typed way ends on Pick a future's three steps: Skip, then the general road.
+  await openTheMapFromTheIntake(page);
   await expect(page.getByRole("button", { name: /^Sole Prop activation, / })).toBeVisible();
 }
 

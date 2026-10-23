@@ -35,7 +35,7 @@ export async function POST(request: Request) {
 
   // The intake's first save also carries the typed sentence and the goal picks; the cockpit's
   // autosaves carry neither. Kept only when this save creates the idea.
-  const firstSave = parseFirstSave(body, new Date());
+  const firstSave = parseFirstSave(body, new Date(), scenario.profile.province);
 
   try {
     const { ventureId } = await ensureVentureFromScenario(prisma, scenario, firstSave);

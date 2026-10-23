@@ -53,9 +53,8 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
       // The person's, not the idea's: the goal bar shows it when the idea has no first sentence (2026-10-12).
       destination: destination ? { text: destination.text, saidAt: destination.saidAt } : null,
       // About this job for the picked job (task 25h), read here on the server so the NOC and wage modules never
-      // reach the browser. The idea keeps no region or area yet (their columns come with Pick a future's step 2):
-      // null reads as "not picked" until then.
-      aboutJob: aboutJobForFuture(future, null),
+      // reach the browser, with the area and region the person gave at Pick a future's step 2, as kept.
+      aboutJob: aboutJobForFuture(future),
     });
   } catch (error) {
     return futureFailure("futures GET", error);

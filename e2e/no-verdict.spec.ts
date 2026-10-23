@@ -29,6 +29,7 @@ import { waitForReact } from "../tests/helpers/react-ready";
 import { OFFICIAL_QUOTE_ALLOWANCES, findVerdicts } from "../tests/helpers/verdict-words";
 
 import { lookCloser, lookCloserItems, openTheCockpit, pickJob } from "./cockpit-calm";
+import { openTheMapFromTheIntake, skipTheJob } from "./three-steps";
 
 const GENERAL = generalRoadV2026.label;
 const APPRENTICE = roadApprenticeToOwnShopAB.label;
@@ -172,7 +173,7 @@ test("no screen of the journey says what to do or ranks anything: every visible 
   await expect(employment).toBeVisible();
   await read(seen, page, "intake: ground it");
   await employment.selectOption("self-employed");
-  await page.getByRole("button", { name: "Open my map →" }).click();
+  await openTheMapFromTheIntake(page);
   await expect(page).toHaveURL(/\/cockpit/);
   const road0Cards = await readCockpit(seen, page, GENERAL, false);
   // About this job (task 25h), for a job picked the way a person picks one: Athletes (53200), whose one
@@ -209,6 +210,7 @@ test("no screen of the journey says what to do or ranks anything: every visible 
   await read(seen, page, "Your destination, answered");
 
   await pick.click();
+  await skipTheJob(page);
   const cards = page.getByRole("list", { name: "Written futures" }).getByRole("listitem");
   await expect(cards.getByRole("heading", { level: 2 })).toHaveText([GENERAL, APPRENTICE]);
   await read(seen, page, "Pick a future");

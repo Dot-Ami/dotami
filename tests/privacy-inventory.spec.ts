@@ -132,6 +132,53 @@ describe("the privacy inventory lists every database table", () => {
   });
 });
 
+/** The fields of one model in prisma/schema.prisma, by name. */
+function schemaFields(model: string): string[] {
+  const schema = readFileSync(path.join(process.cwd(), "prisma", "schema.prisma"), "utf8");
+  const body = schema.match(new RegExp(`^model\\s+${model}\\s*\\{([\\s\\S]*?)^\\}`, "m"))?.[1] ?? "";
+  return [...body.matchAll(/^\s+(\w+)\s+\S/gm)].map((m) => m[1]);
+}
+
+/**
+ * A spec's "Privacy inventory lines": each bullet `- *Name*: *"Sentence"*`, the sentence possibly wrapped over
+ * several lines, read back with its line breaks as spaces and its quotes straightened.
+ */
+function specInventoryLines(file: string): { name: string; holds: string }[] {
+  const straight = (s: string) => s.replace(/[“”]/g, '"').replace(/[‘’]/g, "'");
+  const spec = straight(readFileSync(path.join(process.cwd(), file), "utf8"));
+  const section = spec.split("**Privacy inventory lines**")[1]?.split(/\n\n\*\*/)[0] ?? "";
+  return [...section.matchAll(/^- \*(.+?)\*: \*"([\s\S]+?)"\*/gm)].map((m) => ({ name: m[1], holds: m[2].replace(/\s+/g, " ") }));
+}
+
+describe("the privacy inventory names the answers kept with an idea on lines of their own", () => {
+  // docs/ui-spec/futures/02-where-you-are.md: "the privacy test fails until each exists" (the PR #202 review: the
+  // build had folded them into the ideas card's prose, and nothing failed without them).
+  const venture = TABLES.find((t) => t.model === "Venture")!;
+
+  it("reads the spec's lines (a guard against the scan silently finding nothing)", () => {
+    expect(specInventoryLines("docs/ui-spec/futures/02-where-you-are.md").map((l) => l.name)).toEqual(["Your area", "Your economic region"]);
+  });
+
+  it("has Where you are's two lines on the ideas card, worded as the spec words them", () => {
+    const straight = (s: string) => s.replace(/[“”]/g, '"').replace(/[‘’]/g, "'");
+    expect((venture.lines ?? []).map((l) => ({ name: l.name, holds: straight(l.holds) }))).toEqual(
+      specInventoryLines("docs/ui-spec/futures/02-where-you-are.md"),
+    );
+  });
+
+  it("names, on each line, columns the table really has, and covers both of Where you are's answers", () => {
+    for (const t of TABLES) {
+      const fields = schemaFields(t.model);
+      for (const line of t.lines ?? []) {
+        expect(line.columns.length, `${t.model}: "${line.name}" names no column`).toBeGreaterThan(0);
+        for (const c of line.columns) expect(fields, `${t.model}: "${line.name}" names ${c}`).toContain(c);
+      }
+    }
+    const covered = (venture.lines ?? []).flatMap((l) => l.columns);
+    for (const c of ["landscapeArea", "landscapeAreaSetAt", "economicRegion", "economicRegionSetAt"]) expect(covered).toContain(c);
+  });
+});
+
 describe("the privacy inventory lists every browser-storage key", () => {
   // The values of string constants, so `getItem(MY_KEY)` can be read as the key it stands for.
   const constants = new Map<string, string>();
