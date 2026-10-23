@@ -18,23 +18,10 @@ export interface AccuracyGap {
 
 /** Task 37a: a fact written for another province shown in a run, by "<province> · <road> · <kind> · <what>". */
 export const PLACE_GAPS: readonly AccuracyGap[] = [
-  // Found by the province swap on 2026-10-22. Road 0 ("Starting any business", written for Alberta) cites the map
-  // stage *Hire first employee*'s four sources (lib/engines/cfe/v2026/nodes.ts): two CRA pages, Ontario's guide to
-  // its Employment Standards Act and British Columbia's employment standards page. A road written for particular
-  // provinces draws every source of a step (lib/engines/roads/v2026/index.ts `citationsForPlace`), so a person in
-  // Alberta is shown Ontario's and British Columbia's pages, and no Alberta employment-standards page. The federal
-  // steps already draw only the federal pages and the person's own province's, saying how many were left out.
-  ...[
-    "https://www.ontario.ca/document/your-guide-employment-standards-act-0/small-business",
-    "https://www2.gov.bc.ca/gov/content/employment-business/employment-standards-advice/employment-standards",
-  ].map(
-    (url): AccuracyGap => ({
-      key: `AB · road-starting-any-business-ab · source · ${url}`,
-      kind: "bug",
-      story: "none yet: found by task 37a, the maintainer's call (draw a step's sources for the person's own province on every road, or cite Alberta's own page there)",
-      why: "On road 0 in Alberta, Hire first employee lists Ontario's and British Columbia's employment-standards pages as its sources: road 0 is written for Alberta, and a road written for particular provinces shows every source.",
-    }),
-  ),
+  // Empty since 2026-10-23 (the maintainer's call a-call-12): the two entries found on 2026-10-22, Ontario's and
+  // British Columbia's employment-standards pages under road 0's Hire first employee in Alberta, are gone because every
+  // road now draws a step's sources for the person's own place (lib/engines/roads/v2026/index.ts `citationsForPlace`),
+  // and the step cites Alberta's own page.
 ];
 
 /** Task 37b: a rewording that changes what the person is shown, for the ideas listed (the corpus's numbers). */

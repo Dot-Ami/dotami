@@ -604,7 +604,8 @@ describe("the lever cards belong to the road step (engineHints)", () => {
         "compliance-platform-reporting-rideshare",
       ],
       "stage-2a-voluntary-gst-registration": ["grant-sred", "writeoff-cca-class-50", "compliance-gst-small-supplier"],
-      "stage-2b-mandatory-gst-registration": ["grant-cajg", "compliance-gst-small-supplier", "compliance-gst-taxi-ride-sharing"],
+      // The Canada-Alberta Job Grant came off on 2026-10-23 (the maintainer's call a-call-1).
+      "stage-2b-mandatory-gst-registration": ["compliance-gst-small-supplier", "compliance-gst-taxi-ride-sharing"],
       "stage-3a-incorporation-80k-net": ["grant-on-innovation"],
       "stage-3b-incorporation-liability-sred": ["grant-sred", "grant-irap", "writeoff-rd", "writeoff-cca-class-50"],
       "stage-4-sred-deepening": ["grant-sred", "grant-irap"],

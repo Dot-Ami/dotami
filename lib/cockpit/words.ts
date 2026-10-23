@@ -181,7 +181,7 @@ export const cockpitWords = {
     costsWaiting: (fork: string) => `Not counted yet: it waits on a pick at ${quoted(fork)}.`,
     notSaved: "This idea is not saved yet, so nothing here can be kept.",
     sources: (n: number) => `Sources for this step · ${n}`,
-    /** Under a step's sources on a road written for all of Canada: other provinces' pages it didn't draw (task 28d). */
+    /** Under a step's sources: other provinces' pages it didn't draw (task 28d; on every road since a-call-12, 2026-10-23). */
     sourcesOtherProvinces: (n: number) =>
       n === 1 ? "1 source for other provinces isn't shown." : `${n} sources for other provinces aren't shown.`,
     officialLinks: "Official pages you open yourself",

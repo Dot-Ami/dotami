@@ -39,6 +39,17 @@ person is asked).
 
 ### What DotAmi keeps, and where
 
+- **Changing your place on a saved idea changes that idea (2026-10-23, S2.5.33's bug 33a).** Asks: *Which
+  province or territory are you in?*, from *Change* on *You told us your place is …* in the cockpit's *What
+  you've told DotAmi*, the thirteen provinces and territories in a drop-down, opened on the idea's own place.
+  Keeps: the new place on the same idea (`Venture.province`), saved the way the cockpit saves every answer kept
+  with the map (`POST /api/scenario/save`), on this computer; nothing leaves it. Until this change the same
+  Change opened the intake, whose save is always a new idea, so a second idea was kept and the first kept the
+  old place. After a move out of Alberta the area and economic region picked there stay in the file (a later
+  history of places reads them, the maintainer's call a-call-9) but are shown nowhere, not on Your plan and not
+  in About this job ([`lib/futures/future.ts`](../lib/futures/future.ts) `readFuture`;
+  [`lib/privacy/inventory.ts`](../lib/privacy/inventory.ts), *Your area*, *Your economic region*). Removed with
+  *Your ideas* on What DotAmi knows about you, as before.
 - **About this job's Change keeps your region, and About this job shows in place for a job with no written road
   (2026-10-22, task 28h).** Asks: in Alberta, *Which region are you in?* again, from About this job's **Change**
   in the cockpit, the same eight regions and *I don't know* as Pick a future's step 2b, opened on your own answer

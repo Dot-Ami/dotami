@@ -72,8 +72,8 @@ date. *Needs:* file importer, facts interface, the cited vehicle-class catalog e
 **S4 — Payroll turns a branch real.** The person's agent has a payroll MCP (Wagepoint,
 QuickBooks Payroll, or a spreadsheet). It proposes facts: first pay run 2026-08-15, two
 employees, monthly remittance amounts. **Hire first employee** flips to *done*; the
-payroll-remittance and record-keeping compliance nodes light *applies*; the Canada-Alberta
-Job Grant card's *check first* now says why. *Needs:* MCP server, facts interface, progress
+payroll-remittance and record-keeping compliance nodes light *applies*. (Until 2026-10-23 this
+also named the Canada-Alberta Job Grant card, taken off the catalog that day; docs/engines/grants.md.) *Needs:* MCP server, facts interface, progress
 (roadmap §2).
 
 **S5 — Two companies, one map.** The person has an operating company and is asking about a

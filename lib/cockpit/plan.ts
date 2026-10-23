@@ -86,7 +86,7 @@ export interface PlanStep {
   /** "n cost lines, under Start-up money", or null for a step with none. */
   costCount: string | null;
   officialLinks: { label: string; url: string }[];
-  /** The step's sources for the idea's place (on a road written for all of Canada, the federal ones and its province's). */
+  /** The step's sources for the idea's place: the federal ones and its province's, on every road (a-call-12). */
   sources: PlanSource[];
   /** How many sources for other provinces the list leaves out, said in a line; null when none is left out. */
   sourcesLeftOut: string | null;

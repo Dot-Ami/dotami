@@ -149,7 +149,9 @@ describe("strategy rules engine — gating correctness", () => {
     const result = evaluateProfile(onProfile, { today: TODAY });
     const ids = result.unlocks.map((u) => u.id);
     expect(ids).not.toContain("grant-alberta-innovates");
-    expect(ids).not.toContain("grant-cajg");
+    // The same profile in Alberta does get it, so the check above can fail. (The Canada-Alberta Job Grant was
+    // checked here too until it came off the catalog on 2026-10-23, the maintainer's call a-call-1.)
+    expect(evaluateProfile({ ...gpuWorkstationProfile, province: "AB" }, { today: TODAY }).unlocks.map((u) => u.id)).toContain("grant-alberta-innovates");
     expect(ids).toContain("grant-on-innovation");
   });
 

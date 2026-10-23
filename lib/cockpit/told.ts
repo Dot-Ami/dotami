@@ -58,7 +58,15 @@ export interface KeptAnswers {
 }
 
 /** Which question the one-question box asks. */
-export type BoxQuestion = "date" | "savings" | "structure" | "equipment" | "sales-year-3" | "incorporate-at" | `map-pick:${string}`;
+export type BoxQuestion =
+  | "date"
+  | "savings"
+  | "place"
+  | "structure"
+  | "equipment"
+  | "sales-year-3"
+  | "incorporate-at"
+  | `map-pick:${string}`;
 
 /** Where "Change" goes for a row. */
 export type ToldChange =
@@ -206,8 +214,12 @@ function changeFor(id: string): ToldChange {
       return { kind: "box", question: "incorporate-at" };
     case "idea:figures":
       return { kind: "figures" };
+    // The place is asked in the cockpit's box and saved with this idea (S2.5.33, bug 33a, 2026-10-23). Until then
+    // its Change opened the intake, whose save is always a new idea: a second idea, the first in the old province.
+    case "idea:place":
+      return { kind: "box", question: "place" };
   }
-  // The place, the kind of venture, work situation, kinds of work, sales and hire-first: the intake asks them.
+  // The kind of venture, work situation, kinds of work, sales and hire-first: the intake asks them.
   return { kind: "intake" };
 }
 
