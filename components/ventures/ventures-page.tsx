@@ -11,6 +11,7 @@ import { useIdeaReminders } from "@/components/ventures/use-idea-reminders";
 import type { VentureLinkKind, VentureSummary } from "@/lib/db/ventures";
 import { VENTURE_LINK_KINDS, VENTURE_LINK_LABELS } from "@/lib/db/ventures";
 import { INTAKE_GOAL_LABELS, type IntakeGoalId } from "@/lib/journey/types";
+import { venturesWords } from "@/lib/ventures/words";
 import { VENTURE_STAGES, VENTURE_STAGE_LABELS, type VentureStage } from "@/lib/scenarios/types";
 
 /**
@@ -197,7 +198,8 @@ function VentureCard({
             {venture.name}
           </h2>
           <p className="mt-0.5 text-body capitalize text-stone">
-            {venture.type} · {venture.province} · structure{" "}
+            {/* A type nobody was asked for is the intake's starting value, not theirs (2026-10-23). */}
+            {venture.typeSaid ? venture.type : venturesWords.card.typeNotSaid} · {venture.province} · structure{" "}
             {venture.structureSource === "assumed" ? "not set" : venture.structure}
             {venture.targetRevenueY1 > 0 ? ` · Y1 $${venture.targetRevenueY1.toLocaleString("en-CA")}` : ""}
           </p>

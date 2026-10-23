@@ -39,6 +39,24 @@ person is asked).
 
 ### What DotAmi keeps, and where
 
+- **Your destination's answers are no longer in the window's storage (2026-10-23, the pre-release review).**
+  Where they were: since 2026-10-12, your words and their day, business or career or both, your province or
+  territory and the yearly income you agreed to were also written to the tab's `sessionStorage` under
+  `dotami-journey-v3`, on this computer only, until the tab closed; nothing was sent anywhere, and Delete didn't
+  reach that copy. Now none of them is written there: the journey provider writes the rest of the journey
+  without them, and drops any copy an older DotAmi left when a page opens
+  ([`lib/journey/window-storage.ts`](../lib/journey/window-storage.ts),
+  [`components/shared/journey-provider.tsx`](../components/shared/journey-provider.tsx)). Your words and the
+  income are kept in the data file as soon as you give them, as before; business-or-career and the place are
+  held in the page's memory until you pick a future, which keeps them with that idea (`Venture.lookingFor`,
+  `Venture.province`, as before; no new column, no migration), and a reload or a new window asks those two
+  again, as their receipts now say. Delete takes the answers held in memory with what they belong to: the words
+  with *Your statements*, the income with *The yearly income you said you want*, everything with *Your ideas*
+  ([`components/your-data/delete-menu.tsx`](../components/your-data/delete-menu.tsx)). *What DotAmi knows about
+  you* says the same under *The intake in progress* ([`lib/privacy/inventory.ts`](../lib/privacy/inventory.ts)).
+  Still in window storage, unchanged: the rest of the intake in progress, a statement that couldn't be saved, and
+  the job descriptions typed under "Other…", each listed on that page with how long it lasts.
+
 - **Changing your place on a saved idea changes that idea (2026-10-23, S2.5.33's bug 33a).** Asks: *Which
   province or territory are you in?*, from *Change* on *You told us your place is …* in the cockpit's *What
   you've told DotAmi*, the thirteen provinces and territories in a drop-down, opened on the idea's own place.

@@ -99,14 +99,15 @@ describe("Your destination: the four questions are data", () => {
 });
 
 describe("the receipts: worked out from the answer and the catalogs, never a verdict", () => {
-  it("your words: kept, kept in this tab only, or not given", () => {
+  it("your words: kept, held on this page only, or not given", () => {
     // Only a future picked on Pick a future shows the destination on top; an idea with its own sentence
     // shows that sentence (components/cockpit/goal-bar.tsx), so the receipt says both (review, 2026-10-12).
     expect(destinationReceipt({ kept: "saved", text: "My own shop", saidAt: "2026-10-12" })).toBe(
       "Kept word for word, dated 2026-10-12. It goes at the top of each future you pick on Pick a future; an idea you describe in your own sentence shows that sentence instead.",
     );
     expect(destinationReceipt({ kept: "tab-only", text: "My own shop", saidAt: "2026-10-12" })).toBe(
-      "Not kept: no database reachable. It stays in this tab only.",
+      // Held in the page's memory only since 2026-10-23, never in window storage (lib/journey/window-storage.ts).
+      "Not kept: no database reachable. Only this page holds it: a reload or a new window asks it again.",
     );
     expect(destinationReceipt({ kept: "dont-know" })).toBe("Nothing kept. You can say it later; nothing here waits on it.");
   });

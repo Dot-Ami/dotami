@@ -10,6 +10,7 @@ import { evaluateScenario } from "@/lib/scenarios/evaluate-scenario";
 
 import { inventedRoad } from "./helpers/invented-road";
 import { MAP_TODAY, mapCases, type MapCase } from "./helpers/strategy-map-cases";
+import { withChipRenames } from "./helpers/chip-renames";
 import { withTypeScaleNames } from "./helpers/type-scale-renames";
 
 /**
@@ -76,7 +77,8 @@ function withoutAdded(html: string): { rest: string; cards: string[] } {
 describe("today's map, drawn as the road Starting any business in Alberta", () => {
   it.each(mapCases)("draws $name exactly as the old map did, plus the four before-you-open cards", (c) => {
     // Each file is one line of HTML; only its line ending can differ by checkout (CRLF on Windows).
-    const before = withTypeScaleNames(readFileSync(new URL(`${c.name}.html`, fixtures), "utf8").trimEnd());
+    // With the place chips renamed on 2026-10-23 (tests/helpers/chip-renames.ts), as the type scale's classes are.
+    const before = withChipRenames(withTypeScaleNames(readFileSync(new URL(`${c.name}.html`, fixtures), "utf8").trimEnd()));
     const { rest, cards } = withoutAdded(draw(generalRoadV2026, c));
     // Everything that was there is there, byte for byte; the before pictures are not re-recorded.
     expect(rest).toBe(before);

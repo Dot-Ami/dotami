@@ -50,7 +50,8 @@ const listedFor = (draft: DestinationDraft) => listedRoads(roadsV2026, draft.pla
  * every receipt from lib/front-door/receipts.ts, worked out from the answer and the catalogs.
  *
  * Question 1 is kept at once as the person's destination (a dated, word-for-word statement); question 4 is
- * proposed and counts only once agreed in the prompt. Questions 2 and 3 wait in the tab until a future is
+ * proposed and counts only once agreed in the prompt. Questions 2 and 3 wait in the page's memory (never in
+ * window storage: lib/journey/window-storage.ts) until a future is
  * picked (/futures), which keeps them on the idea. What the data file already holds for 1 and 4 (`kept`,
  * read on the server when the page is drawn) counts as answered, so a returning person isn't asked again.
  */
@@ -298,7 +299,7 @@ function OwnWords({
           destination: { kept: "saved", text: body.statement.text, saidAt: body.statement.saidAt },
         });
       } else if (res.status === 503) {
-        // No database: the words stay in this tab, and the receipt says so.
+        // No database: only this page's memory holds the words, and the receipt says so.
         onAnswer({ destination: { kept: "tab-only", text: typed, saidAt: today } });
       } else {
         setError(body?.error ?? words.receipts.destinationTabOnly);
@@ -575,6 +576,11 @@ function AnsweredQuestion({
       <p role="status" className="text-body text-sage">
         {receipt}
       </p>
+      {/* Questions 2 and 3 are kept with the future picked; until then only this page holds them
+          (lib/journey/window-storage.ts), and the person is told so. */}
+      {question.id === "looking-for" || question.id === "place" ? (
+        <p className="text-body text-stone">{words.heldUntilPicked}</p>
+      ) : null}
     </section>
   );
 }

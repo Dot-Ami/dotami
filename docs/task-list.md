@@ -1119,6 +1119,18 @@ roadmap's build order.
   - [ ] **Tested:** a browser test covers its main path and edge cases
   - [x] Already found: the intake's field labels aren't tied to their dropdowns (a screen reader can't
     name them) — fixed 2026-10-12: province, employment and the name box are named by their labels.
+  - [x] Pre-release honesty and privacy, found by the review of 2026-10-23 and fixed the same day
+    (`tests/prerelease-honesty.spec.ts`, `e2e/front-door.spec.ts`): Your destination's answers out of window
+    storage (held in the page's memory until a future is picked, which keeps them with the idea) and Delete
+    reaching them; no *done* or *now* chip on the map for anything the person never marked (*starting point*,
+    *first stage*), and *type not said* on the ideas card; the time words the check missed (*First years on
+    your own*, *time-boxed*, the ride-share Lens line's "with 30 days to apply") reworded and taught to the
+    check, and official fee pages' words only inside the official-quote component; the front door's chips in
+    the words file without a tax promise; *Your futures* and *Open cockpit* only once an idea is saved
+  - [ ] Still in window storage, about the person, for the maintainer's call: the rest of the intake in
+    progress (`dotami-journey-v3`: the sentence typed, revenue estimates, the idea open on the map), a statement
+    that couldn't be saved (`dotami-person-unsaved`) and the job descriptions typed under "Other…"
+    (`dotami-employment-suggestions`, which Delete doesn't reach)
 - ✅ **[13i] The landing page and intake were dead in production builds** — fixed in #64.
 
 ## 15 — Real examples: how real people started (later)

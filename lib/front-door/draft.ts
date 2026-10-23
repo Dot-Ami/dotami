@@ -4,7 +4,8 @@ import { DESTINATION_QUESTIONS, type DestinationQuestionId, type LookingFor } fr
 import type { DestinationAnswer, IncomeAnswer } from "./receipts";
 
 /**
- * *Your destination*'s answers so far, in the tab's journey draft (sessionStorage, `dotami-journey-v3`).
+ * *Your destination*'s answers so far, in the journey draft the page holds in memory: never in window storage
+ * (2026-10-23; lib/journey/window-storage.ts says why).
  * Questions 1 and 4 are also in the data file as soon as they are kept (a statement, a number the person
  * agreed to); these record what each came to, for the receipts. Questions 2 and 3 wait here until a
  * future is picked, which keeps them on the idea.
@@ -53,8 +54,8 @@ export interface KeptOnRecord {
 /**
  * The draft with what is already kept counted as answered (review of 2026-10-12): a returning person, in a
  * new tab, after a restart or after the front door's Map it started the tab's journey afresh, isn't asked
- * questions 1 and 4 again. An answer given in this tab wins, since it is the newer one; 2 and 3 live only
- * in the tab, so they are asked again.
+ * questions 1 and 4 again. An answer given on this page wins, since it is the newer one; 2 and 3 are held
+ * in the page's memory only until a future is picked (which keeps them with it), so they are asked again.
  */
 export function withKept(draft: DestinationDraft, kept: KeptOnRecord): DestinationDraft {
   const out: DestinationDraft = { ...draft };

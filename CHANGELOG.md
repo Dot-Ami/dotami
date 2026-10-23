@@ -225,6 +225,37 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   British Columbia's employment-standards pages as its sources; a misspelt word in the kind of work finds the job
   only by its own name (84 of the 220 test ideas with a job); and "à Regina" in French names no province.
 ### Fixed
+- **Nothing you answer on Your destination sits in the window's storage any more** (the pre-release screen
+  review of 2026-10-23). Your words, business or career or both, your province or territory and the income you
+  agreed to were also written to the tab's `sessionStorage` (`dotami-journey-v3`), where Delete couldn't reach
+  them. Now they are held in the page's memory only: your words and the income are in the data file as soon as
+  you give them, as before, and business-or-career and the place are kept with the idea when you pick a future
+  (`Venture.lookingFor`, `Venture.province`, as before); until then a reload or a new window asks those two
+  again, and their receipts say so. A copy an older DotAmi left in the window is dropped when a page opens.
+  Delete takes the words held in memory with *Your statements*, the income with *The yearly income you said you
+  want*, and everything with *Your ideas* (`lib/journey/window-storage.ts`, `components/shared/journey-provider.tsx`,
+  `components/your-data/delete-menu.tsx`). Tests: `tests/prerelease-honesty.spec.ts` (with a planted write of
+  an answer to `sessionStorage` that the same scan catches) and a browser test in `e2e/front-door.spec.ts`.
+- **The map no longer says *done* and *now* for things you never told DotAmi.** On every idea the map's own
+  lists put *Employee/Apprentice baseline* first and *Sole Prop activation* next, and their chips read *done*
+  and *now*, as if that were where the person was. They now read *starting point* and *first stage*; *done*,
+  *doing* and *not for me* appear only where you marked a step, and the legend says so (*Stage chip = where it
+  sits on the map; doing, done or not for me only when you mark it*). *Next on your road* and the Steps gauge
+  start at the baseline until you mark it done (`lib/scenarios/graph.ts`, `lib/cockpit/view.ts`). On *Your
+  futures*, an idea saved without a kind of venture (a future picked on *Pick a future*) says *type not said*
+  instead of *Service* (`lib/db/ventures.ts`, `lib/ventures/words.ts`).
+- **Time words the no-times check missed.** The apprentice road's last column *First years on your own* is now
+  *Running your own shop*; the legend's *check first — confirm, time-boxed, or one fork away* now says *has an
+  end date*; the ride-share Lens line no longer paraphrases GI-196 as "with 30 days to apply" but points to its
+  own words under the card's sources. The check (`tests/helpers/time-words.ts`) now catches "first years",
+  "the early months", "time-boxed" and the like. Corporations Canada's fee lines ("It will cost $200 and will
+  take 1 day.") were drawn in bare quotation marks on the Incorporating step's ways to incorporate and on *Your
+  plan*; they are now inside the one official-quote component, after *Words found on the page:*
+  (`components/shared/page-quotes.tsx`). No amount changed.
+- **The front door.** Its three example chips are in the words file (`frontDoorWords.examplePrompts`), and the
+  second now reads *I'm already running a business — show me the write-off rules for it* instead of *optimize my
+  write-offs*, which read as a promise about your taxes. *Your futures* and *Open cockpit* show only once an idea
+  is saved; with nothing saved both opened empty pages (`lib/front-door/saved-idea.ts`).
 - **Changing your place on a saved idea changes that idea** (S2.5.33, bug 33a; the maintainer's calls of
   2026-10-22 and 2026-10-23). *Change* on *You told us your place is …* in the cockpit's *What you've told
   DotAmi* opened the intake, whose save is always a new idea: the person ended with two ideas, the first still in

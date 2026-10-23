@@ -280,18 +280,18 @@ describe("Next on your road", () => {
       const next = nextOnYourRoad(evaluateRoad(road0Input({ scenario })), scenario, generalRoadV2026.steps.length).map((s) => s.stepId);
       expect(next).toContain(picked);
       expect(next).not.toContain(other);
-      // Nothing the map's own chip calls "not on your path" or "done".
-      for (const id of next) expect(["ghost", "complete"]).not.toContain(getScenarioNodeStatus(id, scenario));
+      // Nothing the map's own chip calls "not on your path".
+      for (const id of next) expect(getScenarioNodeStatus(id, scenario)).not.toBe("ghost");
     }
-    // A first visit on the default picks: stage 0 is drawn done, so the list starts at the
-    // before-you-open steps that follow it in the first column (three on 2026-10-12, and Keep your
-    // records from day one since 2026-10-14), then stage 1.
+    // A first visit on the default picks: nothing is done until the person marks it (2026-10-23; until
+    // then stage 0 was drawn done for everyone and left off), so the list starts at stage 0, then the
+    // before-you-open steps that follow it in the first column.
     expect(nextOnYourRoad(evaluateRoad(road0Input()), inventedIdea(), 5).map((s) => s.stepId)).toEqual([
+      "stage-0-employee-apprentice-baseline",
       "step-start-register-name",
       "step-start-permits-bizpal",
       "step-start-business-account",
       "step-start-keep-records",
-      "stage-1-sole-prop-activation",
     ]);
   });
 
@@ -370,11 +370,17 @@ describe("the gauges", () => {
     for (const view of [fees, named]) expect([view.money.value, ...view.money.lines].join(" ")).not.toContain("$0");
   });
 
-  it("on road 0 the Steps gauge names the first step the map shows on the path, not one it shows done", () => {
-    const view = gaugeView(evaluateRoad(road0Input()), generalRoadV2026, inventedIdea());
-    // Stage 0 is drawn done; the first step after it is the first before-you-open step (2026-10-12).
-    expect(view.steps.lines).toContain("next on your road: “Register your business name, if you use one”");
+  it("on road 0 the Steps gauge names the first step on the path, and only the person's Done passes one", () => {
+    // Nothing marked: stage 0 is first, as the map draws it (since 2026-10-23 the map never counts it done
+    // for the person; until then it was drawn done for everyone and the gauge started after it).
     const stage0 = generalRoadV2026.steps.find((s) => s.id === "stage-0-employee-apprentice-baseline")!;
+    expect(gaugeView(evaluateRoad(road0Input()), generalRoadV2026, inventedIdea()).steps.lines).toContain(
+      `next on your road: “${stage0.label}”`,
+    );
+    // Marked done by the person, the first step after it is the first before-you-open step (2026-10-12).
+    const marked = road0Input({ progress: [{ stepId: stage0.id, status: "done", doneWhenIds: [] }] });
+    const view = gaugeView(evaluateRoad(marked), generalRoadV2026, inventedIdea());
+    expect(view.steps.lines).toContain("next on your road: “Register your business name, if you use one”");
     expect(view.steps.lines.join(" ")).not.toContain(stage0.label);
   });
 
@@ -561,7 +567,7 @@ describe("the overlays on the road", () => {
     const scenario = inventedIdea({ activityTags: ["Software / SaaS"] });
     const before = drawRoad0(scenario, evaluateRoad(road0Input({ scenario })));
     // With Money on, the card names its seven start-up lines as not priced (2026-10-12).
-    expect(before).toMatch(/aria-label="Sole Prop activation, now, applies as answered, 7 not priced, opens detail"/);
+    expect(before).toMatch(/aria-label="Sole Prop activation, first stage, applies as answered, 7 not priced, opens detail"/);
     // No one set anything aside: the legend has no line for it.
     expect(before).not.toContain(cockpitWords.road.setAsideLegend);
     const after = drawRoad0(scenario, evaluateRoad(road0Input({ scenario, progress: [notForMe("stage-1-sole-prop-activation")] })));

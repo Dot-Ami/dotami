@@ -77,7 +77,7 @@ stage card one **lever card** per evaluator item relevant to that stage
 
 | Card | Shows | Click |
 |---|---|---|
-| Stage | name · chip (**now · your pick · default · open choice · done · ahead · not on your path**, from the branch picks; `stageChipFor` in `lib/scenarios/graph.ts`) · trigger (2 lines) · on Incorporating and Liability / SR&ED, one line saying which of the person's answers set the colour (`EvaluationResult.nodeReasons`) · left bar coloured by the evaluator (green met · amber plausible · grey n/a), run on the person's own branch picks | opens node detail |
+| Stage | name · chip (**first stage · your pick · default · open choice · starting point · ahead · not on your path**, from the branch picks; `stageChipFor` in `lib/scenarios/graph.ts`; where the stage sits on the map, never the person's status: "first stage" and "starting point" said **now** and **done** of every idea until 2026-10-23; the person's own Doing, Done or Not for me replaces the chip) · trigger (2 lines) · on Incorporating and Liability / SR&ED, one line saying which of the person's answers set the colour (`EvaluationResult.nodeReasons`) · left bar coloured by the evaluator (green met · amber plausible · grey n/a), run on the person's own branch picks | opens node detail |
 | Stage the rules don't colour, on a map drawn without road evaluation (road 0's before-you-open steps, 2026-10-12; in the cockpit, road evaluation gives them a state, so they are coloured and open the step panel like any card) | name · chip **no rule yet** · its one line (2 lines) · a neutral left bar, no colour | selects it and keeps its arrows; no panel opens (it has no catalog entry; the step panel comes later in phase 1). The right-hand panel is left as it was: an open Export panel stays open, and an open node detail panel closes, since it was about the card no longer selected |
 | Lever | dot + type chip (Write-off / Grant / Threshold / …) · title · **applies** (green) or **check first** (amber) · `fork` when incorporating would change it · `in use before <year>` when time-boxed · PARTIAL chip when a citation is partial | opens the stage's node detail |
 
@@ -173,8 +173,10 @@ work only, as built*.
 
 Lever cards are hidden under a stage that is "not on your path". Grey (not applicable) items
 are never drawn. A legend sits under the grid, with the three colours in the same words as the
-cards' accessible names: **applies as answered**, **check first — confirm, time-boxed, or one fork
-away** and **doesn't apply as answered** (the grey entry added 2026-10-11).
+cards' accessible names: **applies as answered**, **check first — confirm, has an end date, or one fork
+away** ("time-boxed" until 2026-10-23, a time word of DotAmi's own) and **doesn't apply as answered** (the
+grey entry added 2026-10-11). Its chip line says **Stage chip = where it sits on the map; doing, done or not
+for me only when you mark it** (2026-10-23).
 
 **Hover / select a stage card (ruling 2, same day):** `components/cockpit/map-arrows.tsx` draws
 an SVG overlay of arrows from that card along the road's `RoadStep.next` (road 0: the nodes'

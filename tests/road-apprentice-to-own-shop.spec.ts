@@ -77,7 +77,7 @@ describe("the first written future is in the catalog", () => {
       "Finish your training",
       "Certified",
       "Open the doors",
-      "First years on your own",
+      "Running your own shop",
     ]);
     for (const column of road.columns) expect(column.summary.length).toBeGreaterThan(0);
   });

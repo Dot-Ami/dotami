@@ -670,7 +670,7 @@ export const WINDOW_STORAGE: readonly WindowStorageEntry[] = [
     key: "dotami-journey-v3",
     name: "The intake in progress",
     holds:
-      "What you've entered on the intake so far, including the sentence you typed to describe your idea and your revenue estimates. When the map opens, the sentence (once, with the first idea it opens) and the goals marked on the intake are also saved with the idea in the data file. It also holds the idea open on the map, with its branch picks and your own “I'd incorporate at” amount if you typed one, and your answers on Your destination (since 2026-10-12): your words and their day, business, career or both, your province or territory, and the yearly income you agreed to, if you did.",
+      "What you've entered on the intake so far, including the sentence you typed to describe your idea and your revenue estimates. When the map opens, the sentence (once, with the first idea it opens) and the goals marked on the intake are also saved with the idea in the data file. It also holds the idea open on the map, with its branch picks and your own “I'd incorporate at” amount if you typed one. Your answers on Your destination are not in it since 2026-10-23 (from 2026-10-12 they were): your words and the income you agreed to are in the data file as soon as you give them, and business, career or both and your province or territory are held only in the page's memory until you pick a future, which keeps them with that idea in the data file. A reload or a new window asks those two again, and a copy an older DotAmi left here is taken out when a page opens.",
     lasts: "Until this window or tab closes.",
   },
   {

@@ -1315,7 +1315,8 @@ Road 1, *From apprentice to your own shop (Alberta)*, is written into the catalo
 made while writing it, each for a reason:
 
 - **Four columns, one fork.** *Finish your training* · *Certified* (the fork: *Stay employed* or *Open
-  your own shop*) · *Open the doors* · *First years on your own*. The example trade is Cabinetmaker,
+  your own shop*) · *Open the doors* · *Running your own shop* (*First years on your own* until
+  2026-10-23: a span of time in DotAmi's own words). The example trade is Cabinetmaker,
   Alberta's official name for it. Alberta's pages list three ways to the certificate (apprenticeship,
   Trades Qualifier on work experience, Trades Qualifier with a certificate from outside Alberta); they
   are steps side by side in the first column that all lead to the certificate, not a fork, because a

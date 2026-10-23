@@ -743,12 +743,14 @@ export const cockpitWords = {
    */
   map: {
     /** The chip's words (lib/scenarios/graph.ts `stageChipFor` decides which; issue #5, 2026-10-11). */
+    // Where the stage sits on the map, never the person's status (2026-10-23): "first stage" and "starting
+    // point" were "now" and "done" until then, said of every idea whatever the person had told DotAmi.
     chips: {
-      now: "now",
+      "first-stage": "first stage",
       "your-pick": "your pick",
       default: "default",
       "open-choice": "open choice",
-      done: "done",
+      "starting-point": "starting point",
       ahead: "ahead",
       "not-on-your-path": "not on your path",
     },
@@ -774,8 +776,9 @@ export const cockpitWords = {
     defaultNotPicked: "· default, not your pick yet",
     legend: {
       arrows: "Hover a card: arrows show where it leads — solid next, dashed further on",
-      chip: "Stage chip = where it sits on your path",
-      checkFirst: "check first — confirm, time-boxed, or one fork away",
+      chip: "Stage chip = where it sits on the map; doing, done or not for me only when you mark it",
+      // "time-boxed" until 2026-10-23: a time word of DotAmi's own. The items it means carry a date they end.
+      checkFirst: "check first — confirm, has an end date, or one fork away",
       leftBar: "left bar = what your answers support",
       federalOnly: "federal rules only for this province",
     },

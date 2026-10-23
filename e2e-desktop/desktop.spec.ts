@@ -709,7 +709,10 @@ test("back up on one computer → restore on another: the same ventures and rece
   const computerB = path.join(tmp, "computer-b");
   mkdirSync(computerB);
   page = await launch(computerB);
-  await page.getByRole("link", { name: "Your futures →" }).click();
+  // Nothing saved: the front door offers no Your futures (2026-10-23), and the ideas page is empty.
+  await expect(page.getByRole("heading", { name: /See the road/ })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Your futures →" })).toHaveCount(0);
+  await page.goto(new URL("/ventures", page.url()).toString());
   await expect(page.getByText("Nothing saved yet.")).toBeVisible();
 
   // File → Restore from a backup… — a wrong passphrase first, then the right one. The app restarts
@@ -2102,7 +2105,10 @@ test("a lost key: Start fresh… asks twice, keeps the locked file and its key i
   await window.getByRole("button", { name: "Start fresh…" }).click();
   await window.getByRole("button", { name: "Start fresh", exact: true }).click();
   page = await mainWindow(app!);
-  await page.getByRole("link", { name: "Your futures →" }).click();
+  // A fresh start: the front door offers no Your futures (2026-10-23), and the ideas page is empty.
+  await expect(page.getByRole("heading", { name: /See the road/ })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Your futures →" })).toHaveCount(0);
+  await page.goto(new URL("/ventures", page.url()).toString());
   await expect(page.getByText("Nothing saved yet.")).toBeVisible();
   await quit();
 

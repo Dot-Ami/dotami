@@ -41,7 +41,12 @@
  * is gone from each (taken off the catalog, the maintainer's call a-call-1), so each "Elsewhere on your map" or
  * "For you on this stage" count is one lower; and Hire first employee's sources are the CRA's two pages and
  * Alberta's own employment-standards page (checked by a tool), with "2 sources for other provinces aren't
- * shown." for Ontario's and British Columbia's (a-call-12). No other word changes. The only cards allowed to change are the ones
+ * shown." for Ontario's and British Columbia's (a-call-12). No other word changes. Redrawn on 2026-10-23 for two
+ * panels only (tests/prerelease-honesty.spec.ts), road 0's two Incorporating panels (Alberta and British
+ * Columbia): the federal way's fee line drew Corporations Canada's "It will cost $200 and will take 1 day." in
+ * bare quotation marks; it is now inside the official-quote component, after "Words found on the page:"
+ * (components/shared/page-quotes.tsx), so the page's processing time is never a line of DotAmi's own. No other
+ * word changes. The only cards allowed to change are the ones
  * that gained road 0's named start-up cost lines (docs/architecture/future-cockpit.md § 6, "The official
  * fees catalog and start-up cost lines as built"); with those seven lines taken out, they match too.
  */

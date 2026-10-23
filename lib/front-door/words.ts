@@ -38,6 +38,16 @@ export const frontDoorWords = {
     },
   },
   nav: { futures: "Your futures →", cockpit: "Open cockpit →", settings: "Settings" },
+  /**
+   * The idea door's three chips (docs/ui-spec/landing/02-example-chips.md): each only fills the box with an
+   * example phrasing. Here since 2026-10-23 (they were written in components/discovery/landing-page.tsx); the
+   * second said "optimize my write-offs" until then, which reads as a promise about the person's taxes.
+   */
+  examplePrompts: [
+    "I want to monetize a hobby",
+    "I'm already running a business — show me the write-off rules for it",
+    "I don't know what to start yet — show me what's available",
+  ],
 } as const;
 
 /** What a future includes, for the receipt to question 2. */
@@ -66,12 +76,16 @@ export const destinationWords = {
   answeredPlace: (name: string) => name,
   answeredAmount: (cents: number) => `${formatMoney(cents)} a year, before tax`,
   skipped: "Skipped",
+  // Under the receipts of questions 2 and 3 (2026-10-23): nothing about the person sits in window storage,
+  // so until a future is picked these two are held in the page's memory only (lib/journey/window-storage.ts).
+  heldUntilPicked:
+    "Kept with the future you pick. Until then only this page holds it: a reload or a new window asks it again.",
   receipts: {
     // The goal bar shows the destination only on an idea with no first sentence of its own, which is what
     // Pick a future saves; an idea described on the front door shows its own (components/cockpit/goal-bar.tsx).
     destinationKept: (day: string) =>
       `Kept word for word, dated ${day}. It goes at the top of each future you pick on Pick a future; an idea you describe in your own sentence shows that sentence instead.`,
-    destinationTabOnly: "Not kept: no database reachable. It stays in this tab only.",
+    destinationTabOnly: "Not kept: no database reachable. Only this page holds it: a reload or a new window asks it again.",
     destinationDontKnow: "Nothing kept. You can say it later; nothing here waits on it.",
     // "I don't know yet" deletes nothing: statements are never edited away one by one.
     destinationStillKept: (day: string) =>
