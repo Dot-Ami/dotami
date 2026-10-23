@@ -195,12 +195,13 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   Tests only: nothing a person sees changes.
 - **The same idea in every province and territory, and the test ideas reworded** (tasks 37a and 37b, tests only).
   Four test ideas run in all 13 places, each way in: no other province's step, source, cost line, way to
-  incorporate or wage row may show, and the federal steps stay the same everywhere. Every test idea is also
+  incorporate or wage row may show, every source, fee and way to incorporate written for the person's own
+  province must show, and the federal steps stay the same everywhere. Every test idea is also
   reworded (capitals, lower case, a typo, another word order, emoji, no accents, its city swapped for its
   province, and 14 in French): the province the words name, the job found by the person's own words and the
   roads offered must stay the same, and Lloydminster, on the Alberta–Saskatchewan border, never names one
-  province. Each check fails on a planted fault. Three things they found today are listed for the maintainer
-  with their stories rather than skipped: in Alberta, *Hire first employee* on the general road lists Ontario's and
+  province. Each check fails on a planted fault. Three things they found today are listed rather than skipped;
+  none has a story yet, and each waits on the maintainer's call: in Alberta, *Hire first employee* on the general road lists Ontario's and
   British Columbia's employment-standards pages as its sources; a misspelt word in the kind of work finds the job
   only by its own name (84 of the 220 test ideas with a job); and "à Regina" in French names no province.
 ### Fixed

@@ -557,16 +557,18 @@ placed in phase 3.
     - [x] 37a (moved here from S2.5.37: it needs no new data): the same idea, job and answers in all 13
       provinces and territories (`tests/province-swap.spec.ts`, four ideas, both ways in): no other province's
       step, source, *done when* line, link, cost line, way to incorporate or wage row; the federal set the same
-      in every run on a road built from the map; *About this job*'s wage row the place's own. A filter that
-      ignores the place (the ways to incorporate, a step's sources, the wage look-up) fails naming what leaked
-      and where. Found 2026-10-22, listed with its story in `tests/fixtures/ideas/accuracy-gaps.ts`: in
-      Alberta, road 0's *Hire first employee* shows Ontario's and British Columbia's employment-standards pages
-      (the maintainer's call)
+      in every run on a road built from the map; *About this job*'s wage row the place's own; every source,
+      *done when* line, fee and way to incorporate the catalogs write for the run's own province shown. A filter
+      that ignores the place (the ways to incorporate, a step's sources, the wage look-up) fails naming what
+      leaked and where; one that leaves out the person's own province (a step's sources, the ways to
+      incorporate) fails naming what is missing and where. Found 2026-10-22, listed in
+      `tests/fixtures/ideas/accuracy-gaps.ts` with no story yet, waiting on the maintainer's call: in Alberta,
+      road 0's *Hire first employee* shows Ontario's and British Columbia's employment-standards pages
     - [x] 37b (moved here too): the corpus reworded (capitals, lower case, a typo, another order, emoji, no
       accents, the city swapped for its province, French; `tests/rewording.spec.ts`) keeps the province the
       words name, the job found by the person's words on step 1, and step 3's roads; Lloydminster never sets a
       single province; "Calgary"/"calgary" and "Québec"/"Quebec" are planted controls. Found 2026-10-22, listed
-      with their stories: a misspelt word in the kind of work finds the job only by its own name (84 of 220
+      with no story yet, waiting on the maintainer's call: a misspelt word in the kind of work finds the job only by its own name (84 of 220
       ideas), and "à Regina" in French names no province (the parser reads a city that is also a first name
       only after an English place word)
     - [x] The idea harness's time budget (60 s) is held on the run's own CPU time, not the wall clock, and a

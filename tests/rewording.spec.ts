@@ -37,7 +37,7 @@ describe("the corpus reworded keeps the named province, the job and the roads (t
     const failures = keepingSearches(() => rewordingFailures(IDEAS_V1));
     const listed = new Set(REWORDING_GAPS.flatMap((gap) => gap.ideas.map((n) => rewordingKey({ ideaId: ideaId(n), how: gap.how, what: gap.what }))));
     const found = new Set(failures.map(rewordingKey));
-    // A new one: fix it, or list it in accuracy-gaps.ts with its story.
+    // A new one: fix it, or list it in accuracy-gaps.ts with its story (or, with none yet, who decides).
     expect(failures.filter((f) => !listed.has(rewordingKey(f))).map((f) => f.detail)).toEqual([]);
     // A listed one that passes now: take it off the list.
     expect([...listed].filter((key) => !found.has(key))).toEqual([]);
