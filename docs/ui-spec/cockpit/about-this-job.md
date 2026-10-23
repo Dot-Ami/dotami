@@ -19,14 +19,23 @@ code, said on screen. Design:
 **As built (2026-10-22, task 25h).** In the cockpit, as below, with these differences, each for the maintainer
 to see:
 
-- **The region and the area as kept, and no Change yet.** GET /api/futures/<id> hands the panel the idea's
+- **The region and the area as kept** (and, since the batch 4 follow-up, its **Change**: see below). GET /api/futures/<id> hands the panel the idea's
   `Venture.economicRegion` and `landscapeArea` as Pick a future's step 2 kept them
   ([../futures/02-where-you-are.md](../futures/02-where-you-are.md); `aboutJobForFuture` in
   `lib/about-job/view.ts`), in Alberta only: a picked region shows its own row with *Your region: Calgary (your
   pick)*, *I don't know* and no answer the province's own row with their lines, and the counts row names the
   area by its drop-down's name (*Your area: Calgary (your pick). Nothing reads it yet.*). The region is never
-  worked out from the area: an area with no region kept reads *Your region isn't picked.* **Change** isn't drawn
-  yet; it comes with step 2's held lines about this panel, in their own change.
+  worked out from the area: an area with no region kept reads *Your region isn't picked.*
+- **Change, built 2026-10-22 (task 28h, the batch 4 follow-up).** In Alberta, on a saved idea, the wages row ends
+  with a button named *Change your region* (the words block's *Change*, named for what it changes because it sits
+  at the row's end: there, after the row's own lines, it stays out of a phone's first window, so the clutter row
+  `cockpit-about-job` holds). It opens the region drop-down in place, the same list, why-line and order line as
+  Pick a future's step 2b, on the person's own answer (or *Choose one*: nothing is picked for them, not from their
+  area either), with **Keep this answer** and **Cancel** (new words; *Not kept: no database reachable. Your region
+  is as it was.* if the save fails). **Keep this answer** saves through `POST /api/futures/<id>/region`
+  (`lib/futures/region.ts`: Alberta's eight codes or *I don't know* only, an idea in Alberta only, the same answer
+  keeps its first day, the area never touched), and the panel is read again for the new row. Not drawn outside
+  Alberta, on Mara's example, or on an idea that isn't saved.
 - **Read on the server.** The NOC lines and the wage file (about 2 MB each) are read by GET /api/futures/<id>,
   which hands the panel its rows as `aboutJob`; no browser file imports them (`tests/about-job.spec.ts` walks
   the imports).
@@ -47,7 +56,9 @@ to see:
   file has no Employment requirements lines for job group <noc>.*; *not published* for one figure a row leaves
   empty; *Reference period <period>* alone where the row names no method; *The wage file has no row for job group
   <noc> in <place>.*; and each link's name for a screen reader, *<label>, opens in your browser*.
-- **Not in this task:** Pick a future's no-road block shows it in place with 28c.
+- **In place on Pick a future's no-road block** since task 28c (2026-10-22): the same rows
+  (`AboutThisJobRows`), with no *Close* and no **Change** ([../futures/03-road-match.md](../futures/03-road-match.md),
+  *As built (28c)*).
 - **Its clutter row** is `cockpit-about-job`, the first screen added after the baseline (`FIRST_MEASURED` in
   `e2e/budgets.ts`, from CI's first count).
 - **The browser idea sweep opens it.** For every swept idea that reaches a cockpit and names a job in the corpus

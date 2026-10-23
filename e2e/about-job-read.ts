@@ -19,7 +19,7 @@
 import path from "node:path";
 
 import type { PrismaClient } from "@prisma/client";
-import { expect, type Page } from "@playwright/test";
+import { expect, type Locator, type Page } from "@playwright/test";
 
 import { aboutJobWords } from "../lib/about-job/words";
 import { createDatabaseClient } from "../lib/db/client";
@@ -231,10 +231,11 @@ const pieces = (text: string) => text.replace(/\r?\n+/g, " ¶ ");
 /**
  * What the gate checks find in the open *About this job* panel. `at` names the screen for the findings' places
  * (the harness's `where`: the rules row is "<at> › about this job › rules"), `group` the five-digit job group
- * of the job the run picked: only that group's lines, as the shipped file holds them, are lifted.
+ * of the job the run picked: only that group's lines, as the shipped file holds them, are lifted. `root` is the
+ * panel by default; on Pick a future's no-road block (task 28c) it is the slot the same rows are drawn in.
  */
-export async function readAboutJob(page: Page, at: string, group: string): Promise<string[]> {
-  const panel = aboutJobPanel(page);
+export async function readAboutJob(page: Page, at: string, group: string, root: Locator = aboutJobPanel(page)): Promise<string[]> {
+  const panel = root;
   await expect(panel).toBeVisible();
   const drawn: DrawnPanel = await panel.evaluate((el) => {
     const textNodes = (keep: (node: Text) => boolean) => {

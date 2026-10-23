@@ -366,11 +366,10 @@ test("the intake's step 3 for a job with a written road stays within its clutter
   });
 });
 
-// Waits on the maintainer (2026-10-22): measured on Windows at 3 controls on a phone, 5 on a laptop and 6 on a
-// tablet (← Back, the word mark, both Look inside, the Not here yet? box, the footer's link), over the intake's
-// 5, so it has no row (e2e/budgets.ts, ADDED_SCREENS). Ready to run once the maintainer decides the screen.
-test.fixme("the intake's step 3 with the job skipped stays within its clutter budget", async ({ page }, testInfo) => {
-  await measureAtEverySize(page, testInfo, "intake-road-skipped" as ScreenId, async () => {
+// The maintainer's call 38 of 2026-10-22: 6 controls on a tablet (← Back, the word mark, both Look inside, the Not
+// here yet? box, the footer's link) accepted as this step's own limit, the same step as Pick a future's case C.
+test("the intake's step 3 with the job skipped stays within its clutter budget", async ({ page }, testInfo) => {
+  await measureAtEverySize(page, testInfo, "intake-road-skipped", async () => {
     await intakeSteps(page);
     await skipTheJob(page);
   });

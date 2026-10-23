@@ -26,6 +26,13 @@ database it reads as none, and the intake starts on *About you* as before); 2026
 > answers and the steps' (`lib/journey/first-save.ts` `withTheSteps`); a save that fails opens nothing and says
 > so (before, the map opened on the tab's copy). Clutter rows `intake-steps` and `intake-road`
 > (`e2e/budgets.ts`).
+>
+> **The maintainer's calls of 2026-10-22, built in the batch 4 follow-up (task 28h).** Call 37: the last step,
+> in both versions (a road written for the job, and none written), shows the intake's own 5 text sizes: its
+> headings take the lead size the intake already draws instead of the title size. Call 38: with the job skipped,
+> the last step counts 6 controls on a tablet (← Back, the word mark, both **Look inside**, the *Not here yet?*
+> box, the footer's link), accepted as that step's own limit (`intake-road-skipped`, beside Pick a future's same
+> step, 7 there). Call 36: a failed save opens nothing and says so, as built.
 
 **Route:** `/intake`
 **Component:** [components/discovery/intake-page.tsx](../../../components/discovery/intake-page.tsx) (one file — both screens + preview rail)

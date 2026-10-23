@@ -38,6 +38,15 @@ export const cockpitWords = {
      */
     federal: (roadLabel: string, province: string) => `Future: ${roadLabel} · ${province}'s own steps aren't written yet`,
     /**
+     * After Look inside (docs/ui-spec/futures/03-road-match.md, task 28c): whether the road opened is written for
+     * the person's pick of job, joined to *Future: <road>* with " · ".
+     */
+    forJob: "written for your pick of job",
+    notForJob: (job: string) => `not written for your pick of job, ${job}`,
+    /** An idea kept with no road (typed before the three steps, and every idea from before roads): drawn on the general road, said why. */
+    savedBeforeRoads: (roadLabel: string) =>
+      `Map drawn: ${roadLabel} · the general road, because this idea was saved before a road was picked for it`,
+    /**
      * The goal bar's one menu for the things it can open in the right-hand panel (the calm first view,
      * 2026-10-17): Compare (where a fork's own pick moves steps), Others in this line of work, and later
      * About this job. Their own words stay with them (compare.region, lib/landscape/words.ts).

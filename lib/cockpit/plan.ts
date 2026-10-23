@@ -287,7 +287,8 @@ export function buildPlan(args: PlanArgs): PlanView {
     wordsNone: said.length === 0 ? words.plan.wordsNone : null,
     target: args.incomeWanted ? words.goal.target(args.incomeWanted.amountCents, args.incomeWanted.agreedOn) : null,
     road: {
-      future: goalRoadLine(road, place),
+      // The goal bar's line, word for word: why this road (task 28c), from what the idea keeps.
+      future: goalRoadLine(road, place, { roadChosen: input.roadChosen, job: input.job ? { code: input.job.code, label: input.job.label } : null }),
       picked: input.roadChosen ? words.plan.roadChosen(args.roadChosenOn) : words.plan.roadDefault,
       where: whereLines(args.where, input.scenario.profile.province),
       endings: endings.length > 0 ? endings : [words.plan.noForks],

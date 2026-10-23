@@ -13,7 +13,7 @@
  */
 import { expect, test, type Page } from "@playwright/test";
 
-import { roadApprenticeToOwnShopAB } from "../lib/engines/roads/v2026";
+import { roadApprenticeToOwnShopAB, roadFederalStepsCA } from "../lib/engines/roads/v2026";
 import { waitForReact } from "../tests/helpers/react-ready";
 
 import { showRail } from "./cockpit-calm";
@@ -255,9 +255,12 @@ test("a returning person in a fresh tab: words and income already kept count as 
 
   const note = `Mobile sauna rentals (invented ${Date.now()})`;
   await page.getByRole("textbox", { name: "Not here yet?" }).fill(note);
-  await page.getByRole("button", { name: "Keep my note and look inside the general road" }).click();
+  // Outside Alberta the note opens the federal steps (the maintainer's call 33 of 2026-10-22).
+  await page.getByRole("button", { name: "Keep my note and look inside the federal steps" }).click();
   await expect(page).toHaveURL(/\/cockpit\?venture=/);
-  await expect(page.getByRole("region", { name: "Your goal and gauges" })).toContainText(GENERAL);
+  await expect(page.getByRole("region", { name: "Your goal and gauges" })).toContainText(
+    `Future: ${roadFederalStepsCA.label} · Yukon's own steps aren't written yet`,
+  );
   const statements = (await (await page.request.get("/api/person/statements")).json()) as { statements: { text: string }[] };
   expect(statements.statements.map((s) => s.text)).toContain(note);
 });

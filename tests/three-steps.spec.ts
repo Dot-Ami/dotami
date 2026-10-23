@@ -20,8 +20,8 @@ import { createDatabaseClient } from "@/lib/db/client";
 import { ensureVentureFromScenario } from "@/lib/db/ensure-venture-from-scenario";
 import { parseFirstSave } from "@/lib/db/parse-scenario-input";
 import { searchJobTitles } from "@/lib/engines/oasis/v2026/title-search";
-import { generalRoadV2026, roadApprenticeToOwnShopAB, roadsV2026 } from "@/lib/engines/roads/v2026";
-import { listedRoads } from "@/lib/front-door/futures";
+import { citationsForPlace, generalRoadV2026, roadApprenticeToOwnShopAB, roadFederalStepsCA, roadsV2026, skillItemsV2026 } from "@/lib/engines/roads/v2026";
+import { futureCards, listedRoads, notHereRoad, sourcesLine } from "@/lib/front-door/futures";
 import { leftOutLine, onlyLeftOutWords, searchBoxStatusLine, searchStatusLine, showsEnglishOnly } from "@/lib/front-door/job-search-lines";
 import { roadJobNames } from "@/lib/front-door/road-jobs";
 import { roadMatch } from "@/lib/front-door/road-match";
@@ -255,15 +255,60 @@ describe("the steps as drawn", () => {
     expect(html).toContain('data-region="step"');
   });
 
-  it("step 3, case B: the honest heading, About this job's marked place, the general road not written for the job, nothing written for it", () => {
+  it("step 3, case B: the honest heading, About this job in place (no placeholder), the general road not written for the job, nothing written for it", () => {
     const html = draw("futures", { part: "road", job: BARBERS, area: null, region: null });
     expect(html).toContain(esc(pickWords.noRoad.heading(BARBERS.label, BARBERS.code)));
     expect(html).toContain(`data-about-this-job-slot="${BARBERS.code}"`);
+    // Task 28c: the slot reads About this job's rows on DotAmi's own server; until they're in, it says so (a page
+    // drawn on the server has no answer yet). The placeholder saying it isn't built is gone.
+    expect(html).toContain(esc(pickWords.noRoad.aboutJobReading(BARBERS.label)));
+    expect(html).not.toContain("isn&#x27;t built yet");
     expect(html).toContain(esc(pickWords.noRoad.nothingSaved));
     expect(html).toContain(esc(pickWords.road0NotForJob(BARBERS.label)));
     expect(html).not.toContain(esc(pickWords.writtenForJobHeading));
-    // The design's lead sentence waits for About this job's rows (task 25h).
+    // The design's lead sentence opens the rows, so it shows only with them.
     expect(html).not.toContain(esc(pickWords.noRoad.governmentLead));
+  });
+
+  it("Not here yet? opens the general road in Alberta and the federal steps elsewhere in Canada, and says which (call 33)", () => {
+    const ab = draw("futures", skipped(), "CA-AB");
+    expect(ab).toContain(esc(pickWords.notHere.button));
+    expect(ab).toContain(esc(pickWords.notHere.hint));
+    expect(ab).not.toContain(esc(pickWords.notHere.federal.button));
+    for (const place of ["CA-ON", "CA-YT"] as const) {
+      const html = draw("futures", skipped(), place);
+      expect(html, place).toContain(esc(pickWords.notHere.federal.button));
+      expect(html, place).toContain(esc(pickWords.notHere.federal.hint));
+      expect(html, place).not.toContain(esc(pickWords.notHere.button));
+      expect(notHereRoad(listedAt(place), generalRoadV2026).id, place).toBe(roadFederalStepsCA.id);
+    }
+    expect(notHereRoad(listedAt("CA-AB"), generalRoadV2026).id).toBe(generalRoadV2026.id);
+  });
+
+  it("the federal card counts only the source pages that person will be shown inside (call 34), with the step panel's filter", () => {
+    const federalFor = (place: "ON" | "YT" | null) => futureCards([roadFederalStepsCA], skillItemsV2026, place)[0]!.sources;
+    const total = (c: ReturnType<typeof federalFor>) => c.person + c.unrecorded + c.model + c.tool;
+    // Every page the road carries, and the ones an Ontario person is shown: fewer.
+    expect(total(federalFor("ON"))).toBeLessThan(total(federalFor(null)));
+    // The count is the step panel's: each step's sources through `citationsForPlace` for the place, plus the rest.
+    const shown = roadFederalStepsCA.steps.reduce((n, step) => n + citationsForPlace(roadFederalStepsCA, step.citations, "ON").shown.length, 0);
+    const all = roadFederalStepsCA.steps.reduce((n, step) => n + step.citations.length, 0);
+    expect(total(federalFor(null)) - total(federalFor("ON"))).toBe(all - shown);
+    // A road written for particular provinces shows every source, so its count is the same with or without a place.
+    expect(futureCards([generalRoadV2026], skillItemsV2026, "ON")[0]!.sources).toEqual(futureCards([generalRoadV2026], skillItemsV2026)[0]!.sources);
+    // As drawn: the federal card on Pick a future in Ontario carries the place's count.
+    const html = draw("futures", skipped(), "CA-ON");
+    for (const part of sourcesLine(federalFor("ON"))) expect(html).toContain(esc(part.text));
+  });
+
+  it("on the intake page step 3's headings use the lead size the intake already draws, never the title size (call 37)", () => {
+    for (const state of [skipped(), { part: "road", job: BARBERS, area: null, region: null } as StepsState, { part: "road", job: CABINETMAKERS, area: null, region: null } as StepsState]) {
+      const html = draw("intake", state);
+      expect(html).not.toContain("text-title");
+      expect(html).toContain("text-lead");
+    }
+    // Pick a future keeps its title size.
+    expect(draw("futures", skipped())).toContain("text-title");
   });
 
   it("step 3, case A: the road written for the job under its own heading, before the others", () => {
@@ -331,21 +376,26 @@ describe("the steps as drawn", () => {
     }
   });
 
-  it("step 2 promises nothing about About this job yet: its lines are held, and the panel has no Change", () => {
-    // About this job reads the kept region and area (its region's own row), but draws no Change yet, and step 2's
-    // three lines about it are held for their own change (with Change). So step 2 says nothing about it: not
-    // "change your region later from About this job", not "About this job shows the Alberta-wide figure", not the
-    // outside-Alberta wage row line.
+  it("step 2's three lines about About this job are back, word for word as spec 02's as-built note records them (task 28h)", () => {
+    // About this job reads the kept region (its region's own row; Alberta's for I don't know) and draws its Change,
+    // so the three lines held by the PR #202 review are true and are drawn again.
     const parts = {
       "2a": draw("futures", { part: "area", job: CABINETMAKERS, area: null, region: null }),
       "2b": draw("futures", { part: "region", job: CABINETMAKERS, area: "cma-825", region: null }),
-      "2b, I don't know": draw("futures", { part: "region", job: CABINETMAKERS, area: "cma-825", region: "dont-know" }),
       "outside Alberta": draw("futures", { part: "outside", job: CABINETMAKERS, area: null, region: null }, "CA-ON"),
     };
-    for (const [part, html] of Object.entries(parts)) expect(html, part).not.toContain("About this job");
-    // What step 2 keeps is still said, on 2a and 2b.
-    expect(parts["2a"]).toContain(esc(whereStepWords.kept));
-    expect(parts["2b"]).toContain(esc(whereStepWords.kept));
+    const kept = "Both answers are kept with this future once you open it, on this computer only. You can change your region later from About this job in the cockpit.";
+    const dontKnow = "With “I don't know”, About this job shows the Alberta-wide figure, and a link to Statistics Canada's list of the towns in each region shows here.";
+    const wageRow = "About this job shows the wage row Job Bank gives for Ontario as a whole, labelled with the level the government's own code gives it.";
+    expect(whereStepWords.kept).toBe(kept);
+    expect(whereStepWords.region.dontKnowNote).toBe(dontKnow);
+    expect(whereStepWords.outside.wageRow("Ontario")).toBe(wageRow);
+    expect(parts["2a"]).toContain(esc(kept));
+    expect(parts["2b"]).toContain(esc(kept));
+    expect(parts["2b"]).toContain(esc(dontKnow));
+    expect(parts["outside Alberta"]).toContain(esc(wageRow));
+    // Outside Alberta nothing is asked, so nothing is kept and the kept line isn't drawn there.
+    expect(parts["outside Alberta"]).not.toContain(esc(kept));
   });
 
   it("2b: Statistics Canada's list is drawn only once “I don't know” is picked", () => {

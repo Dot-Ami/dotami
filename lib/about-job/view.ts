@@ -160,6 +160,22 @@ export function aboutJobForFuture(future: {
 }
 
 /**
+ * *About this job* for the three steps' answers as the person gave them so far, for step 3's no-road block
+ * (docs/ui-spec/futures/03-road-match.md, case B; task 28c): the job they clicked, their place, and in Alberta the
+ * area and region as picked on step 2 (null for "Choose one" or not asked). Read the same way as a saved future
+ * (`aboutJobForFuture`): the region only as the person's own answer, never worked out from the area. Nothing is
+ * kept: the answers live in the page's memory until a future is opened.
+ */
+export function aboutJobForAnswers(answers: { job: string; province: string; area: string | null; region: string | null }): AboutJobView | null {
+  return aboutJobForFuture({
+    job: { code: answers.job },
+    place: `CA-${answers.province}`,
+    area: answers.area === null ? null : { value: answers.area },
+    region: answers.region === null ? null : { value: answers.region },
+  });
+}
+
+/**
  * *About this job* for one idea, or null when the job isn't on the government's list (a hand-edited data file).
  * `lookups` is the committed wage file's, or a planted file's in a test.
  */

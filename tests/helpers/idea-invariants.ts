@@ -1,5 +1,7 @@
 import { cockpitWords } from "@/lib/cockpit/words";
 import { roadsWrittenForJob, type Road } from "@/lib/engines/roads/v2026";
+import { pickWords } from "@/lib/front-door/words";
+import { PROVINCE_LABELS, type Province } from "@/lib/scenarios/types";
 import type { StepEvaluation } from "@/lib/roads";
 
 import { ROAD_IDS } from "../fixtures/ideas/v1";
@@ -232,7 +234,11 @@ export function cockpitFailures(run: IdeaRun, c: CockpitRun, fail: Fail) {
   const province = c.final.input.scenario.profile.province;
   const places: readonly string[] = c.road.provinces;
   const writtenHere = places.includes(province) || places.includes("CA");
-  if (!writtenHere) fail("ends:road-written-for-place", c.way, `${c.way}: drawn on ${c.road.id}, written for ${places.join(", ")}; the idea is in ${province}`);
+  // A road written for another place is an honest end only when the person picked its card and both labels say
+  // so, the card's and the cockpit's (the maintainer's call 35 of 2026-10-22; `honestAlbertaPick`).
+  if (!writtenHere && !honestAlbertaPick(run, c, province)) {
+    fail("ends:road-written-for-place", c.way, `${c.way}: drawn on ${c.road.id}, written for ${places.join(", ")}; the idea is in ${province}`);
+  }
   const expected = run.idea.road === "none-written-yet" ? null : ROAD_IDS[run.idea.road];
   // Typed: the road written for the idea, wherever it is written for. Picked: the road the person picked
   // on Pick a future (a card, or the general road "Not here yet?" opens), kept as their pick, whether or
@@ -276,6 +282,32 @@ export function cockpitFailures(run: IdeaRun, c: CockpitRun, fail: Fail) {
     ].filter(Boolean);
     if (unasked.length > 0) fail("nothing-derived:picked-not-said", "", `picked: answers this way in never asks are set: ${unasked.join("; ")}`);
   }
+}
+
+/**
+ * An Alberta future picked from outside Alberta (the maintainer's call 35 of 2026-10-22, "Yes, it's honest: they
+ * were told and chose it", as long as both labels stay on screen): the person opened the fold and clicked the card
+ * of a road written for another place, and
+ *
+ * - the card they clicked said so: *Written for Alberta.* and *You said <their province>.*, and, when they picked
+ *   a job, the card's own line about that job (*Written for Cabinetmakers (72311).* or *Not written for <job>. …*);
+ * - the cockpit says so: the goal bar's and the plan's line (one function, lib/cockpit/road-line.ts) is
+ *   *Map drawn: <road> · written for AB; this idea is in <province>*.
+ *
+ * Take either away and the same end fails `ends:road-written-for-place` again (tests/idea-harness-plants.spec.ts).
+ * The typed way, "Not here yet?" and a road nobody clicked are never this end.
+ */
+export function honestAlbertaPick(run: IdeaRun, c: CockpitRun, province: string): boolean {
+  if (c.way !== "picked" || c.pick?.by !== "card" || c.pick.roadId !== c.road.id) return false;
+  const card = `picked › steps › road › card ${c.road.id}`;
+  const has = (where: string, text: string) => run.pieces.some((p) => p.where === where && p.text === text);
+  const label = (p: string) => (PROVINCE_LABELS as Record<string, string>)[p] ?? p;
+  const cardSaysPlace =
+    has(`${card} › written for`, pickWords.writtenFor(c.road.provinces.map(label).join(", "))) &&
+    has(`${card} › you said`, pickWords.youSaid(PROVINCE_LABELS[province as Province] ?? province));
+  const cardSaysJob = c.job === null || run.pieces.some((p) => p.where === `${card} › job line` && p.text.trim() !== "");
+  const cockpitSays = c.final.plan.road.future === cockpitWords.goal.drawnOnly(c.road.label, c.road.provinces, province);
+  return cardSaysPlace && cardSaysJob && cockpitSays;
 }
 
 /** Every failure of one idea's run, invariants 1 to 6. Invariant 7 needs two runs: see `sameOutput`. */

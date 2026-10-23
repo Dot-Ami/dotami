@@ -245,13 +245,13 @@ export const TABLES: readonly TableEntry[] = [
       {
         name: "Your area",
         holds:
-          "The area you picked (one of Alberta's four census metropolitan areas, somewhere else in Alberta, or I don't know) and the day. Kept with the idea on this computer; shown on Your plan and in About this job; deleted with it. Nothing else reads it in this version.",
+          "The area you picked (one of Alberta's four census metropolitan areas, somewhere else in Alberta, or I don't know) and the day. Kept with the idea on this computer; shown on Your plan and in About this job; deleted with it. A backup you save (File → Back up…) holds the whole data file, so it holds this too. Nothing else reads it in this version.",
         columns: ["landscapeArea", "landscapeAreaSetAt"],
       },
       {
         name: "Your economic region",
         holds:
-          "The economic region you picked, or I don't know, and the day. Kept with the idea on this computer; shown on Your plan; deleted with it. About this job reads it to choose which published wage row to show.",
+          "The economic region you picked, or I don't know, and the day, from Pick a future's step 2 or from About this job's Change. Kept with the idea on this computer; shown on Your plan and in About this job; deleted with it. A backup you save (File → Back up…) holds the whole data file, so it holds this too. About this job reads it to choose which published wage row to show.",
         columns: ["economicRegion", "economicRegionSetAt"],
       },
     ],

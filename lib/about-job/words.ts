@@ -56,10 +56,15 @@ export const aboutJobWords = {
     outsideAlberta: (place: string) =>
       `DotAmi asks your region only in Alberta for now, so this is the row the wage file gives for ${place} as a whole, with the level its own code gives it.`,
     /**
-     * The region's Change, which opens the region drop-down in place. Not drawn yet: it comes with step 2's held
-     * lines about this panel, in their own change (the panel reads the kept `Venture.economicRegion` already).
+     * The region's Change, which opens the region drop-down in place (Alberta only; in the cockpit's panel, task
+     * 28h): it keeps the answer in `Venture.economicRegion` with its day. Drawn at the wages row's end, so its name
+     * says what it changes (the spec's words block has "Change"; on its own there it would read as changing the row).
      */
-    change: "Change",
+    changeName: "Change your region",
+    /** Under the region drop-down Change opens: keep the answer picked, or close it with nothing changed. */
+    changeKeep: "Keep this answer",
+    changeCancel: "Cancel",
+    changeFailed: "Not kept: no database reachable. Your region is as it was.",
     /** "an Alberta-wide figure", as the spec's example reads (its words block writes "a <province>-wide"). */
     shownUnder: (region: string, province: string) =>
       `Shown under ${region}, but the government's code for this row says it is ${/^[AEIOU]/.test(province) ? "an" : "a"} ${province}-wide figure.`,
