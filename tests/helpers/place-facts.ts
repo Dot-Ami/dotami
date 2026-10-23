@@ -124,3 +124,34 @@ export function placeFacts(c: CockpitRun): PlaceFact[] {
 
 /** A fact as one line, the same in every run that shows it. */
 export const factLine = (f: PlaceFact) => `${f.kind} · ${f.where} · ${f.what}`;
+
+/**
+ * What the catalogs write for the run's own province on the steps the plan shows, as `factLine` lines: each step's
+ * sources and *done when* lines whose citation is that province's, its official fees cited to that province, and
+ * the province's own ways to incorporate. Read from the catalogs themselves (the roads and
+ * `incorporationRoutesV2026`), never through the filters the screens use (`citationsForPlace`,
+ * `incorporationRoutesFor`), so a filter that drops the person's own province's facts shows as missing here. A cost
+ * line's amount isn't part of its line, so compare cost lines by the start of their line.
+ */
+export function ownPlaceWritten(c: CockpitRun): { lines: string[]; costLines: string[] } {
+  const province = c.final.input.scenario.profile.province;
+  const lines: string[] = [];
+  const costLines: string[] = [];
+  for (const column of c.final.plan.steps.columns) {
+    for (const shownStep of column.steps) {
+      const step = c.road.steps.find((s) => s.id === shownStep.id)!;
+      for (const citation of step.citations) if (citation.jurisdiction === province) lines.push(`source · ${step.id} · ${citation.url}`);
+      for (const line of step.doneWhen) {
+        if (line.citation.jurisdiction === province) lines.push(`done when · ${step.id} · ${line.text} (${line.citation.url})`);
+      }
+      for (const route of incorporationRoutesV2026) {
+        if (route.nodeId !== step.id || route.jurisdiction !== province) continue;
+        for (const line of route.lines) lines.push(`way to incorporate · ${step.id} · ${line.label} (${line.id})`);
+      }
+      for (const cost of step.costs) {
+        if (cost.kind === "official-fee" && cost.citation.jurisdiction === province) costLines.push(`cost line · ${step.id} · ${cost.label} (${cost.id})`);
+      }
+    }
+  }
+  return { lines: [...new Set(lines)].sort(), costLines: [...new Set(costLines)].sort() };
+}

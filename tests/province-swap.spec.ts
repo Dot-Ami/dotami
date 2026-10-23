@@ -5,6 +5,8 @@
  *
  * - every run shows only federal facts, its own province's, and facts that name no place: no other province's step,
  *   source, *done when* line, link, cost line, way to incorporate or wage row (tests/helpers/place-facts.ts);
+ * - every run shows all its own province's sources, *done when* lines, fees and ways to incorporate the catalogs
+ *   write for the steps on screen (`ownPlaceWritten`), so a filter that keeps too little fails too;
  * - the federal set (every federal fact and every fact that names no place) is the same in every run drawn on a road
  *   built from the map (road 0 in Alberta, the federal steps everywhere else);
  * - *About this job*'s wage rows are the run's own province's (or its region's, in Alberta), or Canada's where the
@@ -13,7 +15,9 @@
  *
  * What fails today is listed in tests/fixtures/ideas/accuracy-gaps.ts (`PLACE_GAPS`), the same ratchet as the idea
  * harness's. The controls plant a filter that ignores the place in the app's own code (the ways to incorporate, a
- * step's sources, the wage file's look-up), one at a time, and each must fail naming what leaked and where.
+ * step's sources, the wage file's look-up), one at a time, and each must fail naming what leaked and where; two more
+ * plant a filter that leaves out the person's own province (a step's sources, the ways to incorporate), and each
+ * must fail naming what is missing and where.
  */
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 
@@ -24,6 +28,10 @@ const plants = vi.hoisted(() => ({
   sourcesIgnoreThePlace: false,
   /** About this job reads Alberta's wage row, wherever the idea is. */
   wagesIgnoreThePlace: false,
+  /** A road written for all of Canada draws a step's federal pages only, leaving out the person's own province's. */
+  sourcesLeaveOutTheOwnPlace: false,
+  /** The Incorporating stage lists the federal way only, leaving out the person's own province's. */
+  feesLeaveOutTheOwnPlace: false,
 }));
 
 vi.mock("@/lib/engines/cfe/v2026/incorporation-routes", async (importOriginal) => {
@@ -31,6 +39,10 @@ vi.mock("@/lib/engines/cfe/v2026/incorporation-routes", async (importOriginal) =
   return {
     ...real,
     incorporationRoutesFor: (nodeId: string, province: string) => {
+      if (plants.feesLeaveOutTheOwnPlace) {
+        const { routes, provinceNotWritten } = real.incorporationRoutesFor(nodeId, province);
+        return { routes: routes.filter((route) => route.jurisdiction === "CA"), provinceNotWritten };
+      }
       if (!plants.feesIgnoreThePlace) return real.incorporationRoutesFor(nodeId, province);
       return { routes: real.incorporationRoutesV2026.filter((route) => route.nodeId === nodeId), provinceNotWritten: null };
     },
@@ -42,7 +54,12 @@ vi.mock("@/lib/engines/roads/v2026", async (importOriginal) => {
   return {
     ...real,
     citationsForPlace: (...args: Parameters<typeof real.citationsForPlace>) =>
-      plants.sourcesIgnoreThePlace ? { shown: [...args[1]], leftOut: 0 } : real.citationsForPlace(...args),
+      // As the real filter, on a road written for all of Canada only, but keeping the federal pages alone.
+      plants.sourcesLeaveOutTheOwnPlace && (args[0].provinces as readonly string[]).includes("CA")
+        ? { shown: args[1].filter((c) => c.jurisdiction === "CA"), leftOut: args[1].filter((c) => c.jurisdiction !== "CA").length }
+        : plants.sourcesIgnoreThePlace
+          ? { shown: [...args[1]], leftOut: 0 }
+          : real.citationsForPlace(...args),
   };
 });
 
@@ -60,7 +77,7 @@ import { PROVINCE_LABELS, PROVINCES, type Province } from "@/lib/scenarios/types
 import { PLACE_GAPS } from "./fixtures/ideas/accuracy-gaps";
 import { IDEAS_V1, type ExpectedRoad, type Idea } from "./fixtures/ideas/v1";
 import { runIdea, type CockpitRun } from "./helpers/idea-pipeline";
-import { factLine, placeFacts } from "./helpers/place-facts";
+import { factLine, ownPlaceWritten, placeFacts } from "./helpers/place-facts";
 
 /**
  * The ideas swapped: corpus ideas with a job, their words written with the place left for the swap. A plumber
@@ -117,10 +134,28 @@ function otherPlaces(runs: readonly SwapRun[]): { key: string; detail: string }[
 
 const unique = (keys: string[]) => [...new Set(keys)].sort();
 
+/**
+ * What the catalogs write for a run's own province on the steps it shows, but the run doesn't show: a filter that
+ * keeps too little (the person's own province's sources, *done when* lines, fees or ways to incorporate left out)
+ * rather than too much. The leak check above can't see it, and the federal set doesn't hold a province's own facts.
+ */
+function ownPlaceMissing(runs: readonly SwapRun[]): string[] {
+  return runs.flatMap(({ n, province, way, c }) => {
+    const shown = placeFacts(c).filter((f) => f.jurisdiction === province).map(factLine);
+    const written = ownPlaceWritten(c);
+    return [
+      ...written.lines.filter((line) => !shown.includes(line)),
+      ...written.costLines.filter((line) => !shown.some((s) => s === line || s.startsWith(`${line} `))),
+    ].map((line) => `idea ${n}, ${way}, in ${province} on ${c.road.id}: ${line}`);
+  });
+}
+
 afterEach(() => {
   plants.feesIgnoreThePlace = false;
   plants.sourcesIgnoreThePlace = false;
   plants.wagesIgnoreThePlace = false;
+  plants.sourcesLeaveOutTheOwnPlace = false;
+  plants.feesLeaveOutTheOwnPlace = false;
 });
 
 describe("the same idea in every province and territory (task 37a)", () => {
@@ -145,7 +180,7 @@ describe("the same idea in every province and territory (task 37a)", () => {
   it("shows no other province's step, source, done-when line, link, cost line, way to incorporate or wage row", () => {
     const found = otherPlaces(runs);
     const listed = new Set(PLACE_GAPS.map((gap) => gap.key));
-    // A new one: fix it, or list it in accuracy-gaps.ts with its story.
+    // A new one: fix it, or list it in accuracy-gaps.ts with its story (or, with none yet, who decides).
     expect(found.filter((f) => !listed.has(f.key)).map((f) => f.detail)).toEqual([]);
     // A listed one that no longer shows: take it off the list.
     const keys = new Set(found.map((f) => f.key));
@@ -169,6 +204,17 @@ describe("the same idea in every province and territory (task 37a)", () => {
         }
       }
     }
+  });
+
+  it("shows every source, done-when line, fee and way to incorporate the catalogs write for the run's own province", () => {
+    // Something to compare: Ontario's and British Columbia's employment-standards pages on the federal steps, and
+    // Alberta's registry fees and ways to incorporate on road 0.
+    for (const province of ["ON", "BC", "AB"] as const) {
+      const written = runs.filter((r) => r.province === province).flatMap((r) => ownPlaceWritten(r.c).lines);
+      expect(written.filter((line) => line.startsWith("source · ")).length, `${province}: its own sources`).toBeGreaterThan(0);
+    }
+    expect(runs.filter((r) => r.province === "AB").flatMap((r) => ownPlaceWritten(r.c).lines).some((line) => line.startsWith("way to incorporate · "))).toBe(true);
+    expect(ownPlaceMissing(runs)).toEqual([]);
   });
 
   it("shows About this job's wage row for the run's own place, or Canada's where the government points there", () => {
@@ -215,5 +261,34 @@ describe("the province swap fails on a planted filter that ignores the place (co
     const found = leaks().filter((f) => f.key.includes(" · wage row · "));
     expect(unique(found.map((f) => f.key.split(" · ")[0]!))).toEqual(PROVINCES.filter((p) => p !== "AB").sort());
     expect(found.every((f) => f.detail.endsWith("written for AB"))).toBe(true);
+  });
+
+  // Filters that keep too little: nothing leaks and the federal set stays the same, so only the own-province check
+  // above can fail on them (review of PR #203: the earlier checks stayed green on the sources plant).
+  const missing = () => ownPlaceMissing(swapRuns([51]));
+
+  it("passes the own-province check on the same idea without a plant", () => {
+    expect(missing()).toEqual([]);
+  });
+
+  it("a source filter that leaves out the person's own province: Ontario's and British Columbia's pages missing from their own runs", () => {
+    plants.sourcesLeaveOutTheOwnPlace = true;
+    const found = missing();
+    expect(found).toContain(
+      "idea 51, typed, in ON on road-federal-steps-ca: source · branch-hire-first-employee · https://www.ontario.ca/document/your-guide-employment-standards-act-0/small-business",
+    );
+    expect(found).toContain(
+      "idea 51, picked, in BC on road-federal-steps-ca: source · branch-hire-first-employee · https://www2.gov.bc.ca/gov/content/employment-business/employment-standards-advice/employment-standards",
+    );
+    // The leak check and the federal set don't see it.
+    const listed = new Set(PLACE_GAPS.map((gap) => gap.key));
+    expect(leaks().filter((f) => !listed.has(f.key))).toEqual([]);
+  });
+
+  it("a way-to-incorporate filter that leaves out the person's own province: Alberta's ways missing in Alberta", () => {
+    plants.feesLeaveOutTheOwnPlace = true;
+    const found = missing();
+    expect(found.length).toBeGreaterThan(0);
+    expect(found.every((line) => line.includes(", in AB on ") && line.includes(": way to incorporate · "))).toBe(true);
   });
 });
