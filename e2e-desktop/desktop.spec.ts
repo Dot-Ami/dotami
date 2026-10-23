@@ -1494,7 +1494,10 @@ test("Delete with the safety copies ticked: the words are gone from dotami.db an
 
   // The backup saved elsewhere still brings it all back.
   page = await launch();
-  await page.getByRole("link", { name: "Your futures →" }).click();
+  // Everything deleted: the front door offers no Your futures (2026-10-23), and the ideas page is empty.
+  await expect(page.getByRole("heading", { name: /See the road/ })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Your futures →" })).toHaveCount(0);
+  await page.goto(new URL("/ventures", page.url()).toString());
   await expect(page.getByText("Nothing saved yet.")).toBeVisible();
   await restoreFrom(elsewhere, passphrase);
   page = await launch();

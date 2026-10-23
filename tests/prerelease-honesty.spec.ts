@@ -12,7 +12,7 @@
  * 4. The front door's chips are in the words file, and none promises anything about the person's taxes.
  * 5. The front door offers Your futures and Open cockpit only once an idea is saved.
  */
-import { readdirSync, readFileSync, statSync } from "node:fs";
+import { readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
@@ -170,10 +170,11 @@ describe("1. Your destination's answers are never in window storage", () => {
 function sourceFiles(dirs: readonly string[]): { file: string; text: string }[] {
   const out: { file: string; text: string }[] = [];
   const walk = (dir: string) => {
-    for (const name of readdirSync(dir)) {
-      const path = join(dir, name);
-      if (statSync(path).isDirectory()) walk(path);
-      else if (/\.(ts|tsx)$/.test(name)) out.push({ file: path.replace(/\\/g, "/"), text: readFileSync(path, "utf8") });
+    // The directory listing's own entry types: no separate stat of a path before it is read.
+    for (const entry of readdirSync(dir, { withFileTypes: true })) {
+      const path = join(dir, entry.name);
+      if (entry.isDirectory()) walk(path);
+      else if (entry.isFile() && /\.(ts|tsx)$/.test(entry.name)) out.push({ file: path.replace(/\\/g, "/"), text: readFileSync(path, "utf8") });
     }
   };
   for (const dir of dirs) walk(dir);
