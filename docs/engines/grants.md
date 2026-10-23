@@ -34,11 +34,17 @@ confirmation, the recommended shape is a `kind` field:
 kind: "grant" | "tax-credit" | "financing"
 ```
 
-CSBFP entry facts (validated): up to $500K equipment, government guarantees up to 85% of
-lender loss, 74% of loans to businesses <1yr old, **365-day retroactive window** (equipment
-bought now can roll into a CSBFP loan later — surface this; it changes purchase timing
-decisions), collateral = the equipment itself. Compass framing: "if equipment is on your
-path, CSBFP may make financing available without revenue history."
+CSBFP entry facts, as first written: up to $500K equipment, government guarantees up to 85% of
+lender loss, 74% of loans to businesses <1yr old, a 365-day retroactive window, collateral = the
+equipment itself. Compass framing: "if equipment is on your path, CSBFP may make financing
+available without revenue history."
+
+**As built since 2026-10-23** (the maintainer's reading list, items `grant-csbfp/equipment-limit` and
+`grant-csbfp/365-days`): the entry says what ISED's loans page says, in its words and with its page as a
+tool-checked source (*Helping small businesses get loans*): up to $1,000,000 in term loans for any one
+borrower, of which no more than $500,000 for leasehold improvements and equipment together (not "specifically
+for equipment"), and security taken on the assets financed. The 365-day roll-in line is gone: none of ISED's
+program pages held it. The 85% and 74% figures were never on screen.
 
 ## Authoring rules specific to this engine
 

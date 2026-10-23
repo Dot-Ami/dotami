@@ -56,7 +56,9 @@ export const writeOffCategoriesV2026 = [
     description:
       "Vehicle costs for business use — fuel, insurance, maintenance, lease, or CCA on owned vehicles.",
     eligibility:
-      "Logbook or reasonable basis for business-use percentage; personal use portion not deductible. Two statutory caps apply to passenger vehicles regardless of business use: loan interest is limited to a prescribed daily amount ($250 per 30 days in the Act), and lease costs to a prescribed monthly amount ($600 per 30 days in the Act) — both 'or such other amount as may be prescribed', so confirm the current figure.",
+      // The amounts are the ones Income Tax Regulations s.7307 prescribe, not the Act's own $250 and $600 (each
+      // "or such other amount as may be prescribed"): corrected 2026-10-23 from the maintainer's reading list.
+      "Logbook or reasonable basis for business-use percentage; personal use portion not deductible. Two statutory caps apply to passenger vehicles regardless of business use: loan interest under the Act's s.67.2, whose amount Income Tax Regulations s.7307 prescribe as $350 for a car acquired after 2023 ($300 for one acquired after 2000 and before 2024), and lease costs under s.67.3, whose amount s.7307 prescribes as $1,100 plus sales tax for a lease entered into after 2024 (earlier leases have their own amounts in the same section).",
     lensAnnotations: {
       tax: "If the venture requires travel to clients or job sites, business-use vehicle costs may be deductible proportionally.",
       legal: "If employees drive company vehicles, insurance and safety obligations differ from owner-operated use.",
@@ -75,7 +77,31 @@ export const writeOffCategoriesV2026 = [
         url: "https://laws-lois.justice.gc.ca/eng/acts/I-3.3/section-67.3.html",
         lastVerified: "2026-09-13",
         verification: { status: "supported", method: "Provision text read from the consolidated Act in corpus.db (2026-09-13); the 67.2 / 67.3 caps the reading found are now in the entry text." },
-        note: "Read from the consolidated Act (the maintainers' statute store). Proportionality rests on 18(1)(a) 'to the extent... for the purpose of gaining or producing income'; 67 requires reasonableness. The earlier text mentioned lease costs without the caps: 67.2 limits interest ($250/30 days) and 67.3 limits lease charges ($600/30 days), each 'or such other amount as may be prescribed'.",
+        note: "Read from the consolidated Act (the maintainers' statute store). Proportionality rests on 18(1)(a) 'to the extent... for the purpose of gaining or producing income'; 67 requires reasonableness. 67.2 limits interest and 67.3 limits lease charges; the Act's own figures, $250 and $600, each stand 'or such other amount as may be prescribed', and the amounts prescribed are in Income Tax Regulations s.7307 (the next source).",
+      },
+      {
+        title: "Income Tax Regulations s.7307 — the amounts prescribed for the interest and lease caps (ss.67.2, 67.3)",
+        corpus: [
+          { source: "itr", label: "7307", sub: "(2)" },
+          { source: "itr", label: "7307", sub: "(3)" },
+        ],
+        authority: "federal",
+        jurisdiction: "CA",
+        // Added 2026-10-23 (the maintainer's reading list, item writeoff-vehicle/interest-and-lease-caps): a tool
+        // found these words on the consolidated Regulations' page that day; no person has read it yet (option B).
+        url: "https://laws-lois.justice.gc.ca/eng/regulations/C.R.C.,_c._945/section-7307.html",
+        toolCheck: {
+          checkedOn: "2026-10-23",
+          quotes: [
+            "For the purpose of the description of A in section 67.2 of the Act, the amount prescribed in respect of an automobile that is acquired",
+            "or after 2000 and before 2024, is $300; and",
+            "after 2023, is $350.",
+            "For the purpose of the description of A in paragraph 67.3(c) of the Act, the amount prescribed in respect of a taxation year of a lessee is",
+            "for leases entered into after 2024, $1,100, and",
+            "is the sum of the federal and provincial sales taxes that would have been payable on a monthly payment under the lease",
+          ],
+        },
+        note: "The consolidated Income Tax Regulations: s.7307(2) prescribes the interest amount for s.67.2 of the Act by when the car was acquired, s.7307(3) the lease amount for s.67.3 by when the lease was entered into, plus sales tax.",
       },
       {
         title: "Motor vehicle expenses",

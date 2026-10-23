@@ -97,7 +97,11 @@ export const cockpitWords = {
       onlyIf: (n: number) => `${count(n, "official fee applies", "official fees apply")} only sometimes, not added up`,
       notPriced: (n: number) => `${n} not priced yet`,
       leftOut: (n: number) => `${n} left out: not on your path`,
-      waiting: (n: number, fork: string) => `${n} ${n === 1 ? "waits" : "wait"} on a pick at ${quoted(fork)}`,
+      // The official fees among the waiting lines are named with their sum, so the gauge's total plus them is
+      // what Compare shows for an ending (pre-release fix, 2026-10-23): none is added to the total above.
+      waiting: (n: number, fork: string, feeCents = 0, feeLines = 0) =>
+        `${n} ${n === 1 ? "waits" : "wait"} on a pick at ${quoted(fork)}` +
+        (feeLines > 0 ? `, ${count(feeLines, "official fee", "official fees")} among them (${formatMoney(feeCents)})` : ""),
       savings: (cents: number) => `savings ${formatMoney(cents)}`,
       noSavings: "savings: not given yet",
       difference: (cents: number) => `savings minus both: ${formatMoney(cents)}`,
@@ -663,6 +667,32 @@ export const cockpitWords = {
     quoteNote: (day: string | null, from: string) => `yours, agreed ${day ?? "(day not kept)"}, from ${from}`,
     notAdvice:
       "DotAmi is not legal or tax advice. This plan is a preparation tool for your accountant and lawyer: it shows what you told DotAmi and where each fact comes from, and it ranks nothing.",
+  },
+
+  /**
+   * Export's markdown (lib/playbook/road-export.ts; pre-release fix of 2026-10-23): the road on screen, step by
+   * step, in the plan's own words (`plan` above) with these few headings of its own.
+   */
+  exportDoc: {
+    heading: (idea: string) => `${idea} — venture playbook`,
+    title: (idea: string) => `${idea} — DotAmi playbook`,
+    lead: "Planning information from the DotAmi catalog and the road on screen, not tax or legal advice.",
+    profile: "Venture profile",
+    skills: "Skills and requirements on this step",
+    officialLinks: "Official links",
+    costs: "Cost lines",
+    noAmount: "no amount yet",
+    source: "Source",
+    citations: "Citations",
+    wordsFound: "Words found on the page",
+    note: "Note",
+    /** A road 0 step that is a stage of the tax map keeps the tax map's own fields under it. */
+    catalog: "From the tax map's catalog",
+    trigger: "Trigger",
+    description: "Description",
+    taxImpact: "Tax impact",
+    lensTax: "Lens — tax",
+    lensLegal: "Lens — legal",
   },
 
   /**

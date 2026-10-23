@@ -1,5 +1,5 @@
 import { itemsForStep } from "@/lib/brain/node-items";
-import type { ConfirmedFigure } from "@/lib/brain/types";
+import type { ConfirmedFigure, UnlockItem } from "@/lib/brain/types";
 import type { JobList } from "@/lib/engines/oasis/v2026";
 import { forksAreTheMapToggles, type Road, type SkillItem } from "@/lib/engines/roads/v2026";
 import { formatMoney } from "@/lib/format/money-and-months";
@@ -185,24 +185,35 @@ export function stepBadges(step: StepEvaluation, overlays: Overlays): string[] {
 }
 
 /**
+ * The rules and tax cards the map draws, each once: those a step on the road names, from no card the map
+ * draws dashed (set aside, or off the path). The Rules & tax switch counts these, and since the pre-release
+ * fix of 2026-10-23 so does Compare's "Rules and tax cards" row, run once with each ending picked: until then
+ * Compare counted every card the rules lit, so on the apprentice road it said "2 apply" while the switch said
+ * "0 cards" (none of that road's steps names a card).
+ */
+export function rulesCardsOnMap(road: Road, evaluation: RoadEvaluation, scenario: Scenario): UnlockItem[] {
+  const evaluated = new Map(evaluation.steps.map((s) => [s.stepId, s]));
+  const cards = new Map<string, UnlockItem>();
+  for (const step of road.steps) {
+    if (setAsideOnMap(mapPlace(step.id, scenario, evaluated.get(step.id)))) continue;
+    for (const item of itemsForStep(evaluation.rules.unlocks, step).forThisStage) if (!cards.has(item.id)) cards.set(item.id, item);
+  }
+  return [...cards.values()];
+}
+
+/**
  * The counts on the overlay switches: skills listed and cost lines for the whole road, and the rules and
- * tax cards the map draws, each once (none from a card it draws dashed: set aside, or off the path).
+ * tax cards the map draws (`rulesCardsOnMap`).
  */
 export function overlayCounts(
   road: Road,
   evaluation: RoadEvaluation,
   scenario: Scenario,
 ): { skillsListed: number; costLines: number; rulesCards: number } {
-  const evaluated = new Map(evaluation.steps.map((s) => [s.stepId, s]));
-  const cards = new Set<string>();
-  for (const step of road.steps) {
-    if (setAsideOnMap(mapPlace(step.id, scenario, evaluated.get(step.id)))) continue;
-    for (const item of itemsForStep(evaluation.rules.unlocks, step).forThisStage) cards.add(item.id);
-  }
   return {
     skillsListed: evaluation.gauges.skills.listed,
     costLines: road.steps.reduce((n, s) => n + s.costs.length, 0),
-    rulesCards: cards.size,
+    rulesCards: rulesCardsOnMap(road, evaluation, scenario).length,
   };
 }
 
@@ -275,7 +286,7 @@ export function gaugeView(evaluation: RoadEvaluation, road: Road, scenario: Scen
       ...(m.onlyIfFeeLines > 0 ? [words.gauges.money.onlyIf(m.onlyIfFeeLines)] : []),
       ...(m.notPricedLines > 0 ? [words.gauges.money.notPriced(m.notPricedLines)] : []),
       ...(m.leftOutLines > 0 ? [words.gauges.money.leftOut(m.leftOutLines)] : []),
-      ...m.waitingOnForks.map((w) => words.gauges.money.waiting(w.lines, w.label)),
+      ...m.waitingOnForks.map((w) => words.gauges.money.waiting(w.lines, w.label, w.officialFeesCents, w.officialFeeLines)),
       savingsLine,
       // Road evaluation gives the difference only when there are savings and a line with an amount.
       ...(m.differenceCents !== null ? [words.gauges.money.difference(m.differenceCents)] : []),

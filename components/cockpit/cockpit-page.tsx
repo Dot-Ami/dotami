@@ -44,6 +44,7 @@ import {
   type NotToldRow,
   type ToldRow,
 } from "@/lib/cockpit/told";
+import type { PlanArgs } from "@/lib/cockpit/plan";
 import { cockpitInput, costLineNote, nextOnYourRoad, overlayCounts, type GaugeId } from "@/lib/cockpit/view";
 import { cockpitWords as words } from "@/lib/cockpit/words";
 import { aboutJobWords } from "@/lib/about-job/words";
@@ -350,6 +351,26 @@ export function CockpitPage({ initialScenario, pinned = false, example }: Cockpi
   // the path (the maintainer, 2026-10-13). None on today's Alberta road, whose sides the tax rules colour
   // whichever is picked, so both columns' counts would come out the same.
   const compareForks = useMemo(() => (told ? forksToCompare(told.input) : []), [told]);
+  // Export's input (pre-release fix, 2026-10-23): the road on screen as Your plan reads it, from the same kept
+  // answers and the same input without the what-if, so Export prints this road's own steps on every road.
+  const exportArgs = useMemo<PlanArgs | null>(
+    () =>
+      told
+        ? {
+            ideaName: told.input.scenario.profile.name,
+            input: told.input,
+            kept: keptAnswers(kept, figures),
+            firstWords: kept?.firstWords ?? null,
+            destination: kept?.destination ?? null,
+            incomeWanted: kept?.incomeWanted ?? null,
+            roadChosenOn: kept?.future.roadChosenOn ?? null,
+            jobPickedOn: kept?.future.job?.pickedOn ?? null,
+            where: { area: kept?.future.area ?? null, region: kept?.future.region ?? null },
+            today,
+          }
+        : null,
+    [told, kept, figures, today],
+  );
   // The example's story: what each of the example person's answers changed, from road evaluation.
   const story = useMemo(
     () => (example && told ? exampleStory(told.input, example.whatIfFirstYearSalesDollars) : null),
@@ -1505,9 +1526,9 @@ export function CockpitPage({ initialScenario, pinned = false, example }: Cockpi
                 />
               ) : null}
 
-              {rightPanel === "playbook" ? (
+              {rightPanel === "playbook" && exportArgs ? (
                 <div className="h-full overflow-y-auto border-l border-rule bg-ink3 max-lg:border-l-0">
-                  <PlaybookExportPanel scenario={scenario} roadId={road.id} ventureId={ventureId} onClose={() => setRightPanel(null)} />
+                  <PlaybookExportPanel planArgs={exportArgs} ventureId={ventureId} onClose={() => setRightPanel(null)} />
                 </div>
               ) : null}
             </div>

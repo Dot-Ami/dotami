@@ -225,6 +225,8 @@ its row leaves this list.
 | Added | Page | Where it is cited | What to read for |
 |---|---|---|---|
 | 2026-10-23 | Alberta, *Employment standards* (https://www.alberta.ca/employment-standards) | map stage *Hire first employee* (road 0 in Alberta; Alberta's page on the federal road) | that it is the page an Alberta employer reads for the employment standards the stage names (minimum wage, overtime, holidays, leaves, vacations, termination) |
+| 2026-10-23 | Income Tax Regulations s.7307 (https://laws-lois.justice.gc.ca/eng/regulations/C.R.C.,_c._945/section-7307.html) | write-off *Motor vehicle expenses* (`writeoff-vehicle`) | the amounts now on the card: $350 loan interest for a car acquired after 2023, $300 for one acquired after 2000 and before 2024 (s.7307(2), for s.67.2 of the Act), and $1,100 plus sales tax for a lease entered into after 2024 (s.7307(3), for s.67.3); they replace the Act's own $250 and $600 |
+| 2026-10-23 | ISED, *Helping small businesses get loans* (https://ised-isde.canada.ca/site/canada-small-business-financing-program/en/canada-small-business-financing-program/find-loan-your-small-business/helping-small-businesses-get-loans) | program *Canada Small Business Financing Program* (`grant-csbfp`) | the amounts now quoted on the card: up to $1,000,000 in term loans for any one borrower, of which no more than $500,000 for leasehold improvements and equipment; that security is taken on the assets financed |
 
 ## When a cited page moves
 

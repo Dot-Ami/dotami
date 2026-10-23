@@ -17,6 +17,7 @@ import { isBranchDecided } from "@/lib/scenarios/graph";
 import { isNotSaid, withSaid, withSalesTarget } from "@/lib/scenarios/not-said";
 import type { Scenario } from "@/lib/scenarios/types";
 
+import { rulesCardsOnMap } from "./view";
 import { cockpitWords as words } from "./words";
 
 /**
@@ -542,7 +543,8 @@ export function compareEndings(withWhatIf: RoadEvaluationInput, forkId: string):
   const markOf = new Map(input.skillMarks.flatMap((m) => (m.skillItemId !== null ? [[m.skillItemId, m.mark] as const] : [])));
 
   const columns = fork.sides.map((side) => {
-    const evaluation = evaluateRoad(withSide(input, fork, side));
+    const sided = withSide(input, fork, side);
+    const evaluation = evaluateRoad(sided);
     const onPath = evaluation.steps.filter((s) => s.state !== "not-on-your-path");
     // Skills listed on the steps on this path, each counted once, with the person's marks.
     const items = [...new Set(onPath.flatMap((s) => stepById.get(s.stepId)?.needs ?? []))];
@@ -555,7 +557,8 @@ export function compareEndings(withWhatIf: RoadEvaluationInput, forkId: string):
       else skills.notMarked += 1;
     }
     const m = evaluation.gauges.money;
-    const cards = evaluation.rules.unlocks;
+    // The cards the map would draw with this ending picked, counted as the Rules & tax switch counts them.
+    const cards = rulesCardsOnMap(sided.road, evaluation, sided.scenario);
     const c = words.compare;
     const values: Record<CompareRowId, string> = {
       "steps-on-path": String(onPath.length),

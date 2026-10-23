@@ -534,6 +534,13 @@ placed in phase 3.
     line; the Alberta area and region aren't shown outside Alberta (About this job, Your plan), still kept for
     a later history (`e2e/place-change.spec.ts`, `tests/places-and-programs.spec.ts`). The full Change box,
     the history and outside Canada are phase 3 (a-call-8, a-call-9, a-call-10)
+  - [x] Pre-release numbers and amounts (2026-10-23, the screen review 30f and the maintainer's reading list):
+    Export is the road on screen, its steps, done-when lines, cost lines and the place's sources
+    (`lib/playbook/road-export.ts`); Compare and the Rules & tax switch count the cards one way; the money gauge
+    names the official fees waiting on a fork, so it adds up to Compare; the vehicle caps are Income Tax
+    Regulations s.7307's $350 / $300 and $1,100, and the Small Business Financing Program says ISED's own words
+    with no 365-day line (both sources checked by a tool, on the reading list); About this job says "as
+    published" beside two equal wage levels (`tests/prerelease-numbers.spec.ts`)
   - [x] 28d: outside Alberta, the federal steps that apply everywhere, plus "Written for Alberta" with the
     person's own province named; Alberta-only steps and pages left out (full B.C. and Ontario roads come
     later). Built 2026-10-21 (`lib/engines/roads/v2026/federal-steps-ca.ts`, 13 steps; *Pick a future* lists it

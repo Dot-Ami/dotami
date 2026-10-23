@@ -39,6 +39,18 @@ person is asked).
 
 ### What DotAmi keeps, and where
 
+- **Export is built in the page, from what Your plan shows (2026-10-23, pre-release fix).** Asks: nothing new.
+  Keeps: nothing new. Until now the cockpit's **Export** sent the idea's map answers and the road to DotAmi's own
+  server on this computer (`POST /api/playbook`), which answered with the tax map's catalog stages. Now the
+  panel builds the markdown in the page itself from what the cockpit already read (`lib/playbook/road-export.ts`),
+  and nothing is sent for it, to DotAmi's server or off the computer. What it holds is what Your plan shows for
+  the idea: your words typed for it and your newest destination, your agreed yearly income, the road and the
+  endings picked, in Alberta your area and economic region as picked, your step statuses and ticks, your skill
+  marks, your agreed cost quotes, and *What you've told DotAmi*. So the line of 2026-10-22 below that Export
+  "doesn't carry" the area and region is no longer true: it carries them, as Your plan does. It stays on screen
+  until you press **Copy markdown** (your clipboard) or **Save as .md** (a file where you choose, *Files you save
+  yourself* in [`lib/privacy/inventory.ts`](../lib/privacy/inventory.ts)). The route `/api/playbook` still
+  answers, unchanged, but no page calls it any more.
 - **Changing your place on a saved idea changes that idea (2026-10-23, S2.5.33's bug 33a).** Asks: *Which
   province or territory are you in?*, from *Change* on *You told us your place is …* in the cockpit's *What
   you've told DotAmi*, the thirteen provinces and territories in a drop-down, opened on the idea's own place.
