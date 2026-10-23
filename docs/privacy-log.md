@@ -71,6 +71,26 @@ person is asked).
   Giving the estimate takes the third year off that list; Keep on the what-if takes the first year off it;
   taking either back sets it to 0 and puts it back. Nothing new leaves the computer.
 
+### New powers or permissions
+
+- **Fewer, not more: the desktop app's server answers only DotAmi's own window (2026-10-23).** Until now,
+  while DotAmi was open, any program on the computer, including one running under another Windows account on
+  a shared PC, could read and change the person's data through `http://127.0.0.1:<port>/api/...` with no
+  login (the files themselves stayed out of that account's reach). Where it was: the desktop app on the
+  person's own computer, only while it was open; nothing was sent anywhere and there is no sign it was ever
+  used. Now each launch makes a fresh random secret that only the window sends, and everything else gets a
+  403 ([`lib/http/launch-secret.ts`](../lib/http/launch-secret.ts), [`middleware.ts`](../middleware.ts),
+  [`desktop/main.mjs`](../desktop/main.mjs)). Keeps: the secret in the app's memory and the server's
+  environment for that launch only; never on the disk, never in the log. Nothing new is kept and nothing
+  leaves the computer.
+
+### What the policy will need to say
+
+- **"DotAmi's desktop app answers only its own window. It does not protect your data from a program running
+  under your own Windows account, which can read the app's memory and files. A copy run from source answers
+  every program on the computer while it runs."** ([figures-privacy-review.md](architecture/figures-privacy-review.md),
+  the rows for another Windows account and for a program running as the person.)
+
 ---
 
 ## [0.4.1] — 2026-10-20

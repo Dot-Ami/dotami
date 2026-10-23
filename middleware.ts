@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 
 import { allowedHostsFromEnv, isAllowedHost } from "@/lib/http/allowed-host";
+import { launchGuardFromEnv, refuseWithoutLaunchSecret } from "@/lib/http/launch-secret";
 
 /**
  * Content-Security-Policy with a per-request nonce (2026-09-20 hardening).
@@ -30,6 +31,11 @@ export function middleware(request: NextRequest) {
       headers: { "content-type": "text/plain; charset=utf-8" },
     });
   }
+  // Second, also on every request: only DotAmi's own window, which carries this launch's secret
+  // (lib/http/launch-secret.ts). Another program on the computer, another Windows account's included,
+  // gets a 403 before any page, server action or API route runs. Read per request, so a test can set it.
+  const refused = refuseWithoutLaunchSecret(request, launchGuardFromEnv(process.env), request.nextUrl.pathname.startsWith("/api/"));
+  if (refused) return refused;
   // API routes keep next.config's fixed headers, and Next's link prefetches get no CSP of their
   // own (they used to skip the middleware entirely; a header a page can set is no reason to skip
   // the host check above, so they now pass through here instead).
@@ -66,7 +72,8 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  // Everything except Next's own static and image assets and the favicon (public build files,
-  // no data): the host check must see every page, API route and prefetch.
-  matcher: ["/((?!_next/static|_next/image|favicon.ico).*)"],
+  // Everything except Next's own static build files and the favicon (public, no data): the host
+  // check and the launch secret must see every page, API route and prefetch. The image optimiser
+  // (/_next/image) is checked too, since it fetches other addresses of the app for its caller.
+  matcher: ["/((?!_next/static|favicon.ico).*)"],
 };

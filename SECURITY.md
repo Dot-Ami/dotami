@@ -44,8 +44,18 @@ advisory unless you ask not to be.
   only as absolute `https:` URLs (`lib/http/safe-url.ts`). The statute-store lookup runs as
   a child process with allow-listed arguments and a minimal environment — the database URL
   and any API key never reach it.
+- **Other accounts on the same computer (desktop app):** `127.0.0.1` is shared by every Windows
+  account on a computer. The desktop app's server answers only DotAmi's own window: each launch
+  makes a fresh random secret that the window sends as a header, added by Electron below the page,
+  and every page, server action and API route refuses a request without it (`lib/http/launch-secret.ts`,
+  `middleware.ts`, `desktop/main.mjs`; since 2026-10-23, before which another account's program could
+  read and change the person's data through `/api/...` while DotAmi was open). It does **not**
+  stop a program running as the same Windows user, which can read the app's memory and files.
 - **Your machine:** `npm run dev` binds to `127.0.0.1` only. Pass `-- -H 0.0.0.0` if you
-  knowingly want the dev server reachable from your network.
+  knowingly want the dev server reachable from your network. A copy run from source has no window
+  to send a launch secret, so any program on the computer can call it while it runs; it says so in
+  the terminal when it starts. Setting `DOTAMI_LAUNCH_SECRET` (32 characters or more) turns the guard
+  on for it, as the browser tests do.
 
 Contract tests for the above: `tests/security-hardening.spec.ts`. Independent scanners run on
 2026-09-20/21: gitleaks (history + tree, `.gitleaks.toml`), Snyk Open Source and Snyk Code

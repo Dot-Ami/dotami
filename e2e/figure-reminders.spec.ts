@@ -18,6 +18,7 @@
 import { expect, test, type Locator, type Page } from "@playwright/test";
 
 import { startAsAReturnVisit } from "./cockpit-calm";
+import { launchSecretHeaders } from "./launch-secret";
 
 // The map's reminder banner sits in the cockpit's rail, folded on a first visit since 2026-10-17: these tests
 // are about the reminders, so each starts as a person who had opened everything (e2e/cockpit-calm.ts).
@@ -39,7 +40,8 @@ const QUARTER_BANNER = "Figure reminder, quarterly: July to September 2026";
 // already has one; the limit itself is unchanged.
 test.use({
   timezoneId: "America/Vancouver",
-  extraHTTPHeaders: { "X-Forwarded-For": "e2e-figure-reminders" },
+  // This replaces the config's headers, so the launch secret is spread back in (e2e/launch-secret.ts).
+  extraHTTPHeaders: { ...launchSecretHeaders(), "X-Forwarded-For": "e2e-figure-reminders" },
 });
 
 function cardOf(page: Page, name: RegExp | string): Locator {

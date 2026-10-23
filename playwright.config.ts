@@ -1,4 +1,8 @@
+import { randomBytes } from "node:crypto";
+
 import { defineConfig, devices } from "@playwright/test";
+
+import { LAUNCH_SECRET_ENV, LAUNCH_SECRET_HEADER } from "./lib/http/launch-secret";
 
 /**
  * Browser tests: the app built and started for real, driven like a person would drive it.
@@ -9,6 +13,13 @@ import { defineConfig, devices } from "@playwright/test";
  */
 const PORT = 3123;
 const DATABASE_URL = "file:./e2e/dotami.db";
+
+// The test server answers only requests that carry its launch secret, as the desktop app's server
+// answers only DotAmi's window (lib/http/launch-secret.ts). One secret per run, made here in the
+// runner: its worker processes load this file again and inherit the value through the environment,
+// so the server and every test's browser hold the same one. It is never printed or saved.
+process.env[LAUNCH_SECRET_ENV] ||= randomBytes(32).toString("base64url");
+const LAUNCH_SECRET = process.env[LAUNCH_SECRET_ENV];
 
 export default defineConfig({
   testDir: "e2e",
@@ -22,6 +33,9 @@ export default defineConfig({
     baseURL: `http://127.0.0.1:${PORT}`,
     viewport: { width: 1280, height: 720 },
     trace: "retain-on-failure",
+    // What DotAmi's window adds to every request it makes (desktop/main.mjs sendLaunchSecret). A test
+    // that sets its own extraHTTPHeaders spreads e2e/launch-secret.ts launchSecretHeaders() into them.
+    extraHTTPHeaders: { [LAUNCH_SECRET_HEADER]: LAUNCH_SECRET },
   },
   projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"], viewport: { width: 1280, height: 720 } } }],
   webServer: {
@@ -42,6 +56,7 @@ export default defineConfig({
       // checks both). Every browser test shares one client, so otherwise the suite's size alone
       // trips the limits on a fast machine. Set only here: the desktop app removes it.
       DOTAMI_E2E_RATE_LIMITS: "opt-in",
+      [LAUNCH_SECRET_ENV]: LAUNCH_SECRET,
     },
   },
 });

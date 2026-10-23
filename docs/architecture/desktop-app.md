@@ -110,6 +110,22 @@ Edge cases: [settings-and-edge-cases.md § The desktop app](settings-and-edge-ca
    `DOTAMI_DATABASE_KEY` only when "on", and `DOTAMI_DATABASE_PLAIN_LEFT` (a count);
    `lib/db/lock.ts` reads them and `lib/prisma.ts` opens the file with the key. Nor `DEBUG`: the
    database adapter prints query values when it names it.
+   **It answers only DotAmi's own window (2026-10-23).** `127.0.0.1` is shared by every Windows account
+   on the computer, so "this computer only" was not "this person only": while DotAmi was open, a program
+   under another account could call `/api/...` and read or change the person's data with no login (the
+   files themselves stayed out of its reach). Now each launch makes a fresh random secret
+   (`randomBytes(32)` in `desktop/main.mjs`), passes it to the server as `DOTAMI_LAUNCH_SECRET` (one
+   from the shell is never passed on), and adds it as the `x-dotami-launch-secret` header to every
+   request the window makes to its own origin (`sendLaunchSecret`, Electron's
+   `session.webRequest.onBeforeSendHeaders`), and to nothing else. It is added below the page, so
+   page scripts never see it, and it is never written to a file or the log. `middleware.ts` refuses
+   every page, server action and API route without the exact header with 403 (a constant-time compare,
+   `lib/http/launch-secret.ts`); a desktop server started without a secret refuses everything rather
+   than answering everyone. The agree and settings routes check it again, as well as
+   `Sec-Fetch-Site`. **Limit:** a program running as the person's own Windows account can read the
+   secret from DotAmi's memory, so this doesn't stop it (the privacy review says so). A copy run from
+   source has no window to send a secret: its guard is off and it says so in the terminal
+   (`scripts/next.mjs`). Desktop-tested in `e2e-desktop/desktop.spec.ts`.
 6. **The window.** It shows only DotAmi's own pages. New windows are refused; an `https` link to
    anywhere else opens in the person's own browser. The only permission granted is writing to
    the clipboard (the settings page's *Copy path*). A file the page saves (the calendar file, a
