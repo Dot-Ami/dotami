@@ -3,8 +3,9 @@
  * lands on a future not written for it with nothing on screen saying so). The plant is the one the idea harness's
  * own controls use for a silent fallback (tests/idea-harness-plants.spec.ts): the first save drops the road the
  * person opened on step 3, so the cockpit draws the general road as "No future picked". Here the failure it makes is
- * also written into a known-gaps list, the way a ratchet entry would hide it, and the gate
- * (`silentFallbackProblems`, held in tests/idea-harness.spec.ts) still fails.
+ * also written into a known-gaps list, the way a ratchet entry would try to hide it: the ratchet still counts it as
+ * unlisted (#204's NEVER_A_KNOWN_GAP), and the gate (`silentFallbackProblems`, held in tests/idea-harness.spec.ts)
+ * still fails too.
  */
 import { afterEach, describe, expect, it, vi } from "vitest";
 
@@ -52,7 +53,7 @@ describe("call 32: a silent fallback fails the tests even when a known gap lists
       "idea-v1-0046 · picked",
       "idea-v1-0046 · typed",
     ]);
-    // Written into the known gaps, the ratchet lets them through: nothing is "unlisted".
+    // Written into the known gaps, as a ratchet entry would try to hide them.
     const hiding: KnownGap[] = fallbacks.map((f) => ({
       invariant: f.invariant,
       subject: f.subject,
@@ -62,8 +63,15 @@ describe("call 32: a silent fallback fails the tests even when a known gap lists
       ideas: [Number(f.ideaId.slice(-4))],
     }));
     const listed = runHarness(IDEAS, hiding);
-    expect(listed.unlisted.filter((f) => f.invariant === "ends:no-silent-fallback")).toEqual([]);
-    // The gate doesn't: each fallback, and each entry that lists one, is named.
+    // The ratchet refuses them too: since #204 a silent fallback can never be a known gap (NEVER_A_KNOWN_GAP), so
+    // the listed entries are dropped and every fallback still counts as unlisted.
+    expect(listed.unlisted.filter((f) => f.invariant === "ends:no-silent-fallback").map((f) => `${f.ideaId} · ${f.subject}`).sort()).toEqual([
+      "idea-v1-0004 · picked",
+      "idea-v1-0004 · typed",
+      "idea-v1-0046 · picked",
+      "idea-v1-0046 · typed",
+    ]);
+    // And the gate: each fallback, and each entry that lists one, is named.
     const problems = silentFallbackProblems(listed.failures, hiding);
     expect(problems).toHaveLength(8);
     expect(problems.filter((line) => line.startsWith("idea-v1-0046 · ends:no-silent-fallback · picked: picked: drawn on road-starting-any-business-ab as no future picked"))).toHaveLength(1);
