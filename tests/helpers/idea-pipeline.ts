@@ -817,6 +817,39 @@ export function stepsChoice(idea: Idea, way: "typed" | "picked"): StepsRun {
 }
 
 /**
+ * Step 1's search, once per words within one run of an idea (`runIdea`). One run asks the same search up to five
+ * times (the typed and picked ways each find the job, and each draws the lines around it), and the search is the
+ * slowest call the harness makes (about 5 ms over the government's titles), so a run keeps each answer for its own
+ * length only. A new run starts with nothing kept: the second run of an idea (invariant 7) searches afresh, and a
+ * plant that changes the search (tests/idea-harness-plants.spec.ts) reaches the next run. Outside a run, every call
+ * searches, unless a caller keeps them on purpose (`keepingSearches`).
+ */
+let searchesThisRun: Map<string, ReturnType<typeof searchJobTitles>> | null = null;
+function searchOnce(typed: string): ReturnType<typeof searchJobTitles> {
+  if (!searchesThisRun) return searchJobTitles(typed);
+  const kept = searchesThisRun.get(typed);
+  if (kept) return kept;
+  const result = searchJobTitles(typed);
+  searchesThisRun.set(typed, result);
+  return result;
+}
+
+/**
+ * Runs `work` with step 1's searches kept for its whole length, one per words: for a test that plays step 1 for the
+ * same words many times over (tests/rewording.spec.ts, the corpus reworded) and changes nothing the search reads.
+ * `runIdea` inside it still starts its own runs afresh.
+ */
+export function keepingSearches<T>(work: () => T): T {
+  const outer = searchesThisRun;
+  searchesThisRun = new Map();
+  try {
+    return work();
+  } finally {
+    searchesThisRun = outer;
+  }
+}
+
+/**
  * Step 1 as the person plays it: type words into the search, find the job among the groups the screen lists (the
  * first 50 of each), click it. First the kind of work in their own words, then, if that doesn't list it, the job's
  * own name. Throws when neither does: the person can't pick a job the search doesn't list, and the harness must
@@ -827,7 +860,7 @@ function findTheJob(idea: Idea, code: string, name: string): { hit: JobSearchHit
     [idea.work, "work"],
     [name, "job name"],
   ] as const) {
-    const result = searchJobTitles(typed);
+    const result = searchOnce(typed);
     if (result.state !== "results") continue;
     for (const group of result.groups) {
       const hit = group.jobs.find((h) => h.code === code);
@@ -862,7 +895,7 @@ function piecesOfSteps(pieces: TextPiece[], way: "typed" | "picked", idea: Idea,
   add("work › source", jobStepWords.source);
   // The lines drawn around the search the person ran to find their job.
   if (steps.search) {
-    const search = searchJobTitles(steps.search.typed);
+    const search = searchOnce(steps.search.typed);
     add("work › status", searchStatusLine(search));
     add("work › not searched", leftOutLine(search));
   }
@@ -993,9 +1026,11 @@ export interface RunOptions {
  */
 export function runIdea(idea: Idea, options: RunOptions = { probeQuestions: true }): IdeaRun {
   const pieces: TextPiece[] = [];
-  const typed = typedWayIn(idea, pieces, options);
-  const picked = pickedWayIn(idea, pieces, options);
-  return { idea, ...typed, pickedSteps: picked.steps, picked: picked.run, pieces };
+  return keepingSearches(() => {
+    const typed = typedWayIn(idea, pieces, options);
+    const picked = pickedWayIn(idea, pieces, options);
+    return { idea, ...typed, pickedSteps: picked.steps, picked: picked.run, pieces };
+  });
 }
 
 /**

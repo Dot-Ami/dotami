@@ -17,7 +17,8 @@
  *   quote checker (scripts/check-quotes.mjs: it fetches the cited government pages, so CI never runs it).
  *
  * scripts/quality-report.mjs prints these and writes test-results/quality.md; `--line` prints the one Quality
- * line the release pull request puts in the CHANGELOG. Numbers never fail anything yet.
+ * line the release pull request puts in the CHANGELOG. Numbers never fail anything yet; the silent fallbacks fail
+ * the idea harness itself (the maintainer's call 32, tests/idea-harness.spec.ts), so this report counts 0 there.
  */
 import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
 import path from "node:path";
@@ -133,8 +134,9 @@ export function harnessNumbers(result: HarnessResult, gaps: readonly KnownGap[] 
     passingNow: result.passingNow.length,
     knownGaps: { planned: listed("planned"), bug: listed("bug") },
     silentFallbacks: {
-      typed: fallbacks.filter((f) => f.subject === "typed").length,
-      picked: fallbacks.filter((f) => f.subject === "picked").length,
+      // "typed" or "picked", or "typed › step 3" for step 3's own fallback (tests/helpers/idea-invariants.ts).
+      typed: fallbacks.filter((f) => f.subject === "typed" || f.subject.startsWith("typed ›")).length,
+      picked: fallbacks.filter((f) => f.subject === "picked" || f.subject.startsWith("picked ›")).length,
       ideas: new Set(fallbacks.map((f) => f.ideaId)).size,
       list: fallbacks.map((f) => `${f.ideaId}: ${f.detail}`),
     },
