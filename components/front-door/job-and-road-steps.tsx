@@ -13,7 +13,7 @@ import {
 import { generalRoadV2026, skillItemsV2026, type Road } from "@/lib/engines/roads/v2026";
 import { futureCards, groupedForPlace, notHereRoad, type FutureCard } from "@/lib/front-door/futures";
 import { placeName, provinceOfPlace } from "@/lib/front-door/receipts";
-import { roadJobGroups, roadMatch } from "@/lib/front-door/road-match";
+import { cardJobLine, roadMatch } from "@/lib/front-door/road-match";
 import { answersOf, next, pickedJob, skipped, type StepsState } from "@/lib/front-door/three-steps";
 import { areaLabel } from "@/lib/front-door/where";
 import { jobStepWords, pickWords, whereStepWords } from "@/lib/front-door/words";
@@ -378,15 +378,7 @@ function RoadStep({
   }
 
   /** A card's line about the person's pick of job: what each road is written for, or that road 0 isn't. */
-  const jobLine = (road: Road): string | null => {
-    if (!state.job) return null;
-    const groups = roadJobGroups(road);
-    if (groups.length > 0) {
-      const named = groups.map((code) => roadJobs[road.id]?.find((g) => g.code === code)?.title ?? code);
-      return groups.map((code, i) => pickWords.writtenForJob(named[i]!, code)).join(" ");
-    }
-    return match.case === "no-road" && road.id === generalRoadV2026.id ? pickWords.road0NotForJob(state.job.label) : null;
-  };
+  const jobLine = (road: Road): string | null => cardJobLine(road, state.job, match.case, roadJobs);
 
   // On the intake page the headings take the lead size the intake already has (call 37); on Pick a future, the title size.
   const titleSize = host === "intake" ? "text-lead" : "text-title";

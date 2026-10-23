@@ -15,7 +15,7 @@ import { searchJobTitles, type JobSearchGroupKind, type JobSearchHit } from "@/l
 import { leftOutLine, searchStatusLine } from "@/lib/front-door/job-search-lines";
 import { ALBERTA_ECONOMIC_REGIONS, DONT_KNOW_REGION, economicRegionsCreditLine } from "@/lib/engines/research-kit/v2026/economic-regions";
 import { roadJobNames } from "@/lib/front-door/road-jobs";
-import { roadJobGroups, roadMatch, type RoadMatchCase } from "@/lib/front-door/road-match";
+import { cardJobLine, roadMatch, type RoadMatchCase } from "@/lib/front-door/road-match";
 import { answersOf, asksWhere, type StepsState } from "@/lib/front-door/three-steps";
 import { jobStepWords, whereStepWords } from "@/lib/front-door/words";
 import { ALBERTA_AREAS } from "@/lib/places/alberta-areas";
@@ -928,12 +928,9 @@ function piecesOfSteps(pieces: TextPiece[], way: "typed" | "picked", idea: Idea,
     if (placeLabel && places.includes("CA")) add(`${at} › federal only`, pickWords.federalOnly(placeLabel));
     add(`${at} › counts`, pickWords.counts(card.steps, card.skillsListed, card.officialFees, card.linesToPrice));
     for (const part of sourcesLine(card.sources)) add(`${at} › sources`, part.text);
-    if (steps.job) {
-      const road = listed.find((r) => r.id === card.roadId)!;
-      const groups = roadJobGroups(road);
-      for (const code of groups) add(`${at} › job line`, pickWords.writtenForJob(LISTED_JOBS[road.id]?.find((g) => g.code === code)?.title ?? code, code));
-      if (groups.length === 0 && steps.match === "no-road" && road.id === generalRoadV2026.id) add(`${at} › job line`, pickWords.road0NotForJob(steps.job.label));
-    }
+    // The card's job line, from the same function the screen draws it with (tests/future-card-honest-pick.spec.ts
+    // finds it, and the card's other labels, in what components/front-door/future-card.tsx draws).
+    add(`${at} › job line`, cardJobLine(listed.find((r) => r.id === card.roadId)!, steps.job, steps.match, LISTED_JOBS));
   }
 }
 

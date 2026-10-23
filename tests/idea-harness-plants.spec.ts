@@ -35,13 +35,23 @@ const plants = vi.hoisted(() => ({
   dropYouSaid: false,
   /** The cockpit's line calls an Alberta road the person's future outside Alberta (call 35's second label gone). */
   futureForAnyPlace: false,
+  /** No card carries a line about the person's pick of job: *Written for <job> (<code>).* and road 0's *Not written for <job>.* are empty (call 35's job line). */
+  dropJobLine: false,
+  /** No card says where it is written for: *Written for Alberta.* is empty (the first half of call 35's first label). */
+  dropWrittenFor: false,
 }));
 
 vi.mock("@/lib/front-door/words", async (importOriginal) => {
   const real = await importOriginal<typeof import("@/lib/front-door/words")>();
   return {
     ...real,
-    pickWords: { ...real.pickWords, youSaid: (name: string) => (plants.dropYouSaid ? "" : real.pickWords.youSaid(name)) },
+    pickWords: {
+      ...real.pickWords,
+      youSaid: (name: string) => (plants.dropYouSaid ? "" : real.pickWords.youSaid(name)),
+      writtenFor: (names: string) => (plants.dropWrittenFor ? "" : real.pickWords.writtenFor(names)),
+      writtenForJob: (job: string, noc: string) => (plants.dropJobLine ? "" : real.pickWords.writtenForJob(job, noc)),
+      road0NotForJob: (job: string) => (plants.dropJobLine ? "" : real.pickWords.road0NotForJob(job)),
+    },
   };
 });
 
@@ -157,6 +167,8 @@ afterEach(() => {
   plants.wordsFindNothing = false;
   plants.dropYouSaid = false;
   plants.futureForAnyPlace = false;
+  plants.dropJobLine = false;
+  plants.dropWrittenFor = false;
 });
 
 describe("the harness fails on a planted product regression", () => {
@@ -201,7 +213,18 @@ describe("the harness fails on a planted product regression", () => {
       expect(checkRun(runIdea(target, { probeQuestions: false })).map(gapKey)).not.toContain(key);
       expect(addedKeys(target, "dropYouSaid", "ends:road-written-for-place")).toEqual([key]);
       expect(addedKeys(target, "futureForAnyPlace", "ends:road-written-for-place")).toEqual([key]);
+      // The card's own "Written for Alberta." is the first half of call 35's first label.
+      expect(addedKeys(target, "dropWrittenFor", "ends:road-written-for-place")).toEqual([key]);
     }
+  });
+
+  it("an Alberta future picked from outside Alberta with a job is honest only while the card's job line stays (call 35)", () => {
+    // Ontario, a job with no road of its own (idea 0022): road 0's card says "Not written for <job>." Drop it and
+    // the same end fails. The skipped job (idea 0361) has no job line to drop: with no pick of job the card
+    // carries none (docs/ui-spec/futures/03-road-match.md, case C), so dropping the line changes nothing there.
+    const withJob = idea("idea-v1-0022");
+    expect(addedKeys(withJob, "dropJobLine", "ends:road-written-for-place")).toEqual([`${withJob.id} · ends:road-written-for-place · picked`]);
+    expect(addedKeys(idea("idea-v1-0361"), "dropJobLine", "ends:road-written-for-place")).toEqual([]);
   });
 
   it("a silent fallback listed as a known gap still fails the harness (call 32)", () => {

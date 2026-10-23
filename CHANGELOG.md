@@ -239,7 +239,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   regions and *I don't know*, kept with the day, and the wage row follows. Step 2's three lines about *About this
   job* are back now that they're true. Outside Alberta, *Not here yet?* keeps your note and opens the federal steps;
   the federal card counts only the sources you'll be shown inside; an Alberta future picked from outside Alberta
-  counts as an honest end while its card and the cockpit both say so. The typed way's last step shows 5 text sizes
+  counts as an honest end while its card and the cockpit both say so (the card's *Written for Alberta.*, *You said
+  <province>.* and, with a pick of job, its job line, each with a test that fails when it is dropped, read from
+  what the card actually draws). The typed way's last step shows 5 text sizes
   (its headings take a size the page already has), and with the job skipped it has its own clutter limit (6
   controls on a tablet). The idea harness can no longer list a silent fallback as a known gap, and its known gaps
   went from 22 ideas to 0.

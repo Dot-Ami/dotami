@@ -209,8 +209,10 @@ Every string in the words block was run through `VERDICT_WORDS`, `findVerdicts` 
   35 of 2026-10-22: an honest end, "they were told and chose it", as long as both labels stay on screen. The
   harness checks both for the 9 corpus ideas whose invented person does this (the card's *Written for Alberta.*
   and *You said <province>.*, with its line about the job picked, and the cockpit's line;
-  `tests/helpers/idea-invariants.ts` `honestAlbertaPick`), and fails the end again without either (planted in
-  `tests/idea-harness-plants.spec.ts`). The browser sweep still does it every week with a fixed idea (361, fixing
+  `tests/helpers/idea-invariants.ts` `honestAlbertaPick`), and fails the end again without any one of them: *Written for Alberta.*, *You said <province>.*, the job line,
+  the cockpit's line (each planted in `tests/idea-harness-plants.spec.ts`). The job line is the screen's own
+  (`cardJobLine` in `lib/front-door/road-match.ts`), and `tests/future-card-honest-pick.spec.ts` finds every card label
+  the harness reads in what `components/front-door/future-card.tsx` draws. The browser sweep still does it every week with a fixed idea (361, fixing
   bikes in Ottawa, road 1).
 - **The card's sources line** counts only the sources the person will be shown inside (the maintainer's call 34 of
   2026-10-22): each step's own sources through `citationsForPlace`, the step panel's filter (`futureCards` with the
