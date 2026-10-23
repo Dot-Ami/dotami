@@ -32,9 +32,12 @@ then phone width).
 >
 > **Whole words first, as built 2026-10-23 (the maintainer's call a-call-11; research lane "search gap",
 > option b).** Rules 5, 6 and 7 below are amended so: inside each group about the government's titles, the jobs
-> whose title holds the person's exact words come first, under the part heading *Their titles have your exact
-> word, n*; the jobs that reach the count only through a word that starts like one of theirs come after, under
-> *Their titles have a word that starts like yours, n*. Each part is in the government's code order and lists
+> whose title holds the person's exact words come first, under the part heading *One of their titles has your
+> exact words, n* (one title holding every word the group counts, word for word); the jobs that reach the count
+> only through a word that starts like one of theirs come after, under *Their titles have a word that starts
+> like yours, n*. (First built as *Their titles have your exact word*; reworded in the #206 review, because a
+> job in the second part can still hold one of the words exactly, in a different title from the other, and the
+> old label was true of it too: *registered nurse* puts General duty registered nurses second.) Each part is in the government's code order and lists
 > its first 50. The closest group opens whole, both parts together. In the exact-word part, the title named
 > under a job is the first holding the words word for word (*plumbing* names *plumbing installer*, before
 > *plumber apprentice*). A group with both parts says *Your exact words first, then words that start like
@@ -159,7 +162,7 @@ jobStepWords = {
   groupList: "Jobs found only through DotAmi's word list, not by a government title",
   groupOrder: "In the government's code order, not ranked.",
   // Added 2026-10-23 (a-call-11, whole words first)
-  partExact: "Their titles have your exact word",
+  partExact: "One of their titles has your exact words",
   partWordStart: "Their titles have a word that starts like yours",
   partsOrder: "Your exact words first, then words that start like yours, each part in the government's code order. Not ranked.",
   cappedPart: "Showing the first <shown> of <total> in this part, in code order. Add a word to narrow it.",

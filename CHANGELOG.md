@@ -288,8 +288,8 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Changed
 - **"What's closest to your work?" lists whole-word matches first** (the maintainer's call a-call-11,
-  2026-10-23). Inside each group of jobs, the jobs whose government title has your exact word now come first,
-  under *Their titles have your exact word*, and those whose title only has a word that starts like yours come
+  2026-10-23). Inside each group of jobs, the jobs with one government title that has your exact words now come
+  first, under *One of their titles has your exact words*, and those whose title only has a word that starts like yours come
   after, under *Their titles have a word that starts like yours*; each part in the government's code order and
   showing its first 50, and the closest group opens with both parts. Nothing is scored or picked: the part is a
   plain fact about the match. Typing "I build custom kitchen cabinets" now lists Cabinetmakers on row 10 without

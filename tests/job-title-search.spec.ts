@@ -23,6 +23,7 @@ import {
   type JobSearch,
 } from "@/lib/engines/oasis/v2026/title-search";
 import { oasisTitles } from "@/lib/engines/oasis/v2026/titles";
+import { jobStepWords } from "@/lib/front-door/words";
 
 import { LISTED_BEFORE_WHOLE_WORDS_FIRST } from "./fixtures/ideas/job-search-listed";
 import { IDEAS_V1 } from "./fixtures/ideas/v1";
@@ -169,6 +170,24 @@ describe("whole words first: inside each group, the exact word, then a word that
         expect(r.searched.filter((w) => words.has(w)).length, `${q}: ${j.code} “${j.matched!.title}”`).toBe(j.wordsHeld);
       }
     }
+  });
+
+  it("labels the exact part with its rule: one title holds all the counted words exactly, not just one of them", () => {
+    // Review of #206: "registered nurse" files General duty registered nurses under the word-start part, though its
+    // titles hold each word word for word: "nurse" in "general duty nurse", "registered" in the job's name (where
+    // "nurses" only starts like "nurse"). The old label, "Their titles have your exact word", was true of it too, so
+    // the screen didn't say why it sat second.
+    const r = searchJobTitles("registered nurse");
+    const nurses = hit(r, "31301.01")!;
+    expect(nurses.part).toBe("word-start");
+    const titles = [nurses.label, ...oasisTitles.titles.filter(([code]) => code === "31301.01").map(([, , title]) => title)].map(
+      (title) => new Set(searchWords(title)),
+    );
+    expect(titles.some((w) => w.has("registered"))).toBe(true);
+    expect(titles.some((w) => w.has("nurse"))).toBe(true);
+    expect(titles.some((w) => w.has("registered") && w.has("nurse"))).toBe(false);
+    // So the label says the rule: one title, all the words.
+    expect(jobStepWords.partExact).toBe("One of their titles has your exact words");
   });
 
   it("opens the closest group whole: “I build custom kitchen cabinets” shows Cabinetmakers on row 10 without a click", () => {
