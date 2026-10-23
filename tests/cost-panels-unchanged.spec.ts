@@ -36,7 +36,11 @@
  * again on 2026-10-17 for one sentence only (the second review of PR #182): road 0's two Incorporating panels
  * (Alberta and British Columbia), whose "Your answers" line for an idea with no third-year estimate no longer
  * says "set your own number to see this light", a light no number could give, but that it needs that
- * estimate too (lib/brain/evaluate.ts computeNodeStates). The only cards allowed to change are the ones
+ * estimate too (lib/brain/evaluate.ts computeNodeStates). Redrawn on 2026-10-23 for six panels whose step needs
+ * a legal requirement (road 0's Mandatory GST registration and five of the apprentice road's), when legal
+ * requirements moved from "Skills it needs" to a "What it needs" heading of their own (the screen review's
+ * pre-release fixes): each was checked to differ from the recording only between its first of those two headings
+ * and its Costs heading, then redrawn; no other panel changed. The only cards allowed to change are the ones
  * that gained road 0's named start-up cost lines (docs/architecture/future-cockpit.md § 6, "The official
  * fees catalog and start-up cost lines as built"); with those seven lines taken out, they match too.
  */

@@ -86,7 +86,10 @@ export function SkillsListPanel({
   onPickJob,
   onClose,
   receipt,
+  jobListOpen = false,
 }: {
+  /** Whether the job's list starts open; folded unless given (a test draws it open). */
+  jobListOpen?: boolean;
   receipt?: readonly string[] | null;
   road: Road;
   skillItems: readonly SkillItem[];
@@ -186,7 +189,7 @@ export function SkillsListPanel({
         </div>
       </div>
 
-      <JobSection job={job} pickedOn={jobPickedOn} markOf={markOf} canSave={canSave} onMark={onMark} onPickJob={onPickJob} />
+      <JobSection job={job} pickedOn={jobPickedOn} markOf={markOf} canSave={canSave} onMark={onMark} onPickJob={onPickJob} listOpen={jobListOpen} />
     </PanelShell>
   );
 }
@@ -205,7 +208,9 @@ function JobSection({
   canSave,
   onMark,
   onPickJob,
+  listOpen = false,
 }: {
+  listOpen?: boolean;
   job: JobList | null;
   pickedOn: string | null;
   markOf: ReadonlyMap<string, SkillMarkValue>;
@@ -214,6 +219,9 @@ function JobSection({
   onPickJob: (code: string | null) => void;
 }) {
   const [changing, setChanging] = useState(false);
+  // The job's own list folds under one button (the screen review of 2026-10-23: Cabinetmakers' 44 rows, each
+  // with four mark buttons, swamped the road's own 3 items above them). The marks are kept either way.
+  const [open, setOpen] = useState(listOpen);
   const searching = job === null || changing;
 
   function pick(code: string | null) {
@@ -252,7 +260,10 @@ function JobSection({
             </Pill>
           </div>
           <p className="mt-2 text-body text-stone">{words.lists.job.aboutTheList}</p>
-          {(["skills", "knowledge"] as const).map((group) => {
+          <Pill className="mt-2" size="small" variant="ghost" aria-expanded={open} onClick={() => setOpen(!open)}>
+            {open ? words.lists.job.hideList : words.lists.job.showList(job.items.length)}
+          </Pill>
+          {open ? (["skills", "knowledge"] as const).map((group) => {
             const items = job.items.filter((item) => item.group === group);
             if (items.length === 0) return null;
             return (
@@ -271,7 +282,7 @@ function JobSection({
                 </ul>
               </div>
             );
-          })}
+          }) : null}
           <OasisAttribution />
         </>
       )}

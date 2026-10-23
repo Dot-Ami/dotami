@@ -72,6 +72,8 @@ export function FutureCardItem({
           </span>
         ))}
       </p>
+      {/* What "checked by a tool only" means, for a newcomer (the screen review of 2026-10-23), where it shows. */}
+      {card.sources.tool > 0 ? <p className="text-body leading-snug text-stone">{words.sources.toolMeans}</p> : null}
       <div className="mt-auto flex justify-end">
         <Pill
           variant="maple"

@@ -34,8 +34,9 @@ A band under the header, across the whole page, named *Your goal and gauges* for
   (yours, agreed 2026-10-11)* only when the person agreed to a yearly income; *Future: <road's name>*, or,
   when the road isn't written for the idea's province (nor for all of Canada), *Map drawn: <road's name> ·
   written for AB; this idea is in BC*, so a BC idea is never told its future is an Alberta one.
-- Four gauge buttons, four across at any width (each at least 190 px; on a narrow window the row scrolls
-  sideways, so the bar stays one row tall and the map keeps its room). Each has its name and
+- Four gauge buttons: four across from 1024 px (each at least 190 px), two by two from 640 px, and stacked one
+  under another on a phone (since 2026-10-23: they used to stay four across at every width and scroll sideways
+  inside the bar, so at 375 px *Start-up money* and *Your date* were out of sight). Each has its name and
   a tag for where its numbers come from, a value, plain lines under it, and at most one amber invitation:
 
 | Gauge | Tag | Value | Lines | Invitation |

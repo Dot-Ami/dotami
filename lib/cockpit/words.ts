@@ -154,6 +154,8 @@ export const cockpitWords = {
     doneWhen: "Done when",
     doneWhenTicked: (ticked: number, total: number) => `${ticked} of ${total} ticked`,
     doneWhenNone: "No “done when” lines are written for this step yet.",
+    /** The step's legal requirements (an ID number, an agreement), above its skills (2026-10-23). */
+    whatItNeeds: "What it needs",
     skills: "Skills it needs",
     skillsNone: "No skills are listed for this step yet.",
     skillKind: { "legal-requirement": "legal requirement", "listed-skill": "listed skill" },
@@ -236,6 +238,12 @@ export const cockpitWords = {
       // in a job (Cabinetmakers, 72311.00: "Self-employed" under Workplaces/employers). Only what DotAmi
       // can say about itself.
       aboutTheList: "This is the government's list for the job you picked. DotAmi doesn't say which skills a business needs.",
+      /**
+       * The job's list folds under one button, below the road's own items (the screen review of 2026-10-23: its
+       * 44 rows swamped the road's 3).
+       */
+      showList: (n: number) => `Show the ${n} on this job's list`,
+      hideList: "Fold this job's list",
       /** The licence's own attribution line, word for word (lib/engines/oasis/v2026/licence.ts). */
       attribution: OASIS_ATTRIBUTION,
       licence: "The licence",
@@ -604,6 +612,8 @@ export const cockpitWords = {
    */
   plan: {
     title: "Your plan",
+    /** The contents list of the plan's steps, at the top of Each step, each a link to its step (2026-10-23). */
+    contents: "The steps in this plan",
     made: (day: string) => `Made on ${day} from what DotAmi keeps for this idea on this computer.`,
     /** The Export panel's way here, and what it says for an idea not saved yet. */
     open: "Open your plan to read or print",
@@ -685,10 +695,21 @@ export const cockpitWords = {
     prepToolsNote: "Orientation links for your accountant or lawyer — DotAmi does not generate legal documents.",
     openReference: "Open reference ↗",
     /** The structure ladder (lib/engines/structure/): where the idea's structure sits on it. */
+    // In plain words since the screen review of 2026-10-23 ("Holding company (Holdco) … Estate freeze" on the
+    // apprentice road), and drawn only on the tax and structure roads (lib/engines/roads/v2026
+    // `drawsTheStructureLadder`). Each rung says what the set-up is, never which one to pick.
     ladder: {
-      title: "Structure ladder",
-      note: "Entity progression — Canada, the first jurisdiction mapped. Prep orientation, not filing advice.",
-      noRung: "No rung marked — set your structure above and the ladder places you.",
+      title: "Ways a business can be set up",
+      note: "From a business in your own name to companies that own companies, in Canada. Something to take to your accountant, not tax or legal advice.",
+      noRung: "None is marked: once you say how the business is set up, it shows here.",
+      /** Each rung of the catalog's ladder (lib/engines/structure/v2026/ladder.ts), by its id. */
+      rungs: {
+        "structure-sole-prop": { name: "In your own name", line: "A business you run yourself, not a company of its own (a sole proprietorship)." },
+        "structure-sole-prop-gst": { name: "In your own name, registered for GST/HST", line: "The same, with a GST/HST account for the sales tax." },
+        "structure-ccpc": { name: "A company of its own", line: "A corporation, owned and controlled in Canada." },
+        "structure-holdco": { name: "A company that owns companies", line: "A corporation that holds shares of another corporation (a holding company)." },
+        "structure-family-trust": { name: "A family trust", line: "An arrangement where someone holds property for members of a family." },
+      } as Record<string, { name: string; line: string }>,
       current: "Current",
       passed: "Passed",
       ahead: "Ahead",

@@ -338,6 +338,8 @@ test("skills: road 0's legal requirement on its step, and the government's list 
 
   // The government's list for that job: every row tagged, the licence's line, no rating anywhere.
   await expect(skills.getByText(/^Cabinetmakers · 72311\.00 · picked \d{4}-\d{2}-\d{2}$/)).toBeVisible();
+  // Opened from the step's Pick a job, the job's list is open (from the gauge it folds under one button, below).
+  await expect(skills.getByRole("button", { name: "Fold this job's list", exact: true })).toHaveAttribute("aria-expanded", "true");
   const numeracy = skills.getByRole("listitem").filter({ has: page.getByText("Numeracy", { exact: true }) });
   await expect(numeracy.getByText("your pick of job")).toBeVisible();
   await expect(skills.getByText("your pick of job", { exact: true })).toHaveCount(44);
@@ -350,6 +352,11 @@ test("skills: road 0's legal requirement on its step, and the government's list 
   // A reload reads the pick and the mark back from the data file.
   await page.reload();
   await expect(gauge(page, "Skills")).toContainText("your pick of job: 1 have · 0 learning · 0 not yet, of 44 listed");
+  // From the gauge, the job's 44 fold under one button below the road's own items (2026-10-23).
+  await gauge(page, "Skills").click();
+  await expect(skills.getByRole("button", { name: "Show the 44 on this job's list", exact: true })).toHaveAttribute("aria-expanded", "false");
+  await expect(skills.getByText("your pick of job", { exact: true })).toHaveCount(0);
+  await gauge(page, "Skills").click();
   await stage(page, "Mandatory GST registration").click();
   await expect(stepPanel(page).getByText(/^Your pick of job, “Cabinetmakers”: 44 on the government's list, 1 marked\./)).toBeVisible();
   await stepPanel(page).getByRole("button", { name: "Open the list", exact: true }).click();

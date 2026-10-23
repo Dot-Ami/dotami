@@ -40,7 +40,10 @@ left; **Change** moves it to the question it opens.
   <day>. It goes at the top of each future you pick on Pick a future; an idea you describe in your own
   sentence shows that sentence instead."*, the words shown back in quotes. A refusal shows the server's
   own words and keeps the question open; no database: *"Not kept: no database reachable. It stays in
-  this tab only."* Changing it later keeps a new statement; the old one stays.
+  this tab only."*; no answer at all from DotAmi's own server (since 2026-10-23; it used to say the database
+  for this too): *"Not kept: DotAmi's own server didn't answer. It stays in this tab only."* The yearly
+  income's **Keep it** with no answer from the server: *"Not kept: DotAmi's own server didn't answer. Try
+  again, or skip this question."* Changing it later keeps a new statement; the old one stays.
 - **I don't know yet**: nothing new is kept. *"Nothing kept. You can say it later; nothing here waits
   on it."* When words are already kept (from this tab or the data file): *"Nothing new kept. Your
   words of <day> are still kept and still show on top of your futures; Delete on What DotAmi knows

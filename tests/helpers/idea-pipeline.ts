@@ -17,6 +17,7 @@ import { ALBERTA_ECONOMIC_REGIONS, DONT_KNOW_REGION, economicRegionsCreditLine }
 import { roadJobNames } from "@/lib/front-door/road-jobs";
 import { cardJobLine, roadMatch, type RoadMatchCase } from "@/lib/front-door/road-match";
 import { answersOf, asksWhere, type StepsState } from "@/lib/front-door/three-steps";
+import { typedWayCount } from "@/lib/front-door/typed-way";
 import { jobStepWords, whereStepWords } from "@/lib/front-door/words";
 import { ALBERTA_AREAS } from "@/lib/places/alberta-areas";
 import { applyIntentToDraft, type IntentParseResult } from "@/lib/journey/intent";
@@ -887,7 +888,8 @@ function piecesOfSteps(pieces: TextPiece[], way: "typed" | "picked", idea: Idea,
   const place = isProvince(idea.place) ? idea.place : null;
   const placeLabel = place ? placeName(placeCode(place)) : null;
   // 1. Your work.
-  add("work › kicker", jobStepWords.stepCount);
+  // On the typed way the steps carry its one numbering, after the intake's two screens (lib/front-door/typed-way.ts).
+  add("work › kicker", way === "typed" ? typedWayCount("work", false) : jobStepWords.stepCount);
   add("work › heading", jobStepWords.heading);
   add("work › lead", jobStepWords.lead);
   add("work › hint", jobStepWords.boxHint);
@@ -920,7 +922,7 @@ function piecesOfSteps(pieces: TextPiece[], way: "typed" | "picked", idea: Idea,
     }
   }
   // 3. Pick a future: the pick line, the case's own lines and each card as the page writes it.
-  add("road › kicker", pickWords.stepCount);
+  add("road › kicker", way === "typed" ? typedWayCount("pick", false) : pickWords.stepCount);
   add("road › heading", pickWords.heading);
   add("road › order", pickWords.order);
   if (steps.job) add("road › pick line", pickWords.pickLine(steps.job.label, steps.job.code));

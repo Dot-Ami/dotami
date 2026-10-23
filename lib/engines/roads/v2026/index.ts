@@ -47,6 +47,16 @@ export function forksAreTheMapToggles(road: Pick<Road, "id">): boolean {
 }
 
 /**
+ * True on the tax and structure roads, built from the tax map (road 0 and the federal steps), where the cockpit's
+ * left rail draws the ways a business can be set up (components/cockpit/structure-ladder-rail.tsx). On a road
+ * about something else (the apprentice road) the ladder isn't drawn: the screen review of 2026-10-23 found "Holding
+ * company (Holdco) … Family trust" there.
+ */
+export function drawsTheStructureLadder(road: Pick<Road, "id">): boolean {
+  return road.id === roadStartingAnyBusinessAB.id || road.id === roadFederalStepsCA.id;
+}
+
+/**
  * A step's sources as a road written for all of Canada draws them for one idea (task 28d, 2026-10-21): the
  * federal pages and the idea's own province's, in the road's order, and how many it left out (other
  * provinces' pages), so the screen can say so and nothing is hidden without a word. On a road written for

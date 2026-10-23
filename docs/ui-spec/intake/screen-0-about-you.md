@@ -66,7 +66,7 @@ what you won't do, what you're after. It keeps your words with the date you said
 does not turn them into a type of person, and nothing you write here is used to rank
 anything." · placeholder "Anything you want DotAmi to know about you — how you work, what you
 won't do, what you're after. Your words, kept as-is." · "Said on" · "Keep this" / "Keeping…"
-· "1 of 3 · About you" · "You can skip this. Nothing here gates the map." · "Continue →".
+· "1 of 6 · About you" (the typed way's one numbering since 2026-10-23, `_index.md`) · "You can skip this. Nothing here gates the map." · "Continue →".
 
 ## State touched (field names only)
 

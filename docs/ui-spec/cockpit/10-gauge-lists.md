@@ -33,7 +33,10 @@ place of a step, each a region named by its title with a × button named *Close*
   (until then it was a search of job names and codes, ten at most); then the licence's line with its link, as
   below. With one picked: *Cabinetmakers · 72311.00 · picked 2026-10-12*, **Change**
   (the search again, with **Cancel**) and **Take back**; *This is the government's list for the job you
-  picked. DotAmi doesn't say which skills a business needs.*; then **Skills** and
+  picked. DotAmi doesn't say which skills a business needs.*; then one button, **Show the 44 on this job's list**
+  (the count is the job's; **Fold this job's list** once open), folded since 2026-10-23 when the list is opened
+  from the gauge, so the job's rows don't swamp the road's own items above them (opened from a step's **Open
+  the list**, it starts open); open, **Skills** and
   **Knowledge**, each with its source once (the dataset's page, checked by a tool) and its items in the
   dataset's order, each row its name, the tag *your pick of job* and **Have / Learning / Not yet / I don't
   know**; last, the licence's line *Contains information licensed under the Open Government Licence –

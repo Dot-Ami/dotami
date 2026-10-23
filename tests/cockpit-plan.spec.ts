@@ -566,3 +566,23 @@ describe("the page", () => {
     expect(source).not.toMatch(/\bfetch\s*\(|Date\.now|new Date\s*\(|Math\.random|process\.|require\s*\(|\bimport\s*\(|@\/lib\/prisma/);
   });
 });
+
+// The screen review of 2026-10-23: the plan was 42,553 px tall on a 375 px phone with no way to a step but
+// scrolling. A contents list of its steps, in the road's order, each a link to its step on the page.
+describe("the contents list of the plan's steps", () => {
+  const view = buildPlan(args());
+  const html = renderToStaticMarkup(createElement(PlanPage, { view, backHref: "/cockpit?venture=v1" }));
+  const steps = view.steps.columns.flatMap((c) => c.steps);
+
+  it("lists every step once, in the plan's order, each linking to its own step", () => {
+    const nav = html.slice(html.indexOf(`aria-label="${cockpitWords.plan.contents}"`));
+    const links = [...nav.slice(0, nav.indexOf("</nav>")).matchAll(/href="#([^"]+)"/g)].map((m) => m[1]);
+    expect(links).toEqual(steps.map((s) => `plan-step-${s.id}`));
+    for (const id of links) expect(html).toContain(`id="${id}"`);
+  });
+
+  it("comes before the first step on the page", () => {
+    expect(html.indexOf(`aria-label="${cockpitWords.plan.contents}"`)).toBeGreaterThan(-1);
+    expect(html.indexOf(`aria-label="${cockpitWords.plan.contents}"`)).toBeLessThan(html.indexOf(`id="plan-step-${steps[0]!.id}"`));
+  });
+});

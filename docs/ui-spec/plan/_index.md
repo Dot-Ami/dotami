@@ -48,7 +48,11 @@ splits across two pages, and every link is printed as its address (each link's t
    yours yet"* or *"No side picked yet."* (the Compare panel's words). A road with no fork says so.
    Then the four gauges as the goal bar shows them, label, value and lines, counts and sums only (no
    invitation lines: there is nothing to click on paper).
-4. **Each step** — *"In the order the road shows them, not importance."* One block per column (its
+4. **Each step** — at its top (since 2026-10-23; on screen only, not printed) *The steps in this plan*, a
+   numbered list of every step's name in the road's order, each a link to its step's block below (the
+   plan was 42,553 px tall on a phone). Here rather than at the very top of the plan: the plan's first
+   window may hold two controls (`e2e/budgets.ts`), and a link per step there would be far more. Then
+   *"In the order the road shows them, not importance."* One block per column (its
    label and summary), one entry per step of the road, every step, on the path or not (nothing is left
    out because of its state): the step's name and one line; *Your status: doing / done / not for me*
    or *Your status: not set*; its state in the map's words (*applies as answered*, *check first*, *not

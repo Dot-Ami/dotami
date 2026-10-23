@@ -304,7 +304,8 @@ function OwnWords({
         setError(body?.error ?? words.receipts.destinationTabOnly);
       }
     } catch {
-      onAnswer({ destination: { kept: "tab-only", text: typed, saidAt: today } });
+      // No answer at all: DotAmi's own server didn't answer, and the receipt names that, not the database.
+      onAnswer({ destination: { kept: "tab-only", text: typed, saidAt: today, cause: "no-server" } });
     } finally {
       setBusy(false);
     }
@@ -441,7 +442,8 @@ function IncomeAmount({
       if (res.ok && proposed) setProposal({ id: proposed.id, amountCents: proposed.amountCents });
       else setProblem(body?.error ?? words.receipts.destinationTabOnly);
     } catch {
-      setProblem(words.receipts.destinationTabOnly);
+      // No answer at all: the cause is DotAmi's own server (the amount isn't kept in this tab either).
+      setProblem(words.receipts.incomeNoServer);
     } finally {
       setBusy(false);
     }

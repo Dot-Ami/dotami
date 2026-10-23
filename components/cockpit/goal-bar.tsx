@@ -149,9 +149,10 @@ export function GoalBar({
     // data-region: one of the cockpit's regions the clutter limit counts (docs/ui-spec/README.md).
     <section id={GOAL_BAR_ID} data-region="goal-bar" aria-label={words.goal.region}>
       {isFolded ? (
-        // One line: the gauges by name and value, scrolling sideways inside the line when they don't fit.
+        // One line: the gauges by name and value, scrolling sideways inside the line when they don't fit from
+        // 768 px; below that they wrap onto a second line, so none is out of sight on a phone (2026-10-23).
         <div className="flex min-w-0 items-center gap-2 px-5 py-1.5">
-          <div className="flex min-w-0 flex-1 gap-1.5 overflow-x-auto">
+          <div className="flex min-w-0 flex-1 gap-1.5 max-md:flex-wrap md:overflow-x-auto">
             {GAUGES.map((id) => (
               <button
                 key={id}
@@ -195,9 +196,10 @@ export function GoalBar({
             <FoldButton folded={false} region="goal" label={words.folds.goal.fold} controls={GOAL_BAR_ID} onClick={onToggleFold} className="ml-auto" />
           ) : null}
         </p>
-        {/* Four across at any width: on a narrow window the row scrolls sideways inside the bar rather than
-            stacking, so the bar stays one row tall, the map keeps its room and the page never scrolls sideways. */}
-        <div className="grid auto-cols-[minmax(190px,1fr)] grid-flow-col gap-2.5 overflow-x-auto">
+        {/* Four across from 1024 px; two by two from 640 px; stacked one under another on a phone. Until the
+            screen review of 2026-10-23 the four stayed in one row at every width and scrolled sideways inside the
+            bar, so at 375 px Start-up money and Your date were out of sight with nothing saying they were there. */}
+        <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2 lg:auto-cols-[minmax(190px,1fr)] lg:grid-flow-col lg:grid-cols-none lg:overflow-x-auto">
           {GAUGES.map((id) => {
             const gauge = view[id];
             return (

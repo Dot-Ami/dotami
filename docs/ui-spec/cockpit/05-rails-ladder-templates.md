@@ -19,6 +19,15 @@ references" (external links for the user's accountant/lawyer).
 
 - **Structure ladder** — display-only. Renders every `structureLadderV2026` step
   (engine catalog, `lib/engines/structure/v2026/`) with label + trigger text.
+  **Changed 2026-10-23 (the screen review's pre-release fixes):** drawn only on the tax and
+  structure roads (road 0 and the federal steps, `drawsTheStructureLadder` in
+  `lib/engines/roads/v2026/index.ts`), not on the apprentice road, and in plain words from
+  `lib/cockpit/words.ts` (`rail.ladder`): the title *Ways a business can be set up*, a note,
+  and each rung's plain name and one line (*In your own name*, *In your own name, registered
+  for GST/HST*, *A company of its own*, *A company that owns companies*, *A family trust*)
+  in place of the catalog's label and trigger text (*Holding company (Holdco)*, *Estate
+  freeze, succession, or income splitting…*). With no structure set: *None is marked: once
+  you say how the business is set up, it shows here.*
   **Changed 2026-09-13 (S2.5.4d):** `activeStepId` is derived from the scenario's own
   `profile.structure` for intake-built ventures (null while `structureSource` is
   "assumed" → no rung marked, "set your structure above and the ladder places you"); the

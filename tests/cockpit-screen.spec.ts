@@ -699,9 +699,11 @@ describe("the step panel", () => {
   });
 
   it("every skill item and named cost line carries its own source; official pages are links the person opens", () => {
-    // The ticket step: its one skill item's citation is drawn with it, mark or no mark.
+    // The ticket step: its one skill item's citation is drawn with it, mark or no mark. The ticket is a legal
+    // requirement, so it sits under What it needs (2026-10-23), above the step's skills.
     const ticket = draw("step-eval-ticket");
-    const skillsPart = ticket.slice(ticket.indexOf(">Skills it needs<"), ticket.indexOf(">Costs<"));
+    const skillsPart = ticket.slice(ticket.indexOf(">What it needs<"), ticket.indexOf(">Costs<"));
+    expect(ticket.indexOf(">What it needs<")).toBeGreaterThan(-1);
     expect((skillsPart.match(/<a /g) ?? []).length).toBe(1);
     // A named line with a source for its name, and a step with an official page.
     const withSources: Road = {

@@ -52,7 +52,8 @@ export function VenturesPage() {
   return (
     <div className="flex min-h-[calc(100vh-2.5rem)] flex-col bg-ink">
       {/* data-region marks the blocks the clutter limit counts (docs/ui-spec/README.md, "The layout rule"). */}
-      <nav data-region="nav" className="flex items-center gap-6 border-b border-rule-soft px-8 py-[18px]">
+      {/* Wraps onto a second line on a phone: on one line its five items ran past a 375 px window. */}
+      <nav data-region="nav" className="flex flex-wrap items-center gap-x-6 gap-y-2 border-b border-rule-soft px-8 py-[18px]">
         <GhostLink href="/" tone="stone">
           ← Back
         </GhostLink>
@@ -212,7 +213,8 @@ function VentureCard({
           ) : null}
           <FirstWords venture={venture} />
         </div>
-        <div className="flex shrink-0 items-center gap-3">
+        {/* Stage and Open in cockpit wrap under each other where the card is narrower than both (a phone). */}
+        <div className="flex max-w-full flex-wrap items-center gap-3 sm:shrink-0">
           <label className="flex items-center gap-2 text-body text-stone">
             <span className="font-mono text-label uppercase tracking-[0.14em]">Stage</span>
             <select
