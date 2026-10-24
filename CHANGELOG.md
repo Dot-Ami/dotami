@@ -274,6 +274,18 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   start at the baseline until you mark it done (`lib/scenarios/graph.ts`, `lib/cockpit/view.ts`). On *Your
   futures*, an idea saved without a kind of venture (a future picked on *Pick a future*) says *type not said*
   instead of *Service* (`lib/db/ventures.ts`, `lib/ventures/words.ts`).
+- **The readout API no longer says you completed the baseline** (the maintainer's decision 3 of 2026-10-24).
+  `GET /api/readout` gave each stage the map's list name as `status` (*complete* for *Employee/Apprentice
+  baseline* and *active* for *Sole Prop activation*, on every idea, from nothing you said), and `scenario.state`
+  held the same lists as `completedNodeIds` and `activeNodeIds`. All three are gone. Each node's `chip` says
+  where the stage sits on the map, and its values changed with the map's: `now` is `first-stage`, `done` is
+  `starting-point`. The new `yourStatus` is your own mark on the step (`doing`, `done`, `not-for-me`), or null
+  where you gave none, the same mark the map draws (`lib/readout/nodes.ts`). A program that reads `status`, or
+  posts the readout's `scenario` to `/api/playbook` (which still needs the two lists), has to change; nothing in
+  DotAmi does either. Tests: `tests/prerelease-honesty.spec.ts` (no `status` key and no lists, with the old shape
+  as a planted control the same check catches), `e2e/app.spec.ts` and `e2e/cockpit.spec.ts` (after *Done* on
+  Sole Prop activation the readout gives `yourStatus: "done"` there and null on the baseline); on the old route
+  both browser tests failed.
 - **Time words the no-times check missed.** The apprentice road's last column *First years on your own* is now
   *Running your own shop*; the legend's *check first — confirm, time-boxed, or one fork away* now says *has an
   end date*; the ride-share Lens line no longer paraphrases GI-196 as "with 30 days to apply" but points to its

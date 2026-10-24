@@ -172,8 +172,8 @@ screens decision 3 names (K7 A).
   ([ladder.ts:127-128](../../lib/engines/structure/v2026/ladder.ts)), so nothing can count it yet.
 - **Not built:** the Lens [9d], its test set [9c], permission levels [9f] and the MCP server [9i]
   ([task-list.md:572-590](../task-list.md)). `GET /api/readout` lists only road 0's nodes and cards
-  ([route.ts:64](../../app/api/readout/route.ts)) and says ranking "is the reader's job, with the person
-  present" (:112).
+  ([nodes.ts:35](../../lib/readout/nodes.ts)) and says ranking "is the reader's job, with the person
+  present" ([route.ts:111](../../app/api/readout/route.ts)).
 - **The Lens's planned powers** already include searching the web, driving a browser built into the app,
   running commands on the person's computer and changing things in the app for the person
   ([use-cases.md:36-46](use-cases.md)); commands, the browser, bank records and writing to accounting software

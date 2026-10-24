@@ -1308,7 +1308,7 @@ Whether to hide it anyway is the maintainer's call (§ 13).
   anyway is the maintainer's call (§ 13); `tests/research-steps.spec.ts` pins it as built.
 - **Not changed:** *Incorporation for liability/SR&ED* (Tier 3) is about liability as well as research,
   so it is not a research-only step and keeps its colours and its line. The readout API
-  (`app/api/readout/route.ts`, `stageChipFor`) still gives *SR&ED deepening* the map's worked-out chip
+  (`app/api/readout/route.ts` through `lib/readout/nodes.ts`, `stageChipFor`) still gives *SR&ED deepening* the map's worked-out chip
   (*ahead*) beside its grey colour, and the playbook export (`lib/playbook/build-skeleton.ts`) lists the
   steps the map's toggles make visible, this one among them, without road evaluation's reason: neither runs
   road evaluation yet. That belongs to the export and print work, tracked in `docs/task-list.md` beside

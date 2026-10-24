@@ -1,6 +1,7 @@
 # Cockpit canvas — the map as tier columns
 
-Last updated: 2026-10-14 (road 0's Tier 1 gains a fifth card, *Keep your records from day one*, and the
+Last updated: 2026-10-24 (the readout API gives each stage's chip and the person's own mark, `yourStatus`,
+and no longer the map's `status` or its worked-out lists; 2026-10-14: road 0's Tier 1 gains a fifth card, *Keep your records from day one*, and the
 apprentice road's *Open the doors* starts with the same step; 2026-10-13: in the cockpit, SR&ED deepening on an idea without a research kind of work is
 drawn dashed, chip "not on your path" with its reason, instead of "ahead", issue #40; 2026-10-12: road 0 gains three "before you open" cards in Tier 1, which road evaluation
 colours as on your road, and drawn without road evaluation a card no rule colours says "no rule yet"
@@ -105,8 +106,14 @@ pick that is the default reads **default** again). A saved idea whose pick isn't
 default counts as decided, whether the person's click or a program saving through DotAmi's own save
 route put it there (`isBranchDecided`; the toggle's "default, not your pick yet" follows the same
 rule). The same test marks a default in the playbook export ("(default, not picked yet)" beside the
-selection) and in the readout API (each node's `chip`: `your-pick`, `default`, `open-choice`, `now`,
-`done`, `ahead` or `not-on-your-path`). *Hire first
+selection) and in the readout API (each node's `chip`: `your-pick`, `default`, `open-choice`,
+`first-stage`, `starting-point`, `ahead` or `not-on-your-path`: where the stage sits on the map, never the
+person's status; `now` and `done` until 2026-10-23). The person's own mark is the node's `yourStatus`
+(`doing`, `done`, `not-for-me`, or null where they gave none), from the same progress the map draws in place
+of the chip. Since 2026-10-24 the readout gives no `status` (the map's list name, which said `complete` of
+the employee baseline and `active` of Sole Prop activation on every idea) and no `completedNodeIds` or
+`activeNodeIds` in `scenario.state` (`lib/readout/nodes.ts`; `tests/prerelease-honesty.spec.ts`,
+`e2e/app.spec.ts`, `e2e/cockpit.spec.ts`). *Hire first
 employee* reads **your pick** (it is on the map only when the person turned on "Show a hire-first
 path"), and *Service vs. productize*, drawn on every map, reads **open choice**. Until then every
 such card said "your pick", so the GST/HST card said "your pick" under a toggle saying "default, not

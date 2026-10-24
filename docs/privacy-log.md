@@ -73,6 +73,14 @@ person is asked).
   `RETIRED_WINDOW_STORAGE`), and [`tests/privacy-inventory.spec.ts`](../tests/privacy-inventory.spec.ts) fails
   on any other key read or written. No table, column or migration.
 
+- **The readout API gives your own mark on each of today's map steps, and no longer the map's worked-out lists
+  (2026-10-24, the maintainer's decision 3).** `GET /api/readout` now answers, for each stage, your own status on
+  it (doing, done, not for me, or none) from `StepProgress`, which `GET /api/futures/<id>` already answers to the
+  same programs on this computer. It no longer gives the map's list names (each stage's `status`, and
+  `completedNodeIds` and `activeNodeIds` in the idea), which said *complete* and *active* of two stages on every
+  idea though the person said nothing of the kind. Nothing new is kept and nothing leaves the computer
+  ([`lib/readout/nodes.ts`](../lib/readout/nodes.ts)).
+
 - **Changing your place on a saved idea changes that idea (2026-10-23, S2.5.33's bug 33a).** Asks: *Which
   province or territory are you in?*, from *Change* on *You told us your place is …* in the cockpit's *What
   you've told DotAmi*, the thirteen provinces and territories in a drop-down, opened on the idea's own place.

@@ -7,8 +7,8 @@
  *    the journey there, a page removes what an older DotAmi left without reading it, and Delete reaches what
  *    the window holds in memory (lib/journey/held-journey.ts, lib/journey/window-storage.ts). Every line that
  *    says where an unsaved answer is names each way a page is loaded afresh, the desktop app's Go menu included.
- * 2. The map never shows a stage as done, or as where the person is, unless the person marked it; the ideas
- *    card never shows a kind of venture nobody gave.
+ * 2. The map never shows a stage as done, or as where the person is, unless the person marked it, and the
+ *    readout API gives agents the same (2026-10-24); the ideas card never shows a kind of venture nobody gave.
  * 3. Time words the no-times check missed ("first years", "time-boxed"), the Lens lines, and official pages'
  *    words drawn only inside the official-quote component.
  * 4. The front door's chips are in the words file, and none promises anything about the person's taxes.
@@ -24,6 +24,7 @@ import { StrategyMap } from "@/components/cockpit/strategy-map";
 import { FrontDoorNav } from "@/components/discovery/landing-page";
 import { PageQuotes } from "@/components/shared/page-quotes";
 import { cockpitWords } from "@/lib/cockpit/words";
+import { cfeCatalogV2026 } from "@/lib/engines/cfe/v2026";
 import { complianceCatalogV2026 } from "@/lib/engines/compliance/v2026";
 import { generalRoadV2026, roadsV2026, skillItemsV2026, type Road } from "@/lib/engines/roads/v2026";
 import { PAGE_QUOTES_LEAD } from "@/lib/engines/shared/citation-check";
@@ -45,7 +46,10 @@ import {
 } from "@/lib/journey/window-storage";
 import type { PlaceCode } from "@/lib/places/codes";
 import type { StepStatus } from "@/lib/futures/types";
+import { readoutNodes, readoutScenario, stepMarks } from "@/lib/readout/nodes";
 import { evaluateRoad } from "@/lib/roads";
+import { evaluateScenario } from "@/lib/scenarios/evaluate-scenario";
+import { getScenarioNodeStatus } from "@/lib/scenarios/graph";
 import { venturesWords } from "@/lib/ventures/words";
 
 import { input } from "./helpers/road-to-evaluate";
@@ -376,6 +380,18 @@ function drawPickedFuture(road: Road, place: string, progress: { stepId: string;
   );
 }
 
+/**
+ * What the readout API must never give (2026-10-24, the maintainer's decision 3 on PR #210): a node's
+ * `status`, the map's list name, which said `complete` of the employee baseline and `active` of Sole Prop
+ * activation on every idea, and the two lists in `scenario.state` that said the same. Any `status` key at all
+ * is caught, not only those two values; the person's own mark is `yourStatus`, which this doesn't match.
+ */
+const READOUT_NOT_GIVEN = [/"status":"[^"]*"/g, /"completedNodeIds"/g, /"activeNodeIds"/g];
+const notGivenIn = (json: string): string[] => READOUT_NOT_GIVEN.flatMap((re) => [...json.matchAll(re)].map((m) => m[0]));
+
+const BASELINE = "stage-0-employee-apprentice-baseline";
+const SOLE_PROP = "stage-1-sole-prop-activation";
+
 describe("2. The map shows a status only where the person gave one", () => {
   const cases: [string, string][] = roadsV2026.map((road) => [road.id, road.provinces.includes("AB") ? "CA-AB" : "CA-ON"]);
   const roadOf = (id: string): Road => roadsV2026.find((r) => r.id === id)!;
@@ -405,6 +421,43 @@ describe("2. The map shows a status only where the person gave one", () => {
     expect(cockpitWords.map.legend.chip).toBe("Stage chip = where it sits on the map; doing, done or not for me only when you mark it");
     expect(cockpitWords.map.chips).not.toHaveProperty("now");
     expect(cockpitWords.map.chips).not.toHaveProperty("done");
+  });
+
+  it("the readout gives where a stage sits and the person's own mark, never a status they didn't give", () => {
+    const scenario = scenarioForPickedFuture({ road: generalRoadV2026, place: "CA-AB", name: "" }, "readout-test");
+    const evaluation = evaluateScenario(scenario, { today: "2026-10-24" });
+    const nodes = readoutNodes(scenario, evaluation, new Map());
+    const node = (list: typeof nodes, id: string) => list.find((n) => n.id === id);
+    expect(nodes.map((n) => n.id)).toEqual(cfeCatalogV2026.nodes.map((n) => n.id));
+    expect(node(nodes, BASELINE)).toMatchObject({ chip: "starting-point", yourStatus: null });
+    expect(node(nodes, SOLE_PROP)).toMatchObject({ chip: "first-stage", yourStatus: null });
+    const given = readoutScenario(scenario);
+    expect(notGivenIn(JSON.stringify({ nodes, scenario: given }))).toEqual([]);
+    // The picks stay, and the idea itself is left as it was (the map still reads its lists).
+    expect(given.state.activeBranches).toEqual(scenario.state.activeBranches);
+    expect(scenario.state.completedNodeIds).toContain(BASELINE);
+
+    // The person's own Done is given on the step they marked; a status taken back is none.
+    const marks = stepMarks([
+      { roadId: generalRoadV2026.id, stepId: BASELINE, status: "done", doneWhenIds: [], changes: [], updatedAt: "" },
+      { roadId: generalRoadV2026.id, stepId: SOLE_PROP, status: null, doneWhenIds: [], changes: [], updatedAt: "" },
+    ]);
+    const marked = readoutNodes(scenario, evaluation, marks);
+    expect(node(marked, BASELINE)).toMatchObject({ chip: "starting-point", yourStatus: "done" });
+    expect(marked.filter((n) => n.yourStatus !== null).map((n) => n.id)).toEqual([BASELINE]);
+
+    // Planted control: the readout as it was until 2026-10-24 (each node's `status`, the idea with its lists).
+    const before = { nodes: nodes.map(({ yourStatus: _mark, ...n }) => ({ ...n, status: getScenarioNodeStatus(n.id, scenario) })), scenario };
+    expect(notGivenIn(JSON.stringify(before))).toEqual(
+      expect.arrayContaining(['"status":"complete"', '"status":"active"', '"completedNodeIds"', '"activeNodeIds"']),
+    );
+  });
+
+  it("the readout route gives its stages and its idea through those two functions", () => {
+    const route = readFileSync("app/api/readout/route.ts", "utf8");
+    expect(route).toMatch(/\breadoutNodes\(/);
+    expect(route).toContain("scenario: readoutScenario(scenario)");
+    expect(route).not.toMatch(/\bgetScenarioNodeStatus\b/);
   });
 
   it("the ideas card says the type was not said when nobody gave one", async () => {

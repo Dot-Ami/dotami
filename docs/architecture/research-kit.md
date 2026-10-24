@@ -560,7 +560,7 @@ No measure reads the structure ladder's `transitionTrigger` strings, such as "Re
 multiple ventures may favour a holding company" ([ladder.ts:127](../../lib/engines/structure/v2026/ladder.ts)),
 which carry no citation of their own; and no road has a holding-company step yet, so nothing counts one (§ 13).
 
-Today's `GET /api/readout` covers only road 0's nodes ([route.ts:64](../../app/api/readout/route.ts)). Task 25k
+Today's `GET /api/readout` covers only road 0's nodes ([nodes.ts:35](../../lib/readout/nodes.ts)). Task 25k
 extends the read tools:
 - to written roads: `road_view`, `list_options`, `reachable`;
 - to the kit: `job_facts`, `industry_counts`.

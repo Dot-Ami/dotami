@@ -142,6 +142,19 @@ test("the cockpit: gauges, overlays, a step's status, your own skill, your savin
   await expect(done).toHaveAttribute("aria-pressed", "true");
   await expect(gauge(page, "Steps")).toContainText(`1 of ${road0Steps} marked done`);
   await expect(stage(page, "Sole Prop activation")).toHaveAccessibleName(/^Sole Prop activation, done, /);
+  // The readout says the same from the person's own mark, and only there; each chip stays where the stage sits on
+  // the map (2026-10-24).
+  await expect
+    .poll(async () => {
+      const readout = (await (await page.request.get(`/api/readout?venture=${ventureId}`)).json()) as {
+        nodes: { id: string; chip: string; yourStatus: string | null }[];
+      };
+      return readout.nodes.filter((n) => n.id === soleProp.id || n.id === "stage-0-employee-apprentice-baseline");
+    })
+    .toEqual([
+      expect.objectContaining({ id: "stage-0-employee-apprentice-baseline", chip: "starting-point", yourStatus: null }),
+      expect.objectContaining({ id: soleProp.id, chip: "first-stage", yourStatus: "done" }),
+    ]);
   // Its cited "done when" lines (2026-10-12): marking the step done ticks none of them.
   await expect(stepPanel(page).getByText(`0 of ${soleProp.doneWhen.length} ticked`)).toBeVisible();
   await expect(stepPanel(page).getByRole("checkbox", { name: soleProp.doneWhen[0]!.text })).not.toBeChecked();
