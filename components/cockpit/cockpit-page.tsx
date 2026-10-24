@@ -44,7 +44,7 @@ import {
   type NotToldRow,
   type ToldRow,
 } from "@/lib/cockpit/told";
-import { cockpitInput, costLineNote, nextOnYourRoad, overlayCounts, type GaugeId } from "@/lib/cockpit/view";
+import { cockpitInput, costLineNote, linkedSkill, nextOnYourRoad, overlayCounts, type GaugeId } from "@/lib/cockpit/view";
 import { cockpitWords as words } from "@/lib/cockpit/words";
 import { aboutJobWords } from "@/lib/about-job/words";
 import { landscapeWords } from "@/lib/landscape/words";
@@ -52,7 +52,7 @@ import type { CostLineAmountFrom, FigureView } from "@/lib/figures/types";
 import { useLocalToday } from "@/lib/figures/use-local-today";
 import type { CFENodeId } from "@/lib/engines/cfe/v2026";
 import { oasisListForJob } from "@/lib/engines/oasis/v2026";
-import { forksAreTheMapToggles, roadForPlace, roadsV2026, roadsWrittenForJob, skillItemsV2026 } from "@/lib/engines/roads/v2026";
+import { forksAreTheMapToggles, roadForPlace, roadsV2026, roadsWrittenForJob, skillItemsForPlace, skillItemsV2026 } from "@/lib/engines/roads/v2026";
 import { templatesCatalogV2026 } from "@/lib/engines/templates/v2026";
 import type { ExampleFuture } from "@/lib/examples";
 import { exampleStory } from "@/lib/examples/story";
@@ -289,6 +289,9 @@ export function CockpitPage({ initialScenario, pinned = false, example }: Cockpi
     const whole = roadForFuture(SHIPPED_ROADS_CATALOG, roadId);
     return roadPlace ? roadForPlace(whole, roadPlace) : whole;
   }, [roadId, roadPlace]);
+  // The skill items as the step panel and the Skills list draw them: each one's sources for the idea's place
+  // (`skillItemsForPlace`). Road evaluation reads the items as written (ids and labels only).
+  const skillItemsHere = useMemo(() => (roadPlace ? skillItemsForPlace(skillItemsV2026, roadPlace) : skillItemsV2026), [roadPlace]);
   // The government's skills list for the job the person picked as closest to their work, or none.
   const jobCode = kept?.future.job?.code ?? null;
   const job = useMemo(() => (jobCode ? oasisListForJob(jobCode) : null), [jobCode]);
@@ -1313,7 +1316,8 @@ export function CockpitPage({ initialScenario, pinned = false, example }: Cockpi
                   onBranchChange={handleBranchChange}
                   overlays={overlays}
                   stepEvaluations={stepEvaluations}
-                  linkedSkillId={selectedSkillId}
+                  // A skill the idea's place left out dims nothing: no row is drawn to unselect it.
+                  linkedSkillId={linkedSkill(road, selectedSkillId)}
                   cockpit={{
                     legendFolded: folds.legend,
                     onToggleLegend: () => toggle("legend"),
@@ -1387,7 +1391,7 @@ export function CockpitPage({ initialScenario, pinned = false, example }: Cockpi
                     step={selectedStep}
                     evaluation={selectedStepEvaluation}
                     rules={evaluation.rules}
-                    skillItems={skillItemsV2026}
+                    skillItems={skillItemsHere}
                     marks={markOf}
                     selectedSkillId={selectedSkillId}
                     branch={
@@ -1430,7 +1434,7 @@ export function CockpitPage({ initialScenario, pinned = false, example }: Cockpi
               {rightPanel === "skills" ? (
                 <SkillsListPanel
                   road={road}
-                  skillItems={skillItemsV2026}
+                  skillItems={skillItemsHere}
                   marks={kept?.skillMarks ?? []}
                   selectedSkillId={selectedSkillId}
                   canSave={canSave}

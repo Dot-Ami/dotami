@@ -118,10 +118,18 @@ export interface RoadStep {
   opensABusiness?: true;
   /**
    * Set only by `roadForPlace` (./index.ts), never in a road's file: how many other provinces' pages this step's
-   * *done when* lines, cost lines and official links rested on, left out for the idea's place (pages the step's
-   * own sources also cite are counted there, not again). The step's "N sources for other provinces" line adds it.
+   * *done when* lines, cost lines, official links and listed skill items rested on, left out for the idea's place
+   * (pages the step's own sources also cite are counted there, not again). The step's "N sources for other
+   * provinces" line adds it.
    */
   pagesLeftOutForPlace?: number;
+  /**
+   * Set only by `roadForPlace` (./index.ts), never in a road's file, and only when it left something out for the
+   * idea's place: the *done when* lines (by id), the cost lines and the skill items (by id) resting on another
+   * province's pages (second review of #207, 2026-10-24). A tick on one of those lines is kept whatever list a save
+   * sends (lib/futures/types.ts `ticksToSave`).
+   */
+  leftOutForPlace?: { doneWhenIds: readonly string[]; costs: readonly CatalogCostLine[]; needs: readonly string[] };
 }
 
 export interface OnlyForKindsOfWork {
@@ -163,6 +171,11 @@ export interface SkillItem {
   kind: "legal-requirement" | "listed-skill";
   howToGetIt?: { text: string; citation: EngineCitation };
   citations: EngineCitation[];
+  /**
+   * Set only by `skillItemsForPlace` (./index.ts), never in a road's file: how many of its sources (with its way to
+   * get it) were another province's pages, left out for the idea's place. Its row says so in the step's own words.
+   */
+  sourcesLeftOutForPlace?: number;
 }
 
 /**

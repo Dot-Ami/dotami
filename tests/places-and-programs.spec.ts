@@ -24,14 +24,24 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { aboutJobForFuture } from "@/lib/about-job/view";
 import { buildPlan } from "@/lib/cockpit/plan";
 import { toldRows } from "@/lib/cockpit/told";
-import { cockpitInput } from "@/lib/cockpit/view";
+import { cockpitInput, linkedSkill } from "@/lib/cockpit/view";
 import { createDatabaseClient } from "@/lib/db/client";
 import { ensureVentureFromScenario } from "@/lib/db/ensure-venture-from-scenario";
 import { parseFirstSave } from "@/lib/db/parse-scenario-input";
 import { cfeCatalogV2026 } from "@/lib/engines/cfe/v2026";
 import { grantsCatalogV2026 } from "@/lib/engines/grants/v2026";
 import { RETIRED_GRANT_PROGRAMS } from "@/lib/engines/grants/v2026/programs";
-import { citationsForPlace, generalRoadV2026, roadForPlace, roadsV2026, stepSourcesForPlace } from "@/lib/engines/roads/v2026";
+import {
+  citationsForPlace,
+  generalRoadV2026,
+  roadApprenticeToOwnShopAB,
+  roadForPlace,
+  roadsV2026,
+  skillItemsForPlace,
+  skillItemsV2026,
+  stepSourcesForPlace,
+  type SkillItem,
+} from "@/lib/engines/roads/v2026";
 import { readFuture } from "@/lib/futures/future";
 import { readPlan } from "@/lib/futures/read-plan";
 import { listStepProgress, setStepProgress } from "@/lib/futures/step-progress";
@@ -278,12 +288,10 @@ describe("a-call-12: every road draws a step's sources for the person's own plac
         const drawn = roadForPlace(road, province);
         for (const step of road.steps) {
           const same = drawn.steps.find((s) => s.id === step.id)!;
-          expect([same.doneWhen, same.costs, same.officialLinks, same.pagesLeftOutForPlace], `${road.id} · ${step.id}`).toEqual([
-            step.doneWhen,
-            step.costs,
-            step.officialLinks,
-            undefined,
-          ]);
+          expect(
+            [same.doneWhen, same.costs, same.officialLinks, same.needs, same.pagesLeftOutForPlace, same.leftOutForPlace],
+            `${road.id} · ${step.id}`,
+          ).toEqual([step.doneWhen, step.costs, step.officialLinks, step.needs, undefined, undefined]);
         }
       }
     }
@@ -296,6 +304,61 @@ describe("a-call-12: every road draws a step's sources for the person's own plac
     expect(name.pagesLeftOutForPlace).toBeGreaterThan(0);
     const hire = inOntario.steps.find((s) => s.id === "branch-hire-first-employee")!;
     expect(hire.pagesLeftOutForPlace).toBe(1);
+  });
+
+  // Road 1's first step, and the one skill item it lists: Alberta Student Number, all of whose pages are Alberta's.
+  const ASN = "skill-ab-alberta-student-number";
+  const registerApprentice = (place: string) => roadForPlace(roadApprenticeToOwnShopAB, place).steps.find((s) => s.id === "step-shop-register-apprentice")!;
+
+  it("second review of #207: no road drawn for any province or territory lists a skill item resting only on another province's pages", () => {
+    const itemById = new Map(skillItemsV2026.map((item) => [item.id, item]));
+    for (const road of roadsV2026) {
+      for (const province of PROVINCES) {
+        const listed = [...new Set(roadForPlace(road, province).steps.flatMap((s) => s.needs))];
+        const elsewhere = listed.filter((id) => !itemById.get(id)!.citations.some((c) => c.jurisdiction === "CA" || c.jurisdiction === province));
+        expect(elsewhere, `${road.id} in ${province}`).toEqual([]);
+      }
+    }
+    // Road 1 from Ontario: the item leaves the step, kept on it as left out, and its pages are counted in the step's
+    // one line (4 until now: the step's own two pages and its two high-school links; 7 with the item's three others).
+    const step = registerApprentice("ON");
+    expect(step.needs).toEqual([]);
+    expect(step.leftOutForPlace?.needs).toEqual([ASN]);
+    expect(stepSourcesForPlace(roadApprenticeToOwnShopAB, step, "ON").leftOut).toBe(7);
+    // Control: in Alberta the step lists it.
+    expect(registerApprentice("AB").needs).toEqual([ASN]);
+  });
+
+  it("second review of #207: skillItemsForPlace draws an item's sources and its way to get it for the place, and counts the rest", () => {
+    const asn = skillItemsV2026.find((item) => item.id === ASN)!;
+    const gst = skillItemsV2026.find((item) => item.id === "skill-ca-gst-hst-registration")!;
+    // Planted: one federal page and one Alberta page, and its way to get it on a second Alberta page.
+    const planted: SkillItem = {
+      id: "skill-planted",
+      label: "Planted",
+      kind: "legal-requirement",
+      citations: [gst.citations[0], asn.citations[1]],
+      howToGetIt: { text: "Planted.", citation: asn.citations[2] },
+    };
+    const [inOntario] = skillItemsForPlace([planted], "ON");
+    expect(inOntario.citations).toEqual([gst.citations[0]]);
+    expect(inOntario.howToGetIt).toBeUndefined();
+    expect(inOntario.sourcesLeftOutForPlace).toBe(2);
+    // In Alberta nothing changes (the item is rebuilt, so equal, not the same object).
+    expect(skillItemsForPlace([planted], "AB")).toEqual([planted]);
+    expect(skillItemsForPlace(skillItemsV2026, "AB")).toEqual(skillItemsV2026);
+    for (const province of PROVINCES) {
+      for (const item of skillItemsForPlace(skillItemsV2026, province)) {
+        const pages = [...item.citations, ...(item.howToGetIt ? [item.howToGetIt.citation] : [])];
+        expect(pages.filter((c) => c.jurisdiction !== "CA" && c.jurisdiction !== province).map((c) => `${item.id} · ${province} · ${c.url}`)).toEqual([]);
+      }
+    }
+  });
+
+  it("second review of #207: a skill selected on the map is cleared when the idea's place leaves it out, so no card stays dimmed by it", () => {
+    expect(linkedSkill(roadForPlace(roadApprenticeToOwnShopAB, "ON"), ASN)).toBeNull();
+    expect(linkedSkill(roadForPlace(roadApprenticeToOwnShopAB, "AB"), ASN)).toBe(ASN);
+    expect(linkedSkill(roadForPlace(roadApprenticeToOwnShopAB, "AB"), null)).toBeNull();
   });
 
   it("Alberta's employment-standards page: checked by a tool, its words recorded, no read date (waiting for a person)", () => {

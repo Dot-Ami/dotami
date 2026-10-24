@@ -4,7 +4,7 @@ Page: Cockpit (`/cockpit?venture=<id>`) · Component: `components/cockpit/step-p
 step it wraps `components/node-detail-panel.tsx`; the quote box is `components/cockpit/amount-form.tsx`)
 Type: panel (display + toggle buttons + checkboxes + form)
 
-Last updated: 2026-10-24 (a tick on a line the idea's place leaves out is kept, second review of #207; *Why this colour* on SR&ED deepening without a research kind of work, issue #40, 2026-10-13; built 2026-10-12, docs/architecture/future-cockpit.md § 1 row 5 and § 2, Cockpit screen as built)
+Last updated: 2026-10-24 (a tick on a line the idea's place leaves out is kept, and skill items drawn for the place, second review of #207; *Why this colour* on SR&ED deepening without a research kind of work, issue #40, 2026-10-13; built 2026-10-12, docs/architecture/future-cockpit.md § 1 row 5 and § 2, Cockpit screen as built)
 
 > **Changed 2026-10-12 — part 2.** Every answer given here (a status, ticks, a skill mark, a quote once agreed, the fork's toggle) shows its receipt under the panel's refusal line ([13-receipts.md](./13-receipts.md)); opening another step clears it. At a fork, **Compare the endings** opens *Compare the two endings* on that fork ([15-compare.md](./15-compare.md)); since 2026-10-13 (the maintainer's answer to PR #159's question 1) only at a fork whose own pick, not the rules, puts steps on or off the path (`lib/cockpit/told.ts` `forksToCompare`), so not on a road 0 step, where the toggle is the pick, the tax rules colour the sides whichever is picked, and no Compare button shows. The *I'd incorporate at* box saves as the person types and gives no receipt.
 >
@@ -54,7 +54,14 @@ The sections, in order:
    government's skills list for it.* and **Pick a job**. Either button opens the Skills list behind the
    Skills gauge (and switches the Skills overlay on). Road 0's *Mandatory GST registration* lists its one
    legal requirement here, *A GST/HST registration with the Canada Revenue Agency*, with the compliance
-   catalog's source.
+   catalog's source. Since 2026-10-24 (second review of #207) the items are drawn for the idea's place: an item
+   none of whose sources is federal or the place's own isn't listed there (`roadForPlace`; road 1's three Alberta
+   items, *Alberta Student Number* among them, seen from Ontario), its pages counted in the step's *n sources for
+   other provinces aren't shown.* line, and a mark on it stays the person's; a listed item shows its federal and
+   own-province sources and its way to get it only when that page is one of them, with *n sources for other
+   provinces aren't shown.* under them when some were left out (`skillItemsForPlace`). Selecting an item the
+   idea's place then leaves out clears the selection, so the map never stays dimmed with no row to unselect it
+   (`linkedSkill` in `lib/cockpit/view.ts`).
 6. **Costs** — each line in one of the three kinds: an official fee with its amount, *official fee ·
    source and day read* and its citation (one that applies only sometimes adds *Only if: <its condition>.
    Not added to any total.*, where a condition that already ends in a full stop gets no second one); the person's agreed number with *your quote · agreed* and

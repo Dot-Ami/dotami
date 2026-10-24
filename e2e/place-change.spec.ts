@@ -12,7 +12,7 @@ import path from "node:path";
 
 import { expect, test, type Page } from "@playwright/test";
 
-import { generalRoadV2026 } from "../lib/engines/roads/v2026";
+import { generalRoadV2026, roadApprenticeToOwnShopAB } from "../lib/engines/roads/v2026";
 
 import { lookCloser, showRail, showRoadAhead } from "./cockpit-calm";
 
@@ -33,18 +33,24 @@ async function ideaCount(page: Page): Promise<number> {
   return ((await res.json()) as { ventures: unknown[] }).ventures.length;
 }
 
-/** An invented Alberta idea on road 0, kept with a job, Calgary as its area and the Calgary region, as Pick a future keeps one. */
-async function albertaIdea(page: Page): Promise<string> {
+/**
+ * An invented Alberta idea on road 0, kept with a job, Calgary as its area and the Calgary region, as Pick a future keeps
+ * one. `opts` saves it elsewhere, on another road, or with its structure set by the person.
+ */
+async function albertaIdea(
+  page: Page,
+  opts: { province?: "AB" | "ON"; roadId?: string; structureSource?: "assumed" | "user" } = {},
+): Promise<string> {
   const scenario = {
     id: `place-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
     profile: {
       name: "Invented — place change test",
       type: "service",
-      province: "AB",
+      province: opts.province ?? "AB",
       targetRevenueY1: 20_000,
       targetRevenueY3: 60_000,
       structure: "sole-prop",
-      structureSource: "assumed",
+      structureSource: opts.structureSource ?? "assumed",
       employmentStatus: "employee",
       hireFirst: false,
       activityTags: ["Trades"],
@@ -53,7 +59,7 @@ async function albertaIdea(page: Page): Promise<string> {
     state: { activeBranches: { gstTiming: "stage-2b-mandatory-gst-registration", incorporationTiming: "stage-3a-incorporation-80k-net" } },
   };
   const saved = await page.request.post("/api/scenario/save", {
-    data: { scenario, roadId: generalRoadV2026.id, job: BARBERS, area: "cma-825", region: "4830" },
+    data: { scenario, roadId: opts.roadId ?? generalRoadV2026.id, job: BARBERS, area: "cma-825", region: "4830" },
   });
   expect(saved.ok()).toBe(true);
   return ((await saved.json()) as { ventureId: string }).ventureId;
@@ -172,6 +178,35 @@ test("second review of #207: a tick on a line left out in Ontario survives a tic
   panel = await openHire(page);
   await expect(panel.getByRole("checkbox", { name: /WCB-Alberta/ })).toBeChecked();
   await expect(panel.getByRole("checkbox", { name: /^Before the first pay/ })).toBeChecked();
+});
+
+/** Road 1's first step, whose one listed skill item, Alberta Student Number, rests only on Alberta's pages. */
+const REGISTER_APPRENTICE = /^Register as a Cabinetmaker apprentice, /;
+
+test("second review of #207: road 1 opened from Ontario lists no skill item resting only on Alberta's pages, in the step or the Skills list", async ({ page }) => {
+  const ventureId = await albertaIdea(page, { province: "ON", roadId: roadApprenticeToOwnShopAB.id });
+  await page.goto(`/cockpit?venture=${ventureId}`);
+  await page.getByRole("button", { name: REGISTER_APPRENTICE }).first().click();
+  const panel = page.getByRole("region", { name: "Step" });
+  await expect(panel).toBeVisible();
+  await expect(panel).not.toContainText("Alberta Student Number");
+  expect(await panel.locator(ALBERTA_LINKS).count()).toBe(0);
+  await panel.getByRole("button", { name: "Close", exact: true }).click();
+
+  await goalBar(page).getByRole("button", { name: /^Skills/ }).click();
+  const skills = page.getByRole("region", { name: "Skills on this road" });
+  await expect(skills).toBeVisible();
+  await expect(skills).not.toContainText("Alberta Student Number");
+  expect(await skills.locator(ALBERTA_LINKS).count()).toBe(0);
+});
+
+test("control: road 1 in Alberta lists Alberta Student Number with its Alberta pages, so the check above can see them", async ({ page }) => {
+  const ventureId = await albertaIdea(page, { roadId: roadApprenticeToOwnShopAB.id });
+  await page.goto(`/cockpit?venture=${ventureId}`);
+  await page.getByRole("button", { name: REGISTER_APPRENTICE }).first().click();
+  const panel = page.getByRole("region", { name: "Step" });
+  await expect(panel).toContainText("Alberta Student Number");
+  expect(await panel.locator('a[href*="tradesecrets.alberta.ca"]').count()).toBeGreaterThan(0);
 });
 
 test("control: in Alberta, Your plan links Alberta's own pages, so the check above can see them", async ({ page }) => {

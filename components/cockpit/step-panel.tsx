@@ -540,9 +540,12 @@ export function SkillRow({
         {mark === "have" && item.kind === "legal-requirement" ? <span className="font-mono text-label text-sage">{words.panel.youHold}</span> : null}
       </div>
       <MarkButtons mark={mark} canSave={canSave} onMark={onMark} />
-      {/* The item's own sources, mark or no mark: a legal requirement is never shown without its law. */}
+      {/* The item's own sources, mark or no mark: a legal requirement is never shown without its law; drawn for the
+          idea's place (`skillItemsForPlace`), and one resting only on another province's pages isn't listed there
+          (`roadForPlace`). */}
       <div className="mt-1.5">
         <CitationLinks citations={item.citations} compact />
+        {item.sourcesLeftOutForPlace ? <p className="mt-1 text-small text-stone-dim">{words.panel.sourcesOtherProvinces(item.sourcesLeftOutForPlace)}</p> : null}
       </div>
       {mark === "not-yet" && item.howToGetIt ? (
         <div className="mt-1.5 text-body text-stone">

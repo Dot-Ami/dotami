@@ -66,8 +66,15 @@ export function citationsForPlace(
 }
 
 /**
+ * Skill items, shared by every road so a person's mark carries across them: the first written future's
+ * legal requirements and road 0's (2026-10-12), each cited. The government's lists for a job are their own
+ * catalog (lib/engines/oasis/v2026/), shown only for the job the person picks, never tied to a step.
+ */
+export const skillItemsV2026: readonly SkillItem[] = [...skillItemsApprenticeToOwnShopAB, ...skillItemsStartingAnyBusinessAB];
+
+/**
  * A step's own sources for the idea's place (`citationsForPlace`), with the count line's number grown by the
- * pages `roadForPlace` left out of its *done when* lines, cost lines and official links. The step panel and the
+ * pages `roadForPlace` left out of its *done when* lines, cost lines, official links and listed skill items. The step panel and the
  * plan ask this, so one line says everything a step left out for another province.
  */
 export function stepSourcesForPlace(
@@ -89,14 +96,37 @@ export function stepSourcesForPlace(
  * ticks and quotes against the whole road (`roadForFuture`), and a tick on a line left out here is kept whatever
  * list a save sends (lib/futures/types.ts `ticksToSave`), so moving back shows them again. In a road's own
  * province, or on a road citing no other province, it changes nothing.
+ *
+ * Since the second review of #207 (2026-10-24) the same rule holds for the skill items a step lists: an item none
+ * of whose sources is federal or the place's own leaves the step's `needs` (road 1's *Alberta Student Number*, seen
+ * from Ontario), its pages counted in the same line; a mark on it stays the person's. What a step left out is kept
+ * on it (`leftOutForPlace`). `skillItems` are the items as written, never `skillItemsForPlace`'s.
  */
-export function roadForPlace(road: Road, place: string): Road {
-  const other = (citation: EngineCitation | undefined) => citation !== undefined && citation.jurisdiction !== "CA" && citation.jurisdiction !== place;
+export function roadForPlace(road: Road, place: string, skillItems: readonly SkillItem[] = skillItemsV2026): Road {
+  const here = (citation: EngineCitation) => citation.jurisdiction === "CA" || citation.jurisdiction === place;
+  const other = (citation: EngineCitation | undefined) => citation !== undefined && !here(citation);
   const costSource = (cost: CatalogCostLine) => (cost.kind === "official-fee" ? cost.citation : cost.nameSource);
+  const itemById = new Map(skillItems.map((item) => [item.id, item]));
+  // An item's pages: its own sources and the page of its way to get it.
+  const itemPages = (id: string): EngineCitation[] => {
+    const item = itemById.get(id);
+    return item ? [...item.citations, ...(item.howToGetIt ? [item.howToGetIt.citation] : [])] : [];
+  };
+  // An item with no federal or own-province source (the checks refuse an item with no source at all). An id the
+  // list doesn't hold stays listed: nothing here says where it rests.
+  const itemElsewhere = (id: string) => {
+    const item = itemById.get(id);
+    return item !== undefined && !item.citations.some(here);
+  };
   // Every page the road cites for another province, by address, so a link to one goes with its citations.
   const otherPages = new Set(
     road.steps
-      .flatMap((step) => [...step.citations, ...step.doneWhen.map((line) => line.citation), ...step.costs.map(costSource)])
+      .flatMap((step) => [
+        ...step.citations,
+        ...step.doneWhen.map((line) => line.citation),
+        ...step.costs.map(costSource),
+        ...step.needs.flatMap(itemPages),
+      ])
       .filter(other)
       .map((citation) => citation!.url),
   );
@@ -104,28 +134,56 @@ export function roadForPlace(road: Road, place: string): Road {
   return {
     ...road,
     steps: road.steps.map((step) => {
+      const left = {
+        doneWhenIds: step.doneWhen.filter((line) => other(line.citation)).map((line) => line.id),
+        costs: step.costs.filter((cost) => other(costSource(cost))),
+        needs: step.needs.filter(itemElsewhere),
+      };
       const doneWhen = step.doneWhen.filter((line) => !other(line.citation));
       const costs = step.costs.filter((cost) => !other(costSource(cost)));
       const officialLinks = step.officialLinks.filter((link) => !otherPages.has(link.url));
+      const needs = step.needs.filter((id) => !itemElsewhere(id));
       // The pages behind what was left out, once each, less those the step's own sources count already.
       const counted = new Set(step.citations.filter(other).map((citation) => citation.url));
       const leftOut = new Set([
         ...step.doneWhen.filter((line) => other(line.citation)).map((line) => line.citation.url),
-        ...step.costs.flatMap((cost) => (other(costSource(cost)) ? [costSource(cost)!.url] : [])),
+        ...left.costs.map((cost) => costSource(cost)!.url),
         ...step.officialLinks.filter((link) => otherPages.has(link.url)).map((link) => link.url),
+        ...left.needs.flatMap((id) => itemPages(id).filter(other).map((citation) => citation.url)),
       ]);
       const pages = [...leftOut].filter((url) => !counted.has(url)).length;
-      return { ...step, doneWhen, costs, officialLinks, ...(pages > 0 ? { pagesLeftOutForPlace: pages } : {}) };
+      const anyLeft = left.doneWhenIds.length + left.costs.length + left.needs.length > 0;
+      return {
+        ...step,
+        doneWhen,
+        costs,
+        officialLinks,
+        needs,
+        ...(pages > 0 ? { pagesLeftOutForPlace: pages } : {}),
+        ...(anyLeft ? { leftOutForPlace: left } : {}),
+      };
     }),
   };
 }
 
 /**
- * Skill items, shared by every road so a person's mark carries across them: the first written future's
- * legal requirements and road 0's (2026-10-12), each cited. The government's lists for a job are their own
- * catalog (lib/engines/oasis/v2026/), shown only for the job the person picks, never tied to a step.
+ * The skill items as a screen draws them for one idea (second review of #207, 2026-10-24): each item's own sources
+ * through `citationsForPlace`, its way to get it only when that page is federal or the place's own, and how many
+ * pages it left out, which its row says in the step's own words. An item resting only on another province's pages
+ * isn't listed for that place at all (`roadForPlace`), so a legal requirement is never drawn without its law.
  */
-export const skillItemsV2026: readonly SkillItem[] = [...skillItemsApprenticeToOwnShopAB, ...skillItemsStartingAnyBusinessAB];
+export function skillItemsForPlace(items: readonly SkillItem[], place: string): SkillItem[] {
+  const here = (citation: EngineCitation) => citation.jurisdiction === "CA" || citation.jurisdiction === place;
+  return items.map((item) => {
+    const { howToGetIt, ...rest } = item;
+    const { shown, leftOut } = citationsForPlace({ provinces: [] }, item.citations, place);
+    const how = howToGetIt && here(howToGetIt.citation) ? howToGetIt : undefined;
+    // The way to get it, left out, is one more page, unless it is one of the item's own sources (counted there).
+    const howLeft = howToGetIt && !how && !item.citations.some((citation) => citation.url === howToGetIt.citation.url) ? 1 : 0;
+    const n = leftOut + howLeft;
+    return { ...rest, citations: shown, ...(how ? { howToGetIt: how } : {}), ...(n > 0 ? { sourcesLeftOutForPlace: n } : {}) };
+  });
+}
 
 export const roadsCatalogV2026 = {
   version: "v2026",

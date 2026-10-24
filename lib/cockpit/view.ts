@@ -112,6 +112,15 @@ export function cockpitInput(args: {
 }
 
 /**
+ * The skill the map dims by: the one selected, only while the road drawn for the idea's place lists it. A change of
+ * place can leave it out, and with it every row that unselects it, which would leave every card dimmed (second
+ * review of #207).
+ */
+export function linkedSkill(road: Pick<Road, "steps">, selected: string | null): string | null {
+  return selected !== null && road.steps.some((step) => step.needs.includes(selected)) ? selected : null;
+}
+
+/**
  * Where a step sits as its card's chip shows it: the person's own status where they set one, else the
  * place the map works out from its toggles (road 0's lists; a step of another road is "upcoming" there),
  * except that a step the road writes for some kinds of work only is off the path on an idea with none
