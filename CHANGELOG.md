@@ -225,6 +225,29 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   British Columbia's employment-standards pages as its sources; a misspelt word in the kind of work finds the job
   only by its own name (84 of the 220 test ideas with a job); and "à Regina" in French names no province.
 ### Fixed
+- **Every page fits a phone, one step counter, and plainer screens** (the screen review of 2026-10-23, its
+  pre-release fixes "Phone and layout"). At 375 px: the cockpit's four gauges are stacked, each inside the window
+  (Start-up money and Your date were out of sight in a strip that scrolled sideways; two by two from 640 px, four
+  across from 1024 px); the idea's name has a line of its own in the header (it showed "In…"); the first visit's
+  tip sits after *Next on your road*, off the road. *Your futures* (415 px wide) and *Your expenses* (429 px, the
+  **Show** drop-down) fit: the nav and the Stage row wrap, and no drop-down is wider than its box. A new browser
+  test, `e2e/phone-width.spec.ts`, checks at 375 px that no page the review walked scrolls sideways, held to a
+  planted control (a 600 px element fails it). The typed way numbers its screens once, *1 of 6 · About you* to
+  *6 of 6 · Pick a future* (it said *3 of 3 · Ground it* and then *1 of 3 · Your work*; `lib/front-door/typed-way.ts`).
+  The step panel lists a legal requirement such as the Alberta Student Number under *What it needs*, not as a
+  skill, and so do the Skills gauge, its list and its switch over the map: on the apprentice road, whose three
+  items are all legal requirements, the gauge said *3 not marked, out of 3 listed* and the switch *Skills · 3
+  listed*; now *No skills are listed on this road yet* and *3 legal requirements, apart from skills: 3 not
+  marked*, the switch *Skills · 0 listed · 3 legal requirements*, and the list draws them under *Legal
+  requirements on this road's steps*, above *Skills on this road's steps* (it is titled *Skills and legal
+  requirements*), and so does a future's card on *Pick a future* (*0 skills listed · 3 legal requirements*, not *3
+  skills listed*). On a phone the overlay row's own label and Road's *always on* are left to screen readers, so
+  the longer switch keeps the row on two lines. The Skills list folds the job's own list (Cabinetmakers' 44) under one **Show the 44 on this job's list**
+  button below the road's own items. The Structure ladder is drawn only on the tax and structure roads, in plain
+  words (*Ways a business can be set up*: *In your own name* … *A family trust*). *Your plan* has *The steps in this
+  plan* at the top of its steps, each a link to its step. *Your destination* says "DotAmi's own server didn't
+  answer" when it doesn't, not "no database reachable". A future's card says in one sentence what "checked by a
+  tool only" means. No money amount, rule or kept data changed.
 - **Your answer to "Are you buying equipment, a vehicle or tools?" on a future picked on Pick a future is
   kept** (the maintainer's "Yes, fix both", 2026-10-20). Pick a future saves equipment as not said, since it
   never asks it. Answering in the cockpit's one-question box showed the answer for a moment, but left

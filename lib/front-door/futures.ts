@@ -84,8 +84,13 @@ export interface FutureCard {
   kind: RoadKind;
   writtenFor: readonly Province[];
   steps: number;
-  /** Skill items the road lists, each once. */
+  /** Skill items the road lists, each once: its listed skills, never its legal requirements. */
   skillsListed: number;
+  /**
+   * The road's legal requirements (an ID number, an agreement, a certificate), each once, counted apart from its
+   * skills as the cockpit counts them (a review of 2026-10-23: the apprentice road's card read "3 skills listed").
+   */
+  requirementsListed: number;
   officialFees: number;
   /** Named cost lines: the ones the person prices themselves. */
   linesToPrice: number;
@@ -138,15 +143,18 @@ export function futureCards(
   skillItems: readonly SkillItem[],
   place: string | null = null,
 ): FutureCard[] {
+  const legal = new Set(skillItems.filter((item) => item.kind === "legal-requirement").map((item) => item.id));
   return roads.map((road) => {
     const costs = road.steps.flatMap((step) => step.costs);
+    const items = [...new Set(road.steps.flatMap((step) => step.needs))];
     return {
       roadId: road.id,
       label: road.label,
       kind: road.kind,
       writtenFor: road.provinces,
       steps: road.steps.length,
-      skillsListed: new Set(road.steps.flatMap((step) => step.needs)).size,
+      skillsListed: items.filter((id) => !legal.has(id)).length,
+      requirementsListed: items.filter((id) => legal.has(id)).length,
       officialFees: costs.filter((cost) => cost.kind === "official-fee").length,
       linesToPrice: costs.filter((cost) => cost.kind === "named").length,
       sources: countSources(roadCitations(road, skillItems, place)),

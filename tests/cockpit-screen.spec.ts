@@ -29,7 +29,7 @@ import {
   type Overlays,
 } from "@/lib/cockpit/view";
 import { cfeCatalogV2026 } from "@/lib/engines/cfe/v2026";
-import { generalRoadV2026, type Road } from "@/lib/engines/roads/v2026";
+import { generalRoadV2026, type Road, skillItemsV2026 } from "@/lib/engines/roads/v2026";
 import type { FigureView } from "@/lib/figures/types";
 import type { PersonFigureView } from "@/lib/futures/person-figures";
 import { evaluateRoad, NO_AGREED_PLANNING, type RoadEvaluation, type RoadEvaluationInput } from "@/lib/roads";
@@ -329,8 +329,10 @@ describe("the gauges", () => {
     const view = gaugeView(result, roadToEvaluate(), inventedIdea());
     expect(view.steps.value).toBe("1 of 7 marked done");
     expect(view.steps.lines).toContain("next on your road: “Get your ticket (test only)”");
-    expect(view.skills.value).toBe("1 have · 1 learning · 1 not yet");
-    expect(view.skills.lines).toContain("2 not marked, out of 5 listed");
+    // The trade ticket is a legal requirement: counted apart from the four skills (2026-10-23).
+    expect(view.skills.value).toBe("1 have · 1 learning · 0 not yet");
+    expect(view.skills.lines).toContain("2 not marked, out of 4 listed");
+    expect(view.skills.lines).toContain("1 legal requirement, apart from skills: 1 not yet");
     // Each part with its lines: Tuition, the exam and the name registration; the table saw quote.
     expect(view.money.value).toBe("$1,860 official fees (3 lines) · $3,400 your numbers (1 line)");
     expect(view.money.lines).toContain("4 not priced yet");
@@ -399,11 +401,13 @@ describe("the gauges", () => {
   });
 
   it("on road 0: its one legal requirement, not marked yet; its cost lines are named lines, never $0", () => {
-    const view = gaugeView(evaluateRoad(road0Input()), generalRoadV2026, inventedIdea());
+    // With the catalog's items, as the cockpit reads them, so the requirement is known as one.
+    const view = gaugeView(evaluateRoad(road0Input({ skillItems: [...skillItemsV2026] })), generalRoadV2026, inventedIdea());
     expect(view.steps.value).toBe(`0 of ${generalRoadV2026.steps.length} marked done`);
-    // The GST/HST registration, from the compliance catalog (2026-10-12).
-    expect(view.skills.value).toBe("0 have · 0 learning · 0 not yet");
-    expect(view.skills.lines).toContain("1 not marked, out of 1 listed");
+    // The GST/HST registration, from the compliance catalog (2026-10-12): a legal requirement, so it is counted
+    // apart from skills, of which road 0 lists none (2026-10-23).
+    expect(view.skills.value).toBe("No skills are listed on this road yet");
+    expect(view.skills.lines).toContain("1 legal requirement, apart from skills: 1 not marked");
     // The before-you-open steps (2026-10-12) name four lines the person prices, and Sole Prop activation
     // seven start-up lines (later the same day), all with no amount: eleven on the path, none priced.
     expect(view.money.value).toBe("your numbers: not given yet");
@@ -465,7 +469,8 @@ describe("the overlays on the road", () => {
 
   it("the switches carry the road's own counts", () => {
     const counts = overlayCounts(road, result, inventedIdea());
-    expect(counts).toEqual({ skillsListed: 5, costLines: 8, rulesCards: 0 });
+    // The trade ticket is a legal requirement, counted apart from the four skills (2026-10-23).
+    expect(counts).toEqual({ skillsListed: 4, requirementsListed: 1, costLines: 8, rulesCards: 0 });
     const html = renderToStaticMarkup(
       createElement(OverlaySwitches, { overlays: { skills: true, money: false, rules: true }, counts, onToggle: () => {} }),
     );
@@ -473,7 +478,7 @@ describe("the overlays on the road", () => {
     expect(html).toContain("always on");
     expect(html).toMatch(/aria-pressed="true"[^>]*>Skills/);
     expect(html).toMatch(/aria-pressed="false"[^>]*>Money/);
-    expect(html).toContain("5 listed");
+    expect(html).toContain("4 listed · 1 legal requirement");
     expect(html).toContain("8 cost lines");
   });
 
@@ -699,9 +704,11 @@ describe("the step panel", () => {
   });
 
   it("every skill item and named cost line carries its own source; official pages are links the person opens", () => {
-    // The ticket step: its one skill item's citation is drawn with it, mark or no mark.
+    // The ticket step: its one skill item's citation is drawn with it, mark or no mark. The ticket is a legal
+    // requirement, so it sits under What it needs (2026-10-23), above the step's skills.
     const ticket = draw("step-eval-ticket");
-    const skillsPart = ticket.slice(ticket.indexOf(">Skills it needs<"), ticket.indexOf(">Costs<"));
+    const skillsPart = ticket.slice(ticket.indexOf(">What it needs<"), ticket.indexOf(">Costs<"));
+    expect(ticket.indexOf(">What it needs<")).toBeGreaterThan(-1);
     expect((skillsPart.match(/<a /g) ?? []).length).toBe(1);
     // A named line with a source for its name, and a step with an official page.
     const withSources: Road = {

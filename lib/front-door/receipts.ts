@@ -16,8 +16,12 @@ const words = destinationWords.receipts;
 /** What became of the answer to question 1. */
 export type DestinationAnswer =
   | { kept: "saved"; text: string; saidAt: string }
-  /** The words, with no database to keep them in: they stay in this tab only. */
-  | { kept: "tab-only"; text: string; saidAt: string }
+  /**
+   * The words, not kept: they stay in this tab only. `cause` says why: the server answered that no database was
+   * reachable (left out), or DotAmi's own server didn't answer at all ("no-server"; 2026-10-23, the receipt used to
+   * name the database for both).
+   */
+  | { kept: "tab-only"; text: string; saidAt: string; cause?: "no-server" }
   /**
    * "I don't know yet". It deletes nothing, so `stillKept` is the person's newest destination already in
    * the data file when they said it: those words still show on top of their futures, and the receipt says so.
@@ -38,7 +42,7 @@ export type IncomeAnswer =
 
 export function destinationReceipt(answer: DestinationAnswer): string {
   if (answer.kept === "saved") return words.destinationKept(answer.saidAt);
-  if (answer.kept === "tab-only") return words.destinationTabOnly;
+  if (answer.kept === "tab-only") return answer.cause === "no-server" ? words.destinationNoServer : words.destinationTabOnly;
   return answer.stillKept ? words.destinationStillKept(answer.stillKept.saidAt) : words.destinationDontKnow;
 }
 

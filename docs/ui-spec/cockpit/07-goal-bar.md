@@ -34,14 +34,15 @@ A band under the header, across the whole page, named *Your goal and gauges* for
   (yours, agreed 2026-10-11)* only when the person agreed to a yearly income; *Future: <road's name>*, or,
   when the road isn't written for the idea's province (nor for all of Canada), *Map drawn: <road's name> ·
   written for AB; this idea is in BC*, so a BC idea is never told its future is an Alberta one.
-- Four gauge buttons, four across at any width (each at least 190 px; on a narrow window the row scrolls
-  sideways, so the bar stays one row tall and the map keeps its room). Each has its name and
+- Four gauge buttons: four across from 1024 px (each at least 190 px), two by two from 640 px, and stacked one
+  under another on a phone (since 2026-10-23: they used to stay four across at every width and scroll sideways
+  inside the bar, so at 375 px *Start-up money* and *Your date* were out of sight). Each has its name and
   a tag for where its numbers come from, a value, plain lines under it, and at most one amber invitation:
 
 | Gauge | Tag | Value | Lines | Invitation |
 |---|---|---|---|---|
 | **Steps** | count | *1 of 10 marked done* | *2 doing* (when any); *next on your road: “Sole Prop activation”*, or *no step on your path is waiting* | — |
-| **Skills** | your marks | *1 have · 1 learning · 1 not yet*, or *No skills are listed on this road yet* | *2 not marked, out of 5 listed*; *your own skills: 1 have · 0 learning · 0 not yet* when the person added any; *your pick of job: 1 have · 0 learning · 0 not yet, of 44 listed* when the person picked a job (2026-10-12) | *Mark them to see what each step still needs* while any is unmarked; *Add skills of your own in the list* when the road lists none and none are added |
+| **Skills** | your marks | *1 have · 1 learning · 1 not yet*, or *No skills are listed on this road yet* (legal requirements aren't counted as skills, since 2026-10-23) | *2 not marked, out of 5 listed*; the road's legal requirements apart, only the marks with a count named: *3 legal requirements, apart from skills: 1 have · 2 not marked*; *your own skills: 1 have · 0 learning · 0 not yet* when the person added any; *your pick of job: 1 have · 0 learning · 0 not yet, of 44 listed* when the person picked a job (2026-10-12) | *Mark them to see what each step still needs* while any skill or legal requirement is unmarked; *Add skills of your own in the list* when the road lists neither and none are added |
 | **Start-up money** | yours + cited | *$1,860 official fees (3 lines) · $3,400 your numbers (1 line)*; a part with no lines is left out, and with no number of the person's it reads *your numbers: not given yet*, never $0; or *No cost lines on this road yet* | *1 official fee applies only sometimes, not added up* (an `onlyIf` fee, in neither part); *4 not priced yet*; *2 left out: not on your path*; *5 wait on a pick at “Ending”*; *savings $12,000* or *savings: not given yet*; *savings minus both: $10,200* only when road evaluation gives that difference | *Add your savings in the list* while there are none |
 | **Your date** | yours | *May 2029*, or *not set* | *31 months from today* | *Add your month and year to count the months to it* while not set |
 

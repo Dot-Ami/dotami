@@ -40,18 +40,20 @@ The sections, in order:
    and the boxes wait (disabled) until the save is read back; a refused save puts the box back as kept and
    shows the reason above, so a box never stays ticked over a refusal. The count is what is kept. Empty:
    *No “done when” lines are written for this step yet.*
-5. **Skills it needs** — each skill item the step lists: its name (a button that selects it and dims the
+5. **What it needs** and **Skills it needs** (split on 2026-10-23: the screen review found the Alberta
+   Student Number listed as a skill) — the step's legal requirements (an ID number, an agreement) under *What
+   it needs*, drawn only on a step that has one, then its listed skills under *Skills it needs*; each item: its name (a button that selects it and dims the
    steps that don't list it), its kind (*legal requirement* or *listed skill*), **Have**, **Learning**,
    **Not yet** (`aria-pressed`) and **I don't know** (removes the mark; off when there is none), and the
    item's own sources through `CitationLinks`, mark or no mark. A legal requirement marked have reads
    *you said you hold this*; one marked not yet shows *The official way to get it:* with its cited route.
-   Empty: *No skills are listed for this step yet.* Under the step's own items (2026-10-12), one line about
+   With no listed skill: *No skills are listed for this step yet.* Under the step's own items (2026-10-12), one line about
    the government's list for the person's pick of job, which belongs to the job, never to a step: with a job
    picked, *Your pick of job, “Cabinetmakers”: 44 on the government's list, 1 marked. The list is for the
    job, not for this step.* and **Open the list**; with none, *Pick the job closest to your work to see the
    government's skills list for it.* and **Pick a job**. Either button opens the Skills list behind the
-   Skills gauge (and switches the Skills overlay on). Road 0's *Mandatory GST registration* lists its one
-   legal requirement here, *A GST/HST registration with the Canada Revenue Agency*, with the compliance
+   Skills gauge (and switches the Skills overlay on); **Open the list** opens it with the job's list unfolded.
+   Road 0's *Mandatory GST registration* lists its one legal requirement under *What it needs*, *A GST/HST registration with the Canada Revenue Agency*, with the compliance
    catalog's source.
 6. **Costs** — each line in one of the three kinds: an official fee with its amount, *official fee ·
    source and day read* and its citation (one that applies only sometimes adds *Only if: <its condition>.

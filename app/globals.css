@@ -79,6 +79,14 @@
     border-color: var(--color-gray-200, currentcolor);
   }
 
+  /* A drop-down is as wide as its longest choice, and an idea's name can be long: at 375 px the
+     cross-reference and Your expenses' Show drop-downs pushed their pages sideways (the screen
+     review of 2026-10-23). Never wider than the box it sits in; a long choice is cut on screen and
+     shown whole in the open list. */
+  select {
+    max-width: 100%;
+  }
+
   /* v4 gives buttons the arrow cursor; v3 gave them the pointer. */
   button:not(:disabled),
   [role="button"]:not(:disabled) {

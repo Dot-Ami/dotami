@@ -86,7 +86,10 @@ export function SkillsListPanel({
   onPickJob,
   onClose,
   receipt,
+  jobListOpen = false,
 }: {
+  /** Whether the job's list starts open; folded unless given (a test draws it open). */
+  jobListOpen?: boolean;
   receipt?: readonly string[] | null;
   road: Road;
   skillItems: readonly SkillItem[];
@@ -105,34 +108,45 @@ export function SkillsListPanel({
   onClose: () => void;
 }) {
   const [ownLabel, setOwnLabel] = useState("");
-  // Every item the road lists, once, in the order the road first needs it.
-  const listed = [...new Set(road.steps.flatMap((s) => s.needs))]
+  // Every item the road lists, once, in the order the road first needs it, split by kind: its legal requirements
+  // (an ID number, an agreement, a certificate) under a heading of their own, above its skills. Until a review of
+  // 2026-10-23 all were drawn under the road's skills (road 1's three are all legal requirements).
+  const items = [...new Set(road.steps.flatMap((s) => s.needs))]
     .map((id) => skillItems.find((item) => item.id === id))
     .filter((item): item is SkillItem => item !== undefined);
+  const requirements = items.filter((item) => item.kind === "legal-requirement");
+  const listed = items.filter((item) => item.kind !== "legal-requirement");
   const markOf = new Map(marks.flatMap((m) => (m.skillItemId !== null ? [[m.skillItemId, m.mark] as const] : [])));
   const own = marks.filter((m) => m.ownLabel !== null);
+  const itemRow = (item: SkillItem) => (
+    <SkillRow
+      key={item.id}
+      item={item}
+      mark={markOf.get(item.id) ?? null}
+      selected={selectedSkillId === item.id}
+      canSave={canSave}
+      onMark={(mark) => onMark({ skillItemId: item.id }, mark)}
+      onSelect={() => onSelectSkill(selectedSkillId === item.id ? null : item.id)}
+    />
+  );
 
   return (
     <PanelShell title={words.lists.skillsTitle} onClose={onClose} error={error} receipt={receipt}>
       {!canSave ? <CantKeepNote className="text-body text-amber" /> : null}
-      <h3 className={heading}>{words.lists.roadTitle}</h3>
-      {listed.length === 0 ? (
-        <p className="text-body text-stone">{words.lists.skillsNone}</p>
-      ) : (
-        <ul className="space-y-2">
-          {listed.map((item) => (
-            <SkillRow
-              key={item.id}
-              item={item}
-              mark={markOf.get(item.id) ?? null}
-              selected={selectedSkillId === item.id}
-              canSave={canSave}
-              onMark={(mark) => onMark({ skillItemId: item.id }, mark)}
-              onSelect={() => onSelectSkill(selectedSkillId === item.id ? null : item.id)}
-            />
-          ))}
-        </ul>
-      )}
+      {requirements.length > 0 ? (
+        <div>
+          <h3 className={heading}>{words.lists.requirementsTitle}</h3>
+          <ul className="space-y-2">{requirements.map(itemRow)}</ul>
+        </div>
+      ) : null}
+      <div>
+        <h3 className={heading}>{words.lists.roadTitle}</h3>
+        {listed.length === 0 ? (
+          <p className="text-body text-stone">{words.lists.skillsNone}</p>
+        ) : (
+          <ul className="space-y-2">{listed.map(itemRow)}</ul>
+        )}
+      </div>
 
       <div>
         <h3 className={heading}>{words.lists.ownTitle}</h3>
@@ -186,7 +200,7 @@ export function SkillsListPanel({
         </div>
       </div>
 
-      <JobSection job={job} pickedOn={jobPickedOn} markOf={markOf} canSave={canSave} onMark={onMark} onPickJob={onPickJob} />
+      <JobSection job={job} pickedOn={jobPickedOn} markOf={markOf} canSave={canSave} onMark={onMark} onPickJob={onPickJob} listOpen={jobListOpen} />
     </PanelShell>
   );
 }
@@ -205,7 +219,9 @@ function JobSection({
   canSave,
   onMark,
   onPickJob,
+  listOpen = false,
 }: {
+  listOpen?: boolean;
   job: JobList | null;
   pickedOn: string | null;
   markOf: ReadonlyMap<string, SkillMarkValue>;
@@ -214,6 +230,9 @@ function JobSection({
   onPickJob: (code: string | null) => void;
 }) {
   const [changing, setChanging] = useState(false);
+  // The job's own list folds under one button (the screen review of 2026-10-23: Cabinetmakers' 44 rows, each
+  // with four mark buttons, swamped the road's own 3 items above them). The marks are kept either way.
+  const [open, setOpen] = useState(listOpen);
   const searching = job === null || changing;
 
   function pick(code: string | null) {
@@ -252,7 +271,10 @@ function JobSection({
             </Pill>
           </div>
           <p className="mt-2 text-body text-stone">{words.lists.job.aboutTheList}</p>
-          {(["skills", "knowledge"] as const).map((group) => {
+          <Pill className="mt-2" size="small" variant="ghost" aria-expanded={open} onClick={() => setOpen(!open)}>
+            {open ? words.lists.job.hideList : words.lists.job.showList(job.items.length)}
+          </Pill>
+          {open ? (["skills", "knowledge"] as const).map((group) => {
             const items = job.items.filter((item) => item.group === group);
             if (items.length === 0) return null;
             return (
@@ -271,7 +293,7 @@ function JobSection({
                 </ul>
               </div>
             );
-          })}
+          }) : null}
           <OasisAttribution />
         </>
       )}

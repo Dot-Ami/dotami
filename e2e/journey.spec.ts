@@ -61,7 +61,7 @@ const gauge = (page: Page, name: string) => goalBar(page).getByRole("button", { 
 const stage = (page: Page, name: string) => page.getByRole("button", { name: new RegExp(`^${escape(name)}, `) });
 const stepPanel = (page: Page) => page.getByRole("region", { name: "Step" });
 const told = (page: Page) => page.getByRole("region", { name: "What you've told DotAmi" });
-const skillsList = (page: Page) => page.getByRole("region", { name: "Skills on this road" });
+const skillsList = (page: Page) => page.getByRole("region", { name: "Skills and legal requirements" });
 const skillRow = (page: Page, label: string) => skillsList(page).getByRole("listitem").filter({ has: page.getByText(label, { exact: true }) });
 const whatIf = (page: Page) => page.getByRole("region", { name: "What-if" });
 const compare = (page: Page) => page.getByRole("region", { name: "Compare the two endings" });

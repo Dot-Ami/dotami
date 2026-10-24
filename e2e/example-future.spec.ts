@@ -218,7 +218,7 @@ test("every other control in the ui-spec's table is drawn disabled, and none of 
 
   // The Skills list: every skill mark, Add a skill (even with a skill typed), and the pick of job.
   await goalBar(page).getByRole("button", { name: /^Skills/ }).click();
-  const skills = page.getByRole("region", { name: "Skills on this road" });
+  const skills = page.getByRole("region", { name: "Skills and legal requirements" });
   await allDisabled(skills.getByRole("button", { name: /^(Have|Learning|Not yet)$/ }), "skills: marks");
   await skills.getByRole("textbox", { name: "A skill in your own words" }).fill("Finishing");
   await allDisabled(skills.getByRole("button", { name: /^Add as / }), "skills: Add a skill");

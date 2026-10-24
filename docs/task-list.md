@@ -1110,6 +1110,14 @@ roadmap's build order.
   - [ ] **Tested:** a browser test covers its main path and edge cases
   - [x] Already found: the intake's field labels aren't tied to their dropdowns (a screen reader can't
     name them) — fixed 2026-10-12: province, employment and the name box are named by their labels.
+  - [x] Pre-release fixes, "Phone and layout" (the review of 2026-10-23), fixed in the pull request "every page
+    fits a phone, one step counter, and plainer screens": the cockpit at 375 px (gauges stacked, the idea's
+    name on its own line, the tip off the road); *Your futures* and *Your expenses* fit 375 px, with
+    `e2e/phone-width.spec.ts` over every page the review walked; one step counter on the typed way; legal
+    requirements under *What it needs*; the job's list folded under **Show the 44**; the Structure ladder only
+    on the tax and structure roads, in plain words; *Your plan*'s contents list; the server-down message on
+    *Your destination*; one sentence on "checked by a tool only". Still open from the review: the intake's tax
+    words for newcomers (not in this pull request).
 - ✅ **[13i] The landing page and intake were dead in production builds** — fixed in #64.
 
 ## 15 — Real examples: how real people started (later)

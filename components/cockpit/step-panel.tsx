@@ -276,6 +276,24 @@ function StepSections({
   // What the boxes show: the list on its way for this step, else what is kept.
   const shown = pending?.stepId === step.id ? new Set(pending.ids) : ticked;
   const itemById = new Map(skillItems.map((item) => [item.id, item]));
+  // The step's needs in its own order, split by kind: legal requirements, then listed skills.
+  const needed = step.needs.flatMap((id) => {
+    const item = itemById.get(id);
+    return item ? [item] : [];
+  });
+  const requirements = needed.filter((item) => item.kind === "legal-requirement");
+  const listedSkills = needed.filter((item) => item.kind !== "legal-requirement");
+  const needRow = (item: SkillItem) => (
+    <SkillRow
+      key={item.id}
+      item={item}
+      mark={marks.get(item.id) ?? null}
+      selected={selectedSkillId === item.id}
+      canSave={canSave}
+      onMark={(mark) => onMark(item.id, mark)}
+      onSelect={() => onSelectSkill(selectedSkillId === item.id ? null : item.id)}
+    />
+  );
 
   return (
     <div className="mt-5 space-y-5">
@@ -378,28 +396,22 @@ function StepSections({
         )}
       </div>
 
+      {/* What the step needs that isn't a skill (an ID number, an agreement): its legal requirements, under a
+          heading of their own above the skills (the screen review of 2026-10-23 found "Alberta Student Number"
+          listed as a skill). Drawn only on a step that has one. */}
+      {requirements.length > 0 ? (
+        <div>
+          <h3 className={heading}>{words.panel.whatItNeeds}</h3>
+          <ul className="space-y-2">{requirements.map(needRow)}</ul>
+        </div>
+      ) : null}
+
       <div>
         <h3 className={heading}>{words.panel.skills}</h3>
-        {step.needs.length === 0 ? (
+        {listedSkills.length === 0 ? (
           <p className="text-body text-stone">{words.panel.skillsNone}</p>
         ) : (
-          <ul className="space-y-2">
-            {step.needs.map((id) => {
-              const item = itemById.get(id);
-              if (!item) return null;
-              return (
-                <SkillRow
-                  key={id}
-                  item={item}
-                  mark={marks.get(id) ?? null}
-                  selected={selectedSkillId === id}
-                  canSave={canSave}
-                  onMark={(mark) => onMark(id, mark)}
-                  onSelect={() => onSelectSkill(selectedSkillId === id ? null : id)}
-                />
-              );
-            })}
-          </ul>
+          <ul className="space-y-2">{listedSkills.map(needRow)}</ul>
         )}
         {/* The government's list for the person's pick of job belongs to the job, not to a step (no
             official source ties one of its skills to a step), so the panel only counts it and opens it. */}

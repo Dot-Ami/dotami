@@ -8,14 +8,17 @@ Last updated: 2026-10-12 (built; docs/architecture/future-cockpit.md § 2, Cockp
 
 > **Changed 2026-10-12 — part 2.** A mark, a skill of one's own, savings once agreed or a month saved in one of these lists shows its receipt under the list's title ([13-receipts.md](./13-receipts.md)). The lists also open from *Not told yet* (**Open the skills list**, **Open the money list**) and from a told row's **Change**.
 
+> **Changed 2026-10-23 — legal requirements apart from skills (a review of the pre-release fixes).** The list is titled *Skills and legal requirements*. The road's legal requirements (an ID number, an agreement, a certificate: road 1's three are all of this kind) are drawn first, under *Legal requirements on this road's steps*, and only when the road lists any; its skills follow under *Skills on this road's steps*, with *No skills are listed on this road yet. Your own skills are below.* when it lists none. Until then all were drawn under *On this road's steps*, below the title *Skills on this road*, so a document read as a skill.
+
 ## What it is
 
 Clicking the Skills, Start-up money or Your date gauge opens one of these in the right-hand panel, in
 place of a step, each a region named by its title with a × button named *Close*:
 
-- **Skills on this road**: under the heading *On this road's steps* (so the job's list below never reads
-  as the road's), every skill item the road lists, once, in the order the road first needs it,
-  each with the same row as the step panel (name, kind, **Have / Learning / Not yet / I don't know**, its
+- **Skills and legal requirements** (until 2026-10-23 *Skills on this road*): under the heading *Legal
+  requirements on this road's steps*, drawn only when the road lists one, every legal requirement the road lists;
+  then under *Skills on this road's steps* (so the job's list below never reads as the road's), every listed skill;
+  each once, in the order the road first needs it, and each with the same row as the step panel (name, kind, **Have / Learning / Not yet / I don't know**, its
   sources, *you said you hold this*, the official way to get it). With none: *No skills are listed on this road yet.
   Your own skills are below.* Then **Your own skills**: each one the person added, tagged *added by you*,
   with **Have / Learning / Not yet** and **Remove** in place of *I don't know*, since taking the mark off
@@ -33,7 +36,10 @@ place of a step, each a region named by its title with a × button named *Close*
   (until then it was a search of job names and codes, ten at most); then the licence's line with its link, as
   below. With one picked: *Cabinetmakers · 72311.00 · picked 2026-10-12*, **Change**
   (the search again, with **Cancel**) and **Take back**; *This is the government's list for the job you
-  picked. DotAmi doesn't say which skills a business needs.*; then **Skills** and
+  picked. DotAmi doesn't say which skills a business needs.*; then one button, **Show the 44 on this job's list**
+  (the count is the job's; **Fold this job's list** once open), folded since 2026-10-23 when the list is opened
+  from the gauge, so the job's rows don't swamp the road's own items above them (opened from a step's **Open
+  the list**, it starts open); open, **Skills** and
   **Knowledge**, each with its source once (the dataset's page, checked by a tool) and its items in the
   dataset's order, each row its name, the tag *your pick of job* and **Have / Learning / Not yet / I don't
   know**; last, the licence's line *Contains information licensed under the Open Government Licence –

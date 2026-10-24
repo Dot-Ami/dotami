@@ -72,6 +72,10 @@ export const destinationWords = {
     destinationKept: (day: string) =>
       `Kept word for word, dated ${day}. It goes at the top of each future you pick on Pick a future; an idea you describe in your own sentence shows that sentence instead.`,
     destinationTabOnly: "Not kept: no database reachable. It stays in this tab only.",
+    // No answer at all (the request failed): the cause is DotAmi's own server, as the job search says
+    // (jobStepWords.searchFailed); "no database reachable" is said only when the server answered so.
+    destinationNoServer: "Not kept: DotAmi's own server didn't answer. It stays in this tab only.",
+    incomeNoServer: "Not kept: DotAmi's own server didn't answer. Try again, or skip this question.",
     destinationDontKnow: "Nothing kept. You can say it later; nothing here waits on it.",
     // "I don't know yet" deletes nothing: statements are never edited away one by one.
     destinationStillKept: (day: string) =>
@@ -122,10 +126,12 @@ export const pickWords = {
     `The federal steps only. ${province}'s own steps aren't written yet; a step shows ${/^[AEIOU]/.test(province) ? "an" : "a"} ${province} page only where a federal step cites one.`,
   showAlberta: (n: number) => (n === 1 ? "Show the 1 future written for Alberta" : `Show the ${n} futures written for Alberta`),
   hideAlberta: "Hide the futures written for Alberta",
-  counts: (steps: number, skills: number, fees: number, lines: number) =>
+  /** The road's legal requirements are named apart from its skills, and only when it lists any (2026-10-24). */
+  counts: (steps: number, skills: number, requirements: number, fees: number, lines: number) =>
     [
       plural(steps, "step", "steps"),
       plural(skills, "skill listed", "skills listed"),
+      ...(requirements > 0 ? [plural(requirements, "legal requirement", "legal requirements")] : []),
       plural(fees, "official fee found", "official fees found"),
       plural(lines, "cost line you'd price", "cost lines you'd price"),
     ].join(" · "),
@@ -135,6 +141,9 @@ export const pickWords = {
     unrecorded: (n: number) => `${n} read, who read ${n === 1 ? "it" : "them"} wasn't recorded`,
     model: (n: number) => `${n} read by an AI model only, not read by a person yet`,
     tool: (n: number) => `${n} checked by a tool only, not read by a person yet`,
+    /** Under the sources line when a tool checked any (docs/engines/citations.md, option B of 2026-10-11). */
+    toolMeans:
+      "Checked by a tool means a program opened the official page and found the quoted words on it; no person has read the whole page yet.",
   },
   nameIt: "Name it (optional)",
   nameHint: "Left empty, it is named after the future you pick.",
@@ -317,6 +326,23 @@ export const whereStepWords = {
 /** The intake's Screen B button, which opens the three steps on the intake page (2026-10-22, the maintainer's call 1). */
 export const intakeStepsWords = {
   next: "Next: the work closest to yours →",
+} as const;
+
+/**
+ * The typed way's one numbering, from its first screen to its last (lib/front-door/typed-way.ts): the intake's
+ * three screens and then Pick a future's three steps, which on Pick a future itself count "1 of 3" on their own.
+ * Until the screen review of 2026-10-23 Ground it said "3 of 3" and the next screen "1 of 3".
+ */
+export const typedWayWords = {
+  count: (n: number, total: number, name: string) => `${n} of ${total} · ${name}`,
+  names: {
+    about: "About you",
+    confirm: "Confirm",
+    ground: "Ground it",
+    work: "Your work",
+    where: "Where you are",
+    pick: "Pick a future",
+  },
 } as const;
 
 export const incomePromptWords = {

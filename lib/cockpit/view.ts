@@ -192,7 +192,7 @@ export function overlayCounts(
   road: Road,
   evaluation: RoadEvaluation,
   scenario: Scenario,
-): { skillsListed: number; costLines: number; rulesCards: number } {
+): { skillsListed: number; requirementsListed: number; costLines: number; rulesCards: number } {
   const evaluated = new Map(evaluation.steps.map((s) => [s.stepId, s]));
   const cards = new Set<string>();
   for (const step of road.steps) {
@@ -200,7 +200,10 @@ export function overlayCounts(
     for (const item of itemsForStep(evaluation.rules.unlocks, step).forThisStage) cards.add(item.id);
   }
   return {
-    skillsListed: evaluation.gauges.skills.listed,
+    // Skills and legal requirements apart (the screen review of 2026-10-23: road 1's three legal requirements
+    // read "Skills · 3 listed").
+    skillsListed: evaluation.gauges.skills.listedSkills.listed,
+    requirementsListed: evaluation.gauges.skills.legalRequirements.listed,
     costLines: road.steps.reduce((n, s) => n + s.costs.length, 0),
     rulesCards: cards.size,
   };
@@ -244,12 +247,22 @@ export function gaugeView(evaluation: RoadEvaluation, road: Road, scenario: Scen
       ? [person ? words.example.theirs.job(person, job.have, job.learning, job.notYet, job.listed) : words.gauges.skills.job(job.have, job.learning, job.notYet, job.listed)]
       : []),
   ];
+  // The road's skills are the gauge's value; its legal requirements (an ID number, an agreement, a certificate)
+  // get a line of their own and are never counted as skills (the screen review of 2026-10-23).
+  const sk = s.listedSkills;
+  const req = s.legalRequirements;
+  const requirementsLine =
+    req.listed > 0 ? [words.gauges.skills.requirements(req.listed, req.have, req.learning, req.notYet, req.notMarked)] : [];
   const skills: GaugeLines =
-    s.listed === 0
-      ? { value: words.gauges.skills.noneListed, lines: ownLine, invite: ownLine.length === 0 ? words.gauges.skills.addOwn : null }
+    sk.listed === 0
+      ? {
+          value: words.gauges.skills.noneListed,
+          lines: [...requirementsLine, ...ownLine],
+          invite: req.notMarked > 0 ? words.gauges.skills.invite : ownLine.length === 0 && req.listed === 0 ? words.gauges.skills.addOwn : null,
+        }
       : {
-          value: words.gauges.skills.value(s.have, s.learning, s.notYet),
-          lines: [words.gauges.skills.notMarked(s.notMarked, s.listed), ...ownLine],
+          value: words.gauges.skills.value(sk.have, sk.learning, sk.notYet),
+          lines: [words.gauges.skills.notMarked(sk.notMarked, sk.listed), ...requirementsLine, ...ownLine],
           invite: s.notMarked > 0 ? words.gauges.skills.invite : null,
         };
 
