@@ -197,12 +197,7 @@ function VentureCard({
           <h2 className="truncate font-serif text-xl font-bold tracking-tight text-paper" title={venture.name}>
             {venture.name}
           </h2>
-          <p className="mt-0.5 text-body capitalize text-stone">
-            {/* A type nobody was asked for is the intake's starting value, not theirs (2026-10-23). */}
-            {venture.typeSaid ? venture.type : venturesWords.card.typeNotSaid} · {venture.province} · structure{" "}
-            {venture.structureSource === "assumed" ? "not set" : venture.structure}
-            {venture.targetRevenueY1 > 0 ? ` · Y1 $${venture.targetRevenueY1.toLocaleString("en-CA")}` : ""}
-          </p>
+          <VentureFacts venture={venture} />
           {venture.activityTags.length > 0 ? (
             <div className="mt-2 flex flex-wrap gap-1.5">
               {venture.activityTags.map((t) => (
@@ -351,6 +346,23 @@ function VentureCard({
         ) : null}
       </div>
     </li>
+  );
+}
+
+/** The card's line under the idea's name: kind · province · structure · first-year estimate (exported for tests). */
+export function VentureFacts({
+  venture,
+}: {
+  venture: Pick<VentureSummary, "type" | "typeSaid" | "province" | "structure" | "structureSource" | "targetRevenueY1">;
+}) {
+  return (
+    <p className="mt-0.5 text-body capitalize text-stone">
+      {/* A type nobody was asked for is the intake's starting value, not theirs (2026-10-23). DotAmi's words in
+          its place are drawn as written: the line's capitalize had set them "Type Not Said" (2026-10-24). */}
+      {venture.typeSaid ? venture.type : <span className="normal-case">{venturesWords.card.typeNotSaid}</span>} · {venture.province} · structure{" "}
+      {venture.structureSource === "assumed" ? "not set" : venture.structure}
+      {venture.targetRevenueY1 > 0 ? ` · Y1 $${venture.targetRevenueY1.toLocaleString("en-CA")}` : ""}
+    </p>
   );
 }
 

@@ -8,7 +8,8 @@
  *    the window holds in memory (lib/journey/held-journey.ts, lib/journey/window-storage.ts). Every line that
  *    says where an unsaved answer is names each way a page is loaded afresh, the desktop app's Go menu included.
  * 2. The map never shows a stage as done, or as where the person is, unless the person marked it, and the
- *    readout API gives agents the same (2026-10-24); the ideas card never shows a kind of venture nobody gave.
+ *    readout API gives agents the same (2026-10-24); the ideas card never shows a kind of venture nobody gave,
+ *    and draws its own words in its place as written.
  * 3. Time words the no-times check missed ("first years", "time-boxed"), the Lens lines, and official pages'
  *    words drawn only inside the official-quote component.
  * 4. The front door's chips are in the words file, and none promises anything about the person's taxes.
@@ -24,6 +25,7 @@ import { afterEach, describe, expect, it } from "vitest";
 import { StrategyMap } from "@/components/cockpit/strategy-map";
 import { FrontDoorNav } from "@/components/discovery/landing-page";
 import { PageQuotes } from "@/components/shared/page-quotes";
+import { VentureFacts } from "@/components/ventures/ventures-page";
 import { cockpitWords } from "@/lib/cockpit/words";
 import { cfeCatalogV2026 } from "@/lib/engines/cfe/v2026";
 import { complianceCatalogV2026 } from "@/lib/engines/compliance/v2026";
@@ -497,11 +499,28 @@ describe("2. The map shows a status only where the person gave one", () => {
     expect(venturesWords.card.typeNotSaid).toBe("type not said");
   });
 
-  it("the ideas card draws the type only when it was said (source check on the card's line)", () => {
-    const card = readFileSync("components/ventures/ventures-page.tsx", "utf8");
-    expect(card).toContain("{venture.typeSaid ? venture.type : venturesWords.card.typeNotSaid}");
-    // Planted control: the old line, which showed the type always, would not pass this check.
-    expect("{venture.type} · {venture.province}").not.toContain("venture.typeSaid");
+  // Replaces a check on the component's source text, which passed whatever the card drew: the words were
+  // there, but the line's `capitalize` drew them "Type Not Said" (2026-10-24). This draws the line itself.
+  it("the ideas card draws the type only when it was said, and its own words as written, in lower case", () => {
+    const facts = (typeSaid: boolean) =>
+      renderToStaticMarkup(
+        createElement(VentureFacts, {
+          venture: { type: "service", typeSaid, province: "AB", structure: "sole-prop", structureSource: "assumed", targetRevenueY1: 0 },
+        }),
+      );
+    const words = venturesWords.card.typeNotSaid;
+    // Every place the words are drawn sits in a `normal-case` span, out of reach of the line's `capitalize`.
+    const asWritten = (html: string) => {
+      const drawn = html.split(words).length - 1;
+      return drawn > 0 && drawn === html.split(`<span class="normal-case">${words}</span>`).length - 1;
+    };
+
+    expect(asWritten(facts(false))).toBe(true);
+    expect(facts(false)).not.toContain("service");
+    // The kind the person gave is drawn, capitalised with the rest of the line as before.
+    expect(facts(true)).toMatch(/^<p class="[^"]*\bcapitalize\b[^"]*">service · AB · structure not set<\/p>$/);
+    // Planted control: the line as first written, the words bare under `capitalize`, fails the same check.
+    expect(asWritten(`<p class="mt-0.5 text-body capitalize text-stone">${words} · AB · structure not set</p>`)).toBe(false);
   });
 });
 

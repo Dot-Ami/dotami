@@ -154,9 +154,18 @@ test("door 1: four answers, each with its receipt and focus moving on, then the 
   };
   expect(kept.future).toMatchObject({ roadId: "road-starting-any-business-ab", roadChosen: true, lookingFor: "both-or-not-sure", place: "CA-AB" });
 
-  // And it is one of the person's futures.
+  // And it is one of the person's futures. Its card says the kind of venture was not said: this way in never
+  // asks it, and the "service" it was saved with is only the intake's starting value (2026-10-23).
   await page.goto("/ventures");
-  await expect(page.getByRole("heading", { name: GENERAL, level: 2 }).first()).toBeVisible();
+  const href = `/cockpit?venture=${encodeURIComponent(ventureId)}`;
+  const card = page.getByRole("listitem").filter({ has: page.locator(`a[href="${href}"]`, { hasText: "Open in cockpit" }) });
+  await expect(card.getByRole("heading", { name: GENERAL, level: 2 })).toBeVisible();
+  // Found by its words as written; read as drawn. The line's `capitalize` once drew them "Type Not Said"
+  // (2026-10-24), which a check on the text alone never saw.
+  await expect(card.getByText(/^type not said · AB · /i)).toHaveText(/^type not said · AB · /, { useInnerText: true });
+  // Control: an idea whose kind was given keeps it on its card (the demo idea saved as a product).
+  const typed = page.getByRole("listitem").filter({ has: page.getByRole("heading", { name: "Demo — Salish Trail Maps", level: 2 }) });
+  await expect(typed.getByText(/^product · BC · /)).toBeVisible();
 });
 
 test("door 2 is today's box and intake; with an idea saved, the intake skips About you, and Back still reaches it (#38)", async ({ page }) => {
