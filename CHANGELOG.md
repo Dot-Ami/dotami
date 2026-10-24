@@ -305,14 +305,18 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   enhanced rate of 35% on qualified SR&ED expenditures up to their expenditure limit for the year.” and its *What's
   new for corporations*: “The expenditure limit on which the SR&ED enhanced 35% tax credit can be earned is
   increased from the previously announced $4.5 million to $6 million.” The tax years the $6 million applies from
-  are in no held quote, so no screen says them. The entry's eligibility, which no card draws, says the enhanced
+  are in no held quote, so no screen says them. Nor does either side say "refundable" in DotAmi's own words any
+  more: the corporation's card said "this may be worth 35% (refundable)" and the fork "35% refundable treatment",
+  on the maintainer's read alone, which isn't recorded yet, and none of the card's quotes says it; they now say
+  "35%" and "35% treatment". The entry's eligibility, which no card draws, says the enhanced
   rate is for some CCPCs, up to their expenditure limit, where it said "subject to taxable income and capital
   limits". The card gains four sources, each a tool check of 2026-10-23 holding the words the reading list's
   matcher found there that day, so each says "Checked by a tool" in amber (a networked `node
   scripts/check-quotes.mjs` run should find them again): the CRA's page on the credit's rates, its *How certain
   relationships affect the small business deduction and SR&ED investment tax credits*, *What's new for
   corporations*, and Income Tax Act s.127(10.2), its formula only. Tests: `tests/reading-list-corrections.spec.ts`
-  §§ 2 and 3, `tests/brain-evaluate.spec.ts` (the golden scenario's sole proprietor card said "non-refundable").
+  §§ 2 and 3, `tests/brain-evaluate.spec.ts` (the golden scenario's sole proprietor card said "non-refundable",
+  and its fork "refundable", which that test pinned until then; it now pins the CRA's words).
 - **The Alberta sales tax card says only what the CRA's table lists for Alberta** (the maintainer's reading list
   of 2026-10-23). *Alberta — no provincial sales tax* said "If operating only in Alberta, GST (not HST) applies —
   simplifying provincial sales tax compliance": "simplifying" is a judgement no cited page makes, and the CRA's

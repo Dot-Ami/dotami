@@ -270,6 +270,16 @@ describe("3. SR&ED: the credit's rates in the CRA's words", () => {
     expect(quoted(fork!.note)).toEqual([CCPC_ENHANCED, LIMIT_SIX_MILLION]);
   });
 
+  it("the CCPC's 35% is never called refundable in DotAmi's own words: none of the card's quotes says so", () => {
+    // The word rested only on the maintainer's read, which isn't on record yet (his answer 1 of 2026-10-24): the CRA's
+    // “Some businesses may also earn a refundable ITC.” says neither which businesses nor which rate.
+    expect(sred().ratesByStructure!.find((r) => r.structure === "ccpc")!.refundable).toBeUndefined();
+    const shown = [card(idea({ structure: "ccpc" }), "grant-sred").payoff, card(idea(), "grant-sred").fork?.note ?? ""];
+    for (const text of shown) expect(ownWords(text), text).not.toMatch(/refundable/i);
+    // Planted control: the fork as it read before is caught.
+    expect(ownWords("A CCPC may access 35% refundable treatment instead of 15%.")).toMatch(/refundable/i);
+  });
+
   it("no date of DotAmi's own reaches the SR&ED card", () => {
     // A guard (NO TIMES): the limit's start date is in no held quote, so no line on the card says it.
     for (const structure of ["sole-prop", "ccpc"] as const) {

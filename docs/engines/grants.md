@@ -18,15 +18,18 @@ strings. Nothing evaluates them at runtime; archetype configs hand-pick ids for 
   product's aggressive-picture promise. Same for SR&ED's rate split (below).
 - Rates that differ by structure are **data, not prose** (`ratesByStructure`): SR&ED is 15% for
   a sole proprietor, with or without the GST/HST, and 35% for a CCPC, and the card's fork says so
-  ("A CCPC may access 35% refundable treatment instead of 15%."). **As built since 2026-10-24**
+  ("A CCPC may access 35% treatment instead of 15%."). **As built since 2026-10-24**
   (the maintainer's reading list of 2026-10-23, items `grant-sred/*` and
   `sred-expenditure-limit-6-million`): each rate's `note` quotes the CRA
   ([`sred-official-words.ts`](../../lib/engines/grants/v2026/sred-official-words.ts)), and
-  `refundable` is set only where it is settled for that structure. The CCPC's rate says
-  refundable. The sole proprietor's said non-refundable until then; the reading list notes that an
-  individual can get part of the credit refunded, and no held quote says how much, so that card says
-  neither and quotes the CRA's “Your business may earn the credit at a basic rate of 15%.” and
-  “Some businesses may also earn a refundable ITC.” The 35% is the CRA's “Some CCPCs may earn an ITC
+  `refundable` is set only where a held quote (or a recorded read) says it for that structure, which
+  no rate's does yet, so no card says "refundable" or "non-refundable" in DotAmi's own words. The
+  sole proprietor's said non-refundable until then; the reading list notes that an individual can
+  get part of the credit refunded, and no held quote says how much, so that card says neither and
+  quotes the CRA's “Your business may earn the credit at a basic rate of 15%.” and “Some businesses
+  may also earn a refundable ITC.” The CCPC's said refundable ("35% (refundable)", "35% refundable
+  treatment") on the maintainer's read alone, which isn't recorded yet, and none of its quotes says
+  it, so it says neither too ([citations.md](citations.md), *Blocked*). The 35% is the CRA's “Some CCPCs may earn an ITC
   at an enhanced rate of 35% on qualified SR&ED expenditures up to their expenditure limit for the
   year.”, and the limit, $6 million, is on the card only inside the CRA's *What's new for
   corporations* line (Income Tax Act s.127(10.2) holds the formula). The tax years it applies from

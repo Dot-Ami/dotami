@@ -322,7 +322,7 @@ Three rules from his answers hold for every row:
 
 | Entry | Reading-list item(s) | What changed | The evidence |
 |---|---|---|---|
-| *SR&ED tax incentives* (`grant-sred`) | `grant-sred/estimatedValue`, `grant-sred/rate-unincorporated`, `grant-sred/rate-ccpc`, `sred-expenditure-limit-6-million` | A sole proprietor's card no longer calls the 15% credit non-refundable; it quotes the basic rate and that some businesses may also earn a refundable credit. The CCPC's note quotes the enhanced 35% up to the expenditure limit, and the $6 million limit, where it said "confirm the current limit with an advisor". The range "15–35%" (on no screen) is unchanged. | Four new sources, tool checks of 2026-10-23: the CRA's rates page, its relationships page, *What's new for corporations*, and s.127(10.2)'s formula ([grants.md](grants.md)) |
+| *SR&ED tax incentives* (`grant-sred`) | `grant-sred/estimatedValue`, `grant-sred/rate-unincorporated`, `grant-sred/rate-ccpc`, `sred-expenditure-limit-6-million` | A sole proprietor's card no longer calls the 15% credit non-refundable; it quotes the basic rate and that some businesses may also earn a refundable credit. The CCPC's note quotes the enhanced 35% up to the expenditure limit, and the $6 million limit, where it said "confirm the current limit with an advisor"; its card and the fork no longer call the 35% "refundable", a word no quote holds (*Blocked*). The range "15–35%" (on no screen) is unchanged. | Four new sources, tool checks of 2026-10-23: the CRA's rates page, its relationships page, *What's new for corporations*, and s.127(10.2)'s formula ([grants.md](grants.md)) |
 | *Ontario HST (13%)* (`compliance-on-hst`) | `compliance-on-hst` | Unchanged. | None held: the rate table isn't in the page's HTML, and the one 13% sentence found is a worked example (*Blocked*) |
 | *Alberta — no provincial sales tax* (`compliance-ab-no-pst`) | `compliance-ab-no-pst` | "… simplifying provincial sales tax compliance" is gone. The line says "The CRA's table of GST/HST rates lists Alberta at 5% GST, with no provincial sales tax.", which is still DotAmi's wording of a table row, and the catalog says so beside it. | None held, for the same reason (*Blocked*) |
 | *BC Provincial Sales Tax (PST)* (`compliance-bc-pst`) | `compliance-bc-pst` | Unchanged. | No quote is held from its page |
@@ -354,8 +354,9 @@ machine, before DotAmi says more than it does now. They are listed in [task-list
 3. **Ontario food premises.** The regulation in force, read, and what it requires, quoted, under a new
    id.
 4. **Repeated losses.** A CRA, Act or folio page on business versus personal pursuits, with its words.
-5. **SR&ED for an individual.** Whether, and how much of, a sole proprietor's 15% credit is refunded:
-   no held quote says, so the card says neither.
+5. **SR&ED, refunded or not.** Whether, and how much of, a sole proprietor's 15% credit is refunded,
+   and whether a CCPC's enhanced 35% is: no held quote says either (the CCPC's "refundable" rested on
+   the maintainer's read alone), so neither card says it.
 6. **SR&ED's $6 million.** The tax years it applies from (beginning on or after 2024-12-16) are in no
    held quote, and only the formula of s.127(10.2) is held, not the sentence that leads into it.
 7. **SR&ED deepening's 35% from the SR&ED glossary**, the line the maintainer asked for. No tool has

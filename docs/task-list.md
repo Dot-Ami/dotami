@@ -1002,7 +1002,8 @@ roadmap's build order.
     - [ ] Ontario's 13% HST (`compliance-on-hst`): the same table
     - [ ] Ontario food premises: the regulation in force, read and quoted, under a new id
     - [ ] Repeated losses: a CRA, Act or folio page on business versus personal pursuits, with its words
-    - [ ] SR&ED for a sole proprietor: whether, and how much of, the 15% credit is refunded
+    - [ ] SR&ED refunded or not: whether, and how much of, a sole proprietor's 15% credit is, and whether a
+      CCPC's enhanced 35% is (the card said "refundable" on the maintainer's read alone until 2026-10-24)
     - [ ] SR&ED's $6 million: the tax years it applies from, and the sentence of s.127(10.2) that leads into
       its formula
     - [ ] *SR&ED deepening*'s 35% from the SR&ED glossary, as the maintainer asked (it quotes the CRA's

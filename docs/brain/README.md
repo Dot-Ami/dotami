@@ -74,10 +74,10 @@ stands on its cited source). Key facts (verify `lastVerified` before relying):
 - **CSBFP** (Canada Small Business Financing Program): federal **loan guarantee** (not a
   grant), up to $500K for equipment, 74% of loans go to businesses <1yr old, **365-day
   retroactive window**, collateral = the equipment itself.
-- **SR&ED**: sole props 15% vs CCPCs 35% refundable — a structure-gated rate split, prime
-  rules-engine material. Since 2026-10-24 the cards quote the CRA's rates, and the sole
-  proprietor's 15% is no longer called non-refundable (the maintainer's reading list of
-  2026-10-23; docs/engines/grants.md).
+- **SR&ED**: sole props 15% vs CCPCs 35% — a structure-gated rate split, prime
+  rules-engine material. Since 2026-10-24 the cards quote the CRA's rates, and neither rate is
+  called refundable or non-refundable in DotAmi's own words: no held quote says which (the
+  maintainer's reading list of 2026-10-23; docs/engines/grants.md).
 - **Tax ladder gating**: Sole Prop → CCPC → Holdco → Trust; Holdco/Trust do NOT solve
   equipment affordability (they protect existing assets / handle succession) — the ladder
   says don't skip rungs for small purchases.

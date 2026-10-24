@@ -102,7 +102,10 @@ export const grantProgramsV2026 = [
       {
         structure: "ccpc",
         rate: 0.35,
-        refundable: true,
+        // No `refundable` since 2026-10-24: the card said "35% (refundable)" and its fork "35% refundable treatment",
+        // which rested only on the maintainer's read (his answer of 2026-10-24: his reads aren't recorded yet). None of
+        // the card's quotes says the enhanced rate is refundable, so the card leaves it unsaid until a held quote or
+        // his recorded read does (docs/engines/citations.md, § Blocked).
         // Until 2026-10-24 the note said "confirm the current limit with an advisor" and gave no limit. The limit is
         // $6 million in the consolidated Act's s.127(10.2) (the reading list found the formula), for tax years
         // beginning on or after 2024-12-16. No held quote carries that date, so it is on no screen and in no field, only
