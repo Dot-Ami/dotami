@@ -773,6 +773,12 @@ export const cockpitWords = {
     /** A lever card: its state in a word, the one dated fact it carries, and its accessible name. */
     lever: {
       applies: "applies",
+      /**
+       * An item that has an end date (`UnlockItem.expires`), on its open row in node detail and on the intake's
+       * preview, before `inUseBefore`: the legend's own words (`legend.checkFirst`). "Time-boxed" until 2026-10-24,
+       * a time word of DotAmi's own written in the two components, where no words check read it.
+       */
+      endDate: "has an end date",
       /** The one dated fact the evaluator carries for an item: in use before the year it expires. */
       inUseBefore: (year: string) => `in use before ${year}`,
       name: (typeChip: string, title: string, state: string, fork: boolean, partial: boolean, fact: string | null) =>

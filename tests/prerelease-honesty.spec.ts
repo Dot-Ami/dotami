@@ -10,8 +10,10 @@
  * 2. The map never shows a stage as done, or as where the person is, unless the person marked it, and the
  *    readout API gives agents the same (2026-10-24); the ideas card never shows a kind of venture nobody gave,
  *    and draws its own words in its place as written.
- * 3. Time words the no-times check missed ("first years", "time-boxed"), the Lens lines, and official pages'
- *    words drawn only inside the official-quote component.
+ * 3. Time words the no-times check missed ("first years", "time-boxed", the latter also in two item rows written
+ *    in their components and in a catalog's citation note), every catalog's Lens lines, the text every component
+ *    writes itself, and a tool check's quotes drawn only inside the official-quote component (2026-10-24: the
+ *    review of #210).
  * 4. The front door's chips are in the words file, and none promises anything about the person's taxes.
  * 5. The front door offers Your futures and Open cockpit only once an idea is saved, and, with none saved,
  *    Your expenses while the Expenses page has a record to list (2026-10-24).
@@ -20,6 +22,7 @@ import { readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
+import ts from "typescript";
 import { afterEach, describe, expect, it } from "vitest";
 
 import { StrategyMap } from "@/components/cockpit/strategy-map";
@@ -29,8 +32,11 @@ import { VentureFacts } from "@/components/ventures/ventures-page";
 import { cockpitWords } from "@/lib/cockpit/words";
 import { cfeCatalogV2026 } from "@/lib/engines/cfe/v2026";
 import { complianceCatalogV2026 } from "@/lib/engines/compliance/v2026";
+import { grantsCatalogV2026 } from "@/lib/engines/grants/v2026";
 import { generalRoadV2026, roadsV2026, skillItemsV2026, type Road } from "@/lib/engines/roads/v2026";
-import { PAGE_QUOTES_LEAD } from "@/lib/engines/shared/citation-check";
+import { PAGE_QUOTES_LEAD, toolCheckQuotes } from "@/lib/engines/shared/citation-check";
+import { structureCatalogV2026 } from "@/lib/engines/structure/v2026";
+import { writeOffsCatalogV2026 } from "@/lib/engines/writeoffs/v2026";
 import type { DestinationDraft } from "@/lib/front-door/draft";
 import { LISTED_EXPENSE, listExpenses } from "@/lib/expenses/store";
 import { hasListedExpenses, hasSavedIdea } from "@/lib/front-door/saved-idea";
@@ -56,9 +62,11 @@ import { evaluateScenario } from "@/lib/scenarios/evaluate-scenario";
 import { getScenarioNodeStatus } from "@/lib/scenarios/graph";
 import { venturesWords } from "@/lib/ventures/words";
 
+import { COMPONENT_TIME_WORDS } from "./fixtures/ideas/known-gaps";
+import { ownWords } from "./helpers/own-words";
 import { input } from "./helpers/road-to-evaluate";
 import { simplify } from "./helpers/source-scan";
-import { findTimeWords } from "./helpers/time-words";
+import { findTimeWords, TIME_PATTERNS } from "./helpers/time-words";
 
 // ---------------------------------------------------------------------------------------------------------
 // 1. Nothing about the person in window storage
@@ -537,11 +545,23 @@ describe("3. Time words in DotAmi's own words", () => {
       "the first few years",
       "check first — confirm, time-boxed, or one fork away",
       "a time-limited offer",
+      // The two item rows' words until 2026-10-24 (node detail, the intake's preview).
+      "Time-boxed · in use before 2027",
+      "Time-boxed — in use before 2027",
+      "the opening months",
     ]) {
       expect(findTimeWords(text), text).not.toEqual([]);
     }
-    // A tax year or a what-if year is not a wait.
-    for (const text of ["Your first-year sales estimate", "the first year", "Year 1 sales", "Running your own shop"]) {
+    // A tax year or a what-if year is not a wait, and a shop's opening hours are not a span of time.
+    for (const text of [
+      "Your first-year sales estimate",
+      "the first year",
+      "Year 1 sales",
+      "Running your own shop",
+      "opening hours",
+      "Your shop's opening hours",
+      "OPENING HOURS",
+    ]) {
       expect(findTimeWords(text), text).toEqual([]);
     }
   });
@@ -557,16 +577,94 @@ describe("3. Time words in DotAmi's own words", () => {
     expect(Object.values(cockpitWords.map.legend).flatMap((text) => findTimeWords(text))).toEqual([]);
   });
 
-  it("no rule's Lens line paraphrases an official period", () => {
-    const lens = complianceCatalogV2026.entries.flatMap((rule) =>
-      rule.lensAnnotations ? [rule.lensAnnotations.tax, rule.lensAnnotations.legal].map((text) => ({ id: rule.id, text })) : [],
-    );
-    expect(lens.length).toBeGreaterThan(0);
-    expect(lens.filter(({ text }) => findTimeWords(text).length > 0).map(({ id }) => id)).toEqual([]);
+  it("an item's end date says the legend's words, from the words file, on node detail and the intake's preview", () => {
+    const { endDate, inUseBefore } = cockpitWords.map.lever;
+    expect(cockpitWords.map.legend.checkFirst).toContain(endDate);
+    // CCA Class 50's first-year treatment carries expires 2027-01-01 today (tests/brain-evaluate.spec.ts).
+    expect(findTimeWords(`${endDate} · ${inUseBefore("2027")}`)).toEqual([]);
+    // Both rows draw the words file's words (comments left out); the scan below shows neither writes its own.
+    for (const file of ["components/node-detail-panel.tsx", "components/discovery/intake-page.tsx"]) {
+      const code = simplify(readFileSync(file, "utf8"), true);
+      expect(code, file).toContain("{cockpitWords.map.lever.endDate} · {cockpitWords.map.lever.inUseBefore(item.expires.slice(0, 4))}");
+    }
+  });
+
+  it("no catalog's Lens line holds a time, past the listed ones", () => {
+    const lens = everyLensLine();
+    // Every Lens object written in a catalog is read, two lines each (37 objects in five catalogs, 2026-10-24).
+    const written = sourceFiles(["lib/engines"]).reduce((n, { text }) => n + (text.match(/lensAnnotations:\s*\{/g)?.length ?? 0), 0);
+    expect(written).toBeGreaterThan(0);
+    expect(lens.length).toBe(written * 2);
+    // A listed line the scan no longer finds fails here too, so its entry comes out the day it is reworded.
+    expect(lens.filter(({ text }) => findTimeWords(text).length > 0).map(({ where }) => where)).toEqual(LENS_TIME_GAPS.map((g) => g.where));
     // Planted control: the ride-share Lens line until 2026-10-23.
     expect(
       findTimeWords("the CRA says registration for those rides is needed whatever you earn, from the day of your first paid ride, with 30 days to apply (GI-196, for ride-sharing)."),
     ).not.toEqual([]);
+  });
+
+  it("the ride-share Lens line points to GI-196's own words, which the card shows, and asks nothing of the person", () => {
+    const rule = complianceCatalogV2026.entries.find((r) => r.id === "compliance-gst-taxi-ride-sharing")!;
+    expect(rule.lensAnnotations.tax).toBe(
+      "If you drive passengers for fares arranged through an app, or run a taxi business, the CRA says registration for those rides is needed whatever you earn, from the day of your first paid ride. When to apply is in the CRA's own words under this card's sources (its info sheet GI-196, for ride-sharing).",
+    );
+    // The words it points to are drawn under the card's sources, after their label (a tool check, no person's read).
+    const gi196 = rule.citations.find((c) => c.title.startsWith("GI-196"))!;
+    expect(toolCheckQuotes(gi196).some((q) => q.includes("before the thirtieth day"))).toBe(true);
+  });
+
+  it("no string a catalog writes says time-boxed or the like; a comment may", () => {
+    expect(timeBoxedStringsIn(sourceFiles(["lib/engines"]))).toEqual([]);
+  });
+
+  it("planted control: a catalog's string saying time-boxed is caught by the same scan, and a comment isn't", () => {
+    const planted = [
+      {
+        file: "lib/engines/planted/v2026/entries.ts",
+        text: '// A time-boxed treatment.\nexport const entry = { note: "The time-boxed first-year factor", title: `Time-limited ${1}` };\n',
+      },
+    ];
+    expect(timeBoxedStringsIn(planted)).toEqual([
+      "lib/engines/planted/v2026/entries.ts:2: The time-boxed first-year factor",
+      "lib/engines/planted/v2026/entries.ts:2: Time-limited ${…}",
+    ]);
+  });
+
+  // It parses every component, which takes seconds, so a slower machine is given more than vitest's default.
+  it("no component writes a time word of its own, past the listed ones", () => {
+    const files = sourceFiles(["components", "app"]);
+    // The two that wrote "Time-boxed" until 2026-10-24 are read.
+    expect(files.map((f) => f.file)).toEqual(expect.arrayContaining(["components/node-detail-panel.tsx", "components/discovery/intake-page.tsx"]));
+    const found: string[] = [];
+    const used = new Set<number>();
+    for (const { file, text } of files) {
+      for (const own of ownWords(text, file)) {
+        if (findTimeWords(own.text).length === 0) continue;
+        const listed = COMPONENT_TIME_WORDS.findIndex((a) => a.file === file && a.text === own.text);
+        if (listed !== -1) used.add(listed);
+        else found.push(`${file}:${own.line} (${own.where}): ${JSON.stringify(own.text)}`);
+      }
+    }
+    expect(found).toEqual([]);
+    // A listed piece the scan no longer finds is stale: take it out (tests/fixtures/ideas/known-gaps.ts).
+    expect(COMPONENT_TIME_WORDS.filter((_, i) => !used.has(i)).map((a) => `${a.file}: ${a.text}`)).toEqual([]);
+  }, 60_000);
+
+  it("planted control: a time word written in a component is caught by the same scan", () => {
+    const planted = `export function Row({ year }: { year: string }) { return (<><p>Time-boxed · in use before {year}</p><b title="Takes about 3 weeks" /></>); }`;
+    expect(ownWords(planted, "components/planted.tsx").filter((w) => findTimeWords(w.text).length > 0).map((w) => w.text)).toEqual([
+      "Time-boxed · in use before",
+      "Takes about 3 weeks",
+    ]);
+  });
+
+  it("the GnuCash book reader's own messages hold no time", () => {
+    const file = "lib/figures/books/read-book.ts";
+    const own = ownWords(readFileSync(file, "utf8"), file);
+    expect(own.length).toBeGreaterThan(0);
+    expect(own.filter((w) => findTimeWords(w.text).length > 0).map((w) => `${file}:${w.line}: ${w.text}`)).toEqual([]);
+    // Planted control: its words for a read it stopped, until 2026-10-24.
+    expect(findTimeWords("DotAmi stopped reading that book after a minute, so nothing was read. Nothing was kept.")).not.toEqual([]);
   });
 
   it("an official page's words are drawn after their label, inside the official-quote component", () => {
@@ -580,7 +678,7 @@ describe("3. Time words in DotAmi's own words", () => {
     expect(renderToStaticMarkup(createElement(PageQuotes, { quotes: [] }))).toBe("");
   });
 
-  it("no other component draws a citation's quotes itself", () => {
+  it("no other component maps over a tool check's quotes itself", () => {
     expect(quotesDrawnOutsideTheComponent(sourceFiles(["components", "app"]))).toEqual([]);
   });
 
@@ -589,16 +687,75 @@ describe("3. Time words in DotAmi's own words", () => {
     expect(quotesDrawnOutsideTheComponent(planted)).toEqual(["components/planted.tsx: line.quotes.map("]);
     const alsoPlanted = [{ file: "components/planted.tsx", text: "{toolCheckQuotes(c).map((q) => q)}" }];
     expect(quotesDrawnOutsideTheComponent(alsoPlanted)).toEqual(["components/planted.tsx: toolCheckQuotes(c).map("]);
+    // A list taken out of its line first, then mapped over under its own name.
+    const destructured = [{ file: "components/planted.tsx", text: "const { quotes } = line; return quotes.map((q) => <q key={q}>{q}</q>);" }];
+    expect(quotesDrawnOutsideTheComponent(destructured)).toEqual(["components/planted.tsx: quotes.map("]);
   });
 });
 
-/** A citation's quotes mapped over anywhere but the official-quote component. */
+/**
+ * A tool check's quotes (a `quotes` list, or `toolCheckQuotes(…)`) mapped over anywhere but the official-quote
+ * component. It reads source text, so a list under another name gets past it. The official words drawn by
+ * OfficialWordsBlock, About this job and the example's sources each have a label of their own
+ * (components/shared/page-quotes.tsx names them).
+ */
 function quotesDrawnOutsideTheComponent(files: readonly { file: string; text: string }[]): string[] {
   return files
     .filter(({ file }) => file !== "components/shared/page-quotes.tsx")
     .flatMap(({ file, text }) =>
-      [...text.matchAll(/([\w.]+\.quotes|toolCheckQuotes\([^)]*\))\s*\.map\(/g)].map((m) => `${file}: ${m[1]}.map(`),
+      [...text.matchAll(/([\w.]+\.quotes|\bquotes|toolCheckQuotes\([^)]*\))\s*\.map\(/g)].map((m) => `${file}: ${m[1]}.map(`),
     );
+}
+
+/** Every Lens line in every catalog that has them, named "<catalog> <entry id> <tax|legal>". */
+function everyLensLine(): { where: string; text: string }[] {
+  const catalogs: [string, readonly { id: string; lensAnnotations: { tax: string; legal: string } }[]][] = [
+    ["cfe", cfeCatalogV2026.nodes],
+    ["structure", structureCatalogV2026.entries],
+    ["grants", grantsCatalogV2026.entries],
+    ["writeoffs", writeOffsCatalogV2026.entries],
+    ["compliance", complianceCatalogV2026.entries],
+  ];
+  return catalogs.flatMap(([name, entries]) =>
+    entries.flatMap((e) => (["tax", "legal"] as const).map((lens) => ({ where: `${name} ${e.id} ${lens}`, text: e.lensAnnotations[lens] }))),
+  );
+}
+
+/**
+ * Lens lines with a time in them today that another open pull request removes. Listed so the test reads every
+ * catalog now; an entry the scan no longer finds fails the test, so it comes out the day that pull request lands.
+ */
+const LENS_TIME_GAPS: readonly { where: string; why: string }[] = [
+  {
+    where: "grants grant-csbfp tax",
+    why: "\"the 365-day retroactive window\": no ISED page holds it. PR #208 (fix/prerelease-numbers) rewrites this line to ISED's words; whichever of #208 and #210 lands second deletes this entry.",
+  },
+];
+
+/** Every string a file writes (quoted, a plain template, or a template's fixed parts with `${…}` for its holes), never a comment. */
+function stringsWritten(source: string, file: string): { line: number; text: string }[] {
+  const tree = ts.createSourceFile(file, source, ts.ScriptTarget.Latest, true, file.endsWith(".tsx") ? ts.ScriptKind.TSX : ts.ScriptKind.TS);
+  const out: { line: number; text: string }[] = [];
+  const add = (node: ts.Node, text: string) => out.push({ line: tree.getLineAndCharacterOfPosition(node.getStart(tree)).line + 1, text });
+  const visit = (node: ts.Node) => {
+    if (ts.isStringLiteral(node) || ts.isNoSubstitutionTemplateLiteral(node)) add(node, node.text);
+    else if (ts.isTemplateExpression(node)) add(node, [node.head.text, ...node.templateSpans.map((span) => span.literal.text)].join("${…}"));
+    ts.forEachChild(node, visit);
+  };
+  visit(tree);
+  return out;
+}
+
+/** The no-times check's "time-boxed" pattern ("time-boxed", "time-limited", "timebound"), over every string the files write. */
+function timeBoxedStringsIn(files: readonly { file: string; text: string }[]): string[] {
+  const timeBoxed = TIME_PATTERNS.find((p) => p.phrase === "time-boxed")!.pattern;
+  // Only a file whose text has the words somewhere is parsed: a string written out can't hold them otherwise (a
+  // character escape aside), and parsing every catalog file (the job lists among them) takes seconds.
+  return files.flatMap(({ file, text }) =>
+    (timeBoxed.test(text) ? stringsWritten(text, file) : [])
+      .filter((s) => timeBoxed.test(s.text))
+      .map((s) => `${file}:${s.line}: ${s.text}`),
+  );
 }
 
 // ---------------------------------------------------------------------------------------------------------

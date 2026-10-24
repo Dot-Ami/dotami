@@ -24,7 +24,10 @@ import { normaliseSpaces } from "./text-pieces";
  * `findTimeWords` takes the allowed words out of a text first, then names what is left. The harness runs it
  * over every line it collects for an idea (tests/idea-harness.spec.ts: what the app code it calls writes),
  * tests/idea-invariants.spec.ts runs it over every line the written roads hold and every plain sentence in
- * the words files, and checks each allowance is still in use, so a stale one can't sit here unnoticed. The
+ * every words file under lib/ (a list it checks against the folder), and tests/prerelease-honesty.spec.ts over
+ * every catalog's Lens lines and the text each component writes itself (tests/helpers/own-words.ts, with the
+ * pieces it lets through listed in tests/fixtures/ideas/known-gaps.ts). Each checks its allowances are still in
+ * use, so a stale one can't sit here unnoticed. The
  * patterns catch the ways of writing a time listed below, not every way there is: a new phrasing that
  * slips through is added here with a probe in that spec.
  */
@@ -89,10 +92,11 @@ export const TIME_PATTERNS: readonly { phrase: string; pattern: RegExp }[] = [
   // A span of time named without a number (the pre-release review, 2026-10-23: the apprentice road's column
   // "First years on your own" passed every pattern above): "first years", "the early months", "your opening
   // weeks", "the first few years". Plural only: "first-year" and "the first year" name a tax year or a
-  // what-if year ("your first-year sales estimate"), not a wait.
+  // what-if year ("your first-year sales estimate"), not a wait. Not "opening hours": a shop's hours, not a span
+  // of time (2026-10-24, the review of #210).
   {
     phrase: "a span of time in words",
-    pattern: new RegExp(`\\b(?:first|early|earliest|opening|initial|last|final)\\s+(?:few\\s+|couple of\\s+)?${UNIT}s\\b`, "i"),
+    pattern: new RegExp(`\\b(?!opening\\s+hours\\b)(?:first|early|earliest|opening|initial|last|final)\\s+(?:few\\s+|couple of\\s+)?${UNIT}s\\b`, "i"),
   },
   // "time-boxed", "time-limited", "time-bound", "timeboxed" (the legend said "time-boxed" until 2026-10-23).
   { phrase: "time-boxed", pattern: /\btime[- ]?(?:boxed|limited|bound|box)\b/i },

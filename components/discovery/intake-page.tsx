@@ -7,6 +7,7 @@ import { PersonStatements } from "@/components/shared/person-statements";
 import { Chip, GhostLink, Pill, WordMark } from "@/components/ui";
 import { buildEvaluationProfile, evaluateProfile } from "@/lib/brain";
 import type { UnlockItem } from "@/lib/brain";
+import { cockpitWords } from "@/lib/cockpit/words";
 import { ACTIVITY_TAXONOMY, applyIntentToDraft, type IntentParseResult } from "@/lib/journey/intent";
 import { parseIntentFallback } from "@/lib/journey/intent-fallback";
 import { saveScenario } from "@/lib/journey/save-scenario";
@@ -75,7 +76,7 @@ const EMPLOYMENT_OPTIONS: { id: EmploymentStatus; label: string }[] = [
   { id: "other", label: "Other…" },
 ];
 
-/** Consequence-first rank (forks and time-boxed items carry the differentiating info). */
+/** Consequence-first rank (forks and items with an end date carry the differentiating info). */
 function rankUnlocks(unlocks: UnlockItem[]): UnlockItem[] {
   const score = (item: UnlockItem) =>
     (item.fork ? 4 : 0) + (item.expires ? 2 : 0) + (item.state === "yellow" ? 1 : 0);
@@ -106,7 +107,7 @@ export function IntakePage({
   const [parsing, setParsing] = useState(false);
   const [opening, setOpening] = useState(false);
 
-  // Local calendar day, same as the cockpit — a UTC slice flipped time-boxed items a day early
+  // Local calendar day, same as the cockpit — a UTC slice flipped items with an end date a day early
   // in the evening anywhere west of UTC (found 2026-09-14).
   const today = useMemo(() => new Date().toLocaleDateString("en-CA"), []);
   const evaluation = useMemo(
@@ -768,8 +769,10 @@ function PreviewRow({
           <p className="text-stone">{item.why}</p>
           <p className="text-stone-dim">{item.payoff}</p>
           {item.expires ? (
+            // The map legend's words, from the words file, as node detail writes them (2026-10-24: "Time-boxed — in
+            // use before" was written here, where no words check read it).
             <p className="font-mono text-label uppercase tracking-[0.14em] text-amber">
-              Time-boxed — in use before {item.expires.slice(0, 4)}
+              {cockpitWords.map.lever.endDate} · {cockpitWords.map.lever.inUseBefore(item.expires.slice(0, 4))}
             </p>
           ) : null}
           {item.fork ? (

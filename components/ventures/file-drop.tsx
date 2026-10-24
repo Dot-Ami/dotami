@@ -820,9 +820,8 @@ export function FileDrop({
           className="mt-2 text-body text-stone-dim outline-hidden"
         >
           Reading {fileName}…
-          {readingBook
-            ? " A GnuCash book is read in the background, so this window stays usable. A big one can take a little while."
-            : ""}
+          {/* "A big one can take a little while." followed until 2026-10-24: a time in DotAmi's own words. */}
+          {readingBook ? " A GnuCash book is read in the background, so this window stays usable." : ""}
         </p>
       ) : null}
       {origin === "accounting" && readError ? (

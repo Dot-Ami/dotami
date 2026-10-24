@@ -47,7 +47,9 @@ plain words on its sharing-economy page ("The $30,000 small supplier threshold d
 commercial ridesharing services."), and GI-196 says registration takes effect the day the driver
 starts making taxable supplies, and when the driver has to apply ("before the thirtieth day after that
 particular day"). Since 2026-10-23 the Lens line no longer paraphrases that as "with 30 days to apply": it
-points to GI-196's own words under the card's sources. Before this, DotAmi had no driver kind of
+points to GI-196's own words under the card's sources, and since 2026-10-24 it ends there (it said "That date
+is worth taking to your accountant.", with no date before it, telling the person what to do). Before this,
+DotAmi had no driver kind of
 work and only the general $30,000 rule, so a driver expecting less than $30,000 was told on a
 green card that most businesses "need not register yet".
 

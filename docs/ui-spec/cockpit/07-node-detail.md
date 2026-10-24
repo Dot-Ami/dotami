@@ -4,7 +4,8 @@ Page: Cockpit (`/cockpit`) · Component: `components/node-detail-panel.tsx`
 (quotes: `components/shared/official-words.tsx`)
 Type: side panel with one text input
 
-Last updated: 2026-10-12 (inside the cockpit's step panel on today's road, 09-step-panel.md; 2026-10-11:
+Last updated: 2026-10-24 (an item's end-date line in the map legend's words, from the words file; 2026-10-12:
+inside the cockpit's step panel on today's road, 09-step-panel.md; 2026-10-11:
 the ride-share and taxi cards and the GST/HST stages' lines for them; written the same day with
 the honest-map fixes, docs/task-list.md [14a]; the panel
 itself is from 2026-09-13)
@@ -26,6 +27,12 @@ show, each only when the catalog gives it for that stage:
 The GST/HST lever card in *For you on this stage* carries the same official-words box as the
 mandatory stage, always in view under its *why* line (outside its show-details button, because the
 box has a link).
+
+**An item with an end date (2026-10-24).** An item in *For you on this stage* whose treatment has a date it
+ends (`UnlockItem.expires`; today only *CCA Class 50 — computer equipment*'s first-year treatment, for
+equipment in use before 2027-01-01) says so once its details are open, in amber: **has an end date · in use
+before 2027**, the map legend's words (`cockpitWords.map.lever.endDate` and `inUseBefore`). It said
+*Time-boxed · in use before 2027*, written in the component, until 2026-10-24.
 
 **Ride-share or taxi driving (2026-10-11).** For an idea with that activity tag, Mandatory GST
 registration's *For you on this stage* adds *GST/HST for ride-share and taxi driving: from the first

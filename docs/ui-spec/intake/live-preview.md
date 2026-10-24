@@ -6,7 +6,8 @@ Page: Intake (`/intake`) · Component: `components/discovery/intake-page.tsx`
 (`PreviewRail`/`PreviewRow`) — shared by Screen A and Screen B
 Type: preview panel
 
-Last updated: 2026-07-02 (page-mechanics workshop — **full rewrite**, previous doc described
+Last updated: 2026-10-24 (an expanded row's end-date line says the map legend's words, from the words file;
+2026-07-02: page-mechanics workshop — **full rewrite**, previous doc described
 the pre-2026-07-02 card/graph-teaser version which no longer exists in the shipped code)
 Workshop status: **signed off**
 
@@ -22,13 +23,15 @@ unlocks, live, as the user edits any field.
   **entire** data pipeline; nothing here is hardcoded in the component.
 - `rankUnlocks(evaluation.unlocks)`: drops `gray`-state items, sorts by
   `(fork ? 4 : 0) + (expires ? 2 : 0) + (state === "yellow" ? 1 : 0)` descending —
-  fork-bearing and time-boxed items surface first.
+  fork-bearing items and items with an end date surface first.
 - Renders the top 3 (`PREVIEW_VISIBLE`) as collapsed rows; remainder shown only as a
   count: "N more in your map →". Each row: colored dot (sage = green, amber = yellow),
   type chip (`item.typeChip`), title, +/− expand toggle. The toggle exposes `aria-expanded`
   and names the item whose details it opens or closes.
-- Expanded row shows: why (`item.why`), payoff (`item.payoff`), expiry line if
-  time-boxed (`item.expires`, "in use before \<year\>"), fork block if present
+- Expanded row shows: why (`item.why`), payoff (`item.payoff`), end-date line when the item has one
+  (`item.expires`: **has an end date · in use before \<year\>**, the map legend's words from
+  `cockpitWords.map.lever`; "Time-boxed — in use before \<year\>", written in the component, until 2026-10-24),
+  fork block if present
   (`item.fork.label`/`.note`), risk block if present (level: professional-required /
   caution / keep-records, GAAR flag, why + mitigation), and **every citation as a link to
   its official URL** (`CitationLinks`, `components/shared/citation-links.tsx` — S2.5.4f,

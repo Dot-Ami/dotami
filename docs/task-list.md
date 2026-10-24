@@ -1126,14 +1126,27 @@ roadmap's build order.
     descriptions, the three old keys removed unread when a journey page opens, and Delete reaching what the
     window holds; no *done* or *now* chip on the map for anything the person never marked (*starting point*,
     *first stage*), and *type not said* on the ideas card; the time words the check missed (*First years on
-    your own*, *time-boxed*, the ride-share Lens line's "with 30 days to apply") reworded and taught to the
-    check, and official fee pages' words only inside the official-quote component; the front door's chips in
+    your own*, *time-boxed* in the legend, in two item rows written in their components and in a citation's
+    note, the ride-share Lens line's "with 30 days to apply" and its closing advice, the file drop's "A big one
+    can take a little while." and the book reader's "after a minute") reworded and taught to the check, which
+    now reads every catalog's Lens lines, every words file and the text each component writes itself
+    (2026-10-24), and a tool check's quotes only inside the official-quote component; the front door's chips in
     the words file without a tax promise; *Your futures* and *Open cockpit* only once an idea is saved
   - [ ] For the maintainer's later call (the decision of 2026-10-24 kept it for now): the intake's *Other…*
     employment box. Its words are held in the window's memory only, kept with no idea (the idea keeps `other`)
     and read by nothing since its list of earlier descriptions went with `dotami-employment-suggestions`: keep
     the words with the idea (a new column, an inventory line, a privacy-log line), or remove the box and keep
     the *Other…* choice alone
+  - [ ] Anthropic's retention period on *What DotAmi knows about you* (`components/your-data/your-data-page.tsx`,
+    under *How long Anthropic keeps it:*) is DotAmi's paraphrase, "deleted within 30 days, with exceptions". The
+    maintainer's decision 2 of 2026-10-24: a provider's period is quoted word for word under a label, and DotAmi
+    holds no copy of that page's exact words yet. Read the page, keep its words with the day read, quote them
+    under the label, and take the entry out of `COMPONENT_TIME_WORDS` (`tests/fixtures/ideas/known-gaps.ts`)
+  - [ ] For the maintainer's call, found by the review of #210: the *Replace income* goal card's payoff, "If
+    this applies, paths with faster revenue and simpler compliance can rank higher." (`lib/brain/goal-effects.ts`,
+    shown when the intake preview's row is opened), a time word and a ranking nothing does, like the other goal
+    cards' "DotAmi can prioritize … earlier" and "move up the map". Not part of #210: what goal cards say at all
+    (goals are read by no rule), for all five
 - ✅ **[13i] The landing page and intake were dead in production builds** — fixed in #64.
 
 ## 15 — Real examples: how real people started (later)

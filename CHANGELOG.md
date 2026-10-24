@@ -288,11 +288,22 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   both browser tests failed.
 - **Time words the no-times check missed.** The apprentice road's last column *First years on your own* is now
   *Running your own shop*; the legend's *check first — confirm, time-boxed, or one fork away* now says *has an
-  end date*; the ride-share Lens line no longer paraphrases GI-196 as "with 30 days to apply" but points to its
-  own words under the card's sources. The check (`tests/helpers/time-words.ts`) now catches "first years",
-  "the early months", "time-boxed" and the like. Corporations Canada's fee lines ("It will cost $200 and will
-  take 1 day.") were drawn in bare quotation marks on the Incorporating step's ways to incorporate and on *Your
-  plan*; they are now inside the one official-quote component, after *Words found on the page:*
+  end date*, and so do the two rows that said it of an item, written in their components where no check read
+  them: a step panel's item (*Time-boxed · in use before 2027*) and the intake preview's (*Time-boxed — in use
+  before 2027*), now both *has an end date · in use before 2027*, from the words file (`cockpitWords.map.lever`).
+  The CCA Class 50 citation's note in the Export panel says *the first-year factor with its end date*, not *the
+  time-boxed first-year factor*. The ride-share Lens line no longer paraphrases GI-196 as "with 30 days to
+  apply" but points to its own words under the card's sources, and no longer ends "That date is worth taking to
+  your accountant". A GnuCash book being read no longer says "A big one can take a little while.", and a read
+  DotAmi stops says it stopped "before the read finished", not "after a minute". The check
+  (`tests/helpers/time-words.ts`) now catches "first years", "the early months", "time-boxed" and the like (not
+  "opening hours"), and reads every catalog's Lens lines, every words file under `lib/`, every string a catalog
+  writes for "time-boxed", and the text each component writes itself, with the pieces it lets through listed
+  and why (`tests/fixtures/ideas/known-gaps.ts` `COMPONENT_TIME_WORDS`: words the patterns misread, *What
+  DotAmi knows about you*'s retention lines, and Anthropic's period, paraphrased until DotAmi holds its exact
+  words). Corporations Canada's fee lines ("It will cost $200 and will take 1 day.") were drawn in bare
+  quotation marks on the Incorporating step's ways to incorporate and on *Your plan*; they are now inside the
+  official-quote component that draws every tool check's quotes, after *Words found on the page:*
   (`components/shared/page-quotes.tsx`). No amount changed.
 - **The front door.** Its three example chips are in the words file (`frontDoorWords.examplePrompts`), and the
   second now reads *I'm already running a business — show me the write-off rules for it* instead of *optimize my

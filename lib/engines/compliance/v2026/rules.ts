@@ -214,7 +214,9 @@ export const complianceRulesV2026 = [
       "The CRA says self-employed taxi operators and commercial ride-sharing drivers have to register for GST/HST even if they are small suppliers: the $30,000 line doesn't apply to those rides. For commercial ride-sharing, its info sheet GI-196 says registration takes effect the day the driver starts making taxable supplies, and the driver has to apply before the thirtieth day after that.",
     officialWords: CRA_RIDESHARING_REGISTRATION,
     lensAnnotations: {
-      tax: "If you drive passengers for fares arranged through an app, or run a taxi business, the CRA says registration for those rides is needed whatever you earn, from the day of your first paid ride. By when to apply is in the CRA's own words under this card's sources (its info sheet GI-196, for ride-sharing). That date is worth taking to your accountant.",
+      // Until 2026-10-24 it ended "That date is worth taking to your accountant.": no date stood before it, and it
+      // told the person what to do, in DotAmi's own words.
+      tax: "If you drive passengers for fares arranged through an app, or run a taxi business, the CRA says registration for those rides is needed whatever you earn, from the day of your first paid ride. When to apply is in the CRA's own words under this card's sources (its info sheet GI-196, for ride-sharing).",
       legal:
         "The law is the Excise Tax Act: s.240(1.1) requires a small supplier who carries on a taxi business to be registered, and its definition of a taxi business (s.123(1)) takes in rides arranged through an electronic platform. The CRA's pages are about self-employed drivers.",
     },

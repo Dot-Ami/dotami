@@ -14,10 +14,12 @@ import { roadsV2026 } from "@/lib/engines/roads/v2026";
 
 import * as aboutJobFile from "@/lib/about-job/words";
 import * as cockpitFile from "@/lib/cockpit/words";
+import * as researchKitFile from "@/lib/engines/research-kit/v2026/words";
 import * as frontDoorFile from "@/lib/front-door/words";
 import * as landscapeFile from "@/lib/landscape/words";
 import * as personFile from "@/lib/person/words";
 import * as roadsFile from "@/lib/roads/words";
+import * as venturesFile from "@/lib/ventures/words";
 
 import { SHOWN_WORDS_GAPS } from "./fixtures/ideas/known-gaps";
 import { fakeIdDigits, IDEAS_V1 } from "./fixtures/ideas/v1";
@@ -25,6 +27,7 @@ import { checkRun, reachesTheEnd, sameOutput, type InvariantId } from "./helpers
 import { runDigest, runIdea, type IdeaRun } from "./helpers/idea-pipeline";
 import { WAGE_ROW_PLACE, type PublishedWageRow } from "./helpers/number-provenance";
 import { quotedRun } from "./helpers/official-quotes";
+import { sourceFiles } from "./helpers/source-scan";
 import { findTimeWords, OFFICIAL_TIME_ALLOWANCES, YOUR_DATE_ALLOWANCES } from "./helpers/time-words";
 
 // An Alberta business the corpus expects on road 0, and a cabinetmaker it expects on road 1.
@@ -48,6 +51,18 @@ function plainStrings(value: unknown, path = ""): { path: string; text: string }
   if (value && typeof value === "object") return Object.entries(value).flatMap(([k, v]) => plainStrings(v, path ? `${path}.${k}` : k));
   return [];
 }
+
+/** Every words file under lib/ (a folder's words.ts), read for times below; "reads every words file under lib/" keeps the list whole. */
+const WORDS_FILES: Readonly<Record<string, unknown>> = {
+  "lib/about-job/words.ts": aboutJobFile,
+  "lib/cockpit/words.ts": cockpitFile,
+  "lib/engines/research-kit/v2026/words.ts": researchKitFile,
+  "lib/front-door/words.ts": frontDoorFile,
+  "lib/landscape/words.ts": landscapeFile,
+  "lib/person/words.ts": personFile,
+  "lib/roads/words.ts": roadsFile,
+  "lib/ventures/words.ts": venturesFile,
+};
 
 describe("the harness's checks catch what they guard", () => {
   it("1. a verdict word or phrase in DotAmi's words", () => {
@@ -325,19 +340,17 @@ describe("the words no-times lets through", () => {
     // The harness reads what the lib functions it calls write; a screen also shows sentences straight from
     // these files (the front door's doors, the cockpit's help lines). Each plain string is read here; the
     // functions among them are read when the harness calls them, and whole screens by the browser sweep (29e).
-    const files = {
-      "lib/front-door/words.ts": frontDoorFile,
-      "lib/cockpit/words.ts": cockpitFile,
-      "lib/landscape/words.ts": landscapeFile,
-      "lib/roads/words.ts": roadsFile,
-      "lib/about-job/words.ts": aboutJobFile,
-      "lib/person/words.ts": personFile,
-    };
-    const withTimes = Object.entries(files).flatMap(([file, mod]) =>
+    const withTimes = Object.entries(WORDS_FILES).flatMap(([file, mod]) =>
       plainStrings(mod).flatMap(({ path, text }) => (findTimeWords(text).length > 0 ? [`${file} ${path}`] : [])),
     );
     // known-gaps.ts SHOWN_WORDS_GAPS: each one the maintainer's call.
     expect(withTimes).toEqual(SHOWN_WORDS_GAPS.map((gap) => gap.where));
+  });
+
+  it("reads every words file under lib/", () => {
+    // A words file left off the list is one whose sentences no time check reads (lib/ventures/words.ts and the
+    // research kit's were, until the review of #210 on 2026-10-24).
+    expect(Object.keys(WORDS_FILES).sort()).toEqual(sourceFiles(["lib"], /^words\.ts$/));
   });
 
   it("lets through only Your date's own words, still in the cockpit's words", () => {
