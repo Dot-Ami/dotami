@@ -113,7 +113,8 @@ export function DestinationPage({ kept }: { kept: KeptOnRecord }) {
         <div data-region="questions" className="mx-auto w-full max-w-2xl space-y-6 px-4 py-10 sm:px-8">
           {/* The page's name for a screen reader; the nav above already says it on screen. */}
           <h1 className="sr-only">{words.pageHeading}</h1>
-          {/* The tab's answers are read after the first paint; asking before then could ask one already answered. */}
+          {/* The answers held in the window's memory are read after the first paint; asking before then could ask
+              one already answered. */}
           {hydrated
             ? DESTINATION_QUESTIONS.map((question) =>
                 asked === question.id ? (

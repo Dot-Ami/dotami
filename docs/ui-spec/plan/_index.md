@@ -5,7 +5,8 @@ idea, on the server), `components/cockpit/plan-page.tsx` (draws it), `components
 (the one control that runs in the browser) · Content: `lib/cockpit/plan.ts` `buildPlan` (pure) · Words:
 `lib/cockpit/words.ts` `plan` · Reads: `lib/futures/read-plan.ts`
 
-Last updated: 2026-10-13 (first written, before the code; issue #41; design: docs/architecture/future-cockpit.md
+Last updated: 2026-10-24 (an idea not saved yet is held in the window's memory, never its storage); 2026-10-23 (a
+source's quoted words after *Words found on the page:*); 2026-10-13 (first written, before the code; issue #41; design: docs/architecture/future-cockpit.md
 § 1 row 9 and § 2, *Your plan as built*). Same day, after review: the app's footer hidden on paper on the
 plan only, the not-advice line on the first page too, *In your words* and *Skills and requirements, with
 your marks* as headings, the destination's line saying it isn't tied to one idea, a failed read said as a
@@ -55,7 +56,9 @@ splits across two pages, and every link is printed as its address (each link's t
    on your path*) with road evaluation's reason sentence; *Done when (x of y ticked)* with each line
    marked *ticked* or *not ticked* and its source; the skills it needs, each with the person's mark;
    how many cost lines it has (the lines themselves are under *Start-up money*, by step); official pages; and its sources, each with how it was checked
-   (`lib/engines/shared/citation-check.ts` `howCheckedWords`, and the quotes a tool found).
+   (`lib/engines/shared/citation-check.ts` `howCheckedWords`) and the quotes a tool found: *Words found on the
+   page:* on a line of its own, then each quote in quotation marks and italics on a line of its own
+   (`components/shared/page-quotes.tsx`, `layout="lines"`; since 2026-10-23, before which they stood bare).
 5. **Skills and requirements, with your marks** — names only. *On this road's steps*: every skill item the road lists, marked or not, once,
    with *legal requirement* / *listed skill* and the person's mark (*have*, *learning*, *not yet*, or
    *not marked*). *Your own skills*: each with its mark and day. *Your pick of job*: the job's name and
@@ -64,7 +67,8 @@ splits across two pages, and every link is printed as its address (each link's t
    No job picked: *"No job picked for the government's skills list."*
 6. **Start-up money** — every cost line on the road, by step, in the three kinds and nothing else:
    - an **official fee** shows its amount, *official fee*, its source's title and address, and how and
-     on which day the source was read or checked by a tool; a fee that applies only sometimes shows its
+     on which day the source was read or checked by a tool, with the words a tool found under *Words found
+     on the page:* as above (so "It will cost $200 and will take 1 day." is the fee page's, never DotAmi's); a fee that applies only sometimes shows its
      condition (a condition that ends in a full stop gets no second one) and *"Not added to any total."*;
    - **your quote** shows the amount as the person's (*"your quote · agreed <day>, from <quote / link /
      receipt / your guess>"*);
@@ -86,7 +90,7 @@ splits across two pages, and every link is printed as its address (each link's t
 
 | Control | Behaviour | Persists to |
 |---|---|---|
-| **Open your plan to read or print** (a link in the cockpit's Export panel, under Copy markdown and Save as .md) | opens `/plan?venture=<id>` in the same tab, for the idea on screen. An idea not saved yet (only in this tab) has no id: the link is replaced by *"Save this idea first: the plan is made from what DotAmi keeps."* | — |
+| **Open your plan to read or print** (a link in the cockpit's Export panel, under Copy markdown and Save as .md) | opens `/plan?venture=<id>` in the same tab, for the idea on screen. An idea not saved yet (held in the window's memory only, never its storage; until 2026-10-24 also in the tab's storage) has no id: the link is replaced by *"Save this idea first: the plan is made from what DotAmi keeps."* | — |
 | **← Back to the cockpit** | opens `/cockpit?venture=<id>` | — |
 | **Print** | calls the browser's `window.print()`: the computer's own print window opens, where the person picks a printer or *Save as PDF*. In the desktop app it is Electron's same call, expected to open Windows' print window; not yet tried in the packaged app (nothing in `desktop/` changes for it, and nothing there blocks it). DotAmi sends nothing anywhere; where the paper or the PDF goes is the person's choice | — |
 | No idea with that id | *"DotAmi keeps no idea with this id on this computer."* and a link to *Your futures* | — |

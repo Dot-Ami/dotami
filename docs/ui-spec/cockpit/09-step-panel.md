@@ -4,7 +4,7 @@ Page: Cockpit (`/cockpit?venture=<id>`) · Component: `components/cockpit/step-p
 step it wraps `components/node-detail-panel.tsx`; the quote box is `components/cockpit/amount-form.tsx`)
 Type: panel (display + toggle buttons + checkboxes + form)
 
-Last updated: 2026-10-13 (*Why this colour* on SR&ED deepening without a research kind of work, issue #40; built 2026-10-12, docs/architecture/future-cockpit.md § 1 row 5 and § 2, Cockpit screen as built)
+Last updated: 2026-10-24 (an idea not saved yet is held in the window's memory, never its storage); 2026-10-13 (*Why this colour* on SR&ED deepening without a research kind of work, issue #40; built 2026-10-12, docs/architecture/future-cockpit.md § 1 row 5 and § 2, Cockpit screen as built)
 
 > **Changed 2026-10-12 — part 2.** Every answer given here (a status, ticks, a skill mark, a quote once agreed, the fork's toggle) shows its receipt under the panel's refusal line ([13-receipts.md](./13-receipts.md)); opening another step clears it. At a fork, **Compare the endings** opens *Compare the two endings* on that fork ([15-compare.md](./15-compare.md)); since 2026-10-13 (the maintainer's answer to PR #159's question 1) only at a fork whose own pick, not the rules, puts steps on or off the path (`lib/cockpit/told.ts` `forksToCompare`), so not on a road 0 step, where the toggle is the pick, the tax rules colour the sides whichever is picked, and no Compare button shows. The *I'd incorporate at* box saves as the person types and gives no receipt.
 >
@@ -80,7 +80,8 @@ guess), *Nothing counts until you agree to it.*, **Next: agree** and **Cancel**.
   then the agree prompt opens, its row reading *A start-up cost (your number) · … · “Tools” on “Set up
   your shop”, from a quote*. The number counts only after **Agree**; closing the prompt leaves it
   waiting. Agreeing to a new number for the same line takes back the old one (storage).
-- An idea not saved yet (only in this tab): every control is off and *This idea is not saved yet, so
+- An idea not saved yet (held in the window's memory only, never its storage; until 2026-10-24 also in the
+  tab's storage): every control is off and *This idea is not saved yet, so
   nothing here can be kept.* shows.
 - × closes the panel.
 

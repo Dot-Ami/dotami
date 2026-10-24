@@ -13,7 +13,7 @@ interface PlaybookExportPanelProps {
   scenario: Scenario;
   /** The road the cockpit draws, so the export's sources are the ones the screen shows (task 28d). */
   roadId: string;
-  /** The saved idea's id, for the link to its plan; null for an idea kept only in this tab. */
+  /** The saved idea's id, for the link to its plan; null for an idea held only in the window's memory. */
   ventureId: string | null;
   onClose: () => void;
 }

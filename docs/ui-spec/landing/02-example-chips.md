@@ -2,7 +2,7 @@
 
 Page: Landing (`/`) · Component: `components/discovery/landing-page.tsx`
 
-Last updated: 2026-07-02
+Last updated: 2026-10-23 (the chips in the words file, the second reworded; first written 2026-07-02)
 
 ## What it is
 

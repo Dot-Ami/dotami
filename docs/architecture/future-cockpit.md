@@ -155,7 +155,7 @@ each choice that differs from the table above says why.
      future; an idea you describe in your own sentence shows that sentence instead."*, with the words
      shown back in quotes (the goal bar shows an idea's own first sentence when it has one, below).
      **I don't know yet** keeps nothing new: *"Nothing kept. You can say it later; nothing here waits on
-     it."*, or, when words of the person's are already kept (said before, in this tab or another),
+     it."*, or, when words of the person's are already kept (said before, in this window or another),
      *"Nothing new kept. Your words of 2026-10-12 are still kept and still show on top of your futures;
      Delete on What DotAmi knows about you removes them, with all your statements."* (statements are
      deleted all at once, never one by one, by design). With no database: *"Not kept: no database
@@ -327,8 +327,8 @@ in [docs/ui-spec/example/_index.md](../ui-spec/example/_index.md).
 - **Nothing is written, anywhere.** Every control that would save is disabled with *"This is an example.
   Start your own to keep anything."*, or answers with that sentence and does nothing; no request that
   writes is sent, none of the real person's data is read, and no browser storage is read or written (the
-  page sits outside the journey's pages, so the journey draft isn't touched, and the fold answers are
-  remembered nowhere). `e2e/example-future.spec.ts` compares the data file's row counts, both storages and
+  page sits outside the journey's pages, so the journey draft isn't touched and, held in the window's memory
+  since 2026-10-24, is there again on the way back; the fold answers are remembered nowhere). `e2e/example-future.spec.ts` compares the data file's row counts, both storages and
   the requests sent before and after clicking Keep and Export (the two save controls not disabled), and
   checks that every other save control in the ui-spec's table is disabled.
 - **The appendix's counts against the catalog's.** The page shows what road evaluation gives on today's
@@ -565,11 +565,14 @@ answer), the what-if bar, *Compare* and *This is mine*. The left rail stays as i
   **Add your savings**, through the agree prompt.
   *Your date*: a month and year box, **Save** and **Clear**; a month already gone is refused.
 - **Next on your road**, under the map: the first three steps, in road order, that are on the person's
-  path and not done, labelled *the order steps happen, not importance*. Clicking one opens it. *On the
-  path* and *done* are read the way each card's chip reads them (`lib/cockpit/view.ts` `mapPlace`): the
-  person's own status where they set one, else the map's worked-out place. So the list never names a card
-  the map shows *done* (stage 0, worked out from the toggles) or *not on your path* (the side of a fork
-  not picked), nor one road evaluation greys. The Steps gauge's *next on your road* is its first.
+  path and not marked done, labelled *the order steps happen, not importance*. Clicking one opens it. *On
+  the path* is read the way each card's chip reads it (`lib/cockpit/view.ts` `mapPlace`): the person's own
+  status where they set one, else the map's worked-out place; *done* is only the person's own **Done**. So
+  the list never names a card the map shows *not on your path* (the side of a fork not picked), nor one
+  road evaluation greys, nor one the person marked done or not for me. Stage 0, which the map's lists put
+  first on every idea, is listed until the person marks it done: its chip reads *starting point*
+  (2026-10-23, the pre-release review; until then it read *done*, worked out from the toggles, and the list
+  left it out). The Steps gauge's *next on your road* is its first.
 - **Road 0's statuses are the person's now** (the task list's open line; § 7 said a later pull request
   may do it). The map's *active, done, set aside* lists are worked out from its toggles on every load,
   so a status set "through the map" couldn't be kept, and road evaluation already refused to read those
@@ -632,7 +635,8 @@ wrapped to 342 px and left the road 20 px; at 768x1024 with a step open the road
   inventory lists the key. Everything starts open, so a person who never folds sees part 1 unchanged.
   In the desktop app each launch is served from its own local address, so its storage starts empty: the
   folds last until the app closes and it opens with everything showing (the same as the intake's list of
-  typed job descriptions). *(2026-10-17: no longer; the app uses the same address on every launch while its
+  typed job descriptions, which went on 2026-10-24: the window's storage holds nothing the person typed).
+  *(2026-10-17: no longer; the app uses the same address on every launch while its
   usual port is free, `desktop/app-port.mjs`, so the folds last between launches.)*
 - **The proof at 1280x720.** With every panel folded, each stage card and each rules and tax card on the
   road is fully inside the window once the road's own area is scrolled to it, and the road's area is at
@@ -1163,8 +1167,10 @@ lives in `lib/roads/`.
   *not for me*. Readiness is never a state: what a step needs is a count on the step (*needs 3 · you
   have 2*), never a reason to turn it green.
   On road 0 the person sets no status yet. The map's lists of active, done and set-aside steps are
-  worked out from its toggles alone (stage 0 is always done, stage 1 always active, the side of each
-  fork not picked and the hire-first step while it is off are set aside), not set by the person, so
+  worked out from its toggles alone (stage 0 is always on the done list and stage 1 always active, though
+  since 2026-10-23 their chips read *starting point* and *first stage*, never *done* and *now*, and since
+  2026-10-24 the readout API no longer gives those lists; the side of each fork not picked and the hire-first
+  step while it is off are set aside), not set by the person, so
   passing them in as progress would make the evaluation say *"You marked this step not for me"* about
   steps nobody touched. Road evaluation therefore reads no status on road 0 (its ticked *done when*
   lines still count), and a caller passes none until the person can set one (fixed 2026-10-12, before
@@ -2134,7 +2140,8 @@ rules apply"*), and a target of $70,000 a year, which she agrees to.
 
 She opens *From apprentice to your own shop (Alberta)*. The whole road appears, greyed in: *Finish
 your training*, *Certified* (a fork: *Stay employed* or *Open your own shop*), *Open the doors*, *First
-years on your own*, *Incorporating*, *Running as a corporation*. Hovering *Certified* sends arrows to
+years on your own* (on the screen *Running your own shop* since 2026-10-23: no time words), *Incorporating*,
+*Running as a corporation*. Hovering *Certified* sends arrows to
 both endings.
 
 In the cockpit, *Steps: 0 of 22 done*; Skills and Your date show **?** with one invitation each; Start-up

@@ -1,7 +1,7 @@
 # Cockpit canvas — the map as tier columns
 
 Last updated: 2026-10-24 (the readout API gives each stage's chip and the person's own mark, `yourStatus`,
-and no longer the map's `status` or its worked-out lists; 2026-10-14: road 0's Tier 1 gains a fifth card, *Keep your records from day one*, and the
+and no longer the map's `status` or its worked-out lists; the accessible names' example says *first stage*; 2026-10-14: road 0's Tier 1 gains a fifth card, *Keep your records from day one*, and the
 apprentice road's *Open the doors* starts with the same step; 2026-10-13: in the cockpit, SR&ED deepening on an idea without a research kind of work is
 drawn dashed, chip "not on your path" with its reason, instead of "ahead", issue #40; 2026-10-12: road 0 gains three "before you open" cards in Tier 1, which road evaluation
 colours as on your road, and drawn without road evaluation a card no rule colours says "no rule yet"
@@ -82,9 +82,11 @@ stage card one **lever card** per evaluator item relevant to that stage
 | Stage the rules don't colour, on a map drawn without road evaluation (road 0's before-you-open steps, 2026-10-12; in the cockpit, road evaluation gives them a state, so they are coloured and open the step panel like any card) | name · chip **no rule yet** · its one line (2 lines) · a neutral left bar, no colour | selects it and keeps its arrows; no panel opens (it has no catalog entry; the step panel comes later in phase 1). The right-hand panel is left as it was: an open Export panel stays open, and an open node detail panel closes, since it was about the card no longer selected |
 | Lever | dot + type chip (Write-off / Grant / Threshold / …) · title · **applies** (green) or **check first** (amber) · `fork` when incorporating would change it · `in use before <year>` when the item has an end date · PARTIAL chip when a citation is partial | opens the stage's node detail |
 
-Stage and lever buttons have explicit accessible names. Stage names include the current status,
-the left bar's colour in words and the action — "Sole Prop activation, now, applies as answered,
-opens detail"; the words are **applies as answered** (green), **check first** (amber) and
+Stage and lever buttons have explicit accessible names. Stage names include the chip's words (where the
+stage sits on the map, or the person's own status where they set one), the left bar's colour in words and the
+action — "Sole Prop activation, first stage, applies as answered, opens detail", with any badges an overlay
+draws before the action ("…, applies as answered, 7 not priced, opens detail"; `cockpitWords.map.cardName`;
+"now" in place of "first stage" until 2026-10-23); the words are **applies as answered** (green), **check first** (amber) and
 **doesn't apply as answered** (grey), so the colour is never the only way to tell. A card the rules
 don't colour claims no colour and no place on the path: "Register your business name, if you use one,
 no rule reads this step yet, shows where it leads" (grey would say "doesn't apply as answered", which no

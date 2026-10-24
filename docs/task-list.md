@@ -1125,13 +1125,25 @@ roadmap's build order.
     window's memory, a statement that couldn't be saved left in its box, no list of earlier *Other…*
     descriptions, the three old keys removed unread when a journey page opens, and Delete reaching what the
     window holds; no *done* or *now* chip on the map for anything the person never marked (*starting point*,
-    *first stage*), and *type not said* on the ideas card; the time words the check missed (*First years on
+    *first stage*), and the readout API giving the person's own mark (`yourStatus`) in place of the map's
+    worked-out `status` and lists (2026-10-24, the maintainer's decision 3); *type not said* on the ideas card,
+    drawn in lower case; the time words the check missed (*First years on
     your own*, *time-boxed* in the legend, in two item rows written in their components and in a citation's
     note, the ride-share Lens line's "with 30 days to apply" and its closing advice, the file drop's "A big one
     can take a little while." and the book reader's "after a minute") reworded and taught to the check, which
     now reads every catalog's Lens lines, every words file and the text each component writes itself
     (2026-10-24), and a tool check's quotes only inside the official-quote component; the front door's chips in
-    the words file without a tax promise; *Your futures* and *Open cockpit* only once an idea is saved
+    the words file without a tax promise; *Your futures* and *Open cockpit* only once an idea is saved, and
+    with none *Your expenses* while the Expenses page lists a record (2026-10-24); the screen specs and design
+    docs of all of it brought up to date, with a test that reads them (`tests/prerelease-honesty.spec.ts` § 6)
+  - [ ] Left open by #210, each written down where it applies: the desktop app's Go menu loads its pages
+    afresh (`loadURL`, `desktop/main.mjs`), which empties the journey held in the window's memory, and the words
+    say so (moving inside the page instead needs a message through `desktop/window-preload.cjs`, its own
+    review); in a browser copy, Back and Forward show the front door's links as first drawn
+    (docs/ui-spec/landing/03-escape-hatches.md); the line under the receipts of questions 2 and 3 sits outside
+    the receipt's `role="status"`, so a screen reader doesn't hear it with the receipt; and CLAUDE.md's Data
+    paragraph still says of the front-door sentence that "the tab marks it done" (since 2026-10-24 the journey
+    held in the window's memory does), for the maintainer to reword
   - [ ] For the maintainer's later call (the decision of 2026-10-24 kept it for now): the intake's *Other…*
     employment box. Its words are held in the window's memory only, kept with no idea (the idea keeps `other`)
     and read by nothing since its list of earlier descriptions went with `dotami-employment-suggestions`: keep

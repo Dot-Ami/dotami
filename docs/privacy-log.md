@@ -154,6 +154,18 @@ person is asked).
   environment for that launch only; never on the disk, never in the log. Nothing new is kept and nothing
   leaves the computer.
 
+### How to remove it
+
+- **The job descriptions typed under *Other…*** (`dotami-employment-suggestions`), which 0.4.1 said to remove
+  by hand, no longer need it: the first of the journey's pages to open in this version removes them, with the
+  intake in progress (`dotami-journey-v3`) and a statement that couldn't be saved (`dotami-person-unsaved`),
+  without reading them (in the desktop app, a launch on another address leaves the usual address's copy for the
+  next launch there, as above). **How you left the cockpit** (`dotami-cockpit-folds`) is removed as before:
+  Delete doesn't reach it; in the desktop app, close DotAmi and delete the “Local Storage” folder in the data
+  folder; in a browser, clear the site's data ([`lib/privacy/inventory.ts`](../lib/privacy/inventory.ts)
+  `NOT_CLEARED_BY_DELETE`). The journey held in the window's memory goes with a reload, a new window, the
+  desktop app's Go menu or closing DotAmi, and Delete takes from it what it takes from the data file.
+
 ### What the policy will need to say
 
 - **"The window's own storage holds nothing you typed or answered, only how you left the cockpit's screen.

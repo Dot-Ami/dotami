@@ -17,6 +17,8 @@
  * 4. The front door's chips are in the words file, and none promises anything about the person's taxes.
  * 5. The front door offers Your futures and Open cockpit only once an idea is saved, and, with none saved,
  *    Your expenses while the Expenses page has a record to list (2026-10-24).
+ * 6. The screen specs and the design docs that describe these screens say what they now draw and hold
+ *    (CLAUDE.md: "Change the control, change the file, same commit"; 2026-10-24).
  */
 import { readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
@@ -54,6 +56,7 @@ import {
   RETIRED_JOURNEY_KEY,
   RETIRED_UNSAVED_STATEMENTS_KEY,
 } from "@/lib/journey/window-storage";
+import { statementWords } from "@/lib/person/words";
 import type { PlaceCode } from "@/lib/places/codes";
 import type { StepStatus } from "@/lib/futures/types";
 import { readoutNodes, readoutScenario, stepMarks } from "@/lib/readout/nodes";
@@ -870,5 +873,115 @@ describe("5. The front door's links", () => {
       },
     } as unknown as Parameters<typeof hasSavedIdea>[0];
     expect(await hasSavedIdea(broken)).toBe(false);
+  });
+});
+
+// ---------------------------------------------------------------------------------------------------------
+// 6. The screen specs keep up (CLAUDE.md: "Change the control, change the file, same commit")
+// ---------------------------------------------------------------------------------------------------------
+
+/** Straight quotes, and every run of white space one space: the specs wrap their lines mid-sentence. */
+const flat = (s: string) => s.replace(/[“”]/g, '"').replace(/[‘’]/g, "'").replace(/\s+/g, " ");
+const doc = (file: string) => flat(readFileSync(`docs/${file}`, "utf8"));
+const spec = (file: string) => doc(`ui-spec/${file}`);
+
+/** Where questions 2 and 3, and the rest of the journey, are held: the phrase every spec of it uses. */
+const HELD = "held in the window's memory";
+
+describe("6. The screen specs and design docs say what the screens now draw and hold", () => {
+  it("planted control: a spec wrapped mid-sentence with curly quotes still matches; the spec as it stood on 88d0a1f doesn't", () => {
+    const wrapped = flat(`no database: *“Not kept: no database reachable. A reload, a new\n  window or the desktop app’s Go menu asks it again.”*`);
+    expect(wrapped).toContain(flat(destinationWords.receipts.destinationTabOnly));
+    // docs/ui-spec/start/01-questions.md lines 42-43 and 48 as they stood before the window's storage went.
+    const before = flat(`own words and keeps the question open; no database: *"Not kept: no database reachable. It stays in
+  this tab only."* Changing it later keeps a new statement; the old one stays.
+- A choice on \`looking-for\`: kept in the tab.`);
+    expect(before).not.toContain(flat(destinationWords.receipts.destinationTabOnly));
+    expect(before).not.toContain(HELD);
+  });
+
+  it("Your destination: each receipt's words, the line under 2 and 3, and where the answers are held", () => {
+    const questions = spec("start/01-questions.md");
+    expect(questions).toContain(flat(destinationWords.receipts.destinationTabOnly));
+    expect(questions).toContain(flat(destinationWords.receipts.incomeNotKept));
+    expect(questions).toContain(flat(destinationWords.keptWithEachFuture));
+    for (const file of ["start/_index.md", "start/01-questions.md", "futures/_index.md", "landing/04-three-doors.md"]) {
+      expect(spec(file), file).toContain(HELD);
+    }
+    // Pick a future without a place: every way a page is loaded afresh, and not the example, which keeps it.
+    const futures = spec("futures/_index.md");
+    for (const way of ["a reload", "a new window", "Go menu"]) expect(futures).toContain(way);
+  });
+
+  it("the unsaved answer's words: the cockpit's save line and receipt, and About you's statement box", () => {
+    expect(spec("cockpit/13-receipts.md")).toContain(flat(cockpitWords.receipts.notSaved));
+    expect(spec("cockpit/02-left-rail.md")).toContain(flat(cockpitWords.rail.save.unavailable));
+    const aboutYou = spec("intake/screen-0-about-you.md");
+    expect(aboutYou).toContain(flat(statementWords.notKept));
+    expect(aboutYou).toContain(flat(statementWords.noAnswer));
+    // An idea not saved yet, on the step panel and Your plan's link: held in memory, never "only in this tab".
+    for (const file of ["cockpit/09-step-panel.md", "plan/_index.md"]) {
+      expect(spec(file), file).toContain(HELD);
+      expect(spec(file), file).not.toContain("only in this tab");
+    }
+  });
+
+  it("Delete: the spec and the edge cases say it reaches what the window's memory holds", () => {
+    expect(spec("your-data/delete-menu.md")).toContain("intakeAfterDelete");
+    const edges = doc("architecture/settings-and-edge-cases.md");
+    expect(edges).toContain("intakeAfterDelete");
+    expect(edges).toContain(HELD);
+  });
+
+  it("the design docs name the one key the window's storage still holds, and the journey's memory", () => {
+    const overview = doc("architecture/overview.md");
+    expect(overview).toContain(HELD);
+    expect(overview).not.toContain("sessionStorage");
+    expect(doc("architecture/figures-privacy-review.md")).toContain("dotami-cockpit-folds");
+  });
+
+  it("the map's chips: every chip's words in the canvas and overlay specs, and every readout id", () => {
+    const canvas = spec("cockpit/03-canvas.md");
+    const overlays = spec("cockpit/08-overlays.md");
+    for (const [id, label] of Object.entries(cockpitWords.map.chips)) {
+      expect(canvas).toContain("`" + id + "`"); // the readout API's `chip`
+      expect(canvas).toContain(label);
+      expect(overlays).toContain(label);
+    }
+    expect(canvas).toContain("Sole Prop activation, first stage, applies as answered,");
+    expect(canvas).toContain("`yourStatus`");
+    expect(canvas).toContain(flat(cockpitWords.map.legend.chip));
+    expect(canvas).toContain(flat(cockpitWords.map.legend.checkFirst));
+  });
+
+  it("Next on your road and the Steps gauge: the map's starting point is listed until the person marks it done", () => {
+    for (const file of ["cockpit/11-next-on-your-road.md", "cockpit/07-goal-bar.md"]) {
+      expect(spec(file), file).toContain("starting point");
+      expect(spec(file), file).toContain("Employee/Apprentice baseline");
+    }
+  });
+
+  it("an official page's words are after their label wherever a spec describes them", () => {
+    for (const file of ["cockpit/07-node-detail.md", "plan/_index.md", "shared/citation-links.md"]) {
+      expect(spec(file), file).toContain(PAGE_QUOTES_LEAD);
+    }
+    expect(spec("shared/citation-links.md")).toContain("PAGE_QUOTES_LEAD");
+    expect(spec("shared/citation-links.md")).toContain("PageQuotes");
+  });
+
+  it("the front door: its chips, and its links by what the data file holds", () => {
+    const chips = spec("landing/02-example-chips.md");
+    for (const prompt of frontDoorWords.examplePrompts) expect(chips).toContain(flat(prompt));
+    const landing = spec("landing/_index.md");
+    expect(landing).toContain("hasSavedIdea");
+    expect(landing).toContain("hasListedExpenses");
+    expect(landing).toContain(frontDoorWords.nav.expenses);
+  });
+
+  it("Your futures: the card's line says type not said, in lower case", () => {
+    const ventures = spec("ventures/_index.md");
+    expect(ventures).toContain(venturesWords.card.typeNotSaid);
+    expect(ventures).toContain("lower case");
+    expect(ventures).not.toContain("given in this tab");
   });
 });

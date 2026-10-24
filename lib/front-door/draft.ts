@@ -53,7 +53,7 @@ export interface KeptOnRecord {
 
 /**
  * The draft with what is already kept counted as answered (review of 2026-10-12): a returning person, in a
- * new tab, after a restart or after the front door's Map it started the tab's journey afresh, isn't asked
+ * new window, after a restart or after the front door's Map it started the journey afresh, isn't asked
  * questions 1 and 4 again. An answer given in this window wins, since it is the newer one; 2 and 3 are held
  * in the window's memory only (each future picked keeps them with its idea, and nothing reads them back from
  * there), so a page loaded afresh asks them again.

@@ -248,8 +248,12 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   reads and writes the scan catches), `tests/prerelease-honesty.spec.ts` (no read or write of a retired key, the
   removal unread, Delete on the memory, each with a planted control), `tests/first-words.spec.ts`, and the
   browser tests `e2e/window-storage.spec.ts` (the typed way end to end with a statement the server didn't keep,
-  old keys planted, a reload mid-intake), `e2e/front-door.spec.ts` and the failed statement in
-  `e2e/journey.spec.ts`. Replaced, not weakened: the tests of the window-storage filter that no longer exists
+  old keys planted, a reload mid-intake), `e2e/front-door.spec.ts`, the failed statement in
+  `e2e/journey.spec.ts`, and a last test in `e2e/your-data.spec.ts` that reaches Delete only by the app's own
+  links, so the window's memory comes through: after Delete, questions 1 and 4 are asked again while 2 and 3
+  stay answered. The clutter check now reaches Pick a future by its link, as a person does
+  (`e2e/clutter-budget.spec.ts`): a fresh load of `/futures` has no place any more, so its eight rows failed;
+  no budget changed. Replaced, not weakened: the tests of the window-storage filter that no longer exists
   (a stricter check finds no read or write at all), and the `typed · not saved` tag's test (the tag and its
   field are gone).
 - **The lines that say where an answer isn't kept name every way of losing it, and none says the tab keeps it.**
@@ -273,7 +277,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   sits on the map; doing, done or not for me only when you mark it*). *Next on your road* and the Steps gauge
   start at the baseline until you mark it done (`lib/scenarios/graph.ts`, `lib/cockpit/view.ts`). On *Your
   futures*, an idea saved without a kind of venture (a future picked on *Pick a future*) says *type not said*
-  instead of *Service* (`lib/db/ventures.ts`, `lib/ventures/words.ts`).
+  instead of *Service*, in lower case as written: the card's line sets each word in capitals, which had drawn
+  it *Type Not Said* (`lib/db/ventures.ts`, `lib/ventures/words.ts`, `components/ventures/ventures-page.tsx`
+  `VentureFacts`; drawn in `tests/prerelease-honesty.spec.ts` and read as drawn in `e2e/front-door.spec.ts`).
 - **The readout API no longer says you completed the baseline** (the maintainer's decision 3 of 2026-10-24).
   `GET /api/readout` gave each stage the map's list name as `status` (*complete* for *Employee/Apprentice
   baseline* and *active* for *Sole Prop activation*, on every idea, from nothing you said), and `scenario.state`
@@ -308,7 +314,13 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - **The front door.** Its three example chips are in the words file (`frontDoorWords.examplePrompts`), and the
   second now reads *I'm already running a business — show me the write-off rules for it* instead of *optimize my
   write-offs*, which read as a promise about your taxes. *Your futures* and *Open cockpit* show only once an idea
-  is saved; with nothing saved both opened empty pages (`lib/front-door/saved-idea.ts`).
+  is saved; with nothing saved both opened empty pages (`lib/front-door/saved-idea.ts`). With no idea saved,
+  *Your expenses →* shows while the Expenses page has a record to list, such as the records Delete keeps when it
+  takes the ideas, or an agent's proposals waiting, which otherwise had no way in from the front door
+  (`hasListedExpenses`, counted by the Expenses page's own rule, `lib/expenses/store.ts` `LISTED_EXPENSE`); the
+  header still holds three links at most. In a browser copy, Back and Forward show the links as first drawn
+  (docs/ui-spec/landing/03-escape-hatches.md). Tests: `tests/prerelease-honesty.spec.ts`, and in
+  `e2e/your-data.spec.ts` the front door before and after Delete takes the ideas.
 - **Changing your place on a saved idea changes that idea** (S2.5.33, bug 33a; the maintainer's calls of
   2026-10-22 and 2026-10-23). *Change* on *You told us your place is …* in the cockpit's *What you've told
   DotAmi* opened the intake, whose save is always a new idea: the person ended with two ideas, the first still in
@@ -411,6 +423,16 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   entries are gone, so the words-file scan and the browser sweep now fail if either comes back.
 
 ### Documented
+- **The screen specs say what the pre-release fixes changed** (2026-10-24). Each control the fixes above
+  changed has its spec changed with it: where the journey is held and what loses it (docs/ui-spec/start/,
+  landing/, intake/, futures/_index.md, cockpit/09-step-panel.md, plan/_index.md), the map's chips and the
+  readout's ids (cockpit/03-canvas.md, 08-overlays.md), *Next on your road* and the Steps gauge starting at the
+  map's starting point (cockpit/11-next-on-your-road.md, 07-goal-bar.md), an official page's words after
+  *Words found on the page:* (cockpit/07-node-detail.md, plan/_index.md, shared/citation-links.md), the front
+  door's links and the ideas card (landing/_index.md, ventures/_index.md); and the design docs that described
+  them (docs/architecture/future-cockpit.md, overview.md, settings-and-edge-cases.md,
+  figures-privacy-review.md, docs/engines/roads.md and cfe.md). `tests/prerelease-honesty.spec.ts` § 6 reads
+  them for the words files' own strings and a few fixed phrases, with the old start spec as a planted control.
 - **Official wage ranges are allowed in the design docs; outlook ratings aren't** (the maintainer's call K5,
   answered "B" on 2026-10-16, written down 2026-10-20). A government's own published wage range for a job may
   appear, labelled with its area level (economic region, province-wide figure or small-area estimate), its

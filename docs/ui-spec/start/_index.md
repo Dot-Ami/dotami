@@ -43,3 +43,8 @@ the desktop app's Go menu, which opens its pages with `loadURL`) starts it empty
 4 back from the data file (`lib/front-door/kept.ts`), so 2 and 3 are asked again, a future picked or not. The
 words say so where an answer is not kept: the line under the receipts of 2 and 3, and the no-database receipt
 of 1 ([01-questions.md](./01-questions.md)).
+
+Delete on *What DotAmi knows about you* takes from that memory what it takes from the data file: the words with
+*Your statements*, the income with *The yearly income you said you want*, all four answers with *Your ideas*
+(`lib/journey/window-storage.ts` `intakeAfterDelete`; [../your-data/delete-menu.md](../your-data/delete-menu.md)),
+so `/start` never shows back an answer the data file no longer holds.

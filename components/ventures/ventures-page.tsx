@@ -44,7 +44,7 @@ export function VenturesPage() {
   }, [load]);
 
   // Another future starts at the front door, where both ways in are (2026-10-12). The door used resets
-  // what it needs: Map it resets the tab's journey, Start here keeps the destination answers already given.
+  // what it needs: Map it resets the journey, Start here keeps the destination answers already given.
   // A second idea no longer passes through About you (issue #38: app/(journey)/intake/page.tsx).
   function anotherFuture() {
     router.push("/");
