@@ -24,13 +24,15 @@ const PAUSE_MS = 250;
 /**
  * The one job picker (docs/ui-spec/futures/01-whats-closest-to-your-work.md): a search box over the government's
  * example job titles, and the jobs whose titles hold the person's words, grouped by how many they hold, each
- * group labelled, in code order inside, DotAmi's word list's finds in their own last group. Used by step 1 of the
- * three steps (Pick a future and the intake) and by the cockpit's skills list, so there is one search.
+ * group labelled, a group about the government's titles in two parts headed in the group's own count (whole words
+ * first, a-call-11), in code order inside each, DotAmi's word list's finds in their own last group. Used by step 1
+ * of the three steps (Pick a future and the intake) and by the cockpit's skills list, so there is one search.
  *
  * The search runs on DotAmi's own server (`POST /api/jobs/search`), so the titles never go into the page's code;
  * only the types are imported here. Nothing is picked until the person clicks a job: no job is pre-selected,
- * highlighted or ordered by anything but the count of their words and the government's code. The typed words stay
- * in the box, in the page's memory, and are never kept.
+ * highlighted or ordered by anything but the count of their words, whether one of a job's titles holds the group's
+ * count of them word for word (its part), and the government's code. The typed words stay in the box, in the
+ * page's memory, and are never kept.
  */
 export function JobSearchBox({
   onPick,
@@ -182,6 +184,8 @@ function Groups({
     <div className={compact ? "space-y-2" : "space-y-4"}>
       {search.groups.map((group) => {
         const heading = groupHeading(group, search.searched.length);
+        // The word-list group has no parts. A const, so the narrowing holds inside the parts' map below.
+        const partsKind = group.kind === "word-list" ? null : group.kind;
         if (!opened.has(group.kind)) {
           return (
             <button
@@ -204,7 +208,7 @@ function Groups({
               {words.groupCount(heading, group.total)}
             </h3>
             <p className="text-body text-stone">{groupOrderLine(group)}</p>
-            {group.parts.length === 0 ? (
+            {partsKind === null || group.parts.length === 0 ? (
               <>
                 <ul className="mt-1.5 space-y-1.5">
                   {group.jobs.map((hit) => (
@@ -214,12 +218,15 @@ function Groups({
                 {group.total > group.jobs.length ? <p className="mt-1.5 text-body text-stone">{words.capped(group.jobs.length, group.total)}</p> : null}
               </>
             ) : (
-              // Whole words first (a-call-11): each part under its own heading, the whole group open together.
+              // Whole words first (a-call-11): each part under its own heading, in the group's own count, the whole
+              // group open together.
               group.parts.map((part) => {
                 const hits = group.jobs.filter((hit) => hit.part === part.kind);
                 return (
                   <div key={part.kind} className="mt-2">
-                    <h4 className="text-body font-semibold text-paper-dim">{words.groupCount(partHeading(part.kind), part.total)}</h4>
+                    <h4 className="text-body font-semibold text-paper-dim">
+                      {words.groupCount(partHeading(part.kind, partsKind, search.searched.length), part.total)}
+                    </h4>
                     <ul className="mt-1.5 space-y-1.5">
                       {hits.map((hit) => (
                         <JobButton key={hit.code} hit={hit} disabled={disabled} compact={compact} onPick={onPick} />

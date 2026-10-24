@@ -1,4 +1,4 @@
-import type { JobMatch, JobSearch, JobSearchGroup, JobSearchPartKind } from "@/lib/engines/oasis/v2026/title-search";
+import type { JobMatch, JobSearch, JobSearchGroup, JobSearchGroupKind, JobSearchPartKind } from "@/lib/engines/oasis/v2026/title-search";
 
 import { jobStepWords as words } from "./words";
 
@@ -67,9 +67,14 @@ export function groupHeading(group: JobSearchGroup, searchedWords: number): stri
   }
 }
 
-/** A part's heading inside its group (whole words first, a-call-11): a plain fact about how the titles hold the words. */
-export function partHeading(part: JobSearchPartKind): string {
-  return part === "exact" ? words.partExact : words.partWordStart;
+/**
+ * A part's heading inside its group (whole words first, a-call-11), in the group's own count, as the search files
+ * the jobs (the #206 review): true of every job under it and of none in the other part. The word-list group has no
+ * parts.
+ */
+export function partHeading(part: JobSearchPartKind, kind: Exclude<JobSearchGroupKind, "word-list">, searchedWords: number): string {
+  const count = kind === "all" && searchedWords === 1 ? "one" : kind;
+  return part === "exact" ? words.partExact[count] : words.partWordStart[count];
 }
 
 /** The order line under a group's heading: the parts' order when it holds both, the code order otherwise. */

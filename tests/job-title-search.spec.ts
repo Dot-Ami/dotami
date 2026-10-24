@@ -23,7 +23,7 @@ import {
   type JobSearch,
 } from "@/lib/engines/oasis/v2026/title-search";
 import { oasisTitles } from "@/lib/engines/oasis/v2026/titles";
-import { jobStepWords } from "@/lib/front-door/words";
+import { partHeading } from "@/lib/front-door/job-search-lines";
 
 import { LISTED_BEFORE_WHOLE_WORDS_FIRST } from "./fixtures/ideas/job-search-listed";
 import { IDEAS_V1 } from "./fixtures/ideas/v1";
@@ -32,6 +32,35 @@ import { ideasNoLongerListed, measureJobSearch } from "./helpers/job-search-corp
 const kinds = (r: JobSearch) => r.groups.map((g) => `${g.kind}:${g.total}`);
 const codesIn = (r: JobSearch, kind: string) => r.groups.find((g) => g.kind === kind)?.jobs.map((j) => j.code) ?? [];
 const hit = (r: JobSearch, code: string) => r.groups.flatMap((g) => g.jobs).find((j) => j.code === code);
+
+/** Every job's titles as the search compares them, read here on their own: its example titles, then its name. */
+const titlesOf = new Map<string, Set<string>[]>();
+for (const [code, , title] of oasisTitles.titles) titlesOf.set(code, [...(titlesOf.get(code) ?? []), new Set(searchWords(title))]);
+for (const [code, label] of oasisData.occupations) titlesOf.set(code, [...(titlesOf.get(code) ?? []), new Set(searchWords(label))]);
+
+/** How many of the words searched a title holds word for word. */
+const exactlyIn = (searched: readonly string[], title: ReadonlySet<string>) => searched.filter((w) => title.has(w)).length;
+
+/**
+ * The jobs a search lists in the wrong part, by the rule the part headings say (the #206 review): a job is in the
+ * first part when, and only when, one of its titles holds, word for word, as many of the words as its group's
+ * heading counts (all of them, all but one, or one in the "at least one" group), and the title named there holds
+ * that many too. Worked out from the titles here, not from the search's own counts, so a slip there shows.
+ */
+function partMisfilings(r: JobSearch): string[] {
+  const n = r.searched.length;
+  return r.groups.flatMap((g) => {
+    if (g.kind === "word-list") return [];
+    const needed = g.kind === "all" ? n : g.kind === "all-but-one" ? n - 1 : 1;
+    return g.jobs.flatMap((j) => {
+      if (j.part === null) return [];
+      const most = Math.max(...titlesOf.get(j.code)!.map((t) => exactlyIn(r.searched, t)));
+      const wrongPart = j.part !== (most >= needed ? "exact" : "word-start");
+      const namedTooFew = j.part === "exact" && exactlyIn(r.searched, new Set(searchWords(j.matched!.title))) < needed;
+      return wrongPart || namedTooFew ? [j.code] : [];
+    });
+  });
+}
 
 describe("words, as the search compares them", () => {
   it("drops capitals, accents and apostrophes, and splits at anything that isn't a letter or digit", () => {
@@ -91,8 +120,9 @@ describe("the government's titles, grouped by how many of the person's words the
 
   it("names the first of the job's titles, in the file's order, that holds the words, and how many more do", () => {
     const barbers = hit(searchJobTitles("barber"), "63210.02")!;
-    // The file lists "barber apprentice" before "barber"; the job's name ("Barbers") holds it too.
-    expect([barbers.matched, barbers.moreTitles]).toEqual([{ title: "barber apprentice", from: "Example" }, 2]);
+    // The file lists "barber apprentice" before "barber". The job's name, Barbers, holds barber only by word start,
+    // so it is not one of the titles like the one named.
+    expect([barbers.matched, barbers.moreTitles]).toEqual([{ title: "barber apprentice", from: "Example" }, 1]);
   });
 
   it("puts the jobs whose titles hold all the words first, then those holding at least one, the first group open", () => {
@@ -136,7 +166,7 @@ describe("the government's titles, grouped by how many of the person's words the
   });
 });
 
-describe("whole words first: inside each group, the exact word, then a word that starts like it (a-call-11)", () => {
+describe("whole words first: inside each group, the jobs one of whose titles holds the group's count of words word for word, then the rest (a-call-11)", () => {
   it("puts the jobs whose title holds the exact word first, the word starts after, and the group's parts add up", () => {
     const r = searchJobTitles("barber");
     const all = r.groups[0]!;
@@ -162,14 +192,69 @@ describe("whole words first: inside each group, the exact word, then a word that
     }
   }, 60_000);
 
-  it("names, in the exact-word part, a title that holds the person's words word for word", () => {
+  it("names, in the first part, a title that holds the group's count of the person's words word for word", () => {
     for (const q of ["plumbing", "cake decorating", "I build custom kitchen cabinets", "wedding photography", "manager"]) {
       const r = searchJobTitles(q);
-      for (const j of r.groups.flatMap((g) => g.jobs).filter((x) => x.part === "exact")) {
-        const words = new Set(searchWords(j.matched!.title));
-        expect(r.searched.filter((w) => words.has(w)).length, `${q}: ${j.code} “${j.matched!.title}”`).toBe(j.wordsHeld);
+      for (const g of r.groups) {
+        const needed = g.kind === "all" ? r.searched.length : g.kind === "all-but-one" ? r.searched.length - 1 : 1;
+        for (const j of g.jobs.filter((x) => x.part === "exact")) {
+          const held = exactlyIn(r.searched, new Set(searchWords(j.matched!.title)));
+          const where = `${q}: ${j.code} “${j.matched!.title}”`;
+          expect(held, where).toBeGreaterThanOrEqual(needed);
+          // In "all" and "all-but-one" every job holds the group's count, so the title named holds the job's own.
+          if (g.kind !== "some") expect(held, where).toBe(j.wordsHeld);
+        }
       }
     }
+  });
+
+  it("files each job by its group's own count, so each part's heading is true of every job in it and of none in the other (the #206 review)", () => {
+    // Every corpus idea's kind of work and its whole sentence, each part listed in full (rows past the cap too).
+    const misfiled = [...new Set(IDEAS_V1.flatMap((i) => [i.work, i.words]))].flatMap((q) =>
+      partMisfilings(searchJobTitles(q, Number.POSITIVE_INFINITY)).map((code) => `${q}: ${code}`),
+    );
+    expect(misfiled).toEqual([]);
+  }, 60_000);
+
+  it("fails when a job sits in the wrong part (a planted control: Journalists, held word for word, filed second)", () => {
+    // "law reporter" holds "law" word for word, so Journalists belongs in the first part of the "at least one" group.
+    const r = searchJobTitles("AI consulting for law firms", Number.POSITIVE_INFINITY);
+    const planted: JobSearch = {
+      ...r,
+      groups: r.groups.map((g) => ({ ...g, jobs: g.jobs.map((j) => (j.code === "51113.00" ? { ...j, part: "word-start" as const } : j)) })),
+    };
+    expect(hit(r, "51113.00")).toMatchObject({ part: "exact", matched: { title: "law reporter" } });
+    expect(partMisfilings(planted)).toContain("51113.00");
+  });
+
+  it("the review's cases: a title that holds one of the words exactly puts the job first in the “at least one” group", () => {
+    // Before, each sat second, under a heading its own title made false.
+    expect(hit(searchJobTitles("AI consulting for law firms"), "21211.00")).toMatchObject({
+      part: "exact",
+      matched: { title: "artificial intelligence (AI) consultant" },
+    });
+    expect(hit(searchJobTitles("I want to become a registered nurse in Alberta"), "31301.01")).toMatchObject({
+      part: "exact",
+      matched: { title: "General duty registered nurses", from: "job name" },
+    });
+    // The title named is the first in the file's order of those placing the job, holding the most words among them.
+    expect(hit(searchJobTitles("short-term rental management"), "13101.00")).toMatchObject({
+      part: "exact",
+      matched: { title: "property management agent" },
+      moreTitles: 8,
+    });
+    // Already so before: a job first through one of the two words is named by that title.
+    expect(hit(searchJobTitles("wedding photography"), "51120.07")).toMatchObject({ part: "exact", matched: { title: "director of photography" } });
+  });
+
+  it("counts under “and n more of its titles” only the titles like the one named: Photographers, “photography supervisor” and 1 more", () => {
+    // Of Photographers' titles, only "retoucher - photography" also holds "photography" word for word; the rest hold
+    // a word that starts like it ("photographer"), which the first part's heading doesn't speak of.
+    expect(hit(searchJobTitles("wedding photography"), "53110.00")).toMatchObject({
+      part: "exact",
+      matched: { title: "photography supervisor" },
+      moreTitles: 1,
+    });
   });
 
   it("labels the exact part with its rule: one title holds all the counted words exactly, not just one of them", () => {
@@ -186,8 +271,9 @@ describe("whole words first: inside each group, the exact word, then a word that
     expect(titles.some((w) => w.has("registered"))).toBe(true);
     expect(titles.some((w) => w.has("nurse"))).toBe(true);
     expect(titles.some((w) => w.has("registered") && w.has("nurse"))).toBe(false);
-    // So the label says the rule: one title, all the words.
-    expect(jobStepWords.partExact).toBe("One of their titles has your exact words");
+    // So the headings say the rule in the group's count.
+    expect(partHeading("word-start", "all", 2)).toBe("None of their titles has all your words exactly");
+    expect(partHeading("exact", "all", 2)).toBe("One of their titles has all your words exactly");
   });
 
   it("opens the closest group whole: “I build custom kitchen cabinets” shows Cabinetmakers on row 10 without a click", () => {
@@ -199,13 +285,15 @@ describe("whole words first: inside each group, the exact word, then a word that
         "some",
         true,
         [
-          { kind: "exact", total: 14 },
-          { kind: "word-start", total: 71 },
+          { kind: "exact", total: 15 },
+          { kind: "word-start", total: 70 },
         ],
       ],
     ]);
     expect(openGroupCodes(r).indexOf("72311.00") + 1).toBe(10);
     expect(hit(r, "72311.00")!.part).toBe("exact");
+    // "kitchen cabinet installer" holds "kitchen" word for word: first, after Cabinetmakers in code order.
+    expect(hit(r, "73200.00")).toMatchObject({ part: "exact", matched: { title: "kitchen cabinet installer" } });
   });
 });
 

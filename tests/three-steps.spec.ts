@@ -22,7 +22,7 @@ import { parseFirstSave } from "@/lib/db/parse-scenario-input";
 import { searchJobTitles } from "@/lib/engines/oasis/v2026/title-search";
 import { citationsForPlace, generalRoadV2026, roadApprenticeToOwnShopAB, roadFederalStepsCA, roadsV2026, skillItemsV2026 } from "@/lib/engines/roads/v2026";
 import { futureCards, listedRoads, notHereRoad, sourcesLine } from "@/lib/front-door/futures";
-import { leftOutLine, onlyLeftOutWords, searchBoxStatusLine, searchStatusLine, showsEnglishOnly } from "@/lib/front-door/job-search-lines";
+import { groupOrderLine, leftOutLine, onlyLeftOutWords, partHeading, searchBoxStatusLine, searchStatusLine, showsEnglishOnly } from "@/lib/front-door/job-search-lines";
 import { roadJobNames } from "@/lib/front-door/road-jobs";
 import { roadMatch } from "@/lib/front-door/road-match";
 import { answersOf, back, backLabel, FIRST_STEP, next, pickedJob, skipped, type StepsState } from "@/lib/front-door/three-steps";
@@ -34,6 +34,7 @@ import { withTheSteps } from "@/lib/journey/first-save";
 import { ALBERTA_AREAS } from "@/lib/places/alberta-areas";
 import { demoScenarios } from "../prisma/seed-data";
 import { fileUrl, migratedFile } from "./helpers/migrated-db";
+import { findVerdicts } from "./helpers/verdict-words";
 
 // The roads Pick a future lists in Alberta (outside Alberta the federal steps too, task 28d: `listedAt`).
 const LISTED = listedRoads(roadsV2026, "AB");
@@ -214,6 +215,29 @@ describe("the search's lines (lib/front-door/job-search-lines.ts, drawn by compo
     expect(searchBoxStatusLine({ typed: true, compact: false, failed: true, search: null })).toBe(jobStepWords.searchFailed);
     expect(searchBoxStatusLine({ typed: false, compact: false, failed: false, search: null })).toBe(jobStepWords.empty);
     expect(searchBoxStatusLine({ typed: false, compact: true, failed: false, search: null })).toBe("");
+  });
+
+  it("heads each part with its rule in the group's own count, and the order line states no rule (the #206 review)", () => {
+    // The group's count, as its heading says it (your word; all your words; all but one; at least one), never a
+    // job's own, which the screen doesn't show: so each heading is true of every job under it and of none in the other.
+    expect(partHeading("exact", "all", 1)).toBe("One of their titles has your word exactly");
+    expect(partHeading("word-start", "all", 1)).toBe("None of their titles has your word exactly, only a word that starts like it");
+    expect(partHeading("exact", "all", 2)).toBe("One of their titles has all your words exactly");
+    expect(partHeading("word-start", "all", 2)).toBe("None of their titles has all your words exactly");
+    expect(partHeading("exact", "all-but-one", 3)).toBe("One of their titles has all but one of your words exactly");
+    expect(partHeading("word-start", "all-but-one", 3)).toBe("None of their titles has all but one of your words exactly");
+    expect(partHeading("exact", "some", 4)).toBe("One of their titles has at least one of your words exactly");
+    expect(partHeading("word-start", "some", 4)).toBe("None of their titles has any of your words exactly, only words that start like them");
+    const bothParts = [
+      { kind: "exact", total: 1 },
+      { kind: "word-start", total: 1 },
+    ] as const;
+    expect(groupOrderLine({ parts: bothParts })).toBe("In two parts, each in the government's code order. Not ranked.");
+    expect(groupOrderLine({ parts: [] })).toBe(jobStepWords.groupOrder);
+    for (const line of [...Object.values(jobStepWords.partExact), ...Object.values(jobStepWords.partWordStart), jobStepWords.partsOrder]) {
+      expect(findVerdicts(line), line).toEqual([]);
+      expect(line).not.toMatch(/\b(second|minute|moment|soon|quick|wait|time)s?\b/i);
+    }
   });
 });
 

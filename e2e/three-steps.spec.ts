@@ -10,6 +10,7 @@ import { expect, test, type Page } from "@playwright/test";
 
 import { aboutJobWords } from "../lib/about-job/words";
 import { generalRoadV2026, roadApprenticeToOwnShopAB, roadFederalStepsCA } from "../lib/engines/roads/v2026";
+import { partHeading } from "../lib/front-door/job-search-lines";
 import { intakeStepsWords, jobStepWords, pickWords, whereStepWords } from "../lib/front-door/words";
 import { waitForReact } from "../tests/helpers/react-ready";
 
@@ -113,18 +114,28 @@ test("step 1 searches the government's example titles, grouped and labelled, and
   await later.click();
   await expect(page.getByRole("heading", { level: 3, name: new RegExp(`^${jobStepWords.groupSome}, \\d+$`) })).toBeFocused();
 
-  // Whole words first (a-call-11): inside the open group, the exact word's part, then the word start's, both open.
+  // Whole words first (a-call-11), headed in the group's own count (the #206 review): inside the open group, the
+  // jobs one of whose titles holds the group's count of words word for word, then the rest, both open.
   await box.fill("I build custom kitchen cabinets");
-  await expect(page.getByRole("heading", { level: 4, name: `${jobStepWords.partExact}, 14` })).toBeVisible();
-  await expect(page.getByRole("heading", { level: 4, name: `${jobStepWords.partWordStart}, 71` })).toBeVisible();
+  await expect(page.getByRole("heading", { level: 4, name: `${partHeading("exact", "some", 4)}, 15` })).toBeVisible();
+  await expect(page.getByRole("heading", { level: 4, name: `${partHeading("word-start", "some", 4)}, 70` })).toBeVisible();
   await expect(page.getByText(jobStepWords.partsOrder, { exact: true })).toBeVisible();
   // Before: 64th of 85 in one group, past the first 50, so not listed. Now in the exact part, without a click.
   await expect(page.getByRole("button", { name: "Pick Cabinetmakers, 72311.00", exact: true })).toBeVisible();
-  await expect(page.getByText(jobStepWords.cappedPart(50, 71), { exact: true })).toBeVisible();
+  await expect(page.getByText(jobStepWords.cappedPart(50, 70), { exact: true })).toBeVisible();
   await box.fill("wedding photography");
-  await expect(page.getByRole("button", { name: "Pick Photographers, 53110.00", exact: true })).toBeVisible();
-  await expect(page.getByRole("heading", { level: 4, name: `${jobStepWords.partWordStart}, 18` })).toBeVisible();
+  const photographers = page.getByRole("button", { name: "Pick Photographers, 53110.00", exact: true });
+  await expect(photographers).toBeVisible();
+  await expect(page.getByRole("heading", { level: 4, name: `${partHeading("exact", "some", 2)}, 6` })).toBeVisible();
+  await expect(page.getByRole("heading", { level: 4, name: `${partHeading("word-start", "some", 2)}, 18` })).toBeVisible();
+  // "and n more" counts only the titles like the one named: of the rest, only one holds "photography" word for word.
+  await expect(photographers).toHaveAccessibleDescription(`${jobStepWords.matched("photography supervisor")} ${jobStepWords.matchedMore(1)}`);
   await shotsAtEveryWidth(page, "futures-whole-words-first");
+  // An "all your words" group: General duty registered nurses has each word in a different title, so it is second,
+  // under the heading that says none of its titles has both.
+  await box.fill("registered nurse");
+  await expect(page.getByRole("heading", { level: 4, name: `${partHeading("exact", "all", 2)}, 5` })).toBeVisible();
+  await expect(page.getByRole("heading", { level: 4, name: `${partHeading("word-start", "all", 2)}, 1` })).toBeVisible();
 
   // DotAmi's word list: "dayhome" finds a job only through it, in its own last group, headed as DotAmi's.
   await box.fill("dayhome");

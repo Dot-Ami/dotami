@@ -517,8 +517,9 @@ placed in phase 3.
     road written for the picked job first (spec 03, case A); a job with no road gets the honest line, a marked
     place for *About this job* (25h fills it) and the general road, and saves nothing until a future is opened
   - [x] 28b-2: whole words first (the maintainer's call a-call-11, 2026-10-23): inside each group, the jobs
-    whose title holds the person's exact word, then those holding a word that starts like theirs, each part
-    labelled and in code order, the closest group open whole. On the corpus: 152 in the open group (was 150),
+    one of whose titles holds, word for word, as many of the person's words as the group counts (all, all but
+    one, at least one), then the rest, each part headed in that count (the #206 review) and in code order, the
+    closest group open whole. On the corpus: 152 in the open group (was 150),
     181 listed (was 172), none that was listed drops out; "I build custom kitchen cabinets" lists
     Cabinetmakers on row 10 (was not listed)
   - [x] 28c: the road written for the picked job comes first; otherwise "No road is written for this job
