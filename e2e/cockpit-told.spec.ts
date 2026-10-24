@@ -15,6 +15,7 @@ import { cockpitWords } from "../lib/cockpit/words";
 import { createDatabaseClient } from "../lib/db/client";
 import { generalRoadV2026, roadApprenticeToOwnShopAB } from "../lib/engines/roads/v2026";
 import { firstSaveForPickedFuture, scenarioForPickedFuture } from "../lib/front-door/start-future";
+import { frontDoorWords } from "../lib/front-door/words";
 import { branchDecisions } from "../lib/scenarios/branches";
 
 import { lookCloserItems, showRail, showRoadAhead, showWhatIfBar } from "./cockpit-calm";
@@ -458,4 +459,68 @@ test("on a future picked on Pick a future, Keep on the what-if shows the kept fi
   // Your plan reads the same number (its told row ends with where the day is kept).
   await page.goto(`/plan?venture=${ventureId}`);
   await expect(page.getByText(/^You told us first-year sales of \$45,000 · /)).toBeVisible();
+});
+
+/**
+ * An edit on the map that no save has kept yet (a review of PR #210, 2026-10-24). Since that day nothing about
+ * the person sits in the window's storage, so an edit the data file doesn't hold is only in the window's memory,
+ * which a reload or the desktop app's Go menu empties. Until the same review, leaving the page within the
+ * autosave's pause cancelled the save, and coming back by the app's own links drew the window's copy under
+ * "Edits save automatically." with no save on its way, even after a save had failed.
+ */
+const keptStructure = (ventureId: string) => () =>
+  withE2eDb((db) => db.venture.findUniqueOrThrow({ where: { id: ventureId }, select: { structure: true, structureSource: true } }));
+const structureBox = (page: Page) => page.getByRole("combobox", { name: cockpitWords.rail.structure, exact: true });
+
+test("leaving the cockpit within the autosave's pause still saves the edit", async ({ page }) => {
+  const ventureId = await saveIdea(page, "Invented — leave within the pause");
+  await page.goto(`/cockpit?venture=${ventureId}`);
+  await showRail(page);
+  await structureBox(page).selectOption("corporation");
+  // At once, by the rail's own link: well inside the pause, so only leaving the page can send the save.
+  await page.getByRole("link", { name: cockpitWords.allFutures, exact: true }).click();
+  await page.waitForURL("**/ventures");
+  await expect.poll(keptStructure(ventureId)).toEqual({ structure: "corporation", structureSource: "user" });
+});
+
+test("a save that failed is tried again when the idea is opened again in the same window, and says so while it fails", async ({ page }) => {
+  // Its own name, so Your futures shows one card for it however often the test runs on the same data file.
+  const name = `Invented — save failed, then back (${Date.now()})`;
+  const ventureId = await saveIdea(page, name);
+  await page.goto(`/cockpit?venture=${ventureId}`);
+  await showRail(page);
+  await page.route("**/api/scenario/save", (route) =>
+    route.fulfill({ status: 503, contentType: "application/json", body: JSON.stringify({ error: "Database unavailable" }) }),
+  );
+  await structureBox(page).selectOption("corporation");
+  const unavailable = page.getByText(cockpitWords.rail.save.unavailable, { exact: true });
+  await expect(unavailable).toBeVisible();
+
+  // Away by the rail's link and back by the front door's Open cockpit: the same window, so its memory came through.
+  await page.getByRole("link", { name: cockpitWords.allFutures, exact: true }).click();
+  await page.waitForURL("**/ventures");
+  await page.getByRole("link", { name: "← Back" }).click();
+  await page.getByRole("link", { name: frontDoorWords.nav.cockpit }).click();
+  await page.waitForURL(/\/cockpit$/);
+  await showRail(page);
+  // The window's copy is drawn, with the save tried again and said to have failed, never "Edits save automatically.".
+  await expect(structureBox(page)).toHaveValue("corporation");
+  await expect(unavailable).toBeVisible();
+  await expect(page.getByText(cockpitWords.rail.save.automatic, { exact: true })).toHaveCount(0);
+
+  // By Your futures' Open in cockpit (the idea named in the address): the window's copy still wins over the data file's.
+  await page.getByRole("link", { name: cockpitWords.allFutures, exact: true }).click();
+  const card = page.getByRole("listitem").filter({ has: page.getByRole("heading", { name, exact: true, level: 2 }) });
+  await card.getByRole("link", { name: /Open in cockpit/ }).click();
+  await page.waitForURL(`**/cockpit?venture=${ventureId}`);
+  await showRail(page);
+  await expect(structureBox(page)).toHaveValue("corporation");
+  await expect(unavailable).toBeVisible();
+  expect(await keptStructure(ventureId)()).toEqual({ structure: "sole-prop", structureSource: "assumed" });
+
+  // The database back: Save now keeps it, and the data file has it.
+  await page.unroute("**/api/scenario/save");
+  await page.getByRole("button", { name: cockpitWords.rail.save.now, exact: true }).click();
+  await expect(page.getByText(/^Saved · /)).toBeVisible();
+  await expect.poll(keptStructure(ventureId)).toEqual({ structure: "corporation", structureSource: "user" });
 });

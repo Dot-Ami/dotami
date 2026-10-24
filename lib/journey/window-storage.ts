@@ -19,7 +19,9 @@ import { defaultIntakeDraft, type IntakeDraft } from "./types";
  *   (`Venture.lookingFor`, `Venture.province`). Before that there is no idea to keep them with, and keeping them
  *   beforehand would mean a second, person-wide copy the next idea could silently inherit, a fact about the
  *   person DotAmi worked out rather than one they gave for that idea; so they are asked again after a reload;
- * - the idea's own answers on the map: by the cockpit's autosave.
+ * - the idea's own answers on the map: by the cockpit's autosave, which sends a waiting save when the page is left
+ *   and saves again, when the idea is opened again in the window, an edit no save has kept yet (held in memory
+ *   meanwhile as `JourneyState.unsavedEdits`; a review of 2026-10-24).
  */
 
 /**

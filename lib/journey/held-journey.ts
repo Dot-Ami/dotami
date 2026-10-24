@@ -1,10 +1,10 @@
 import type { JourneyState } from "./types";
 
 /**
- * The journey (the intake in progress, *Your destination*'s answers and the idea open on the map), held in this
- * window's memory: a variable of the page's own code, never the window's storage (2026-10-24, the maintainer's
- * rule that nothing about the person sits there; lib/journey/window-storage.ts says where each answer is kept
- * instead).
+ * The journey (the intake in progress, *Your destination*'s answers, the idea open on the map and any edit on the
+ * map no save has kept yet), held in this window's memory: a variable of the page's own code, never the window's
+ * storage (2026-10-24, the maintainer's rule that nothing about the person sits there;
+ * lib/journey/window-storage.ts says where each answer is kept instead).
  *
  * Not the journey provider's React state alone: the provider lives in app/(journey)/layout.tsx and is unmounted
  * whenever the person moves to a page outside it, the invented example (app/example/, outside on purpose so it

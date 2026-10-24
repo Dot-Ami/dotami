@@ -256,6 +256,19 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   no budget changed. Replaced, not weakened: the tests of the window-storage filter that no longer exists
   (a stricter check finds no read or write at all), and the `typed · not saved` tag's test (the tag and its
   field are gone).
+- **A change on the map is no longer lost without a word when you leave the cockpit** (a review of PR #210,
+  2026-10-24). Leaving the cockpit by one of its own links within the autosave's short pause cancelled the save,
+  and a save that had failed was forgotten once you left: coming back by *Open cockpit* drew your change under
+  *"Edits save automatically."* with no save on its way (by *Open in cockpit*, the data file's older copy), and
+  the next reload lost it. With the journey held only in the window's memory since the same day, nothing else
+  held it. Now leaving sends the waiting save at once, and each change no save has kept yet is held with the
+  journey (`unsavedEdits`, `components/shared/journey-provider.tsx`) until one does: opened again in the same
+  window, either way, the idea is drawn as you left it and saved again, and the save line says *"Saved · …"* or
+  *"Save unavailable — …"* (`components/cockpit/cockpit-page.tsx`;
+  [docs/ui-spec/cockpit/02-left-rail.md](docs/ui-spec/cockpit/02-left-rail.md)). Delete of your ideas drops
+  those copies too. Tests: two in `e2e/cockpit-told.spec.ts` (a change, then *Your futures* at once, reaches the
+  data file; a failed save, away and back by *Open cockpit* and by *Open in cockpit*, says it failed each time,
+  then *Save now* keeps it).
 - **The lines that say where an answer isn't kept name every way of losing it, and none says the tab keeps it.**
   Under Your destination's questions 2 and 3: *"Kept with each future you pick, and nowhere else: a reload, a new
   window or the desktop app's Go menu asks it again, a future picked or not."* (it said *"Kept with the future you

@@ -102,6 +102,17 @@ spot in the product — it carries 6+ unrelated concerns.
   automatically."* **"Save now"** skips the pause and is the retry. The intake already
   saved the venture on **Open my map**, so a cockpit reached from the intake is on disk
   before it renders. (H7 transactionality still open.)
+- **Leaving with an edit not kept (a review of 2026-10-24).** Every edit is also held in the journey, in the
+  window's memory, as not kept (`unsavedEdits`, `components/shared/journey-provider.tsx`) until a save keeps that
+  very copy. Leaving the page within the pause by one of the app's own links (the rail's *Your futures*, *Edit
+  venture profile*, the header) sends the waiting save at once instead of dropping it; nothing on the page is
+  left to show how it went. When the idea is opened again in the same window, by the front door's *Open cockpit*
+  or by *Open in cockpit* on Your futures, a copy still held as not kept (its save failed, or the save sent on
+  leaving didn't come back kept) is drawn instead of the data file's, and saved again at once: the button reads
+  *"Saving…"*, then the line *"Saved · 12:04"* or *"Save unavailable — …"* as above. Until that review the save
+  was cancelled on leaving, and the window's copy came back under *"Edits save automatically."* with no save on its
+  way (or the data file's copy replaced it on screen), so the next reload lost the edit without a word. Delete of
+  the ideas drops every held copy with the rest of the journey, so none is saved back.
 - **"Edit venture profile"** — link to `/intake` (whole-journey walkthrough; the
   quick-edit vs full-intake question from 2026-06-10 stands).
 
@@ -123,8 +134,8 @@ the map. DotAmi never files, predicts, or replaces an accountant."
 
 ## State touched (field names only)
 
-Reads `currentScenario.profile`, archetype config. Writes `currentScenario` + session
-`scenario` (switcher, save), local `saveState`.
+Reads `currentScenario.profile`, archetype config. Writes `currentScenario` + the journey's
+`scenario` and `unsavedEdits` (held in the window's memory, never its storage), local `saveState`.
 
 ## Downstream consumers (where the data goes today)
 

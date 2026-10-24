@@ -55,7 +55,9 @@ person is asked).
   DotAmi's pages keeps it, Mara's example and back included, and a reload, a new window, or the desktop app's Go
   menu or Help → Licences (each opens its page with `loadURL`) starts it afresh. What you answer is kept in the data file where it already was: your destination words
   and agreed income as soon as you give them, the sentence and the goal chips with the idea's first save,
-  business-or-career and the place with the future you pick, and every change on the map by its autosave. A
+  business-or-career and the place with the future you pick, and every change on the map by its autosave (sent at
+  once when you leave the cockpit before its pause ends, and sent again when you open the idea again in the same
+  window after a save that didn't go through; a review of 2026-10-24, until which leaving cancelled it). A
   statement that couldn't be saved stays in its box, said not kept, with *Keep this* to try again. The box under
   *Other…* offers no earlier descriptions; what is typed there was never kept with the idea, and still isn't
   (whether to keep it or remove the box is the maintainer's later call, docs/task-list.md). The window's storage

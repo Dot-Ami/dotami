@@ -66,6 +66,13 @@ export interface IntakeDraft {
 export interface JourneyState {
   intake: IntakeDraft;
   scenario: Scenario | null;
+  /**
+   * Ideas with an edit on the map that no save has kept yet, as the cockpit last drew each, one per idea (a review of
+   * PR #210, 2026-10-24): its save failed, or the page was left before the save went and the save sent on leaving
+   * hasn't come back kept. The cockpit draws such a copy, not the data file's, when the idea is opened again in this
+   * window, and saves it again (components/cockpit/cockpit-page.tsx). Optional: none held reads the same.
+   */
+  unsavedEdits?: Scenario[];
 }
 
 /**
