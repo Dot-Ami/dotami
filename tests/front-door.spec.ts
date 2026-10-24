@@ -20,7 +20,16 @@ import { profileRows, ventureLine } from "@/lib/cockpit/profile-rows";
 import { withKept } from "@/lib/front-door/draft";
 import { futureCards, groupedForPlace, LISTED_ROAD_IDS, listedRoads, sourcesLine } from "@/lib/front-door/futures";
 import { DESTINATION_PLACES, DESTINATION_QUESTIONS, LOOKING_FOR, type LookingFor } from "@/lib/front-door/questions";
-import { destinationReceipt, incomeReceipt, lookingForReceipt, placeName, placeReceipt, roadIncludes } from "@/lib/front-door/receipts";
+import {
+  destinationReceipt,
+  incomeNotKeptLine,
+  incomeReceipt,
+  lookingForReceipt,
+  placeName,
+  placeReceipt,
+  roadIncludes,
+  wordsNotKept,
+} from "@/lib/front-door/receipts";
 import { firstSaveForPickedFuture, scenarioForPickedFuture } from "@/lib/front-door/start-future";
 import { destinationWords, frontDoorWords, incomePromptWords, pickWords } from "@/lib/front-door/words";
 import { parseFirstSave, parseScenarioInput } from "@/lib/db/parse-scenario-input";
@@ -113,10 +122,51 @@ describe("the receipts: worked out from the answer and the catalogs, never a ver
     expect(destinationReceipt({ kept: "dont-know" })).toBe("Nothing kept. You can say it later; nothing here waits on it.");
   });
 
-  it("the yearly income with no database reachable: not kept, and the amount still in its box, nothing held anywhere else", () => {
-    // Until 2026-10-24 the words receipt above was shown here, though nothing was held: the proposal never
-    // reached the server, and only the box holds the amount (components/front-door/destination-page.tsx).
-    expect(destinationWords.receipts.incomeNotKept).toBe("Not kept: no database reachable. The amount is still in the box.");
+  it("your words when the server didn't answer: held in memory, said not kept, and the cause it knows", () => {
+    expect(destinationReceipt({ kept: "no-answer", text: "My own shop", saidAt: "2026-10-24" })).toBe(
+      "Not kept: the server didn't answer. A reload, a new window or the desktop app's Go menu asks it again.",
+    );
+  });
+
+  it("words the server didn't keep: what the page does, from how the server answered or that it didn't", () => {
+    const typed = ["My own shop", "2026-10-24"] as const;
+    // No database (a 503): held in memory, and the receipt says no database was reachable.
+    expect(wordsNotKept({ status: 503, body: { error: "No database reachable — not saved." } }, ...typed)).toEqual({
+      held: { kept: "tab-only", text: "My own shop", saidAt: "2026-10-24" },
+    });
+    // No answer at all (the server stopped, the request cut off): held, and the receipt says the server didn't answer.
+    expect(wordsNotKept(null, ...typed)).toEqual({ held: { kept: "no-answer", text: "My own shop", saidAt: "2026-10-24" } });
+    // A refusal in the server's words: shown, and the question stays open.
+    expect(wordsNotKept({ status: 400, body: { error: "Statements are 2,000 characters at most." } }, ...typed)).toEqual({
+      error: "Statements are 2,000 characters at most.",
+    });
+    // A refusal with no words of its own (a crash's HTML page): no cause it doesn't know, the words still in the box.
+    // Until a review of 2026-10-24 this said "no database reachable" and that a reload asks it again, though nothing
+    // was held and the database may have been fine.
+    expect(wordsNotKept({ status: 500, body: null }, ...typed)).toEqual({
+      error: "Not kept. Your words are still in the box, and Keep my words tries again.",
+    });
+  });
+
+  it("the yearly income not kept: the server's own words, or a line that names only the cause it knows", () => {
+    // Until 2026-10-24 the words receipt above was shown here, though nothing was held: only the box holds the amount
+    // (components/front-door/destination-page.tsx). Until a review of the same day it said "no database reachable"
+    // wherever the server gave no words of its own; a database that is down answers 503 in its own words.
+    expect(incomeNotKeptLine({ status: 503, body: { error: "No database reachable — nothing was changed." } })).toBe(
+      "No database reachable — nothing was changed.",
+    );
+    expect(incomeNotKeptLine(null)).toBe("Not kept: the server didn't answer. The amount is still in the box, and Keep it tries again.");
+    expect(incomeNotKeptLine({ status: 500, body: null })).toBe("Not kept. The amount is still in the box, and Keep it tries again.");
+    // A 201 that carries no proposal: nothing to agree to, and no cause named.
+    expect(incomeNotKeptLine({ status: 201, body: {} })).toBe(destinationWords.receipts.incomeNotKept);
+  });
+
+  it("a line of DotAmi's says no database was reachable only where the server said so (a 503)", () => {
+    const own = [destinationWords.receipts.incomeNotKept, destinationWords.receipts.incomeNoAnswer, destinationWords.receipts.destinationNotKept, destinationWords.receipts.destinationNoAnswer];
+    expect(own.filter((line) => /no database/i.test(line))).toEqual([]);
+    // The buttons the lines name are the page's own.
+    expect(destinationWords.receipts.destinationNotKept).toContain(destinationWords.keepWords);
+    expect(destinationWords.receipts.incomeNotKept).toContain(destinationWords.keepAmount);
   });
 
   it("I don't know yet, with words already kept: says they are still kept and still shown, and how to remove them", () => {

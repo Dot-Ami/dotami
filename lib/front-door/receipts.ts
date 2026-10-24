@@ -18,6 +18,8 @@ export type DestinationAnswer =
   | { kept: "saved"; text: string; saidAt: string }
   /** The words, with no database to keep them in: only the window's memory holds them (lib/journey/held-journey.ts; the id is the old name). */
   | { kept: "tab-only"; text: string; saidAt: string }
+  /** The words, with no answer from the server at all: held the same way, the receipt naming only that cause. */
+  | { kept: "no-answer"; text: string; saidAt: string }
   /**
    * "I don't know yet". It deletes nothing, so `stillKept` is the person's newest destination already in
    * the data file when they said it: those words still show on top of their futures, and the receipt says so.
@@ -39,7 +41,42 @@ export type IncomeAnswer =
 export function destinationReceipt(answer: DestinationAnswer): string {
   if (answer.kept === "saved") return words.destinationKept(answer.saidAt);
   if (answer.kept === "tab-only") return words.destinationTabOnly;
+  if (answer.kept === "no-answer") return words.destinationNoAnswer;
   return answer.stillKept ? words.destinationStillKept(answer.stillKept.saidAt) : words.destinationDontKnow;
+}
+
+/**
+ * How a request to keep question 1's or question 4's answer ended when nothing was kept: the server's status
+ * and its JSON body (null when the body wasn't JSON), or null when the server didn't answer at all.
+ */
+export type NotKeptReply = { status: number; body: { error?: unknown } | null } | null;
+
+/** The server's own words for a refusal, when it sent some. */
+function serverWords(reply: NotKeptReply): string | null {
+  const error = reply?.body?.error;
+  return typeof error === "string" && error.trim() !== "" ? error : null;
+}
+
+/**
+ * Question 1's words that the server didn't keep. A 503 is the server's "no database": the words are held in the
+ * window's memory and the receipt says so; no answer at all, held the same way, its receipt naming only that. Any
+ * other refusal keeps the question open with the server's own words, or, when it sent none (a crash's page), a
+ * line that names no cause: until a review of 2026-10-24 both of those said "no database reachable".
+ */
+export function wordsNotKept(reply: NotKeptReply, text: string, saidAt: string): { held: DestinationAnswer } | { error: string } {
+  if (reply === null) return { held: { kept: "no-answer", text, saidAt } };
+  if (reply.status === 503) return { held: { kept: "tab-only", text, saidAt } };
+  return { error: serverWords(reply) ?? words.destinationNotKept };
+}
+
+/**
+ * The line under question 4's box when no proposal came back: nothing is held, the amount stays in the box. The
+ * server's own words when it sent some (its 503 says "No database reachable"); else the cause DotAmi knows, that
+ * the server didn't answer, or none.
+ */
+export function incomeNotKeptLine(reply: NotKeptReply): string {
+  if (reply === null) return words.incomeNoAnswer;
+  return serverWords(reply) ?? words.incomeNotKept;
 }
 
 /**

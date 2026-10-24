@@ -263,13 +263,18 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   opens its pages afresh). Words kept with no database: *"Not kept: no database reachable. A reload, a new window
   or the desktop app's Go menu asks it again."* The cockpit's failed save, in its receipt and on the save line:
   *"Only this window holds your answer: a reload or the desktop app's Go menu loses it."* (it said the tab kept
-  it). An income whose proposal doesn't reach the server: *"Not kept: no database reachable. The amount is still
-  in the box."*, where the words receipt of question 1 was shown (`lib/front-door/words.ts`,
+  it). An income not proposed: the server's own words when it sends some (no database, its 503: *"No database
+  reachable — nothing was changed."*), *"Not kept: the server didn't answer. The amount is still in the box, and
+  Keep it tries again."* when it doesn't answer, else *"Not kept. The amount is still in the box, and Keep it
+  tries again."*, where the words receipt of question 1 was shown; question 1 likewise says *"Not kept: the
+  server didn't answer. …"* with no answer and *"Not kept. Your words are still in the box, and Keep my words
+  tries again."* for a refusal with no words of its own, no longer "no database reachable" where nobody had seen
+  that (`lib/front-door/receipts.ts` `wordsNotKept`, `incomeNotKeptLine`; `lib/front-door/words.ts`,
   `lib/cockpit/words.ts`; [docs/ui-spec/start/01-questions.md](docs/ui-spec/start/01-questions.md)). Tests:
   `tests/prerelease-honesty.spec.ts` (each line names its ways, the Go menu tied to `desktop/main.mjs`'s
   `loadURL`; no "tab" and no time, with the old lines as planted controls), `tests/front-door.spec.ts`, and in
   `e2e/front-door.spec.ts` the answers out to Mara's example and back, a reload and a new window asking 2 and 3
-  again, and the income with its proposal cut off.
+  again, the income with its proposal cut off or answered by a crash's page, and question 1's words the same two ways.
 - **The map no longer says *done* and *now* for things you never told DotAmi.** On every idea the map's own
   lists put *Employee/Apprentice baseline* first and *Sole Prop activation* next, and their chips read *done*
   and *now*, as if that were where the person was. They now read *starting point* and *first stage*; *done*,

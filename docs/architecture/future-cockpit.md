@@ -161,6 +161,9 @@ each choice that differs from the table above says why.
      deleted all at once, never one by one, by design). With no database: *"Not kept: no database
      reachable. A reload, a new window or the desktop app's Go menu asks it again."* (2026-10-24: the words are
      held in the window's memory only, never its storage; *"It stays in this tab only"* until 2026-10-23).
+     With no answer from the server at all, held the same way: *"Not kept: the server didn't answer. …"*; a
+     refusal with no words of its own keeps the question open: *"Not kept. Your words are still in the box,
+     and Keep my words tries again."* (a review of 2026-10-24: both said "no database reachable" until then).
      Changing it adds a new statement; none is written over.
   2. *"Are you after a business of your own, a job or career, or both?"*: **A business of my own** ·
      **A job or career** · **Both, or not sure** (the last is the *I don't know*). The receipt counts the

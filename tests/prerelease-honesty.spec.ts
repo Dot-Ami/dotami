@@ -264,6 +264,7 @@ describe("1. Nothing about the person in window storage", () => {
     expect(main).toMatch(/label: "Go",\s*submenu: \[\s*\{ label: "Home", click: go\("\/"\) \}/);
     expect(waysMissing(destinationWords.keptWithEachFuture, FRESH_LOADS)).toEqual([]);
     expect(waysMissing(destinationWords.receipts.destinationTabOnly, FRESH_LOADS)).toEqual([]);
+    expect(waysMissing(destinationWords.receipts.destinationNoAnswer, FRESH_LOADS)).toEqual([]);
     // The cockpit's unsaved answer is in this window only; a new window opens the idea as the data file holds it.
     expect(waysMissing(cockpitWords.receipts.notSaved, ["only this window holds", "a reload", "Go menu"])).toEqual([]);
     expect(waysMissing(cockpitWords.rail.save.unavailable, ["only this window holds", "a reload", "Go menu"])).toEqual([]);
@@ -275,7 +276,10 @@ describe("1. Nothing about the person in window storage", () => {
     const lines = [
       destinationWords.keptWithEachFuture,
       destinationWords.receipts.destinationTabOnly,
+      destinationWords.receipts.destinationNoAnswer,
+      destinationWords.receipts.destinationNotKept,
       destinationWords.receipts.incomeNotKept,
+      destinationWords.receipts.incomeNoAnswer,
       cockpitWords.receipts.notSaved,
       cockpitWords.rail.save.unavailable,
     ];
@@ -285,8 +289,11 @@ describe("1. Nothing about the person in window storage", () => {
     expect(lines.flatMap((line) => findTimeWords(line))).toEqual([]);
     // The line under 2 and 3 no longer says "Until then": /start reads neither answer back after a pick.
     expect(destinationWords.keptWithEachFuture).not.toMatch(/until then/i);
-    // Nothing of the income is held anywhere when its proposal fails: its line names no way of losing it.
-    expect(destinationWords.receipts.incomeNotKept).not.toMatch(/reload|window|Go menu/i);
+    // Nothing of the income is held anywhere when its proposal fails, nor of words refused with no reason: their
+    // lines name no way of losing them.
+    for (const line of [destinationWords.receipts.incomeNotKept, destinationWords.receipts.incomeNoAnswer, destinationWords.receipts.destinationNotKept]) {
+      expect(line).not.toMatch(/reload|window|Go menu/i);
+    }
     // Planted control: the cockpit's save line as it stood on 2026-10-23 is caught by the same check.
     const old = "Save unavailable — kept in this tab. Save now retries.";
     expect(sayTheTabKeepsIt([...lines, old])).toEqual([old]);
@@ -933,8 +940,9 @@ describe("6. The screen specs and design docs say what the screens now draw and 
 
   it("Your destination: each receipt's words, the line under 2 and 3, and where the answers are held", () => {
     const questions = spec("start/01-questions.md");
-    expect(questions).toContain(flat(destinationWords.receipts.destinationTabOnly));
-    expect(questions).toContain(flat(destinationWords.receipts.incomeNotKept));
+    for (const line of ["destinationTabOnly", "destinationNoAnswer", "destinationNotKept", "incomeNotKept", "incomeNoAnswer"] as const) {
+      expect(questions, line).toContain(flat(destinationWords.receipts[line]));
+    }
     expect(questions).toContain(flat(destinationWords.keptWithEachFuture));
     for (const file of ["start/_index.md", "start/01-questions.md", "futures/_index.md", "landing/04-three-doors.md"]) {
       expect(spec(file), file).toContain(HELD);

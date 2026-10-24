@@ -404,9 +404,40 @@ test("Your destination's answers never sit in window storage; a visit to the exa
   expect((JSON.parse(after) as { session: Record<string, string> }).session).toEqual({});
 });
 
+/** A server that answers with a crash's own page, no JSON: nothing in it says why. */
+const CRASH_PAGE = { status: 500, contentType: "text/html", body: "<!doctype html><title>Internal Server Error</title>" };
+
+test("words the server didn't keep: a refusal with no words of its own keeps the question open, no answer at all is said as such (2026-10-24)", async ({ page }) => {
+  // Both said "Not kept: no database reachable" until a review of 2026-10-24, though the database was never asked.
+  await page.goto("/start");
+  const box = page.getByRole("textbox", { name: Q1 });
+  await expect(box.or(page.getByRole("heading", { name: Q2, level: 2 })).first()).toBeVisible();
+  // Words an earlier test kept answer question 1 from the data file: Change asks it here.
+  if (!(await box.isVisible())) await page.getByRole("button", { name: destinationWords.change }).first().click();
+  const typed = `Words the server didn't keep (invented ${Date.now()})`;
+  await waitForReact(box);
+  await box.fill(typed);
+
+  // The question's own region: Next.js keeps a route announcer of its own with the alert role.
+  const question = page.getByRole("region", { name: Q1 });
+  await page.route("**/api/person/statements", (route) => route.fulfill(CRASH_PAGE));
+  await question.getByRole("button", { name: destinationWords.keepWords }).click();
+  await expect(question.getByRole("alert")).toHaveText(destinationWords.receipts.destinationNotKept);
+  await expect(box).toHaveValue(typed);
+
+  await page.unroute("**/api/person/statements");
+  await page.route("**/api/person/statements", (route) => route.abort());
+  await question.getByRole("button", { name: destinationWords.keepWords }).click();
+  await expect(question.getByRole("status")).toHaveText(destinationWords.receipts.destinationNoAnswer);
+  await expect(question.getByText(`“${typed}”`, { exact: true })).toBeVisible();
+  await page.unroute("**/api/person/statements");
+});
+
 test("a yearly income the server can't take is said not kept, and the amount stays in its box (2026-10-24)", async ({ page }) => {
   // The words with no database reachable said "Only this page holds it" here until 2026-10-24, though nothing was
-  // held: the proposal never reached the server, and only the box holds the amount.
+  // held: the proposal never reached the server, and only the box holds the amount. Until a review of the same day
+  // the line said "no database reachable" though the database was never asked; a server that answers 503 gives
+  // its own words.
   await page.route("**/api/person-figures/propose", (route) => route.abort());
   await page.goto("/start");
   await skipQuestionOneIfAsked(page);
@@ -419,8 +450,17 @@ test("a yearly income the server can't take is said not kept, and the amount sta
   if (await change.isVisible()) await change.click();
   await amount.fill("61,234");
   await income.getByRole("button", { name: destinationWords.keepAmount }).click();
-  await expect(income.getByRole("alert")).toHaveText(destinationWords.receipts.incomeNotKept);
+  await expect(income.getByRole("alert")).toHaveText(destinationWords.receipts.incomeNoAnswer);
   await expect(amount).toHaveValue("61,234");
   // Nothing was proposed, so there is nothing to agree to.
   await expect(page.getByRole("dialog")).toHaveCount(0);
+
+  // A server that answers with no words of its own: not kept, and no cause DotAmi doesn't know.
+  await page.unroute("**/api/person-figures/propose");
+  await page.route("**/api/person-figures/propose", (route) => route.fulfill(CRASH_PAGE));
+  await income.getByRole("button", { name: destinationWords.keepAmount }).click();
+  await expect(income.getByRole("alert")).toHaveText(destinationWords.receipts.incomeNotKept);
+  await expect(amount).toHaveValue("61,234");
+  await expect(page.getByRole("dialog")).toHaveCount(0);
+  await page.unroute("**/api/person-figures/propose");
 });

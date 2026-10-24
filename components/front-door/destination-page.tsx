@@ -26,11 +26,13 @@ import {
 } from "@/lib/front-door/questions";
 import {
   destinationReceipt,
+  incomeNotKeptLine,
   incomeReceipt,
   lookingForReceipt,
   placeName,
   placeReceipt,
   provinceOfPlace,
+  wordsNotKept,
   type StillAgreed,
 } from "@/lib/front-door/receipts";
 import { destinationWords as words } from "@/lib/front-door/words";
@@ -300,14 +302,17 @@ function OwnWords({
         onAnswer({
           destination: { kept: "saved", text: body.statement.text, saidAt: body.statement.saidAt },
         });
-      } else if (res.status === 503) {
-        // No database: only the window's memory holds the words, and the receipt says so.
-        onAnswer({ destination: { kept: "tab-only", text: typed, saidAt: today } });
       } else {
-        setError(body?.error ?? words.receipts.destinationTabOnly);
+        // No database (a 503): only the window's memory holds the words, and the receipt says so. Any other
+        // refusal keeps the question open, in the server's words or a line that names no cause it doesn't know.
+        const outcome = wordsNotKept({ status: res.status, body }, typed, today);
+        if ("held" in outcome) onAnswer({ destination: outcome.held });
+        else setError(outcome.error);
       }
     } catch {
-      onAnswer({ destination: { kept: "tab-only", text: typed, saidAt: today } });
+      // No answer at all: held the same way, and the receipt says only that the server didn't answer.
+      const outcome = wordsNotKept(null, typed, today);
+      if ("held" in outcome) onAnswer({ destination: outcome.held });
     } finally {
       setBusy(false);
     }
@@ -443,9 +448,9 @@ function IncomeAmount({
       const proposed = body?.figures?.[0];
       if (res.ok && proposed) setProposal({ id: proposed.id, amountCents: proposed.amountCents });
       // Nothing was proposed, so nothing is held: only the box keeps the amount, and the line says so.
-      else setProblem(body?.error ?? words.receipts.incomeNotKept);
+      else setProblem(incomeNotKeptLine({ status: res.status, body }));
     } catch {
-      setProblem(words.receipts.incomeNotKept);
+      setProblem(incomeNotKeptLine(null));
     } finally {
       setBusy(false);
     }

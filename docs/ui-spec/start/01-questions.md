@@ -48,11 +48,17 @@ left; **Change** moves it to the question it opens.
   own day). The words are kept exactly as typed, ends trimmed. Receipt: *"Kept word for word, dated
   <day>. It goes at the top of each future you pick on Pick a future; an idea you describe in your own
   sentence shows that sentence instead."*, the words shown back in quotes. A refusal shows the server's
-  own words and keeps the question open; no database: *"Not kept: no database reachable. A reload, a new
-  window or the desktop app's Go menu asks it again."* (`destinationWords.receipts.destinationTabOnly`; until
-  2026-10-23 it said the words stayed in the tab, and they were written to the tab's window storage; until
-  2026-10-24 *"Only this page holds it: a reload or a new window asks it again."*). Changing it later keeps a
-  new statement; the old one stays.
+  own words and keeps the question open; one with no words of its own (a crash's page): *"Not kept. Your words
+  are still in the box, and Keep my words tries again."* (`destinationWords.receipts.destinationNotKept`). No
+  database (the server's 503): the words are held in the window's memory and shown back, with *"Not kept: no
+  database reachable. A reload, a new window or the desktop app's Go menu asks it again."*
+  (`destinationWords.receipts.destinationTabOnly`; until 2026-10-23 it said the words stayed in the tab, and they
+  were written to the tab's window storage; until 2026-10-24 *"Only this page holds it: a reload or a new window
+  asks it again."*). No answer from the server at all: held the same way, with *"Not kept: the server didn't
+  answer. A reload, a new window or the desktop app's Go menu asks it again."*
+  (`destinationWords.receipts.destinationNoAnswer`). Until a review of 2026-10-24 those last two cases, a refusal
+  with no words and no answer at all, said "no database reachable", a cause nobody had seen
+  (`lib/front-door/receipts.ts` `wordsNotKept`). Changing it later keeps a new statement; the old one stays.
 - **I don't know yet**: nothing new is kept. *"Nothing kept. You can say it later; nothing here waits
   on it."* When words are already kept (given in this window or in the data file): *"Nothing new kept. Your
   words of <day> are still kept and still show on top of your futures; Delete on What DotAmi knows
@@ -80,10 +86,14 @@ left; **Change** moves it to the question it opens.
   amount box (`12,500` or `12500.50`); one it can't read says so under the box and nothing is sent.
   Otherwise `POST /api/person-figures/propose { kind: "income-wanted", amountCents }` and the agree
   prompt opens ([02-income-agree-prompt.md](./02-income-agree-prompt.md)). A refusal shows the server's own
-  words under the box; a proposal that doesn't reach the server: *"Not kept: no database reachable. The amount
-  is still in the box."* (`destinationWords.receipts.incomeNotKept`; since 2026-10-24: until then the words
-  receipt of question 1 was shown, which said a page held the answer). Nothing is proposed either way, and the
-  amount stays in the box. Agreed: *"Your target:
+  words under the box (with no database, its 503: *"No database reachable — nothing was changed."*); one with no
+  words of its own: *"Not kept. The amount is still in the box, and Keep it tries again."*
+  (`destinationWords.receipts.incomeNotKept`); no answer from the server at all: *"Not kept: the server didn't
+  answer. The amount is still in the box, and Keep it tries again."* (`destinationWords.receipts.incomeNoAnswer`;
+  `lib/front-door/receipts.ts` `incomeNotKeptLine`). Since 2026-10-24: until then the words receipt of question 1
+  was shown, which said a page held the answer, and until a review of the same day the line said "no database
+  reachable" wherever the server gave no words, though the database was never asked. Nothing is proposed either
+  way, and the amount stays in the box. Agreed: *"Your target:
   $70,000 a year, before tax, agreed <day>. Nothing compares it with anything."* Turned down:
   *"Turned down. It stays in your data file, marked turned down and shown nowhere, until Delete on What
   DotAmi knows about you removes it."*

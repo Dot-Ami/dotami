@@ -92,11 +92,19 @@ export const destinationWords = {
     destinationKept: (day: string) =>
       `Kept word for word, dated ${day}. It goes at the top of each future you pick on Pick a future; an idea you describe in your own sentence shows that sentence instead.`,
     // The words, with no database: shown back from the window's memory, which any fresh load empties (the id is
-    // the old name, from when the tab's storage held them).
+    // the old name, from when the tab's storage held them). Only after a 503, the server's own "no database".
     destinationTabOnly: "Not kept: no database reachable. A reload, a new window or the desktop app's Go menu asks it again.",
-    // The yearly income whose proposal didn't reach the server: nothing was proposed and nothing is held, only the
-    // box keeps the amount (2026-10-24; the words receipt above was shown here until then).
-    incomeNotKept: "Not kept: no database reachable. The amount is still in the box.",
+    // The same, when the server didn't answer at all (it stopped, or the request was cut off): the database was never
+    // asked, so no cause is named but that one (a review of 2026-10-24; the line above was shown here until then).
+    destinationNoAnswer: "Not kept: the server didn't answer. A reload, a new window or the desktop app's Go menu asks it again.",
+    // A refusal that came with no words of its own (a crash's page): nothing is held, the question stays open, and
+    // no cause is named (the line above "no database reachable" was shown here until a review of 2026-10-24).
+    destinationNotKept: "Not kept. Your words are still in the box, and Keep my words tries again.",
+    // The yearly income not proposed: nothing is held, only the box keeps the amount (2026-10-24; the words receipt
+    // above was shown here until then). A server that answers 503 says "no database" in its own words, shown in place
+    // of these; until a review of the same day the first said "no database reachable" though nothing said so.
+    incomeNotKept: "Not kept. The amount is still in the box, and Keep it tries again.",
+    incomeNoAnswer: "Not kept: the server didn't answer. The amount is still in the box, and Keep it tries again.",
     destinationDontKnow: "Nothing kept. You can say it later; nothing here waits on it.",
     // "I don't know yet" deletes nothing: statements are never edited away one by one.
     destinationStillKept: (day: string) =>
