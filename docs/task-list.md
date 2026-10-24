@@ -1161,6 +1161,10 @@ roadmap's build order.
     shown when the intake preview's row is opened), a time word and a ranking nothing does, like the other goal
     cards' "DotAmi can prioritize … earlier" and "move up the map". Not part of #210: what goal cards say at all
     (goals are read by no rule), for all five
+  - [ ] Two edge cases the last review of #210 found, both there before it: a map change held in the window's
+    memory because its save failed is dropped, without a word, if the person then starts a new idea from the
+    front door's *Map it* (or opens another idea and then a new one); and the intake's failed first save leaves
+    an idea never saved in the window's memory, which the front door's *Open cockpit* would then draw as if kept
 - ✅ **[13i] The landing page and intake were dead in production builds** — fixed in #64.
 
 ## 15 — Real examples: how real people started (later)
