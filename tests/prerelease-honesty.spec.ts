@@ -399,9 +399,10 @@ function drawPickedFuture(road: Road, place: string, progress: { stepId: string;
  * What the readout API must never give (2026-10-24, the maintainer's decision 3 on PR #210): a node's
  * `status`, the map's list name, which said `complete` of the employee baseline and `active` of Sole Prop
  * activation on every idea, and the two lists in `scenario.state` that said the same. Any `status` key at all
- * is caught, not only those two values; the person's own mark is `yourStatus`, which this doesn't match.
+ * is caught, whatever its value, null included (until a review of 2026-10-24 only a string value was); the
+ * person's own mark is `yourStatus`, which this doesn't match.
  */
-const READOUT_NOT_GIVEN = [/"status":"[^"]*"/g, /"completedNodeIds"/g, /"activeNodeIds"/g];
+const READOUT_NOT_GIVEN = [/"status":/g, /"completedNodeIds"/g, /"activeNodeIds"/g];
 const notGivenIn = (json: string): string[] => READOUT_NOT_GIVEN.flatMap((re) => [...json.matchAll(re)].map((m) => m[0]));
 
 const BASELINE = "stage-0-employee-apprentice-baseline";
@@ -460,12 +461,14 @@ describe("2. The map shows a status only where the person gave one", () => {
     const marked = readoutNodes(scenario, evaluation, marks);
     expect(node(marked, BASELINE)).toMatchObject({ chip: "starting-point", yourStatus: "done" });
     expect(marked.filter((n) => n.yourStatus !== null).map((n) => n.id)).toEqual([BASELINE]);
+    expect(notGivenIn(JSON.stringify(marked))).toEqual([]);
+    // Planted control: the person's own mark brought back under the old name (null where they gave none) is caught.
+    const renamed = marked.map((n) => ({ ...n, status: n.yourStatus }));
+    expect(notGivenIn(JSON.stringify(renamed))).toHaveLength(marked.length);
 
     // Planted control: the readout as it was until 2026-10-24 (each node's `status`, the idea with its lists).
     const before = { nodes: nodes.map(({ yourStatus: _mark, ...n }) => ({ ...n, status: getScenarioNodeStatus(n.id, scenario) })), scenario };
-    expect(notGivenIn(JSON.stringify(before))).toEqual(
-      expect.arrayContaining(['"status":"complete"', '"status":"active"', '"completedNodeIds"', '"activeNodeIds"']),
-    );
+    expect(notGivenIn(JSON.stringify(before))).toEqual([...nodes.map(() => '"status":'), '"completedNodeIds"', '"activeNodeIds"']);
   });
 
   it("the readout's own comment says truly whose marks reach it: every road that keeps road 0's stage ids", () => {
