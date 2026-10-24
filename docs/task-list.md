@@ -1120,17 +1120,20 @@ roadmap's build order.
   - [x] Already found: the intake's field labels aren't tied to their dropdowns (a screen reader can't
     name them) — fixed 2026-10-12: province, employment and the name box are named by their labels.
   - [x] Pre-release honesty and privacy, found by the review of 2026-10-23 and fixed the same day
-    (`tests/prerelease-honesty.spec.ts`, `e2e/front-door.spec.ts`): Your destination's answers out of window
-    storage (held in the page's memory until a future is picked, which keeps them with the idea) and Delete
-    reaching them; no *done* or *now* chip on the map for anything the person never marked (*starting point*,
+    (`tests/prerelease-honesty.spec.ts`, `e2e/front-door.spec.ts`): nothing about the person in window storage
+    (`tests/privacy-inventory.spec.ts`, `e2e/window-storage.spec.ts`; 2026-10-24): the journey held in the
+    window's memory, a statement that couldn't be saved left in its box, no list of earlier *Other…*
+    descriptions, the three old keys removed unread when a journey page opens, and Delete reaching what the
+    window holds; no *done* or *now* chip on the map for anything the person never marked (*starting point*,
     *first stage*), and *type not said* on the ideas card; the time words the check missed (*First years on
     your own*, *time-boxed*, the ride-share Lens line's "with 30 days to apply") reworded and taught to the
     check, and official fee pages' words only inside the official-quote component; the front door's chips in
     the words file without a tax promise; *Your futures* and *Open cockpit* only once an idea is saved
-  - [ ] Still in window storage, about the person, for the maintainer's call: the rest of the intake in
-    progress (`dotami-journey-v3`: the sentence typed, revenue estimates, the idea open on the map), a statement
-    that couldn't be saved (`dotami-person-unsaved`) and the job descriptions typed under "Other…"
-    (`dotami-employment-suggestions`, which Delete doesn't reach)
+  - [ ] For the maintainer's later call (the decision of 2026-10-24 kept it for now): the intake's *Other…*
+    employment box. Its words are held in the window's memory only, kept with no idea (the idea keeps `other`)
+    and read by nothing since its list of earlier descriptions went with `dotami-employment-suggestions`: keep
+    the words with the idea (a new column, an inventory line, a privacy-log line), or remove the box and keep
+    the *Other…* choice alone
 - ✅ **[13i] The landing page and intake were dead in production builds** — fixed in #64.
 
 ## 15 — Real examples: how real people started (later)

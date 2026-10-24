@@ -10,20 +10,16 @@ import {
   type ReactNode,
 } from "react";
 import type { Scenario } from "@/lib/scenarios/types";
-import {
-  defaultIntakeDraft,
-  JOURNEY_STORAGE_KEY,
-  type IntakeDraft,
-  type JourneyState,
-} from "@/lib/journey/types";
-import { forWindowStorage, fromWindowStorage } from "@/lib/journey/window-storage";
+import { heldJourney, holdJourney } from "@/lib/journey/held-journey";
+import { defaultIntakeDraft, type IntakeDraft } from "@/lib/journey/types";
+import { removeRetiredWindowStorage } from "@/lib/journey/window-storage";
 
 interface JourneyContextValue {
   intake: IntakeDraft;
   scenario: Scenario | null;
   /**
-   * False until the `sessionStorage` read effect has run. Consumers that pick an initial
-   * scenario synchronously (e.g. cockpit's `useState`, seeded before this hydrates) need
+   * False until the effect that takes up the journey held in the window's memory has run. Consumers that
+   * pick an initial scenario synchronously (e.g. cockpit's `useState`, seeded before this hydrates) need
    * this to know when `scenario` has settled, so they can sync once instead of racing it
    * (audit-2026-07-04 C2).
    */
@@ -35,47 +31,33 @@ interface JourneyContextValue {
 
 const JourneyContext = createContext<JourneyContextValue | null>(null);
 
-/** The journey as this tab's window storage holds it (exported for tests/prerelease-honesty.spec.ts). */
-export function readJourneyFromWindow(): Partial<JourneyState> | null {
-  if (typeof window === "undefined") return null;
-  try {
-    const raw = sessionStorage.getItem(JOURNEY_STORAGE_KEY);
-    if (!raw) return null;
-    // Your destination's answers are never read from the window, even where an older copy wrote them
-    // (lib/journey/window-storage.ts); the first write after loading then takes them out of it.
-    return fromWindowStorage(JSON.parse(raw) as Partial<JourneyState>);
-  } catch {
-    return null;
-  }
-}
-
-/** Writes the journey to this tab's window storage, without Your destination's answers. */
-export function writeJourneyToWindow(state: JourneyState) {
-  if (typeof window === "undefined") return;
-  try {
-    // Without Your destination's answers: they stay in this page's memory, and in the data file where
-    // the design keeps them (lib/journey/window-storage.ts).
-    sessionStorage.setItem(JOURNEY_STORAGE_KEY, JSON.stringify(forWindowStorage(state)));
-  } catch {
-    // ignore quota errors
-  }
-}
-
+/**
+ * The journey: the intake in progress, *Your destination*'s answers and the idea open on the map. Held in the
+ * window's memory only, never in its storage (2026-10-24; lib/journey/window-storage.ts says why, and where
+ * each answer is kept instead). This provider is in app/(journey)/layout.tsx, so it is unmounted on Mara's
+ * example; the memory it holds the journey in (lib/journey/held-journey.ts) outlives it, so the journey is
+ * there again on the way back. A reload, a new window or the desktop app's Go menu starts it afresh.
+ */
 export function JourneyProvider({ children }: { children: ReactNode }) {
   const [intake, setIntakeState] = useState<IntakeDraft>(defaultIntakeDraft);
   const [scenario, setScenarioState] = useState<Scenario | null>(null);
   const [hydrated, setHydrated] = useState(false);
 
   useEffect(() => {
-    const stored = readJourneyFromWindow();
-    if (stored?.intake) setIntakeState({ ...defaultIntakeDraft(), ...stored.intake });
-    if (stored?.scenario) setScenarioState(stored.scenario);
+    // What an older DotAmi left in the window's storage goes, unread, when a journey page opens.
+    removeRetiredWindowStorage();
+    const held = heldJourney();
+    if (held) {
+      setIntakeState(held.intake);
+      setScenarioState(held.scenario);
+    }
     setHydrated(true);
   }, []);
 
   useEffect(() => {
+    // Not before the held journey is taken up, or the empty first render would replace it.
     if (!hydrated) return;
-    writeJourneyToWindow({ intake, scenario });
+    holdJourney({ intake, scenario });
   }, [hydrated, intake, scenario]);
 
   const setIntake = useCallback(
@@ -112,10 +94,10 @@ export function JourneyProvider({ children }: { children: ReactNode }) {
 const NOTHING = () => {};
 
 /**
- * For a page that must never touch the tab's journey: the invented example future (app/example/,
- * docs/ui-spec/example/_index.md). It hands out the scenario it is given and nothing else: it never reads
- * or writes sessionStorage, and its setters do nothing, so the journey a person has going in this tab is
- * exactly as it was when they come back.
+ * For a page that must never touch the person's journey: the invented example future (app/example/,
+ * docs/ui-spec/example/_index.md). It hands out the scenario it is given and nothing else: it never reads or
+ * holds the journey kept in the window's memory, and its setters do nothing, so the journey a person has going
+ * is exactly as it was when they come back.
  */
 export function ReadOnlyJourneyProvider({ scenario, children }: { scenario: Scenario; children: ReactNode }) {
   const value = useMemo<JourneyContextValue>(

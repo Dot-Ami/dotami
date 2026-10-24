@@ -16,6 +16,7 @@ import * as aboutJobFile from "@/lib/about-job/words";
 import * as cockpitFile from "@/lib/cockpit/words";
 import * as frontDoorFile from "@/lib/front-door/words";
 import * as landscapeFile from "@/lib/landscape/words";
+import * as personFile from "@/lib/person/words";
 import * as roadsFile from "@/lib/roads/words";
 
 import { SHOWN_WORDS_GAPS } from "./fixtures/ideas/known-gaps";
@@ -330,6 +331,7 @@ describe("the words no-times lets through", () => {
       "lib/landscape/words.ts": landscapeFile,
       "lib/roads/words.ts": roadsFile,
       "lib/about-job/words.ts": aboutJobFile,
+      "lib/person/words.ts": personFile,
     };
     const withTimes = Object.entries(files).flatMap(([file, mod]) =>
       plainStrings(mod).flatMap(({ path, text }) => (findTimeWords(text).length > 0 ? [`${file} ${path}`] : [])),

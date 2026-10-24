@@ -132,7 +132,9 @@ with where they are kept, before confirming.
 3. **First ask** (dialog, "Delete these?"): every ticked box with the count of each table it
    touches (and of safety copies, as files); under **Kept, not deleted**, the same warning on the
    expense records that stay; and a line that everything not ticked stays, as does what Delete
-   doesn't reach. With the safety copies ticked, an amber line: they go too, so afterwards only a
+   doesn't reach ("how you left the cockpit, kept in this window's own storage and offered back next
+   time; the log"; until 2026-10-24 it also named the job descriptions typed under "Other…", which the
+   window's storage no longer holds). With the safety copies ticked, an amber line: they go too, so afterwards only a
    backup saved somewhere else could bring anything back; and, when there are set-aside receipt
    folders, the same amber warning as under the box ("Set-aside receipt folders: 2 folders" in the list). Without them, when there are any, a line
    that the safety copies aren't ticked and still hold what is deleted; and, when there are set-aside
@@ -197,8 +199,12 @@ file not named the way DotAmi names receipts is never touched); the safety copie
 set aside there (`receipts-locked-…`, `receipts-before-restore-…`; an emptied folder is removed, one still
 holding the person's own files stays); and the "wipe pending" note beside the data file
 (`<data file>.wipe-pending`, written before the wipe and removed once it has worked; it holds a time,
-safety-copy file names and set-aside folder names only). In the window: after deleting ideas, the intake in progress (`dotami-journey-v3`)
-is reset through the journey provider, so a Save on the map can't bring a deleted idea back.
+safety-copy file names and set-aside folder names only). In the window's memory (the journey: the intake in
+progress, Your destination's answers and the idea open on the map, never in the window's storage since
+2026-10-24), through the journey provider: after deleting ideas the journey is reset, so a Save on the map
+can't bring a deleted idea back; after the statements, the sentence typed on the front door (with its copy in
+`description` and the parse's reading of it) and Your destination's words go from it; after the yearly income,
+the income (`lib/journey/window-storage.ts` `intakeAfterDelete`).
 
 ## Downstream consumers (where the data goes today)
 
@@ -207,10 +213,11 @@ cockpit's *Businesses you're watching* and the settings page read empty or defau
 
 ## Cleanup / open questions
 
-- Clearing what the window keeps in its own storage: a later decision. Since 2026-10-17 the desktop app
-  uses the same local address on every launch, so the page itself can now reach that storage; until a
-  box does, the menu says how to remove it by hand (close DotAmi and delete the "Local Storage" folder
-  in the data folder).
+- Clearing what the window keeps in its own storage: a later decision. Since 2026-10-24 it holds only how
+  the cockpit was left (`dotami-cockpit-folds`), nothing the person typed or answered. Since 2026-10-17 the
+  desktop app uses the same local address on every launch, so the page itself can now reach that storage;
+  until a box does, the menu says how to remove it by hand (close DotAmi and delete the "Local Storage"
+  folder in the data folder).
 - Whether an agent (the Lens, or an outside one) may ever delete: a later decision. Until then the
   route answers only to DotAmi's own page.
 - Known limit: the "wipe pending" note is written just before the rows are deleted. If the computer

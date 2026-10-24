@@ -4,7 +4,8 @@
  * their receipts, Pick a future, the cockpit on the first written future (skills marked, a start-up line
  * priced with the person's own number, their month, a what-if, Compare and This is mine, a business added
  * to Others in this line of work with an ad link, a region folded and opened again), Your plan, then a reload that reads back what was kept, and Your futures listing it.
- * Then the other way in: "I already have an idea", to the cockpit on road 0.
+ * Then the other way in: "I already have an idea", to the cockpit on road 0, by way of About you, where a statement
+ * the server can't keep is said not kept.
  *
  * The screens are each tested on their own elsewhere (e2e/front-door.spec.ts, e2e/cockpit*.spec.ts,
  * e2e/plan.spec.ts); this file checks they still join up, one after the other, as a person meets them,
@@ -25,6 +26,7 @@
 import { expect, test, type Page } from "@playwright/test";
 
 import { generalRoadV2026, roadApprenticeToOwnShopAB, skillItemsV2026 } from "../lib/engines/roads/v2026";
+import { statementWords } from "../lib/person/words";
 import { waitForReact } from "../tests/helpers/react-ready";
 import { findVerdicts } from "../tests/helpers/verdict-words";
 
@@ -344,6 +346,27 @@ test("the other way in: \"I already have an idea\" → the intake → the cockpi
 
   await expect(page).toHaveURL(/\/intake/);
   await expect(page.getByRole("heading", { name: /Did we get this/ })).toBeVisible();
+
+  // About you, one step back, with a statement the server can't keep: the note says it wasn't kept and the words
+  // stay in the box, kept nowhere else (since 2026-10-24; until then the window's storage held it).
+  const seen: Seen[] = [];
+  await button(page, "← Back").click();
+  await page.route("**/api/person/statements", (route) =>
+    route.request().method() === "POST"
+      ? route.fulfill({ status: 503, contentType: "application/json", body: JSON.stringify({ error: "No database reachable — not saved." }) })
+      : route.continue(),
+  );
+  const aboutYou = page.getByPlaceholder(/Anything you want DotAmi to know about you/);
+  const statement = `I work best with my hands (invented ${Date.now()})`;
+  await aboutYou.fill(statement);
+  await button(page, "Keep this").click();
+  await expect(page.getByText(statementWords.notKept, { exact: true })).toBeVisible();
+  await expect(aboutYou).toHaveValue(statement);
+  await look(seen, page, "About you, a statement the server didn't keep");
+  await page.unroute("**/api/person/statements");
+  await button(page, "Continue →").click();
+  await expect(page.getByRole("heading", { name: /Did we get this/ })).toBeVisible();
+
   await button(page, "Looks right →").click();
   await page.getByText("Current employment", { exact: true }).locator("xpath=following-sibling::select").selectOption("self-employed");
   await openTheMapFromTheIntake(page);
@@ -361,13 +384,14 @@ test("the other way in: \"I already have an idea\" → the intake → the cockpi
   const label = (id: string) => generalRoadV2026.steps.find((s) => s.id === id)!.label;
   for (const id of firstColumns.flatMap((c) => c.steps)) await expect(stage(page, label(id)), label(id)).toBeVisible();
   for (const id of ahead.flatMap((c) => c.steps)) await expect(stage(page, label(id)), label(id)).toBeHidden();
-  const seen: Seen[] = [];
   await look(seen, page, "cockpit on road 0, from the intake, the first visit");
   await showRoadAhead(page);
   for (const step of generalRoadV2026.steps) await expect(stage(page, step.label), step.label).toBeVisible();
 
   // And it is one of the person's futures, with the sentence typed for it on the front door.
   await look(seen, page, "cockpit on road 0, from the intake");
+  // The read above did catch the statement's note: it was on screen when read.
+  expect(seen.find((s) => s.where.startsWith("About you, a statement"))!.text).toContain(statementWords.notKept);
   expect(verdictsIn(seen)).toEqual([]);
 
   await page.goto("/ventures");

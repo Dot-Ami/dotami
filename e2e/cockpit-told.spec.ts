@@ -11,6 +11,7 @@ import path from "node:path";
 import type { PrismaClient } from "@prisma/client";
 import { expect, test, type Page } from "@playwright/test";
 
+import { cockpitWords } from "../lib/cockpit/words";
 import { createDatabaseClient } from "../lib/db/client";
 import { generalRoadV2026, roadApprenticeToOwnShopAB } from "../lib/engines/roads/v2026";
 import { firstSaveForPickedFuture, scenarioForPickedFuture } from "../lib/front-door/start-future";
@@ -226,7 +227,7 @@ test("the map's default side, picked in the box or on the map's toggle, is still
   await structureRow.getByRole("button", { name: "Save", exact: true }).click();
   await expect(told(page).getByRole("status")).toContainText("Not saved yet");
   await expect(told(page).getByRole("status")).not.toContainText("Saved.");
-  await expect(page.getByText("Save unavailable — kept in this tab. Save now retries.")).toBeVisible();
+  await expect(page.getByText(cockpitWords.rail.save.unavailable, { exact: true })).toBeVisible();
   expect(await thisVisit()).toBe(linesBefore);
   await page.unroute("**/api/scenario/save");
 });

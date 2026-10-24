@@ -10,6 +10,7 @@ import {
   LIBRARY_IMPORTS,
   LOCAL_REQUESTS,
   NOT_CLEARED_BY_DELETE,
+  RETIRED_WINDOW_STORAGE,
   SENT_ELSEWHERE,
   STARTS_PROGRAMS,
   TABLES,
@@ -180,36 +181,15 @@ describe("the privacy inventory names the answers kept with an idea on lines of 
 });
 
 describe("the privacy inventory lists every browser-storage key", () => {
-  // The values of string constants, so `getItem(MY_KEY)` can be read as the key it stands for.
-  const constants = new Map<string, string>();
-  for (const f of files) {
-    for (const m of simplify(readSource(f), true).matchAll(/\bconst\s+([A-Za-z_$][\w$]*)\s*=\s*(["'])([^"'\n]*)\2/g)) {
-      constants.set(m[1], m[3]);
-    }
-  }
-
-  const used = new Map<string, string[]>(); // "store:key" -> the files that use it
-  const unreadable: string[] = [];
+  const sources = files.map((f) => ({ file: f, code: readSource(f) }));
+  const { readOrWritten, removed, unreadable } = storageKeysIn(sources);
   const otherUses: string[] = [];
   const otherStores: string[] = [];
 
-  for (const f of files) {
-    const code = simplify(readSource(f), true);
-    for (const m of code.matchAll(/\b(localStorage|sessionStorage)\s*\.\s*(getItem|setItem|removeItem)\s*\(\s*([^,)]*)/g)) {
-      const arg = m[3].trim();
-      const literal = arg.match(/^(["'`])([^"'`$]*)\1$/);
-      const key = literal ? literal[2] : constants.get(arg);
-      if (key === undefined) {
-        unreadable.push(`${f}: ${m[1]}.${m[2]}(${arg})`);
-        continue;
-      }
-      const id = `${m[1]}:${key}`;
-      used.set(id, [...(used.get(id) ?? []), f]);
-    }
-
+  for (const { file: f, code } of sources) {
     // Anything else done with the storage objects (clear(), key(), bracket access, handing the
     // object to another function) could touch keys this scan can't name, so it is refused outright.
-    const plain = simplify(readSource(f), false);
+    const plain = simplify(code, false);
     for (const m of plain.matchAll(/\b(localStorage|sessionStorage)\b/g)) {
       const after = plain.slice(m.index! + m[0].length);
       if (!/^\s*\.\s*(getItem|setItem|removeItem)\s*\(/.test(after)) otherUses.push(`${f}: ${m[0]}`);
@@ -220,26 +200,60 @@ describe("the privacy inventory lists every browser-storage key", () => {
     }
   }
 
-  it("sees the keys DotAmi uses today (a guard against the scan silently finding nothing)", () => {
-    expect([...used.keys()]).toEqual(
+  const windowKeys = WINDOW_STORAGE.map((w) => `${w.store}:${w.key}`);
+  const retiredKeys = RETIRED_WINDOW_STORAGE.map((w) => `${w.store}:${w.key}`);
+
+  it("sees the keys DotAmi uses today, in both kinds (a guard against the scan silently finding nothing)", () => {
+    expect([...readOrWritten.keys()]).toContain("localStorage:dotami-cockpit-folds");
+    expect([...removed.keys()]).toEqual(
       expect.arrayContaining([
-        "localStorage:dotami-employment-suggestions",
-        "localStorage:dotami-cockpit-folds",
         "sessionStorage:dotami-journey-v3",
         "sessionStorage:dotami-person-unsaved",
+        "localStorage:dotami-employment-suggestions",
       ]),
     );
   });
 
   it("has an entry for every key the code reads or writes", () => {
-    const listed = new Set(WINDOW_STORAGE.map((w) => `${w.store}:${w.key}`));
-    const missing = [...used.keys()].filter((k) => !listed.has(k));
+    const missing = [...readOrWritten.keys()].filter((k) => !windowKeys.includes(k));
     expect(missing, `add these to WINDOW_STORAGE in lib/privacy/inventory.ts: ${missing.join(", ")}`).toEqual([]);
   });
 
-  it("lists no key the code never uses (a renamed key would leave a stale line)", () => {
-    const stale = WINDOW_STORAGE.map((w) => `${w.store}:${w.key}`).filter((k) => !used.has(k));
-    expect(stale).toEqual([]);
+  it("lists no key the code never reads or writes (a renamed key would leave a stale line)", () => {
+    expect(windowKeys.filter((k) => !readOrWritten.has(k))).toEqual([]);
+  });
+
+  // The maintainer's rule (2026-10-23, binding since 2026-10-24): nothing about the person sits in the window's
+  // storage. It may hold how the screen was left, nothing the person typed or answered; the journey is held in
+  // the window's memory (lib/journey/held-journey.ts). A new key needs the maintainer's yes before it joins this.
+  const SCREEN_STATE_ONLY = ["localStorage:dotami-cockpit-folds"];
+
+  it("holds nothing about the person: the only key read or written is how the cockpit was left", () => {
+    expect([...readOrWritten.keys()].sort()).toEqual(SCREEN_STATE_ONLY);
+    expect(windowKeys).toEqual(SCREEN_STATE_ONLY);
+  });
+
+  it("planted control: a write or a read of the person's journey, by a string or a constant, is seen by the same scan", () => {
+    const planted = storageKeysIn([
+      { file: "planted.tsx", code: 'sessionStorage.setItem("dotami-journey-v3", JSON.stringify(intake));' },
+      { file: "planted-read.ts", code: 'const KEY = "dotami-person-unsaved";\nconst raw = sessionStorage.getItem(KEY);' },
+      { file: "planted-remove.ts", code: 'localStorage.removeItem("dotami-employment-suggestions");' },
+    ]);
+    expect([...planted.readOrWritten.keys()].sort()).toEqual(["sessionStorage:dotami-journey-v3", "sessionStorage:dotami-person-unsaved"]);
+    // Either one would fail the rule above.
+    expect([...planted.readOrWritten.keys()].sort()).not.toEqual(SCREEN_STATE_ONLY);
+    // A removal alone is not a read or a write.
+    expect([...planted.removed.keys()]).toEqual(["localStorage:dotami-employment-suggestions"]);
+  });
+
+  it("a key the code only removes is a retired one, listed in RETIRED_WINDOW_STORAGE, and never read or written", () => {
+    const removedOnly = [...removed.keys()].filter((k) => !readOrWritten.has(k)).sort();
+    expect(removedOnly, "list a key the code removes in RETIRED_WINDOW_STORAGE in lib/privacy/inventory.ts").toEqual([...retiredKeys].sort());
+    expect(retiredKeys.filter((k) => readOrWritten.has(k))).toEqual([]);
+    for (const r of RETIRED_WINDOW_STORAGE) {
+      expect(r.held.trim(), `${r.key} needs to say what it held`).not.toBe("");
+      expect(r.retired, `${r.key} needs the day it was retired`).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+    }
   });
 
   it("can name every key: each one is a string written out or a constant, never built at run time", () => {
@@ -262,6 +276,38 @@ describe("the privacy inventory lists every browser-storage key", () => {
     }
   });
 });
+
+/**
+ * The browser-storage keys the given code uses, split by what it does with them: read or write (getItem,
+ * setItem), or only remove (removeItem). A key is read as a string written out or as a string constant the
+ * given code declares (`getItem(MY_KEY)`); any other argument is unreadable. Keys are "store:key".
+ */
+function storageKeysIn(sources: readonly { file: string; code: string }[]) {
+  const constants = new Map<string, string>();
+  for (const { code } of sources) {
+    for (const m of simplify(code, true).matchAll(/\bconst\s+([A-Za-z_$][\w$]*)\s*=\s*(["'])([^"'\n]*)\2/g)) {
+      constants.set(m[1], m[3]);
+    }
+  }
+  const readOrWritten = new Map<string, string[]>(); // "store:key" -> the files that read or write it
+  const removed = new Map<string, string[]>(); // "store:key" -> the files that remove it
+  const unreadable: string[] = [];
+  for (const { file, code } of sources) {
+    for (const m of simplify(code, true).matchAll(/\b(localStorage|sessionStorage)\s*\.\s*(getItem|setItem|removeItem)\s*\(\s*([^,)]*)/g)) {
+      const arg = m[3].trim();
+      const literal = arg.match(/^(["'`])([^"'`$]*)\1$/);
+      const key = literal ? literal[2] : constants.get(arg);
+      if (key === undefined) {
+        unreadable.push(`${file}: ${m[1]}.${m[2]}(${arg})`);
+        continue;
+      }
+      const id = `${m[1]}:${key}`;
+      const kind = m[2] === "removeItem" ? removed : readOrWritten;
+      kind.set(id, [...(kind.get(id) ?? []), file]);
+    }
+  }
+  return { readOrWritten, removed, unreadable };
+}
 
 describe("the privacy inventory lists what the desktop app writes beside the data file", () => {
   it.each(FOLDERS)("$name is still written by $writtenBy.file", (folder) => {

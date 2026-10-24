@@ -225,17 +225,33 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   British Columbia's employment-standards pages as its sources; a misspelt word in the kind of work finds the job
   only by its own name (84 of the 220 test ideas with a job); and "à Regina" in French names no province.
 ### Fixed
-- **Nothing you answer on Your destination sits in the window's storage any more** (the pre-release screen
-  review of 2026-10-23). Your words, business or career or both, your province or territory and the income you
-  agreed to were also written to the tab's `sessionStorage` (`dotami-journey-v3`), where Delete couldn't reach
-  them. Now they are held in the page's memory only: your words and the income are in the data file as soon as
-  you give them, as before, and business-or-career and the place are kept with the idea when you pick a future
-  (`Venture.lookingFor`, `Venture.province`, as before); until then a reload or a new window asks those two
-  again, and their receipts say so. A copy an older DotAmi left in the window is dropped when a page opens.
-  Delete takes the words held in memory with *Your statements*, the income with *The yearly income you said you
-  want*, and everything with *Your ideas* (`lib/journey/window-storage.ts`, `components/shared/journey-provider.tsx`,
-  `components/your-data/delete-menu.tsx`). Tests: `tests/prerelease-honesty.spec.ts` (with a planted write of
-  an answer to `sessionStorage` that the same scan catches) and a browser test in `e2e/front-door.spec.ts`.
+- **Nothing about you sits in the window's storage any more** (the pre-release screen review of 2026-10-23; the
+  maintainer's rule: the window's storage holds only how the screen was left). Three keys held your own words
+  and answers, on this computer only, and Delete reached none of them: the intake in progress
+  (`dotami-journey-v3`, `sessionStorage`: the sentence you typed, your kinds of work, province or territory,
+  employment and the words typed under *Other…*, revenue estimates, and the idea open on the map with its place;
+  from 2026-10-12 also your answers on Your destination), a statement that couldn't be saved
+  (`dotami-person-unsaved`), and the job descriptions typed under *Other…* on the intake
+  (`dotami-employment-suggestions`, `localStorage`, with no end date). Now the journey is held in the window's
+  memory only (`lib/journey/held-journey.ts`, `components/shared/journey-provider.tsx`): moving between pages
+  keeps it, Mara's example and back included, and a reload, a new window or the desktop app's Go menu starts it
+  afresh. What you answer is kept in the data file where it already was: your destination words and agreed
+  income at once, the sentence and goals with the idea's first save, business-or-career and the place with the
+  future you pick, the map's changes by its autosave. A statement that couldn't be saved stays in its box, said
+  not kept, with *Keep this* to try again (`lib/person/words.ts`); the box under *Other…* no longer offers
+  earlier descriptions. A journey page removes the three keys where an older copy left them, without reading
+  them (`lib/journey/window-storage.ts`). Delete takes from the window's memory what it takes from the data file:
+  *Your statements* the sentence (until now it stayed in the tab, marked never to be sent again) and your
+  destination words, *The yearly income you said you want* the income, *Your ideas* everything
+  (`intakeAfterDelete`, `components/your-data/delete-menu.tsx`). Tests: `tests/privacy-inventory.spec.ts` (only
+  `dotami-cockpit-folds` may be read or written, a key only removed must be a listed retired one, with planted
+  reads and writes the scan catches), `tests/prerelease-honesty.spec.ts` (no read or write of a retired key, the
+  removal unread, Delete on the memory, each with a planted control), `tests/first-words.spec.ts`, and the
+  browser tests `e2e/window-storage.spec.ts` (the typed way end to end with a statement the server didn't keep,
+  old keys planted, a reload mid-intake), `e2e/front-door.spec.ts` and the failed statement in
+  `e2e/journey.spec.ts`. Replaced, not weakened: the tests of the window-storage filter that no longer exists
+  (a stricter check finds no read or write at all), and the `typed · not saved` tag's test (the tag and its
+  field are gone).
 - **The map no longer says *done* and *now* for things you never told DotAmi.** On every idea the map's own
   lists put *Employee/Apprentice baseline* first and *Sole Prop activation* next, and their chips read *done*
   and *now*, as if that were where the person was. They now read *starting point* and *first stage*; *done*,

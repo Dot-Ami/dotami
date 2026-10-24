@@ -3,8 +3,9 @@
  * C:/dotami-wt/review-30f-gaps.txt): each check has a planted control, so it is shown to fail on what it
  * is there to catch.
  *
- * 1. Your destination's answers never sit in window storage (lib/journey/window-storage.ts), and Delete
- *    reaches the ones held in the page's memory.
+ * 1. Nothing about the person in window storage (2026-10-24, the maintainer's rule): no code reads or writes
+ *    the journey there, a page removes what an older DotAmi left without reading it, and Delete reaches what
+ *    the window holds in memory (lib/journey/held-journey.ts, lib/journey/window-storage.ts).
  * 2. The map never shows a stage as done, or as where the person is, unless the person marked it; the ideas
  *    card never shows a kind of venture nobody gave.
  * 3. Time words the no-times check missed ("first years", "time-boxed"), the Lens lines, and official pages'
@@ -20,7 +21,6 @@ import { afterEach, describe, expect, it } from "vitest";
 
 import { StrategyMap } from "@/components/cockpit/strategy-map";
 import { FrontDoorNav } from "@/components/discovery/landing-page";
-import { readJourneyFromWindow, writeJourneyToWindow } from "@/components/shared/journey-provider";
 import { PageQuotes } from "@/components/shared/page-quotes";
 import { cockpitWords } from "@/lib/cockpit/words";
 import { complianceCatalogV2026 } from "@/lib/engines/compliance/v2026";
@@ -30,15 +30,25 @@ import type { DestinationDraft } from "@/lib/front-door/draft";
 import { hasSavedIdea } from "@/lib/front-door/saved-idea";
 import { scenarioForPickedFuture } from "@/lib/front-door/start-future";
 import { frontDoorWords } from "@/lib/front-door/words";
+import { heldJourney, holdJourney } from "@/lib/journey/held-journey";
+import { applyIntentToDraft } from "@/lib/journey/intent";
 import { parseIntentFallback } from "@/lib/journey/intent-fallback";
-import { defaultIntakeDraft, JOURNEY_STORAGE_KEY, type JourneyState } from "@/lib/journey/types";
-import { destinationAfterDelete, forWindowStorage, fromWindowStorage } from "@/lib/journey/window-storage";
+import { defaultIntakeDraft, type IntakeDraft, type JourneyState } from "@/lib/journey/types";
+import {
+  destinationAfterDelete,
+  intakeAfterDelete,
+  removeRetiredWindowStorage,
+  RETIRED_EMPLOYMENT_SUGGESTIONS_KEY,
+  RETIRED_JOURNEY_KEY,
+  RETIRED_UNSAVED_STATEMENTS_KEY,
+} from "@/lib/journey/window-storage";
 import type { PlaceCode } from "@/lib/places/codes";
 import type { StepStatus } from "@/lib/futures/types";
 import { evaluateRoad } from "@/lib/roads";
 import { venturesWords } from "@/lib/ventures/words";
 
 import { input } from "./helpers/road-to-evaluate";
+import { simplify } from "./helpers/source-scan";
 import { findTimeWords } from "./helpers/time-words";
 
 // ---------------------------------------------------------------------------------------------------------
@@ -53,9 +63,23 @@ const ANSWERS: DestinationDraft = {
   incomeWanted: { kind: "agreed", amountCents: 6_543_200, agreedOn: "2026-10-23" },
 };
 
+/** The keys an older DotAmi wrote with the person's own words or answers in them, as it wrote them. */
+const RETIRED_KEYS = ["dotami-journey-v3", "dotami-person-unsaved", "dotami-employment-suggestions"];
+
 const journeyWith = (destination: DestinationDraft | undefined): JourneyState => ({
   intake: { ...defaultIntakeDraft(), name: "Invented idea", destination },
   scenario: null,
+});
+
+/** An intake the front door's sentence went into, with Your destination's answers: what Delete is checked on. */
+const typedIntake = (): IntakeDraft => ({
+  ...applyIntentToDraft(
+    { ...defaultIntakeDraft(), name: "Invented idea", destination: ANSWERS },
+    parseIntentFallback("A sign shop in Calgary (invented for this test)"),
+    "A sign shop in Calgary (invented for this test)",
+    "2026-10-23",
+  ),
+  goals: ["write-offs"],
 });
 
 /**
@@ -73,82 +97,140 @@ function destinationAnswersIn(stored: string, answers: DestinationDraft = ANSWER
   return found;
 }
 
-/** A window with a session store, for the provider's own read and write. */
-function fakeWindow(): Map<string, string> {
-  const store = new Map<string, string>();
+/**
+ * A window with both stores, as a browser has them. Reading either throws: what an older DotAmi left is removed
+ * without being read, so a read here is a failure of its own.
+ */
+function fakeWindow(refuse: { removeFromSession?: boolean } = {}) {
   const g = globalThis as unknown as Record<string, unknown>;
   g.window = globalThis;
-  g.sessionStorage = {
-    getItem: (key: string) => store.get(key) ?? null,
-    setItem: (key: string, value: string) => void store.set(key, String(value)),
-    removeItem: (key: string) => void store.delete(key),
-  };
-  return store;
+  const store = (map: Map<string, string>, refuseRemove = false) => ({
+    getItem: (key: string): string | null => {
+      throw new Error(`read ${key}`);
+    },
+    setItem: (key: string, value: string) => void map.set(key, String(value)),
+    removeItem: (key: string) => {
+      // A browser can refuse its storage (blocked site data); the other store must still be cleared.
+      if (refuseRemove) throw new Error("refused");
+      map.delete(key);
+    },
+  });
+  const session = new Map<string, string>();
+  const local = new Map<string, string>();
+  g.sessionStorage = store(session, refuse.removeFromSession);
+  g.localStorage = store(local);
+  return { session, local };
 }
 
 const storedText = (store: Map<string, string>) => [...store.values()].join("\n");
 
-describe("1. Your destination's answers are never in window storage", () => {
+describe("1. Nothing about the person in window storage", () => {
   afterEach(() => {
     const g = globalThis as unknown as Record<string, unknown>;
     delete g.window;
     delete g.sessionStorage;
+    delete g.localStorage;
   });
 
-  it("the provider's write leaves them out, and keeps the rest of the journey", () => {
-    const store = fakeWindow();
-    writeJourneyToWindow(journeyWith(ANSWERS));
-    expect(destinationAnswersIn(storedText(store))).toEqual([]);
-    // The rest of the journey is still written, so the scan is reading a real write.
-    expect(storedText(store)).toContain("Invented idea");
+  it("no code reads or writes the journey, or any key an older DotAmi wrote about the person, in window storage", () => {
+    expect(retiredKeyUsesIn(sourceFiles(["components", "lib", "app"]))).toEqual([]);
   });
 
-  it("planted control: an answer written to sessionStorage straight is caught by the same scan", () => {
-    const store = fakeWindow();
-    sessionStorage.setItem(JOURNEY_STORAGE_KEY, JSON.stringify(journeyWith(ANSWERS)));
-    expect(destinationAnswersIn(storedText(store))).toEqual([
+  it("planted control: a read or a write of one, by its constant or written out, is caught by the same scan; a removal isn't one", () => {
+    const planted = retiredKeyUsesIn([
+      {
+        file: "planted.tsx",
+        text: 'export const RETIRED_JOURNEY_KEY = "dotami-journey-v3";\nsessionStorage.setItem(RETIRED_JOURNEY_KEY, JSON.stringify(state));',
+      },
+      { file: "planted-read.tsx", text: 'const raw = localStorage.getItem("dotami-employment-suggestions");' },
+      { file: "planted-remove.tsx", text: 'sessionStorage.removeItem("dotami-person-unsaved"); // a page clearing it' },
+    ]);
+    expect(planted).toEqual([
+      "planted-read.tsx: localStorage.getItem(dotami-employment-suggestions)",
+      "planted.tsx: sessionStorage.setItem(dotami-journey-v3)",
+    ]);
+  });
+
+  it("the code's names for the retired keys are the keys an older DotAmi wrote", () => {
+    expect([RETIRED_JOURNEY_KEY, RETIRED_UNSAVED_STATEMENTS_KEY, RETIRED_EMPLOYMENT_SUGGESTIONS_KEY]).toEqual(RETIRED_KEYS);
+  });
+
+  it("the journey is held in the window's memory: held, it is given back; without a window (the server) nothing is held or given", () => {
+    const first = journeyWith(ANSWERS);
+    // On the server one module serves every request: nothing is held there.
+    holdJourney(first);
+    fakeWindow();
+    expect(heldJourney()).toBeUndefined();
+    const second = journeyWith(undefined);
+    holdJourney(second);
+    expect(heldJourney()).toBe(second);
+    delete (globalThis as unknown as Record<string, unknown>).window;
+    expect(heldJourney()).toBeUndefined();
+  });
+
+  it("a page removes what an older DotAmi left, without reading it, and leaves how the cockpit was left alone", () => {
+    const { session, local } = fakeWindow();
+    session.set("dotami-journey-v3", JSON.stringify(journeyWith(ANSWERS)));
+    session.set("dotami-person-unsaved", JSON.stringify([{ text: "Invented statement" }]));
+    local.set("dotami-employment-suggestions", JSON.stringify(["Invented trade"]));
+    local.set("dotami-cockpit-folds", JSON.stringify({ rail: true }));
+    // Planted control: what was left there held the person's answers.
+    expect(destinationAnswersIn(storedText(session))).toEqual([
       "your words",
       "your place",
       "business, career or both",
       "your income",
       "the destination draft",
     ]);
-    // And the one answer alone, the place.
-    const one = fakeWindow();
-    sessionStorage.setItem(JOURNEY_STORAGE_KEY, JSON.stringify(journeyWith({ place: "CA-ON" as PlaceCode })));
-    expect(destinationAnswersIn(storedText(one))).toContain("your place");
+    removeRetiredWindowStorage();
+    expect([...session.keys()]).toEqual([]);
+    expect([...local.keys()]).toEqual(["dotami-cockpit-folds"]);
   });
 
-  it("answers an older DotAmi left in the window are never read back, and the next write takes them out", () => {
-    const store = fakeWindow();
-    store.set(JOURNEY_STORAGE_KEY, JSON.stringify(journeyWith(ANSWERS)));
-    const read = readJourneyFromWindow();
-    expect(read?.intake?.destination).toBeUndefined();
-    expect(read?.intake?.name).toBe("Invented idea");
-    writeJourneyToWindow({ intake: { ...defaultIntakeDraft(), ...read!.intake }, scenario: null });
-    expect(destinationAnswersIn(storedText(store))).toEqual([]);
+  it("a store the browser refuses doesn't stop the other from being cleared, and without a window nothing is touched", () => {
+    const { session, local } = fakeWindow({ removeFromSession: true });
+    session.set("dotami-journey-v3", "{}");
+    local.set("dotami-employment-suggestions", "[]");
+    expect(() => removeRetiredWindowStorage()).not.toThrow();
+    expect([...local.keys()]).toEqual([]);
+    delete (globalThis as unknown as Record<string, unknown>).window;
+    expect(() => removeRetiredWindowStorage()).not.toThrow();
   });
 
-  it("the pure parts: what goes to the window, and what is read from it", () => {
-    expect(destinationAnswersIn(JSON.stringify(forWindowStorage(journeyWith(ANSWERS))))).toEqual([]);
-    expect(fromWindowStorage(null)).toBeNull();
-    expect(fromWindowStorage({ scenario: null })).toEqual({ scenario: null });
-    expect(fromWindowStorage(journeyWith(ANSWERS))?.intake?.destination).toBeUndefined();
+  it("Delete takes from the window's memory what it takes from the data file: the sentence and the destination words with the statements", () => {
+    const held = typedIntake();
+    // What the sentence put there, so the check below is checking something.
+    expect(held.manualEntry).toBeTruthy();
+    expect(held.description).toBe(held.manualEntry);
+    expect(held.intentParse?.rawLabel).toBeTruthy();
+    const after = intakeAfterDelete(held, ["statements"]);
+    expect(after.manualEntry).toBeUndefined();
+    expect(after.manualEntrySaidAt).toBeUndefined();
+    expect(after.description).toBe("");
+    expect(after.intentParse).toBeNull();
+    expect(after.destination).toEqual({ lookingFor: "business", place: "CA-ON", incomeWanted: ANSWERS.incomeWanted });
+    // What was confirmed for the idea stays: those go with "Your ideas".
+    expect(after.goals).toEqual(held.goals);
+    expect(after.activityTags).toEqual(held.activityTags);
+    expect(after.name).toBe("Invented idea");
+    // None of the sentence's words is left anywhere in what the window holds.
+    expect(JSON.stringify(after)).not.toMatch(/sign shop/i);
   });
 
-  it("the provider is the only code that writes the journey key, and it writes through forWindowStorage", () => {
-    const writes = journeyWritesIn(sourceFiles(["components", "lib", "app"]));
-    expect(writes).toEqual([{ file: "components/shared/journey-provider.tsx", throughTheFilter: true }]);
+  it("Delete: the income with the income, both with both, everything with the ideas; anything else leaves the memory as it was", () => {
+    const held = typedIntake();
+    const income = intakeAfterDelete(held, ["income-wanted"]);
+    expect(income.manualEntry).toBe(held.manualEntry);
+    expect(income.destination).toEqual({ destination: ANSWERS.destination, lookingFor: "business", place: "CA-ON" });
+    const both = intakeAfterDelete(held, ["statements", "income-wanted"]);
+    expect(both.manualEntry).toBeUndefined();
+    expect(both.destination).toEqual({ lookingFor: "business", place: "CA-ON" });
+    expect(intakeAfterDelete(held, ["ideas", "expenses"])).toEqual(defaultIntakeDraft());
+    // Planted control: a Delete of something else leaves what the window holds as it was.
+    expect(intakeAfterDelete(held, ["expenses", "skill-marks"])).toEqual(held);
   });
 
-  it("planted control: a raw write of the journey is caught by the same source scan", () => {
-    const planted = journeyWritesIn([
-      { file: "planted.tsx", text: "sessionStorage.setItem(JOURNEY_STORAGE_KEY, JSON.stringify(state));" },
-    ]);
-    expect(planted).toEqual([{ file: "planted.tsx", throughTheFilter: false }]);
-  });
-
-  it("Delete reaches the answers held in memory: words with the statements, income with the income, all with the ideas", () => {
+  it("destinationAfterDelete: words with the statements, income with the income, all with the ideas", () => {
     expect(destinationAfterDelete(ANSWERS, ["statements"])).toEqual({
       lookingFor: "business",
       place: "CA-ON",
@@ -181,15 +263,26 @@ function sourceFiles(dirs: readonly string[]): { file: string; text: string }[] 
   return out;
 }
 
-/** Every write of the journey key, and whether what it writes goes through `forWindowStorage` first. */
-function journeyWritesIn(files: readonly { file: string; text: string }[]) {
-  const writes: { file: string; throughTheFilter: boolean }[] = [];
-  for (const { file, text } of files) {
-    for (const m of text.matchAll(/sessionStorage\s*\.\s*setItem\(\s*(JOURNEY_STORAGE_KEY|["']dotami-journey-v3["'])\s*,([^;]*)\);/g)) {
-      writes.push({ file, throughTheFilter: /forWindowStorage\(/.test(m[2]!) });
+/**
+ * Every read or write (getItem, setItem) of a retired key, by the key written out or by a string constant the
+ * files declare for it. Comments don't count (a sentence about the old key is not a use of it); a removal isn't
+ * a read or a write.
+ */
+function retiredKeyUsesIn(files: readonly { file: string; text: string }[]): string[] {
+  const code = files.map(({ file, text }) => ({ file, code: simplify(text, true) }));
+  const constants = new Map<string, string>();
+  for (const { code: c } of code) {
+    for (const m of c.matchAll(/\bconst\s+([A-Za-z_$][\w$]*)\s*=\s*(["'])([^"'\n]*)\2/g)) constants.set(m[1]!, m[3]!);
+  }
+  const found: string[] = [];
+  for (const { file, code: c } of code) {
+    for (const m of c.matchAll(/\b(localStorage|sessionStorage)\s*\.\s*(getItem|setItem)\s*\(\s*([^,)]*)/g)) {
+      const arg = m[3]!.trim();
+      const key = arg.match(/^(["'`])([^"'`$]*)\1$/)?.[2] ?? constants.get(arg);
+      if (key !== undefined && RETIRED_KEYS.includes(key)) found.push(`${file}: ${m[1]}.${m[2]}(${key})`);
     }
   }
-  return writes;
+  return found.sort();
 }
 
 // ---------------------------------------------------------------------------------------------------------

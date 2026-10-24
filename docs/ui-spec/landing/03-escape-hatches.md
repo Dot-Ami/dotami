@@ -6,7 +6,7 @@
 
 Page: Landing (`/`) · Component: `components/discovery/landing-page.tsx`
 
-Last updated: 2026-07-02
+Last updated: 2026-10-24 (Open cockpit's idea: the window's memory, never its storage); 2026-07-02
 
 ## What they are
 
@@ -23,8 +23,9 @@ Two links that skip the free-text → parse → intake flow entirely.
   then `router.push("/cockpit?sample=maya-woodworker")`. Builds a fully-formed scenario
   client-side from the Maya archetype, bypassing intent parse and intake completely.
 - **Open cockpit:** raw `<GhostLink href="/cockpit">` — no handler, no state change.
-  Navigates to `/cockpit` with whatever `scenario`/`intake` already exist in
-  `sessionStorage` from a prior visit, or nothing at all on a first visit.
+  Navigates to `/cockpit` with the idea last open in this window, held in the window's memory
+  (since 2026-10-24; until then the tab's `sessionStorage`), else the most recently saved idea, or
+  the empty state when none is saved.
 
 ## Why they exist (user purpose)
 

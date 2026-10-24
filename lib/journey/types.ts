@@ -47,18 +47,18 @@ export interface IntakeDraft {
   /** The person's own calendar day (YYYY-MM-DD) they typed it; saved with it when the idea is first saved. */
   manualEntrySaidAt?: string;
   /**
-   * True once this sentence is done with: a save kept it with an idea, or the person deleted their
-   * statements since. A done sentence is never sent again, so a second "Open my map" from the same tab
-   * (a new idea each time) neither copies it nor brings back one the person deleted. A new sentence
-   * typed on the front door or in the intake's box clears it.
+   * True once a save kept this sentence with an idea. A done sentence is never sent again, so a second "Open my
+   * map" from the same window (a new idea each time) doesn't copy it. Delete → Your statements takes the sentence
+   * out of the draft altogether (lib/journey/first-save.ts `afterStatementsDeleted`). A new sentence typed on the
+   * front door or in the intake's box clears it.
    */
   manualEntryDone?: boolean;
   /** Latest intent-parse result — Screen A renders/edits it; null once confirmed. */
   intentParse?: IntentParseResult | null;
   /**
-   * *Your destination*'s answers (2026-10-12; lib/front-door/draft.ts), held in memory only: never written to
-   * window storage (2026-10-23, lib/journey/window-storage.ts). Optional, so a draft
-   * saved before it reads the same; reset with the rest of the journey by the front door's Map it.
+   * *Your destination*'s answers (2026-10-12; lib/front-door/draft.ts), held in the window's memory like the rest
+   * of the journey, never in its storage (lib/journey/window-storage.ts). Optional, so a draft without them reads
+   * the same; reset with the rest of the journey by the front door's Map it.
    */
   destination?: DestinationDraft;
 }
@@ -90,8 +90,3 @@ export const defaultIntakeDraft = (): IntakeDraft => ({
   hireFirst: false,
   capitalPurchasePlanned: false,
 });
-
-// v2: 2026-07-02 draft reshape (blank defaults, nullable province, custom tags).
-// v3: 2026-09-14 (S2.5.4h) — Explore's goal weights / motivators / path pins removed from the
-// draft; bumping the key orphans stale drafts that still carry them.
-export const JOURNEY_STORAGE_KEY = "dotami-journey-v3";

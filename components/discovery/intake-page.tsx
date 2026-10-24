@@ -75,29 +75,6 @@ const EMPLOYMENT_OPTIONS: { id: EmploymentStatus; label: string }[] = [
   { id: "other", label: "Other…" },
 ];
 
-const EMPLOYMENT_SUGGESTIONS_KEY = "dotami-employment-suggestions";
-
-function readEmploymentSuggestions(): string[] {
-  if (typeof window === "undefined") return [];
-  try {
-    const raw = localStorage.getItem(EMPLOYMENT_SUGGESTIONS_KEY);
-    return raw ? (JSON.parse(raw) as string[]) : [];
-  } catch {
-    return [];
-  }
-}
-
-function saveEmploymentSuggestion(value: string) {
-  const v = value.trim();
-  if (!v || typeof window === "undefined") return;
-  try {
-    const list = [...new Set([v, ...readEmploymentSuggestions()])].slice(0, 20);
-    localStorage.setItem(EMPLOYMENT_SUGGESTIONS_KEY, JSON.stringify(list));
-  } catch {
-    // ignore quota errors
-  }
-}
-
 /** Consequence-first rank (forks and time-boxed items carry the differentiating info). */
 function rankUnlocks(unlocks: UnlockItem[]): UnlockItem[] {
   const score = (item: UnlockItem) =>
@@ -192,14 +169,11 @@ export function IntakePage({
    * Step 3's Look inside, on the typed way (2026-10-22): saves the idea from the intake's answers on the road the
    * person opened, with the steps' answers, then opens the map. Until then Screen B's "Open my map" did this on the
    * general road with no road picked. A save that fails opens nothing (resolves false), as on Pick a future: the
-   * tab's copy would be drawn on the general road, not the road the person opened.
+   * window's copy would be drawn on the general road, not the road the person opened.
    */
   async function lookInside(road: Road, answers: StepAnswers): Promise<boolean> {
     if (intake.province === null || intake.employmentStatus === null || opening) return false;
     const employmentStatus = intake.employmentStatus;
-    if (intake.employmentStatus === "other") {
-      saveEmploymentSuggestion(intake.employmentOther);
-    }
     setIntake((prev) => ({ ...prev, intentParse: null }));
     const scenario = buildScenarioFromIntake(
       {
@@ -220,11 +194,11 @@ export function IntakePage({
     setScenario(scenario);
     // Issue #1: the venture reaches the database here, not only when someone finds "Save" on
     // the cockpit rail. Since 2026-10-22 a save that fails opens nothing and step 3 says so, as on
-    // Pick a future: the tab's copy would be drawn without the road the person opened.
+    // Pick a future: the window's copy would be drawn without the road the person opened.
     setOpening(true);
     // This first save also keeps the sentence the person typed, word for word with its day, and the goal
     // chips, with the idea (lib/journey/first-save.ts). Later saves of the idea never carry them, and once
-    // a save has kept the sentence this tab never sends it again: the next "Open my map" is a new idea.
+    // a save has kept the sentence this window never sends it again: the next "Open my map" is a new idea.
     const sent = withTheSteps(firstSaveFromIntake(intake, new Date().toLocaleDateString("en-CA")), road.id, answers);
     const saved = await saveScenario(scenario, sent);
     setIntake((prev) => afterFirstSave(prev, sent, saved));
@@ -471,23 +445,18 @@ export function IntakePage({
                     ))}
                   </select>
                   {intake.employmentStatus === "other" ? (
-                    <>
-                      <input
-                        list="employment-suggestions"
-                        value={intake.employmentOther}
-                        onChange={(e) =>
-                          setIntake((p) => ({ ...p, employmentOther: e.target.value }))
-                        }
-                        aria-label="Your employment, in your words"
-                        placeholder="Tell us in your words"
-                        className="mt-2 w-full max-w-sm rounded-sm border border-rule bg-ink px-3 py-2 text-lead text-paper outline-hidden placeholder:text-stone-dim focus:border-maple-soft"
-                      />
-                      <datalist id="employment-suggestions">
-                        {readEmploymentSuggestions().map((s) => (
-                          <option key={s} value={s} />
-                        ))}
-                      </datalist>
-                    </>
+                    // Held in the window's memory with the rest of the intake and kept nowhere: the idea keeps
+                    // "other" only. Until 2026-10-24 earlier answers were offered back from the window's storage
+                    // (`dotami-employment-suggestions`), with no end date and out of Delete's reach.
+                    <input
+                      value={intake.employmentOther}
+                      onChange={(e) =>
+                        setIntake((p) => ({ ...p, employmentOther: e.target.value }))
+                      }
+                      aria-label="Your employment, in your words"
+                      placeholder="Tell us in your words"
+                      className="mt-2 w-full max-w-sm rounded-sm border border-rule bg-ink px-3 py-2 text-lead text-paper outline-hidden placeholder:text-stone-dim focus:border-maple-soft"
+                    />
                   ) : null}
                 </FieldGroup>
 

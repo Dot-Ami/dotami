@@ -39,23 +39,39 @@ person is asked).
 
 ### What DotAmi keeps, and where
 
-- **Your destination's answers are no longer in the window's storage (2026-10-23, the pre-release review).**
-  Where they were: since 2026-10-12, your words and their day, business or career or both, your province or
-  territory and the yearly income you agreed to were also written to the tab's `sessionStorage` under
-  `dotami-journey-v3`, on this computer only, until the tab closed; nothing was sent anywhere, and Delete didn't
-  reach that copy. Now none of them is written there: the journey provider writes the rest of the journey
-  without them, and drops any copy an older DotAmi left when a page opens
-  ([`lib/journey/window-storage.ts`](../lib/journey/window-storage.ts),
-  [`components/shared/journey-provider.tsx`](../components/shared/journey-provider.tsx)). Your words and the
-  income are kept in the data file as soon as you give them, as before; business-or-career and the place are
-  held in the page's memory until you pick a future, which keeps them with that idea (`Venture.lookingFor`,
-  `Venture.province`, as before; no new column, no migration), and a reload or a new window asks those two
-  again, as their receipts now say. Delete takes the answers held in memory with what they belong to: the words
-  with *Your statements*, the income with *The yearly income you said you want*, everything with *Your ideas*
-  ([`components/your-data/delete-menu.tsx`](../components/your-data/delete-menu.tsx)). *What DotAmi knows about
-  you* says the same under *The intake in progress* ([`lib/privacy/inventory.ts`](../lib/privacy/inventory.ts)).
-  Still in window storage, unchanged: the rest of the intake in progress, a statement that couldn't be saved, and
-  the job descriptions typed under "Other…", each listed on that page with how long it lasts.
+- **Nothing about you sits in the window's storage any more (2026-10-24, the pre-release review and the
+  maintainer's rule; Your destination's answers since 2026-10-23).** Where it was, on this computer only and
+  sent nowhere: the tab's `sessionStorage` held the intake in progress under `dotami-journey-v3` (the sentence
+  typed on the front door, the kinds of work, province or territory, employment and the words typed under
+  *Other…*, revenue estimates, the idea's name) and the idea open on the map with its answers, a future picked on
+  *Pick a future* included, with its place; from 2026-10-12 to 2026-10-23 also your answers on Your destination.
+  It lasted until the tab closed; after Delete → *Your statements* the sentence stayed in it, marked never to be
+  sent again. `dotami-person-unsaved` held a statement that couldn't be saved, until the tab closed.
+  `localStorage` held up to 20 job descriptions typed under *Other…* (`dotami-employment-suggestions`) with no
+  end date, read again at each launch of the desktop app since 0.4.1. Delete reached none of the three. Now
+  DotAmi reads and writes none of them. The journey is held in the window's memory only
+  ([`lib/journey/held-journey.ts`](../lib/journey/held-journey.ts), through
+  [`components/shared/journey-provider.tsx`](../components/shared/journey-provider.tsx)): moving between
+  DotAmi's pages keeps it, Mara's example and back included, and a reload, a new window or the desktop app's Go
+  menu starts it afresh. What you answer is kept in the data file where it already was: your destination words
+  and agreed income as soon as you give them, the sentence and the goal chips with the idea's first save,
+  business-or-career and the place with the future you pick, and every change on the map by its autosave. A
+  statement that couldn't be saved stays in its box, said not kept, with *Keep this* to try again. The box under
+  *Other…* offers no earlier descriptions; what is typed there was never kept with the idea, and still isn't
+  (whether to keep it or remove the box is the maintainer's later call, docs/task-list.md). The window's storage
+  now holds only how you left the cockpit (`dotami-cockpit-folds`), as before. When one of the journey's pages
+  opens (every page but Mara's example), it removes the three old keys where an older copy left them, without
+  reading them ([`lib/journey/window-storage.ts`](../lib/journey/window-storage.ts)
+  `removeRetiredWindowStorage`). In the desktop app, a launch on another address (the usual one taken) can't
+  reach the copy kept for the usual address, which goes at the next launch there. Not checked: whether the
+  browser's own files on disk still hold removed values until it rewrites them. Delete takes from the window's
+  memory what it takes from the data file: the sentence (with its copies) and the destination words with *Your
+  statements*, the income with *The yearly income you said you want*, and everything with *Your ideas*
+  ([`components/your-data/delete-menu.tsx`](../components/your-data/delete-menu.tsx), `intakeAfterDelete`).
+  *What DotAmi knows about you* lists one key under the window's own storage
+  ([`lib/privacy/inventory.ts`](../lib/privacy/inventory.ts) `WINDOW_STORAGE`; the three old keys are in
+  `RETIRED_WINDOW_STORAGE`), and [`tests/privacy-inventory.spec.ts`](../tests/privacy-inventory.spec.ts) fails
+  on any other key read or written. No table, column or migration.
 
 - **Changing your place on a saved idea changes that idea (2026-10-23, S2.5.33's bug 33a).** Asks: *Which
   province or territory are you in?*, from *Change* on *You told us your place is …* in the cockpit's *What
@@ -132,6 +148,10 @@ person is asked).
 
 ### What the policy will need to say
 
+- **"The window's own storage holds nothing you typed or answered, only how you left the cockpit's screen.
+  Until this version it also held the intake in progress, a statement that couldn't be saved and the job
+  descriptions typed under Other…; this version removes those where it finds them."**
+  ([`lib/privacy/inventory.ts`](../lib/privacy/inventory.ts) `WINDOW_STORAGE`, `RETIRED_WINDOW_STORAGE`.)
 - **"DotAmi's desktop app answers only its own window. It does not protect your data from a program running
   under your own Windows account, which can read the app's memory and files. A copy run from source answers
   every program on the computer while it runs."** ([figures-privacy-review.md](architecture/figures-privacy-review.md),

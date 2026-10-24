@@ -12,7 +12,7 @@ const loading = <div className="flex h-screen items-center justify-center text-s
 
 interface CockpitPageClientProps {
   initialScenario: Scenario | null;
-  /** True when the URL named a venture explicitly — the session's scenario must not override it. */
+  /** True when the URL named a venture explicitly — the journey's scenario (the idea last open in this window) must not override it. */
   pinned?: boolean;
 }
 
@@ -26,7 +26,7 @@ export function CockpitPageClient({ initialScenario, pinned = false }: CockpitPa
 
 /**
  * The cockpit for an invented example future, by its id (docs/ui-spec/example/_index.md). It is drawn under
- * a journey that hands out the example and never touches the tab's own (no sessionStorage read or write).
+ * a journey that hands out the example and never touches the person's own (held in the window's memory meanwhile).
  * The id comes from the address; the page has already refused any id that isn't an example.
  */
 export function ExampleCockpitClient({ exampleId }: { exampleId: string }) {

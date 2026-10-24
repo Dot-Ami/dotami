@@ -7,7 +7,7 @@ export const dynamic = "force-dynamic";
 
 /**
  * First paint: `?venture=<id>` (from the ideas page) loads that venture and pins it — the
- * session's scenario does not override an explicit choice. Otherwise the most recently saved
+ * journey's scenario (the idea last open in this window) does not override an explicit choice. Otherwise the most recently saved
  * venture, else null and the cockpit shows its empty state. S2.5.4h/i.
  */
 async function resolveInitialScenario(ventureId: string | undefined) {

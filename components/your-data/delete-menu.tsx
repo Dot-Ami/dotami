@@ -7,8 +7,7 @@ import { useJourney } from "@/components/shared/journey-provider";
 import { postJson } from "@/components/ventures/agree-prompt";
 import type { RecordRetentionEntry } from "@/lib/engines/compliance/v2026";
 import { howCheckedWords, isCheckFirst } from "@/lib/engines/shared/citation-check";
-import { afterStatementsDeleted } from "@/lib/journey/first-save";
-import { destinationAfterDelete } from "@/lib/journey/window-storage";
+import { intakeAfterDelete } from "@/lib/journey/window-storage";
 import type { DeleteKindId, DeleteMenuEntry, KeptLink } from "@/lib/privacy/inventory";
 import { folderKeys, keptLinkKey, keptLinks, SAFETY_COPIES_KEY, SET_ASIDE_RECEIPTS_KEY } from "@/lib/privacy/kept-links";
 
@@ -143,16 +142,14 @@ export function DeleteMenu({ menu, counts, keptCounts, tableNames, notCleared, r
     }
     const body = result.body as Outcome;
     setOutcome({ deleted: body.deleted, left: body.left, kept: body.kept, wiped: body.wiped, receiptFiles: body.receiptFiles });
-    // The intake in progress can still hold a deleted idea; a Save on the map would bring it back.
+    // The journey held in the window's memory goes with what was deleted (lib/journey/window-storage.ts
+    // `intakeAfterDelete`): all of it with the ideas (the idea open on the map too, or a Save there would bring
+    // a deleted idea back), the front door's sentence and the destination words with the statements, the
+    // income with the income.
     if (ticked.includes("ideas")) resetJourney();
     else {
-      // The sentence typed on the front door may still sit in this tab's draft: once the statements are
-      // deleted, a later "Open my map" must not write it back (lib/journey/first-save.ts).
-      if (ticked.includes("statements")) setIntake(afterStatementsDeleted);
-      // Your destination's answers held in this page's memory go with what they belong to: the words with
-      // the statements, the income with the income (lib/journey/window-storage.ts).
       const deleted = [...ticked];
-      setIntake((prev) => ({ ...prev, destination: destinationAfterDelete(prev.destination, deleted) }));
+      setIntake((prev) => intakeAfterDelete(prev, deleted));
     }
     setTicked([]);
     setStep("done");
@@ -397,8 +394,8 @@ export function DeleteMenu({ menu, counts, keptCounts, tableNames, notCleared, r
           ) : null}
           {setAsideTicked ? <SetAsideWarning text={setAsideWarning} /> : null}
           <p className="mt-3 text-body text-paper-dim">
-            Everything not ticked stays, and so does what Delete doesn&apos;t reach (the job descriptions you typed and how
-            you left the cockpit, kept in this window&apos;s own storage and offered back next time; the log).
+            Everything not ticked stays, and so does what Delete doesn&apos;t reach (how you left the cockpit, kept in
+            this window&apos;s own storage and offered back next time; the log).
             {/* Only said when there are copies to leave: a copy run from source has none. */}
             {!copiesTicked && (counts[COPIES] ?? 0) > 0
               ? " The safety copies in the backups folder aren't ticked, so they still hold what you delete."

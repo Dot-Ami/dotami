@@ -29,7 +29,9 @@ be*. Next: *Pick a future* (`/futures`).
 
 ## Page-level state
 
-`useJourney()` — the tab's journey draft gains `destination` (the answers so far: the destination's
+`useJourney()` — the journey draft gains `destination` (the answers so far: the destination's
 words and how they were kept, the *business / career / both* choice, the place code, and what the income
-question came to). It is kept in the tab only (`dotami-journey-v3`, sessionStorage); the destination
-and the income are also in the data file as soon as they are kept.
+question came to). It is held in the window's memory only, never in its storage (since 2026-10-24,
+`lib/journey/held-journey.ts`; from 2026-10-12 to 2026-10-23 it was also written to the tab's
+`sessionStorage`, `dotami-journey-v3`); the destination and the income are also in the data file as soon
+as they are kept, and business-or-career and the place once a future is picked.

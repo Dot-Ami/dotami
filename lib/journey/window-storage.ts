@@ -1,46 +1,53 @@
 import type { DestinationDraft } from "@/lib/front-door/draft";
 import type { DeleteKindId } from "@/lib/privacy/inventory";
 
-import type { IntakeDraft, JourneyState } from "./types";
+import { afterStatementsDeleted } from "./first-save";
+import { defaultIntakeDraft, type IntakeDraft } from "./types";
 
 /**
- * What of the journey goes into the tab's window storage (`sessionStorage`, `dotami-journey-v3`), and what
- * never does (2026-10-23, the pre-release review of 30f).
+ * Nothing of the journey goes into the window's storage (the maintainer's rule: it may hold how the screen was
+ * left, `dotami-cockpit-folds`, and nothing the person typed or answered). *Your destination*'s answers came
+ * out of it on 2026-10-23, and the rest of the journey on 2026-10-24: the intake in progress and the idea open
+ * on the map are held in the window's memory only (lib/journey/held-journey.ts, through the journey provider,
+ * components/shared/journey-provider.tsx). A reload, a new window or the desktop app's Go menu starts that
+ * memory empty. What the person answers reaches the data file where the design already keeps it:
  *
- * *Your destination*'s answers are the person's own (their words, business or career or both, their
- * province or territory, the income they agreed to), and the rule is that nothing about the person sits
- * in window storage: their answers belong in the data file. They are held in the page's memory only
- * (the journey provider, `components/shared/journey-provider.tsx`) and reach the data file where the
- * design already puts them:
- *
- * - question 1 (the words) and question 4 (the agreed income) are kept in the data file the moment they
- *   are given, and `/start` reads them back on every visit (lib/front-door/kept.ts);
- * - questions 2 and 3 (business or career, the place) are kept with the idea when a future is picked
- *   (`Venture.lookingFor`, `Venture.province`). Before that there is no idea to keep them with, so they
- *   live in memory only, and a reload or a new window asks them again (the receipts say so).
- *
- * Memory, not a new place in the data file, because both are answers about one idea: the data file already
- * keeps them on the idea, and keeping them beforehand would mean a second, person-wide copy that the next
- * idea could silently inherit, which would be a fact about the person DotAmi worked out rather than one they
- * gave for that idea.
+ * - Your destination's words (question 1) and agreed income (question 4): the moment they are given, and
+ *   `/start` reads them back on every visit (lib/front-door/kept.ts);
+ * - the front door's sentence and the intake's goal chips: with the idea's first save (lib/journey/first-save.ts);
+ * - business or career (question 2) and the place (question 3): with the idea a future is picked for
+ *   (`Venture.lookingFor`, `Venture.province`). Before that there is no idea to keep them with, and keeping them
+ *   beforehand would mean a second, person-wide copy the next idea could silently inherit, a fact about the
+ *   person DotAmi worked out rather than one they gave for that idea; so they are asked again after a reload;
+ * - the idea's own answers on the map: by the cockpit's autosave.
  */
-export function forWindowStorage(state: JourneyState): JourneyState {
-  return { ...state, intake: withoutDestination(state.intake) };
-}
 
 /**
- * What is read back from window storage, without any destination answers an older copy of DotAmi wrote
- * there before 2026-10-23: the provider writes the journey straight back, so those answers are gone from
- * the window as soon as the page loads.
+ * Keys older copies of DotAmi wrote with the person's own words or answers in them (lib/privacy/inventory.ts
+ * RETIRED_WINDOW_STORAGE). Only ever removed now, never read or written (tests/privacy-inventory.spec.ts).
  */
-export function fromWindowStorage(stored: Partial<JourneyState> | null): Partial<JourneyState> | null {
-  if (!stored) return null;
-  return stored.intake ? { ...stored, intake: withoutDestination(stored.intake) } : stored;
-}
+export const RETIRED_JOURNEY_KEY = "dotami-journey-v3";
+export const RETIRED_UNSAVED_STATEMENTS_KEY = "dotami-person-unsaved";
+export const RETIRED_EMPLOYMENT_SUGGESTIONS_KEY = "dotami-employment-suggestions";
 
-function withoutDestination<T extends Partial<IntakeDraft>>(intake: T): T {
-  const { destination: _held, ...rest } = intake;
-  return rest as T;
+/**
+ * Removes what an older DotAmi left in this window's storage, without reading it. The journey provider runs it
+ * when one of the journey's pages opens; Mara's example, outside them, touches no storage at all.
+ */
+export function removeRetiredWindowStorage(): void {
+  if (typeof window === "undefined") return;
+  // One store at a time: a browser that refuses one (blocked site data) still has the other cleared.
+  try {
+    sessionStorage.removeItem(RETIRED_JOURNEY_KEY);
+    sessionStorage.removeItem(RETIRED_UNSAVED_STATEMENTS_KEY);
+  } catch {
+    // Nothing to clear, or the browser refused.
+  }
+  try {
+    localStorage.removeItem(RETIRED_EMPLOYMENT_SUGGESTIONS_KEY);
+  } catch {
+    // As above.
+  }
 }
 
 /**
@@ -59,4 +66,17 @@ export function destinationAfterDelete(
   if (deleted.includes("statements")) delete out.destination;
   if (deleted.includes("income-wanted")) delete out.incomeWanted;
   return Object.keys(out).length > 0 ? out : undefined;
+}
+
+/**
+ * The intake held in the window's memory after Delete on *What DotAmi knows about you*: what goes from the data
+ * file goes from memory too (2026-10-24). With the statements, the sentence typed on the front door and its copies
+ * (lib/journey/first-save.ts `afterStatementsDeleted`) and Your destination's words; with the income, the income;
+ * with the ideas, the whole intake (the Delete menu also drops the idea open on the map, so a Save there can't
+ * bring a deleted idea back). Anything else Delete removes leaves the intake as it was.
+ */
+export function intakeAfterDelete(intake: IntakeDraft, deleted: readonly DeleteKindId[]): IntakeDraft {
+  if (deleted.includes("ideas")) return defaultIntakeDraft();
+  const draft = deleted.includes("statements") ? afterStatementsDeleted(intake) : intake;
+  return { ...draft, destination: destinationAfterDelete(draft.destination, deleted) };
 }

@@ -515,7 +515,7 @@ export const DELETE_MENU: readonly DeleteMenuEntry[] = [
     goesWithIt:
       "All of them go at once. DotAmi never deletes one statement by itself: a newer statement is how you change an older one.",
     learnMore:
-      "These are the things you told DotAmi about yourself, word for word, with their dates, the sentence you typed on the front door for each idea, and your answers to “where do you want to be”. Nothing else uses them to decide anything, so nothing else changes, but the “In your words” panel is empty afterwards, your ideas' cards no longer show what you typed, and there is no record that you said them. A statement you kept in this tab only, because it couldn't be saved, isn't in the data file and stays until the tab closes.",
+      "These are the things you told DotAmi about yourself, word for word, with their dates, the sentence you typed on the front door for each idea, and your answers to “where do you want to be”. Nothing else uses them to decide anything, so nothing else changes, but the “In your words” panel is empty afterwards, your ideas' cards no longer show what you typed, and there is no record that you said them.",
     built: true,
   },
   {
@@ -617,7 +617,7 @@ export const NOT_CLEARED_BY_DELETE: readonly { name: string; why: string }[] = [
     // read again; since desktop/app-port.mjs it is read at every launch (a review found this line still
     // said otherwise).
     name: "What this window keeps in its own storage",
-    why: "Not cleared. The job descriptions you typed under “Other…” on the intake, and how you left the cockpit, are kept in this window's own storage, not in the data file, and offered back next time: in the desktop app from one launch to the next since 2026-10-17, when the app started using the same local address each time. To remove them in the desktop app, close DotAmi and delete the “Local Storage” folder in the data folder (the folder that holds the data file; its path is above); in a browser, clear this site's data.",
+    why: "Not cleared. How you left the cockpit (which parts are folded, which layers are on, whether you put away the first visit's tip) is kept in this window's own storage, not in the data file, and offered back next time: in the desktop app from one launch to the next since 2026-10-17, when the app started using the same local address each time. It holds nothing you typed or answered. To remove it in the desktop app, close DotAmi and delete the “Local Storage” folder in the data folder (the folder that holds the data file; its path is above); in a browser, clear this site's data.",
   },
   {
     name: "The log",
@@ -645,17 +645,12 @@ export const NOT_CLEARED_BY_DELETE: readonly { name: string; why: string }[] = [
 export const SET_ASIDE_RECEIPTS_WARNING =
   "The receipt folders set aside in the backups folder go too: receipts-locked-… (receipts Start a new key set aside, with the old key file) and receipts-before-restore-… (the receipts folder as it was before a restore). Afterwards those receipts can never be opened, even if the old key comes back.";
 
-/** The browser-storage keys. Each is a string constant in the code, so the test can find it. */
+/**
+ * The browser-storage keys DotAmi reads or writes. Each is a string constant in the code, so the test can find it.
+ * Since 2026-10-24 only how the screen was left, never anything the person typed or answered (the maintainer's
+ * rule; tests/privacy-inventory.spec.ts fails on any other key read or written).
+ */
 export const WINDOW_STORAGE: readonly WindowStorageEntry[] = [
-  {
-    store: "localStorage",
-    key: "dotami-employment-suggestions",
-    name: "Job descriptions you typed",
-    holds:
-      "Up to 20 job descriptions you typed under “Other…” on the intake, offered back to you next time.",
-    lasts:
-      "Until this window's site data is cleared; it has no end date, and Delete doesn't reach it. In the desktop app it lasts from one launch to the next since 2026-10-17, when the app started using the same local address each time (desktop/app-port.mjs); a launch that has to use another address, because the usual one is taken, starts without it, and the list stays in the app's own folder for the next launch on the usual address. The app has no button that clears it: close DotAmi and delete the “Local Storage” folder in the data folder. In a browser, clear this site's data.",
-  },
   {
     store: "localStorage",
     key: "dotami-cockpit-folds",
@@ -665,21 +660,41 @@ export const WINDOW_STORAGE: readonly WindowStorageEntry[] = [
     lasts:
       "Until this window's site data is cleared; it has no end date, and Delete doesn't reach it. In the desktop app it lasts from one launch to the next since 2026-10-17, when the app started using the same local address each time (desktop/app-port.mjs); a launch that has to use another address, because the usual one is taken, opens as a first visit, and the answers stay in the app's own folder for the next launch on the usual address. The app has no button that clears it: close DotAmi and delete the “Local Storage” folder in the data folder. In a browser, clear this site's data.",
   },
+];
+
+/**
+ * A key an older copy of DotAmi wrote with the person's own words or answers in it. DotAmi now only removes it,
+ * without reading it, when one of the journey's pages opens (lib/journey/window-storage.ts
+ * `removeRetiredWindowStorage`); Mara's example opens none. Listed so the test can tell a removal of an old key
+ * from a new key, and so the privacy log can say what each held.
+ */
+export interface RetiredWindowStorageEntry {
+  store: "localStorage" | "sessionStorage";
+  key: string;
+  /** What it held, while it was written. */
+  held: string;
+  /** The day DotAmi stopped reading and writing it (YYYY-MM-DD). */
+  retired: string;
+}
+
+export const RETIRED_WINDOW_STORAGE: readonly RetiredWindowStorageEntry[] = [
   {
     store: "sessionStorage",
     key: "dotami-journey-v3",
-    name: "The intake in progress",
-    holds:
-      "What you've entered on the intake so far, including the sentence you typed to describe your idea and your revenue estimates. When the map opens, the sentence (once, with the first idea it opens) and the goals marked on the intake are also saved with the idea in the data file. It also holds the idea open on the map, with its branch picks and your own “I'd incorporate at” amount if you typed one. Your answers on Your destination are not in it since 2026-10-23 (from 2026-10-12 they were): your words and the income you agreed to are in the data file as soon as you give them, and business, career or both and your province or territory are held only in the page's memory until you pick a future, which keeps them with that idea in the data file. A reload or a new window asks those two again, and a copy an older DotAmi left here is taken out when a page opens.",
-    lasts: "Until this window or tab closes.",
+    held: "The intake in progress: the sentence typed on the front door, the kinds of work, province or territory, employment and the words typed under “Other…”, revenue estimates and the idea's name; the idea open on the map with its answers, a future picked on Pick a future included, with its place; from 2026-10-12 to 2026-10-23 the answers on Your destination too. Until the window closed.",
+    retired: "2026-10-24",
   },
   {
     store: "sessionStorage",
     key: "dotami-person-unsaved",
-    name: "A statement that couldn't be saved",
-    holds:
-      "A statement you typed when the data file couldn't be reached, kept in this tab so it isn't lost. It is not in the data file.",
-    lasts: "Until this window or tab closes.",
+    held: "A statement typed on About you or the cockpit's rail when the data file couldn't be reached. Until the window closed.",
+    retired: "2026-10-24",
+  },
+  {
+    store: "localStorage",
+    key: "dotami-employment-suggestions",
+    held: "Up to 20 job descriptions typed under “Other…” on the intake, offered back on the next intake. No end date, and Delete didn't reach it.",
+    retired: "2026-10-24",
   },
 ];
 

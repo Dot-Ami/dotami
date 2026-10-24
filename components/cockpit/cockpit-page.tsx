@@ -185,7 +185,7 @@ const ALL_TEMPLATE_IDS = templatesCatalogV2026.entries.map((entry) => entry.id);
 interface CockpitPageProps {
   /** The most recently saved venture (or the one named by `?venture=`), or null when nothing is saved. */
   initialScenario: Scenario | null;
-  /** S2.5.4i: `?venture=<id>` was explicit — it wins over the session and becomes the session. */
+  /** S2.5.4i: `?venture=<id>` was explicit — it wins over the journey's idea and becomes it. */
   pinned?: boolean;
   /** An invented example future, drawn read-only in place of a saved idea (docs/ui-spec/example/_index.md). */
   example?: ExampleFuture;
@@ -198,15 +198,16 @@ export function CockpitPage({ initialScenario, pinned = false, example }: Cockpi
     example ? example.scenario : pinned ? initialScenario : (journeyScenario ?? initialScenario),
   );
 
-  // `JourneyProvider` reads sessionStorage in its own effect, so on first paint
-  // `journeyScenario` is still null and the server-loaded scenario is used. Once hydration
-  // settles, adopt the session's scenario if one exists and differs — the user's most recent
-  // unsaved edits win over the server snapshot (audit-2026-07-04 C2).
+  // `JourneyProvider` takes up the journey held in the window's memory in its own effect, so on first
+  // paint `journeyScenario` may still be null and the server-loaded scenario is used. Once that settles,
+  // adopt the journey's scenario if one exists and differs — the idea last open in this window, with any
+  // edit not saved yet, wins over the server snapshot (audit-2026-07-04 C2). After a reload the memory is
+  // empty and the server's idea stays (nothing is in the window's storage since 2026-10-24).
   useEffect(() => {
-    // The example is its own: no session scenario ever replaces it.
+    // The example is its own: no journey's scenario ever replaces it.
     if (!hydrated || isExample) return;
     if (pinned) {
-      // An explicit `?venture=` is a deliberate choice: make it the session's scenario.
+      // An explicit `?venture=` is a deliberate choice: make it the journey's scenario.
       if (initialScenario && journeyScenario?.id !== initialScenario.id) setScenario(initialScenario);
       return;
     }

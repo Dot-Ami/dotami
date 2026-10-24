@@ -35,11 +35,6 @@ export interface PersonStatement {
    * 2026-10-11): the newest one is the current destination. Absent on every other statement.
    */
   kind?: "destination";
-  /**
-   * Client-only: false while a typed statement lives only in this browser tab because the
-   * save failed (no database reachable). Never sent by the server.
-   */
-  persisted?: boolean;
 }
 
 /**
@@ -50,7 +45,6 @@ export interface PersonStatement {
  */
 export function statementSourceLabel(s: PersonStatement): string {
   if (s.source === "vault") return `vault · ${s.sourceRef}`;
-  if (s.persisted === false) return "typed · not saved";
   return s.idea ? `typed for your idea “${s.idea.name}”` : "typed in DotAmi";
 }
 

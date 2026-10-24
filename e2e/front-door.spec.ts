@@ -359,8 +359,11 @@ test("Your destination's answers never sit in window storage; a new window asks 
   expect(stored).not.toContain("CA-NS");
   expect(stored).not.toContain("lookingFor");
   expect(stored).not.toContain('\\"destination\\"');
-  // The journey itself is still written there (the scan is reading a real write, not an empty store).
-  expect(stored).toContain("dotami-journey-v3");
+  // Nothing of the journey is there at all (2026-10-24): the session store is empty, and the local one holds at
+  // most how the cockpit was left.
+  const { local, session } = JSON.parse(stored) as { local: Record<string, string>; session: Record<string, string> };
+  expect(session).toEqual({});
+  expect(Object.keys(local).filter((k) => k !== "dotami-cockpit-folds")).toEqual([]);
 
   // A new window (its own window storage) asks questions 2 and 3 again; 1 and 4 come from the data file.
   const second = await context.newPage();
@@ -383,5 +386,10 @@ test("Your destination's answers never sit in window storage; a new window asks 
   await third.goto(`/cockpit?venture=${encodeURIComponent(ventureId)}`);
   await expect(third.getByRole("region", { name: "Your goal and gauges" })).toContainText("Nova Scotia");
   await third.close();
-  expect(await windowStorage(page)).not.toContain("CA-NS");
+  // After the pick: not the place code, and not the idea's own province either ("NS", which "CA-NS" never
+  // matched): the idea open on the map is held in the window's memory, not its storage.
+  const after = await windowStorage(page);
+  expect(after).not.toContain("CA-NS");
+  expect(after).not.toContain('\\"NS\\"');
+  expect((JSON.parse(after) as { session: Record<string, string> }).session).toEqual({});
 });
