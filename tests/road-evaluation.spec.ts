@@ -355,6 +355,9 @@ describe("the four gauges are counts and sums", () => {
       learning: 1,
       notYet: 1,
       notMarked: 2,
+      // The same five split by kind: the trade ticket is the one legal requirement (2026-10-23).
+      listedSkills: { listed: 4, have: 1, learning: 1, notYet: 0, notMarked: 2 },
+      legalRequirements: { listed: 1, have: 0, learning: 0, notYet: 1, notMarked: 0 },
       addedByYou: { have: 1, learning: 0, notYet: 0 },
       // No job picked: the government's list for one is counted apart (tests/cockpit-skills.spec.ts).
       yourPickOfJob: null,

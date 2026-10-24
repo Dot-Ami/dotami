@@ -3,7 +3,8 @@
  *
  * - The typed way numbers its screens once, from the first to the last: Screen B said "3 of 3 · Ground it" and the
  *   next screen "1 of 3 · Your work".
- * - The step panel shows a legal requirement (an ID number, an agreement) under "What it needs", not as a skill.
+ * - The step panel shows a legal requirement (an ID number, an agreement) under "What it needs", not as a skill;
+ *   the Skills gauge, its list and its switch over the map count legal requirements apart from skills too.
  * - The Structure ladder is drawn only on the tax and structure roads, in plain words.
  * - Your destination names the right cause when DotAmi's own server doesn't answer.
  * - A future's card says in one sentence what "checked by a tool only" means.
@@ -12,10 +13,14 @@ import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 
+import { SkillsListPanel } from "@/components/cockpit/gauge-panels";
+import { OverlaySwitches } from "@/components/cockpit/overlay-switches";
 import { StepPanel } from "@/components/cockpit/step-panel";
 import { StructureLadderRail } from "@/components/cockpit/structure-ladder-rail";
 import { FutureCardItem } from "@/components/front-door/future-card";
 import { JobAndRoadSteps } from "@/components/front-door/job-and-road-steps";
+import { notToldYet } from "@/lib/cockpit/told";
+import { gaugeView, overlayCounts } from "@/lib/cockpit/view";
 import { cockpitWords } from "@/lib/cockpit/words";
 import {
   drawsTheStructureLadder,
@@ -33,7 +38,7 @@ import { TYPED_WAY_SCREENS, typedWayCount } from "@/lib/front-door/typed-way";
 import { destinationWords, pickWords, typedWayWords } from "@/lib/front-door/words";
 import { evaluateRoad } from "@/lib/roads";
 
-import { input, TODAY } from "./helpers/road-to-evaluate";
+import { input, inventedIdea, roadToEvaluate, TODAY } from "./helpers/road-to-evaluate";
 import { VERDICT_WORDS } from "./helpers/verdict-words";
 
 /** The text a person reads in drawn markup. */
@@ -133,6 +138,98 @@ describe("the step panel: a legal requirement is what a step needs, not a skill"
     // Not among the skills: the Skills heading comes after it, and says none are listed for this step.
     expect(skillsAt).toBeGreaterThan(text.indexOf(label));
     expect(text.slice(skillsAt)).toContain(cockpitWords.panel.skillsNone);
+  });
+});
+
+describe("the Skills gauge, its list and its switch: a legal requirement is not counted as a skill", () => {
+  // A review of this branch (2026-10-23): with the step panel fixed, the Skills gauge on road 1 still read
+  // "0 have · 0 learning · 0 not yet / 3 not marked, out of 3 listed", its switch "Skills · 3 listed", and its
+  // list put the Alberta Student Number, the apprenticeship agreement and the certificate under the road's
+  // skills. Every item road 1's steps list is a legal requirement.
+  const road = roadApprenticeToOwnShopAB;
+  const kindOf = new Map(skillItemsV2026.map((i) => [i.id, i.kind]));
+  const items = [...new Set(road.steps.flatMap((s) => s.needs))];
+  const requirements = items.filter((id) => kindOf.get(id) === "legal-requirement");
+  const roadInput = input({ road, skillItems: [...skillItemsV2026] });
+  const result = evaluateRoad(roadInput);
+  const gauge = gaugeView(result, road, inventedIdea()).skills;
+  const label = skillItemsV2026.find((i) => i.id === requirements[0])!.label;
+
+  it("road 1 lists legal requirements only (what the checks below rest on)", () => {
+    expect(requirements.length).toBeGreaterThan(1);
+    expect(requirements).toHaveLength(items.length);
+  });
+
+  it("the gauge says no skills are listed, and counts the legal requirements apart from skills", () => {
+    expect(gauge.value).toBe("No skills are listed on this road yet");
+    const lines = gauge.lines.join(" | ");
+    expect(lines).not.toContain(`out of ${items.length} listed`);
+    expect(lines).toContain(`${requirements.length} legal requirements, apart from skills: ${requirements.length} not marked`);
+  });
+
+  it("the Skills switch over the map counts no skill and names the legal requirements; it still lights each step's needs", () => {
+    const counts = overlayCounts(road, result, inventedIdea());
+    const html = renderToStaticMarkup(createElement(OverlaySwitches, { overlays: { skills: true, money: false, rules: false }, counts, onToggle: () => {} }));
+    expect(shown(html)).toContain(`Skills · 0 listed · ${requirements.length} legal requirements`);
+    expect(html).toMatch(/aria-pressed="true"[^>]*>Skills/);
+  });
+
+  it("the list draws them under Legal requirements, apart from the road's skills, which says none are listed", () => {
+    const text = shown(
+      renderToStaticMarkup(
+        createElement(SkillsListPanel, {
+          road,
+          skillItems: [...skillItemsV2026],
+          marks: [],
+          selectedSkillId: null,
+          canSave: true,
+          error: null,
+          job: null,
+          jobPickedOn: null,
+          onMark: () => {},
+          onSelectSkill: () => {},
+          onPickJob: () => {},
+          onClose: () => {},
+        }),
+      ),
+    );
+    expect(text).not.toContain("Skills on this road ");
+    const requirementsAt = text.indexOf("Legal requirements on this road's steps");
+    const skillsAt = text.indexOf("Skills on this road's steps");
+    expect(requirementsAt).toBeGreaterThan(-1);
+    expect(text.indexOf(label)).toBeGreaterThan(requirementsAt);
+    expect(skillsAt).toBeGreaterThan(text.indexOf(label));
+    expect(text.slice(skillsAt)).toContain(cockpitWords.lists.skillsNone);
+  });
+
+  it("What you haven't told yet asks for marks on the legal requirements, not on skills", () => {
+    const row = notToldYet(roadInput, result).find((r) => r.id === "skills");
+    expect(row?.question).toBe(`Your marks on ${requirements.length} legal requirements not marked`);
+  });
+
+  it("planted control: a road with both counts each apart (the invented road: 4 listed skills, 1 legal requirement)", () => {
+    const mixed = evaluateRoad(input());
+    const view = gaugeView(mixed, roadToEvaluate(), inventedIdea()).skills;
+    expect(view.value).toBe("0 have · 0 learning · 0 not yet");
+    expect(view.lines).toContain("4 not marked, out of 4 listed");
+    expect(view.lines).toContain("1 legal requirement, apart from skills: 1 not marked");
+    expect(overlayCounts(roadToEvaluate(), mixed, inventedIdea())).toMatchObject({ skillsListed: 4, requirementsListed: 1 });
+    expect(notToldYet(input(), mixed).find((r) => r.id === "skills")?.question).toBe("Your marks on 4 skills and 1 legal requirement not marked");
+  });
+
+  it("the new words carry no verdict and no time", () => {
+    const all = [
+      cockpitWords.gauges.skills.requirements(3, 1, 0, 1, 1),
+      cockpitWords.road.skillsCount(0, 3),
+      cockpitWords.lists.skillsTitle,
+      cockpitWords.lists.requirementsTitle,
+      cockpitWords.lists.roadTitle,
+      cockpitWords.questions.skills.question(2, 3),
+    ]
+      .join(" ")
+      .toLowerCase();
+    expect(all).not.toMatch(VERDICT_WORDS);
+    expect(all).not.toMatch(/\b(day|days|week|weeks|month|months|year|years|soon|quick)\b/);
   });
 });
 

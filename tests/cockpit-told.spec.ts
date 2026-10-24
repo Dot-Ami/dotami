@@ -605,7 +605,7 @@ describe("Not told yet", () => {
     }
     // The gauge's own count: with no ending picked, only the textbooks line is counted; the rest wait on the fork.
     expect(rows.find((r) => r.id === "cost-lines")!.question).toBe("Your numbers for 1 cost line not priced yet");
-    expect(rows.find((r) => r.id === "skills")!.question).toBe("Your marks on 5 skills not marked");
+    expect(rows.find((r) => r.id === "skills")!.question).toBe("Your marks on 4 skills and 1 legal requirement not marked");
     expect(rows.find((r) => r.id === `ending:${FORK}`)).toMatchObject({ answer: "compare", forkId: FORK });
     expect(rows.find((r) => r.id === "date")).toMatchObject({ answer: "box" });
   });

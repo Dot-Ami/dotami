@@ -232,7 +232,7 @@ export function PlanPage({ view, backHref }: { view: PlanView; backHref: string 
         </Section>
 
         <Section id="skills" index={3}>
-          <h3 className="font-semibold">{words.lists.roadTitle}</h3>
+          <h3 className="font-semibold">{words.lists.roadItemsTitle}</h3>
           {view.skills.roadNone ? <p>{view.skills.roadNone}</p> : null}
           <ul className="mt-1 list-disc pl-5">
             {view.skills.road.map((skill) => (

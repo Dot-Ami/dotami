@@ -21,13 +21,20 @@ export function OverlaySwitches({
   roadAhead,
 }: {
   overlays: Overlays;
-  counts: { skillsListed: number; costLines: number; rulesCards: number };
+  counts: { skillsListed: number; requirementsListed: number; costLines: number; rulesCards: number };
   onToggle: (overlay: keyof Overlays) => void;
   /** Shown only while the road ahead is open: its fold button, and the ids of the columns it folds. */
   roadAhead?: { controls: string; onFold: () => void };
 }) {
   const switches: { id: keyof Overlays; label: string; count: string; empty: boolean }[] = [
-    { id: "skills", label: words.road.skills, count: words.road.skillsCount(counts.skillsListed), empty: counts.skillsListed === 0 },
+    // The Skills layer lights each step's needs, its legal requirements among them, so it is empty only with
+    // neither; its count names the two apart (2026-10-23).
+    {
+      id: "skills",
+      label: words.road.skills,
+      count: words.road.skillsCount(counts.skillsListed, counts.requirementsListed),
+      empty: counts.skillsListed + counts.requirementsListed === 0,
+    },
     { id: "money", label: words.road.money, count: words.road.moneyCount(counts.costLines), empty: counts.costLines === 0 },
     { id: "rules", label: words.road.rules, count: words.road.rulesCount(counts.rulesCards), empty: counts.rulesCards === 0 },
   ];

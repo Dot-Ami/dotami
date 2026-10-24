@@ -159,6 +159,13 @@ export interface RoadGauges {
    * government's list for the job the person picked (null when none is picked).
    */
   skills: MarkCounts & {
+    /**
+     * The same items split by kind: the listed skills, and the legal requirements (an ID number, an
+     * agreement, a certificate), which the cockpit never counts as skills (the screen review of 2026-10-23).
+     * An item missing from the catalog counts as a listed skill, as the step panel draws it.
+     */
+    listedSkills: MarkCounts;
+    legalRequirements: MarkCounts;
     addedByYou: { have: number; learning: number; notYet: number };
     yourPickOfJob: (MarkCounts & { code: string; label: string }) | null;
   };
@@ -534,6 +541,8 @@ function gauges(
   itemMarks: ReadonlyMap<string, SkillMarkValue>,
 ): RoadGauges {
   const own = input.skillMarks.filter((m) => m.skillItemId === null);
+  const roadItems = road.steps.flatMap((s) => s.needs);
+  const legal = new Set(input.skillItems.filter((item) => item.kind === "legal-requirement").map((item) => item.id));
 
   const money: RoadGauges["money"] = {
     officialFeesCents: 0,
@@ -587,8 +596,13 @@ function gauges(
       total: steps.length,
     },
     skills: {
-      ...countMarks(
-        road.steps.flatMap((s) => s.needs),
+      ...countMarks(roadItems, itemMarks),
+      listedSkills: countMarks(
+        roadItems.filter((id) => !legal.has(id)),
+        itemMarks,
+      ),
+      legalRequirements: countMarks(
+        roadItems.filter((id) => legal.has(id)),
         itemMarks,
       ),
       addedByYou: {

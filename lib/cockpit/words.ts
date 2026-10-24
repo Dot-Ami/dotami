@@ -80,6 +80,18 @@ export const cockpitWords = {
       notMarked: (n: number, listed: number) => `${n} not marked, out of ${listed} listed`,
       invite: "Mark them to see what each step still needs",
       noneListed: "No skills are listed on this road yet",
+      /**
+       * The road's legal requirements (an ID number, an agreement, a certificate), counted apart from its skills
+       * (the screen review of 2026-10-23: road 1's three read as "3 listed" skills). Only the marks that have a
+       * count are named.
+       */
+      requirements: (listed: number, have: number, learning: number, notYet: number, notMarked: number) =>
+        `${count(listed, "legal requirement", "legal requirements")}, apart from skills: ${[
+          ...(have > 0 ? [`${have} have`] : []),
+          ...(learning > 0 ? [`${learning} learning`] : []),
+          ...(notYet > 0 ? [`${notYet} not yet`] : []),
+          ...(notMarked > 0 ? [`${notMarked} not marked`] : []),
+        ].join(" · ")}`,
       own: (have: number, learning: number, notYet: number) => `your own skills: ${have} have · ${learning} learning · ${notYet} not yet`,
       addOwn: "Add skills of your own in the list",
       /** The government's list for the person's pick of job, counted apart from the road's. */
@@ -120,7 +132,9 @@ export const cockpitWords = {
     skills: "Skills",
     money: "Money",
     rules: "Rules & tax",
-    skillsCount: (n: number) => `${n} listed`,
+    /** The Skills switch: the road's skills, and its legal requirements apart from them when it has any. */
+    skillsCount: (skills: number, requirements: number) =>
+      requirements === 0 ? `${skills} listed` : `${skills} listed · ${count(requirements, "legal requirement", "legal requirements")}`,
     moneyCount: (n: number) => count(n, "cost line", "cost lines"),
     rulesCount: (n: number) => count(n, "card", "cards"),
     needs: (listed: number, have: number) => `needs ${listed} · you have ${have}`,
@@ -207,9 +221,14 @@ export const cockpitWords = {
 
   lists: {
     close: "Close",
-    skillsTitle: "Skills on this road",
-    /** Above the items the road's own steps list, so the job's list below never reads as the road's. */
-    roadTitle: "On this road's steps",
+    /** Since 2026-10-23 the list names legal requirements too, under a heading of their own, never as skills. */
+    skillsTitle: "Skills and legal requirements",
+    /** Above the legal requirements the road's own steps list (an ID number, an agreement, a certificate). */
+    requirementsTitle: "Legal requirements on this road's steps",
+    /** Above the skills the road's own steps list, so the job's list below never reads as the road's. */
+    roadTitle: "Skills on this road's steps",
+    /** Your plan's one list of everything the road's steps list, each row tagged with its kind. */
+    roadItemsTitle: "On this road's steps",
     skillsNone: "No skills are listed on this road yet. Your own skills are below.",
     ownTitle: "Your own skills",
     ownTag: "added by you",
@@ -355,7 +374,12 @@ export const cockpitWords = {
       unlocks: "your numbers in Start-up money",
     },
     skills: {
-      question: (n: number) => `Your marks on ${count(n, "skill", "skills")} not marked`,
+      // Skills and legal requirements named apart, each only when one is waiting (2026-10-23).
+      question: (skills: number, requirements: number) =>
+        `Your marks on ${[
+          ...(skills > 0 ? [count(skills, "skill", "skills")] : []),
+          ...(requirements > 0 ? [count(requirements, "legal requirement", "legal requirements")] : []),
+        ].join(" and ")} not marked`,
       unlocks: "needs · you have on each step that lists them",
     },
     ending: {
