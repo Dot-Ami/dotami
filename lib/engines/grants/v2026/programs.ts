@@ -1,6 +1,10 @@
+import { SRED_PAGES, SRED_QUOTES_FOUND_ON, SRED_WORDS } from "./sred-official-words";
 import type { GrantProgram } from "./types";
 
 const LAST_VERIFIED = "2026-06-08";
+
+/** The CRA's two lines a sole proprietor's SR&ED card quotes, with or without the GST/HST (2026-10-24). */
+const SOLE_PROP_SRED_NOTE = `The CRA: “${SRED_WORDS.basicRate}” “${SRED_WORDS.someRefundable}”`;
 
 export const grantProgramsV2026 = [
   {
@@ -11,7 +15,10 @@ export const grantProgramsV2026 = [
     description:
       "Scientific Research and Experimental Development (SR&ED) program provides tax credits and deductions for eligible R&D in Canada.",
     eligibility:
-      "Eligible SR&ED work performed in Canada; CCPCs may access enhanced ITC rates subject to taxable income and capital limits.",
+      // Until 2026-10-24 "subject to taxable income and capital limits", which no held quote names; now the condition
+      // in the CRA's sentence on the enhanced rate (the maintainer's reading list: 35% for eligible CCPCs, within the
+      // limit).
+      "Eligible SR&ED work performed in Canada; some CCPCs may earn the enhanced rate, up to their expenditure limit for the year.",
     lensAnnotations: {
       tax: "If the venture performs systematic experimentation to resolve technological uncertainty, SR&ED may unlock ITCs and deductions — with contemporaneous documentation.",
       legal:
@@ -31,29 +38,77 @@ export const grantProgramsV2026 = [
         },
         note: "CRA SR&ED program overview.",
       },
+      // The four below were added 2026-10-24 for the rates and the limit the card quotes (the maintainer's reading
+      // list of 2026-10-23, items grant-sred/* and sred-expenditure-limit-6-million). Its tool found each quote on its
+      // page that day (./sred-official-words.ts); no read of these pages is on record, so each card says "Checked by a
+      // tool" in amber and lists the words.
+      {
+        title: "SR&ED tax incentives: the credit's rates",
+        authority: "CRA",
+        jurisdiction: "CA",
+        url: SRED_PAGES.whatAre,
+        toolCheck: {
+          checkedOn: SRED_QUOTES_FOUND_ON,
+          quotes: [SRED_WORDS.basicRate, SRED_WORDS.enhancedRate, SRED_WORDS.someRefundable],
+        },
+        note: "The SR&ED investment tax credit's basic and enhanced rates, and that some businesses may also earn a refundable credit.",
+      },
+      {
+        title: "How certain relationships affect the small business deduction and SR&ED investment tax credits",
+        authority: "CRA",
+        jurisdiction: "CA",
+        url: SRED_PAGES.relationships,
+        toolCheck: { checkedOn: SRED_QUOTES_FOUND_ON, quotes: [SRED_WORDS.ccpcEnhanced] },
+        note: "Which CCPCs may earn the enhanced 35% rate, up to their expenditure limit for the year, and how associated corporations share that limit.",
+      },
+      {
+        title: "What's new for corporations",
+        authority: "CRA",
+        jurisdiction: "CA",
+        url: SRED_PAGES.whatsNew,
+        toolCheck: { checkedOn: SRED_QUOTES_FOUND_ON, quotes: [SRED_WORDS.limitSixMillion] },
+        note: "The CRA's list of corporation income tax changes; its line on the SR&ED expenditure limit sits under 2025 – Federal.",
+      },
+      {
+        title: "Income Tax Act s.127(10.2) — expenditure limit",
+        authority: "federal",
+        jurisdiction: "CA",
+        url: SRED_PAGES.act127,
+        toolCheck: { checkedOn: SRED_QUOTES_FOUND_ON, quotes: [SRED_WORDS.actFormula] },
+        note: "The formula for a CCPC's expenditure limit for a taxation year, from $6 million (the consolidated Act).",
+      },
     ],
     provinces: ["AB", "BC", "ON", "CA"],
     structures: ["sole-prop", "sole-prop-gst", "ccpc"],
     activityTags: ["Software / SaaS", "AI / ML / R&D", "Manufacturing"],
+    // Shown on no screen. The range is the CRA's basic and enhanced rates (its page on the credit's rates, above).
     estimatedValue: "15–35% ITC on eligible expenditures",
     ratesByStructure: [
       {
         structure: "sole-prop",
         rate: 0.15,
-        refundable: false,
-        note: "Unincorporated claimants earn the basic 15% non-refundable ITC.",
+        // No `refundable`: until 2026-10-24 this said "non-refundable" ("Unincorporated claimants earn the basic 15%
+        // non-refundable ITC."). The maintainer's reading list notes an individual can get part of the credit
+        // refunded; no held quote says that or how much, so the card says neither and quotes the CRA's two lines.
+        note: SOLE_PROP_SRED_NOTE,
       },
       {
         structure: "sole-prop-gst",
         rate: 0.15,
-        refundable: false,
-        note: "GST registration does not change the SR&ED rate — incorporation does.",
+        // Until 2026-10-24: "GST registration does not change the SR&ED rate — incorporation does." Incorporating
+        // changes it only for some CCPCs (the CRA's sentence on the enhanced rate), so the card quotes the CRA instead.
+        note: SOLE_PROP_SRED_NOTE,
       },
       {
         structure: "ccpc",
         rate: 0.35,
         refundable: true,
-        note: "CCPCs may earn the enhanced 35% refundable ITC up to the expenditure limit — confirm the current limit with an advisor.",
+        // Until 2026-10-24 the note said "confirm the current limit with an advisor" and gave no limit. The limit is
+        // $6 million in the consolidated Act's s.127(10.2) (the reading list found the formula), for tax years
+        // beginning on or after 2024-12-16. No held quote carries that date, so it is on no screen and in no field, only
+        // here and in docs/engines/citations.md (the maintainer's answer of 2026-10-24); the card gives the amount only
+        // inside the CRA's quote.
+        note: `The CRA: “${SRED_WORDS.ccpcEnhanced}” The CRA's What's new for corporations: “${SRED_WORDS.limitSixMillion}”`,
       },
     ],
   },
@@ -263,6 +318,64 @@ export const grantProgramsV2026 = [
     structures: ["sole-prop", "sole-prop-gst", "ccpc"],
     activityTags: ["Software / SaaS", "AI / ML / R&D", "Trades", "Manufacturing", "Hospitality"],
     estimatedValue: "Up to $500K equipment financing (loan guarantee, not a grant)",
+  },
+  {
+    // The maintainer's call a-call-1 on his reading list of 2026-10-23: "ADD it". The program whose page the
+    // Canada-Alberta Job Grant's old address now opens (https://www.alberta.ca/canada-alberta-job-grant redirects
+    // there). Its own id: grant-cajg is never reused. Every amount and rule below is the page's own words, each held as
+    // a quote of the citation; DotAmi's own words only name the page and give the compass's "If"
+    // (tests/productivity-grant.spec.ts).
+    id: "grant-capg",
+    label: "Canada-Alberta Productivity Grant",
+    kind: "grant",
+    // Alberta's page. No held quote says who else funds it, so "federal" is not claimed. No screen shows this field.
+    authority: "Alberta",
+    description:
+      "In the words of Alberta's page on this program: “Must contribute 25% of the total eligible training costs for existing employees or individuals (includes unemployed individuals) they intend to hire”; “Contributes the other 75% of the cost to a maximum of $5,000 per employed trainee per fiscal year”; “An employer is eligible for up to a maximum amount of $100,000 per fiscal year”.",
+    // No screen draws a program's eligibility. The page's one-year rule is a time, which DotAmi shows only as the
+    // page's quoted words, so it stays off the card's line (lensAnnotations.tax).
+    eligibility: "Employers, in Alberta's words, one of the requirements its page lists: “be operational in Alberta for at least one year”.",
+    lensAnnotations: {
+      // Shown on screen as the card's payoff (lib/brain/evaluate.ts evaluateGrant). Outside the quotes: the compass's
+      // "If" and the page's name only, never what the program may do. The page's subjects for the 25% and 75% lines
+      // aren't held, so none is added.
+      tax: "If training employees is on the venture's path, Alberta's page on this program: “Must contribute 25% of the total eligible training costs for existing employees or individuals (includes unemployed individuals) they intend to hire”; “Contributes the other 75% of the cost to a maximum of $5,000 per employed trainee per fiscal year”; “An employer is eligible for up to a maximum amount of $100,000 per fiscal year”.",
+      legal:
+        "Alberta's page on this program, on the employer's own share: “Must contribute 25% of the total eligible training costs for existing employees or individuals (includes unemployed individuals) they intend to hire”.",
+    },
+    citations: [
+      {
+        title: "Canada-Alberta Productivity Grant",
+        authority: "provincial",
+        jurisdiction: "AB",
+        // The maintainer's reading list (2026-10-23, items capg-75-percent, capg-5000-per-trainee,
+        // capg-100000-per-employer and capg-operational-one-year) fetched the page that day from the Job Grant's old
+        // address, which redirects here, and its tool (the repo's matcher, the same whole-word, one-block match as
+        // scripts/check-quotes.mjs) found these four quotes on it. No read of the page is on record yet, so its card
+        // says "Checked by a tool" in amber. A networked `node scripts/check-quotes.mjs` run should find them again
+        // before merge (docs/engines/citations.md, rule 4).
+        url: "https://www.alberta.ca/canada-alberta-productivity-grant",
+        toolCheck: {
+          checkedOn: "2026-10-23",
+          quotes: [
+            "Must contribute 25% of the total eligible training costs for existing employees or individuals (includes unemployed individuals) they intend to hire.",
+            "Contributes the other 75% of the cost to a maximum of $5,000 per employed trainee per fiscal year.",
+            "An employer is eligible for up to a maximum amount of $100,000 per fiscal year.",
+            "be operational in Alberta for at least one year",
+          ],
+        },
+        note: "Alberta's program page: the employer's and the program's shares of eligible training costs, the most per employed trainee and per employer, and what an employer meets.",
+      },
+    ],
+    provinces: ["AB"],
+    // Open at every structure: no held word of the page limits it to a corporation. Leaving the sole proprietorship out
+    // would make evaluateGrant's near-miss say "requires incorporation (CCPC)", as the Job Grant's card wrongly did.
+    structures: ["sole-prop", "sole-prop-gst", "ccpc"],
+    // No kind of work: the page's held words name none, so DotAmi names none. It shows for every Alberta idea, and its
+    // reason names only the place (lib/brain/evaluate.ts evaluateGrant).
+    activityTags: [],
+    estimatedValue:
+      "Alberta's page: “Contributes the other 75% of the cost to a maximum of $5,000 per employed trainee per fiscal year”; “An employer is eligible for up to a maximum amount of $100,000 per fiscal year”.",
   },
 ] satisfies GrantProgram[];
 

@@ -61,16 +61,32 @@ function cardAt(html: string, label: string): { start: number; end: number } {
   return { start, end };
 }
 
-/** The map's HTML with the added cards cut out, and the cut-out cards. */
-function withoutAdded(html: string): { rest: string; cards: string[] } {
+/**
+ * The one lever card the map gained since: the Canada-Alberta Productivity Grant, named by Hire first employee
+ * (2026-10-24, the maintainer's call a-call-1), drawn there for an Alberta idea that hires first.
+ */
+const ADDED_LEVER = 'aria-label="Grant: Canada-Alberta Productivity Grant, ';
+/** The class of a stage card's lever list (components/cockpit/strategy-map.tsx), left empty once its one lever is cut. */
+const EMPTY_LEVER_LIST = /<ul class="ml-3 flex flex-col gap-1\.5 border-l border-rule-soft pl-3"><\/ul>/g;
+
+/** The map's HTML with the added cards and that lever cut out, and what was cut. A lever list left empty goes too. */
+function withoutAdded(html: string): { rest: string; cards: string[]; levers: string[] } {
   const cards: string[] = [];
+  const levers: string[] = [];
   let rest = html;
   for (const { label } of ADDED) {
     const { start, end } = cardAt(rest, label);
     cards.push(rest.slice(start, end));
     rest = rest.slice(0, start) + rest.slice(end);
   }
-  return { rest, cards };
+  for (let at = rest.indexOf(ADDED_LEVER); at !== -1; at = rest.indexOf(ADDED_LEVER)) {
+    const start = rest.lastIndexOf("<li>", at);
+    const end = rest.indexOf("</li>", at) + "</li>".length;
+    levers.push(rest.slice(start, end));
+    rest = rest.slice(0, start) + rest.slice(end);
+  }
+  rest = rest.replace(EMPTY_LEVER_LIST, "");
+  return { rest, cards, levers };
 }
 
 describe("today's map, drawn as the road Starting any business in Alberta", () => {
@@ -120,6 +136,19 @@ describe("today's map, drawn as the road Starting any business in Alberta", () =
         { from: id, to: "stage-1-sole-prop-activation", depth: 1 },
         ...fromSoleProp.map((e) => ({ ...e, depth: e.depth + 1 })),
       ]);
+    }
+  });
+
+  it("the one lever the map gained is the Productivity Grant, under Hire first employee, only for the Alberta idea that hires first", () => {
+    for (const c of mapCases) {
+      const html = draw(generalRoadV2026, c);
+      const { levers } = withoutAdded(html);
+      expect(levers, c.name).toHaveLength(c.name === "golden-ab-hire-first" ? 1 : 0);
+      if (levers.length === 0) continue;
+      // It sits in Hire first employee's card, before the next card's name.
+      const at = html.indexOf(ADDED_LEVER);
+      expect(html.lastIndexOf(">Hire first employee</h4>", at), c.name).toBeGreaterThan(-1);
+      expect(html.lastIndexOf("</h4>", at), c.name).toBe(html.lastIndexOf(">Hire first employee</h4>", at) + ">Hire first employee".length);
     }
   });
 });

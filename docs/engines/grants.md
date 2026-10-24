@@ -16,11 +16,61 @@ strings. Nothing evaluates them at runtime; archetype configs hand-pick ids for 
   CCPC (`structures: ["ccpc"]`): for a sole prop the correct output is not gray — it's
   *"incorporation would unlock IRAP"* (gray→yellow fork). This one behavior is most of the
   product's aggressive-picture promise. Same for SR&ED's rate split (below).
-- Rates that differ by structure are **data, not prose**: SR&ED = 15% non-refundable ITC
-  (sole prop) vs 35% refundable (CCPC). The current entry hides this in
-  `estimatedValue: "15–35%"`. The split is validated seed research and prime fork-surfacing
-  material ("incorporating changes your SR&ED position from 15% non-refundable to 35%
-  refundable").
+- Rates that differ by structure are **data, not prose** (`ratesByStructure`): SR&ED is 15% for
+  a sole proprietor, with or without the GST/HST, and 35% for a CCPC, and the card's fork says so
+  ("A CCPC may access 35% refundable treatment instead of 15%."). **As built since 2026-10-24**
+  (the maintainer's reading list of 2026-10-23, items `grant-sred/*` and
+  `sred-expenditure-limit-6-million`): each rate's `note` quotes the CRA
+  ([`sred-official-words.ts`](../../lib/engines/grants/v2026/sred-official-words.ts)), and
+  `refundable` is set only where it is settled for that structure. The CCPC's rate says
+  refundable. The sole proprietor's said non-refundable until then; the reading list notes that an
+  individual can get part of the credit refunded, and no held quote says how much, so that card says
+  neither and quotes the CRA's “Your business may earn the credit at a basic rate of 15%.” and
+  “Some businesses may also earn a refundable ITC.” The 35% is the CRA's “Some CCPCs may earn an ITC
+  at an enhanced rate of 35% on qualified SR&ED expenditures up to their expenditure limit for the
+  year.”, and the limit, $6 million, is on the card only inside the CRA's *What's new for
+  corporations* line (Income Tax Act s.127(10.2) holds the formula). The tax years it applies from
+  are in no held quote, so no screen or field says them ([citations.md](citations.md), *The reading
+  list's tool checks*). Until then the CCPC's note said "confirm the current limit with an advisor".
+  The four pages added for these quotes are tool checks of 2026-10-23; no person is recorded as
+  having read them.
+
+## The Canada-Alberta Productivity Grant (`grant-capg`)
+
+Added 2026-10-24 on the maintainer's call a-call-1 ("ADD it", on his reading list of 2026-10-23).
+It is the program whose page the Canada-Alberta Job Grant's address now opens
+(https://www.alberta.ca/canada-alberta-productivity-grant); its id is its own, and `grant-cajg` is
+never reused.
+
+- **What it says.** Every amount and rule is a quote the citation holds, each found on the page by
+  the reading list's tool on 2026-10-23: the employer's 25% (“Must contribute 25% of the total
+  eligible training costs …”), “the other 75% of the cost to a maximum of $5,000 per employed trainee
+  per fiscal year”, “up to a maximum amount of $100,000 per fiscal year” for an employer, and that an
+  employer “be operational in Alberta for at least one year”. Outside the quotes DotAmi says only the
+  compass's "If" and the page's name. The card's payoff (`lensAnnotations.tax`) shows the first
+  three, in curly quote marks. The one-year rule is in `eligibility` only, which no screen draws for
+  a program: it is a time, and the screens' no-times check (`e2e/idea-sweep.spec.ts`) lets a quoted
+  time through only while a tool check alone holds it, so a later read of the page would make it
+  count as DotAmi's own.
+- **How it was checked.** A tool check of 2026-10-23, with no read on record, so its card says
+  *Checked by a tool* in amber and lists the four quotes. A networked
+  `node scripts/check-quotes.mjs` run should find them again before merge (rule 4 of
+  [citations.md](citations.md)).
+- **Who sees it.** Every idea in Alberta, at every structure and kind of work, always *check
+  first*. `activityTags: []`: a program whose page names no kind of work shows for every idea in its
+  provinces, and its card's reason names only the place the person picked ("Shown because you
+  selected Alberta.", a provincial compliance rule's own line), never "your … activity match this
+  program", which no answer was checked against (`lib/brain/evaluate.ts` `evaluateGrant`). All
+  three structures are listed because no held word of the page limits it: a program open to a
+  corporation but not listing the sole proprietorship is drawn as a near-miss that "requires
+  incorporation (CCPC)", the Job Grant's mistake. No `ratesByStructure`: a rate there is written on
+  the card as "this may be worth N%", which only fits a tax credit. Road 0's *Hire first employee*
+  names it (`engineHints`), so the map draws it under that card for an idea that hires first; the
+  apprentice road draws no rules and tax cards.
+- **Not yet held** (needs the page's words): its other requirements for employers (the reading list
+  summarises active legal entity status, good standing, WCB coverage for trainees and complying
+  with provincial agreements, without quotes), whether a sole proprietor counts as an employer,
+  what training counts, and who else funds it (`authority` is "Alberta").
 
 ## Classification rule (flagged decision — see audit § Flags #5)
 

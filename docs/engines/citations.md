@@ -1,6 +1,7 @@
 # How a source was checked: read, or checked by a tool
 
-Last updated: 2026-10-13 (pages that moved, § When a cited page moves; 2026-10-12: the first tool
+Last updated: 2026-10-24 (the reading list's tool checks of 2026-10-23, § The reading list's tool
+checks; 2026-10-13: pages that moved, § When a cited page moves; 2026-10-12: the first tool
 checks in the catalogs: the honest map's six pages, § Tool checks in the catalogs; 2026-10-11: the
 maintainer's decision; same day, after review: a card says "Read by a person" only when the catalog
 records that a person did the reading)
@@ -240,6 +241,30 @@ What was done, for each dead address:
 citation may cite a dead address except the three left for a person, and each moved citation points at
 its new page with a tool check and no old read date. It never reaches the network; running
 `node scripts/check-quotes.mjs` with no arguments re-checks the new pages with the rest.
+
+## The reading list's tool checks (2026-10-23)
+
+On 2026-10-23 the maintainer's reading list fetched the pages behind its 30 *Needs you first* items
+(each an amount or a rule DotAmi shows next to the government's words) and, with the repo's matcher
+(the same whole-word, one-block match as `scripts/check-quotes.mjs`), found on them words the
+corrections of 2026-10-24 rely on. Each is recorded as a tool check of that day on the entry the
+list checked, and on no other citation of the same page. They were found by the list's matcher, not
+by a run of the script, so before merge a networked `node scripts/check-quotes.mjs` run (no
+arguments) must find each again (rule 4). No person is recorded as having read these pages yet: the
+maintainer's saved reads come in a later change, which adds `lastVerified` and `readBy: "person"`
+to the citations he read.
+
+| Page | Where it is cited | What the quotes are |
+|---|---|---|
+| CRA, the SR&ED tax incentives' rates (https://www.canada.ca/en/revenue-agency/services/scientific-research-experimental-development-tax-incentive-program/what-are-sred-tax-incentives.html) | program *SR&ED tax incentives* (`grant-sred`; `SRED_WORDS`, [`lib/engines/grants/v2026/sred-official-words.ts`](../../lib/engines/grants/v2026/sred-official-words.ts)) | the basic 15% rate, the enhanced 35% for some corporations, and that some businesses may also earn a refundable credit. The page's own title isn't held, so the citation's title describes it. |
+| CRA, *How certain relationships affect the small business deduction and SR&ED investment tax credits* | `grant-sred` (the CCPC rate) | some CCPCs may earn the enhanced 35% up to their expenditure limit for the year (never the page's worked example with an older limit) |
+| CRA, *What's new for corporations* | `grant-sred` (the CCPC rate) | the expenditure limit for the enhanced 35% raised to $6 million (never the page's line that it lists proposed, announced or enacted changes) |
+| Income Tax Act s.127(10.2) | `grant-sred` | the expenditure limit's formula, from $6 million. The list recorded "formula found" for this page, so the sentence that leads into it is not kept. |
+| Alberta, *Canada-Alberta Productivity Grant* (https://www.alberta.ca/canada-alberta-productivity-grant) | program *Canada-Alberta Productivity Grant* (`grant-capg`, added 2026-10-24), named by map stage *Hire first employee* on road 0 | the employer's 25% and the program's 75% of eligible training costs, at most $5,000 per employed trainee and $100,000 per employer per fiscal year, and that an employer be operational in Alberta for at least one year. Fetched from the Canada-Alberta Job Grant's old address, which redirects there. |
+
+The $6 million applies to tax years beginning on or after 2024-12-16. No held quote carries that
+date, so it is kept here and in a comment on the CCPC rate only: no screen says it, and no field holds
+it (the maintainer's answer of 2026-10-24).
 
 ## How this relates to the other checks
 

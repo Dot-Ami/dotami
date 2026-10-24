@@ -34,7 +34,9 @@ describe("strategy rules engine — GPU/workstation golden scenario", () => {
     expect(sred!.state).toBe("yellow");
     expect(sred!.typeChip).toBe("Tax credit");
     expect(sred!.payoff).toContain("15%");
-    expect(sred!.payoff).toContain("non-refundable");
+    // Never "non-refundable" since the maintainer's reading list of 2026-10-23: an individual can get part of the
+    // credit refunded, and the card quotes the CRA instead (tests/reading-list-corrections.spec.ts).
+    expect(sred!.payoff).not.toContain("non-refundable");
     expect(sred!.fork).toBeDefined();
     expect(sred!.fork!.note).toContain("35%");
     expect(sred!.fork!.note).toContain("refundable");

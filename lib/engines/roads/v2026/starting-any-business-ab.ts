@@ -867,7 +867,8 @@ export const roadZeroParts: Parameters<typeof roadFromCfe>[0] = {
     "stage-3b-incorporation-liability-sred": ["grant-sred", "grant-irap", "writeoff-rd", "writeoff-cca-class-50"],
     "stage-4-sred-deepening": ["grant-sred", "grant-irap"],
     "stage-4-retained-earnings-planning": ["grant-on-innovation"],
-    "branch-hire-first-employee": ["writeoff-vehicle"],
+    // The Canada-Alberta Productivity Grant: training costs for employees (2026-10-24, the maintainer's call a-call-1).
+    "branch-hire-first-employee": ["writeoff-vehicle", "grant-capg"],
   },
   doneWhen: stageDoneWhen,
   costs: { "stage-1-sole-prop-activation": startUpCosts },

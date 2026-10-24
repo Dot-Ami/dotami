@@ -3,7 +3,7 @@ import { grantsCatalogV2026 } from "@/lib/engines/grants/v2026";
 import { riskCatalogV2026 } from "@/lib/engines/risk/v2026";
 import { structureLadderV2026 } from "@/lib/engines/structure/v2026";
 import { writeOffsCatalogV2026 } from "@/lib/engines/writeoffs/v2026";
-import type { GrantProgram } from "@/lib/engines/grants/v2026/types";
+import type { GrantProgram, StructureRate } from "@/lib/engines/grants/v2026/types";
 import type { WriteOffCategory } from "@/lib/engines/writeoffs/v2026/types";
 import type { ComplianceRule } from "@/lib/engines/compliance/v2026/types";
 import type { RiskSeverity } from "@/lib/engines/risk/v2026/types";
@@ -170,6 +170,17 @@ function evaluateWriteOff(profile: EvaluationProfile, entry: WriteOffCategory, t
   };
 }
 
+/**
+ * "refundable" or "non-refundable" after a rate, between `open` and `close`, only where the catalog says which
+ * (`StructureRate.refundable`). Where it doesn't, nothing: the rate's note quotes its page instead (2026-10-24: a sole
+ * proprietor's SR&ED credit was called non-refundable, and the maintainer's reading list of 2026-10-23 notes an
+ * individual can get part of it refunded). Left out, `refundable` would otherwise print "non-refundable".
+ */
+function refundableAfter(rate: StructureRate, open: string, close: string): string {
+  if (rate.refundable === undefined) return "";
+  return `${open}${rate.refundable ? "refundable" : "non-refundable"}${close}`;
+}
+
 function evaluateGrant(profile: EvaluationProfile, entry: GrantProgram): UnlockItem | null {
   if (!provinceMatches(profile, entry.provinces)) return null;
 
@@ -190,9 +201,14 @@ function evaluateGrant(profile: EvaluationProfile, entry: GrantProgram): UnlockI
     // Same test as a compliance rule's (#36): "CA" in `provinces` makes a program federal, shown in any
     // province, so crediting the person's province for it would be wrong. A program, not a rule.
     const activity = tagList(profile, entry.activityTags) || "venture";
+    // A provincial program that lists no kind of work (the Canada-Alberta Productivity Grant, 2026-10-24) is shown for
+    // the place alone, so its line names only what the person said, in a provincial rule's own words: never "your
+    // venture activity match this program", which no answer of theirs was checked against.
     const why = entry.provinces.includes("CA")
       ? `Shown because it is a federal program, offered in every province and territory, and your ${activity} activity matches it.`
-      : `Shown because ${provinceName(profile.province)} and your ${activity} activity match this program.`;
+      : entry.activityTags.length === 0
+        ? `Shown because you selected ${provinceName(profile.province)}.`
+        : `Shown because ${provinceName(profile.province)} and your ${activity} activity match this program.`;
 
     return {
       id: entry.id,
@@ -202,7 +218,7 @@ function evaluateGrant(profile: EvaluationProfile, entry: GrantProgram): UnlockI
       title: entry.label,
       why,
       payoff: currentRate
-        ? `If eligible as a ${STRUCTURE_LABELS[profile.structure]}, this may be worth ${Math.round(currentRate.rate * 100)}% (${currentRate.refundable ? "refundable" : "non-refundable"}). ${currentRate.note ?? ""}`.trim()
+        ? `If eligible as a ${STRUCTURE_LABELS[profile.structure]}, this may be worth ${Math.round(currentRate.rate * 100)}%${refundableAfter(currentRate, " (", ")")}. ${currentRate.note ?? ""}`.trim()
         : entry.lensAnnotations.tax,
       source: firstCitationSource(entry.citations),
       citations: entry.citations,
@@ -210,7 +226,7 @@ function evaluateGrant(profile: EvaluationProfile, entry: GrantProgram): UnlockI
       fork: betterAtCcpc
         ? {
             label: "Incorporating (CCPC) changes this",
-            note: `A CCPC may access ${Math.round(ccpcRate.rate * 100)}% ${ccpcRate.refundable ? "refundable" : "non-refundable"} treatment instead of ${Math.round(currentRate.rate * 100)}%. ${ccpcRate.note ?? ""}`.trim(),
+            note: `A CCPC may access ${Math.round(ccpcRate.rate * 100)}%${refundableAfter(ccpcRate, " ", "")} treatment instead of ${Math.round(currentRate.rate * 100)}%. ${ccpcRate.note ?? ""}`.trim(),
           }
         : undefined,
     };
@@ -231,7 +247,7 @@ function evaluateGrant(profile: EvaluationProfile, entry: GrantProgram): UnlockI
     fork: {
       label: "Incorporating (CCPC) would unlock this",
       note: ccpcRate
-        ? `As a CCPC this may be worth ${Math.round(ccpcRate.rate * 100)}% (${ccpcRate.refundable ? "refundable" : "non-refundable"}).`
+        ? `As a CCPC this may be worth ${Math.round(ccpcRate.rate * 100)}%${refundableAfter(ccpcRate, " (", ")")}.`
         : "This program is only open to incorporated ventures — incorporation timing is a fork worth modeling.",
     },
   };
