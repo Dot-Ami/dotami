@@ -6,7 +6,8 @@
  * person ended with two ideas and the first one still in Alberta. The unit side is tests/places-and-programs.spec.ts.
  *
  * The pull request's second review (2026-10-24): a tick on a line Ontario leaves out survives a tick there; road 1
- * from Ontario lists no skill item resting only on Alberta's pages; the rail's prep tools follow the place.
+ * from Ontario lists no skill item resting only on Alberta's pages; the rail's prep tools follow the place. Its third
+ * review: the same tick survives a tick made while the file still holds Alberta (the cockpit's own merge).
  *
  * PLACE_SHOTS=<folder> saves the cockpit with the box open, and its receipt after Save, at 375, 768 and 1280 wide.
  */
@@ -181,6 +182,43 @@ test("second review of #207: a tick on a line left out in Ontario survives a tic
   panel = await openHire(page);
   await expect(panel.getByRole("checkbox", { name: /WCB-Alberta/ })).toBeChecked();
   await expect(panel.getByRole("checkbox", { name: /^Before the first pay/ })).toBeChecked();
+});
+
+test("third review of #207: a tick made in Ontario before the move is saved keeps the WCB-Alberta tick (the cockpit sends it)", async ({ page }) => {
+  const ventureId = await albertaIdea(page);
+  await page.goto(`/cockpit?venture=${ventureId}`);
+  await showRail(page);
+
+  let panel = await openHire(page);
+  const wcb = panel.getByRole("checkbox", { name: /WCB-Alberta/ });
+  await wcb.check();
+  await expect(panel.getByRole("status")).toBeVisible();
+  await expect(wcb).toBeEnabled();
+  await panel.getByRole("button", { name: "Close node detail panel" }).click();
+
+  // The move's save is refused, so the file stays in Alberta while the screen draws Ontario (as in the pause before
+  // the map's autosave, or after a save that failed): the storage, reading Alberta, leaves no line out and keeps the
+  // list it is sent, so only the cockpit's own merge (`ticksFor` in cockpit-page.tsx) can keep the WCB-Alberta tick.
+  await page.route("**/api/scenario/save", (route) => route.fulfill({ status: 503, contentType: "application/json", body: "{}" }));
+  await told(page).getByRole("button", { name: "Change: you told us your place is Alberta" }).click();
+  await told(page).getByRole("combobox", { name: "Which province or territory are you in?" }).selectOption("ON");
+  await told(page).getByRole("button", { name: "Save", exact: true }).click();
+  await expect(page.getByText("Save unavailable — kept in this tab. Save now retries.")).toBeVisible();
+
+  panel = await openHire(page);
+  await expect(panel).not.toContainText("WCB-Alberta");
+  const beforePay = panel.getByRole("checkbox", { name: /^Before the first pay/ });
+  await beforePay.check();
+  await expect(panel.getByRole("status")).toBeVisible();
+  await expect(beforePay).toBeEnabled();
+
+  const kept = (await (await page.request.get(`/api/futures/${encodeURIComponent(ventureId)}`)).json()) as {
+    future: { place: string };
+    progress: { stepId: string; doneWhenIds: string[] }[];
+  };
+  // The control: the file still says Alberta, so the storage's own merge played no part.
+  expect(kept.future.place).toBe("CA-AB");
+  expect(kept.progress.find((p) => p.stepId === "branch-hire-first-employee")?.doneWhenIds.sort()).toEqual(["dw-start-hire-before-pay", "dw-start-hire-wcb"]);
 });
 
 /** Road 1's first step, whose one listed skill item, Alberta Student Number, rests only on Alberta's pages. */

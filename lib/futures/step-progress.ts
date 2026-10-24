@@ -89,7 +89,9 @@ export async function listStepProgress(
  * it is; `status: null` takes the status back. `doneWhenIds` is the step's ticks on the lines drawn for the
  * idea's place: a tick on a line its place leaves out (it rests on another province's page) is kept whatever
  * list is sent, so neither a tick nor Take back from another province removes it (second review of #207,
- * `ticksToSave`). Every id is checked against the road catalog: the road
+ * `ticksToSave`). The place is the one in the file, which trails the cockpit's until a change of place is saved:
+ * the cockpit adds the kept ticks for the place on its screen too, and an untick sent from a place the file doesn't
+ * hold yet, of a line the file's place leaves out, is put back. Every id is checked against the road catalog: the road
  * has to be the future's own road, the step on it, each ticked line one of that step's "done when"
  * lines, so nothing is kept that points at nothing. Returns the step's progress as kept.
  */

@@ -90,7 +90,11 @@ guess), *Nothing counts until you agree to it.*, **Next: agree** and **Cancel**.
   ticks sends the step's whole list, so the boxes are off from a tick until that save is read back (a
   second quick tick would otherwise send a list without the first). The list sent holds the ticks kept on
   lines the place on screen leaves out, and the storage keeps those by the place in the file whatever list
-  arrives (`ticksToSave`, 2026-10-24), so a tick from another province, or *Take back*, never removes one.
+  arrives (`ticksToSave`, 2026-10-24), so a tick from another province, or *Take back*, never removes one
+  (`e2e/place-change.spec.ts` holds the place's save back to test the cockpit's side). The place in the file
+  trails the screen until the change of place is saved (the map's autosave pause, or a save that failed): in
+  that gap a line the screen draws again but the file's place still leaves out can't be unticked, and the
+  read-back shows it ticked again; unticked once the place is saved, it stays unticked.
 - Marks: `POST /api/skill-marks { skillItemId, mark }` (`mark: null` for I don't know).
 - **Next: agree**: `POST /api/figures/propose` with source *typed by you*, one figure of kind
   `start-up-cost-line`, dated today at both ends, with `costLine { roadId, stepId, lineId, amountFrom }`;

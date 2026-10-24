@@ -259,7 +259,8 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   step's ticks. It is now kept whatever list a save sends (`ticksToSave` in `lib/futures/types.ts`, used by
   `lib/futures/step-progress.ts`), and the cockpit sends it too, so a tick made while a change of place is still
   being saved can't lose one; moving back shows it again (`tests/places-and-programs.spec.ts` and
-  `e2e/place-change.spec.ts`: on the old code the WCB-Alberta tick was gone after a tick in Ontario). Road 1's
+  `e2e/place-change.spec.ts`: on the old code the WCB-Alberta tick was gone after a tick in Ontario; with the
+  place's save held back, it is gone after that tick when the cockpit sends only the lines it draws). Road 1's
   skill items, all resting on Alberta's pages (*Alberta Student Number* listed four tradesecrets.alberta.ca pages
   in Ontario), are left out of a step's list for another province, their pages counted in the same line, and a
   listed item's sources are drawn for the place too (`skillItemsForPlace`); a skill selected on the map that the
