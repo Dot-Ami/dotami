@@ -12,7 +12,8 @@
  * 3. Time words the no-times check missed ("first years", "time-boxed"), the Lens lines, and official pages'
  *    words drawn only inside the official-quote component.
  * 4. The front door's chips are in the words file, and none promises anything about the person's taxes.
- * 5. The front door offers Your futures and Open cockpit only once an idea is saved.
+ * 5. The front door offers Your futures and Open cockpit only once an idea is saved, and, with none saved,
+ *    Your expenses while the Expenses page has a record to list (2026-10-24).
  */
 import { readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
@@ -29,7 +30,8 @@ import { complianceCatalogV2026 } from "@/lib/engines/compliance/v2026";
 import { generalRoadV2026, roadsV2026, skillItemsV2026, type Road } from "@/lib/engines/roads/v2026";
 import { PAGE_QUOTES_LEAD } from "@/lib/engines/shared/citation-check";
 import type { DestinationDraft } from "@/lib/front-door/draft";
-import { hasSavedIdea } from "@/lib/front-door/saved-idea";
+import { LISTED_EXPENSE, listExpenses } from "@/lib/expenses/store";
+import { hasListedExpenses, hasSavedIdea } from "@/lib/front-door/saved-idea";
 import { scenarioForPickedFuture } from "@/lib/front-door/start-future";
 import { destinationWords, frontDoorWords } from "@/lib/front-door/words";
 import { heldJourney, holdJourney } from "@/lib/journey/held-journey";
@@ -610,19 +612,74 @@ describe("4. The front door's chips", () => {
 });
 
 // ---------------------------------------------------------------------------------------------------------
-// 5. Your futures and Open cockpit only once an idea is saved
+// 5. Your futures and Open cockpit only once an idea is saved; with none, Your expenses while it lists a record
 // ---------------------------------------------------------------------------------------------------------
 
 describe("5. The front door's links", () => {
   it("with nothing saved, only Settings; with an idea saved, Your futures and Open cockpit too", () => {
-    const none = renderToStaticMarkup(createElement(FrontDoorNav, { hasSavedIdea: false }));
+    const none = renderToStaticMarkup(createElement(FrontDoorNav, { hasSavedIdea: false, expensesListed: false }));
     expect(none).not.toContain(frontDoorWords.nav.futures);
     expect(none).not.toContain(frontDoorWords.nav.cockpit);
+    expect(none).not.toContain(frontDoorWords.nav.expenses);
+    expect(none).not.toContain('href="/expenses"');
     expect(none).toContain(frontDoorWords.nav.settings);
     // Planted control: a saved idea brings both back.
-    const saved = renderToStaticMarkup(createElement(FrontDoorNav, { hasSavedIdea: true }));
+    const saved = renderToStaticMarkup(createElement(FrontDoorNav, { hasSavedIdea: true, expensesListed: false }));
     expect(saved).toContain(frontDoorWords.nav.futures);
     expect(saved).toContain(frontDoorWords.nav.cockpit);
+  });
+
+  it("with no idea saved but records the Expenses page lists, Your expenses leads to them; with an idea saved, Your futures does", () => {
+    const records = renderToStaticMarkup(createElement(FrontDoorNav, { hasSavedIdea: false, expensesListed: true }));
+    expect(records).toContain(`href="/expenses"`);
+    expect(records).toContain(frontDoorWords.nav.expenses);
+    expect(records).toContain(frontDoorWords.nav.settings);
+    expect(records).not.toContain(frontDoorWords.nav.futures);
+    expect(records).not.toContain(frontDoorWords.nav.cockpit);
+    // Planted control: with an idea saved, Your futures is the way there (its nav links Your expenses), and
+    // the front door draws no fourth link.
+    const both = renderToStaticMarkup(createElement(FrontDoorNav, { hasSavedIdea: true, expensesListed: true }));
+    expect(both).toContain(frontDoorWords.nav.futures);
+    expect(both).toContain(frontDoorWords.nav.cockpit);
+    expect(both).not.toContain(frontDoorWords.nav.expenses);
+    expect(both).not.toContain(`href="/expenses"`);
+  });
+
+  it("asks the data file for the records the Expenses page lists, by the page's own rule: none, some, or no database at all", async () => {
+    let seen: unknown;
+    const count = (n: number) =>
+      ({
+        expense: {
+          count: async (args: unknown) => {
+            seen = args;
+            return n;
+          },
+        },
+      }) as unknown as Parameters<typeof hasListedExpenses>[0];
+    expect(await hasListedExpenses(count(0))).toBe(false);
+    expect(await hasListedExpenses(count(2))).toBe(true);
+    // Every record but the ones turned down, the rule listExpenses applies (the same object, not a copy).
+    expect(LISTED_EXPENSE).toEqual({ status: { not: "discarded" } });
+    expect((seen as { where: unknown }).where).toBe(LISTED_EXPENSE);
+    let listed: { where: { AND: unknown[] } } | undefined;
+    const lists = {
+      expense: {
+        findMany: async (args: { where: { AND: unknown[] } }) => {
+          listed = args;
+          return [];
+        },
+      },
+    } as unknown as Parameters<typeof listExpenses>[0];
+    expect(await listExpenses(lists, null)).toEqual([]);
+    expect(listed!.where.AND).toContain(LISTED_EXPENSE);
+    const broken = {
+      expense: {
+        count: async () => {
+          throw new Error("no database");
+        },
+      },
+    } as unknown as Parameters<typeof hasListedExpenses>[0];
+    expect(await hasListedExpenses(broken)).toBe(false);
   });
 
   it("reads the data file: none, some, or no database at all", async () => {

@@ -11,6 +11,7 @@ import type { PrismaClient } from "@prisma/client";
 import { expect, test, type Locator, type Page } from "@playwright/test";
 
 import { createDatabaseClient } from "../lib/db/client";
+import { frontDoorWords } from "../lib/front-door/words";
 import { FOLDERS, SENT_ELSEWHERE, SET_ASIDE_RECEIPTS_WARNING as WARNING, TABLES, WINDOW_STORAGE } from "../lib/privacy/inventory";
 
 /** The amount typed in the test. It must never appear in a URL, and the statement's words only as a count. */
@@ -437,6 +438,11 @@ test("Delete: tick ideas and statements, see what goes and what stays, say yes t
   await expect(turnedRow).toHaveCount(0);
   await page.keyboard.press("Escape");
 
+  // With ideas saved, the front door leads to the records through Your futures, not a link of their own.
+  await page.goto("/");
+  await expect(page.getByRole("link", { name: frontDoorWords.nav.futures })).toBeVisible();
+  await expect(page.getByRole("link", { name: frontDoorWords.nav.expenses })).toHaveCount(0);
+
   // Every table checked for 0 after the reload holds something now, so each 0 is a real change.
   await page.goto("/your-data");
   const goneAfter = ["Your statements", "Map progress", "Your figures", "Links between ideas"];
@@ -532,8 +538,14 @@ test("Delete: tick ideas and statements, see what goes and what stays, say yes t
   await page.goto("/ventures");
   await expect(page.getByText("Nothing saved yet.")).toBeVisible();
 
+  // The front door, with no idea saved, offers the Expenses page, which still has records to list
+  // (2026-10-24), and not Your futures, whose page is empty now.
+  await page.goto("/");
+  await expect(page.getByRole("link", { name: frontDoorWords.nav.futures })).toHaveCount(0);
+  await page.getByRole("link", { name: frontDoorWords.nav.expenses }).click();
+  await expect(page).toHaveURL(/\/expenses$/);
+
   // On the Expenses page the record that was on the idea now shows as not attached to an idea.
-  await page.goto("/expenses");
   const banner = page.getByRole("region", { name: "Waiting for you" });
   await banner.getByRole("button", { name: "Review" }).click();
   const review = page.getByRole("dialog", { name: "Agree to these proposed records?" });

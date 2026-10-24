@@ -37,7 +37,9 @@ export const frontDoorWords = {
       go: "Show me Mara's example →",
     },
   },
-  nav: { futures: "Your futures →", cockpit: "Open cockpit →", settings: "Settings" },
+  // `expenses` only while no idea is saved and the Expenses page has a record to list (2026-10-24): once an
+  // idea is saved, Your futures leads there.
+  nav: { futures: "Your futures →", cockpit: "Open cockpit →", expenses: "Your expenses →", settings: "Settings" },
   /**
    * The idea door's three chips (docs/ui-spec/landing/02-example-chips.md): each only fills the box with an
    * example phrasing. Here since 2026-10-23 (they were written in components/discovery/landing-page.tsx); the

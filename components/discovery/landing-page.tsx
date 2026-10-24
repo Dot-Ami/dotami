@@ -20,9 +20,11 @@ import { useLayoutEffect, useRef, useState } from "react";
  * chips' words are in the words file (`frontDoorWords.examplePrompts`, since 2026-10-23).
  *
  * *Your futures* and *Open cockpit* are offered only once an idea is saved (`hasSavedIdea`, read on the server
- * when the page is drawn, 2026-10-23): with nothing saved both opened empty pages.
+ * when the page is drawn, 2026-10-23): with nothing saved both opened empty pages. With none saved, *Your
+ * expenses* is offered while the Expenses page has a record to list (`expensesListed`, read the same way,
+ * 2026-10-24).
  */
-export function LandingPage({ hasSavedIdea }: { hasSavedIdea: boolean }) {
+export function LandingPage({ hasSavedIdea, expensesListed }: { hasSavedIdea: boolean; expensesListed: boolean }) {
   const router = useRouter();
   const { setIntake, resetJourney } = useJourney();
   const [text, setText] = useState("");
@@ -79,7 +81,7 @@ export function LandingPage({ hasSavedIdea }: { hasSavedIdea: boolean }) {
         className="flex shrink-0 flex-wrap items-center justify-between gap-4 border-b border-rule-soft px-4 py-5 sm:px-8 md:px-14"
       >
         <WordMark />
-        <FrontDoorNav hasSavedIdea={hasSavedIdea} />
+        <FrontDoorNav hasSavedIdea={hasSavedIdea} expensesListed={expensesListed} />
       </header>
 
       <main className="flex min-h-0 flex-1 flex-col items-center overflow-y-auto px-4 py-8 sm:px-8 md:px-14">
@@ -181,9 +183,11 @@ export function LandingPage({ hasSavedIdea }: { hasSavedIdea: boolean }) {
 
 /**
  * The front door's links. *Your futures* and *Open cockpit* only once an idea is saved (2026-10-23): for a
- * brand-new person both opened empty pages. *Settings* always.
+ * brand-new person both opened empty pages. With none saved, *Your expenses* while the Expenses page has a
+ * record to list (2026-10-24): records kept when Delete took the ideas, or an agent's proposals waiting, had no
+ * way in from here; with an idea saved, Your futures links to them. *Settings* always.
  */
-export function FrontDoorNav({ hasSavedIdea }: { hasSavedIdea: boolean }) {
+export function FrontDoorNav({ hasSavedIdea, expensesListed }: { hasSavedIdea: boolean; expensesListed: boolean }) {
   return (
     <div className="flex flex-wrap items-center gap-5">
       {hasSavedIdea ? (
@@ -195,6 +199,10 @@ export function FrontDoorNav({ hasSavedIdea }: { hasSavedIdea: boolean }) {
             {frontDoorWords.nav.cockpit}
           </GhostLink>
         </>
+      ) : expensesListed ? (
+        <GhostLink href="/expenses" tone="stone">
+          {frontDoorWords.nav.expenses}
+        </GhostLink>
       ) : null}
       <GhostLink href="/settings" tone="stone">
         {frontDoorWords.nav.settings}
