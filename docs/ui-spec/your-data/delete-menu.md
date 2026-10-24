@@ -204,7 +204,9 @@ progress, Your destination's answers and the idea open on the map, never in the 
 2026-10-24), through the journey provider: after deleting ideas the journey is reset, so a Save on the map
 can't bring a deleted idea back; after the statements, the sentence typed on the front door (with its copy in
 `description` and the parse's reading of it) and Your destination's words go from it; after the yearly income,
-the income (`lib/journey/window-storage.ts` `intakeAfterDelete`).
+the income (`lib/journey/window-storage.ts` `intakeAfterDelete`). Checked in the browser by the last test of
+`e2e/your-data.spec.ts`, which reaches Delete from *Your destination* by the app's own links only, so the memory
+comes through, and finds questions 1 and 4 asked again while 2 and 3 stay answered.
 
 ## Downstream consumers (where the data goes today)
 

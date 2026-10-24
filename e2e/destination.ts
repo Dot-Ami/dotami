@@ -1,8 +1,8 @@
 /**
  * Your destination (/start) in the browser tests: its four questions' words and the steps several tests share
- * (e2e/front-door.spec.ts). Questions 1 and 4 are answered from the data file once an earlier test kept them;
- * 2 and 3 only from the window's memory (lib/journey/held-journey.ts), which a page loaded afresh starts empty,
- * so each test that reaches them answers them itself, and runs on its own too.
+ * (e2e/front-door.spec.ts, e2e/your-data.spec.ts). Questions 1 and 4 are answered from the data file once an
+ * earlier test kept them; 2 and 3 only from the window's memory (lib/journey/held-journey.ts), which a page
+ * loaded afresh starts empty, so each test that reaches them answers them itself, and runs on its own too.
  */
 import { expect, type Page } from "@playwright/test";
 
