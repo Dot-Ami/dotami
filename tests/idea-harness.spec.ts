@@ -13,6 +13,8 @@ import path from "node:path";
 
 import { describe, expect, it } from "vitest";
 
+import { JOB_SEARCH_GROUP_CAP } from "@/lib/engines/oasis/v2026/title-search";
+
 import { KNOWN_GAPS, NEVER_A_KNOWN_GAP, type KnownGap } from "./fixtures/ideas/known-gaps";
 import { IDEAS_V1 } from "./fixtures/ideas/v1";
 import { coverageReport } from "./helpers/idea-coverage-report";
@@ -114,6 +116,10 @@ describe("the idea harness", () => {
       // Call 32: a silent fallback fails here even when a known gap lists it (the count must stay 0).
       expect(silentFallbackProblems(failures, KNOWN_GAPS)).toEqual([]);
       expect(Math.round(cpuMs), `the run's own work, in ms (wall clock ${Math.round(elapsedMs)} ms)`).toBeLessThan(BUDGET_MS);
+      // The report is for a person to read beside the screen, so it says the job search's cap as the screen has
+      // it: since whole words first (a-call-11) each part of a group lists its first 50, so a group can list 100.
+      expect(report).toContain(`as listed: each part's first ${JOB_SEARCH_GROUP_CAP}, and a group without parts its first ${JOB_SEARCH_GROUP_CAP})`);
+      expect(report).not.toContain("of each group");
     },
     // vitest's own limit is wider than the budget, so a slow run fails on the budget's line, with its time.
     BUDGET_MS * 3,
