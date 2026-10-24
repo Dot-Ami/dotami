@@ -233,6 +233,41 @@ describe("the Skills gauge, its list and its switch: a legal requirement is not 
   });
 });
 
+describe("a future's card on Pick a future: a legal requirement is not counted as a skill", () => {
+  // The same review fix, on the card that opens the road: the apprentice road's card read "3 skills listed" for its
+  // Alberta Student Number, apprenticeship agreement and certificate (2026-10-24).
+  const kindOf = new Map(skillItemsV2026.map((i) => [i.id, i.kind]));
+  const cards = futureCards(listedRoads(roadsV2026, "AB"), skillItemsV2026);
+  const cardText = (roadId: string) =>
+    shown(
+      renderToStaticMarkup(
+        createElement(FutureCardItem, { card: cards.find((c) => c.roadId === roadId)!, personPlace: "AB", personPlaceLabel: "Alberta", opening: null, onLookInside: () => {} }),
+      ),
+    );
+
+  it("the apprentice road's card says no skills are listed, and names its legal requirements apart", () => {
+    const items = [...new Set(roadApprenticeToOwnShopAB.steps.flatMap((s) => s.needs))];
+    expect(items.every((id) => kindOf.get(id) === "legal-requirement")).toBe(true);
+    const text = cardText(roadApprenticeToOwnShopAB.id);
+    expect(text).not.toContain(`${items.length} skills listed`);
+    expect(text).toContain(`0 skills listed · ${items.length} legal requirements ·`);
+  });
+
+  it("every card's two counts add up to the items its road lists, each counted by its kind", () => {
+    for (const card of cards) {
+      const road = roadsV2026.find((r) => r.id === card.roadId)!;
+      const items = [...new Set(road.steps.flatMap((s) => s.needs))];
+      const legal = items.filter((id) => kindOf.get(id) === "legal-requirement").length;
+      expect([card.skillsListed, card.requirementsListed], card.roadId).toEqual([items.length - legal, legal]);
+    }
+  });
+
+  it("planted control: a road with no legal requirement keeps the line as it was", () => {
+    expect(pickWords.counts(4, 2, 0, 1, 3)).toBe("4 steps · 2 skills listed · 1 official fee found · 3 cost lines you'd price");
+    expect(pickWords.counts(4, 2, 1, 1, 3)).toBe("4 steps · 2 skills listed · 1 legal requirement · 1 official fee found · 3 cost lines you'd price");
+  });
+});
+
 describe("the Structure ladder: only on the tax and structure roads, in plain words", () => {
   it("is drawn on road 0 and the federal steps, and not on the apprentice road", () => {
     expect(drawsTheStructureLadder(roadStartingAnyBusinessAB)).toBe(true);

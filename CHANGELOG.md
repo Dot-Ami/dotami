@@ -240,7 +240,8 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   listed*; now *No skills are listed on this road yet* and *3 legal requirements, apart from skills: 3 not
   marked*, the switch *Skills · 0 listed · 3 legal requirements*, and the list draws them under *Legal
   requirements on this road's steps*, above *Skills on this road's steps* (it is titled *Skills and legal
-  requirements*). On a phone the overlay row's own label and Road's *always on* are left to screen readers, so
+  requirements*), and so does a future's card on *Pick a future* (*0 skills listed · 3 legal requirements*, not *3
+  skills listed*). On a phone the overlay row's own label and Road's *always on* are left to screen readers, so
   the longer switch keeps the row on two lines. The Skills list folds the job's own list (Cabinetmakers' 44) under one **Show the 44 on this job's list**
   button below the road's own items. The Structure ladder is drawn only on the tax and structure roads, in plain
   words (*Ways a business can be set up*: *In your own name* … *A family trust*). *Your plan* has *The steps in this

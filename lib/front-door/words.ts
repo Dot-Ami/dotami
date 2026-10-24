@@ -126,10 +126,12 @@ export const pickWords = {
     `The federal steps only. ${province}'s own steps aren't written yet; a step shows ${/^[AEIOU]/.test(province) ? "an" : "a"} ${province} page only where a federal step cites one.`,
   showAlberta: (n: number) => (n === 1 ? "Show the 1 future written for Alberta" : `Show the ${n} futures written for Alberta`),
   hideAlberta: "Hide the futures written for Alberta",
-  counts: (steps: number, skills: number, fees: number, lines: number) =>
+  /** The road's legal requirements are named apart from its skills, and only when it lists any (2026-10-24). */
+  counts: (steps: number, skills: number, requirements: number, fees: number, lines: number) =>
     [
       plural(steps, "step", "steps"),
       plural(skills, "skill listed", "skills listed"),
+      ...(requirements > 0 ? [plural(requirements, "legal requirement", "legal requirements")] : []),
       plural(fees, "official fee found", "official fees found"),
       plural(lines, "cost line you'd price", "cost lines you'd price"),
     ].join(" · "),

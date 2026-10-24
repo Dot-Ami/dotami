@@ -961,7 +961,7 @@ function piecesOfSteps(pieces: TextPiece[], way: "typed" | "picked", idea: Idea,
     add(`${at} › written for`, pickWords.writtenFor(names));
     if (place && placeLabel && !places.includes("CA") && !places.includes(place)) add(`${at} › you said`, pickWords.youSaid(placeLabel));
     if (placeLabel && places.includes("CA")) add(`${at} › federal only`, pickWords.federalOnly(placeLabel));
-    add(`${at} › counts`, pickWords.counts(card.steps, card.skillsListed, card.officialFees, card.linesToPrice));
+    add(`${at} › counts`, pickWords.counts(card.steps, card.skillsListed, card.requirementsListed, card.officialFees, card.linesToPrice));
     for (const part of sourcesLine(card.sources)) add(`${at} › sources`, part.text);
     // The card's job line, from the same function the screen draws it with (tests/future-card-honest-pick.spec.ts
     // finds it, and the card's other labels, in what components/front-door/future-card.tsx draws).

@@ -62,7 +62,7 @@ export function FutureCardItem({
           {jobLine}
         </p>
       ) : null}
-      <p className="text-body tabular-nums text-paper-dim">{words.counts(card.steps, card.skillsListed, card.officialFees, card.linesToPrice)}</p>
+      <p className="text-body tabular-nums text-paper-dim">{words.counts(card.steps, card.skillsListed, card.requirementsListed, card.officialFees, card.linesToPrice)}</p>
       <p className="text-body leading-snug text-stone">
         {words.sourcesLead}{" "}
         {sourcesLine(card.sources).map((part, i) => (
