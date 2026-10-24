@@ -272,6 +272,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   (`lib/roads/receipts.ts`). An agreed number on a cost line left out for the place dropped out of the money,
   *What you've told DotAmi* and Your plan without a word; it is now listed in both as kept with this idea and not
   counted for the place, with **Take back** and no **Change** (the maintainer's decision of 2026-10-24, option B).
+  Pick a future's card for an Alberta road, seen from another province, counts what that person will be shown
+  inside (call 34; road 1 from Ontario: 17 lines to price, no official fee and no skill listed, where it said 30,
+  9 and 3; `tests/three-steps.spec.ts`).
 - **Your answer to "Are you buying equipment, a vehicle or tools?" on a future picked on Pick a future is
   kept** (the maintainer's "Yes, fix both", 2026-10-20). Pick a future saves equipment as not said, since it
   never asks it. Answering in the cockpit's one-question box showed the answer for a moment, but left

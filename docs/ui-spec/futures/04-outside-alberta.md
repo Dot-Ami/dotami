@@ -232,7 +232,11 @@ Every string in the words block was run through `VERDICT_WORDS`, `findVerdicts` 
   bikes in Ottawa, road 1).
 - **The card's sources line** counts only the sources the person will be shown inside (the maintainer's call 34 of
   2026-10-22): each step's own sources through `citationsForPlace`, the step panel's filter (`futureCards` with the
-  person's province). On road 0 and road 1 every source shows, so their cards count as before.
+  person's province). Since the second review of #207 (2026-10-24) every card counts the road as the cockpit
+  draws it for the person's place (`roadForPlace`, `skillItemsForPlace`): an Alberta road's card, seen from
+  Ontario, counts no *done when* line, cost line, fee or skill item resting on Alberta's pages, nor their sources
+  (road 1: 17 lines to price, no official fee, no skill listed and 18 sources, where it said 30 lines and 9 fees;
+  road 0: 9 lines to price, where it said 11).
 - **About this job** outside Alberta (its province-wide wage row, Tradesecrets left out) is task 25h's.
 - **Clutter** (`e2e/budgets.ts`, two new rows by the written way, `ADDED_SCREENS`; measured with Chromium on
   Windows, phone, tablet, laptop): *Pick a future* in Ontario (`futures-outside-alberta`) 6, 6, 6 regions and
