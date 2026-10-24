@@ -53,7 +53,10 @@ person is asked).
   tick on a *done when* line the idea's new place leaves out (it rests on another province's page) stays kept with
   the idea, where a save of that step's ticks from the new place deleted it, and shows again once the place draws
   the line ([`lib/futures/step-progress.ts`](../lib/futures/step-progress.ts) `setStepProgress`, *Your progress on
-  each step* in the inventory). Nothing new is asked, and nothing leaves the computer.
+  each step* in the inventory). An agreed number on a cost line the place leaves out stays kept, as before, and is
+  now listed in *What you've told DotAmi* and on Your plan as kept and not counted
+  ([`lib/roads/evaluate-road.ts`](../lib/roads/evaluate-road.ts)). Nothing new is asked, and nothing leaves the
+  computer.
 - **About this job's Change keeps your region, and About this job shows in place for a job with no written road
   (2026-10-22, task 28h).** Asks: in Alberta, *Which region are you in?* again, from About this job's **Change**
   in the cockpit, the same eight regions and *I don't know* as Pick a future's step 2b, opened on your own answer

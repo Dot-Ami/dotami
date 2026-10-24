@@ -269,7 +269,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   13 of its 17 steps). The change of place's receipt said *you ticked 1 of 3 “done when” lines …*, *you took back
   your number for …* and, on road 1, *you took back your mark on “Alberta Student Number”* and *4 steps no longer
   have every skill they list marked have*, none of which the person did; it now names only the place
-  (`lib/roads/receipts.ts`).
+  (`lib/roads/receipts.ts`). An agreed number on a cost line left out for the place dropped out of the money,
+  *What you've told DotAmi* and Your plan without a word; it is now listed in both as kept with this idea and not
+  counted for the place, with **Take back** and no **Change** (the maintainer's decision of 2026-10-24, option B).
 - **Your answer to "Are you buying equipment, a vehicle or tools?" on a future picked on Pick a future is
   kept** (the maintainer's "Yes, fix both", 2026-10-20). Pick a future saves equipment as not said, since it
   never asks it. Answering in the cockpit's one-question box showed the answer for a moment, but left

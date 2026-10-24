@@ -135,7 +135,8 @@ export function toldRows(input: RoadEvaluationInput, evaluation: RoadEvaluation,
         takenBack: a.takenBack,
         day: dayFor(a.id, input, kept),
         unlocked: without === null ? null : roadReceipt(evaluateRoad(without), evaluation),
-        change: changeFor(a.id),
+        // A quote kept on a line the idea's place leaves out has no step here to change it in; Take back still works.
+        change: a.forAnotherPlace ? { kind: "none" } : changeFor(a.id),
         takeBack: takeBackFor(a.id, input, kept),
       };
     });

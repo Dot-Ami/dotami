@@ -152,6 +152,13 @@ export const answer = {
     takenBack: `you took back your number for ${quoted(line)} on ${quoted(step)}`,
     fact: `your number for ${quoted(line)} (${formatMoney(cents)})`,
   }),
+  // A quote the person agreed on a cost line the road leaves out for the idea's place (`roadForPlace`: the line rests
+  // on another province's page): kept, named, counted in no sum (second review of #207, 2026-10-24).
+  costLineForAnotherPlace: (line: string, step: string, cents: number): AnswerWords => ({
+    said: `you told us your number for ${quoted(line)} on ${quoted(step)} is ${formatMoney(cents)}; it is kept with this idea and not counted for your place, because that line rests on another province's page`,
+    takenBack: `you took back your number for ${quoted(line)} on ${quoted(step)}`,
+    fact: `your number for ${quoted(line)} (${formatMoney(cents)}, kept, not counted for your place)`,
+  }),
   savings: (cents: number): AnswerWords => ({
     said: `you told us you'd put ${formatMoney(cents)} of savings toward starting`,
     takenBack: "you took back your savings number",

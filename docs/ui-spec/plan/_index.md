@@ -80,7 +80,8 @@ splits across two pages, and every link is printed as its address (each link's t
 7. **What you've told DotAmi** — the cockpit's left list, row for row: what was said, its day (or *day
    not kept*), and what it unlocked (the receipt lines; *"Nothing on the road changes with or without
    it."* when none). The what-if is never here: it is never kept. Nothing told: the list's own empty
-   line.
+   line. Since 2026-10-24 a number agreed on a cost line the idea's place leaves out is a row too, saying it is
+   kept with this idea and not counted for the place, as the cockpit's list does.
 8. **What this plan is** — the standing line: *"DotAmi is not legal or tax advice. This plan is a
    preparation tool for your accountant and lawyer: it shows what you told DotAmi and where each fact
    comes from, and it ranks nothing."*

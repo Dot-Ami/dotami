@@ -24,6 +24,11 @@ ladder, the save line). Two regions:
     words a receipt uses), or *Nothing on the road changes with or without it.*; for the place, the kind
     of venture and the work situation, *The map needs this answer: it can be changed, not taken back.*;
   - **Change** and **Take back** (see below).
+  - A number agreed on a cost line the idea's place leaves out (it rests on another province's page, such as
+    the Alberta registry agent's fee after a move to Ontario) stays a row (since 2026-10-24, the maintainer's
+    decision of that day, option B): *You told us your number for “…” on “…” is $…; it is kept with this idea and
+    not counted for your place, because that line rests on another province's page*, with **Take back** and no
+    **Change** (no step drawn for the place shows its line); no sum counts it.
 - **Not told yet** (a region with that name). Each missing answer as *<question> → unlocks <what>*, in
   the order DotAmi asks them (a line says *In the order DotAmi asks them, not importance*): your date;
   your savings; your numbers for the cost lines not priced yet; your marks on the skills not marked; an

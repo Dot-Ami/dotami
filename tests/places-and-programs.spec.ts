@@ -51,6 +51,7 @@ import { SHIPPED_ROADS_CATALOG, ticksToSave, type SkillMarkValue } from "@/lib/f
 import type { FigureView } from "@/lib/figures/types";
 import type { EngineCitation } from "@/lib/engines/shared/types";
 import { evaluateRoad } from "@/lib/roads";
+import { answer } from "@/lib/roads/words";
 import { PROVINCES } from "@/lib/scenarios/types";
 import { demoScenarios } from "../prisma/seed-data";
 import { fileUrl, migratedFile } from "./helpers/migrated-db";
@@ -499,6 +500,41 @@ describe("second review of #207: the receipt for a change of place names only th
   it("control: in one place, taking back only the quote still says so", () => {
     const lines = answerReceipt(ideaIn("AB", road0), ideaIn("AB", { ...road0, figures: [] }));
     expect(lines.join("\n")).toContain("you took back your number for");
+  });
+});
+
+describe("second review of #207: a quote agreed on a cost line the new place leaves out is kept, named, and not counted", () => {
+  const LINE = "Registry agent's service fee (set by your agent)";
+  const STEP = "Register your business name, if you use one";
+  const ROW = "cost-line:step-start-register-name/cost-start-name-service-fee";
+  const kept = { progress: [], skillMarks: [], forkPickedOn: {}, targetMonthSetOn: null, figures: [SERVICE_FEE], incomeWantedOn: null };
+  const rowIn = (province: "AB" | "ON") => {
+    const input = ideaIn(province, { figures: [SERVICE_FEE] });
+    const evaluation = evaluateRoad(input);
+    return { evaluation, row: toldRows(input, evaluation, kept).find((r) => r.id === ROW) };
+  };
+  const capital = (text: string) => `${text.charAt(0).toUpperCase()}${text.slice(1)}`;
+
+  it("from Ontario: in no sum, and still a row in What you've told DotAmi, with Take back and no Change", () => {
+    const { evaluation, row } = rowIn("ON");
+    expect(evaluation.gauges.money.yourNumbersCents).toBe(0);
+    expect(evaluation.gauges.money.yourNumberLines).toBe(0);
+    expect(row, "the quote's row").toBeDefined();
+    expect(row!.said).toBe(capital(answer.costLineForAnotherPlace(LINE, STEP, 5000).said));
+    expect(row!.change).toEqual({ kind: "none" });
+    expect(row!.takeBack).toEqual({ kind: "figures", figureIds: ["f1"] });
+  });
+
+  it("control: in Alberta the same quote is counted, and its row is the usual one with Change", () => {
+    const { evaluation, row } = rowIn("AB");
+    expect(evaluation.gauges.money.yourNumbersCents).toBe(5000);
+    expect(row!.said).toBe(capital(answer.costLine(LINE, STEP, 5000).said));
+    expect(row!.change).toEqual({ kind: "step", stepId: "step-start-register-name" });
+  });
+
+  it("its words name no time and no verdict", () => {
+    const words = answer.costLineForAnotherPlace(LINE, STEP, 5000);
+    for (const line of [words.said, words.takenBack, words.fact]) expect([...findTimeWords(line), ...findVerdicts(line)], line).toEqual([]);
   });
 });
 

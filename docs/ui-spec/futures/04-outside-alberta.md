@@ -190,7 +190,8 @@ Every string in the words block was run through `VERDICT_WORDS`, `findVerdicts` 
   province), its pages counted in the step's line, and drew each listed item's sources for the place
   (`skillItemsForPlace`); a section left empty by the place says so, where it said none is written yet (*This
   step's “done when” lines rest on other provinces' pages, so none is shown for your place.*; road 1 from Ontario
-  shows it on 13 of its 17 steps). Steps are not removed: an Alberta idea moved to Ontario keeps *Register your business
+  shows it on 13 of its 17 steps). A number the person agreed on a cost line left out for the place stays named
+  in *What you've told DotAmi* and on Your plan, kept and counted in no sum ([../cockpit/12-told-list.md](../cockpit/12-told-list.md)). Steps are not removed: an Alberta idea moved to Ontario keeps *Register your business
   name, if you use one*, with its summary as written, no *done when* lines and the count.
 - **Pick a future:** step 3 of the three steps (`components/front-door/job-and-road-steps.tsx` `RoadStep`, on
   Pick a future and at the end of the intake): the federal card under *Written for all of Canada*, then the

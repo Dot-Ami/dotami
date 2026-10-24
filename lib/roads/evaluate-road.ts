@@ -156,6 +156,11 @@ export interface ToldAnswer extends AnswerWords {
    * or change its count, with nothing the person did, so the place's receipt says neither (./receipts.ts).
    */
   drawnForPlace?: true;
+  /**
+   * True on a quote kept on a cost line the road drawn for the idea's place leaves out (`leftOutForPlace`): counted in
+   * no sum, and no step drawn here shows its line, so its row in the told list has no Change (lib/cockpit/told.ts).
+   */
+  forAnotherPlace?: true;
 }
 
 export interface RoadGauges {
@@ -663,9 +668,21 @@ function personAnswers(input: RoadEvaluationInput, road: Road): ToldAnswer[] {
   for (const quote of input.agreed.costLines) {
     const step = stepById.get(quote.stepId);
     const line = step?.costs.find((c) => c.id === quote.lineId && c.kind === "named");
+    // A line the road drawn for the idea's place leaves out (it rests on another province's page): the person's
+    // number is still theirs, so it is listed, saying it isn't counted for this place (quoteOf never prices it).
+    const elsewhere = line ? undefined : step?.leftOutForPlace?.costs.find((c) => c.id === quote.lineId && c.kind === "named");
     // A number that isn't a whole, non-negative number of cents is shown as not priced, so it isn't an answer either.
-    if (!step || !line || !Number.isSafeInteger(quote.amountCents) || quote.amountCents < 0) continue;
-    out.push({ id: `cost-line:${step.id}/${line.id}`, group: "cost-line", ...answer.costLine(line.label, step.label, quote.amountCents), drawnForPlace: true });
+    if (!step || !(line ?? elsewhere) || !Number.isSafeInteger(quote.amountCents) || quote.amountCents < 0) continue;
+    const said = line
+      ? answer.costLine(line.label, step.label, quote.amountCents)
+      : answer.costLineForAnotherPlace(elsewhere!.label, step.label, quote.amountCents);
+    out.push({
+      id: `cost-line:${step.id}/${quote.lineId}`,
+      group: "cost-line",
+      ...said,
+      drawnForPlace: true,
+      ...(line ? {} : { forAnotherPlace: true as const }),
+    });
   }
   if (input.agreed.savingsCents !== null) out.push({ id: "savings", group: "money", ...answer.savings(input.agreed.savingsCents) });
   if (input.agreed.incomeWantedCents !== null) {
