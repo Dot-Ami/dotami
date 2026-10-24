@@ -266,7 +266,10 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   new place leaves out no longer dims the whole map (`linkedSkill`). A section left empty by the place says so
   (*This step's “done when” lines rest on other provinces' pages, so none is shown for your place.*), in the step
   panel, the Skills list, the Skills gauge and Your plan, where it said none is written yet (road 1 from Ontario:
-  13 of its 17 steps).
+  13 of its 17 steps). The change of place's receipt said *you ticked 1 of 3 “done when” lines …*, *you took back
+  your number for …* and, on road 1, *you took back your mark on “Alberta Student Number”* and *4 steps no longer
+  have every skill they list marked have*, none of which the person did; it now names only the place
+  (`lib/roads/receipts.ts`).
 - **Your answer to "Are you buying equipment, a vehicle or tools?" on a future picked on Pick a future is
   kept** (the maintainer's "Yes, fix both", 2026-10-20). Pick a future saves equipment as not said, since it
   never asks it. Answering in the cockpit's one-question box showed the answer for a moment, but left

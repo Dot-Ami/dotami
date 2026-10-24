@@ -9,6 +9,13 @@ Type: status line (display)
 Last updated: 2026-10-12 (built; after review the same day: receipts wait for the map's save, focus in the
 left list, *This visit*; docs/architecture/future-cockpit.md § 2, Cockpit screen as built, part 2)
 
+> **Changed 2026-10-24 — a change of place.** Its receipt names only the place: a tick count, a quote or a mark
+> that came into or out of view because the road is drawn for the new place is neither said nor taken back
+> (`drawnForPlace` on road evaluation's answers, `lib/roads/receipts.ts`), as a mark on the job's list is when the
+> pick of job changes; and a step that lists no skill after the move is not counted as no longer having every
+> skill marked have. Until then a move from Alberta to Ontario said *you ticked 1 of 3 “done when” lines on “Hire
+> first employee”, you took back your ticks on … and you took back your number for …* (second review of #207).
+
 ## What it is
 
 - **A receipt**: after an answer is saved, one or more plain lines saying what it changed, each starting

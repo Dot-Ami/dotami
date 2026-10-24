@@ -23,7 +23,7 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
 import { aboutJobForFuture } from "@/lib/about-job/view";
 import { buildPlan } from "@/lib/cockpit/plan";
-import { toldRows } from "@/lib/cockpit/told";
+import { answerReceipt, toldRows } from "@/lib/cockpit/told";
 import { cockpitInput, emptySectionLine, linkedSkill, roadSkillsNone } from "@/lib/cockpit/view";
 import { cockpitWords } from "@/lib/cockpit/words";
 import { createDatabaseClient } from "@/lib/db/client";
@@ -47,7 +47,8 @@ import {
 import { readFuture } from "@/lib/futures/future";
 import { readPlan } from "@/lib/futures/read-plan";
 import { listStepProgress, setStepProgress } from "@/lib/futures/step-progress";
-import { SHIPPED_ROADS_CATALOG, ticksToSave } from "@/lib/futures/types";
+import { SHIPPED_ROADS_CATALOG, ticksToSave, type SkillMarkValue } from "@/lib/futures/types";
+import type { FigureView } from "@/lib/figures/types";
 import type { EngineCitation } from "@/lib/engines/shared/types";
 import { evaluateRoad } from "@/lib/roads";
 import { PROVINCES } from "@/lib/scenarios/types";
@@ -414,6 +415,90 @@ describe("second review of #207: a section the place left empty says why, never 
       expect(line).toEqual(expect.any(String));
       expect([...findTimeWords(line), ...findVerdicts(line)], line).toEqual([]);
     }
+  });
+});
+
+/** An agreed quote of $50 on road 0's registry agent's service fee, a named line resting on Alberta's page. */
+const SERVICE_FEE: FigureView = {
+  id: "f1",
+  ventureId: "v",
+  kind: "start-up-cost-line",
+  periodStart: TODAY,
+  periodEnd: TODAY,
+  amountCents: 5000,
+  currency: "CAD",
+  sourceKind: "typed",
+  sourceLabel: "typed by you",
+  sourceRows: null,
+  status: "confirmed",
+  editedByPerson: false,
+  proposedAt: "2026-10-20T12:00:00.000Z",
+  confirmedAt: "2026-10-20T12:00:00.000Z",
+  retractedAt: null,
+  taxYear: null,
+  formLine: null,
+  costLine: { roadId: generalRoadV2026.id, stepId: "step-start-register-name", lineId: "cost-start-name-service-fee", amountFrom: "your-guess" },
+};
+
+/** The cockpit's input for one invented idea in `province`, with what the person told DotAmi about its road. */
+function ideaIn(
+  province: "AB" | "ON",
+  told: {
+    road?: typeof generalRoadV2026;
+    figures?: FigureView[];
+    progress?: { stepId: string; status: null; doneWhenIds: string[] }[];
+    skillMarks?: { skillItemId: string; ownLabel: null; mark: SkillMarkValue }[];
+  } = {},
+) {
+  return cockpitInput({
+    road: told.road ?? generalRoadV2026,
+    roadChosen: true,
+    skillItems: skillItemsV2026,
+    scenario: inventedIdea({ province }),
+    figures: told.figures ?? [],
+    personFigures: [],
+    future: null,
+    progress: told.progress ?? [],
+    skillMarks: told.skillMarks ?? [],
+    today: TODAY,
+  });
+}
+
+describe("second review of #207: the receipt for a change of place names only the place", () => {
+  const road0 = {
+    figures: [SERVICE_FEE],
+    progress: [
+      { stepId: "branch-hire-first-employee", status: null, doneWhenIds: [STATUS, WCB] },
+      { stepId: "step-start-register-name", status: null, doneWhenIds: ["dw-start-name-email"] },
+    ],
+  };
+
+  it("on road 0, with ticks and a quote on lines the move leaves out: no tick or take back the person never made", () => {
+    for (const [from, to, name] of [["AB", "ON", "Ontario"], ["ON", "AB", "Alberta"]] as const) {
+      const lines = answerReceipt(ideaIn(from, road0), ideaIn(to, road0));
+      expect(lines.length, `${from} to ${to}`).toBeGreaterThan(0);
+      for (const line of lines) {
+        expect(line).toMatch(new RegExp(`^Because you told us your place is ${name}, `));
+        expect(line).not.toMatch(/you ticked|took back/);
+      }
+    }
+  });
+
+  it("on road 1, with marks on items the move leaves out: no mark taken back, and no step said to lose a mark", () => {
+    const marks = {
+      road: roadApprenticeToOwnShopAB,
+      skillMarks: ["skill-ab-alberta-student-number", "skill-ab-apprenticeship-education-agreement"].map((skillItemId) => ({ skillItemId, ownLabel: null, mark: "have" as const })),
+    };
+    for (const [from, to] of [["AB", "ON"], ["ON", "AB"]] as const) {
+      const lines = answerReceipt(ideaIn(from, marks), ideaIn(to, marks));
+      expect(lines.length, `${from} to ${to}`).toBeGreaterThan(0);
+      for (const line of lines) expect(line).not.toMatch(/no longer ha(s|ve) every skill|took back your mark|you told us you have/);
+    }
+  });
+
+  it("control: in one place, taking back only the quote still says so", () => {
+    const lines = answerReceipt(ideaIn("AB", road0), ideaIn("AB", { ...road0, figures: [] }));
+    expect(lines.join("\n")).toContain("you took back your number for");
   });
 });
 

@@ -150,6 +150,12 @@ export interface ToldAnswer extends AnswerWords {
    * pick changes a receipt doesn't count it coming into or out of view as given or taken back.
    */
   onJobList?: true;
+  /**
+   * True on an answer read through the road drawn for the idea's place (`roadForPlace`): a step's tick count, a
+   * quote on a cost line, a mark on an item the road lists. A change of place can bring one into or out of view,
+   * or change its count, with nothing the person did, so the place's receipt says neither (./receipts.ts).
+   */
+  drawnForPlace?: true;
 }
 
 export interface RoadGauges {
@@ -636,7 +642,7 @@ function personAnswers(input: RoadEvaluationInput, road: Road): ToldAnswer[] {
       if (!listed.has(mark.skillItemId)) continue;
       const label = itemLabel.get(mark.skillItemId) ?? mark.skillItemId;
       // Read here only because of the pick of job (not one of the road's own items): say so, for the receipts.
-      const onJobList = onRoad.has(mark.skillItemId) ? {} : { onJobList: true as const };
+      const onJobList = onRoad.has(mark.skillItemId) ? { drawnForPlace: true as const } : { onJobList: true as const };
       out.push({ id: `skill:${mark.skillItemId}`, group: "skill", ...answer.skill(label, mark.mark, false), ...onJobList });
     } else if (mark.ownLabel !== null) {
       // One skill whatever its capital letters, as the storage keeps it.
@@ -650,14 +656,16 @@ function personAnswers(input: RoadEvaluationInput, road: Road): ToldAnswer[] {
       out.push({ id: `step:${step.id}`, group: "step", ...answer.stepStatus(step.label, p.status) });
     }
     const ticked = new Set(p.doneWhenIds.filter((id) => step.doneWhen.some((line) => line.id === id))).size;
-    if (ticked > 0) out.push({ id: `ticks:${step.id}`, group: "ticks", ...answer.ticks(step.label, ticked, step.doneWhen.length) });
+    if (ticked > 0) {
+      out.push({ id: `ticks:${step.id}`, group: "ticks", ...answer.ticks(step.label, ticked, step.doneWhen.length), drawnForPlace: true });
+    }
   }
   for (const quote of input.agreed.costLines) {
     const step = stepById.get(quote.stepId);
     const line = step?.costs.find((c) => c.id === quote.lineId && c.kind === "named");
     // A number that isn't a whole, non-negative number of cents is shown as not priced, so it isn't an answer either.
     if (!step || !line || !Number.isSafeInteger(quote.amountCents) || quote.amountCents < 0) continue;
-    out.push({ id: `cost-line:${step.id}/${line.id}`, group: "cost-line", ...answer.costLine(line.label, step.label, quote.amountCents) });
+    out.push({ id: `cost-line:${step.id}/${line.id}`, group: "cost-line", ...answer.costLine(line.label, step.label, quote.amountCents), drawnForPlace: true });
   }
   if (input.agreed.savingsCents !== null) out.push({ id: "savings", group: "money", ...answer.savings(input.agreed.savingsCents) });
   if (input.agreed.incomeWantedCents !== null) {
