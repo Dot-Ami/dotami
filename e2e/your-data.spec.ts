@@ -763,8 +763,10 @@ test("Delete also takes Your destination's answers from the window's memory: the
   expect(await marked()).toBe(true);
   await expect(page.getByText("Nova Scotia", { exact: true })).toBeVisible();
   await expect(page.getByRole("button", { name: "A business of my own" })).toHaveCount(0);
-  // The words went with the statements: question 1 is asked again, and the words are nowhere on the page.
+  // The words went with the statements: question 1 is asked again, with its box empty (the box is filled from
+  // what memory holds, and text matching doesn't read a box's value), and the words are nowhere on the page.
   await expect(box).toBeVisible();
+  await expect(box).toHaveValue("");
   await expect(page.getByText(words)).toHaveCount(0);
   // The income went with the income: past question 1, question 4 is asked, not shown answered.
   await page.getByRole("button", { name: "I don't know yet" }).click();

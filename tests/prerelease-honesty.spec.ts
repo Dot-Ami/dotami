@@ -903,6 +903,22 @@ const spec = (file: string) => doc(`ui-spec/${file}`);
 /** Where questions 2 and 3, and the rest of the journey, are held: the phrase every spec of it uses. */
 const HELD = "held in the window's memory";
 
+/**
+ * The privacy log's entries about the journey held in the window's memory that name the desktop app's Go menu as a
+ * way it is emptied more often than Help → Licences, which empties it the same way (each opens its page with
+ * `loadURL`, desktop/main.mjs); or, if the log has no such entry, that it has none. Read entry by entry (a bullet
+ * with its wrapped lines, or a heading), wherever it sits: until a review of 2026-10-24 this read everything
+ * above `## [0.4.1]`, the preamble too, so a release would have bound every later line naming the Go menu.
+ */
+function licencesLeftOut(log: string): string[] {
+  const aboutTheMemory = log
+    .split(/\n(?=- |#)/)
+    .map(flat)
+    .filter((entry) => entry.includes("Go menu") && entry.includes(HELD));
+  if (aboutTheMemory.length === 0) return ["no entry about the window's memory names the Go menu"];
+  return aboutTheMemory.filter((entry) => entry.split("Go menu").length > entry.split("Help → Licences").length);
+}
+
 describe("6. The screen specs and design docs say what the screens now draw and hold", () => {
   it("planted control: a spec wrapped mid-sentence with curly quotes still matches; the spec as it stood on 88d0a1f doesn't", () => {
     const wrapped = flat(`no database: *“Not kept: no database reachable. A reload, a new\n  window or the desktop app’s Go menu asks it again.”*`);
@@ -969,16 +985,26 @@ describe("6. The screen specs and design docs say what the screens now draw and 
     const goMenu = opened(main.match(/label: "Go",\s*submenu: \[([\s\S]*?)\]/)![1]);
     expect(goMenu).toEqual(["/", "/ventures", "/settings"]);
     expect(opened(main).filter((page) => !goMenu.includes(page))).toEqual(["/licences"]);
-    const unreleased = doc("privacy-log.md").split("## [0.4.1]")[0];
     for (const [file, text] of [
-      ["docs/privacy-log.md [Unreleased]", unreleased],
       ["docs/ui-spec/start/_index.md", spec("start/_index.md")],
       ["docs/task-list.md", doc("task-list.md")],
     ] as const) {
       expect(text, file).toContain("Help → Licences");
     }
     // The privacy log says every way the memory is emptied: each time it names the Go menu, it names Licences too.
-    expect(unreleased.split("Go menu").length).toBe(unreleased.split("Help → Licences").length);
+    const log = readFileSync("docs/privacy-log.md", "utf8");
+    expect(licencesLeftOut(log)).toEqual([]);
+    // Planted control: the log once a release has turned [Unreleased] into its section, and a later line names
+    // the Go menu for something else. That line says nothing of the journey's memory, so it binds nothing.
+    const released = log.replace(
+      "## [Unreleased]\n",
+      "## [Unreleased]\n\n### What DotAmi keeps, and where\n\n- **The desktop app's Go menu gains Your expenses.** Nothing new is kept.\n\n## [0.4.2] — 2026-11-02\n",
+    );
+    expect(licencesLeftOut(released)).toEqual([]);
+    // Planted control: the entry as it stood on 58f576e, naming the Go menu and not Licences, is caught.
+    const before = log.replace("desktop app's Go\n  menu or Help → Licences (each opens", "desktop app's Go\n  menu (it opens");
+    expect(before).not.toBe(log);
+    expect(licencesLeftOut(before)).toHaveLength(1);
   });
 
   it("the map's chips: every chip's words in the canvas and overlay specs, and every readout id", () => {
