@@ -12,9 +12,12 @@ left list, *This visit*; docs/architecture/future-cockpit.md § 2, Cockpit scree
 > **Changed 2026-10-24 — a change of place.** Its receipt names only the place: a tick count, a quote or a mark
 > that came into or out of view because the road is drawn for the new place is neither said nor taken back
 > (`drawnForPlace` on road evaluation's answers, `lib/roads/receipts.ts`), as a mark on the job's list is when the
-> pick of job changes; and a step that lists no skill after the move is not counted as no longer having every
-> skill marked have. Until then a move from Alberta to Ontario said *you ticked 1 of 3 “done when” lines on “Hire
-> first employee”, you took back your ticks on … and you took back your number for …* (second review of #207).
+> pick of job changes; and a step that lists no skill after the move, or listed none before it, is not counted as
+> no longer having, or now having, every skill marked have. A move that leaves every listed skill out says so as the
+> Skills gauge does, *…, this road's skills rest on other provinces' pages, so none is listed for your place.*, where
+> it read *the skills now read 0 have, 0 learning, 0 not yet, 0 not marked* (third review of #207). Until then a
+> move from Alberta to Ontario said *you ticked 1 of 3 “done when” lines on “Hire first employee”, you took back
+> your ticks on … and you took back your number for …* (second review of #207).
 
 ## What it is
 

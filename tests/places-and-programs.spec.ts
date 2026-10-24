@@ -55,7 +55,7 @@ import { SHIPPED_ROADS_CATALOG, ticksToSave, type SkillMarkValue } from "@/lib/f
 import type { FigureView } from "@/lib/figures/types";
 import type { EngineCitation } from "@/lib/engines/shared/types";
 import { evaluateRoad } from "@/lib/roads";
-import { answer } from "@/lib/roads/words";
+import { answer, changed } from "@/lib/roads/words";
 import { PROVINCES } from "@/lib/scenarios/types";
 import { demoScenarios } from "../prisma/seed-data";
 import { fileUrl, migratedFile } from "./helpers/migrated-db";
@@ -499,6 +499,32 @@ describe("second review of #207: the receipt for a change of place names only th
       expect(lines.length, `${from} to ${to}`).toBeGreaterThan(0);
       for (const line of lines) expect(line).not.toMatch(/no longer ha(s|ve) every skill|took back your mark|you told us you have/);
     }
+  });
+
+  // The third review of #207: away from Alberta the receipt said "the skills now read 0 have, 0 learning, 0 not yet, 0
+  // not marked", as if the marks were gone, while the Skills gauge says the skills rest on other provinces' pages; back
+  // in Alberta it said "4 steps now have every skill they list marked have", though the person marked nothing.
+  const road1Marks = (marked: string[]) => ({
+    road: roadApprenticeToOwnShopAB,
+    skillMarks: marked.map((skillItemId) => ({ skillItemId, ownLabel: null, mark: "have" as const })),
+  });
+  const bothMarked = road1Marks(["skill-ab-alberta-student-number", "skill-ab-apprenticeship-education-agreement"]);
+
+  it("on road 1, the skills' line says what the Skills gauge says, and no step is said to have every skill marked", () => {
+    const away = answerReceipt(ideaIn("AB", bothMarked), ideaIn("ON", bothMarked));
+    expect(away).toContain(`Because you told us your place is Ontario, ${changed.skillsNoneForPlace}.`);
+    expect(away.join("\n")).not.toMatch(/the skills now read/);
+    const back = answerReceipt(ideaIn("ON", bothMarked), ideaIn("AB", bothMarked));
+    expect(back.join("\n")).not.toMatch(/every skill (it|they) lists? marked have/);
+    // Moving back lists the items again with the person's marks on them: the counts, as the gauge shows them.
+    expect(back).toContain("Because you told us your place is Alberta, the skills now read 2 have, 0 learning, 0 not yet, 1 not marked.");
+  });
+
+  it("control: in Alberta, marking a skill still says which steps now have every skill they list marked have", () => {
+    const lines = answerReceipt(ideaIn("AB", road1Marks([])), ideaIn("AB", road1Marks(["skill-ab-alberta-student-number"])));
+    expect(lines.join("\n")).toMatch(/now have every skill they list marked have/);
+    expect(lines.join("\n")).toMatch(/the skills now read 1 have/);
+    expect([...findTimeWords(changed.skillsNoneForPlace), ...findVerdicts(changed.skillsNoneForPlace)]).toEqual([]);
   });
 
   it("control: in one place, taking back only the quote still says so", () => {

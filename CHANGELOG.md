@@ -269,7 +269,10 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   13 of its 17 steps). The change of place's receipt said *you ticked 1 of 3 “done when” lines …* and *you took
   back your number for …*, neither of which the person did; it now names only the place, and with road 1's skill
   items left out for another province it says neither that a mark was taken back nor that a step lost one
-  (`lib/roads/receipts.ts`). An agreed number on a cost line left out for the place dropped out of the money,
+  (`lib/roads/receipts.ts`). On road 1 it still said *the skills now read 0 have, 0 learning, 0 not yet, 0 not
+  marked* on the way out, as if the marks were gone, and *4 steps now have every skill they list marked have* on
+  the way back; it now says *this road's skills rest on other provinces' pages, so none is listed for your place*,
+  as the Skills gauge does, and counts no step whose skills only came back into view. An agreed number on a cost line left out for the place dropped out of the money,
   *What you've told DotAmi* and Your plan without a word; it is now listed in both as kept with this idea and not
   counted for the place, with **Take back** and no **Change** (the maintainer's decision of 2026-10-24, option B).
   The Start-up money gauge, Your plan's money sums and *Compare the two endings* still said *your numbers: not
