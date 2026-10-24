@@ -15,9 +15,9 @@ export interface JobSearchCorpusMeasure {
   ideas: number;
   withJob: number;
   /**
-   * Of the ideas with an expected job, as "What's closest to your work?" lists the jobs (each group's first
-   * JOB_SEARCH_GROUP_CAP): in the group it opens, in any group listed, not listed though other jobs were, and
-   * no job found at all.
+   * Of the ideas with an expected job, as "What's closest to your work?" lists the jobs (each part's first
+   * JOB_SEARCH_GROUP_CAP; a group without parts, its first JOB_SEARCH_GROUP_CAP): in the group it opens, in any
+   * group listed, not listed though other jobs were, and no job found at all.
    */
   firstGroup: number;
   anyGroup: number;
@@ -25,7 +25,7 @@ export interface JobSearchCorpusMeasure {
   noResults: number;
   /** Of every idea: no job found at all for its kind of work. */
   noResultsAll: number;
-  /** The same, counting past each group's first JOB_SEARCH_GROUP_CAP (a match a person sees only by adding a word). */
+  /** The same, counting past each part's first JOB_SEARCH_GROUP_CAP (a match a person sees only by adding a word). */
   firstGroupUncapped: number;
   anyGroupUncapped: number;
   /** Of the ideas with an expected job: the cockpit's older job list finds it (first COCKPIT_LIST_MEASURE_LIMIT), or finds no job at all. */
