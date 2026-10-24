@@ -91,7 +91,12 @@ catalog at run time.
 4. A tool check is recorded only after `node scripts/check-quotes.mjs --url … --quote …` reported
    every one of its quotes as found on the live page. The builder copies the date the script printed.
    The script never writes a file itself. Run with no arguments, it checks every recorded tool check
-   again, which shows when a page has changed under a citation.
+   again, which shows when a page has changed under a citation. One exception, on the maintainer's
+   answer of 2026-10-24: the tool checks dated 2026-10-23 (§ The reading list's tool checks) were
+   recorded from his reading list's matcher, the same whole-word, one-block match as the script, run
+   that day where the script couldn't be. They are not confirmed by the script yet: a networked
+   `node scripts/check-quotes.mjs` run with no arguments must find each of them again before the
+   change that records them (the reading list's corrections) merges, not later with his reads.
 5. A person who reads a source sets `lastVerified` to that day and `readBy: "person"`; a tool check
    may stay. An AI model that reads one sets `readBy: "model"`. A read nobody can say who did leaves
    `readBy` out.
@@ -271,8 +276,8 @@ to the citations he read.
 Two more risk reads quote pages whose words were already held, so they keep those checks' dates
 rather than the list's: the home office read quotes the CRA's *Business-use-of-home expenses* in the
 four quotes the home office write-off's citation of that page holds from its check of 2026-10-13,
-and the anti-avoidance read (`risk-ladder-skipping`) quotes Income Tax Act s.245 in the four phrases
-docs/glossary.md's GAAR entry holds from `node scripts/check-quotes.mjs` on 2026-10-12. That citation
+and the anti-avoidance read (`risk-ladder-skipping`) quotes Income Tax Act s.245 in four of the five
+phrases docs/glossary.md's GAAR entry holds from `node scripts/check-quotes.mjs` on 2026-10-12. That citation
 (`S245_CITATION`, [`lib/engines/risk/v2026/gaar-official-words.ts`](../../lib/engines/risk/v2026/gaar-official-words.ts))
 keeps the risk catalog's read of 2026-07-02, which wins on screen, and is now also listed under the
 Holding company and Family trust cards, where that read shows: a risk box draws no sources of its own.
@@ -340,7 +345,7 @@ Three rules from his answers hold for every row:
 | Home office read (`risk-home-office-percentage`) | `risk-home-office-percentage` | DotAmi's own words on floor area and exclusive use are gone; the box quotes the CRA's two conditions and the limit to the business's net income. | The four quotes the home office write-off's citation of the page holds (tool check of 2026-10-13) |
 | First-year deduction read (`risk-immediate-expensing-timing`) | `risk-immediate-expensing-timing` | "Getting the year wrong misstates income and unwinds on review" and "keep purchase and deployment records" are gone; the rest stays. | The guide's sentence on the dates, tool check of 2026-10-23, on no screen (it ends on a colon) |
 | Repeated-losses read (`risk-hobby-reclassification`) | `risk-hobby-reclassification` | Retired: its one page supports none of it ([risk-calculator.md](../brain/risk-calculator.md), § Retired risk reads). | No held quote from a page that does (*Blocked*) |
-| Anti-avoidance read (`risk-ladder-skipping`) | `risk-ladder-skipping` | DotAmi's advice ("professional advice tied to a genuine business purpose, documented at the time") is gone; the box lists s.245's own phrases, joined by nothing of DotAmi's, and the Holding company and Family trust cards list s.245 as a source. | The four phrases docs/glossary.md holds (tool check of 2026-10-12) |
+| Anti-avoidance read (`risk-ladder-skipping`) | `risk-ladder-skipping` | DotAmi's advice ("professional advice tied to a genuine business purpose, documented at the time") is gone; the box lists s.245's own phrases, joined by nothing of DotAmi's, and the Holding company and Family trust cards list s.245 as a source. | Four of the five phrases docs/glossary.md's GAAR entry holds (tool check of 2026-10-12) |
 | Loan program read (`risk-self-declared-valuation`) | `risk-self-declared-valuation` | Kept (his answer 3), saying only ISED's rule on security; "the lesser of purchase price or appraised value" is gone. It cites ISED's loans page in place of the program's hub. | “For real property and equipment, security must be taken on the assets financed.”, tool check of 2026-10-23 |
 | *Sole Prop activation* (`stage-1-sole-prop-activation`) | `stage-1-sole-prop-activation/projection-30000` | "Track gross revenue against" the two tests is gone; the note quotes what the CRA says a sole proprietor counts and what is left out, and points to *Mandatory GST registration* for the tests. | A new source, *When to register for and start charging the GST/HST*, with the tool check of 2026-10-12 those words already had |
 | *Incorporating* (`stage-3a-incorporation-80k-net`) | `stage-3a-incorporation-80k-net/sbd-limit` | The business limit's "$500,000", which read as automatic, is "Up to $500,000", on the T2 guide's words: CCPCs “may be able to claim” the deduction. | Tool check of 2026-10-23 on the T2 guide's citation; its read of 2026-05-01 still wins on screen |
@@ -359,6 +364,10 @@ machine, before DotAmi says more than it does now. They are listed in [task-list
    Administration* ("Alberta has no sales tax.", [S17] in
    [other-ways-to-build.md](../architecture/other-ways-to-build.md)) is a candidate no tool has checked,
    and it says nothing of the 5%. Or the maintainer's ruling on how a row of a table is recorded.
+   The card's line credits the CRA's table with "no provincial sales tax", on the maintainer's read
+   alone: no tool can see the table, and a rate table may show only Alberta's 5% GST (British
+   Columbia, which has a PST, would show the same). His saved read of the table settles it; if the
+   table shows only the 5%, the line says only that.
 2. **Ontario's 13% HST.** The same table.
 3. **Ontario food premises.** The regulation in force, read, and what it requires, quoted, under a new
    id.
@@ -380,7 +389,31 @@ machine, before DotAmi says more than it does now. They are listed in [task-list
     training counts, who else funds it, and the page's subject labels before the 25% and 75% lines.
 11. **Every tool check of 2026-10-23.** The list's matcher found these words, not a run of the
     script, so a networked `node scripts/check-quotes.mjs` run (no arguments) must find each again
-    before merge (rule 4).
+    before this change merges (rule 4 and its exception).
+
+### Outside the list: open questions for the maintainer
+
+Three things on the same cards say in DotAmi's own words what the corrections above took out or
+couldn't source. None is one of the entries he checked, so none is changed here (his answer 2: only
+the entries he checked); each waits for his call. They are listed in [task-list.md](../task-list.md)
+[11b] too.
+
+1. **The structure ladder's fork label.** The Holding company and Family trust cards show the fork
+   "Holding company (Holdco) needs a real business purpose first" (and the same for Family trust;
+   `lib/brain/evaluate.ts` `evaluateStructureStep`), right above the anti-avoidance box that no
+   longer speaks of a business purpose. The label states a requirement no held quote states.
+2. **"Professional required" over two boxes.** The anti-avoidance read and the loan program's read
+   keep `severity: "professional-required"`, so their boxes are headed "Professional required"
+   (`components/node-detail-panel.tsx`, `components/discovery/intake-page.tsx`). The heading is
+   DotAmi's own calibration ([risk-calculator.md](../brain/risk-calculator.md), § Severity
+   semantics): the maintainer's note on the anti-avoidance read is that s.245 asks for no professional
+   advice, and ISED's quoted rule names none. `tests/engine-integrity.spec.ts` holds every GAAR read at
+   `professional-required`, so changing either heading is his call, not a test edit.
+3. **The Hobby vs. business income test card** (`compliance-hobby-vs-business`). Its description and
+   line say the CRA weighs a reasonable expectation of profit and business-like conduct, citing the
+   CRA's *Setting up your business*: the page the retired hobby read's record says supports neither
+   (`RETIRED_RISK_ENTRIES`). It is another citation of the same page, so it is unchanged until he
+   reads it.
 
 ## How this relates to the other checks
 

@@ -997,13 +997,15 @@ roadmap's build order.
   - [ ] His reads of that list: he sends the list with his saved reads, then only the citations he checked get
     `lastVerified` and `readBy: "person"` (his answers of 2026-10-24); no source says "Read by a person" for
     them until then
-  - [ ] A networked `node scripts/check-quotes.mjs` run finds again every quote the reading list's matcher found
-    on 2026-10-23 (rule 4 of citations.md), before that change merges
+  - [ ] A networked `node scripts/check-quotes.mjs` run (no arguments) finds again every quote the reading
+    list's matcher found on 2026-10-23, before the reading list's corrections merge, not later with his
+    reads (rule 4 of citations.md and its exception)
   - [ ] Blocked until an official page's own words are found and checked (citations.md, § The reading list's
     corrections, *Blocked*):
     - [ ] Alberta has no PST and GST is 5% (`compliance-ab-no-pst`): the CRA's table isn't in its page's HTML;
       Alberta's *About Tax and Revenue Administration* is an unchecked candidate for the first half. The
-      card's line is DotAmi's wording of the table's row until then
+      card's line is DotAmi's wording of the table's row until then, and his saved read settles whether the
+      table shows "no provincial sales tax" or only Alberta's 5% GST (then the line says only that)
     - [ ] Ontario's 13% HST (`compliance-on-hst`): the same table
     - [ ] Ontario food premises: the regulation in force, read and quoted, under a new id
     - [ ] Repeated losses: a CRA, Act or folio page on business versus personal pursuits, with its words
@@ -1018,6 +1020,12 @@ roadmap's build order.
       its page)
     - [ ] The Productivity Grant's other conditions for employers, whether a sole proprietor counts, what
       training counts, who else funds it, and the page's labels before its 25% and 75% lines
+  - [ ] Open questions for the maintainer, on the same cards but not entries he checked (citations.md,
+    § Outside the list): the Holding company and Family trust fork label "… needs a real business
+    purpose first"; the "Professional required" heading over the anti-avoidance and loan program boxes
+    (`tests/engine-integrity.spec.ts` holds GAAR reads there); and the *Hobby vs. business income test*
+    card's profit-expectation and business-like lines, which cite the page the retired hobby read's
+    record says supports neither
 - ⬜ **[11c] Flag stale sources automatically** — with #37
   - [ ] Kept open on purpose (the maintainer, 2026-10-14), so a person decides later:
     - [ ] *Alberta Investor Tax Credit* (`grant-abti`, `lib/engines/grants/v2026/programs.ts`): its

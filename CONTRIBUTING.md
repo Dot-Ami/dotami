@@ -165,7 +165,9 @@ Every citation says how it was checked, and the card shows it. The maintainer de
   The card shows *"Checked by a tool on 2026-10-11: it found on the page the exact words this
   entry relies on. Not read by a person yet."*, with the words it found under it. The script
   matches whole words only, inside one block of the page. It changes no file; you record the result. It doesn't read PDFs,
-  so a PDF needs a person's read.
+  so a PDF needs a person's read. (One exception, the maintainer's of 2026-10-24: the tool checks dated
+  2026-10-23 came from his reading list's matcher, and a networked run of the script must find them
+  again before they merge; rule 4 of [docs/engines/citations.md](docs/engines/citations.md).)
 
 A citation needs one of the two and may have both; when both exist, the card shows the read. A tool check only proves the words are on the page. Whether the entry reads them right is
 still for a person, so the maintainer may read any source before it merges. Run

@@ -575,4 +575,20 @@ describe("7. The corrected words are gone from the docs that copied them", () =>
   it("the canvas spec gives Incorporating's business limit as the step shows it: up to $500,000", () => {
     expect(/up to \$500,000/i.test(readFlat("docs/ui-spec/cockpit/03-canvas.md")), "03-canvas.md gives the limit as “up to $500,000”").toBe(true);
   });
+
+  it("what stays in DotAmi's own words on the corrected cards is listed for the maintainer, and the docs count what they quote", () => {
+    // Not entries the reading list checked (his answer 2), so unchanged, and listed rather than left unsaid.
+    const citations = readFlat("docs/engines/citations.md");
+    const at = citations.indexOf("### Outside the list");
+    expect(at, "citations.md has § Outside the list").toBeGreaterThan(-1);
+    const open = citations.slice(at, citations.indexOf("## How this relates", at));
+    for (const thing of ["needs a real business purpose first", "Professional required", "compliance-hobby-vs-business"]) {
+      expect(open.includes(thing), `§ Outside the list names “${thing}”`).toBe(true);
+    }
+    // s.245 is quoted in four of the five phrases the glossary holds (the GAAR read's S245_QUOTES), not in "the four".
+    expect(citations.includes("in the four phrases docs/glossary.md")).toBe(false);
+    expect(readFlat("docs/brain/risk-calculator.md").includes("the four quotes docs/glossary.md")).toBe(false);
+    // The risk catalog's row in the brain's README: attachRisk evaluates combinations and the ladder's GAAR read.
+    expect(readFlat("docs/brain/README.md").includes("not yet evaluated")).toBe(false);
+  });
 });

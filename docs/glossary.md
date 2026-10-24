@@ -86,8 +86,8 @@ A section of the federal Income Tax Act (section 245) that can take away a tax b
 an avoidance transaction, one where getting the tax benefit is one of the main purposes, when the
 transaction misuses one of the Act's rules or goes against what the rules, taken together, are for. It
 doesn't take away the tax benefits Parliament meant people to have. DotAmi's risk reads name it where
-it may apply (`lib/engines/risk/v2026/triggers.ts`), and since 2026-10-24 quote the section in the words
-below (`lib/engines/risk/v2026/gaar-official-words.ts`; change one there and here together).
+it may apply (`lib/engines/risk/v2026/triggers.ts`), and since 2026-10-24 quote four of the section's
+phrases below (`lib/engines/risk/v2026/gaar-official-words.ts`; change one there and here together).
 
 Source: [Income Tax Act, section 245](https://laws-lois.justice.gc.ca/eng/acts/I-3.3/section-245.html)
 (Justice Laws). Checked by a tool on 2026-10-12: "This section of the Act contains the general

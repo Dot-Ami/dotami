@@ -355,10 +355,14 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   section of the Act contains the general anti-avoidance rule”; “applies to deny the tax benefit of avoidance
   transactions that result directly or indirectly either in a misuse of provisions of the Act”; “an abuse having
   regard to those provisions read as a whole”." and "The same section: “while not preventing taxpayers from
-  obtaining tax benefits contemplated by Parliament”.", listed with nothing of DotAmi's between them: the four
-  phrases docs/glossary.md holds from `node scripts/check-quotes.mjs` on 2026-10-12. Both cards now list s.245
-  among their sources ("Read on 2026-07-02. Who read it wasn't recorded."), because a risk box draws no sources
-  of its own. Test: `tests/reading-list-corrections.spec.ts` § 6.
+  obtaining tax benefits contemplated by Parliament”.", listed with nothing of DotAmi's between them: four of
+  the five phrases docs/glossary.md's GAAR entry holds from `node scripts/check-quotes.mjs` on 2026-10-12. Both
+  cards now list s.245 among their sources ("Read on 2026-07-02. Who read it wasn't recorded."), because a risk
+  box draws no sources of its own. Two things on the same cards are unchanged, as they aren't entries the
+  reading list checked: the fork label above the box, "… needs a real business purpose first", and the box's
+  "Professional required" heading. Both are open questions for the maintainer
+  ([docs/engines/citations.md](docs/engines/citations.md), § Outside the list). Test:
+  `tests/reading-list-corrections.spec.ts` § 6.
 - **The loan program's box says only ISED's rule on security** (the maintainer's reading list, and his answer of
   2026-10-24: keep the box). The *Canada Small Business Financing Program* card's "Professional required" box said
   valuing a new company from equipment it means to buy and borrowing against it "is circular and can read as
@@ -367,8 +371,10 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   “For real property and equipment, security must be taken on the assets financed.” and "ISED's words, from its
   page on loans under this program." Its citation is now that page, whose sentence the reading list's matcher
   found on 2026-10-23 (a networked `node scripts/check-quotes.mjs` run should find it again), in place of the
-  program's hub. The card's own sources list the hub only, until #208 adds the loans page there. Tests:
-  `tests/reading-list-corrections.spec.ts` § 6, `tests/retired-entries.spec.ts` § 2.
+  program's hub. The card's own sources list the hub only, until #208 adds the loans page there. The box keeps
+  its "Professional required" heading, which ISED's quoted rule doesn't state: an open question for the
+  maintainer (docs/engines/citations.md, § Outside the list). Tests: `tests/reading-list-corrections.spec.ts`
+  § 6, `tests/retired-entries.spec.ts` § 2.
 - **Five map stages give their pages' own words where they said a number or a deadline in DotAmi's**
   (the maintainer's reading list of 2026-10-23; each step panel's *More about this stage*, on road 0, the
   federal road, the playbook export and the readout).
@@ -428,7 +434,11 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   from a page that does, so nothing is left to say: the *Hobby vs. business income test* card still shows, with
   no risk box, and its colour doesn't change. The id, `risk-hobby-reclassification`, is kept with the reason in
   `RETIRED_RISK_ENTRIES` and never used again: a read on the same subject would come back under a new id
-  ([docs/brain/risk-calculator.md](docs/brain/risk-calculator.md), § Retired risk reads). Test: `tests/retired-entries.spec.ts` §§ 2 and 3.
+  ([docs/brain/risk-calculator.md](docs/brain/risk-calculator.md), § Retired risk reads). The card's own
+  description and line, on a reasonable expectation of profit and business-like conduct, cite the same page and
+  are unchanged: the card isn't an entry the reading list checked, so it is an open question for the maintainer
+  ([docs/engines/citations.md](docs/engines/citations.md), § Outside the list). Test:
+  `tests/retired-entries.spec.ts` §§ 2 and 3.
 - **The Delete menu's records line keeps the CRA's own words on the six years.** Its citation, the CRA's *Where
   to keep your records, for how long …*, now also holds "Generally, you must keep all required records and
   supporting documents for a period of six years from the end of the last tax year they relate to." and "In

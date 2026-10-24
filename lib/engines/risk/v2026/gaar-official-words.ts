@@ -7,9 +7,9 @@ import type { EngineCitation } from "@/lib/engines/shared/types";
  * read's own sources, so the section the box quotes is listed under those cards instead.
  *
  * Since 2026-10-24 (the maintainer's reading list of 2026-10-23, item risk-ladder-skipping): the read had cited the
- * section with no quote, and its mitigation was DotAmi's own advice. The quotes are the ones docs/glossary.md's GAAR
- * entry holds: `node scripts/check-quotes.mjs` found them on the live page on 2026-10-12, so that is the check's date
- * (docs/engines/citations.md, rule 4). The read of 2026-07-02 is the one the risk catalog recorded for this page;
+ * section with no quote, and its mitigation was DotAmi's own advice. The quotes are four of the five docs/glossary.md's
+ * GAAR entry holds (the fifth, on the main purposes, is the glossary's only): `node scripts/check-quotes.mjs` found
+ * them on the live page on 2026-10-12, so that is the check's date (docs/engines/citations.md, rule 4). The read of 2026-07-02 is the one the risk catalog recorded for this page;
  * who read it wasn't recorded. Change a quote only after the script finds it on the page.
  */
 export const S245_QUOTES = {

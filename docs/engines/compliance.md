@@ -91,7 +91,8 @@ How it is modelled, all in the catalog, none of it in a component:
 - **The two cards name the tag that lit them.** Both ride-share cards carry `reasonNamesTags`, so
   their reason is "Shown because your intake has the activity tag Ride-share or taxi driving." rather
   than "Shown because you selected <province>.", which would say nothing about why they show. The
-  older cards scoped by `industryTags` (hobby vs. business, the licensing cards) don't carry it and
+  older cards scoped by `industryTags` (hobby vs. business, and Alberta trades licensing, the one licensing
+  card left since Ontario food premises was retired on 2026-10-24) don't carry it and
   keep their default line (below); whether they should name their tag too is a separate decision
   (`tests/rideshare-gst.spec.ts` pins their lines).
 
