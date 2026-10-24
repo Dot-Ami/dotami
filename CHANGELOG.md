@@ -281,6 +281,48 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   and the one 5% sentence a tool found there is a worked example about Manitoba, never recorded as the rate.
   *Ontario HST (13%)* cites the same page and has no tool check for the same reason (its 13% sentence there is a
   furniture store's sale). Test: `tests/reading-list-corrections.spec.ts` § 5.
+- **The home office card's caution says what the CRA's page says** (the maintainer's reading list of 2026-10-23).
+  Its box said "Workspace percentages well above typical floor-area math draw review; the exclusive-use test is
+  where claims fail" and "Base the claim on measured floor area, document exclusive business use, and keep the
+  calculation with your records", DotAmi's own words; as the maintainer noted, floor area is one reasonable basis,
+  not the only one, and using the space only for the business is asked only when it isn't the principal place of
+  business. It now quotes the CRA's *Business-use-of-home expenses*: “You can deduct expenses for the business use
+  of a workspace in your home” if “it is your principal place of business”, or if “you use the space only to earn
+  your business income, and you use it on a regular and ongoing basis to meet your clients, customers, or
+  patients”; and the same page, on the amount: it “cannot be more than your net income from the business before
+  you deduct these expenses”. The four are the quotes the home office write-off's citation of the page holds from its tool check of
+  2026-10-13, which the risk read's citation now holds too. Nothing on how to work out the business part: no held
+  quote gives the page's sentence on it. Test: `tests/reading-list-corrections.spec.ts` § 6.
+- **The 100% first-year deduction's box keeps only what the maintainer found matches the guide.** On the Class 50
+  card it said "… depends on acquisition and available-for-use dates; getting the year wrong misstates income and
+  unwinds on review" and "Confirm eligibility and the available-for-use date with an accountant before filing —
+  keep purchase and deployment records". The two clauses no source held came out; the rest stays. Its citation,
+  the CRA's Guide T4002 chapter 4, now also keeps the guide's sentence on the dates ("Under proposed changes, if
+  property included in Class 44, 46, or 50 is acquired and becomes available for use after April 15, 2024, the
+  following factors apply:"), found on the live page on 2026-10-23 by the reading list's matcher (a networked
+  `node scripts/check-quotes.mjs` run should find it again). It ends on a colon before the factors, which DotAmi
+  doesn't hold, so the box doesn't show it. Test: `tests/reading-list-corrections.spec.ts` §§ 2 and 6.
+- **The anti-avoidance box on the Holding company and Family trust cards is the Act's own words.** It said entering
+  those rungs early "reads as structure-for-tax's-sake — exactly what the General Anti-Avoidance Rule exists to
+  unwind" and "Cross them with professional advice tied to a genuine business purpose, documented at the time";
+  s.245 asks for neither (the maintainer's reading list). It now says "Income Tax Act s.245, in its own words: “This
+  section of the Act contains the general anti-avoidance rule”; “applies to deny the tax benefit of avoidance
+  transactions that result directly or indirectly either in a misuse of provisions of the Act”; “an abuse having
+  regard to those provisions read as a whole”." and "The same section: “while not preventing taxpayers from
+  obtaining tax benefits contemplated by Parliament”.", listed with nothing of DotAmi's between them: the four
+  phrases docs/glossary.md holds from `node scripts/check-quotes.mjs` on 2026-10-12. Both cards now list s.245
+  among their sources ("Read on 2026-07-02. Who read it wasn't recorded."), because a risk box draws no sources
+  of its own. Test: `tests/reading-list-corrections.spec.ts` § 6.
+- **The loan program's box says only ISED's rule on security** (the maintainer's reading list, and his answer of
+  2026-10-24: keep the box). The *Canada Small Business Financing Program* card's "Professional required" box said
+  valuing a new company from equipment it means to buy and borrowing against it "is circular and can read as
+  collateral misrepresentation to a lender", and that the financed equipment is the collateral "at the lesser of
+  purchase price or appraised value": a different rule from ISED's, on no page DotAmi cites. It now says
+  “For real property and equipment, security must be taken on the assets financed.” and "ISED's words, from its
+  page on loans under this program." Its citation is now that page, whose sentence the reading list's matcher
+  found on 2026-10-23 (a networked `node scripts/check-quotes.mjs` run should find it again), in place of the
+  program's hub. The card's own sources list the hub only, until #208 adds the loans page there. Tests:
+  `tests/reading-list-corrections.spec.ts` § 6, `tests/retired-entries.spec.ts` § 2.
 
 ### Changed
 - **Ontario food premises licensing is off the map** (the maintainer's reading list of 2026-10-23). The rule
@@ -292,6 +334,15 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   and never used again ([docs/engines/compliance.md](docs/engines/compliance.md), § Retired rules); an Ontario
   food rule comes back only under a new id, citing the regulation in force and quoting what it requires.
   Test: `tests/retired-entries.spec.ts` § 1.
+- **The repeated-losses caution is off the Hobby vs. business card** (the maintainer's reading list of
+  2026-10-23). Its box said "Year-after-year losses against employment income invite the
+  reasonable-expectation-of-profit question; reclassification limits expense claims retroactively" and "Run the
+  venture business-like: separate accounts, a revenue plan, and records that show profit intent — not just
+  deductions", and its one source, the CRA's *Setting up your business*, supports neither. DotAmi holds no quote
+  from a page that does, so nothing is left to say: the *Hobby vs. business income test* card still shows, with
+  no risk box, and its colour doesn't change. The id, `risk-hobby-reclassification`, is kept with the reason in
+  `RETIRED_RISK_ENTRIES` and never used for another read ([docs/brain/risk-calculator.md](docs/brain/risk-calculator.md),
+  § Retired risk reads). Test: `tests/retired-entries.spec.ts` §§ 2 and 3.
 - **The Delete menu's records line keeps the CRA's own words on the six years.** Its citation, the CRA's *Where
   to keep your records, for how long …*, now also holds "Generally, you must keep all required records and
   supporting documents for a period of six years from the end of the last tax year they relate to." and "In

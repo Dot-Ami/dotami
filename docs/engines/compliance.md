@@ -24,7 +24,8 @@ Compliance and Risk answer different questions and must not blur:
 Example of the split: "GST registration required over $30,000 (the CRA's two tests)" = Compliance. "Repeated losses
 invite hobby reclassification" = the *fact* of the test is Compliance
 (`compliance-hobby-vs-business`); the *audit-sensitivity of claiming losses year after
-year* is a Risk entry pointing at it.
+year* is a Risk entry pointing at it. (That risk read came off on 2026-10-24: its page didn't support
+it, [risk-calculator.md](../brain/risk-calculator.md) § Retired risk reads. The split still holds.)
 
 ## How it should reason (target)
 

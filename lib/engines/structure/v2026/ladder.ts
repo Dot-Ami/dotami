@@ -1,4 +1,5 @@
 import { CRA_WHEN_TO_REGISTER_TOOL_CHECK, CRA_WHEN_TO_REGISTER_URL } from "@/lib/engines/compliance/v2026/gst-official-words";
+import { S245_CITATION } from "@/lib/engines/risk/v2026/gaar-official-words";
 import type { StructureStep } from "./types";
 
 const LAST_VERIFIED = "2026-06-08";
@@ -161,6 +162,9 @@ export const structureLadderV2026 = [
         },
         note: "CRA framing for dividends between connected corporations.",
       },
+      // Since 2026-10-24: the section the card's anti-avoidance risk read quotes (risk-ladder-skipping), listed here
+      // because no screen draws a risk read's own sources.
+      S245_CITATION,
     ],
     transitionTrigger: "Estate freeze or family succession planning.",
     nextSteps: ["structure-family-trust"],
@@ -200,6 +204,9 @@ export const structureLadderV2026 = [
         },
         note: "CRA TOSI rules affecting dividends to related persons.",
       },
+      // Since 2026-10-24: the section the card's anti-avoidance risk read quotes (risk-ladder-skipping), listed here
+      // because no screen draws a risk read's own sources.
+      S245_CITATION,
     ],
     transitionTrigger: "v2+ estate planning depth; not a v1 default path.",
     nextSteps: [],

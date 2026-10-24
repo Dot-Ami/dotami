@@ -262,6 +262,17 @@ to the citations he read.
 | Income Tax Act s.127(10.2) | `grant-sred` | the expenditure limit's formula, from $6 million. The list recorded "formula found" for this page, so the sentence that leads into it is not kept. |
 | CRA, *Where to keep your records, for how long and how to request the permission to destroy them early* | the Delete menu's records line (`cra-business-records-retention`, [`lib/engines/compliance/v2026/record-keeping.ts`](../../lib/engines/compliance/v2026/record-keeping.ts)) | that records are generally kept six years from the end of the last tax year they relate to, and for a different period in some situations: the two sentences every road's *Keep your records from day one* step holds from its own check of 2026-10-14, which keeps that date. The list found all ten quotes held for this page that day. The citation's read of 2026-10-08 still wins on screen (rule 3). |
 | Alberta, *Canada-Alberta Productivity Grant* (https://www.alberta.ca/canada-alberta-productivity-grant) | program *Canada-Alberta Productivity Grant* (`grant-capg`, added 2026-10-24), named by map stage *Hire first employee* on road 0 | the employer's 25% and the program's 75% of eligible training costs, at most $5,000 per employed trainee and $100,000 per employer per fiscal year, and that an employer be operational in Alberta for at least one year. Fetched from the Canada-Alberta Job Grant's old address, which redirects there. |
+| CRA, Guide T4002, chapter 4 (https://www.canada.ca/en/revenue-agency/services/forms-publications/publications/t4002/t4002-6.html) | risk read *Enhanced first-year deduction timing* (`risk-immediate-expensing-timing`, [`lib/engines/risk/v2026/triggers.ts`](../../lib/engines/risk/v2026/triggers.ts)) | the guide's sentence on the dates for Class 44, 46 or 50 property under proposed changes. It ends on a colon before the factors, which aren't held, so no screen quotes it. The Class 50 write-off's citation of the same chapter keeps its read of 2026-07-02 and no tool check. |
+| ISED, the program's loans page (https://ised-isde.canada.ca/site/canada-small-business-financing-program/en/canada-small-business-financing-program/find-loan-your-small-business/helping-small-businesses-get-loans) | the loan program's risk read (`risk-self-declared-valuation`) | that for real property and equipment, security must be taken on the assets financed. The read cited ISED's program hub until 2026-10-24. The page's own title isn't held, so the citation's title describes it. |
+
+Two more risk reads quote pages whose words were already held, so they keep those checks' dates
+rather than the list's: the home office read quotes the CRA's *Business-use-of-home expenses* in the
+four quotes the home office write-off's citation of that page holds from its check of 2026-10-13,
+and the anti-avoidance read (`risk-ladder-skipping`) quotes Income Tax Act s.245 in the four phrases
+docs/glossary.md's GAAR entry holds from `node scripts/check-quotes.mjs` on 2026-10-12. That citation
+(`S245_CITATION`, [`lib/engines/risk/v2026/gaar-official-words.ts`](../../lib/engines/risk/v2026/gaar-official-words.ts))
+keeps the risk catalog's read of 2026-07-02, which wins on screen, and is now also listed under the
+Holding company and Family trust cards, where that read shows: a risk box draws no sources of its own.
 
 One page the list opened gets no tool check: the CRA's page on which GST/HST rate to charge, cited by
 *Ontario HST (13%)* and *Alberta — no provincial sales tax*. Its table of rates isn't in the page's

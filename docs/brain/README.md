@@ -8,7 +8,7 @@ profile-driven reasoning. It has three components, specified in this folder:
 | Component | File | One-line job | Status |
 |-----------|------|--------------|--------|
 | Strategy Rules Engine | [strategy-rules-engine.md](./strategy-rules-engine.md) | Deterministic evaluator: `(profile, catalogs) → unlocks + node states (green/yellow/gray)` | **Built** (v0, 2026-07-02): `lib/brain/` — predicate DSL, `evaluateProfile`, golden-tested |
-| Risk Calculator | [risk-calculator.md](./risk-calculator.md) | Audit-trigger + GAAR-exposure catalog; attaches an honest risk chip to every surfaced lever | **Built** (v0, 2026-07-02): `lib/engines/risk/v2026/` — 8 entries; **known gap: `riskCombinations` and structure-ladder GAAR flags not yet evaluated** (audit-2026-07-04 H2) |
+| Risk Calculator | [risk-calculator.md](./risk-calculator.md) | Audit-trigger + GAAR-exposure catalog; attaches an honest risk chip to every surfaced lever | **Built** (v0, 2026-07-02): `lib/engines/risk/v2026/` — 7 entries (on 2026-10-24, after the maintainer's reading list, one retired and four corrected to what their pages say: [risk-calculator.md](./risk-calculator.md) § What the reads quote); **known gap: `riskCombinations` and structure-ladder GAAR flags not yet evaluated** (audit-2026-07-04 H2) |
 | RAG pipeline | [rag-pipeline.md](./rag-pipeline.md) | Citation-grounded retrieval over ITA/CRA/provincial text — explains, never decides | **Not built** — needs stack promotion (pgvector, embeddings provider) |
 
 Intake live preview reads from the evaluator (hardcoded card builders deleted).
