@@ -91,8 +91,8 @@ catalog at run time.
 4. A tool check is recorded only after `node scripts/check-quotes.mjs --url … --quote …` reported
    every one of its quotes as found on the live page. The builder copies the date the script printed.
    The script never writes a file itself. Run with no arguments, it checks every recorded tool check
-   again, which shows when a page has changed under a citation. One exception, on the maintainer's
-   answer of 2026-10-24: the tool checks dated 2026-10-23 (§ The reading list's tool checks) were
+   again, which shows when a page has changed under a citation. One open exception, waiting for the
+   maintainer's word (proposed 2026-10-24 by the session that built the change, not decided by him): the tool checks dated 2026-10-23 (§ The reading list's tool checks) were
    recorded from his reading list's matcher, the same whole-word, one-block match as the script, run
    that day where the script couldn't be. They are not confirmed by the script yet: a networked
    `node scripts/check-quotes.mjs` run with no arguments must find each of them again before the
@@ -301,7 +301,7 @@ never recorded as the rate (docs/engines/compliance.md, § From the maintainer's
 
 The $6 million applies to tax years beginning on or after 2024-12-16. No held quote carries that
 date, so it is kept here and in a comment on the CCPC rate only: no screen says it, and no field holds
-it (the maintainer's answer of 2026-10-24).
+it (the rule: no number or date on screen without a held quote).
 
 ## The reading list's corrections (2026-10-24)
 

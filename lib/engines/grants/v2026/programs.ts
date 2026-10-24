@@ -109,7 +109,7 @@ export const grantProgramsV2026 = [
         // Until 2026-10-24 the note said "confirm the current limit with an advisor" and gave no limit. The limit is
         // $6 million in the consolidated Act's s.127(10.2) (the reading list found the formula), for tax years
         // beginning on or after 2024-12-16. No held quote carries that date, so it is on no screen and in no field, only
-        // here and in docs/engines/citations.md (the maintainer's answer of 2026-10-24); the card gives the amount only
+        // here and in docs/engines/citations.md (the rule: no number or date without a held quote); the card gives the amount only
         // inside the CRA's quote.
         note: `The CRA: “${SRED_WORDS.ccpcEnhanced}” The CRA's What's new for corporations: “${SRED_WORDS.limitSixMillion}”`,
       },
