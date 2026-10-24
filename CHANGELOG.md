@@ -266,9 +266,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   new place leaves out no longer dims the whole map (`linkedSkill`). A section left empty by the place says so
   (*This step's “done when” lines rest on other provinces' pages, so none is shown for your place.*), in the step
   panel, the Skills list, the Skills gauge and Your plan, where it said none is written yet (road 1 from Ontario:
-  13 of its 17 steps). The change of place's receipt said *you ticked 1 of 3 “done when” lines …*, *you took back
-  your number for …* and, on road 1, *you took back your mark on “Alberta Student Number”* and *4 steps no longer
-  have every skill they list marked have*, none of which the person did; it now names only the place
+  13 of its 17 steps). The change of place's receipt said *you ticked 1 of 3 “done when” lines …* and *you took
+  back your number for …*, neither of which the person did; it now names only the place, and with road 1's skill
+  items left out for another province it says neither that a mark was taken back nor that a step lost one
   (`lib/roads/receipts.ts`). An agreed number on a cost line left out for the place dropped out of the money,
   *What you've told DotAmi* and Your plan without a word; it is now listed in both as kept with this idea and not
   counted for the place, with **Take back** and no **Change** (the maintainer's decision of 2026-10-24, option B).
