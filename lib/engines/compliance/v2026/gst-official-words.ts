@@ -75,3 +75,19 @@ export const CRA_VOLUNTARY_REGISTRATION: OfficialWords = {
   ],
   url: CRA_WHEN_TO_REGISTER_URL,
 };
+
+/**
+ * What the same page says a sole proprietor counts toward the two tests, and what no one counts (its
+ * footnote). Sole Prop activation's note on the tests quotes them (since 2026-10-24, the maintainer's
+ * reading list: not "gross revenue" but what the CRA counts), and road 0's dw-start-gstman-tests line
+ * rests on them, so the two can't drift. `node scripts/check-quotes.mjs` found each on the page on
+ * 2026-10-12 (road 0's check of that day), and the reading list found them there again on 2026-10-23.
+ * The footnote's sentence is quoted in two parts: a glossary link inside it leaves a space before the
+ * comma after "capital property", so the whole sentence doesn't match.
+ */
+export const CRA_SOLE_PROPRIETOR_COUNTS =
+  "If you are a sole proprietor, include the total amount of all revenues (before expenses) from your worldwide taxable supplies from all your businesses and those of your associates (if they were associated at the beginning of the particular calendar quarter).";
+export const CRA_NOT_COUNTED = [
+  "do not include revenues from supplies of financial services, sales of capital property",
+  "and goodwill from the sale of a business.",
+] as const;

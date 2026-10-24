@@ -1,5 +1,6 @@
 import { cfeNodesV2026, type CFENodeId } from "../../cfe/v2026/nodes";
 import { cfeTiersV2026 } from "../../cfe/v2026/tiers";
+import { CRA_NOT_COUNTED, CRA_SOLE_PROPRIETOR_COUNTS } from "../../compliance/v2026/gst-official-words";
 import { complianceRulesV2026 } from "../../compliance/v2026/rules";
 import type { CitationAuthority, EngineCitation, Province } from "../../shared/types";
 import { roadFromCfe } from "./from-cfe";
@@ -348,12 +349,11 @@ const stageDoneWhen = {
         PAGES.gstWhenToRegister,
         "in a single calendar quarter.",
         Q.fourQuarters,
-        "If you are a sole proprietor, include the total amount of all revenues (before expenses) from your worldwide taxable supplies from all your businesses and those of your associates (if they were associated at the beginning of the particular calendar quarter).",
+        // Shared with Sole Prop activation's note on the tests, which quotes them (gst-official-words.ts).
+        CRA_SOLE_PROPRIETOR_COUNTS,
         "If you are a partnership or a corporation, include the total amount of all revenues (before expenses) from your worldwide taxable supplies and those of your associates (if they were associated at the beginning of the particular calendar quarter).",
-        // One sentence on the page, quoted in two parts: a glossary link inside it leaves a space
-        // before the comma after "capital property", so the whole sentence doesn't match.
-        "do not include revenues from supplies of financial services, sales of capital property",
-        "and goodwill from the sale of a business.",
+        // One sentence on the page, quoted in two parts (gst-official-words.ts says why).
+        ...CRA_NOT_COUNTED,
       ),
     },
     {

@@ -45,7 +45,10 @@ in v0 of the brain; merging the two systems is its own reviewed change.
    it stays amber (check first) instead of lighting from an amount. Removed on 2026-10-11:
    "Incorporation at $80K net", whose $80,000 was a heuristic with no source and was compared
    against third-year *sales*. `tests/engine-integrity.spec.ts` fails on a dollar figure in a
-   node's text that isn't one of the cited amounts it lists, or whose page the node doesn't cite.
+   node's text that isn't one of the cited amounts it lists, or whose page the node doesn't cite
+   (the second half since 2026-10-24: until then Sole Prop activation said $30,000 and cited neither
+   page that sets it; it now cites the CRA's *When to register for and start charging the GST/HST*,
+   the maintainer's reading list of 2026-10-23).
    The one exception that was left, in the evaluator where that test can't see it, went on
    2026-10-11: `THRESHOLD_WATCH_RATIO` (0.7) turned a GST/HST card amber at 70% of the line
    (about $21,000) and called the estimate "approaching" it. No cited page sets 70%. A threshold
@@ -64,6 +67,17 @@ in v0 of the brain; merging the two systems is its own reviewed change.
    page behind every official-words box and every way's line carries a `toolCheck` whose quotes are
    the words relied on, found on the live page by `scripts/check-quotes.mjs`, never a read date
    that would claim a person read it.
+   **A quote in a node's own text is held by one of its own sources** (2026-10-24, the maintainer's
+   reading list): where an estimate's value or basis, or a projection note, gives a page's words, they
+   sit in curly quotation marks and are among the `toolCheck` quotes of a citation of that same node,
+   so the page is one click away under *Sources for this stage*. A citation that also has a read keeps
+   it, and the read wins on screen (rule 3 of [citations.md](citations.md)); quotes the reading list's
+   matcher found on 2026-10-23 are recorded as a tool check of that day, on the stage the list checked
+   only (citations.md, § The reading list's tool checks). As built: Sole Prop activation's note on what
+   counts toward the $30,000 tests, Incorporating's business limit ("Up to $500,000"), Hire first
+   employee's payroll account timing, and the 35% on Incorporation for liability/SR&ED and SR&ED
+   deepening. `tests/reading-list-corrections.spec.ts` § 4 fails on a quoted run that no citation of
+   its node holds.
    **A number only the person can give** is asked on the node (`asksOwnNumber`): Incorporating's
    "I'd incorporate at $___" is the only thing that can light it green.
 3. Node count is version-locked scope (v1 = 10; 20+ is roadmap v4). Do not add nodes

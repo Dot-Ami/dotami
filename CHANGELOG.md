@@ -323,6 +323,46 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   found on 2026-10-23 (a networked `node scripts/check-quotes.mjs` run should find it again), in place of the
   program's hub. The card's own sources list the hub only, until #208 adds the loans page there. Tests:
   `tests/reading-list-corrections.spec.ts` § 6, `tests/retired-entries.spec.ts` § 2.
+- **Five map stages give their pages' own words where they said a number or a deadline in DotAmi's**
+  (the maintainer's reading list of 2026-10-23; each step panel's *More about this stage*, on road 0, the
+  federal road, the playbook export and the readout).
+  - *Sole Prop activation* said "Track gross revenue against the CRA's two $30,000 small-supplier tests: a
+    single calendar quarter, and the previous four (or fewer) consecutive calendar quarters." The CRA counts
+    neither all of "gross revenue" nor only one business's, and the stage cited neither page that sets the
+    $30,000. The note now quotes the CRA: “If you are a sole proprietor, include the total amount of all
+    revenues (before expenses) from your worldwide taxable supplies from all your businesses and those of
+    your associates …”, and, on what is left out, “do not include revenues from supplies of financial
+    services, sales of capital property” “and goodwill from the sale of a business.”, pointing to Mandatory
+    GST registration for the tests in full. The stage now cites the CRA's *When to register for and start
+    charging the GST/HST* (Sources for this stage · 3), with the tool check of 2026-10-12 road 0 and the
+    GST/HST stages already hold for those words, so it says "Checked by a tool" in amber.
+  - *Incorporating*'s business-limit box said "$500,000" on "CRA T2 guide business limit for qualifying
+    CCPC active business income.", which read as automatic. It now says "Up to $500,000", on the guide's
+    words: corporations that were CCPCs “throughout the tax year may be able to claim the small business
+    deduction”, and “The maximum allowable business limit for a corporation that is not associated with
+    any other corporation is $500,000.”
+  - *Hire first employee*'s payroll account timing said "Before first remittance due date", on "CRA
+    payroll registration guidance." It now says “before the first remittance due date”, on the CRA's two
+    sentences: “You have to register for a payroll account before the first remittance due date.” and
+    when that date is, “the 15th day of the month following the month in which you began withholding
+    deductions from your employee's pay, unless the CRA tells you to remit using a different frequency.”
+  - *Incorporation for liability/SR&ED* and *SR&ED deepening* each said 35% on a paraphrase. Both now quote
+    the CRA: “Some CCPCs may earn an ITC at an enhanced rate of 35% on qualified SR&ED expenditures up to
+    their expenditure limit for the year.” SR&ED deepening's sources, about preparing a claim and the
+    program's terms, held no 35%, so it gains that page as a third source; its tax impact said the enhanced
+    rates were "subject to taxable income limits", which no held quote says, and now says the enhanced rate
+    is for some CCPCs, up to their expenditure limit for the year. The maintainer asked for the SR&ED
+    glossary's line stating 35%; no tool has found one yet (his answer of 2026-10-24: quote this page, as
+    the other stage does).
+
+  The words new to a stage were found on their pages on 2026-10-23 by the reading list's matcher, kept as a
+  tool check of that day on the stage the list checked (a networked `node scripts/check-quotes.mjs` run
+  should find them again); the stages' other sources keep their read of 2026-05-01, which still shows. Road
+  0's line on what counts toward the tests and Sole Prop activation's note now read one copy of the CRA's
+  words (`gst-official-words.ts`). Tests: `tests/reading-list-corrections.spec.ts` §§ 2–4 and 7,
+  `tests/engine-integrity.spec.ts` (a stage's dollar figure must come from a page that stage cites),
+  `tests/brain-incorporation.spec.ts`, `e2e/app.spec.ts` (Sole Prop activation's three sources, the new one
+  in amber).
 
 ### Changed
 - **Ontario food premises licensing is off the map** (the maintainer's reading list of 2026-10-23). The rule

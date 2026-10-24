@@ -12,6 +12,9 @@ import type { PrismaClient } from "@prisma/client";
 import { expect, test, type Download, type Locator, type Page, type Worker } from "@playwright/test";
 
 import { createDatabaseClient } from "../lib/db/client";
+import { cfeNodesV2026 } from "../lib/engines/cfe/v2026";
+import { CRA_WHEN_TO_REGISTER_URL } from "../lib/engines/compliance/v2026/gst-official-words";
+import { howCheckedWords } from "../lib/engines/shared/citation-check";
 import { SETTING_GROUPS, SETTINGS } from "../lib/settings/catalog";
 import { INVENTED_AMOUNTS, otherFormPage, t2125Pages } from "../tests/fixtures/returns/cra-layout";
 import { gnucashGz, gnucashXml, smallBook } from "../tests/helpers/make-gnucash";
@@ -377,10 +380,12 @@ test("the map draws today's road: columns, cards, toggles and hover arrows, plus
   await expect(stepPanel.getByText(noKindsOfWork, { exact: true })).toBeVisible();
 });
 
-// 2026-10-11 (option B, docs/engines/citations.md): every source says how it was checked. Every
-// source on the map today was read, and for the map's own stages nobody recorded who read it, so the
-// stage's sources and the playbook export say "Read on <date>. Who read it wasn't recorded." and never
-// claim a person; the readout says the same words as the screens, and none says "verified" any more.
+// 2026-10-11 (option B, docs/engines/citations.md): every source says how it was checked, in the words
+// lib/engines/shared/citation-check.ts gives its citation. The map's own stages were read by someone
+// nobody recorded, so their sources and the playbook export say "Read on <date>. Who read it wasn't
+// recorded." and never claim a person. Since 2026-10-24 Sole Prop activation also cites the CRA's page
+// its $30,000 note quotes, which only a tool has checked, so that source says so (the maintainer's
+// reading list of 2026-10-23). The readout says the same words as the screens, and none says "verified".
 test("every source says how it was checked: the map's sources, the playbook export and the readout", async ({ page }) => {
   const scenario = {
     id: `checked-${Date.now()}`,
@@ -412,12 +417,21 @@ test("every source says how it was checked: the map's sources, the playbook expo
   // The fold's summary reads "▸ Sources for this stage · 2".
   await page.locator("summary", { hasText: /Sources for this stage · \d+/ }).click();
   const sources = page.locator("details[open]").filter({ has: page.locator("summary", { hasText: "Sources for this stage" }) }).getByRole("listitem");
-  expect(await sources.count()).toBeGreaterThan(0);
+  const stage = cfeNodesV2026.find((n) => n.id === "stage-1-sole-prop-activation")!;
+  const expected = stage.citations.map((c) => howCheckedWords(c));
+  await expect(sources).toHaveCount(stage.citations.length);
   for (const item of await sources.all()) {
-    await expect(item).toContainText(/Read on \d{4}-\d{2}-\d{2}\. Who read it wasn't recorded\./i);
-    await expect(item).not.toContainText(/Read by a person/i);
+    // Lower-cased: a read's line is drawn in capitals (CSS), which innerText keeps.
+    const text = (await item.innerText()).replace(/\s+/g, " ").toLowerCase();
+    expect(expected.some((words) => text.includes(words.toLowerCase())), text).toBe(true);
     await expect(item).not.toContainText(/verified/i);
   }
+  // No one is recorded as having read these pages, so none claims a person ("Not read by a person yet" is a tool's line).
+  await expect(sources.filter({ hasText: /Read by a person on \d{4}-\d{2}-\d{2}/i })).toHaveCount(0);
+  // The page the $30,000 note quotes: checked by a tool, and saying so.
+  const quotedPage = sources.filter({ has: page.locator(`a[href="${CRA_WHEN_TO_REGISTER_URL}"]`) });
+  await expect(quotedPage).toHaveCount(1);
+  await expect(quotedPage).toContainText(/Checked by a tool on \d{4}-\d{2}-\d{2}: .*Not read by a person yet\./);
 
   // The playbook export, in the same words.
   await page.getByRole("button", { name: "Export", exact: true }).click();

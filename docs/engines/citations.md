@@ -257,7 +257,9 @@ to the citations he read.
 | Page | Where it is cited | What the quotes are |
 |---|---|---|
 | CRA, the SR&ED tax incentives' rates (https://www.canada.ca/en/revenue-agency/services/scientific-research-experimental-development-tax-incentive-program/what-are-sred-tax-incentives.html) | program *SR&ED tax incentives* (`grant-sred`; `SRED_WORDS`, [`lib/engines/grants/v2026/sred-official-words.ts`](../../lib/engines/grants/v2026/sred-official-words.ts)) | the basic 15% rate, the enhanced 35% for some corporations, and that some businesses may also earn a refundable credit. The page's own title isn't held, so the citation's title describes it. |
-| CRA, *How certain relationships affect the small business deduction and SR&ED investment tax credits* | `grant-sred` (the CCPC rate) | some CCPCs may earn the enhanced 35% up to their expenditure limit for the year (never the page's worked example with an older limit) |
+| CRA, *How certain relationships affect the small business deduction and SR&ED investment tax credits* | `grant-sred` (the CCPC rate); map stages *Incorporation for liability/SR&ED* (`stage-3b-incorporation-liability-sred`, whose read of 2026-05-01 still wins on screen) and *SR&ED deepening* (`stage-4-sred-deepening`, a new source of that stage, tool check only), each quoting it for its 35% | some CCPCs may earn the enhanced 35% up to their expenditure limit for the year (never the page's worked example with an older limit) |
+| CRA, T2 guide chapter 4 (https://www.canada.ca/en/revenue-agency/services/forms-publications/publications/t4012/t2-corporation-income-tax-guide-chapter-4-page-4-t2-return.html) | map stage *Incorporating* (`stage-3a-incorporation-80k-net`, [`lib/engines/cfe/v2026/nodes.ts`](../../lib/engines/cfe/v2026/nodes.ts)), its business-limit estimate | that the maximum allowable business limit for a corporation not associated with any other is $500,000 (the list's quote), and that CCPCs "throughout the tax year may be able to claim the small business deduction", the words structure-ccpc's citation of the page holds from its own check of 2026-10-13, which keeps that date. The list found both held quotes for the page that day. The stage's read of 2026-05-01 still wins on screen. |
+| CRA, *Determine if you need to register for a payroll account* | map stage *Hire first employee* (`branch-hire-first-employee`), its payroll account timing | that you register for a payroll account before the first remittance due date, and when that date is (the list's quote): the two sentences road 0's `dw-start-hire-payroll-account` holds from its check of 2026-10-12, which keeps that date. The list found all five quotes held for the page that day. The stage's read of 2026-05-01 still wins on screen. |
 | CRA, *What's new for corporations* | `grant-sred` (the CCPC rate) | the expenditure limit for the enhanced 35% raised to $6 million (never the page's line that it lists proposed, announced or enacted changes) |
 | Income Tax Act s.127(10.2) | `grant-sred` | the expenditure limit's formula, from $6 million. The list recorded "formula found" for this page, so the sentence that leads into it is not kept. |
 | CRA, *Where to keep your records, for how long and how to request the permission to destroy them early* | the Delete menu's records line (`cra-business-records-retention`, [`lib/engines/compliance/v2026/record-keeping.ts`](../../lib/engines/compliance/v2026/record-keeping.ts)) | that records are generally kept six years from the end of the last tax year they relate to, and for a different period in some situations: the two sentences every road's *Keep your records from day one* step holds from its own check of 2026-10-14, which keeps that date. The list found all ten quotes held for this page that day. The citation's read of 2026-10-08 still wins on screen (rule 3). |
@@ -273,6 +275,17 @@ docs/glossary.md's GAAR entry holds from `node scripts/check-quotes.mjs` on 2026
 (`S245_CITATION`, [`lib/engines/risk/v2026/gaar-official-words.ts`](../../lib/engines/risk/v2026/gaar-official-words.ts))
 keeps the risk catalog's read of 2026-07-02, which wins on screen, and is now also listed under the
 Holding company and Family trust cards, where that read shows: a risk box draws no sources of its own.
+
+One map stage cites a page for a quote whose check was already held, so it keeps that check's date:
+*Sole Prop activation* (`stage-1-sole-prop-activation`) said "Track gross revenue against" the CRA's
+$30,000 tests and cited neither page that sets them. Since 2026-10-24 its note quotes what the CRA says a
+sole proprietor counts toward the tests and what is left out, and the stage cites the CRA's *When to
+register for and start charging the GST/HST*, with a tool check of 2026-10-12 holding those words and
+"You exceed the $30,000": each is a quote the two GST/HST stages or road 0's `dw-start-gstman-tests` line
+holds from `node scripts/check-quotes.mjs` that day (`CRA_SOLE_PROPRIETOR_COUNTS` and `CRA_NOT_COUNTED`,
+[`lib/engines/compliance/v2026/gst-official-words.ts`](../../lib/engines/compliance/v2026/gst-official-words.ts)).
+The list found all 22 quotes held for that page on 2026-10-23. The new source has no read, so it says
+"Checked by a tool" in amber under the stage.
 
 One page the list opened gets no tool check: the CRA's page on which GST/HST rate to charge, cited by
 *Ontario HST (13%)* and *Alberta — no provincial sales tax*. Its table of rates isn't in the page's

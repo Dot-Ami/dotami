@@ -1,13 +1,27 @@
 import {
+  CRA_NOT_COUNTED,
   CRA_SMALL_SUPPLIER_TESTS,
+  CRA_SOLE_PROPRIETOR_COUNTS,
   CRA_VOLUNTARY_REGISTRATION,
   CRA_WHEN_TO_REGISTER_TOOL_CHECK,
   CRA_WHEN_TO_REGISTER_URL,
 } from "@/lib/engines/compliance/v2026/gst-official-words";
+import { SRED_PAGES, SRED_QUOTES_FOUND_ON, SRED_WORDS } from "@/lib/engines/grants/v2026/sred-official-words";
 
 import type { CFENode } from "./types";
 
 const LAST_VERIFIED = "2026-05-01";
+
+/**
+ * The day the maintainer's reading list fetched the pages behind its items and, with the repo's matcher (the
+ * same whole-word, one-block match as scripts/check-quotes.mjs), found on them the words Incorporating and Hire
+ * first employee now quote (the two SR&ED stages' 35% is SRED_QUOTES_FOUND_ON, the same day). Each is kept as a
+ * tool check of that day on the stage the list checked, and on no other citation of the page (his answer of
+ * 2026-10-24). A networked `node scripts/check-quotes.mjs` run should find each again before merge
+ * (docs/engines/citations.md, § The reading list's tool checks). Where a stage's citation also has its read of
+ * 2026-05-01, which nobody recorded who made, the read still wins on screen.
+ */
+const READING_LIST_FOUND_ON = "2026-10-23";
 
 export const cfeNodesV2026 = [
   {
@@ -101,12 +115,30 @@ export const cfeNodesV2026 = [
         lastVerified: LAST_VERIFIED,
         note: "CRA business registration entry point for business numbers and program accounts.",
       },
+      {
+        // Since 2026-10-24 (the maintainer's reading list): the page the first projection note quotes, for what
+        // counts toward the $30,000 tests, so the stage that says $30,000 cites the page that sets it. Each quote is
+        // one the two GST/HST stages or road 0's dw-start-gstman-tests line holds from scripts/check-quotes.mjs on
+        // 2026-10-12, so it keeps that day; no person is recorded as having read the page.
+        title: "When to register for and start charging the GST/HST",
+        authority: "CRA",
+        jurisdiction: "CA",
+        url: CRA_WHEN_TO_REGISTER_URL,
+        toolCheck: {
+          checkedOn: CRA_WHEN_TO_REGISTER_TOOL_CHECK.checkedOn,
+          quotes: ["You exceed the $30,000", CRA_SOLE_PROPRIETOR_COUNTS, ...CRA_NOT_COUNTED],
+        },
+        note: "The CRA's small-supplier tests, and what a sole proprietor counts toward them.",
+      },
     ],
     financialImpact: {
       summary:
         "Revenue and expenses start flowing through the personal tax return as self-employment business income.",
       projectionNotes: [
-        "Track gross revenue against the CRA's two $30,000 small-supplier tests: a single calendar quarter, and the previous four (or fewer) consecutive calendar quarters.",
+        // Until 2026-10-24 "Track gross revenue against …": the maintainer's reading list asked for what the CRA
+        // counts instead, in its words, from the page cited above (tests/reading-list-corrections.spec.ts § 4). The
+        // tests' periods are only in the CRA's own words now, quoted in full on Mandatory GST registration.
+        `For the CRA's two $30,000 small-supplier tests (quoted in full on Mandatory GST registration), its page says: “${CRA_SOLE_PROPRIETOR_COUNTS}” And, on what is left out: “${CRA_NOT_COUNTED[0]}” “${CRA_NOT_COUNTED[1]}”`,
         "Track expenses from the first business activity because later GST/HST registration may affect ITC planning.",
       ],
       estimates: [
@@ -281,6 +313,16 @@ export const cfeNodesV2026 = [
         jurisdiction: "CA",
         url: "https://www.canada.ca/en/revenue-agency/services/forms-publications/publications/t4012/t2-corporation-income-tax-guide-chapter-4-page-4-t2-return.html",
         lastVerified: LAST_VERIFIED,
+        // The two runs of words the business-limit estimate below quotes. The reading list's matcher found both on the
+        // page on 2026-10-23: the first was its suggested quote, the second the words structure-ccpc's citation of
+        // the page already held (2026-10-13), which that citation keeps.
+        toolCheck: {
+          checkedOn: READING_LIST_FOUND_ON,
+          quotes: [
+            "The maximum allowable business limit for a corporation that is not associated with any other corporation is $500,000.",
+            "throughout the tax year may be able to claim the small business deduction",
+          ],
+        },
         note: "CRA guidance on the small business deduction and business limit.",
       },
     ],
@@ -293,9 +335,13 @@ export const cfeNodesV2026 = [
       ],
       estimates: [
         {
+          // The maintainer's reading list (2026-10-23): a maximum, not automatic. Until 2026-10-24 the value was
+          // "$500,000" and the basis DotAmi's paraphrase; both quotes are the T2 guide's (its citation's tool check
+          // above). The label is unchanged: "Up to" in the value already says it is a maximum.
           label: "Federal SBD business limit",
-          value: "$500,000",
-          basis: "CRA T2 guide business limit for qualifying CCPC active business income.",
+          value: "Up to $500,000",
+          basis:
+            "The CRA's T2 guide says corporations that were Canadian-controlled private corporations (CCPCs) “throughout the tax year may be able to claim the small business deduction”, and: “The maximum allowable business limit for a corporation that is not associated with any other corporation is $500,000.”",
         },
       ],
     },
@@ -325,8 +371,11 @@ export const cfeNodesV2026 = [
         title: "How certain relationships affect the small business deduction and SR&ED investment tax credits",
         authority: "CRA",
         jurisdiction: "CA",
-        url: "https://www.canada.ca/en/revenue-agency/services/tax/businesses/topics/corporations/business-tax-credits/how-relationships-affect-small-business-deduction-sred-investment-tax-credits.html",
+        url: SRED_PAGES.relationships,
         lastVerified: LAST_VERIFIED,
+        // The sentence the 35% estimate below quotes: the reading list's matcher found it on the page on 2026-10-23
+        // (lib/engines/grants/v2026/sred-official-words.ts). The read of 2026-05-01 still wins on screen.
+        toolCheck: { checkedOn: SRED_QUOTES_FOUND_ON, quotes: [SRED_WORDS.ccpcEnhanced] },
         note: "CRA guidance on CCPC relationships, SBD, and SR&ED investment tax credits.",
       },
       {
@@ -349,8 +398,10 @@ export const cfeNodesV2026 = [
         {
           label: "Enhanced SR&ED ITC reference",
           value: "35%",
-          basis:
-            "CRA guidance describes enhanced SR&ED ITC access for certain CCPCs subject to limits and relationships.",
+          // Until 2026-10-24 a paraphrase ("CRA guidance describes enhanced SR&ED ITC access for certain CCPCs subject
+          // to limits and relationships."); now the CRA's own sentence (the maintainer's reading list: 35% for
+          // eligible CCPCs, within the limit).
+          basis: `The CRA: “${SRED_WORDS.ccpcEnhanced}”`,
         },
       ],
     },
@@ -390,6 +441,16 @@ export const cfeNodesV2026 = [
         jurisdiction: "CA",
         url: "https://www.canada.ca/en/revenue-agency/services/tax/businesses/topics/payroll/open-manage-payroll-account/determine-need-register.html",
         lastVerified: LAST_VERIFIED,
+        // The two sentences the payroll-timing estimate below quotes, both held by road 0's
+        // dw-start-hire-payroll-account from its check of 2026-10-12, which keeps that date. The reading list's
+        // matcher found both on the page again on 2026-10-23 (the second was its suggested quote).
+        toolCheck: {
+          checkedOn: READING_LIST_FOUND_ON,
+          quotes: [
+            "You have to register for a payroll account before the first remittance due date.",
+            "Your first remittance due date is the 15th day of the month following the month in which you began withholding deductions from your employee's pay, unless the CRA tells you to remit using a different frequency.",
+          ],
+        },
         note: "CRA guidance on when an employer needs a payroll program account.",
       },
       {
@@ -418,9 +479,13 @@ export const cfeNodesV2026 = [
       ],
       estimates: [
         {
+          // The CRA's own words (the maintainer's reading list, 2026-10-23: the claim matches), so no deadline is said
+          // in DotAmi's words. Until 2026-10-24 "Before first remittance due date", on "CRA payroll registration
+          // guidance."
           label: "Payroll account timing",
-          value: "Before first remittance due date",
-          basis: "CRA payroll registration guidance.",
+          value: "“before the first remittance due date”",
+          basis:
+            "The CRA: “You have to register for a payroll account before the first remittance due date.” “Your first remittance due date is the 15th day of the month following the month in which you began withholding deductions from your employee's pay, unless the CRA tells you to remit using a different frequency.”",
         },
       ],
     },
@@ -544,7 +609,9 @@ export const cfeNodesV2026 = [
     description:
       "Beyond initial incorporation for SR&ED access, mature ventures maintain contemporaneous project records, time tracking, and expenditure allocation. If R&D is core to the venture, this unlocks annual SR&ED claim workflows and potential IRAP stacking.",
     taxImpact:
-      "Eligible SR&ED expenditures generate ITCs and deductions. Enhanced rates for CCPCs subject to taxable income limits. Provincial top-ups may apply in some jurisdictions.",
+      // Until 2026-10-24 "Enhanced rates for CCPCs subject to taxable income limits", which no held quote says; now
+      // the condition of the CRA's sentence this stage's 35% quotes (the maintainer's reading list).
+      "Eligible SR&ED expenditures generate ITCs and deductions. The enhanced rate is for some CCPCs, up to their expenditure limit for the year. Provincial top-ups may apply in some jurisdictions.",
     lensAnnotations: {
       tax: "If experimentation is ongoing, annual SR&ED documentation may unlock recurring credits — with audit-ready records.",
       legal:
@@ -586,6 +653,18 @@ export const cfeNodesV2026 = [
         },
         note: "CRA SR&ED terminology and eligibility concepts.",
       },
+      {
+        // Added 2026-10-24 for the stage's 35% (the maintainer's answer of that day: quote this page's line, as
+        // Incorporation for liability/SR&ED does). He asked for the glossary's line stating 35%, which no tool has
+        // found, so the stage quotes the sentence the reading list's matcher found here on 2026-10-23. A tool check
+        // only: no person is recorded as having read the page.
+        title: "How certain relationships affect the small business deduction and SR&ED investment tax credits",
+        authority: "CRA",
+        jurisdiction: "CA",
+        url: SRED_PAGES.relationships,
+        toolCheck: { checkedOn: SRED_QUOTES_FOUND_ON, quotes: [SRED_WORDS.ccpcEnhanced] },
+        note: "Which CCPCs may earn the enhanced 35% rate, up to their expenditure limit for the year.",
+      },
     ],
     financialImpact: {
       summary:
@@ -598,7 +677,9 @@ export const cfeNodesV2026 = [
         {
           label: "Enhanced ITC reference",
           value: "35%",
-          basis: "CRA enhanced SR&ED ITC rate for qualifying CCPCs.",
+          // Until 2026-10-24 "CRA enhanced SR&ED ITC rate for qualifying CCPCs.", with no source of the stage stating
+          // 35%; now the CRA's sentence, from the relationships page cited above.
+          basis: `The CRA: “${SRED_WORDS.ccpcEnhanced}”`,
         },
       ],
     },

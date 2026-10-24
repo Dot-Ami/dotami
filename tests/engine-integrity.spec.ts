@@ -192,13 +192,15 @@ describe("engine catalog integrity", () => {
 
   // 2026-10-11: "Incorporation at $80K net" lit a stage from $80,000, a number of DotAmi's own (the
   // catalog called it a "v0 heuristic") that no page sets. A dollar figure on the map has to be one
-  // an official page sets, and the catalog has to cite that page. Adding an amount here means naming
-  // the page it comes from; docs/engines/cfe.md, authoring rule 2.
-  it("every dollar figure on the map comes from a page the catalog cites — none is DotAmi's own", () => {
+  // an official page sets, and the stage that says it has to cite that page itself, so its source is
+  // one click away under the stage (until 2026-10-24 Sole Prop activation said $30,000 and cited
+  // neither page that sets it; the maintainer's reading list of 2026-10-23). Adding an amount here
+  // means naming the page it comes from; docs/engines/cfe.md, authoring rule 2.
+  it("every dollar figure on the map comes from a page the stage that says it cites — none is DotAmi's own", () => {
     const CITED_AMOUNTS: Record<string, string> = {
       // GST/HST small-supplier line: taxable supplies over $30,000 (CRA).
       "$30,000": "https://www.canada.ca/en/revenue-agency/services/tax/businesses/topics/gst-hst-businesses/when-register-charge.html",
-      // The small business deduction's federal business limit (CRA, T2 guide chapter 4).
+      // The small business deduction: the maximum allowable business limit (CRA, T2 guide chapter 4).
       "$500,000":
         "https://www.canada.ca/en/revenue-agency/services/forms-publications/publications/t4012/t2-corporation-income-tax-guide-chapter-4-page-4-t2-return.html",
     };
@@ -208,6 +210,7 @@ describe("engine catalog integrity", () => {
     for (const node of cfeCatalogV2026.nodes) {
       // Everything the node says, not its citations' notes (those describe the page).
       const said = { ...node, citations: [] };
+      const ownPages = node.citations.map((c) => c.url);
       // "$80K", "$80,000", "$ 500,000", "$1.5M": every way a dollar figure is written.
       const amounts = JSON.stringify(said).match(/\$\s?\d+(?:,\d{3})*(?:\.\d+)?(?:\s?[KkMm]\b)?/g) ?? [];
       for (const raw of amounts) {
@@ -215,6 +218,7 @@ describe("engine catalog integrity", () => {
         // "$0" is the absence of revenue before a venture starts, not a threshold.
         if (amount === "$0") continue;
         expect(Object.keys(CITED_AMOUNTS), `${node.id} says ${amount}, which no cited page in this list sets`).toContain(amount);
+        expect(ownPages, `${node.id} says ${amount} but doesn't cite the page that sets it`).toContain(CITED_AMOUNTS[amount]);
       }
       // And no estimate may present a number of DotAmi's own as a "heuristic".
       for (const estimate of node.financialImpact.estimates) {
