@@ -15,7 +15,7 @@ import {
   ETA_240_TOOL_CHECK,
   ETA_240_URL,
 } from "./ride-share-official-words";
-import type { ComplianceRule } from "./types";
+import type { ComplianceRule, RetiredComplianceRule } from "./types";
 
 const LAST_VERIFIED = "2026-06-08";
 
@@ -100,6 +100,8 @@ export const complianceRulesV2026 = [
         authority: "CRA",
         jurisdiction: "ON",
         url: "https://www.canada.ca/en/revenue-agency/services/tax/businesses/topics/gst-hst-businesses/charge-collect-which-rate.html",
+        // No tool check (the maintainer's reading list, 2026-10-23): the page's table of rates isn't in its HTML, and
+        // the one 13% sentence a tool found there is a worked example (a furniture store's sale), not the rate.
         lastVerified: LAST_VERIFIED,
         note: "CRA HST rate guidance for participating provinces.",
       },
@@ -113,7 +115,14 @@ export const complianceRulesV2026 = [
     description:
       "Alberta has no PST. GST applies at 5% on taxable supplies once registered.",
     lensAnnotations: {
-      tax: "If operating only in Alberta, GST (not HST) applies — simplifying provincial sales tax compliance.",
+      // The card's line. Until 2026-10-24 it said "If operating only in Alberta, GST (not HST) applies — simplifying
+      // provincial sales tax compliance": "simplifying" is a judgement no cited page makes, and the CRA's table lists
+      // rates by province, not by where a business operates (the maintainer's reading list, 2026-10-23). It now says
+      // only what the table lists for Alberta, and it is still DotAmi's wording of the table's row, not a quote: the
+      // table isn't in the page's HTML, so no tool can find the row, and the one 5% sentence a tool found there is a
+      // worked example about Manitoba. A quote takes its place once an official page that says it in its own words
+      // is found and checked (docs/engines/compliance.md, § From the maintainer's reading list).
+      tax: "The CRA's table of GST/HST rates lists Alberta at 5% GST, with no provincial sales tax.",
       legal: "Federal GST rules still apply for registration and remittance.",
     },
     citations: [
@@ -122,6 +131,7 @@ export const complianceRulesV2026 = [
         authority: "CRA",
         jurisdiction: "AB",
         url: "https://www.canada.ca/en/revenue-agency/services/tax/businesses/topics/gst-hst-businesses/charge-collect-which-rate.html",
+        // No tool check, for the reason above: the table's Alberta row isn't in the page's words.
         lastVerified: LAST_VERIFIED,
         note: "CRA GST rate for non-HST provinces.",
       },
@@ -180,29 +190,7 @@ export const complianceRulesV2026 = [
     provinces: ["AB"],
     industryTags: ["Trades", "Woodworking"],
   },
-  {
-    id: "compliance-food-premises-on",
-    label: "Ontario food premises licensing",
-    ruleType: "licensing",
-    description:
-      "Food service and certain hospitality ventures require public health and municipal licensing in Ontario.",
-    lensAnnotations: {
-      tax: "Permit and inspection fees may be deductible when tied to earning business income.",
-      legal: "If serving food to the public, public health compliance is typically required before opening.",
-    },
-    citations: [
-      {
-        title: "Food premises regulation",
-        authority: "provincial",
-        jurisdiction: "ON",
-        url: "https://www.ontario.ca/laws/regulation/900562",
-        lastVerified: LAST_VERIFIED,
-        note: "Ontario Regulation 562 — Food Premises.",
-      },
-    ],
-    provinces: ["ON"],
-    industryTags: ["Hospitality", "Food service"],
-  },
+  // Ontario food premises licensing (compliance-food-premises-on) came off on 2026-10-24: RETIRED_COMPLIANCE_RULES.
   {
     // 2026-10-11: until then a driver expecting under $30,000 was told on a green card that most
     // businesses "need not register yet". The small-supplier line doesn't apply to this work.
@@ -305,3 +293,18 @@ export const complianceRulesV2026 = [
 ] satisfies ComplianceRule[];
 
 export type ComplianceRuleId = (typeof complianceRulesV2026)[number]["id"];
+
+/**
+ * Rules taken off the catalog (docs/engines/compliance.md, § Retired rules), in the shape #207 gives the grants
+ * catalog's retired programs (RETIRED_GRANT_PROGRAMS). Their ids are never used for another rule (IDs are forever),
+ * and nothing here reaches a screen; tests/retired-entries.spec.ts holds this list to the catalog.
+ */
+export const RETIRED_COMPLIANCE_RULES: readonly RetiredComplianceRule[] = [
+  {
+    id: "compliance-food-premises-on",
+    label: "Ontario food premises licensing",
+    url: "https://www.ontario.ca/laws/regulation/900562",
+    readOn: "2026-10-23",
+    why: "On the maintainer's reading list of 2026-10-23 the rule didn't match its source: the regulation it cited, Ontario Regulation 562/90 (Food Premises), is revoked, and the rule said more than that regulation (\"require public health and municipal licensing in Ontario\"). The regulation in force now hasn't been read, so nothing replaces the rule yet; an Ontario food rule comes back only under a new id, citing that regulation and quoting what it requires.",
+  },
+];

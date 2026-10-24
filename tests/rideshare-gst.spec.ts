@@ -284,7 +284,8 @@ describe("the control: the same $10,000 without the driving tag is unchanged", (
         { activityTags: ["Content / streaming"], province: "AB" },
         "Shown because it is a federal rule, the same in every province and territory.",
       ],
-      ["compliance-food-premises-on", { activityTags: ["Food service"], province: "ON" }, "Shown because you selected Ontario."],
+      // Ontario food premises licensing came off the catalog on 2026-10-24: the regulation it cited is revoked
+      // (tests/retired-entries.spec.ts checks it is gone, and that an Ontario food idea still gets Ontario's rules).
     ];
     for (const [id, over, why] of cases) {
       const c = card(evaluateProfile({ ...abby, ...over }, { today: TODAY }), id);

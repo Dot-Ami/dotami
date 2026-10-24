@@ -1954,8 +1954,10 @@ figures only); it is budgeted here. With no model, phases 1 and 2 still work by 
 
 **Phase 4 — More futures, more places.** Ongoing: about 5 content days per future; B.C. and Ontario
 versions; contributor-written futures through a compiler (about a week, once) that refuses uncited
-steps. Before any food future, Ontario's food-premises citation is re-read (the compliance catalog
-points at a regulation that looks like the older one).
+steps. Before any food future in Ontario, a person reads the regulation in force: the compliance
+catalog's food-premises rule cited Ontario Regulation 562/90, which the maintainer's reading list of
+2026-10-23 found revoked, and the rule came off on 2026-10-24 (docs/engines/compliance.md, § Retired
+rules).
 
 ## 11. Built to change
 

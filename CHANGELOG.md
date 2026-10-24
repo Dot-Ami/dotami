@@ -272,8 +272,35 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   answer does; the app was not changed.
 - **The quality report counts step 3's own silent fallbacks on their way in** (tests and report only). A road
   written for the job listed after another on step 3 was counted among the ideas but on neither way in.
+- **The Alberta sales tax card says only what the CRA's table lists for Alberta** (the maintainer's reading list
+  of 2026-10-23). *Alberta — no provincial sales tax* said "If operating only in Alberta, GST (not HST) applies —
+  simplifying provincial sales tax compliance": "simplifying" is a judgement no cited page makes, and the CRA's
+  table lists rates by province, not by where a business operates. It now says "The CRA's table of GST/HST rates
+  lists Alberta at 5% GST, with no provincial sales tax." That is still DotAmi's wording of the table's row, not
+  a quote, and the catalog says so beside it: the table isn't in the page's HTML, so no tool can find its row,
+  and the one 5% sentence a tool found there is a worked example about Manitoba, never recorded as the rate.
+  *Ontario HST (13%)* cites the same page and has no tool check for the same reason (its 13% sentence there is a
+  furniture store's sale). Test: `tests/reading-list-corrections.spec.ts` § 5.
 
 ### Changed
+- **Ontario food premises licensing is off the map** (the maintainer's reading list of 2026-10-23). The rule
+  cited Ontario Regulation 562/90 (Food Premises), which is revoked, and said food service and certain
+  hospitality ventures "require public health and municipal licensing in Ontario", more than that regulation
+  said. The regulation in force now hasn't been read, so nothing replaces the rule yet: an Ontario idea with
+  *Food service* or *Hospitality* no longer shows the card on its map, in the intake's preview, the readout or
+  the playbook. Its id, `compliance-food-premises-on`, is kept with the reason in `RETIRED_COMPLIANCE_RULES`
+  and never used again ([docs/engines/compliance.md](docs/engines/compliance.md), § Retired rules); an Ontario
+  food rule comes back only under a new id, citing the regulation in force and quoting what it requires.
+  Test: `tests/retired-entries.spec.ts` § 1.
+- **The Delete menu's records line keeps the CRA's own words on the six years.** Its citation, the CRA's *Where
+  to keep your records, for how long …*, now also holds "Generally, you must keep all required records and
+  supporting documents for a period of six years from the end of the last tax year they relate to." and "In
+  some situations, you must retain your records for a different period of time.", which the maintainer's
+  reading list found on the live page on 2026-10-23 with the repo's matcher (a networked `node
+  scripts/check-quotes.mjs` run should find them again). They are the same two sentences every road's *Keep
+  your records from day one* step holds. The line on screen doesn't change: it already said "generally", and
+  its read of 2026-10-08 outranks a tool check, so it still says "(Read on 2026-10-08. Who read it wasn't
+  recorded.)". Test: `tests/reading-list-corrections.spec.ts` §§ 2 and 5.
 - **About this job in place for a job with no road, your region's Change, and the batch 4 calls** (tasks 28c and
   28h, the maintainer's calls of 2026-10-22). On Pick a future and at the end of the typed way, a job with no road
   written for it now shows *About this job*'s four rows right inside step 3, opened by "Here is what the government
@@ -338,6 +365,12 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   research kit's sketch of *About this job* ([docs/architecture/research-kit.md](docs/architecture/research-kit.md)
   § 4.2) now follows the same picks (no business counts yet, general pages only, no job in any web address).
   Docs only: nothing DotAmi keeps, sends, ships or asks changes yet.
+- **The CRA's "generally" six years in every doc** (the maintainer's reading list of 2026-10-23). Where the
+  design docs gave the CRA's six years for keeping records without its "generally"
+  ([figures-privacy-review.md](docs/architecture/figures-privacy-review.md),
+  [expense-records.md](docs/architecture/expense-records.md) and two lines of
+  [other-ways-to-build.md](docs/architecture/other-ways-to-build.md)), they now give it; every screen already
+  did, and `tests/reading-list-corrections.spec.ts` fails if the code or those docs drop it again.
 
 ## [0.4.1] — 2026-10-20
 

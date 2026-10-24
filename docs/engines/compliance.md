@@ -1,11 +1,12 @@
 # Compliance Engine (+ planned Risk) — Reasoning Conventions
 
-Catalog: `lib/engines/compliance/v2026/rules.ts` (9 rules as of 2026-10-11) · Priority: **high**
+Catalog: `lib/engines/compliance/v2026/rules.ts` (8 rules as of 2026-10-24; one retired, § Retired rules) · Priority: **high**
 
 ## What it holds
 
 Threshold rules (GST/HST small supplier), province tax facts (BC PST, ON HST, AB no-PST),
-the hobby-vs-business test, two licensing rules, and, since 2026-10-11, GST/HST registration from the
+the hobby-vs-business test, one licensing rule (Alberta's trades; Ontario's food-premises rule came off on
+2026-10-24), and, since 2026-10-11, GST/HST registration from the
 first paid ride for ride-share and taxi driving and the platform-reporting card for the same work
 (§ Work the $30,000 line doesn't cover). Annotation-only today.
 
@@ -123,16 +124,68 @@ person's other work), it doesn't work out GST/HST included in a fare, and it doe
 reporting rules to other kinds of work the same CRA page lists (selling goods, renting property,
 personal services). Each is a separate change.
 
+## From the maintainer's reading list (2026-10-23)
+
+His reading list of 2026-10-23 checked five entries here, and his answers of 2026-10-24 decided what
+changed. None of their sources is marked as read by him yet: his saved reads come in a later change.
+
+- **Ontario HST (13%)** and **Alberta — no provincial sales tax** cite the CRA's page on which GST/HST
+  rate to charge. Its table of rates isn't in the page's HTML, so no tool can find one of its rows, and
+  the two sentences a tool found there with a rate are worked examples (an Ontario furniture store's
+  sale, a Manitoba electronics store's), never the rate. Neither citation has a tool check, and neither
+  may record those sentences. The Alberta card's line said "If operating only in Alberta, GST
+  (not HST) applies — simplifying provincial sales tax compliance": "simplifying" is a judgement no
+  cited page makes, and the table lists rates by province, not by where a business operates. It now
+  says only what the table lists for Alberta, "The CRA's table of GST/HST rates lists Alberta at 5% GST,
+  with no provincial sales tax." That is still DotAmi's wording of a table row, not a quote, and the
+  catalog says so beside it: a quote takes its place once an official page that says it in its own
+  words is found and checked. Alberta's *About Tax and Revenue Administration* ("Alberta has no sales
+  tax.", [S17] in [other-ways-to-build.md](../architecture/other-ways-to-build.md)) is a candidate no
+  tool has checked yet, and it says nothing of the 5%.
+- **BC Provincial Sales Tax (PST)**: unchanged.
+- **Ontario food premises licensing** came off: § Retired rules.
+- **The Delete menu's records line** (`record-keeping.ts`, not a map rule) keeps its read of
+  2026-10-08, which still shows, and now also a tool check of 2026-10-23 holding the CRA's own
+  sentences, "Generally, you must keep all required records and supporting documents for a period of
+  six years from the end of the last tax year they relate to." and "In some situations, you must
+  retain your records for a different period of time.", the same two every road's *Keep your records
+  from day one* step holds. The line already said "generally"; the docs that gave the CRA's six years
+  without it give it now too.
+
+The quotes of 2026-10-23 were found by the list's matcher (the same whole-word, one-block match as
+`scripts/check-quotes.mjs`), so a networked run of the script must find them again before merge
+([citations.md](citations.md), § The reading list's tool checks).
+
+## Retired rules
+
+A rule taken off the catalog stays listed here and in `RETIRED_COMPLIANCE_RULES`
+(`lib/engines/compliance/v2026/rules.ts`, the same shape as the grants catalog's retired programs, #207),
+and its id is never used again. [`tests/retired-entries.spec.ts`](../../tests/retired-entries.spec.ts)
+holds the list to the catalog: no retired id is a rule, nothing on the map names one, no citation
+cites its page, and every rule that ever shipped is either live or here.
+
+| Id | Rule | Its page, as cited | Why it came off (page opened 2026-10-23) |
+| --- | --- | --- | --- |
+| `compliance-food-premises-on` | Ontario food premises licensing | https://www.ontario.ca/laws/regulation/900562 | On the maintainer's reading list it didn't match its source: the regulation it cited, Ontario Regulation 562/90 (Food Premises), is revoked, and the rule ("Food service and certain hospitality ventures require public health and municipal licensing in Ontario.") said more than that regulation. The regulation in force now hasn't been read, so nothing replaces it yet. |
+
+An Ontario idea with *Food service* or *Hospitality* no longer shows the card anywhere (the map's
+panels, the intake's preview, the readout and the playbook), and no other licensing card takes its
+place. An Ontario food rule comes back only after the regulation in force now is read, under a new
+id, saying only what that regulation requires, with its words quoted.
+
 ## Authoring rules specific to this engine
 
 1. Rule types stay within the existing union (`gst-threshold`, `pst-hst`,
    `hobby-vs-business`, `licensing`, and `platform-reporting`, approved 2026-10-12) unless a
    maintainer approves a new type — types are consumed by UI grouping.
 2. Licensing rules are industry-scoped via `industryTags`; keep them narrow and cited to
-   the actual regulation (the ON food-premises entry citing O. Reg. 562 is the model).
+   the actual regulation or the government's own list (the AB trades entry, which cites Alberta's list
+   of compulsory certification trades with the sentence a tool found on it, is the model; the ON
+   food-premises entry that used to be the model cited a revoked regulation and came off on 2026-10-24,
+   § Retired rules).
 3. Compass language is *most* load-bearing here — compliance copy that reads as legal
    advice is the fastest way to break the "prep tool for your accountant" positioning.
-   "If serving food to the public, public health compliance is typically required" — yes.
+   "If performing regulated trades, provincial certification may be required before commercial work" — yes.
    "You must obtain a license" — no.
 4. When the Risk engine lands, every `caution`-or-higher risk that concerns an obligation
    (not a strategy) should be checked against this catalog first — if the obligation isn't

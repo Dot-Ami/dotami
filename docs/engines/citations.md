@@ -260,7 +260,14 @@ to the citations he read.
 | CRA, *How certain relationships affect the small business deduction and SR&ED investment tax credits* | `grant-sred` (the CCPC rate) | some CCPCs may earn the enhanced 35% up to their expenditure limit for the year (never the page's worked example with an older limit) |
 | CRA, *What's new for corporations* | `grant-sred` (the CCPC rate) | the expenditure limit for the enhanced 35% raised to $6 million (never the page's line that it lists proposed, announced or enacted changes) |
 | Income Tax Act s.127(10.2) | `grant-sred` | the expenditure limit's formula, from $6 million. The list recorded "formula found" for this page, so the sentence that leads into it is not kept. |
+| CRA, *Where to keep your records, for how long and how to request the permission to destroy them early* | the Delete menu's records line (`cra-business-records-retention`, [`lib/engines/compliance/v2026/record-keeping.ts`](../../lib/engines/compliance/v2026/record-keeping.ts)) | that records are generally kept six years from the end of the last tax year they relate to, and for a different period in some situations: the two sentences every road's *Keep your records from day one* step holds from its own check of 2026-10-14, which keeps that date. The list found all ten quotes held for this page that day. The citation's read of 2026-10-08 still wins on screen (rule 3). |
 | Alberta, *Canada-Alberta Productivity Grant* (https://www.alberta.ca/canada-alberta-productivity-grant) | program *Canada-Alberta Productivity Grant* (`grant-capg`, added 2026-10-24), named by map stage *Hire first employee* on road 0 | the employer's 25% and the program's 75% of eligible training costs, at most $5,000 per employed trainee and $100,000 per employer per fiscal year, and that an employer be operational in Alberta for at least one year. Fetched from the Canada-Alberta Job Grant's old address, which redirects there. |
+
+One page the list opened gets no tool check: the CRA's page on which GST/HST rate to charge, cited by
+*Ontario HST (13%)* and *Alberta — no provincial sales tax*. Its table of rates isn't in the page's
+HTML, so no tool can find one of its rows, and the two sentences the list found there with a rate
+are worked examples (an Ontario furniture store's sale, a Manitoba electronics store's), which are
+never recorded as the rate (docs/engines/compliance.md, § From the maintainer's reading list).
 
 The $6 million applies to tax years beginning on or after 2024-12-16. No held quote carries that
 date, so it is kept here and in a comment on the CCPC rate only: no screen says it, and no field holds

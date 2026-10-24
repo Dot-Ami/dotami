@@ -88,6 +88,12 @@ describe("what the catalogs say about who read them", () => {
     const rk = all.filter(({ where }) => where === "compliance cra-business-records-retention");
     expect(rk.length).toBe(1);
     expect(howChecked(rk[0].citation).kind).not.toBe("person");
+    // Since 2026-10-24 it also keeps a tool check of 2026-10-23 (the CRA's "Generally" sentence on the six years and
+    // the next one). The read outranks it (docs/engines/citations.md, rule 3), so the Delete line still says the read
+    // and lists no quotes.
+    expect(rk[0].citation.toolCheck?.checkedOn).toBe("2026-10-23");
+    expect(howCheckedWords(rk[0].citation)).toBe("Read on 2026-10-08. Who read it wasn't recorded.");
+    expect(isCheckFirst(rk[0].citation)).toBe(false);
   });
 
   it("the T2125 lines the maintainer checked on 2026-10-10 say a person read them", () => {

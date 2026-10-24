@@ -1,6 +1,8 @@
 # A source's line: how it was checked
 
-Last updated: 2026-10-12 (§ Today: the honest map's six pages now carry a tool check; before that,
+Last updated: 2026-10-24 (the Delete menu's record-keeping line: its citation also keeps a tool check,
+which its read outranks, so the line doesn't change; 2026-10-12: § Today: the honest map's six pages now
+carry a tool check; before that,
 2026-10-11: read or checked by a tool, the maintainer's decision of 2026-10-11, option B; same day,
 after review: "Read by a person" only when a person is recorded as the reader;
 docs/engines/citations.md)
@@ -62,8 +64,10 @@ The words come from one function, `howCheckedWords`; no screen writes them itsel
   a check of the citation. The citation's own line above it says how it was checked.
 - **What DotAmi knows about you, Delete** ([../your-data/delete-menu.md](../your-data/delete-menu.md)):
   the record-keeping line ends `(Read on 2026-10-08. Who read it wasn't recorded.)` where it said
-  `(read 2026-10-08)`, in grey; a model's read or a tool check there would be amber, like the card.
-  It doesn't list a tool check's words.
+  `(read 2026-10-08)`, in grey; a model's read, or a tool check with no read, there would be amber,
+  like the card. It doesn't list a tool check's words. Since 2026-10-24 that citation also keeps a
+  tool check of 2026-10-23 (the CRA's "Generally, …" sentence on the six years and the one after it);
+  the read outranks it, so the line still says the read, in grey.
 - **Your ideas, Add a figure, Tax year** ([../ventures/_index.md](../ventures/_index.md)): `Line 8299
   on the CRA's 2025 T2125 ("Gross business or professional income"). Read by a person on 2026-10-10.`
   A year's form always has a person's read (`tests/engine-integrity.spec.ts`), because this sentence
