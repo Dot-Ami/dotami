@@ -137,9 +137,9 @@ The page's step region (the same block that holds the cards today, so no region 
    button, *Show the n jobs whose example titles have …*, which opens it in place (and **Hide these n jobs**
    folds it again). This is rule H's own view (look further only when the closer group is empty), with the
    rest one click away rather than hidden.
-7. At most 50 jobs are listed per group (the app's own measure, `tests/helpers/idea-coverage-report.ts:85`),
-   with *Showing the first 50 of n in this group, in code order. Add a word to narrow it.* when there are
-   more. Since 2026-10-23, a group with parts lists at most 50 per part, with *Showing the first 50 of n in
+7. At most 50 jobs are listed per group (the app's own measure, `JOB_SEARCH_GROUP_CAP` in
+   `lib/engines/oasis/v2026/title-search.ts`), with *Showing the first 50 of n in this group, in code order.
+   Add a word to narrow it.* when there are more. Since 2026-10-23, a group with parts lists at most 50 per part, with *Showing the first 50 of n in
    this part, in code order. Add a word to narrow it.*
 
 Each job in a list is one button: its name and code (*Barbers · 63210.02*), and under it, in the mono label
@@ -319,7 +319,8 @@ recorded click) and the coverage report's *expected job among the matches* line.
 - The main-duties search as its own labelled section (research 28f option 3).
 - The industry question (phase 3, with the business counts; the maintainer's pick of 2026-10-20).
 - A model guessing the job (research 28f option 5: not for the picker).
-- Any order but the count of the person's words, then the government's code.
+- Any order but the count of the person's words, then the part (whether one of a job's titles holds the
+  group's count of them word for word, since 2026-10-23), then the government's code.
 
 ## Checked against the rules
 
