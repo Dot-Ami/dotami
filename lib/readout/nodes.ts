@@ -27,9 +27,11 @@ export function stepMarks(progress: readonly StepProgressView[]): Map<string, St
  * "done" and "now" until 2026-10-23), never the person's status. `yourStatus` is the person's own mark, the
  * one the map draws in place of the chip, or null where they gave none.
  *
- * The marks come from the idea's own road, and road 0's step ids are these stages' ids. An idea on another
- * road has marks on that road's steps only, so every stage here reads null: the readout draws today's tax map
- * for every idea until it reads road evaluation (docs/task-list.md, under #41).
+ * The marks come from the idea's own road, matched by step id: road 0's step ids are these stages' ids, and so
+ * are the federal road's (`road-federal-steps-ca` keeps road 0's ids for the stages it shares), so an idea on
+ * either has its marks given here. An idea on a road with steps of its own (the apprentice road) has marks on
+ * those steps only, so every stage here reads null: the readout draws today's tax map for every idea until it
+ * reads road evaluation (docs/task-list.md, under #41).
  */
 export function readoutNodes(scenario: Scenario, evaluation: EvaluationResult, marks: ReadonlyMap<string, StepStatus>) {
   return cfeCatalogV2026.nodes.map((node) => ({

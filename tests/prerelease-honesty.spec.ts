@@ -468,6 +468,18 @@ describe("2. The map shows a status only where the person gave one", () => {
     );
   });
 
+  it("the readout's own comment says truly whose marks reach it: every road that keeps road 0's stage ids", () => {
+    // The readout draws today's map for every idea, and the marks it gives are those on the idea's own road
+    // (lib/futures/step-progress.ts listStepProgress), matched by step id. So a road whose steps keep road 0's
+    // stage ids has its marks given; any other road's idea reads null on every stage.
+    const stageIds = new Set(cfeCatalogV2026.nodes.map((n) => n.id));
+    const keeping = roadsV2026.filter((road) => road.steps.some((step) => stageIds.has(step.id))).map((road) => road.id);
+    expect(keeping).toContain(generalRoadV2026.id);
+    expect(keeping.length).toBeLessThan(roadsV2026.length);
+    const source = readFileSync("lib/readout/nodes.ts", "utf8");
+    for (const id of keeping.filter((id) => id !== generalRoadV2026.id)) expect(source, `name ${id} in lib/readout/nodes.ts`).toContain(id);
+  });
+
   it("the readout route gives its stages and its idea through those two functions", () => {
     const route = readFileSync("app/api/readout/route.ts", "utf8");
     expect(route).toMatch(/\breadoutNodes\(/);
