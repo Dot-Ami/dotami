@@ -32,6 +32,7 @@ import { parseFirstSave } from "@/lib/db/parse-scenario-input";
 import { cfeCatalogV2026 } from "@/lib/engines/cfe/v2026";
 import { grantsCatalogV2026 } from "@/lib/engines/grants/v2026";
 import { RETIRED_GRANT_PROGRAMS } from "@/lib/engines/grants/v2026/programs";
+import { templateIdsForPlace, templateReferencesV2026 } from "@/lib/engines/templates/v2026";
 import {
   citationsForPlace,
   generalRoadV2026,
@@ -535,6 +536,30 @@ describe("second review of #207: a quote agreed on a cost line the new place lea
   it("its words name no time and no verdict", () => {
     const words = answer.costLineForAnotherPlace(LINE, STEP, 5000);
     for (const line of [words.said, words.takenBack, words.fact]) expect([...findTimeWords(line), ...findVerdicts(line)], line).toEqual([]);
+  });
+});
+
+describe("second review of #207: the cockpit rail's prep tools, drawn for the idea's place", () => {
+  it("Alberta's business-name page is a prep tool in Alberta only", () => {
+    expect(templateIdsForPlace("AB")).toContain("template-business-name-registration");
+    expect(templateIdsForPlace("ON")).not.toContain("template-business-name-registration");
+    // The federal ones are drawn everywhere.
+    expect(templateIdsForPlace("ON")).toEqual(["template-t2125", "template-shareholder-agreement", "template-contractor-nda"]);
+  });
+
+  it("no prep tool drawn for any province or territory links or cites another province's page", () => {
+    for (const province of PROVINCES) {
+      const otherPages = new Set(
+        templateReferencesV2026
+          .flatMap((t): readonly EngineCitation[] => t.citations)
+          .filter((c) => c.jurisdiction !== "CA" && c.jurisdiction !== province)
+          .map((c) => c.url),
+      );
+      for (const t of templateReferencesV2026.filter((ref) => templateIdsForPlace(province).includes(ref.id))) {
+        expect(otherPages.has(t.externalUrl), `${t.id} in ${province}`).toBe(false);
+        expect((t.citations as readonly EngineCitation[]).some((c) => c.jurisdiction === "CA" || c.jurisdiction === province), `${t.id} in ${province}`).toBe(true);
+      }
+    }
   });
 });
 

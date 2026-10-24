@@ -274,7 +274,10 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   counted for the place, with **Take back** and no **Change** (the maintainer's decision of 2026-10-24, option B).
   Pick a future's card for an Alberta road, seen from another province, counts what that person will be shown
   inside (call 34; road 1 from Ontario: 17 lines to price, no official fee and no skill listed, where it said 30,
-  9 and 3; `tests/three-steps.spec.ts`).
+  9 and 3; `tests/three-steps.spec.ts`). The cockpit rail's prep tools no longer link Alberta's business-name page
+  (*Provincial business name registration*) for an idea in another province, which they did before this pull
+  request too (`templateIdsForPlace`; `e2e/place-change.spec.ts`: four links after a move to Ontario on the old
+  code, three now).
 - **Your answer to "Are you buying equipment, a vehicle or tools?" on a future picked on Pick a future is
   kept** (the maintainer's "Yes, fix both", 2026-10-20). Pick a future saves equipment as not said, since it
   never asks it. Answering in the cockpit's one-question box showed the answer for a moment, but left

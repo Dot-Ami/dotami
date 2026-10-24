@@ -209,6 +209,21 @@ test("control: road 1 in Alberta lists Alberta Student Number with its Alberta p
   expect(await panel.locator('a[href*="tradesecrets.alberta.ca"]').count()).toBeGreaterThan(0);
 });
 
+/** The rail's prep-tool references, once the structure is set. */
+const prepTools = (page: Page) => page.locator("section", { has: page.getByText("Prep-tool references", { exact: true }) });
+
+test("second review of #207: the rail's prep tools link Alberta's business-name page in Alberta, and not after a move to Ontario", async ({ page }) => {
+  const ventureId = await albertaIdea(page, { structureSource: "user" });
+  await page.goto(`/cockpit?venture=${ventureId}`);
+  await showRail(page);
+  await expect(prepTools(page).getByRole("link")).toHaveCount(4);
+  expect(await prepTools(page).locator(ALBERTA_LINKS).count()).toBe(1);
+
+  await changePlace(page, "Alberta", { code: "ON", name: "Ontario" });
+  await expect(prepTools(page).getByRole("link")).toHaveCount(3);
+  expect(await prepTools(page).locator(ALBERTA_LINKS).count()).toBe(0);
+});
+
 test("control: in Alberta, Your plan links Alberta's own pages, so the check above can see them", async ({ page }) => {
   const ventureId = await albertaIdea(page);
   await page.goto(`/plan?venture=${encodeURIComponent(ventureId)}`);

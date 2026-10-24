@@ -53,7 +53,7 @@ import { useLocalToday } from "@/lib/figures/use-local-today";
 import type { CFENodeId } from "@/lib/engines/cfe/v2026";
 import { oasisListForJob } from "@/lib/engines/oasis/v2026";
 import { forksAreTheMapToggles, roadForPlace, roadsV2026, roadsWrittenForJob, skillItemsForPlace, skillItemsV2026 } from "@/lib/engines/roads/v2026";
-import { templatesCatalogV2026 } from "@/lib/engines/templates/v2026";
+import { templateIdsForPlace } from "@/lib/engines/templates/v2026";
 import type { ExampleFuture } from "@/lib/examples";
 import { exampleStory } from "@/lib/examples/story";
 import { roadForFuture, SHIPPED_ROADS_CATALOG, ticksToSave, type SkillMarkValue, type StepStatus } from "@/lib/futures/types";
@@ -178,9 +178,6 @@ function keptAnswers(kept: KeptForIdea | null, figures: FigureView[] | null): Ke
     incomeWantedOn: kept?.incomeWanted?.agreedOn ?? null,
   };
 }
-
-/** Every prep-tool reference, once the structure is set — there are four; no persona picks them. */
-const ALL_TEMPLATE_IDS = templatesCatalogV2026.entries.map((entry) => entry.id);
 
 interface CockpitPageProps {
   /** The most recently saved venture (or the one named by `?venture=`), or null when nothing is saved. */
@@ -1234,7 +1231,9 @@ export function CockpitPage({ initialScenario, pinned = false, example }: Cockpi
                 <p className="mt-1 text-small leading-snug text-stone-dim">{words.rail.prepToolsWait}</p>
               </section>
             ) : (
-              <TemplatesRail templateIds={ALL_TEMPLATE_IDS} />
+              // Every prep-tool reference once the structure is set (no persona picks them), drawn for the idea's place:
+              // the federal ones, and its own province's.
+              <TemplatesRail templateIds={templateIdsForPlace(scenario.profile.province)} />
             )}
 
             {/* The example keeps nothing, so it has no save line: its one way on is to start your own. */}
