@@ -47,18 +47,20 @@ export function forksAreTheMapToggles(road: Pick<Road, "id">): boolean {
 }
 
 /**
- * A step's sources as a road written for all of Canada draws them for one idea (task 28d, 2026-10-21): the
- * federal pages and the idea's own province's, in the road's order, and how many it left out (other
- * provinces' pages), so the screen can say so and nothing is hidden without a word. On a road written for
- * particular provinces every source is shown: the road is that place's, whoever opens it.
+ * A step's sources as any road draws them for one idea: the federal pages and the idea's own province's, in the
+ * road's order, and how many it left out (other provinces' pages), so the screen can say so and nothing is hidden
+ * without a word. First on the road written for all of Canada (task 28d, 2026-10-21); on every road since the
+ * maintainer's call a-call-12 (2026-10-23), so a person in Alberta on road 0 no longer sees Ontario's and British
+ * Columbia's employment-standards pages under Hire first employee. `road` is kept so every screen keeps asking
+ * through this one function (the step panel, the plan, the export and Pick a future's source counts); where a road
+ * is written for no longer changes what is shown.
  */
 export function citationsForPlace(
   road: Pick<Road, "provinces">,
   citations: readonly EngineCitation[],
   place: string,
 ): { shown: EngineCitation[]; leftOut: number } {
-  const places: readonly string[] = road.provinces;
-  if (!places.includes("CA")) return { shown: [...citations], leftOut: 0 };
+  void road;
   const shown = citations.filter((citation) => citation.jurisdiction === "CA" || citation.jurisdiction === place);
   return { shown, leftOut: citations.length - shown.length };
 }

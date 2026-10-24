@@ -176,8 +176,12 @@ export interface RoadGauges {
     notPricedLines: number;
     /** Lines on steps not on the person's path. */
     leftOutLines: number;
-    /** Lines waiting on a fork with no pick yet, per fork, in road order. */
-    waitingOnForks: { forkId: string; label: string; lines: number }[];
+    /**
+     * Lines waiting on a fork with no pick yet, per fork, in road order, with the official fees among them (not
+     * the ones that apply only sometimes) and their sum: none is in the totals above, and the gauge names them so
+     * its total and Compare's for an ending add up (pre-release fix, 2026-10-23).
+     */
+    waitingOnForks: { forkId: string; label: string; lines: number; officialFeesCents: number; officialFeeLines: number }[];
     savingsCents: number | null;
     /** Savings minus (official fees + your numbers): only when there are savings and a line with an amount. */
     differenceCents: number | null;
@@ -547,11 +551,19 @@ function gauges(
     savingsCents: input.agreed.savingsCents,
     differenceCents: null,
   };
-  const waiting = new Map<string, number>();
+  const waiting = new Map<string, { lines: number; officialFeesCents: number; officialFeeLines: number }>();
   for (const step of steps) {
     if (step.money === "left-out") money.leftOutLines += step.costs.length;
     else if (step.money === "waits-on-a-pick") {
-      waiting.set(step.waitsOnForkId!, (waiting.get(step.waitsOnForkId!) ?? 0) + step.costs.length);
+      const w = waiting.get(step.waitsOnForkId!) ?? { lines: 0, officialFeesCents: 0, officialFeeLines: 0 };
+      w.lines += step.costs.length;
+      for (const line of step.costs) {
+        if (line.kind === "official-fee" && line.onlyIf === undefined) {
+          w.officialFeesCents += line.amountCents;
+          w.officialFeeLines += 1;
+        }
+      }
+      waiting.set(step.waitsOnForkId!, w);
     } else {
       for (const line of step.costs) {
         if (line.kind === "official-fee" && line.onlyIf !== undefined) {
@@ -570,9 +582,10 @@ function gauges(
       }
     }
   }
-  money.waitingOnForks = road.forks.flatMap((fork) =>
-    (waiting.get(fork.id) ?? 0) > 0 ? [{ forkId: fork.id, label: fork.label, lines: waiting.get(fork.id)! }] : [],
-  );
+  money.waitingOnForks = road.forks.flatMap((fork) => {
+    const w = waiting.get(fork.id);
+    return w && w.lines > 0 ? [{ forkId: fork.id, label: fork.label, ...w }] : [];
+  });
   // Plain arithmetic, and only on numbers that exist: savings and at least one line with an amount.
   if (money.savingsCents !== null && money.officialFeeLines + money.yourNumberLines > 0) {
     money.differenceCents = money.savingsCents - (money.officialFeesCents + money.yourNumbersCents);

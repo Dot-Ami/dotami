@@ -697,7 +697,9 @@ answer, before and after it or with and without it. Choices made while building 
   today's general road).
 - **Change and Take back.** *Change* goes to where the answer is given: the step (status, ticks, a
   quote), the Skills list (marks), *Compare* (an ending), the one-question box (the month, savings, the
-  structure, buying equipment, *I'd incorporate at*, a map pick), the intake (the idea's other answers)
+  place, the structure, buying equipment, *I'd incorporate at*, a map pick), the intake (the idea's other answers;
+  the place moved to the box on 2026-10-23, S2.5.33's bug 33a: the intake's save is always a new idea, so its
+  Change made a second idea and left the first in the old province)
   or the idea's figures on *Your ideas* (agreed business figures). *Take back* removes the answer the
   same way `withoutAnswer` does: a mark or a status through its route with *I don't know* / none; ticks
   emptied; a quote or savings retracted through `/api/figures/retract` (kept in the history as

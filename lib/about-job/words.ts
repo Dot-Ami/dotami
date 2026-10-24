@@ -45,6 +45,14 @@ export const aboutJobWords = {
     yearly: (low: string, median: string, high: string) => `Yearly · low ${low} · median ${median} · high ${high}`,
     /** Where the file leaves one figure of a row empty. */
     figureNotPublished: "not published",
+    /**
+     * Beside a row whose published levels are the same (Ontario bakers: low $17.60, median $17.60), so the
+     * repeat reads as the file's own figures and not a mistake (pre-release fix, 2026-10-23).
+     */
+    sameAsPublished: (levels: string) => `${levels} the same, as published`,
+    /** The levels' names in that line, joined "low and median", or "low, median and high". */
+    levelNames: { low: "low", median: "median", high: "high" },
+    and: "and",
     period: (period: string, method: string) => `Reference period ${period} · ${method}`,
     /** A row whose file gives no method: the period alone. */
     periodOnly: (period: string) => `Reference period ${period}`,

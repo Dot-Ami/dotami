@@ -351,7 +351,8 @@ describe("the gauges", () => {
     expect(view.money.lines).toContain("savings $12,000");
     // Official fees on the path with nothing picked: Tuition $1,500 and the exam $300 (Own shop waits on the pick).
     expect(view.money.lines).toContain("savings minus both: $10,200");
-    expect(view.money.lines).toContain("5 wait on a pick at “Ending (test only)”");
+    // Among the five, Own shop's $60 fee, named so the gauge and Compare add up (pre-release fix, 2026-10-23).
+    expect(view.money.lines).toContain("5 wait on a pick at “Ending (test only)”, 1 official fee among them ($60)");
     expect(view.date.value).toBe("May 2029");
     expect(view.date.lines).toContain("31 months from today");
   });
@@ -604,7 +605,8 @@ describe("the lever cards belong to the road step (engineHints)", () => {
         "compliance-platform-reporting-rideshare",
       ],
       "stage-2a-voluntary-gst-registration": ["grant-sred", "writeoff-cca-class-50", "compliance-gst-small-supplier"],
-      "stage-2b-mandatory-gst-registration": ["grant-cajg", "compliance-gst-small-supplier", "compliance-gst-taxi-ride-sharing"],
+      // The Canada-Alberta Job Grant came off on 2026-10-23 (the maintainer's call a-call-1).
+      "stage-2b-mandatory-gst-registration": ["compliance-gst-small-supplier", "compliance-gst-taxi-ride-sharing"],
       "stage-3a-incorporation-80k-net": ["grant-on-innovation"],
       "stage-3b-incorporation-liability-sred": ["grant-sred", "grant-irap", "writeoff-rd", "writeoff-cca-class-50"],
       "stage-4-sred-deepening": ["grant-sred", "grant-irap"],

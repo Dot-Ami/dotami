@@ -44,6 +44,7 @@ import {
   type NotToldRow,
   type ToldRow,
 } from "@/lib/cockpit/told";
+import type { PlanArgs } from "@/lib/cockpit/plan";
 import { cockpitInput, costLineNote, nextOnYourRoad, overlayCounts, type GaugeId } from "@/lib/cockpit/view";
 import { cockpitWords as words } from "@/lib/cockpit/words";
 import { aboutJobWords } from "@/lib/about-job/words";
@@ -69,7 +70,9 @@ import {
 } from "@/lib/scenarios/branches";
 import { isBranchDecided } from "@/lib/scenarios/graph";
 import { isNotSaid } from "@/lib/scenarios/not-said";
-import type { Scenario, VentureStructure } from "@/lib/scenarios/types";
+import { PROVINCE_LABELS, PROVINCES, type Province, type Scenario, type VentureStructure } from "@/lib/scenarios/types";
+import { DESTINATION_QUESTIONS } from "@/lib/front-door/questions";
+import { destinationWords } from "@/lib/front-door/words";
 import Link from "next/link";
 
 /**
@@ -348,6 +351,26 @@ export function CockpitPage({ initialScenario, pinned = false, example }: Cockpi
   // the path (the maintainer, 2026-10-13). None on today's Alberta road, whose sides the tax rules colour
   // whichever is picked, so both columns' counts would come out the same.
   const compareForks = useMemo(() => (told ? forksToCompare(told.input) : []), [told]);
+  // Export's input (pre-release fix, 2026-10-23): the road on screen as Your plan reads it, from the same kept
+  // answers and the same input without the what-if, so Export prints this road's own steps on every road.
+  const exportArgs = useMemo<PlanArgs | null>(
+    () =>
+      told
+        ? {
+            ideaName: told.input.scenario.profile.name,
+            input: told.input,
+            kept: keptAnswers(kept, figures),
+            firstWords: kept?.firstWords ?? null,
+            destination: kept?.destination ?? null,
+            incomeWanted: kept?.incomeWanted ?? null,
+            roadChosenOn: kept?.future.roadChosenOn ?? null,
+            jobPickedOn: kept?.future.job?.pickedOn ?? null,
+            where: { area: kept?.future.area ?? null, region: kept?.future.region ?? null },
+            today,
+          }
+        : null,
+    [told, kept, figures, today],
+  );
   // The example's story: what each of the example person's answers changed, from road evaluation.
   const story = useMemo(
     () => (example && told ? exampleStory(told.input, example.whatIfFirstYearSalesDollars) : null),
@@ -409,6 +432,10 @@ export function CockpitPage({ initialScenario, pinned = false, example }: Cockpi
     if (result.ok) {
       setSaveState("saved");
       setSavedAt(new Date());
+      // A new place (the place row's Change, bug 33a): what the server builds from the place (About this job's
+      // rows, the area and region read only in Alberta) is read again, so nothing on screen keeps the old one.
+      const keptPlace = kept?.future.place ?? null;
+      if (keptPlace !== null && keptPlace !== `CA-${target.profile.province}`) void reload();
       // Only when no newer edit came in meanwhile: that edit's own save brings its receipt.
       if (waiting && pendingReceipt.current === waiting) {
         pendingReceipt.current = null;
@@ -780,6 +807,20 @@ export function CockpitPage({ initialScenario, pinned = false, example }: Cockpi
       why = q.savings.why;
       control = { kind: "money" };
       save = async (cents) => done(await proposeNumber({ kind: "savings-for-start", amountCents: cents }, "told"));
+    } else if (question === "place") {
+      // S2.5.33, bug 33a: the place is changed on this idea, saved with it like the structure, in Your destination's
+      // own words. The rules and tax cards, fees, sources and the map follow at once; About this job and Your plan
+      // read the new place once the save has answered (`persist` reloads what is kept).
+      const asked = DESTINATION_QUESTIONS.find((d) => d.id === "place")!;
+      title = asked.ask;
+      why = asked.why;
+      control = {
+        kind: "select",
+        options: PROVINCES.map((code) => ({ id: code, label: PROVINCE_LABELS[code] })),
+        value: scenario.profile.province,
+        choose: destinationWords.choosePlace,
+      };
+      save = (value) => viaScenario({ ...scenario, profile: { ...scenario.profile, province: value as Province } });
     } else if (question === "structure") {
       title = q.structure.question;
       why = q.structure.why;
@@ -1485,9 +1526,9 @@ export function CockpitPage({ initialScenario, pinned = false, example }: Cockpi
                 />
               ) : null}
 
-              {rightPanel === "playbook" ? (
+              {rightPanel === "playbook" && exportArgs ? (
                 <div className="h-full overflow-y-auto border-l border-rule bg-ink3 max-lg:border-l-0">
-                  <PlaybookExportPanel scenario={scenario} roadId={road.id} ventureId={ventureId} onClose={() => setRightPanel(null)} />
+                  <PlaybookExportPanel planArgs={exportArgs} ventureId={ventureId} onClose={() => setRightPanel(null)} />
                 </div>
               ) : null}
             </div>

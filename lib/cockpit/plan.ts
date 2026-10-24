@@ -86,7 +86,7 @@ export interface PlanStep {
   /** "n cost lines, under Start-up money", or null for a step with none. */
   costCount: string | null;
   officialLinks: { label: string; url: string }[];
-  /** The step's sources for the idea's place (on a road written for all of Canada, the federal ones and its province's). */
+  /** The step's sources for the idea's place: the federal ones and its province's, on every road (a-call-12). */
   sources: PlanSource[];
   /** How many sources for other provinces the list leaves out, said in a line; null when none is left out. */
   sourcesLeftOut: string | null;
@@ -116,7 +116,8 @@ export interface PlanView {
     job: { title: string; items: { label: string; mark: string }[]; notMarked: string; attribution: string } | null;
     noJob: string | null;
   };
-  money: { sums: string[]; byStep: { step: string; note: string | null; lines: PlanCostLine[] }[]; none: string | null };
+  /** `stepId` lets the export put each step's lines under the step itself (lib/playbook/road-export.ts). */
+  money: { sums: string[]; byStep: { stepId: string; step: string; note: string | null; lines: PlanCostLine[] }[]; none: string | null };
   told: { rows: { said: string; day: string; unlocked: string[] }[]; none: string | null };
   notAdvice: string;
 }
@@ -230,7 +231,7 @@ export function buildPlan(args: PlanArgs): PlanView {
           : evaluated.money === "waits-on-a-pick" && evaluated.waitsOnForkId
             ? words.panel.costsWaiting(road.forks.find((f) => f.id === evaluated.waitsOnForkId)?.label ?? evaluated.waitsOnForkId)
             : null;
-      return [{ step: step.label, note, lines: evaluated.costs.map((line) => costLine(step.id, line)) }];
+      return [{ stepId: step.id, step: step.label, note, lines: evaluated.costs.map((line) => costLine(step.id, line)) }];
     });
 
   function costLine(stepId: string, line: CostLineAsShown): PlanCostLine {

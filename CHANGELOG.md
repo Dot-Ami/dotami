@@ -225,6 +225,68 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   British Columbia's employment-standards pages as its sources; a misspelt word in the kind of work finds the job
   only by its own name (84 of the 220 test ideas with a job); and "à Regina" in French names no province.
 ### Fixed
+- **Export is the road on screen** (pre-release fix of 2026-10-23; review 30f, gap 22). Export printed the tax
+  map's catalog stages for the idea's branch picks, whatever road was drawn: a cabinetmaker's export had 0 of
+  the apprentice road's 17 steps, and a baker's on the federal road had none of its BizPaL, bank account or
+  records steps. It is now built in the page from the same run as Your plan (`lib/playbook/road-export.ts`):
+  every step of the road on screen, with its state and the person's status, its done-when lines and their
+  sources, its cost lines (an official fee with its amount and source, the person's agreed quote, or "no amount
+  yet"), its official links and its sources for the idea's place. A road 0 step that is a tax-map stage keeps the
+  stage's catalog fields under it. Nothing is sent to DotAmi's server to build it (`tests/prerelease-numbers.spec.ts`:
+  on the old code the checker finds 17 of 17 apprentice steps missing; a step, a done-when line or a source
+  taken out of the export is caught).
+- **Compare and the Rules & tax switch count the cards one way** (gap 16). On the apprentice road Compare said
+  *Rules and tax cards: 2 apply · 0 check first* while the switch said *0 cards*: Compare counted every card the
+  rules lit, the switch only those a step on the road names. Both now count the cards the map draws
+  (`lib/cockpit/view.ts` `rulesCardsOnMap`); on that road both say none.
+- **The money gauge names the fees that wait on a fork** (gap 17). The gauge showed *$1,070 official fees (5
+  lines)* and Compare *$1,220* for each ending, with no reason. The gauge's waiting line now names them: *21
+  wait on a pick at “Stay employed or open your own shop”, 2 official fees among them ($150)*, so $1,070 + $150
+  is Compare's $1,220 (the Blue Seal fee and the $0 business number, on the steps after the fork; on a road whose
+  endings carried different fees, the line would add both sides' fees, more than any one ending).
+- **The vehicle loan-interest and lease caps are the amounts in force** (the maintainer's reading list, item
+  `writeoff-vehicle/interest-and-lease-caps`). The vehicle write-off's catalog entry said $250 and $600, the Income
+  Tax Act's own figures, which stand "or such other amount as may be prescribed" (in its eligibility text, which
+  no screen draws today: the card's panel shows its tax line and sources). It now says the amounts Income
+  Tax Regulations s.7307 prescribe, each for 30 days: $350 of interest for a car acquired after 2023 ($300 for one
+  acquired after 2000 and before 2024), and $1,100 plus sales tax for a lease entered into after 2024, with s.7307 as a new source whose words a
+  tool found on the consolidated Regulations' page on 2026-10-23 (not read by a person yet), listed with its
+  words in the card's panel.
+- **The Canada Small Business Financing Program says what ISED's page says** (items `grant-csbfp/equipment-limit`
+  and `grant-csbfp/365-days`). "Up to $500K specifically for equipment" became ISED's own words, quoted: up to
+  $1,000,000 in term loans for any one borrower, of which no more than $500,000 for leasehold improvements and
+  equipment together; security is taken on the assets financed. The line that equipment bought "within the past
+  365 days" can be rolled in is gone, from the entry and from the card's tax line on screen ("the 365-day
+  retroactive window means buying now does not forfeit the option"): none of the ISED pages DotAmi cites holds it
+  (the maintainer's own read found the rule in the program's Guidelines, s.5.1; it can come back cited to them).
+  The card's tax line, shown as its payoff, and the entry's eligibility text keep only ISED's words: what they said
+  in DotAmi's own words ("may make financing available without revenue history", "Loan interest and fees may be
+  deductible; the loan itself is not income", "under the revenue ceiling") no citation held. ISED's loans page is
+  a new source, checked by a tool on 2026-10-23 (not read by a person yet).
+- **About this job says "as published" beside two wage levels that are the same** (gap 15). Ontario bakers'
+  *low $17.60 · median $17.60* looked like a mistake; the line now ends *· low and median the same, as published*.
+- **Changing your place on a saved idea changes that idea** (S2.5.33, bug 33a; the maintainer's calls of
+  2026-10-22 and 2026-10-23). *Change* on *You told us your place is …* in the cockpit's *What you've told
+  DotAmi* opened the intake, whose save is always a new idea: the person ended with two ideas, the first still in
+  the old province. It now opens the cockpit's one-question box, asking *Which province or territory are you
+  in?* in Your destination's own words, with the thirteen provinces and territories in a drop-down, and saves the
+  answer with this idea. The rules and tax cards, the fees, the step sources and the map follow at once, and the
+  receipt says what changed ("Because you told us your place is Ontario, …"). A road written for Alberta stays
+  drawn, saying *Map drawn: … · written for AB; this idea is in ON* (call 35). Once the place isn't Alberta, the
+  area and region picked in Alberta are shown nowhere (About this job, Your plan), though the idea keeps them for
+  a later history of places (a-call-9); About this job is read again after the save. The idea count stays 1
+  (`e2e/place-change.spec.ts`: on the old code the box never opened, the Change went to the intake;
+  `tests/places-and-programs.spec.ts`: on the old code a moved idea's plan still said *Your area: Calgary*). The
+  other answers the intake asks (the kind of venture, work situation, kinds of work, sales, hire-first) still
+  open the intake; see the pull request's questions.
+- **Every road shows a step's sources for your own place** (the maintainer's call a-call-12). On road 0 in
+  Alberta, *Hire first employee* listed Ontario's and British Columbia's employment-standards pages as its
+  sources: a road written for particular provinces showed every source. Every road now shows the federal pages
+  and the person's own province's, with the existing line *"N sources for other provinces aren't shown."*, in the
+  step panel, Your plan, the Export and Pick a future's source counts (`lib/engines/roads/v2026/index.ts`
+  `citationsForPlace`). *Hire first employee* now cites Alberta's own *Employment standards* page, checked by a
+  tool on 2026-10-23 and labelled so until a person reads it (it is on the reading list in
+  docs/engines/citations.md). The province swap's `PLACE_GAPS` list is empty: the test passes with no known gap.
 - **Your answer to "Are you buying equipment, a vehicle or tools?" on a future picked on Pick a future is
   kept** (the maintainer's "Yes, fix both", 2026-10-20). Pick a future saves equipment as not said, since it
   never asks it. Answering in the cockpit's one-question box showed the answer for a moment, but left
@@ -274,6 +336,13 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   written for the job listed after another on step 3 was counted among the ideas but on neither way in.
 
 ### Changed
+- **Two ended programs are off** (the maintainer's call a-call-1, before release 0.5.0). The *Alberta Investor
+  Tax Credit* (its page answers page not found) and the *Canada-Alberta Job Grant* (its page now opens the
+  Canada-Alberta Productivity Grant) are gone from the programs catalog and from every screen. The Job Grant
+  showed on road 0's map panels as a near-miss saying it "requires incorporation (CCPC)", which its page never
+  said; each panel's *Elsewhere on your map* count is one lower. The reason and the day each page was read are
+  kept (`RETIRED_GRANT_PROGRAMS`, docs/engines/grants.md *Retired programs*). The Productivity Grant is added
+  only after the maintainer reads its amounts.
 - **About this job in place for a job with no road, your region's Change, and the batch 4 calls** (tasks 28c and
   28h, the maintainer's calls of 2026-10-22). On Pick a future and at the end of the typed way, a job with no road
   written for it now shows *About this job*'s four rows right inside step 3, opened by "Here is what the government

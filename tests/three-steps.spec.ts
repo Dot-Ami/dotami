@@ -294,8 +294,9 @@ describe("the steps as drawn", () => {
     const shown = roadFederalStepsCA.steps.reduce((n, step) => n + citationsForPlace(roadFederalStepsCA, step.citations, "ON").shown.length, 0);
     const all = roadFederalStepsCA.steps.reduce((n, step) => n + step.citations.length, 0);
     expect(total(federalFor(null)) - total(federalFor("ON"))).toBe(all - shown);
-    // A road written for particular provinces shows every source, so its count is the same with or without a place.
-    expect(futureCards([generalRoadV2026], skillItemsV2026, "ON")[0]!.sources).toEqual(futureCards([generalRoadV2026], skillItemsV2026)[0]!.sources);
+    // Every road counts the place's pages only since 2026-10-23 (a-call-12): road 0 in Alberta counts fewer than all.
+    const road0 = (place: "AB" | null) => total(futureCards([generalRoadV2026], skillItemsV2026, place)[0]!.sources);
+    expect(road0("AB")).toBeLessThan(road0(null));
     // As drawn: the federal card on Pick a future in Ontario carries the place's count.
     const html = draw("futures", skipped(), "CA-ON");
     for (const part of sourcesLine(federalFor("ON"))) expect(html).toContain(esc(part.text));

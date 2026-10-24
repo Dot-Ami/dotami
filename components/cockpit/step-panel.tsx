@@ -92,8 +92,8 @@ export function StepPanel(props: StepPanelProps) {
   const items = itemsForStep(rules.unlocks, step);
   const node = cfeCatalogV2026.nodes.find((n) => n.id === step.id);
   const sections = <StepSections {...props} />;
-  // On a road written for all of Canada, the step's sources for the idea's own place, and a line saying how
-  // many other provinces' pages were left out (task 28d); on any other road, every source.
+  // The step's sources for the idea's own place, and a line saying how many other provinces' pages were left
+  // out (task 28d; on every road since the maintainer's call a-call-12, 2026-10-23).
   const sources = citationsForPlace(props.road, step.citations, province);
   const sourcesNote = sources.leftOut > 0 ? words.panel.sourcesOtherProvinces(sources.leftOut) : null;
 

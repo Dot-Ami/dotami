@@ -372,7 +372,7 @@ describe("the four gauges are counts and sums", () => {
       yourNumberLines: 0,
       notPricedLines: 1,
       leftOutLines: 0,
-      waitingOnForks: [{ forkId: "fork-eval-ending", label: "Ending (test only)", lines: 5 }],
+      waitingOnForks: [{ forkId: "fork-eval-ending", label: "Ending (test only)", lines: 5, officialFeesCents: 6_000, officialFeeLines: 1 }],
       savingsCents: null,
       differenceCents: null,
     });
