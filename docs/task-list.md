@@ -984,6 +984,34 @@ roadmap's build order.
     ("Read by a person on …" only when a person is recorded as the reader, "Read on …" otherwise, or
     "Checked by a tool on …"); `node scripts/check-quotes.mjs` checks the quotes on the live page · [docs/engines/citations.md](engines/citations.md)
   - [ ] A model proposes the quotes for a source (not built)
+  - [x] The maintainer's reading list of 2026-10-23, its first 30 entries: 23 corrected on 2026-10-24, each
+    only as far as a quote goes (the other seven are #207's and #208's); two entries retired, ids kept
+    (`compliance-food-premises-on`, `risk-hobby-reclassification`); the Canada-Alberta Productivity Grant
+    added as `grant-capg` ([docs/engines/citations.md](engines/citations.md), § The reading list's corrections;
+    `tests/reading-list-corrections.spec.ts`, `tests/retired-entries.spec.ts`, `tests/productivity-grant.spec.ts`)
+  - [ ] His reads of that list: he sends the list with his saved reads, then only the citations he checked get
+    `lastVerified` and `readBy: "person"` (his answers of 2026-10-24); no source says "Read by a person" for
+    them until then
+  - [ ] A networked `node scripts/check-quotes.mjs` run finds again every quote the reading list's matcher found
+    on 2026-10-23 (rule 4 of citations.md), before that change merges
+  - [ ] Blocked until an official page's own words are found and checked (citations.md, § The reading list's
+    corrections, *Blocked*):
+    - [ ] Alberta has no PST and GST is 5% (`compliance-ab-no-pst`): the CRA's table isn't in its page's HTML;
+      Alberta's *About Tax and Revenue Administration* is an unchecked candidate for the first half. The
+      card's line is DotAmi's wording of the table's row until then
+    - [ ] Ontario's 13% HST (`compliance-on-hst`): the same table
+    - [ ] Ontario food premises: the regulation in force, read and quoted, under a new id
+    - [ ] Repeated losses: a CRA, Act or folio page on business versus personal pursuits, with its words
+    - [ ] SR&ED for a sole proprietor: whether, and how much of, the 15% credit is refunded
+    - [ ] SR&ED's $6 million: the tax years it applies from, and the sentence of s.127(10.2) that leads into
+      its formula
+    - [ ] *SR&ED deepening*'s 35% from the SR&ED glossary, as the maintainer asked (it quotes the CRA's
+      relationships page until then)
+    - [ ] Home office: the CRA page's sentence on working out the business part (floor area as one basis)
+    - [ ] The titles the CRA's SR&ED rates page and ISED's loans page give themselves (each citation describes
+      its page)
+    - [ ] The Productivity Grant's other conditions for employers, whether a sole proprietor counts, what
+      training counts, who else funds it, and the page's labels before its 25% and 75% lines
 - ⬜ **[11c] Flag stale sources automatically** — with #37
   - [ ] Kept open on purpose (the maintainer, 2026-10-14), so a person decides later:
     - [ ] *Alberta Investor Tax Credit* (`grant-abti`, `lib/engines/grants/v2026/programs.ts`): its

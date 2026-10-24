@@ -1,7 +1,8 @@
 # How a source was checked: read, or checked by a tool
 
 Last updated: 2026-10-24 (the reading list's tool checks of 2026-10-23, § The reading list's tool
-checks; 2026-10-13: pages that moved, § When a cited page moves; 2026-10-12: the first tool
+checks, and the corrections they back, with what is still blocked, § The reading list's corrections;
+2026-10-13: pages that moved, § When a cited page moves; 2026-10-12: the first tool
 checks in the catalogs: the honest map's six pages, § Tool checks in the catalogs; 2026-10-11: the
 maintainer's decision; same day, after review: a card says "Read by a person" only when the catalog
 records that a person did the reading)
@@ -296,6 +297,80 @@ never recorded as the rate (docs/engines/compliance.md, § From the maintainer's
 The $6 million applies to tax years beginning on or after 2024-12-16. No held quote carries that
 date, so it is kept here and in a comment on the CCPC rate only: no screen says it, and no field holds
 it (the maintainer's answer of 2026-10-24).
+
+## The reading list's corrections (2026-10-24)
+
+The maintainer's reading list of 2026-10-23 checked 30 entries, and his answers of 2026-10-24 decided
+what changed. 23 of them are below. The other seven belong to other changes: the Canada-Alberta Job
+Grant and the Alberta Investor Tax Credit (`grant-cajg`, `grant-abti`, three items) and Alberta's
+employment-standards page on *Hire first employee* (one item) to #207; the loan program's equipment
+limit and its 365-day line (`grant-csbfp`, two items) and the vehicle's interest and lease caps
+(`writeoff-vehicle`, one item) to #208. The 365-day line stays out (his answer 5).
+
+Three rules from his answers hold for every row:
+
+- **No read of his is recorded yet.** He will send the reading list with his saved reads, and a later
+  change gives `lastVerified` and `readBy: "person"` to the citations he checked, and to no other
+  citation of the same pages (his answers 1 and 2). Until then each source below says what it said
+  before, or "Checked by a tool" in amber where a tool check is all it has.
+- **A correction stands on a quote, never on his note alone.** The quote is one a citation already
+  held, or one the list's matcher found on the live page on 2026-10-23, kept as a tool check of that
+  day (§ The reading list's tool checks). Where no quote says it, the entry says only what is quoted, or
+  nothing, and the gap is listed under *Blocked* below.
+- **An entry with nothing sourced left to say comes off,** and its id is kept with the reason in its
+  catalog's retired list and never used for anything else (IDs are forever).
+
+| Entry | Reading-list item(s) | What changed | The evidence |
+|---|---|---|---|
+| *SR&ED tax incentives* (`grant-sred`) | `grant-sred/estimatedValue`, `grant-sred/rate-unincorporated`, `grant-sred/rate-ccpc`, `sred-expenditure-limit-6-million` | A sole proprietor's card no longer calls the 15% credit non-refundable; it quotes the basic rate and that some businesses may also earn a refundable credit. The CCPC's note quotes the enhanced 35% up to the expenditure limit, and the $6 million limit, where it said "confirm the current limit with an advisor". The range "15–35%" (on no screen) is unchanged. | Four new sources, tool checks of 2026-10-23: the CRA's rates page, its relationships page, *What's new for corporations*, and s.127(10.2)'s formula ([grants.md](grants.md)) |
+| *Ontario HST (13%)* (`compliance-on-hst`) | `compliance-on-hst` | Unchanged. | None held: the rate table isn't in the page's HTML, and the one 13% sentence found is a worked example (*Blocked*) |
+| *Alberta — no provincial sales tax* (`compliance-ab-no-pst`) | `compliance-ab-no-pst` | "… simplifying provincial sales tax compliance" is gone. The line says "The CRA's table of GST/HST rates lists Alberta at 5% GST, with no provincial sales tax.", which is still DotAmi's wording of a table row, and the catalog says so beside it. | None held, for the same reason (*Blocked*) |
+| *BC Provincial Sales Tax (PST)* (`compliance-bc-pst`) | `compliance-bc-pst` | Unchanged. | No quote is held from its page |
+| *Ontario food premises licensing* (`compliance-food-premises-on`) | `compliance-food-premises-on` | Retired: it cited a revoked regulation and said more than it ([compliance.md](compliance.md), § Retired rules). | A retirement claims nothing: the reading list notes the cited regulation is revoked, and the one in force hasn't been read (*Blocked*) |
+| The Delete menu's records line (`cra-business-records-retention`) | `cra-business-records-retention` | The line is unchanged (it already said "generally"); its citation also keeps the CRA's two sentences. Four design-doc lines that gave the six years without "generally" now give it. | Tool check of 2026-10-23; the read of 2026-10-08 still wins on screen |
+| Home office read (`risk-home-office-percentage`) | `risk-home-office-percentage` | DotAmi's own words on floor area and exclusive use are gone; the box quotes the CRA's two conditions and the limit to the business's net income. | The four quotes the home office write-off's citation of the page holds (tool check of 2026-10-13) |
+| First-year deduction read (`risk-immediate-expensing-timing`) | `risk-immediate-expensing-timing` | "Getting the year wrong misstates income and unwinds on review" and "keep purchase and deployment records" are gone; the rest stays. | The guide's sentence on the dates, tool check of 2026-10-23, on no screen (it ends on a colon) |
+| Repeated-losses read (`risk-hobby-reclassification`) | `risk-hobby-reclassification` | Retired: its one page supports none of it ([risk-calculator.md](../brain/risk-calculator.md), § Retired risk reads). | No held quote from a page that does (*Blocked*) |
+| Anti-avoidance read (`risk-ladder-skipping`) | `risk-ladder-skipping` | DotAmi's advice ("professional advice tied to a genuine business purpose, documented at the time") is gone; the box lists s.245's own phrases, joined by nothing of DotAmi's, and the Holding company and Family trust cards list s.245 as a source. | The four phrases docs/glossary.md holds (tool check of 2026-10-12) |
+| Loan program read (`risk-self-declared-valuation`) | `risk-self-declared-valuation` | Kept (his answer 3), saying only ISED's rule on security; "the lesser of purchase price or appraised value" is gone. It cites ISED's loans page in place of the program's hub. | “For real property and equipment, security must be taken on the assets financed.”, tool check of 2026-10-23 |
+| *Sole Prop activation* (`stage-1-sole-prop-activation`) | `stage-1-sole-prop-activation/projection-30000` | "Track gross revenue against" the two tests is gone; the note quotes what the CRA says a sole proprietor counts and what is left out, and points to *Mandatory GST registration* for the tests. | A new source, *When to register for and start charging the GST/HST*, with the tool check of 2026-10-12 those words already had |
+| *Incorporating* (`stage-3a-incorporation-80k-net`) | `stage-3a-incorporation-80k-net/sbd-limit` | The business limit's "$500,000", which read as automatic, is "Up to $500,000", on the T2 guide's words: CCPCs “may be able to claim” the deduction. | Tool check of 2026-10-23 on the T2 guide's citation; its read of 2026-05-01 still wins on screen |
+| *Incorporation for liability/SR&ED* (`stage-3b-incorporation-liability-sred`) | `stage-3b-incorporation-liability-sred/35` | The 35% quotes the CRA: some CCPCs, up to their expenditure limit for the year. | Tool check of 2026-10-23 on the relationships page's citation; its read of 2026-05-01 still wins on screen |
+| *SR&ED deepening* (`stage-4-sred-deepening`) | `stage-4-sred-deepening/35` | The 35% quotes the same CRA line (his answer 4); "subject to taxable income limits" is gone from its tax impact. | The relationships page as a third source, tool check of 2026-10-23 only |
+| *Hire first employee* (`branch-hire-first-employee`) | `branch-hire-first-employee/payroll-timing` | "Before first remittance due date" is “before the first remittance due date”, on the CRA's two sentences. | Tool check of 2026-10-23 on the payroll page's citation; its read of 2026-05-01 still wins on screen |
+| *Canada-Alberta Productivity Grant* (`grant-capg`) | `capg-75-percent`, `capg-5000-per-trainee`, `capg-100000-per-employer`, `capg-operational-one-year` | Added (his call a-call-1), saying only the page's words, in curly quote marks; the one-year rule is kept in `eligibility`, which no screen draws ([grants.md](grants.md)). | Four quotes, tool check of 2026-10-23 |
+
+### Blocked: what each needs
+
+Each needs an official page's own words, found by `node scripts/check-quotes.mjs` on a networked
+machine, before DotAmi says more than it does now. They are listed in [task-list.md](../task-list.md)
+[11b] too.
+
+1. **Alberta, no PST and GST at 5%.** A page whose HTML says it. Alberta's *About Tax and Revenue
+   Administration* ("Alberta has no sales tax.", [S17] in
+   [other-ways-to-build.md](../architecture/other-ways-to-build.md)) is a candidate no tool has checked,
+   and it says nothing of the 5%. Or the maintainer's ruling on how a row of a table is recorded.
+2. **Ontario's 13% HST.** The same table.
+3. **Ontario food premises.** The regulation in force, read, and what it requires, quoted, under a new
+   id.
+4. **Repeated losses.** A CRA, Act or folio page on business versus personal pursuits, with its words.
+5. **SR&ED for an individual.** Whether, and how much of, a sole proprietor's 15% credit is refunded:
+   no held quote says, so the card says neither.
+6. **SR&ED's $6 million.** The tax years it applies from (beginning on or after 2024-12-16) are in no
+   held quote, and only the formula of s.127(10.2) is held, not the sentence that leads into it.
+7. **SR&ED deepening's 35% from the SR&ED glossary**, the line the maintainer asked for. No tool has
+   found it; until one does, the stage quotes the relationships page.
+8. **Home office: how to work out the business part.** The CRA page's sentence on it (floor area as
+   one reasonable basis) isn't held, so the box says nothing about it.
+9. **Two pages' own titles:** the CRA's SR&ED rates page and ISED's loans page. Neither is held, so
+   each citation describes its page.
+10. **The Productivity Grant's other conditions:** its other requirements for employers (the list
+    summarises active legal entity status, good standing, WCB coverage for trainees and complying with
+    provincial agreements, without quotes), whether a sole proprietor counts as an employer, what
+    training counts, who else funds it, and the page's subject labels before the 25% and 75% lines.
+11. **Every tool check of 2026-10-23.** The list's matcher found these words, not a run of the
+    script, so a networked `node scripts/check-quotes.mjs` run (no arguments) must find each again
+    before merge (rule 4).
 
 ## How this relates to the other checks
 

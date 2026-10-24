@@ -31,6 +31,28 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   agree confirmed the figure), `tests/launch-secret.spec.ts`, and a desktop test in `e2e-desktop/desktop.spec.ts`.
 
 ### Added
+- **The Canada-Alberta Productivity Grant, for ideas in Alberta** (the maintainer's call a-call-1 on his reading
+  list of 2026-10-23: "ADD it"). The program whose page the Canada-Alberta Job Grant's old address now opens is in
+  the programs catalog under its own id, `grant-capg`; the Job Grant's id is never reused. Its card says only what
+  Alberta's page says, in quote marks: the employer “Must contribute 25% of the total eligible training costs …”,
+  the program “Contributes the other 75% of the cost to a maximum of $5,000 per employed trainee per fiscal year”,
+  and “An employer is eligible for up to a maximum amount of $100,000 per fiscal year”. Outside the quotes it says
+  only "If training employees is on the venture's path" and the page's name. The page's rule that an employer "be
+  operational in Alberta for at least one year" is kept in the entry, quoted, and not drawn on the card. Its source
+  says "Checked by a tool on 2026-10-23" in amber, with the four quotes the reading list's matcher found on the
+  page that day (a networked `node scripts/check-quotes.mjs` run should find them again); no read of the page is
+  recorded yet. It shows for every idea in Alberta, at every structure and kind of work (the page's words DotAmi
+  holds name neither), as a grant to check first, never as needing incorporation, and its reason says only "Shown
+  because you selected Alberta." (a provincial program that lists no kind of work no longer says "your venture
+  activity match this program", `lib/brain/evaluate.ts` `evaluateGrant`). Road 0's *Hire first employee* names it,
+  so for an idea that hires first the map draws it under that card; road 0's other panels list it under
+  *Elsewhere on your map*. It is not on the apprentice road, which draws no rules and tax cards, and not outside
+  Alberta. What the page asks of employers beyond that, whether a sole proprietor counts, and who else funds it
+  aren't in the words DotAmi holds, so the card says none of them ([docs/engines/grants.md](docs/engines/grants.md)).
+  Tests: `tests/productivity-grant.spec.ts` (on the old code there was no such entry), `tests/road-map.spec.ts`
+  (the one card the map gained), `tests/cockpit-screen.spec.ts`; road 0's 11 panels in
+  `tests/fixtures/official-fees/panels-before.json` are redrawn for it, and for five map stages' corrections
+  (*Fixed*), and no other panel changes.
 - **About this job** ([14i], task 25h; [docs/ui-spec/cockpit/about-this-job.md](docs/ui-spec/cockpit/about-this-job.md)).
   Once you've picked the job closest to your work, the goal bar's *Look closer* menu has *About this job*, which
   opens in the right-hand panel (on a phone, a sheet over the road). Four rows, always in this order: the
@@ -272,6 +294,25 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   answer does; the app was not changed.
 - **The quality report counts step 3's own silent fallbacks on their way in** (tests and report only). A road
   written for the job listed after another on step 3 was counted among the ideas but on neither way in.
+- **The SR&ED card says what the CRA says about its rates** (the maintainer's reading list of 2026-10-23). For a
+  sole proprietor it said the credit "may be worth 15% (non-refundable)", with "Unincorporated claimants earn the
+  basic 15% non-refundable ITC." (with the GST/HST, "GST registration does not change the SR&ED rate —
+  incorporation does."). The reading list notes that an individual can get part of the credit refunded, and no
+  held quote says how much, so the card now says neither and quotes the CRA: “Your business may earn the credit at
+  a basic rate of 15%.” “Some businesses may also earn a refundable ITC.” The CCPC side, on a corporation's card
+  and in a sole proprietor's *Incorporating (CCPC) changes this*, said "up to the expenditure limit — confirm the
+  current limit with an advisor" and gave no limit. It now quotes the CRA's “Some CCPCs may earn an ITC at an
+  enhanced rate of 35% on qualified SR&ED expenditures up to their expenditure limit for the year.” and its *What's
+  new for corporations*: “The expenditure limit on which the SR&ED enhanced 35% tax credit can be earned is
+  increased from the previously announced $4.5 million to $6 million.” The tax years the $6 million applies from
+  are in no held quote, so no screen says them. The entry's eligibility, which no card draws, says the enhanced
+  rate is for some CCPCs, up to their expenditure limit, where it said "subject to taxable income and capital
+  limits". The card gains four sources, each a tool check of 2026-10-23 holding the words the reading list's
+  matcher found there that day, so each says "Checked by a tool" in amber (a networked `node
+  scripts/check-quotes.mjs` run should find them again): the CRA's page on the credit's rates, its *How certain
+  relationships affect the small business deduction and SR&ED investment tax credits*, *What's new for
+  corporations*, and Income Tax Act s.127(10.2), its formula only. Tests: `tests/reading-list-corrections.spec.ts`
+  §§ 2 and 3, `tests/brain-evaluate.spec.ts` (the golden scenario's sole proprietor card said "non-refundable").
 - **The Alberta sales tax card says only what the CRA's table lists for Alberta** (the maintainer's reading list
   of 2026-10-23). *Alberta — no provincial sales tax* said "If operating only in Alberta, GST (not HST) applies —
   simplifying provincial sales tax compliance": "simplifying" is a judgement no cited page makes, and the CRA's

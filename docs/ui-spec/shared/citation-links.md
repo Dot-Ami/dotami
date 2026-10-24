@@ -1,7 +1,8 @@
 # A source's line: how it was checked
 
 Last updated: 2026-10-24 (the Delete menu's record-keeping line: its citation also keeps a tool check,
-which its read outranks, so the line doesn't change; 2026-10-12: § Today: the honest map's six pages now
+which its read outranks, so the line doesn't change; § Today: the reading list's new sources say "Checked
+by a tool"; 2026-10-12: § Today: the honest map's six pages now
 carry a tool check; before that,
 2026-10-11: read or checked by a tool, the maintainer's decision of 2026-10-11, option B; same day,
 after review: "Read by a person" only when a person is recorded as the reader;
@@ -98,7 +99,12 @@ rung; until 2026-10-12 it said "Read by an AI model on 2026-10-06"), and the fiv
 two ways to incorporate: Corporations Canada's "Services, fees and processing times" and "Register a
 federal corporation in a province or territory", and Alberta's "Incorporate an Alberta
 corporation", "Find a business registry" and "Annual returns for corporations, cooperatives and
-organizations" (docs/engines/citations.md, § Tool checks in the catalogs). Every other source says
+organizations" (docs/engines/citations.md, § Tool checks in the catalogs). The pages that moved after
+that say "Checked by a tool" too (§ When a cited page moves there). Since 2026-10-24 (the maintainer's
+reading list of 2026-10-23) so do the sources it added: the SR&ED card's four new pages, the
+Canada-Alberta Productivity Grant's page and *SR&ED deepening*'s third source ("Checked by a tool on
+2026-10-23"), and *Sole Prop activation*'s third ("on 2026-10-12", the check its words already had;
+§ The reading list's tool checks there). A source with a read and no record of who did it says
 "Read on <date>. Who read it wasn't recorded." No citation is read by an AI model any more.
 `e2e/app.spec.ts` ("every source says how it was checked") checks a stage's sources, the playbook
 export and the readout in the browser.
