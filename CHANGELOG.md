@@ -263,7 +263,10 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   skill items, all resting on Alberta's pages (*Alberta Student Number* listed four tradesecrets.alberta.ca pages
   in Ontario), are left out of a step's list for another province, their pages counted in the same line, and a
   listed item's sources are drawn for the place too (`skillItemsForPlace`); a skill selected on the map that the
-  new place leaves out no longer dims the whole map (`linkedSkill`).
+  new place leaves out no longer dims the whole map (`linkedSkill`). A section left empty by the place says so
+  (*This step's “done when” lines rest on other provinces' pages, so none is shown for your place.*), in the step
+  panel, the Skills list, the Skills gauge and Your plan, where it said none is written yet (road 1 from Ontario:
+  13 of its 17 steps).
 - **Your answer to "Are you buying equipment, a vehicle or tools?" on a future picked on Pick a future is
   kept** (the maintainer's "Yes, fix both", 2026-10-20). Pick a future saves equipment as not said, since it
   never asks it. Answering in the cockpit's one-question box showed the answer for a moment, but left

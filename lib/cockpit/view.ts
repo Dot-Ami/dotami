@@ -1,7 +1,7 @@
 import { itemsForStep } from "@/lib/brain/node-items";
 import type { ConfirmedFigure } from "@/lib/brain/types";
 import type { JobList } from "@/lib/engines/oasis/v2026";
-import { forksAreTheMapToggles, roadForPlace, type Road, type SkillItem } from "@/lib/engines/roads/v2026";
+import { forksAreTheMapToggles, roadForPlace, type Road, type RoadStep, type SkillItem } from "@/lib/engines/roads/v2026";
 import { formatMoney } from "@/lib/format/money-and-months";
 import { BUSINESS_TOTAL_KINDS, COST_LINE_AMOUNT_FROM_LABELS, type FigureView } from "@/lib/figures/types";
 import type { PersonFigureView } from "@/lib/futures/person-figures";
@@ -118,6 +118,28 @@ export function cockpitInput(args: {
  */
 export function linkedSkill(road: Pick<Road, "steps">, selected: string | null): string | null {
   return selected !== null && road.steps.some((step) => step.needs.includes(selected)) ? selected : null;
+}
+
+/**
+ * The line a step's section shows with nothing drawn in it (second review of #207): that its lines rest on other
+ * provinces' pages, when the road drawn for the idea's place left them all out (`leftOutForPlace`), else that none
+ * is written yet. The step panel and Your plan ask here, so the two can't say different things.
+ */
+export function emptySectionLine(step: Pick<RoadStep, "leftOutForPlace">, section: "doneWhen" | "skills" | "costs"): string {
+  const left = step.leftOutForPlace;
+  if (section === "doneWhen") return left?.doneWhenIds.length ? words.panel.doneWhenNoneForPlace : words.panel.doneWhenNone;
+  if (section === "skills") return left?.needs.length ? words.panel.skillsNoneForPlace : words.panel.skillsNone;
+  return left?.costs.length ? words.panel.costsNoneForPlace : words.panel.costsNone;
+}
+
+/**
+ * A road listing no skills: none written yet, or every one left out for the idea's place (`roadForPlace`). For the
+ * Skills list (`list`), and the Skills gauge in the goal bar and on Your plan (`gauge`).
+ */
+export function roadSkillsNone(road: Pick<Road, "steps">): { list: string; gauge: string } {
+  return road.steps.some((step) => step.leftOutForPlace?.needs.length)
+    ? { list: words.lists.skillsNoneForPlace, gauge: words.gauges.skills.noneListedForPlace }
+    : { list: words.lists.skillsNone, gauge: words.gauges.skills.noneListed };
 }
 
 /**
@@ -257,7 +279,7 @@ export function gaugeView(evaluation: RoadEvaluation, road: Road, scenario: Scen
   ];
   const skills: GaugeLines =
     s.listed === 0
-      ? { value: words.gauges.skills.noneListed, lines: ownLine, invite: ownLine.length === 0 ? words.gauges.skills.addOwn : null }
+      ? { value: roadSkillsNone(road).gauge, lines: ownLine, invite: ownLine.length === 0 ? words.gauges.skills.addOwn : null }
       : {
           value: words.gauges.skills.value(s.have, s.learning, s.notYet),
           lines: [words.gauges.skills.notMarked(s.notMarked, s.listed), ...ownLine],

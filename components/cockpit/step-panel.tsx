@@ -12,6 +12,7 @@ import { CitationLinks } from "@/components/shared/citation-links";
 import { Pill } from "@/components/ui";
 import { itemsForStep } from "@/lib/brain/node-items";
 import type { EvaluationResult } from "@/lib/brain/types";
+import { emptySectionLine } from "@/lib/cockpit/view";
 import { cockpitWords as words } from "@/lib/cockpit/words";
 import { cfeCatalogV2026 } from "@/lib/engines/cfe/v2026";
 import { stepSourcesForPlace, type Road, type RoadStep, type SkillItem } from "@/lib/engines/roads/v2026";
@@ -346,7 +347,7 @@ function StepSections({
       <div>
         <h3 className={heading}>{words.panel.doneWhen}</h3>
         {step.doneWhen.length === 0 ? (
-          <p className="text-body text-stone">{words.panel.doneWhenNone}</p>
+          <p className="text-body text-stone">{emptySectionLine(step, "doneWhen")}</p>
         ) : (
           <>
             <p className="mb-1.5 font-mono text-small text-stone">{words.panel.doneWhenTicked(evaluation.doneWhen.ticked, evaluation.doneWhen.total)}</p>
@@ -383,7 +384,7 @@ function StepSections({
       <div>
         <h3 className={heading}>{words.panel.skills}</h3>
         {step.needs.length === 0 ? (
-          <p className="text-body text-stone">{words.panel.skillsNone}</p>
+          <p className="text-body text-stone">{emptySectionLine(step, "skills")}</p>
         ) : (
           <ul className="space-y-2">
             {step.needs.map((id) => {
@@ -418,7 +419,7 @@ function StepSections({
       <div>
         <h3 className={heading}>{words.panel.costs}</h3>
         {evaluation.costs.length === 0 ? (
-          <p className="text-body text-stone">{words.panel.costsNone}</p>
+          <p className="text-body text-stone">{emptySectionLine(step, "costs")}</p>
         ) : (
           <>
             {evaluation.money === "left-out" ? <p className="mb-1.5 text-body text-stone">{words.panel.costsLeftOut}</p> : null}

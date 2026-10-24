@@ -188,7 +188,9 @@ Every string in the words block was run through `VERDICT_WORDS`, `findVerdicts` 
   *Take back*, from Ontario never removes it, and moving back shows it again. The same review left out a skill
   item none of whose sources is federal or the place's own (road 1's three Alberta items, seen from another
   province), its pages counted in the step's line, and drew each listed item's sources for the place
-  (`skillItemsForPlace`). Steps are not removed: an Alberta idea moved to Ontario keeps *Register your business
+  (`skillItemsForPlace`); a section left empty by the place says so, where it said none is written yet (*This
+  step's “done when” lines rest on other provinces' pages, so none is shown for your place.*; road 1 from Ontario
+  shows it on 13 of its 17 steps). Steps are not removed: an Alberta idea moved to Ontario keeps *Register your business
   name, if you use one*, with its summary as written, no *done when* lines and the count.
 - **Pick a future:** step 3 of the three steps (`components/front-door/job-and-road-steps.tsx` `RoadStep`, on
   Pick a future and at the end of the intake): the federal card under *Written for all of Canada*, then the

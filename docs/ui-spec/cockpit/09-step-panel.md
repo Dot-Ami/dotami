@@ -41,13 +41,16 @@ The sections, in order:
    shows the reason above, so a box never stays ticked over a refusal. The count is what is kept. Empty:
    *No “done when” lines are written for this step yet.* Only the lines drawn for the idea's place are listed
    (`roadForPlace`); a tick on a line it leaves out is kept whatever list a save sends, and shows again where
-   the line is drawn (second review of #207, 2026-10-24).
+   the line is drawn (second review of #207, 2026-10-24). Empty because the place left every line out: *This
+   step's “done when” lines rest on other provinces' pages, so none is shown for your place.* (`emptySectionLine`
+   in `lib/cockpit/view.ts`, which Your plan asks too).
 5. **Skills it needs** — each skill item the step lists: its name (a button that selects it and dims the
    steps that don't list it), its kind (*legal requirement* or *listed skill*), **Have**, **Learning**,
    **Not yet** (`aria-pressed`) and **I don't know** (removes the mark; off when there is none), and the
    item's own sources through `CitationLinks`, mark or no mark. A legal requirement marked have reads
    *you said you hold this*; one marked not yet shows *The official way to get it:* with its cited route.
-   Empty: *No skills are listed for this step yet.* Under the step's own items (2026-10-12), one line about
+   Empty: *No skills are listed for this step yet.*, or, where the place left every item out, *The skills this
+   step lists rest on other provinces' pages, so none is shown for your place.* (2026-10-24). Under the step's own items (2026-10-12), one line about
    the government's list for the person's pick of job, which belongs to the job, never to a step: with a job
    picked, *Your pick of job, “Cabinetmakers”: 44 on the government's list, 1 marked. The list is for the
    job, not for this step.* and **Open the list**; with none, *Pick the job closest to your work to see the
@@ -68,7 +71,9 @@ The sections, in order:
    **Change your number**; or a named line with *not priced yet* and **Add your quote**. A named line whose
    name has a source (a blank template) shows that citation too. Above them, *Not
    counted in the sums: this step is not on your path.* or *Not counted yet: it waits on a pick at “…”.*
-   when road evaluation leaves them out. Empty: *No cost lines are written for this step yet.*
+   when road evaluation leaves them out. Empty: *No cost lines are written for this step yet.*, or, where the
+   place left every line out, *This step's cost lines rest on other provinces' pages, so none is shown for your
+   place.* (2026-10-24).
 7. **Official pages you open yourself** — the step's own links (a registry, BizPaL), each opening in a new
    tab. Drawn only when the step has any; no shipped step has one yet.
 

@@ -24,7 +24,8 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { aboutJobForFuture } from "@/lib/about-job/view";
 import { buildPlan } from "@/lib/cockpit/plan";
 import { toldRows } from "@/lib/cockpit/told";
-import { cockpitInput, linkedSkill } from "@/lib/cockpit/view";
+import { cockpitInput, emptySectionLine, linkedSkill, roadSkillsNone } from "@/lib/cockpit/view";
+import { cockpitWords } from "@/lib/cockpit/words";
 import { createDatabaseClient } from "@/lib/db/client";
 import { ensureVentureFromScenario } from "@/lib/db/ensure-venture-from-scenario";
 import { parseFirstSave } from "@/lib/db/parse-scenario-input";
@@ -40,6 +41,7 @@ import {
   skillItemsForPlace,
   skillItemsV2026,
   stepSourcesForPlace,
+  type RoadStep,
   type SkillItem,
 } from "@/lib/engines/roads/v2026";
 import { readFuture } from "@/lib/futures/future";
@@ -51,6 +53,8 @@ import { evaluateRoad } from "@/lib/roads";
 import { PROVINCES } from "@/lib/scenarios/types";
 import { demoScenarios } from "../prisma/seed-data";
 import { fileUrl, migratedFile } from "./helpers/migrated-db";
+import { findTimeWords } from "./helpers/time-words";
+import { findVerdicts } from "./helpers/verdict-words";
 import { inventedIdea, TODAY } from "./helpers/road-to-evaluate";
 
 const BARBERS = "63210.02";
@@ -161,6 +165,8 @@ describe("33a: no Alberta area or region shown once the idea's place isn't Alber
     // on Alberta's pages only, so it says how many it left out.
     const name = plan.steps.columns.flatMap((c) => c.steps).find((s) => s.id === "step-start-register-name")!;
     expect(name.sourcesLeftOut).toMatch(/^\d+ sources? for other provinces/);
+    // Second review of #207: and its done-when part says why it lists none, never that none is written yet.
+    expect(name.doneWhenTitle).toBe(cockpitWords.panel.doneWhenNoneForPlace);
   });
 
   it("control: in Alberta the same check finds road 0's Alberta pages (alberta.ca, the WCB, the name fee)", async () => {
@@ -369,6 +375,45 @@ describe("a-call-12: every road draws a step's sources for the person's own plac
     expect(alberta[0].lastVerified).toBeUndefined();
     expect(alberta[0].toolCheck?.checkedOn).toBe("2026-10-23");
     expect(alberta[0].toolCheck?.quotes).toContain("Employment standards set out the rights and obligations of employers and employees in Alberta.");
+  });
+});
+
+describe("second review of #207: a section the place left empty says why, never that none is written yet", () => {
+  const p = cockpitWords.panel;
+  const registerName = (place: string) => roadForPlace(generalRoadV2026, place).steps.find((s) => s.id === "step-start-register-name")!;
+  const road1 = (place: string) => roadForPlace(roadApprenticeToOwnShopAB, place);
+
+  it("a step whose lines all rest on other provinces' pages says so, in each section", () => {
+    // Road 0's Register your business name from Ontario: six done-when lines and two cost lines, all Alberta's.
+    expect(emptySectionLine(registerName("ON"), "doneWhen")).toBe(p.doneWhenNoneForPlace);
+    expect(emptySectionLine(registerName("ON"), "costs")).toBe(p.costsNoneForPlace);
+    // Road 1's Register as a Cabinetmaker apprentice from Ontario: its one item, Alberta Student Number.
+    const apprentice = road1("ON").steps.find((s) => s.id === "step-shop-register-apprentice")!;
+    expect(emptySectionLine(apprentice, "skills")).toBe(p.skillsNoneForPlace);
+  });
+
+  it("control: a step with nothing written, or nothing left out, keeps the line saying none is written yet", () => {
+    expect(emptySectionLine({}, "doneWhen")).toBe(p.doneWhenNone);
+    expect(emptySectionLine({}, "skills")).toBe(p.skillsNone);
+    expect(emptySectionLine({}, "costs")).toBe(p.costsNone);
+    // Planted: road 0's step in Alberta with its lines taken away (no shipped step is written without any).
+    const planted: RoadStep = { ...registerName("AB"), doneWhen: [] };
+    expect(emptySectionLine(planted, "doneWhen")).toBe(p.doneWhenNone);
+  });
+
+  it("the Skills list and the Skills gauge say a road's skills rest on other provinces' pages when the place left them all out", () => {
+    const forPlace = { list: cockpitWords.lists.skillsNoneForPlace, gauge: cockpitWords.gauges.skills.noneListedForPlace };
+    expect(roadSkillsNone(road1("ON"))).toEqual(forPlace);
+    // Control: a road listing nothing at all says none is listed yet.
+    expect(roadSkillsNone({ steps: [] })).toEqual({ list: cockpitWords.lists.skillsNone, gauge: cockpitWords.gauges.skills.noneListed });
+  });
+
+  it("the new lines name no time and no verdict", () => {
+    const lines = [p.doneWhenNoneForPlace, p.skillsNoneForPlace, p.costsNoneForPlace, cockpitWords.lists.skillsNoneForPlace, cockpitWords.gauges.skills.noneListedForPlace];
+    for (const line of lines) {
+      expect(line).toEqual(expect.any(String));
+      expect([...findTimeWords(line), ...findVerdicts(line)], line).toEqual([]);
+    }
   });
 });
 

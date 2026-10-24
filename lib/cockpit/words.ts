@@ -80,6 +80,8 @@ export const cockpitWords = {
       notMarked: (n: number, listed: number) => `${n} not marked, out of ${listed} listed`,
       invite: "Mark them to see what each step still needs",
       noneListed: "No skills are listed on this road yet",
+      /** The road lists skills, but the road drawn for the idea's place left every one out (lib/cockpit/view.ts `roadSkillsNone`). */
+      noneListedForPlace: "This road's skills rest on other provinces' pages",
       own: (have: number, learning: number, notYet: number) => `your own skills: ${have} have · ${learning} learning · ${notYet} not yet`,
       addOwn: "Add skills of your own in the list",
       /** The government's list for the person's pick of job, counted apart from the road's. */
@@ -154,8 +156,11 @@ export const cockpitWords = {
     doneWhen: "Done when",
     doneWhenTicked: (ticked: number, total: number) => `${ticked} of ${total} ticked`,
     doneWhenNone: "No “done when” lines are written for this step yet.",
+    // A section the road drawn for the idea's place left empty says why (lib/cockpit/view.ts `emptySectionLine`).
+    doneWhenNoneForPlace: "This step's “done when” lines rest on other provinces' pages, so none is shown for your place.",
     skills: "Skills it needs",
     skillsNone: "No skills are listed for this step yet.",
+    skillsNoneForPlace: "The skills this step lists rest on other provinces' pages, so none is shown for your place.",
     skillKind: { "legal-requirement": "legal requirement", "listed-skill": "listed skill" },
     marks: { have: "Have", learning: "Learning", "not-yet": "Not yet" },
     dontKnow: "I don't know",
@@ -164,6 +169,7 @@ export const cockpitWords = {
     showSteps: (label: string) => `Show the steps that list ${quoted(label)}`,
     costs: "Costs",
     costsNone: "No cost lines are written for this step yet.",
+    costsNoneForPlace: "This step's cost lines rest on other provinces' pages, so none is shown for your place.",
     costKind: {
       "official-fee": "official fee · source and day read",
       "your-quote": "your quote · agreed",
@@ -209,6 +215,7 @@ export const cockpitWords = {
     /** Above the items the road's own steps list, so the job's list below never reads as the road's. */
     roadTitle: "On this road's steps",
     skillsNone: "No skills are listed on this road yet. Your own skills are below.",
+    skillsNoneForPlace: "The skills this road lists rest on other provinces' pages, so none is shown for your place. Your own skills are below.",
     ownTitle: "Your own skills",
     ownTag: "added by you",
     ownNone: "None added yet.",

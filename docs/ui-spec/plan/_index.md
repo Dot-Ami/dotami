@@ -53,12 +53,15 @@ splits across two pages, and every link is printed as its address (each link's t
    out because of its state): the step's name and one line; *Your status: doing / done / not for me*
    or *Your status: not set*; its state in the map's words (*applies as answered*, *check first*, *not
    on your path*) with road evaluation's reason sentence; *Done when (x of y ticked)* with each line
-   marked *ticked* or *not ticked* and its source; the skills it needs, each with the person's mark;
+   marked *ticked* or *not ticked* and its source (a step whose *done when* lines all rest on other provinces'
+   pages says *This step's “done when” lines rest on other provinces' pages, so none is shown for your place.*,
+   since 2026-10-24, as the step panel does); the skills it needs, each with the person's mark;
    how many cost lines it has (the lines themselves are under *Start-up money*, by step); official pages; and its sources, each with how it was checked
    (`lib/engines/shared/citation-check.ts` `howCheckedWords`, and the quotes a tool found).
 5. **Skills and requirements, with your marks** — names only. *On this road's steps*: every skill item the road lists, marked or not, once,
    with *legal requirement* / *listed skill* and the person's mark (*have*, *learning*, *not yet*, or
-   *not marked*). *Your own skills*: each with its mark and day. *Your pick of job*: the job's name and
+   *not marked*); with none listed because the place left them out, *This road's skills rest on other
+   provinces' pages* (since 2026-10-24). *Your own skills*: each with its mark and day. *Your pick of job*: the job's name and
    code and the day picked, the items the person marked (names only, never the government's ratings),
    *"n not marked, of m on the government's list"*, and the licence's attribution line word for word.
    No job picked: *"No job picked for the government's skills list."*

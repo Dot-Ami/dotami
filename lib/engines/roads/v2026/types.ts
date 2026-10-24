@@ -127,7 +127,8 @@ export interface RoadStep {
    * Set only by `roadForPlace` (./index.ts), never in a road's file, and only when it left something out for the
    * idea's place: the *done when* lines (by id), the cost lines and the skill items (by id) resting on another
    * province's pages (second review of #207, 2026-10-24). A tick on one of those lines is kept whatever list a save
-   * sends (lib/futures/types.ts `ticksToSave`).
+   * sends (lib/futures/types.ts `ticksToSave`), and a section left empty by it says why (lib/cockpit/view.ts
+   * `emptySectionLine`).
    */
   leftOutForPlace?: { doneWhenIds: readonly string[]; costs: readonly CatalogCostLine[]; needs: readonly string[] };
 }

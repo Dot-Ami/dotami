@@ -19,7 +19,9 @@ place of a step, each a region named by its title with a × button named *Close*
   sources, *you said you hold this*, the official way to get it). Since 2026-10-24 the items and their sources are
   drawn for the idea's place, as in the step panel ([09-step-panel.md](./09-step-panel.md) item 5): an item resting
   only on another province's pages isn't listed. With none: *No skills are listed on this road yet.
-  Your own skills are below.* Then **Your own skills**: each one the person added, tagged *added by you*,
+  Your own skills are below.*; where the road's skills rest on other provinces' pages: *The skills this road
+  lists rest on other provinces' pages, so none is shown for your place. Your own skills are below.*
+  (`roadSkillsNone` in `lib/cockpit/view.ts`). Then **Your own skills**: each one the person added, tagged *added by you*,
   with **Have / Learning / Not yet** and **Remove** in place of *I don't know*, since taking the mark off
   a skill the person typed removes the skill (*None added yet.* when empty); and **Add a skill**: a box (*A skill in your own words*,
   up to 120 characters) and **Add as have**, **Add as learning**, **Add as not yet** (off until something
