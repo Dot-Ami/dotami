@@ -114,7 +114,7 @@ export function cockpitInput(args: {
 /**
  * The skill the map dims by: the one selected, only while the road drawn for the idea's place lists it. A change of
  * place can leave it out, and with it every row that unselects it, which would leave every card dimmed (second
- * review of #207).
+ * review of #207). The selection itself is kept: back in a place that lists the item, the map dims by it again.
  */
 export function linkedSkill(road: Pick<Road, "steps">, selected: string | null): string | null {
   return selected !== null && road.steps.some((step) => step.needs.includes(selected)) ? selected : null;

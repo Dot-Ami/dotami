@@ -367,7 +367,7 @@ describe("a-call-12: every road draws a step's sources for the person's own plac
     }
   });
 
-  it("second review of #207: a skill selected on the map is cleared when the idea's place leaves it out, so no card stays dimmed by it", () => {
+  it("second review of #207: a skill selected on the map stops dimming it while the idea's place leaves it out, and dims it again where it is listed", () => {
     expect(linkedSkill(roadForPlace(roadApprenticeToOwnShopAB, "ON"), ASN)).toBeNull();
     expect(linkedSkill(roadForPlace(roadApprenticeToOwnShopAB, "AB"), ASN)).toBe(ASN);
     expect(linkedSkill(roadForPlace(roadApprenticeToOwnShopAB, "AB"), null)).toBeNull();

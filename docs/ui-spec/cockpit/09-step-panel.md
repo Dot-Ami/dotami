@@ -62,9 +62,10 @@ The sections, in order:
    items, *Alberta Student Number* among them, seen from Ontario), its pages counted in the step's *n sources for
    other provinces aren't shown.* line, and a mark on it stays the person's; a listed item shows its federal and
    own-province sources and its way to get it only when that page is one of them, with *n sources for other
-   provinces aren't shown.* under them when some were left out (`skillItemsForPlace`). Selecting an item the
-   idea's place then leaves out clears the selection, so the map never stays dimmed with no row to unselect it
-   (`linkedSkill` in `lib/cockpit/view.ts`).
+   provinces aren't shown.* under them when some were left out (`skillItemsForPlace`). An item selected before
+   the idea's place leaves it out stops dimming the map, so the map never stays dimmed with no row to unselect it
+   (`linkedSkill` in `lib/cockpit/view.ts`); the selection itself is kept, so a later move to a place that lists the
+   item again dims the map by it again and shows its row pressed.
 6. **Costs** — each line in one of the three kinds: an official fee with its amount, *official fee ·
    source and day read* and its citation (one that applies only sometimes adds *Only if: <its condition>.
    Not added to any total.*, where a condition that already ends in a full stop gets no second one); the person's agreed number with *your quote · agreed* and

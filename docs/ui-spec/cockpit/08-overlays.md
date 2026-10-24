@@ -44,7 +44,8 @@ Also on the map, from road evaluation (`evaluateRoad`):
   deepening*, issue #40): **not on your path**, dashed, no lever cards, and the reason as its line
   ([03-canvas.md](./03-canvas.md)).
 - **A fork's column** says *The road splits here: you choose* under its line.
-- **A skill selected** in the step panel or the skills list dims every step that doesn't list it.
+- **A skill selected** in the step panel or the skills list dims every step that doesn't list it, while the road
+  drawn for the idea's place lists it ([09-step-panel.md](./09-step-panel.md) item 5, 2026-10-24).
 
 Drawn without these props the map is byte for byte what it was (`tests/road-map.spec.ts`).
 
