@@ -252,7 +252,14 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   name-registry pages, the WCB-Alberta *done when* line and the Alberta name fee. Now a step's *done when* lines,
   cost lines and official links resting on another province's page are left out too, and counted in the same
   line (`roadForPlace` and `stepSourcesForPlace` in `lib/engines/roads/v2026/index.ts`). In a road's own province
-  nothing changes. Each step's name and one-line summary stay as the road wrote them.
+  nothing changes. Each step's name and one-line summary stay as the road wrote them. The pull request's second
+  review (2026-10-24) found the change of place could still lose or misstate the person's own answers. A tick on a
+  *done when* line left out for the idea's new place was deleted the next time any tick on that step was saved
+  there (the step panel sends the lines it draws, and the storage replaced the list), or by *Take back* on the
+  step's ticks. It is now kept whatever list a save sends (`ticksToSave` in `lib/futures/types.ts`, used by
+  `lib/futures/step-progress.ts`), and the cockpit sends it too, so a tick made while a change of place is still
+  being saved can't lose one; moving back shows it again (`tests/places-and-programs.spec.ts` and
+  `e2e/place-change.spec.ts`: on the old code the WCB-Alberta tick was gone after a tick in Ontario).
 - **Your answer to "Are you buying equipment, a vehicle or tools?" on a future picked on Pick a future is
   kept** (the maintainer's "Yes, fix both", 2026-10-20). Pick a future saves equipment as not said, since it
   never asks it. Answering in the cockpit's one-question box showed the answer for a moment, but left

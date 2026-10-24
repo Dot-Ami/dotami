@@ -56,7 +56,7 @@ import { forksAreTheMapToggles, roadForPlace, roadsV2026, roadsWrittenForJob, sk
 import { templatesCatalogV2026 } from "@/lib/engines/templates/v2026";
 import type { ExampleFuture } from "@/lib/examples";
 import { exampleStory } from "@/lib/examples/story";
-import { roadForFuture, SHIPPED_ROADS_CATALOG, type SkillMarkValue, type StepStatus } from "@/lib/futures/types";
+import { roadForFuture, SHIPPED_ROADS_CATALOG, ticksToSave, type SkillMarkValue, type StepStatus } from "@/lib/futures/types";
 import { AUTOSAVE_DELAY_MS, formatSavedAt, saveScenario } from "@/lib/journey/save-scenario";
 import { evaluateRoad, withoutIdeaAnswer, type RoadEvaluationInput } from "@/lib/roads";
 import { EMPLOYMENT_WORDS } from "@/lib/roads/words";
@@ -647,11 +647,26 @@ export function CockpitPage({ initialScenario, pinned = false, example }: Cockpi
     void saveAnswer(() => postJson(`/api/futures/${encodeURIComponent(ventureId)}/progress`, { roadId: road.id, stepId, status }), "step");
   }
 
+  /**
+   * The ticks to send for one step: `ids`, plus those kept on its lines the road drawn for the place on screen leaves
+   * out (`ticksToSave`). The storage keeps them too, but by the place in the file, which trails the screen until a
+   * change of place is saved.
+   */
+  function ticksFor(stepId: string, ids: string[]): string[] {
+    const written = roadForFuture(SHIPPED_ROADS_CATALOG, roadId).steps.find((s) => s.id === stepId);
+    const drawn = road.steps.find((s) => s.id === stepId);
+    const keptTicks = kept?.progress.find((p) => p.stepId === stepId)?.doneWhenIds ?? [];
+    return written && drawn ? ticksToSave(ids, keptTicks, written, drawn) : ids;
+  }
+
   /** Resolves once the ticks are saved and read back, so the step panel can hold its boxes until then. */
   function handleTicks(doneWhenIds: string[]): Promise<unknown> {
     if (!ventureId || !selectedNodeId) return Promise.resolve();
     const stepId = selectedNodeId;
-    return saveAnswer(() => postJson(`/api/futures/${encodeURIComponent(ventureId)}/progress`, { roadId: road.id, stepId, doneWhenIds }), "step");
+    return saveAnswer(
+      () => postJson(`/api/futures/${encodeURIComponent(ventureId)}/progress`, { roadId: road.id, stepId, doneWhenIds: ticksFor(stepId, doneWhenIds) }),
+      "step",
+    );
   }
 
   function handleMark(skill: SkillKey, mark: SkillMarkValue | null, place: ReceiptPlace) {
@@ -754,7 +769,8 @@ export function CockpitPage({ initialScenario, pinned = false, example }: Cockpi
     if (back.kind === "skill-mark") void saveAnswer(() => postJson("/api/skill-marks", { skillItemId: back.skillItemId, mark: null }), "told", empty);
     else if (back.kind === "own-skill") void saveAnswer(() => postJson("/api/skill-marks", { ownLabel: back.ownLabel, mark: null }), "told", empty);
     else if (back.kind === "step-status") void saveAnswer(() => postJson(`/api/futures/${id}/progress`, { roadId: road.id, stepId: back.stepId, status: null }), "told", empty);
-    else if (back.kind === "step-ticks") void saveAnswer(() => postJson(`/api/futures/${id}/progress`, { roadId: road.id, stepId: back.stepId, doneWhenIds: [] }), "told", empty);
+    else if (back.kind === "step-ticks")
+      void saveAnswer(() => postJson(`/api/futures/${id}/progress`, { roadId: road.id, stepId: back.stepId, doneWhenIds: ticksFor(back.stepId, []) }), "told", empty);
     else if (back.kind === "figures") void saveAnswer(() => postJson("/api/figures/retract", { ventureId, figureIds: back.figureIds }), "told", empty);
     else if (back.kind === "date") void saveAnswer(() => postJson(`/api/futures/${id}/date`, { month: null }), "told", empty);
     else if (back.kind === "ending") void saveAnswer(() => postJson(`/api/futures/${id}/ending`, { forkId: back.forkId, stepId: null }), "told", empty);

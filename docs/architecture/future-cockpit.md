@@ -1703,7 +1703,9 @@ a position or a title), the status (**doing · done · not for me**, or none), t
 the person ticked, and a list of status changes with the moment of each (the newest 100 per step), for
 *Since last time*. One row per future, road and step. Every id is checked against the road catalog when
 it is written: the road must be the future's own road, the step must be on it, and each ticked line must
-be one of that step's *done when* lines. The step's own date (*your date* on a step) is left out: dates
+be one of that step's *done when* lines. A save's list replaces the ticks on the lines the road draws for the
+idea's place; a tick on a line its place leaves out (another province's page) is kept whatever list is sent
+(`ticksToSave` in `lib/futures/types.ts`, second review of #207, 2026-10-24). The step's own date (*your date* on a step) is left out: dates
 beyond the target date are not in phase 1 (§ 12), and it is a plain added column when they are.
 
 - **On road 0 a step's status is the map's, kept in one place (settled 2026-10-12).** The map already

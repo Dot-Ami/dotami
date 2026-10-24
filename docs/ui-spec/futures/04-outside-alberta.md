@@ -182,8 +182,10 @@ Every string in the words block was run through `VERDICT_WORDS`, `findVerdicts` 
   the pull request) a road opened from another province also leaves out each step's *done when* lines, cost lines
   and official links resting on another province's page, by the federal road's rule, for any place
   (`roadForPlace`, applied in `cockpitInput` and the cockpit's drawn road), and the step's line counts those
-  pages too (`stepSourcesForPlace`). The storage still checks ticks and quotes against the whole road, so moving
-  back shows them again. Steps are not removed: an Alberta idea moved to Ontario keeps *Register your business
+  pages too (`stepSourcesForPlace`). The storage checks ticks and quotes against the whole road and keeps a tick
+  on a line left out for the idea's place whatever list a save sends (`ticksToSave` in `lib/futures/types.ts`,
+  second review, 2026-10-24), and the cockpit sends it too, by the place on screen, so ticking another line, or
+  *Take back*, from Ontario never removes it, and moving back shows it again. Steps are not removed: an Alberta idea moved to Ontario keeps *Register your business
   name, if you use one*, with its summary as written, no *done when* lines and the count.
 - **Pick a future:** step 3 of the three steps (`components/front-door/job-and-road-steps.tsx` `RoadStep`, on
   Pick a future and at the end of the intake): the federal card under *Written for all of Canada*, then the

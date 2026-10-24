@@ -4,7 +4,7 @@ Page: Cockpit (`/cockpit?venture=<id>`) · Component: `components/cockpit/step-p
 step it wraps `components/node-detail-panel.tsx`; the quote box is `components/cockpit/amount-form.tsx`)
 Type: panel (display + toggle buttons + checkboxes + form)
 
-Last updated: 2026-10-13 (*Why this colour* on SR&ED deepening without a research kind of work, issue #40; built 2026-10-12, docs/architecture/future-cockpit.md § 1 row 5 and § 2, Cockpit screen as built)
+Last updated: 2026-10-24 (a tick on a line the idea's place leaves out is kept, second review of #207; *Why this colour* on SR&ED deepening without a research kind of work, issue #40, 2026-10-13; built 2026-10-12, docs/architecture/future-cockpit.md § 1 row 5 and § 2, Cockpit screen as built)
 
 > **Changed 2026-10-12 — part 2.** Every answer given here (a status, ticks, a skill mark, a quote once agreed, the fork's toggle) shows its receipt under the panel's refusal line ([13-receipts.md](./13-receipts.md)); opening another step clears it. At a fork, **Compare the endings** opens *Compare the two endings* on that fork ([15-compare.md](./15-compare.md)); since 2026-10-13 (the maintainer's answer to PR #159's question 1) only at a fork whose own pick, not the rules, puts steps on or off the path (`lib/cockpit/told.ts` `forksToCompare`), so not on a road 0 step, where the toggle is the pick, the tax rules colour the sides whichever is picked, and no Compare button shows. The *I'd incorporate at* box saves as the person types and gives no receipt.
 >
@@ -39,7 +39,9 @@ The sections, in order:
    under it; *1 of 2 ticked*. Ticking or unticking saves at once: the box shows the click straight away
    and the boxes wait (disabled) until the save is read back; a refused save puts the box back as kept and
    shows the reason above, so a box never stays ticked over a refusal. The count is what is kept. Empty:
-   *No “done when” lines are written for this step yet.*
+   *No “done when” lines are written for this step yet.* Only the lines drawn for the idea's place are listed
+   (`roadForPlace`); a tick on a line it leaves out is kept whatever list a save sends, and shows again where
+   the line is drawn (second review of #207, 2026-10-24).
 5. **Skills it needs** — each skill item the step lists: its name (a button that selects it and dims the
    steps that don't list it), its kind (*legal requirement* or *listed skill*), **Have**, **Learning**,
    **Not yet** (`aria-pressed`) and **I don't know** (removes the mark; off when there is none), and the
@@ -73,7 +75,9 @@ guess), *Nothing counts until you agree to it.*, **Next: agree** and **Cancel**.
   doneWhenIds }`; on success the page reads back what is kept and the map, gauges and *Next on your road*
   change. A refusal shows in an amber line at the top of the panel, in the server's words. Each save of
   ticks sends the step's whole list, so the boxes are off from a tick until that save is read back (a
-  second quick tick would otherwise send a list without the first).
+  second quick tick would otherwise send a list without the first). The list sent holds the ticks kept on
+  lines the place on screen leaves out, and the storage keeps those by the place in the file whatever list
+  arrives (`ticksToSave`, 2026-10-24), so a tick from another province, or *Take back*, never removes one.
 - Marks: `POST /api/skill-marks { skillItemId, mark }` (`mark: null` for I don't know).
 - **Next: agree**: `POST /api/figures/propose` with source *typed by you*, one figure of kind
   `start-up-cost-line`, dated today at both ends, with `costLine { roadId, stepId, lineId, amountFrom }`;

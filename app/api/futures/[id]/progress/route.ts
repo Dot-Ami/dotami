@@ -14,8 +14,9 @@ const MAX_BODY_BYTES = 16 * 1024;
 /**
  * POST /api/futures/<idea id>/progress { roadId, stepId, status?, doneWhenIds? } — the person's status on
  * one step (doing, done, not for me, or null to take it back) and the "done when" lines they ticked. Every
- * id is checked against the road catalog by the storage code (lib/futures/step-progress.ts); answers the
- * step's progress as kept. Only from DotAmi's own window.
+ * id is checked against the road catalog by the storage code (lib/futures/step-progress.ts); a tick on a line
+ * the idea's place leaves out (another province's page) is kept whatever list is sent. Answers the step's
+ * progress as kept. Only from DotAmi's own window.
  */
 export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const refused = guardWrite(request, "futures-progress", RATE_LIMIT);

@@ -34,7 +34,8 @@ import { RETIRED_GRANT_PROGRAMS } from "@/lib/engines/grants/v2026/programs";
 import { citationsForPlace, generalRoadV2026, roadForPlace, roadsV2026, stepSourcesForPlace } from "@/lib/engines/roads/v2026";
 import { readFuture } from "@/lib/futures/future";
 import { readPlan } from "@/lib/futures/read-plan";
-import { SHIPPED_ROADS_CATALOG } from "@/lib/futures/types";
+import { listStepProgress, setStepProgress } from "@/lib/futures/step-progress";
+import { SHIPPED_ROADS_CATALOG, ticksToSave } from "@/lib/futures/types";
 import type { EngineCitation } from "@/lib/engines/shared/types";
 import { evaluateRoad } from "@/lib/roads";
 import { PROVINCES } from "@/lib/scenarios/types";
@@ -44,6 +45,11 @@ import { inventedIdea, TODAY } from "./helpers/road-to-evaluate";
 
 const BARBERS = "63210.02";
 const NOW = new Date("2026-10-23T12:00:00Z");
+// Hire first employee's "done when" lines on road 0: two on the CRA's pages, and one on the WCB-Alberta's,
+// which the road drawn for any other province leaves out.
+const STATUS = "dw-start-hire-status";
+const BEFORE_PAY = "dw-start-hire-before-pay";
+const WCB = "dw-start-hire-wcb";
 
 describe("33a: the place row's Change edits this idea", () => {
   it("opens the one-question box on the cockpit, never the intake (which saves a second idea)", () => {
@@ -153,6 +159,62 @@ describe("33a: no Alberta area or region shown once the idea's place isn't Alber
     expect(found).toMatch(/alberta\.ca\/register-business-name/);
     expect(found).toMatch(/wcb\.ab\.ca/);
     expect(found).toMatch(/Registry Agent Product Catalogue/);
+  });
+
+  /** An Alberta idea on road 0, and its save again in another place (the cockpit's save: the update branch). */
+  async function ideaThatMoves() {
+    const scenario = { ...demoScenarios[0], id: `scenario-${randomUUID()}`, profile: { ...demoScenarios[0].profile, province: "AB" as const } };
+    const { ventureId } = await ensureVentureFromScenario(prisma, scenario, { ...parseFirstSave({}, NOW, "AB"), roadId: generalRoadV2026.id });
+    const moveTo = (province: "AB" | "ON") => ensureVentureFromScenario(prisma, { ...scenario, profile: { ...scenario.profile, province } });
+    return { ventureId, moveTo };
+  }
+
+  it("second review of #207: a tick on a line left out for the idea's new place is never lost, by another tick or by Take back", async () => {
+    const { ventureId, moveTo } = await ideaThatMoves();
+    const hire = { roadId: generalRoadV2026.id, stepId: "branch-hire-first-employee" };
+    const keptTicks = async () => (await listStepProgress(prisma, ventureId)).find((p) => p.stepId === hire.stepId)!.doneWhenIds.sort();
+    await setStepProgress(prisma, ventureId, { ...hire, doneWhenIds: [STATUS, WCB] });
+    await moveTo("ON");
+    // What the step panel sends from Ontario: the lines it draws there, the WCB-Alberta line not among them.
+    await setStepProgress(prisma, ventureId, { ...hire, doneWhenIds: [STATUS, BEFORE_PAY] });
+    expect(await keptTicks()).toEqual([BEFORE_PAY, STATUS, WCB]);
+    // The told list's Take back of the step's ticks, from Ontario.
+    await setStepProgress(prisma, ventureId, { ...hire, doneWhenIds: [] });
+    expect(await keptTicks()).toEqual([WCB]);
+    // Back in Alberta the line is drawn again, ticked.
+    await moveTo("AB");
+    const plan = buildPlan((await readPlan(prisma, ventureId, "2026-10-24"))!);
+    const step = plan.steps.columns.flatMap((c) => c.steps).find((s) => s.id === hire.stepId)!;
+    const ticked = step.doneWhen.filter((line) => line.ticked);
+    expect(ticked).toHaveLength(1);
+    expect(ticked[0].text).toContain("WCB-Alberta");
+    // Control: where the line is drawn, a list without it unticks it.
+    await setStepProgress(prisma, ventureId, { ...hire, doneWhenIds: [] });
+    expect(await keptTicks()).toEqual([]);
+    // From Ontario a save may still name the line left out there (any of the step's own lines), and it is kept.
+    await moveTo("ON");
+    await setStepProgress(prisma, ventureId, { ...hire, doneWhenIds: [WCB] });
+    expect(await keptTicks()).toEqual([WCB]);
+  });
+});
+
+describe("second review of #207: ticks kept across a change of place (ticksToSave, the storage's and the cockpit's)", () => {
+  const written = generalRoadV2026.steps.find((s) => s.id === "branch-hire-first-employee")!;
+  const drawnIn = (place: string) => roadForPlace(generalRoadV2026, place).steps.find((s) => s.id === written.id)!;
+
+  it("a tick kept on a line the place leaves out stays, whatever list is sent from there", () => {
+    expect(ticksToSave([STATUS, BEFORE_PAY], [STATUS, WCB], written, drawnIn("ON")).sort()).toEqual([BEFORE_PAY, STATUS, WCB]);
+    // Take back from Ontario: the ticks on the lines drawn there go; the WCB-Alberta one stays.
+    expect(ticksToSave([], [STATUS, WCB], written, drawnIn("ON"))).toEqual([WCB]);
+  });
+
+  it("control: where every line is drawn, the list sent is the list kept", () => {
+    expect(ticksToSave([], [STATUS, WCB], written, drawnIn("AB"))).toEqual([]);
+    expect(ticksToSave([STATUS], [STATUS, WCB], written, drawnIn("AB"))).toEqual([STATUS]);
+  });
+
+  it("a kept id that is no line of the step is dropped, as before", () => {
+    expect(ticksToSave([STATUS], [STATUS, "dw-gone"], written, drawnIn("ON"))).toEqual([STATUS]);
   });
 });
 

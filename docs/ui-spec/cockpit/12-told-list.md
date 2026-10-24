@@ -61,7 +61,8 @@ the same kinds: the question, its *why we ask* line, one control, **Save**, **I 
   idea's figures on *Your ideas* (agreed business figures).
 - **Take back**: removes that one answer, the way `withoutAnswer` does: a skill mark or own skill through
   `POST /api/skill-marks` with no mark; a status or the ticks through `POST /api/futures/<id>/progress`
-  (`status: null`, `doneWhenIds: []`); a quote or savings through `POST /api/figures/retract` (kept as
+  (`status: null`, `doneWhenIds: []`; ticks on lines the idea's place leaves out stay kept, sent along by the
+  cockpit and kept by the storage whatever list arrives, `ticksToSave`, 2026-10-24); a quote or savings through `POST /api/figures/retract` (kept as
   retracted); the month through the date route with `null`; an ending through `POST
   /api/futures/<id>/ending { stepId: null }`; the idea's own answers through the map's save (structure
   back to not set, a map pick back to the default, kinds of work emptied, a sales number to none,

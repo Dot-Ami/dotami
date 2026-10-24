@@ -129,6 +129,51 @@ test("Change on the place row edits this idea: one idea, Ontario, the Alberta ro
   expect(plan).not.toContain("Registry Agent Product Catalogue");
 });
 
+/** Changes the idea's place through the told list's place row, and waits for the receipt. */
+async function changePlace(page: Page, from: string, to: { code: string; name: string }) {
+  await told(page).getByRole("button", { name: `Change: you told us your place is ${from}` }).click();
+  await told(page).getByRole("combobox", { name: "Which province or territory are you in?" }).selectOption(to.code);
+  await told(page).getByRole("button", { name: "Save", exact: true }).click();
+  await expect(told(page).getByRole("status")).toContainText(`Because you told us your place is ${to.name}`);
+}
+
+/** Opens Hire first employee (in the road ahead) and returns its panel. */
+async function openHire(page: Page) {
+  await showRoadAhead(page);
+  await page.getByRole("button", { name: /^Hire first employee, / }).first().click();
+  return page.getByRole("region", { name: "Step" });
+}
+
+test("second review of #207: a tick on a line left out in Ontario survives a tick there, and shows again back in Alberta", async ({ page }) => {
+  const ventureId = await albertaIdea(page);
+  await page.goto(`/cockpit?venture=${ventureId}`);
+  await showRail(page);
+
+  // In Alberta: tick the WCB-Alberta line, and wait for the save to be read back (its receipt, the box free again).
+  let panel = await openHire(page);
+  const wcb = panel.getByRole("checkbox", { name: /WCB-Alberta/ });
+  await wcb.check();
+  await expect(panel.getByRole("status")).toBeVisible();
+  await expect(wcb).toBeEnabled();
+  await panel.getByRole("button", { name: "Close node detail panel" }).click();
+
+  // In Ontario the line isn't drawn; ticking another line there sends only the lines drawn there.
+  await changePlace(page, "Alberta", { code: "ON", name: "Ontario" });
+  panel = await openHire(page);
+  await expect(panel).not.toContainText("WCB-Alberta");
+  const beforePay = panel.getByRole("checkbox", { name: /^Before the first pay/ });
+  await beforePay.check();
+  await expect(panel.getByRole("status")).toBeVisible();
+  await expect(beforePay).toBeEnabled();
+  await panel.getByRole("button", { name: "Close node detail panel" }).click();
+
+  // Back in Alberta: the WCB-Alberta tick is still there, with the one made in Ontario.
+  await changePlace(page, "Ontario", { code: "AB", name: "Alberta" });
+  panel = await openHire(page);
+  await expect(panel.getByRole("checkbox", { name: /WCB-Alberta/ })).toBeChecked();
+  await expect(panel.getByRole("checkbox", { name: /^Before the first pay/ })).toBeChecked();
+});
+
 test("control: in Alberta, Your plan links Alberta's own pages, so the check above can see them", async ({ page }) => {
   const ventureId = await albertaIdea(page);
   await page.goto(`/plan?venture=${encodeURIComponent(ventureId)}`);

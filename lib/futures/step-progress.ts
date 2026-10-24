@@ -1,9 +1,19 @@
 import type { Prisma, PrismaClient, StepProgress } from "@prisma/client";
 
 import { toStringList } from "@/lib/db/json-list";
+import { roadForPlace } from "@/lib/engines/roads/v2026";
 import { requireVenture } from "@/lib/figures/store";
 
-import { FutureInputError, isRecord, roadForFuture, SHIPPED_ROADS_CATALOG, STEP_STATUSES, type RoadsCatalog, type StepStatus } from "./types";
+import {
+  FutureInputError,
+  isRecord,
+  roadForFuture,
+  SHIPPED_ROADS_CATALOG,
+  STEP_STATUSES,
+  ticksToSave,
+  type RoadsCatalog,
+  type StepStatus,
+} from "./types";
 
 /**
  * The person's progress on each step of a future's road (docs/architecture/future-cockpit.md § 7,
@@ -76,7 +86,10 @@ export async function listStepProgress(
 
 /**
  * Changes one step's progress: `{ roadId, stepId, status?, doneWhenIds? }`. A field left out is left as
- * it is; `status: null` takes the status back. Every id is checked against the road catalog: the road
+ * it is; `status: null` takes the status back. `doneWhenIds` is the step's ticks on the lines drawn for the
+ * idea's place: a tick on a line its place leaves out (it rests on another province's page) is kept whatever
+ * list is sent, so neither a tick nor Take back from another province removes it (second review of #207,
+ * `ticksToSave`). Every id is checked against the road catalog: the road
  * has to be the future's own road, the step on it, each ticked line one of that step's "done when"
  * lines, so nothing is kept that points at nothing. Returns the step's progress as kept.
  */
@@ -91,11 +104,14 @@ export async function setStepProgress(
     throw new FutureInputError("Say which road and step.");
   }
   const { roadId, stepId } = input;
-  const venture = await prisma.venture.findUniqueOrThrow({ where: { id: ventureId }, select: { roadId: true } });
+  const venture = await prisma.venture.findUniqueOrThrow({ where: { id: ventureId }, select: { roadId: true, province: true } });
   const road = roadForFuture(catalog, venture.roadId);
   if (roadId !== road.id) throw new FutureInputError("That road isn't the one this future is drawn on.");
   const step = road.steps.find((s) => s.id === stepId);
   if (!step) throw new FutureInputError("That step isn't on this road.");
+  // The step as this idea's place draws it (`roadForPlace` keeps every step, so it is always found): a tick on a
+  // line it leaves out is kept whatever list is sent (`ticksToSave`, second review of #207).
+  const drawn = roadForPlace(road, venture.province).steps.find((s) => s.id === stepId)!;
 
   const statusGiven = input.status !== undefined;
   if (statusGiven && input.status !== null && !isStatus(input.status)) {
@@ -127,7 +143,7 @@ export async function setStepProgress(
 
     const data = {
       ...(statusGiven ? { status } : {}),
-      ...(doneWhenIds !== undefined ? { doneWhenIds } : {}),
+      ...(doneWhenIds !== undefined ? { doneWhenIds: ticksToSave(doneWhenIds, current ? toStringList(current.doneWhenIds) : [], step, drawn) } : {}),
       changes: changes as unknown as Prisma.InputJsonValue,
     };
     const row = current

@@ -251,7 +251,8 @@ function StepSections({
   onOpenJobList,
 }: StepPanelProps) {
   const [quoting, setQuoting] = useState<string | null>(null);
-  // Each save sends the step's whole list of ticks, built from what was last read back. A second tick
+  // Each save sends the step's whole list of ticks on the lines drawn here, built from what was last read back (a
+  // tick on a line this place leaves out is kept: lib/futures/types.ts `ticksToSave`). A second tick
   // before that read-back would send a list without the first, so the boxes wait until it lands.
   // While they wait they show the list just sent, so a click ticks the box at once; once the save is
   // read back (or refused, with the reason shown above) they show what is kept again, so a refused

@@ -85,8 +85,9 @@ export function stepSourcesForPlace(
  * written for Alberta, opened from Ontario (call 35), would otherwise list Alberta's name registry, its WCB line and
  * its name fee. The same rule as the federal road's (./federal-steps-ca.ts), for any place, and counted: each step
  * says how many pages it left out, in the line its sources already have (`stepSourcesForPlace`). Nothing is
- * removed from the road itself: the steps, their order and their sources stay, and the storage checks a person's
- * ticks and quotes against the whole road (`roadForFuture`), so moving back shows them again. In a road's own
+ * removed from the road itself: the steps, their order and their sources stay, the storage checks a person's
+ * ticks and quotes against the whole road (`roadForFuture`), and a tick on a line left out here is kept whatever
+ * list a save sends (lib/futures/types.ts `ticksToSave`), so moving back shows them again. In a road's own
  * province, or on a road citing no other province, it changes nothing.
  */
 export function roadForPlace(road: Road, place: string): Road {
