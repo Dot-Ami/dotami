@@ -26,7 +26,9 @@ ladder, the save line). Two regions:
   - **Change** and **Take back** (see below).
 - **Not told yet** (a region with that name). Each missing answer as *<question> → unlocks <what>*, in
   the order DotAmi asks them (a line says *In the order DotAmi asks them, not importance*): your date;
-  your savings; your numbers for the cost lines not priced yet; your marks on the skills not marked; an
+  your savings; your numbers for the cost lines not priced yet; your marks on the skills and legal requirements
+  not marked (*Your marks on 4 skills and 1 legal requirement not marked*, each part only when one waits, since
+  2026-10-23); an
   ending at each fork with no pick (roads other than road 0); your pick at each of road 0's forks while
   it is the map's default and not picked by you, and only where picking the other side changes something
   on the road (since 2026-10-17: GST timing isn't asked of ride-share and taxi drivers, registered from the

@@ -235,7 +235,13 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   planted control (a 600 px element fails it). The typed way numbers its screens once, *1 of 6 · About you* to
   *6 of 6 · Pick a future* (it said *3 of 3 · Ground it* and then *1 of 3 · Your work*; `lib/front-door/typed-way.ts`).
   The step panel lists a legal requirement such as the Alberta Student Number under *What it needs*, not as a
-  skill. The Skills list folds the job's own list (Cabinetmakers' 44) under one **Show the 44 on this job's list**
+  skill, and so do the Skills gauge, its list and its switch over the map: on the apprentice road, whose three
+  items are all legal requirements, the gauge said *3 not marked, out of 3 listed* and the switch *Skills · 3
+  listed*; now *No skills are listed on this road yet* and *3 legal requirements, apart from skills: 3 not
+  marked*, the switch *Skills · 0 listed · 3 legal requirements*, and the list draws them under *Legal
+  requirements on this road's steps*, above *Skills on this road's steps* (it is titled *Skills and legal
+  requirements*). On a phone the overlay row's own label and Road's *always on* are left to screen readers, so
+  the longer switch keeps the row on two lines. The Skills list folds the job's own list (Cabinetmakers' 44) under one **Show the 44 on this job's list**
   button below the road's own items. The Structure ladder is drawn only on the tax and structure roads, in plain
   words (*Ways a business can be set up*: *In your own name* … *A family trust*). *Your plan* has *The steps in this
   plan* at the top of its steps, each a link to its step. *Your destination* says "DotAmi's own server didn't

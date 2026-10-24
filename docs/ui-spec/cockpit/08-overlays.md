@@ -11,9 +11,15 @@ Last updated: 2026-10-13 (the chip on a step for some kinds of work only, issue 
 ## What it is
 
 A row over the map, a group named *Overlays*: **Road · always on** (not a button), then three toggle
-buttons, each with its count for the whole road: **Skills · 5 listed**, **Money · 8 cost lines**,
+buttons, each with its count for the whole road: **Skills · 5 listed** (with the road's legal requirements
+named apart when it lists any, since 2026-10-23: **Skills · 0 listed · 3 legal requirements** on road 1; the layer
+lights both, so the switch is off only when the road lists neither), **Money · 8 cost lines**,
 **Rules & tax · 6 cards** (the rules and tax cards the map draws, each counted once: none from a card drawn
 dashed, so none from a step the person marked not for me or the side of a fork not picked).
+
+Below 768 px the row's own label *Overlays* and Road's *· always on* are left to screen readers (the group
+keeps its name), so the row stays on two lines of switches with the longer Skills count (61 px at 375 px; 87 px
+with both drawn, measured 2026-10-24; `e2e/cockpit-fit.spec.ts` holds it to 64).
 
 First visit: **Rules & tax** on, so the map looks as it did before the overlays; **Skills** and **Money**
 off. The choice is not remembered between visits yet.

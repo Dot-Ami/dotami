@@ -43,10 +43,14 @@ export function OverlaySwitches({
     // On a phone the row wraps to two lines above the road, so it is kept tight there: switches 24 px tall (the
     // smallest target WCAG 2.5.8 asks for) and less padding. At 32 px they made the row 87 px tall and, with the
     // coach line, put the road about 100 px lower than before the calm view (a review, 2026-10-17).
+    // Since the Skills switch names legal requirements apart (2026-10-23) its count is longer, so below 768 px the
+    // row's own label and Road's "always on" are left to screen readers (the group keeps its name): measured at
+    // 375 px, the row stays on two lines (61 px) with "Skills · 12 listed · 3 legal requirements", and took three
+    // (87 px) with both drawn.
     <div data-region="overlays" role="group" aria-label={words.road.overlays} className="flex flex-wrap items-center gap-1.5 border-b border-rule bg-ink3 px-5 py-2 text-body text-stone max-md:gap-y-1 max-md:py-1">
-      <span className="font-mono text-label uppercase tracking-[0.12em]">{words.road.overlays}</span>
+      <span className="font-mono text-label uppercase tracking-[0.12em] max-md:sr-only">{words.road.overlays}</span>
       <span className="rounded-full border border-rule px-2.5 py-0.5 text-paper-dim">
-        {words.road.road} <span className="text-stone-dim">· {words.road.alwaysOn}</span>
+        {words.road.road} <span className="text-stone-dim max-md:sr-only">· {words.road.alwaysOn}</span>
       </span>
       {switches.map(({ id, label, count, empty }) => (
         // A layer with nothing on this road (road 1 has no rules and tax cards) can't light anything, so its
