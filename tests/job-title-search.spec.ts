@@ -257,7 +257,7 @@ describe("whole words first: inside each group, the jobs one of whose titles hol
     });
   });
 
-  it("labels the exact part with its rule: one title holds all the counted words exactly, not just one of them", () => {
+  it("heads the parts in the group's count: in an “all your words” group, a job whose words sit in different titles is second", () => {
     // Review of #206: "registered nurse" files General duty registered nurses under the word-start part, though its
     // titles hold each word word for word: "nurse" in "general duty nurse", "registered" in the job's name (where
     // "nurses" only starts like "nurse"). The old label, "Their titles have your exact word", was true of it too, so
@@ -368,11 +368,11 @@ describe("DotAmi's word list, kept apart from the government's titles", () => {
 /**
  * The corpus measure (research 28f's, on tests/fixtures/ideas/v1.ts), counted once in
  * tests/helpers/job-search-corpus.ts, which the idea harness's coverage report and the quality report read
- * too: each idea with an expected job is searched by its `work` words with the screen's own cap per group, and
- * found when one of its expected jobs is in the open group (rule H's own view), or in any group as listed;
- * the same counted past the cap, for the record. The floors are the measure of 2026-10-21 (the group listed
- * in full since 2026-10-22); a change that lowers one fails here and has to say why, and a change that raises
- * one raises the floor.
+ * too: each idea with an expected job is searched by its `work` words with the screen's own cap (per part since
+ * whole words first; a group without parts, per group), and found when one of its expected jobs is in the open
+ * group (rule H's own view), or in any group as listed; the same counted past the cap, for the record. The
+ * floors are the measure of 2026-10-21 (the group listed in full since 2026-10-22); a change that lowers one
+ * fails here and has to say why, and a change that raises one raises the floor.
  */
 describe("on the idea corpus", () => {
   it("finds the expected job for many more ideas than today's search, and leaves almost none with nothing", () => {
