@@ -144,6 +144,15 @@ describe("who is shown it (lib/brain/evaluate.ts evaluateGrant)", () => {
   it("no idea outside Alberta, or with no province yet", () => {
     for (const province of ["ON", "BC", "MB", null] as const) expect(card(profile({ province })), String(province)).toBeUndefined();
   });
+
+  // Until #207 is in: the Job Grant is still in the catalog and its address opens this program's page, so an Alberta
+  // idea in its kinds of work gets two cards for one program. #207 retires grant-cajg; once both are in, this check
+  // passes, `it.fails` turns red, and it becomes a plain `it`, with the RETIRED_GRANT_PROGRAMS checks the header names. #207
+  // merges first (docs/engines/citations.md, § The reading list's corrections, merge order).
+  it.fails("the Canada-Alberta Job Grant is off the catalog, so no second card opens this page (#207 retires it)", () => {
+    expect(grantProgramsV2026.map((p) => p.id)).not.toContain("grant-cajg");
+    expect(card(profile({ activityTags: ["Trades"], structure: "sole-prop-gst" }), "grant-cajg")).toBeUndefined();
+  });
 });
 
 describe("where the map draws it", () => {

@@ -307,6 +307,15 @@ employment-standards page on *Hire first employee* (one item) to #207; the loan 
 limit and its 365-day line (`grant-csbfp`, two items) and the vehicle's interest and lease caps
 (`writeoff-vehicle`, one item) to #208. The 365-day line stays out (his answer 5).
 
+**Merge order: #207, then #208, then this change.** Two of its rows lean on theirs. The Job Grant's
+address now opens the Productivity Grant's page, so until #207 takes `grant-cajg` off, an Alberta idea
+in the Job Grant's kinds of work shows two cards for one program. And the loan program's risk box
+quotes ISED's loans page, which a risk box doesn't draw; until #208 adds that page to `grant-csbfp`,
+the card lists only ISED's hub. Each gap has an `it.fails` check naming the change that closes it
+(`tests/productivity-grant.spec.ts`, `tests/reading-list-corrections.spec.ts` § 6): it turns red once
+both changes are in, and becomes a plain check then. The panels fixture is redrawn last, after the
+rebase.
+
 Three rules from his answers hold for every row:
 
 - **No read of his is recorded yet.** He will send the reading list with his saved reads, and a later

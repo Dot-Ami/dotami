@@ -550,6 +550,14 @@ describe("6. The risk reads say only what their sources say", () => {
     expect(csbfp.risk).toBeDefined();
     expect(quoted(`${csbfp.risk!.why} ${csbfp.risk!.mitigation}`)).toContain(ISED_SECURITY);
   });
+
+  // Until #208 is in: the loan program's card lists ISED's hub only, so the loans page its box quotes isn't one click
+  // away under the card (a risk box draws no sources of its own). #208 adds that page to grant-csbfp; once both are
+  // in, this check passes, `it.fails` turns red, and it becomes a plain `it`. #208 merges first (docs/engines/
+  // citations.md, § The reading list's corrections, merge order).
+  it.fails("the loan program's card cites the loans page its risk box quotes (#208 adds it)", () => {
+    citationOf("grants grant-csbfp", PAGE.isedLoans);
+  });
 });
 
 describe("7. The corrected words are gone from the docs that copied them", () => {

@@ -984,11 +984,16 @@ roadmap's build order.
     ("Read by a person on …" only when a person is recorded as the reader, "Read on …" otherwise, or
     "Checked by a tool on …"); `node scripts/check-quotes.mjs` checks the quotes on the live page · [docs/engines/citations.md](engines/citations.md)
   - [ ] A model proposes the quotes for a source (not built)
-  - [x] The maintainer's reading list of 2026-10-23, its first 30 entries: 23 corrected on 2026-10-24, each
-    only as far as a quote goes (the other seven are #207's and #208's); two entries retired, ids kept
+  - [x] The maintainer's reading list of 2026-10-23, its first 30 entries: 23 handled on 2026-10-24, each only
+    as far as a quote goes (21 corrected, retired or added; Ontario's HST and BC's PST left as they were, no
+    quote held), the other seven are #207's and #208's; two entries retired, ids kept
     (`compliance-food-premises-on`, `risk-hobby-reclassification`); the Canada-Alberta Productivity Grant
     added as `grant-capg` ([docs/engines/citations.md](engines/citations.md), § The reading list's corrections;
     `tests/reading-list-corrections.spec.ts`, `tests/retired-entries.spec.ts`, `tests/productivity-grant.spec.ts`)
+  - [ ] Merged after #207 and #208 (citations.md, § The reading list's corrections, merge order): until #207
+    the Job Grant's card opens the Productivity Grant's page too, and until #208 the loan program's card
+    doesn't list the loans page its risk box quotes. Each has an `it.fails` check that turns red once both
+    are in, to become a plain check; the panels fixture is redrawn after the rebase
   - [ ] His reads of that list: he sends the list with his saved reads, then only the citations he checked get
     `lastVerified` and `readBy: "person"` (his answers of 2026-10-24); no source says "Read by a person" for
     them until then
