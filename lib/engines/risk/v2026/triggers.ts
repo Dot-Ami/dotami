@@ -232,9 +232,9 @@ export type RiskEntryId = (typeof riskEntriesV2026)[number]["id"];
 
 /**
  * Reads taken off the catalog (docs/brain/risk-calculator.md, § Retired risk reads), in the shape the compliance
- * catalog's RETIRED_COMPLIANCE_RULES and the grants catalog's retired programs (#207) have. Their ids are never used again,
- * not even for a read on the same subject, which comes back under a new id (IDs are forever); nothing here reaches a
- * screen, and tests/retired-entries.spec.ts holds this list to the catalog.
+ * catalog's RETIRED_COMPLIANCE_RULES and the grants catalog's retired programs (#207) have. Their ids are never used
+ * again, not even for a read on the same subject, which comes back under a new id (IDs are forever); nothing here
+ * reaches a screen, and tests/retired-entries.spec.ts holds this list to the catalog.
  */
 export const RETIRED_RISK_ENTRIES: readonly RetiredRiskEntry[] = [
   {
