@@ -26,8 +26,8 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
 import { aboutJobForFuture } from "@/lib/about-job/view";
 import { buildPlan } from "@/lib/cockpit/plan";
-import { answerReceipt, toldRows } from "@/lib/cockpit/told";
-import { cockpitInput, emptySectionLine, linkedSkill, roadSkillsNone } from "@/lib/cockpit/view";
+import { answerReceipt, compareEndings, toldRows } from "@/lib/cockpit/told";
+import { cockpitInput, emptySectionLine, gaugeView, linkedSkill, roadSkillsNone } from "@/lib/cockpit/view";
 import { cockpitWords } from "@/lib/cockpit/words";
 import { createDatabaseClient } from "@/lib/db/client";
 import { ensureVentureFromScenario } from "@/lib/db/ensure-venture-from-scenario";
@@ -539,6 +539,51 @@ describe("second review of #207: a quote agreed on a cost line the new place lea
   it("its words name no time and no verdict", () => {
     const words = answer.costLineForAnotherPlace(LINE, STEP, 5000);
     for (const line of [words.said, words.takenBack, words.fact]) expect([...findTimeWords(line), ...findVerdicts(line)], line).toEqual([]);
+  });
+
+  // The third review of #207: the told row said the number is kept while the Start-up money gauge (and Your plan's
+  // money sums, which print it) said "your numbers: not given yet", on the same screen.
+  const m = cockpitWords.gauges.money;
+  const moneyIn = (province: "AB" | "ON", figures: FigureView[]) => {
+    const input = ideaIn(province, { figures });
+    const evaluation = evaluateRoad(input);
+    return { evaluation, money: gaugeView(evaluation, input.road, input.scenario).money };
+  };
+
+  it("from Ontario the Start-up money gauge says the number is kept and not counted, never that none was given", () => {
+    const { evaluation, money } = moneyIn("ON", [SERVICE_FEE]);
+    expect(evaluation.gauges.money.notCountedForPlaceLines).toBe(1);
+    expect(money.value).not.toContain(m.yoursNone);
+    expect(money.value).toContain(m.yoursNoneForPlace);
+    expect(money.lines).toContain(m.notCountedForPlace(1));
+  });
+
+  it("control: in Alberta the number is counted, and with no number in Ontario the gauge still says none was given", () => {
+    const counted = moneyIn("AB", [SERVICE_FEE]);
+    expect(counted.evaluation.gauges.money.notCountedForPlaceLines).toBe(0);
+    expect(counted.money.value).toContain(m.yours(5000, 1));
+    expect(counted.money.lines.join("\n")).not.toContain("not counted for your place");
+    const none = moneyIn("ON", []);
+    expect(none.money.value).toContain(m.yoursNone);
+    expect(none.money.lines.join("\n")).not.toContain("not counted for your place");
+  });
+
+  it("Compare the two endings says none is counted for the place, not that none was given (road 1's lawyer line, Alberta's page)", () => {
+    const lawyer: FigureView = {
+      ...SERVICE_FEE,
+      costLine: { roadId: roadApprenticeToOwnShopAB.id, stepId: "step-shop-open-own-shop", lineId: "cost-shop-lawyer-business-form", amountFrom: "your-guess" },
+    };
+    const yours = (province: "AB" | "ON") =>
+      compareEndings(ideaIn(province, { road: roadApprenticeToOwnShopAB, figures: [lawyer] }), "fork-shop-employed-or-own")!.rows.find((r) => r.id === "yours")!.values;
+    expect(yours("ON")).toEqual([cockpitWords.compare.yoursNoneForPlace, cockpitWords.compare.yoursNoneForPlace]);
+    // Control: in Alberta the side whose step holds the line counts it.
+    expect(yours("AB")).toContain(cockpitWords.compare.money(5000, 1));
+  });
+
+  it("the gauge's and Compare's new words name no time and no verdict", () => {
+    const t = cockpitWords.example.theirs;
+    const lines = [m.yoursNoneForPlace, m.notCountedForPlace(1), m.notCountedForPlace(2), cockpitWords.compare.yoursNoneForPlace, t.numbersNoneForPlace("Mara"), t.notCountedForPlace("Mara", 2)];
+    for (const line of lines) expect([...findTimeWords(line), ...findVerdicts(line)], line).toEqual([]);
   });
 });
 

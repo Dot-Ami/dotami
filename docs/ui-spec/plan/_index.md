@@ -74,7 +74,9 @@ splits across two pages, and every link is printed as its address (each link's t
    - a **named line not priced yet** shows its name and *not priced yet*, and no amount at all: never
      $0, never a typical number.
    Above the lines, the Start-up money gauge's sums (official fees, your numbers, not priced yet, left
-   out, waiting on a pick, savings, savings minus both), each only where the gauge shows it.
+   out, waiting on a pick, savings, savings minus both), each only where the gauge shows it; a number
+   agreed on a line the idea's place leaves out reads as the gauge says it (*your numbers: none counted for
+   your place*, *1 of your numbers kept, not counted for your place*; 2026-10-24).
    A step's lines carry the step panel's note when they aren't counted (*not on your path*, *waits on
    a pick*).
 7. **What you've told DotAmi** — the cockpit's left list, row for row: what was said, its day (or *day

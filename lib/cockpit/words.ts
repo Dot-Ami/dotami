@@ -95,6 +95,12 @@ export const cockpitWords = {
       fees: (cents: number, lines: number) => `${formatMoney(cents)} official fees (${count(lines, "line", "lines")})`,
       yours: (cents: number, lines: number) => `${formatMoney(cents)} your numbers (${count(lines, "line", "lines")})`,
       yoursNone: "your numbers: not given yet",
+      /**
+       * Every number the person agreed is on a line the road drawn for the idea's place leaves out (another province's
+       * page): given, kept and named in the told list, counted in no sum (lib/cockpit/view.ts `gaugeView`).
+       */
+      yoursNoneForPlace: "your numbers: none counted for your place",
+      notCountedForPlace: (n: number) => `${n} of your numbers kept, not counted for your place`,
       noLines: "No cost lines on this road yet",
       onlyIf: (n: number) => `${count(n, "official fee applies", "official fees apply")} only sometimes, not added up`,
       notPriced: (n: number) => `${n} not priced yet`,
@@ -479,6 +485,8 @@ export const cockpitWords = {
     money: (cents: number, lines: number) => `${formatMoney(cents)} (${count(lines, "line", "lines")})`,
     feesNone: "none",
     yoursNone: "not given yet",
+    /** As the Start-up money gauge says it: the person's numbers are all on lines the idea's place leaves out. */
+    yoursNoneForPlace: "none counted for your place",
     lines: (n: number) => count(n, "line", "lines"),
     onlyIf: (n: number) => (n === 0 ? "none" : `${count(n, "line", "lines")}, not added up`),
     cards: (apply: number, checkFirst: number) => `${apply} apply · ${checkFirst} check first`,
@@ -524,6 +532,8 @@ export const cockpitWords = {
       dateLabel: (person: string) => `${person}'s date`,
       numbers: (person: string, cents: number, lines: number) => `${formatMoney(cents)} ${person}'s numbers (${count(lines, "line", "lines")})`,
       numbersNone: (person: string) => `${person}'s numbers: not given yet`,
+      numbersNoneForPlace: (person: string) => `${person}'s numbers: none counted for ${person}'s place`,
+      notCountedForPlace: (person: string, n: number) => `${n} of ${person}'s numbers kept, not counted for ${person}'s place`,
       ownSkills: (person: string, have: number, learning: number, notYet: number) =>
         `${person}'s own skills: ${have} have · ${learning} learning · ${notYet} not yet`,
       job: (person: string, have: number, learning: number, notYet: number, listed: number) =>

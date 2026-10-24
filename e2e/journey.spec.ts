@@ -337,6 +337,8 @@ test("the whole journey: front door → destination → pick a future → the co
   await button(page, "Save").click();
   await expect(told(page).getByRole("status")).toContainText("Because you told us your place is Ontario");
   await expect(told(page).getByText(`${booksTold}; it is kept with this idea and not counted for your place`, { exact: false })).toBeVisible();
+  // The Start-up money gauge counts it as kept, never as a number not given (third review of #207).
+  await expect(gauge(page, "Start-up money")).toContainText("1 of your numbers kept, not counted for your place");
   await look(seen, page, "cockpit after a change of place to Ontario, with a quote on an Alberta line");
   await stage(page, registerApprentice.label).click();
   await expect(stepPanel(page)).toContainText("rest on other provinces' pages, so none is shown for your place.");

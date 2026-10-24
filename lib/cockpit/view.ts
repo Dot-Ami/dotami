@@ -291,15 +291,22 @@ export function gaugeView(evaluation: RoadEvaluation, road: Road, scenario: Scen
   const savingsLine = m.savingsCents === null ? words.gauges.money.noSavings : words.gauges.money.savings(m.savingsCents);
   // Each part only with lines behind it, and its count: no line means no amount, so never "$0 your numbers"
   // for a person who gave none (the same rule as the badges, where a blank is never $0).
+  // A number kept on a line the idea's place leaves out was given: with none counted, the part says none is counted
+  // for the place, never "not given yet", and a line counts what is kept (third review of #207).
+  const keptForPlace = m.notCountedForPlaceLines;
   const moneyParts = [
     ...(m.officialFeeLines > 0 ? [words.gauges.money.fees(m.officialFeesCents, m.officialFeeLines)] : []),
     m.yourNumberLines > 0
       ? person
         ? words.example.theirs.numbers(person, m.yourNumbersCents, m.yourNumberLines)
         : words.gauges.money.yours(m.yourNumbersCents, m.yourNumberLines)
-      : person
-        ? words.example.theirs.numbersNone(person)
-        : words.gauges.money.yoursNone,
+      : keptForPlace > 0
+        ? person
+          ? words.example.theirs.numbersNoneForPlace(person)
+          : words.gauges.money.yoursNoneForPlace
+        : person
+          ? words.example.theirs.numbersNone(person)
+          : words.gauges.money.yoursNone,
   ];
   const money: GaugeLines = {
     value: anyLines ? moneyParts.join(" · ") : words.gauges.money.noLines,
@@ -308,6 +315,9 @@ export function gaugeView(evaluation: RoadEvaluation, road: Road, scenario: Scen
       ...(m.onlyIfFeeLines > 0 ? [words.gauges.money.onlyIf(m.onlyIfFeeLines)] : []),
       ...(m.notPricedLines > 0 ? [words.gauges.money.notPriced(m.notPricedLines)] : []),
       ...(m.leftOutLines > 0 ? [words.gauges.money.leftOut(m.leftOutLines)] : []),
+      ...(keptForPlace > 0
+        ? [person ? words.example.theirs.notCountedForPlace(person, keptForPlace) : words.gauges.money.notCountedForPlace(keptForPlace)]
+        : []),
       ...m.waitingOnForks.map((w) => words.gauges.money.waiting(w.lines, w.label)),
       savingsLine,
       // Road evaluation gives the difference only when there are savings and a line with an amount.

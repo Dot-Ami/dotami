@@ -8,6 +8,7 @@ import {
   type CostLineAsShown,
   type Fork,
   type Road,
+  type RoadStep,
   type SkillItem,
 } from "@/lib/engines/roads/v2026";
 import type { SkillMarkValue, StepStatus } from "@/lib/futures/types";
@@ -187,6 +188,12 @@ export interface RoadGauges {
     notPricedLines: number;
     /** Lines on steps not on the person's path. */
     leftOutLines: number;
+    /**
+     * The person's agreed numbers on named lines the road drawn for the idea's place leaves out (`leftOutForPlace`: the
+     * line rests on another province's page). Kept with the idea and listed among what they told DotAmi, counted in no
+     * sum, so a gauge can say so, never that no number was given (third review of #207).
+     */
+    notCountedForPlaceLines: number;
     /** Lines waiting on a fork with no pick yet, per fork, in road order. */
     waitingOnForks: { forkId: string; label: string; lines: number }[];
     savingsCents: number | null;
@@ -554,6 +561,7 @@ function gauges(
     yourNumberLines: 0,
     notPricedLines: 0,
     leftOutLines: 0,
+    notCountedForPlaceLines: 0,
     waitingOnForks: [],
     savingsCents: input.agreed.savingsCents,
     differenceCents: null,
@@ -581,6 +589,11 @@ function gauges(
       }
     }
   }
+  // Read the way the told list reads them (`personAnswers`), whether or not the step is on the person's path.
+  const stepById = new Map(road.steps.map((s) => [s.id, s]));
+  money.notCountedForPlaceLines = input.agreed.costLines.filter(
+    (q) => usableQuote(q.amountCents) && lineLeftOutForPlace(stepById.get(q.stepId), q.lineId) !== undefined,
+  ).length;
   money.waitingOnForks = road.forks.flatMap((fork) =>
     (waiting.get(fork.id) ?? 0) > 0 ? [{ forkId: fork.id, label: fork.label, lines: waiting.get(fork.id)! }] : [],
   );
@@ -621,6 +634,16 @@ function gauges(
     money,
     date: input.targetMonth !== null && months !== null ? { targetMonth: input.targetMonth, monthsFromToday: months } : null,
   };
+}
+
+/** A number that isn't a whole, non-negative number of cents is shown as not priced, so it isn't an answer either. */
+function usableQuote(amountCents: number): boolean {
+  return Number.isSafeInteger(amountCents) && amountCents >= 0;
+}
+
+/** The named line a quote is on, when the road drawn for the idea's place leaves it out (`leftOutForPlace`). */
+function lineLeftOutForPlace(step: RoadStep | undefined, lineId: string) {
+  return step?.leftOutForPlace?.costs.find((c) => c.id === lineId && c.kind === "named");
 }
 
 /** The person's own answers about this road, in plain words, for the receipts. Each one was given. */
@@ -670,9 +693,8 @@ function personAnswers(input: RoadEvaluationInput, road: Road): ToldAnswer[] {
     const line = step?.costs.find((c) => c.id === quote.lineId && c.kind === "named");
     // A line the road drawn for the idea's place leaves out (it rests on another province's page): the person's
     // number is still theirs, so it is listed, saying it isn't counted for this place (quoteOf never prices it).
-    const elsewhere = line ? undefined : step?.leftOutForPlace?.costs.find((c) => c.id === quote.lineId && c.kind === "named");
-    // A number that isn't a whole, non-negative number of cents is shown as not priced, so it isn't an answer either.
-    if (!step || !(line ?? elsewhere) || !Number.isSafeInteger(quote.amountCents) || quote.amountCents < 0) continue;
+    const elsewhere = line ? undefined : lineLeftOutForPlace(step, quote.lineId);
+    if (!step || !(line ?? elsewhere) || !usableQuote(quote.amountCents)) continue;
     const said = line
       ? answer.costLine(line.label, step.label, quote.amountCents)
       : answer.costLineForAnotherPlace(elsewhere!.label, step.label, quote.amountCents);

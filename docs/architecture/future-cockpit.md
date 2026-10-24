@@ -512,7 +512,9 @@ answer), the what-if bar, *Compare* and *This is mine*. The left rail stays as i
   - **Start-up money** (*yours + cited*): official fees and the person's own numbers, each with its
     count of lines (*$1,860 official fees (3 lines) · $3,400 your numbers (1 line)*). A part with no line
     behind it shows no amount: no official fee part when no fee counts, and *your numbers: not given yet*
-    when the person agreed to none, never *$0* (the badges' rule: a blank is never $0); *n official fees apply only sometimes, not added
+    when the person agreed to none (*your numbers: none counted for your place*, with *n of your numbers kept,
+    not counted for your place*, when the ones they agreed are all on lines the idea's place leaves out, since
+    2026-10-24), never *$0* (the badges' rule: a blank is never $0); *n official fees apply only sometimes, not added
     up* (an `onlyIf` fee is in neither part: the badges leave it out of a step's sum and say so, and the
     step panel and the money list show its condition); *n not priced yet*; the lines left out (off the path, or waiting on a fork with no pick); the
     savings; and *savings minus both* only when road evaluation gives that difference. A road with no

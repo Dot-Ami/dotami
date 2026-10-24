@@ -565,7 +565,9 @@ export function compareEndings(withWhatIf: RoadEvaluationInput, forkId: string):
       skills: c.skills(skills.have, skills.learning, skills.notYet, skills.notMarked),
       legal: String(items.filter((id) => kindOf.get(id) === "legal-requirement").length),
       fees: m.officialFeeLines > 0 ? c.money(m.officialFeesCents, m.officialFeeLines) : c.feesNone,
-      yours: m.yourNumberLines > 0 ? c.money(m.yourNumbersCents, m.yourNumberLines) : c.yoursNone,
+      // A number kept on a line the idea's place leaves out was given, so this says none is counted, as the gauge does.
+      yours:
+        m.yourNumberLines > 0 ? c.money(m.yourNumbersCents, m.yourNumberLines) : m.notCountedForPlaceLines > 0 ? c.yoursNoneForPlace : c.yoursNone,
       "not-priced": c.lines(m.notPricedLines),
       "only-if": c.onlyIf(m.onlyIfFeeLines),
       cards: c.cards(cards.filter((u) => u.state === "green").length, cards.filter((u) => u.state === "yellow").length),

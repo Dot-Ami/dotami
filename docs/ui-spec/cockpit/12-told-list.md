@@ -30,7 +30,8 @@ ladder, the save line). Two regions:
     the Alberta registry agent's fee after a move to Ontario) stays a row (since 2026-10-24, the maintainer's
     decision of that day, option B): *You told us your number for “…” on “…” is $…; it is kept with this idea and
     not counted for your place, because that line rests on another province's page*, with **Take back** and no
-    **Change** (no step drawn for the place shows its line); no sum counts it.
+    **Change** (no step drawn for the place shows its line); no sum counts it, and the Start-up money gauge and
+    Compare say none is counted for the place, never that no number was given ([07-goal-bar.md](07-goal-bar.md)).
 - **Not told yet** (a region with that name). Each missing answer as *<question> → unlocks <what>*, in
   the order DotAmi asks them (a line says *In the order DotAmi asks them, not importance*): your date;
   your savings; your numbers for the cost lines not priced yet; your marks on the skills not marked; an
