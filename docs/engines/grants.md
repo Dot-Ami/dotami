@@ -46,15 +46,17 @@ It is the program whose page the Canada-Alberta Job Grant's address now opens
 never reused.
 
 - **What it says.** Every amount and rule is a quote the citation holds, each found on the page by
-  the reading list's tool on 2026-10-23: the employer's 25% (“Must contribute 25% of the total
-  eligible training costs …”), “the other 75% of the cost to a maximum of $5,000 per employed trainee
-  per fiscal year”, “up to a maximum amount of $100,000 per fiscal year” for an employer, and that an
-  employer “be operational in Alberta for at least one year”. Outside the quotes DotAmi says only the
-  compass's "If" and the page's name. The card's payoff (`lensAnnotations.tax`) shows the first
-  three, in curly quote marks. The one-year rule is in `eligibility` only, which no screen draws for
-  a program: it is a time, and the screens' no-times check (`e2e/idea-sweep.spec.ts`) lets a quoted
-  time through only while a tool check alone holds it, so a later read of the page would make it
-  count as DotAmi's own.
+  the reading list's tool on 2026-10-23: “Must contribute 25% of the total eligible training costs
+  …”, “Contributes the other 75% of the cost to a maximum of $5,000 per employed trainee per fiscal
+  year”, “An employer is eligible for up to a maximum amount of $100,000 per fiscal year”, and “be
+  operational in Alberta for at least one year”. Outside the quotes DotAmi says only the compass's
+  "If" and the page's name: who contributes the 25% and who the 75% isn't in the words held, so no
+  line names it. The card's payoff (`lensAnnotations.tax`) shows the first three, in curly quote
+  marks. The one-year rule is a time, so it is on no card's line (it is in `eligibility`, which no
+  screen draws for a program); it shows only among the words found on the page, under the card's
+  source, as every tool check's quotes do. The screens' no-times check (`e2e/idea-sweep.spec.ts`)
+  lets a quoted time through only while a tool check alone holds it; once a read of the page is
+  recorded, the read wins on screen and that list of words is no longer drawn.
 - **How it was checked.** A tool check of 2026-10-23, with no read on record, so its card says
   *Checked by a tool* in amber and lists the four quotes. A networked
   `node scripts/check-quotes.mjs` run should find them again before merge (rule 4 of

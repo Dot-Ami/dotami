@@ -336,15 +336,16 @@ export const grantProgramsV2026 = [
     description:
       "In the words of Alberta's page on this program: “Must contribute 25% of the total eligible training costs for existing employees or individuals (includes unemployed individuals) they intend to hire”; “Contributes the other 75% of the cost to a maximum of $5,000 per employed trainee per fiscal year”; “An employer is eligible for up to a maximum amount of $100,000 per fiscal year”.",
     // No screen draws a program's eligibility. The page's one-year rule is a time, which DotAmi shows only as the
-    // page's quoted words, so it stays off the card's line (lensAnnotations.tax).
+    // page's quoted words, so it stays off the card's line (lensAnnotations.tax); it is on screen only among the
+    // words found on the page, under the card's source.
     eligibility: "Employers, in Alberta's words, one of the requirements its page lists: “be operational in Alberta for at least one year”.",
     lensAnnotations: {
       // Shown on screen as the card's payoff (lib/brain/evaluate.ts evaluateGrant). Outside the quotes: the compass's
       // "If" and the page's name only, never what the program may do. The page's subjects for the 25% and 75% lines
-      // aren't held, so none is added.
+      // aren't held, so none is added, here or in the legal line.
       tax: "If training employees is on the venture's path, Alberta's page on this program: “Must contribute 25% of the total eligible training costs for existing employees or individuals (includes unemployed individuals) they intend to hire”; “Contributes the other 75% of the cost to a maximum of $5,000 per employed trainee per fiscal year”; “An employer is eligible for up to a maximum amount of $100,000 per fiscal year”.",
       legal:
-        "Alberta's page on this program, on the employer's own share: “Must contribute 25% of the total eligible training costs for existing employees or individuals (includes unemployed individuals) they intend to hire”.",
+        "Alberta's page on this program: “Must contribute 25% of the total eligible training costs for existing employees or individuals (includes unemployed individuals) they intend to hire”.",
     },
     citations: [
       {

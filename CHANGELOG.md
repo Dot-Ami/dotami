@@ -34,11 +34,12 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - **The Canada-Alberta Productivity Grant, for ideas in Alberta** (the maintainer's call a-call-1 on his reading
   list of 2026-10-23: "ADD it"). The program whose page the Canada-Alberta Job Grant's old address now opens is in
   the programs catalog under its own id, `grant-capg`; the Job Grant's id is never reused. Its card says only what
-  Alberta's page says, in quote marks: the employer “Must contribute 25% of the total eligible training costs …”,
-  the program “Contributes the other 75% of the cost to a maximum of $5,000 per employed trainee per fiscal year”,
-  and “An employer is eligible for up to a maximum amount of $100,000 per fiscal year”. Outside the quotes it says
-  only "If training employees is on the venture's path" and the page's name. The page's rule that an employer "be
-  operational in Alberta for at least one year" is kept in the entry, quoted, and not drawn on the card. Its source
+  Alberta's page says, in quote marks: “Must contribute 25% of the total eligible training costs …”, “Contributes
+  the other 75% of the cost to a maximum of $5,000 per employed trainee per fiscal year” and “An employer is
+  eligible for up to a maximum amount of $100,000 per fiscal year” (who contributes which share isn't in the words
+  DotAmi holds, so no line names it). Outside the quotes it says only "If training employees is on the venture's
+  path" and the page's name. The page's “be operational in Alberta for at least one year” is a time, so it is not
+  on the card's line; it shows only among the words found on the page, under the card's source. That source
   says "Checked by a tool on 2026-10-23" in amber, with the four quotes the reading list's matcher found on the
   page that day (a networked `node scripts/check-quotes.mjs` run should find them again); no read of the page is
   recorded yet. It shows for every idea in Alberta, at every structure and kind of work (the page's words DotAmi

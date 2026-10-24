@@ -10,6 +10,9 @@
  * Once #207 is in, this file also checks the id against RETIRED_GRANT_PROGRAMS (the Job Grant's `grant-cajg` stays
  * retired, and no retired id is in the catalog).
  */
+import { readFileSync } from "node:fs";
+import path from "node:path";
+
 import { describe, expect, it } from "vitest";
 
 import { evaluateProfile, type EvaluationProfile } from "@/lib/brain";
@@ -17,7 +20,7 @@ import { itemsForStep } from "@/lib/brain/node-items";
 import { grantProgramsV2026 } from "@/lib/engines/grants/v2026/programs";
 import type { GrantProgram } from "@/lib/engines/grants/v2026/types";
 import { generalRoadV2026, roadApprenticeToOwnShopAB, roadFederalStepsCA, skillItemsV2026 } from "@/lib/engines/roads/v2026";
-import { citationCheckProblems, howChecked, howCheckedWords } from "@/lib/engines/shared/citation-check";
+import { citationCheckProblems, howChecked, howCheckedWords, toolCheckQuotes } from "@/lib/engines/shared/citation-check";
 import { evaluateRoad } from "@/lib/roads";
 
 import { input, inventedIdea } from "./helpers/road-to-evaluate";
@@ -59,6 +62,8 @@ const profile = (change: Partial<EvaluationProfile>): EvaluationProfile => ({
   ...change,
 });
 const card = (p: EvaluationProfile, id = ID) => evaluateProfile(p, { today: TODAY }).unlocks.find((u) => u.id === id);
+/** A doc's words with its line breaks taken out, so a phrase split over two lines is found. */
+const readFlat = (file: string) => readFileSync(path.join(__dirname, "..", file), "utf8").replace(/\s+/g, " ");
 
 describe("the Canada-Alberta Productivity Grant in the programs catalog", () => {
   it("is there once, under its own new id, as a grant for Alberta open at every structure and kind of work", () => {
@@ -108,9 +113,28 @@ describe("the Canada-Alberta Productivity Grant in the programs catalog", () => 
       expect(own(line), line).not.toMatch(/\b(may|can|will|must|should|qualif\w*|eligib\w*|guarantee\w*|deductible)\b/i);
       expect(findTimeWords(own(line)), line).toEqual([]);
     }
-    // The line the card shows holds no time even inside its quotes: the page's one-year rule stays in `eligibility`,
-    // which no screen draws for a program.
+    // The line the card shows holds no time even inside its quotes: the page's one-year rule stays off it (and in
+    // `eligibility`, which no screen draws for a program). It shows only among the words found on the page, under the
+    // card's source (next check).
     expect(findTimeWords(p.lensAnnotations.tax)).toEqual([]);
+  });
+
+  it("its legal line names no subject the page's held words don't: the page's subjects for its 25% and 75% lines aren't held", () => {
+    expect(own(capg()!.lensAnnotations.legal).replace(/\s+/g, " ").trim()).toBe("Alberta's page on this program: .");
+    // Planted control: the line as it read before is caught.
+    expect(own("Alberta's page on this program, on the employer's own share: “Must contribute 25%”.")).toMatch(/employer/);
+  });
+
+  it("the page's one-year rule shows under the card's source, among the words found on the page, and the docs say so", () => {
+    // components/shared/citation-links.tsx draws a tool check's quotes under "Words found on the page:", and the
+    // playbook export prints them (lib/playbook/render-markdown.ts), so the rule is on screen as the page's own words.
+    expect(toolCheckQuotes(capg()!.citations[0]!)).toContain(HELD[3]);
+    const saidItWasOnNoScreen: [string, string][] = [
+      ["CHANGELOG.md", "is kept in the entry, quoted, and not drawn on the card"],
+      ["docs/engines/grants.md", "The one-year rule is in `eligibility` only, which no screen draws"],
+      ["docs/engines/citations.md", "the one-year rule is kept in `eligibility`, which no screen draws"],
+    ];
+    for (const [file, words] of saidItWasOnNoScreen) expect(readFlat(file).includes(words), `${file} still says “${words}”`).toBe(false);
   });
 
   it("planted control: the page's one-year rule is a time the check sees, so it stays off the card's line", () => {
