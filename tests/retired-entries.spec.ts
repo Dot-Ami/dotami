@@ -177,6 +177,19 @@ describe("3. A retired id is never used again", () => {
     for (const { id } of riskEntriesV2026) expect(SHIPPED_RISK_IDS, `add ${id} to the shipped list`).toContain(id);
   });
 
+  it("a retired entry that says how its subject comes back says under a new id, in the catalog and in its doc", () => {
+    // One rule for every catalog: the first check here fails on any live entry with a retired id, so a subject that
+    // comes back can only come back under a new one (citations.md: a retired id is never used for anything else).
+    const underTheOldId = /under (this|the same|its old|its own) id/i;
+    for (const r of retired()) {
+      if (/comes back/i.test(r.why)) expect(r.why, r.id).toMatch(/only under a new id/i);
+      expect(r.why, r.id).not.toMatch(underTheOldId);
+    }
+    for (const file of ["docs/engines/compliance.md", "docs/brain/risk-calculator.md"]) {
+      expect(retiredSection(file).replace(/\s+/g, " "), file).not.toMatch(underTheOldId);
+    }
+  });
+
   it("each retired entry says why without claiming that a person read its page", () => {
     // The maintainer's reads are not on record yet (his answer of 2026-10-24): readOn is the day the reading list's
     // tool opened the page, as it is for the grants catalog's retired programs.

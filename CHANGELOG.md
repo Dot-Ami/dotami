@@ -427,8 +427,8 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   deductions", and its one source, the CRA's *Setting up your business*, supports neither. DotAmi holds no quote
   from a page that does, so nothing is left to say: the *Hobby vs. business income test* card still shows, with
   no risk box, and its colour doesn't change. The id, `risk-hobby-reclassification`, is kept with the reason in
-  `RETIRED_RISK_ENTRIES` and never used for another read ([docs/brain/risk-calculator.md](docs/brain/risk-calculator.md),
-  § Retired risk reads). Test: `tests/retired-entries.spec.ts` §§ 2 and 3.
+  `RETIRED_RISK_ENTRIES` and never used again: a read on the same subject would come back under a new id
+  ([docs/brain/risk-calculator.md](docs/brain/risk-calculator.md), § Retired risk reads). Test: `tests/retired-entries.spec.ts` §§ 2 and 3.
 - **The Delete menu's records line keeps the CRA's own words on the six years.** Its citation, the CRA's *Where
   to keep your records, for how long …*, now also holds "Generally, you must keep all required records and
   supporting documents for a period of six years from the end of the last tax year they relate to." and "In

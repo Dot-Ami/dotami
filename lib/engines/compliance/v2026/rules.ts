@@ -296,8 +296,9 @@ export type ComplianceRuleId = (typeof complianceRulesV2026)[number]["id"];
 
 /**
  * Rules taken off the catalog (docs/engines/compliance.md, § Retired rules), in the shape #207 gives the grants
- * catalog's retired programs (RETIRED_GRANT_PROGRAMS). Their ids are never used for another rule (IDs are forever),
- * and nothing here reaches a screen; tests/retired-entries.spec.ts holds this list to the catalog.
+ * catalog's retired programs (RETIRED_GRANT_PROGRAMS). Their ids are never used again, not even for a rule
+ * on the same subject, which comes back under a new id (IDs are forever); nothing here reaches a screen, and
+ * tests/retired-entries.spec.ts holds this list to the catalog.
  */
 export const RETIRED_COMPLIANCE_RULES: readonly RetiredComplianceRule[] = [
   {

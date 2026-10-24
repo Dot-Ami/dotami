@@ -125,7 +125,7 @@ loan program's card once #208 adds it there; until then the box names the page i
 
 A read taken off the catalog stays listed here and in `RETIRED_RISK_ENTRIES`
 (`lib/engines/risk/v2026/triggers.ts`, the same shape as the compliance catalog's retired rules and the
-grants catalog's retired programs, #207), and its id is never used for another read.
+grants catalog's retired programs, #207), and its id is never used again.
 [`tests/retired-entries.spec.ts`](../../tests/retired-entries.spec.ts) holds the list to the catalog: no
 retired id is a live entry, nothing on the map names one, and every read that ever shipped is either live
 or here.
@@ -135,8 +135,8 @@ or here.
 | `risk-hobby-reclassification` | Repeated losses → hobby reclassification | https://www.canada.ca/en/revenue-agency/services/tax/businesses/small-businesses-self-employed-income/setting-your-business.html | On the maintainer's reading list it didn't match its source: the CRA's *Setting up your business* doesn't support what it said about losses year after year, the reasonable-expectation-of-profit question, or running the venture "business-like" with "records that show profit intent", and DotAmi holds no quote from a page that does. |
 
 The *Hobby vs. business income test* card still shows; it no longer carries a risk box, and its colour
-doesn't change. The read comes back under the same id only for the same subject, citing a page on business
-versus personal pursuits and quoting it.
+doesn't change. A read on its subject comes back only under a new id, as a retired compliance rule's does,
+citing a page on business versus personal pursuits and quoting it.
 
 ## Testing
 
