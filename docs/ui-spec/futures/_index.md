@@ -3,8 +3,9 @@
 Page: `/futures` · Component: `components/front-door/pick-future-page.tsx` (cards:
 `lib/front-door/futures.ts`; words: `lib/front-door/words.ts`)
 
-Last updated: 2026-10-24 (the place and *business / career / both* are held in the window's memory until a future is
-picked, never in its storage, so a page loaded afresh says no place was answered); 2026-10-13 (the first written future listed; design: docs/architecture/future-cockpit.md § 1, The way in as built)
+Last updated: 2026-10-24 (the place and *business / career / both* are held in the window's memory, never in its
+storage, and kept on the idea of each future picked, so a page loaded afresh says no place was answered, a future
+picked or not); 2026-10-13 (the first written future listed; design: docs/architecture/future-cockpit.md § 1, The way in as built)
 
 > **Designed 2026-10-20, not built yet — phase 2's three steps (task 28g).** Pick a future becomes three
 > steps in the page's one step region, one at a time, asked before any road is drawn: **1. What's closest to
@@ -98,7 +99,7 @@ from *Your destination*'s **Pick a future →**. Next: the cockpit on the new id
 | A card | display: the road's name (level 2 heading); what it holds (*A business* · *A career and a business* · *A career*); *Written for Alberta*, plus *"You said <place>."* when that isn't the person's place; counts only: *n steps · n skills listed · n official fees found · n cost lines you'd price*; and *Sources: n read · m checked by a tool only, not read by a person yet* (the second part amber, and left out when it is 0), counted through `lib/engines/shared/citation-check.ts` over every citation on the road (its steps, *done when* lines, official fees and named lines' sources) and the skill items it lists | — |
 | **Look inside →** (one per card, named *Look inside <road's name>*) | builds the idea (the place answered, the name typed or the road's name; the work situation *not said*; the kind of venture, equipment and both sales targets *not said*, listed in `notSaid`, with the intake's starting values in their columns), saves it with `POST /api/scenario/save` carrying `roadId` and `lookingFor` in the first save, then opens `/cockpit?venture=<id>`. Disabled while saving. With no database the page says so and stays: a future that couldn't be saved isn't opened | `Venture` (with `roadId`, `roadChosenAt`, `lookingFor`, `lookingForSetAt`, `province`, `employmentStatus = NOT_SAID`, `notSaid`), `ScenarioState` |
 | **Not here yet?** box + **Keep my note and look inside the general road** | keeps the note as one of the person's statements (`POST /api/person/statements`) and empties the box, then does what **Look inside** does on the general road (*Starting any business in Alberta*). Note not kept: *"Not saved: no database reachable. Nothing was opened."* Note kept but the road not opened: *"Your note is kept. The general road couldn't be opened: no database reachable."* | `PersonStatement`, then as above |
-| No place answered yet | the cards are replaced by *"Say which province or territory you're in first."* and a link back to `/start`. Since 2026-10-23 also when the page is loaded afresh before a pick (a reload of `/futures`, a new window, or the desktop app's Go menu, which opens its pages with `loadURL`): the place is held in the window's memory only, and `/start` asks it again. Moving between DotAmi's pages, Mara's example and back included, keeps it | — |
+| No place answered yet | the cards are replaced by *"Say which province or territory you're in first."* and a link back to `/start`. Since 2026-10-23 also when the page is loaded afresh (a reload of `/futures`, a new window, or the desktop app's Go menu, which opens its pages with `loadURL`), a future picked or not: the place is held in the window's memory only, the idea a pick saved keeps it but nothing reads it back from there, and `/start` asks it again. Moving between DotAmi's pages, Mara's example and back included, keeps it | — |
 
 ## Page-level state
 

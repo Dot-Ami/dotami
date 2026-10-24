@@ -911,6 +911,11 @@ describe("6. The screen specs and design docs say what the screens now draw and 
     // Pick a future without a place: every way a page is loaded afresh, and not the example, which keeps it.
     const futures = spec("futures/_index.md");
     for (const way of ["a reload", "a new window", "Go menu"]) expect(futures).toContain(way);
+    // A pick ends nothing: /start reads neither answer back from the idea, so a page of Pick a future loaded afresh
+    // after a pick has no place either, as the line under 2 and 3 says ("a future picked or not").
+    expect(futures).toContain("a future picked or not");
+    expect(futures).not.toContain("before a pick");
+    expect(futures).not.toContain("until a future is picked");
   });
 
   it("the unsaved answer's words: the cockpit's save line and receipt, and About you's statement box", () => {
