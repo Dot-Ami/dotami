@@ -5,6 +5,9 @@
  * not on Your plan. Until 2026-10-23 the Change opened the intake, whose save is always a new idea, so the
  * person ended with two ideas and the first one still in Alberta. The unit side is tests/places-and-programs.spec.ts.
  *
+ * The pull request's second review (2026-10-24): a tick on a line Ontario leaves out survives a tick there; road 1
+ * from Ontario lists no skill item resting only on Alberta's pages; the rail's prep tools follow the place.
+ *
  * PLACE_SHOTS=<folder> saves the cockpit with the box open, and its receipt after Save, at 375, 768 and 1280 wide.
  */
 import { mkdirSync } from "node:fs";

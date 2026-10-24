@@ -533,7 +533,10 @@ placed in phase 3.
     rules and tax cards, fees, sources and map follow; a road written for Alberta stays drawn with its honest
     line; the Alberta area and region aren't shown outside Alberta (About this job, Your plan), still kept for
     a later history (`e2e/place-change.spec.ts`, `tests/places-and-programs.spec.ts`). The full Change box,
-    the history and outside Canada are phase 3 (a-call-8, a-call-9, a-call-10)
+    the history and outside Canada are phase 3 (a-call-8, a-call-9, a-call-10). Second review, 2026-10-24: ticks
+    kept across a change of place (by the storage and the cockpit, `ticksToSave`), its receipt names only the
+    place, a quote kept on a cost line the place leaves out named and not counted, skill items, empty sections
+    and Pick a future's card counts drawn for the place, and the rail's prep tools by place
   - [x] 28d: outside Alberta, the federal steps that apply everywhere, plus "Written for Alberta" with the
     person's own province named; Alberta-only steps and pages left out (full B.C. and Ontario roads come
     later). Built 2026-10-21 (`lib/engines/roads/v2026/federal-steps-ca.ts`, 13 steps; *Pick a future* lists it

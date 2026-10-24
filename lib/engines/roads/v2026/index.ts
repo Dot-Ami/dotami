@@ -74,8 +74,8 @@ export const skillItemsV2026: readonly SkillItem[] = [...skillItemsApprenticeToO
 
 /**
  * A step's own sources for the idea's place (`citationsForPlace`), with the count line's number grown by the
- * pages `roadForPlace` left out of its *done when* lines, cost lines, official links and listed skill items. The step panel and the
- * plan ask this, so one line says everything a step left out for another province.
+ * pages `roadForPlace` left out of its *done when* lines, cost lines, official links and listed skill items. The
+ * step panel and the plan ask this, so one line says everything a step left out for another province.
  */
 export function stepSourcesForPlace(
   road: Pick<Road, "provinces">,

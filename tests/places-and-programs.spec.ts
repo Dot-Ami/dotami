@@ -10,6 +10,9 @@
  *   page, checked by a tool and waiting for a person's read.
  * - a-call-1: the Alberta Investor Tax Credit and the Canada-Alberta Job Grant are off the programs catalog and
  *   every road, each kept in the retired list with the official reason and the day it was read.
+ * - The pull request's second review (2026-10-24): a tick on a line the new place leaves out is never lost; skill
+ *   items, empty sections, the receipt, a quote kept on a hidden line, Pick a future's card counts and the rail's
+ *   prep tools, each drawn for the idea's place.
  *
  * The end-to-end side (the idea count stays 1 in a real browser) is e2e/place-change.spec.ts.
  */
