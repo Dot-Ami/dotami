@@ -52,8 +52,8 @@ person is asked).
   DotAmi reads and writes none of them. The journey is held in the window's memory only
   ([`lib/journey/held-journey.ts`](../lib/journey/held-journey.ts), through
   [`components/shared/journey-provider.tsx`](../components/shared/journey-provider.tsx)): moving between
-  DotAmi's pages keeps it, Mara's example and back included, and a reload, a new window or the desktop app's Go
-  menu starts it afresh. What you answer is kept in the data file where it already was: your destination words
+  DotAmi's pages keeps it, Mara's example and back included, and a reload, a new window, or the desktop app's Go
+  menu or Help → Licences (each opens its page with `loadURL`) starts it afresh. What you answer is kept in the data file where it already was: your destination words
   and agreed income as soon as you give them, the sentence and the goal chips with the idea's first save,
   business-or-career and the place with the future you pick, and every change on the map by its autosave. A
   statement that couldn't be saved stays in its box, said not kept, with *Keep this* to try again. The box under
@@ -164,7 +164,8 @@ person is asked).
   Delete doesn't reach it; in the desktop app, close DotAmi and delete the “Local Storage” folder in the data
   folder; in a browser, clear the site's data ([`lib/privacy/inventory.ts`](../lib/privacy/inventory.ts)
   `NOT_CLEARED_BY_DELETE`). The journey held in the window's memory goes with a reload, a new window, the
-  desktop app's Go menu or closing DotAmi, and Delete takes from it what it takes from the data file.
+  desktop app's Go menu or Help → Licences, or closing DotAmi, and Delete takes from it what it takes from the
+  data file.
 
 ### What the policy will need to say
 

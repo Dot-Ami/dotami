@@ -234,8 +234,8 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   (`dotami-person-unsaved`), and the job descriptions typed under *Other…* on the intake
   (`dotami-employment-suggestions`, `localStorage`, with no end date). Now the journey is held in the window's
   memory only (`lib/journey/held-journey.ts`, `components/shared/journey-provider.tsx`): moving between pages
-  keeps it, Mara's example and back included, and a reload, a new window or the desktop app's Go menu starts it
-  afresh. What you answer is kept in the data file where it already was: your destination words and agreed
+  keeps it, Mara's example and back included, and a reload, a new window, or the desktop app's Go menu or Help →
+  Licences starts it afresh. What you answer is kept in the data file where it already was: your destination words and agreed
   income at once, the sentence and goals with the idea's first save, business-or-career and the place with the
   future you pick, the map's changes by its autosave. A statement that couldn't be saved stays in its box, said
   not kept, with *Keep this* to try again (`lib/person/words.ts`); the box under *Other…* no longer offers

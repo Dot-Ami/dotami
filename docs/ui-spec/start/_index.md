@@ -39,10 +39,11 @@ as they are kept, and business-or-career and the place with each future picked.
 
 That memory outlives the journey's own pages: the answers are still there when the person moves between
 DotAmi's pages, *Show me an example first* and back included. A page loaded afresh (a reload, a new window, or
-the desktop app's Go menu, which opens its pages with `loadURL`) starts it empty, and `/start` reads only 1 and
+the desktop app's Go menu or Help → Licences, which open their pages with `loadURL`) starts it empty, and `/start` reads only 1 and
 4 back from the data file (`lib/front-door/kept.ts`), so 2 and 3 are asked again, a future picked or not. The
 words say so where an answer is not kept: the line under the receipts of 2 and 3, and the no-database receipt
-of 1 ([01-questions.md](./01-questions.md)).
+of 1 ([01-questions.md](./01-questions.md)). They name the Go menu (the maintainer's words of 2026-10-24), not
+Help → Licences, which is left open in docs/task-list.md.
 
 Delete on *What DotAmi knows about you* takes from that memory what it takes from the data file: the words with
 *Your statements*, the income with *The yearly income you said you want*, all four answers with *Your ideas*

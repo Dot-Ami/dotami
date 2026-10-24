@@ -945,6 +945,27 @@ describe("6. The screen specs and design docs say what the screens now draw and 
     expect(doc("architecture/figures-privacy-review.md")).toContain("dotami-cockpit-folds");
   });
 
+  it("every desktop menu item that opens a page afresh is the Go menu's or Help's Licences, and the docs name both", () => {
+    // Each `go(…)` in desktop/main.mjs's menu is a loadURL: a fresh load, which empties the journey held in the
+    // window's memory. The words on screen name the Go menu (the maintainer's decision 1 of 2026-10-24); Help's
+    // Licences opens its page the same way, so the privacy log, the start spec and the task list name it too.
+    const main = readFileSync("desktop/main.mjs", "utf8");
+    const opened = (code: string) => [...code.matchAll(/click: go\("([^"]+)"\)/g)].map((m) => m[1]);
+    const goMenu = opened(main.match(/label: "Go",\s*submenu: \[([\s\S]*?)\]/)![1]);
+    expect(goMenu).toEqual(["/", "/ventures", "/settings"]);
+    expect(opened(main).filter((page) => !goMenu.includes(page))).toEqual(["/licences"]);
+    const unreleased = doc("privacy-log.md").split("## [0.4.1]")[0];
+    for (const [file, text] of [
+      ["docs/privacy-log.md [Unreleased]", unreleased],
+      ["docs/ui-spec/start/_index.md", spec("start/_index.md")],
+      ["docs/task-list.md", doc("task-list.md")],
+    ] as const) {
+      expect(text, file).toContain("Help → Licences");
+    }
+    // The privacy log says every way the memory is emptied: each time it names the Go menu, it names Licences too.
+    expect(unreleased.split("Go menu").length).toBe(unreleased.split("Help → Licences").length);
+  });
+
   it("the map's chips: every chip's words in the canvas and overlay specs, and every readout id", () => {
     const canvas = spec("cockpit/03-canvas.md");
     const overlays = spec("cockpit/08-overlays.md");

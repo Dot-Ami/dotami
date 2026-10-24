@@ -1139,7 +1139,9 @@ roadmap's build order.
   - [ ] Left open by #210, each written down where it applies: the desktop app's Go menu loads its pages
     afresh (`loadURL`, `desktop/main.mjs`), which empties the journey held in the window's memory, and the words
     say so (moving inside the page instead needs a message through `desktop/window-preload.cjs`, its own
-    review); in a browser copy, Back and Forward show the front door's links as first drawn
+    review); Help → Licences loads its page the same way (the same `go` helper), which the privacy log and
+    docs/ui-spec/start/_index.md say but the words on screen, naming the Go menu only (the maintainer's words
+    of 2026-10-24), don't: the same message would fix both, or the words could name it; in a browser copy, Back and Forward show the front door's links as first drawn
     (docs/ui-spec/landing/03-escape-hatches.md); the line under the receipts of questions 2 and 3 sits outside
     the receipt's `role="status"`, so a screen reader doesn't hear it with the receipt; and CLAUDE.md's Data
     paragraph still says of the front-door sentence that "the tab marks it done" (since 2026-10-24 the journey
