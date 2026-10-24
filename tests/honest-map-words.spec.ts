@@ -140,7 +140,11 @@ describe("the playbook export marks a default as a default", () => {
     activityTags: [],
   };
 
-  it("an untouched toggle is written as 'default, not picked yet'; a pick isn't", () => {
+  // renderPlaybookMarkdown is the route /api/playbook's renderer, which no page calls since 2026-10-23: the cockpit's
+  // Export is lib/playbook/road-export.ts, built on buildPlan, whose "The map's default pick: …, not yours yet" is
+  // tested with Your plan (tests/cockpit-plan.spec.ts) and in tests/prerelease-numbers.spec.ts below. This keeps the
+  // route honest while it still answers.
+  it("an untouched toggle is written as 'default, not picked yet'; a pick isn't (the route's renderer)", () => {
     const fresh = buildScenarioFromIntake(intake, "playbook-defaults");
     const md = renderPlaybookMarkdown(buildPlaybookSkeleton(cfeCatalogV2026.nodes, fresh));
     expect(md.match(/\(default, not picked yet\)/g)?.length).toBe(2);

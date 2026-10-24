@@ -148,6 +148,48 @@ describe("1. Export is the road on screen", () => {
     expect(md).toContain(`#### ${cockpitWords.exportDoc.citations}`);
   });
 
+  it("carries an Alberta idea's area as Your plan does, and the privacy inventory says so", async () => {
+    // A blind review of this branch (2026-10-24): Export now holds the area and the economic region, while the
+    // inventory's lines (drawn on What DotAmi knows about you) still named only Your plan and About this job.
+    const { ALBERTA_AREAS } = await import("@/lib/places/alberta-areas");
+    const { areaLabel } = await import("@/lib/front-door/where");
+    const { TABLES } = await import("@/lib/privacy/inventory");
+    const area = ALBERTA_AREAS[0]!;
+    const md = renderRoadExport({ ...exportArgs(roadApprenticeToOwnShopAB, "CA-AB"), where: { area: { value: area.value, setOn: TODAY }, region: null } });
+    expect(md).toContain(cockpitWords.plan.whereArea(areaLabel(area.value)!, TODAY));
+    const lines = TABLES.find((t) => t.model === "Venture")!.lines!;
+    for (const name of ["Your area", "Your economic region"]) expect(lines.find((l) => l.name === name)!.holds, name).toContain("Export");
+  });
+
+  it("on road 0 an untouched fork is the map's default pick, not the person's; a pick reads as theirs", () => {
+    // The live path of issue #5's guarantee (tests/honest-map-words.spec.ts keeps the route's old renderer honest).
+    const road = roadsV2026[0]!;
+    const args = exportArgs(road, "CA-AB");
+    const untouched = renderRoadExport(args);
+    expect(untouched.match(/The map's default pick: “[^”]+”, not yours yet/g)?.length).toBe(road.forks.length);
+    const fork = road.forks[0]!;
+    const side = fork.sides[1] as CFENodeId;
+    const scenario = updateScenarioBranch(args.input.scenario, fork.id as BranchDecisionId, side);
+    const picked = renderRoadExport({ ...args, input: { ...args.input, scenario, forkPicks: { ...args.input.forkPicks, [fork.id]: { stepId: side, from: "map" } } } });
+    expect(picked.match(/The map's default pick/g)?.length ?? 0).toBe(road.forks.length - 1);
+    expect(picked).toContain(cockpitWords.compare.yourPick(road.steps.find((s) => s.id === side)!.label));
+  });
+
+  it("every tax-map stage on road 0 keeps all the fields the step panel shows, its financial impact and notes too", () => {
+    // A blind review of this branch (2026-10-24): the export dropped "Financial impact (summary)" and the projection
+    // notes the old Export printed, and the step panel's "More about this stage" still shows.
+    const road = roadsV2026[0]!;
+    const md = renderRoadExport(exportArgs(road, "CA-AB"));
+    const stages = cfeCatalogV2026.nodes.filter((n) => road.steps.some((s) => s.id === n.id));
+    expect(stages.length).toBeGreaterThan(5);
+    for (const node of stages) {
+      for (const field of [node.trigger, node.description, node.taxImpact, node.lensAnnotations.tax, node.lensAnnotations.legal, node.financialImpact.summary]) {
+        expect(md, `${node.id}: ${field.slice(0, 40)}`).toContain(field);
+      }
+      for (const note of node.financialImpact.projectionNotes) expect(md, `${node.id}: ${note.slice(0, 40)}`).toContain(`- ${note}`);
+    }
+  });
+
   it("the Export panel draws that markdown, built in the browser from what the cockpit holds", () => {
     const args = exportArgs(roadApprenticeToOwnShopAB, "CA-AB");
     const html = renderToStaticMarkup(createElement(PlaybookExportPanel, { planArgs: args, ventureId: "v1", onClose: () => {} }));
@@ -256,16 +298,22 @@ const inQuotes = (quotes: string, amount: string) => {
 
 describe("4. The vehicle caps are the amounts the Regulations prescribe", () => {
   const vehicle = writeOffCategoriesV2026.find((c) => c.id === "writeoff-vehicle")!;
-  const onScreen = [vehicle.description, vehicle.eligibility, vehicle.lensAnnotations.tax, vehicle.lensAnnotations.legal].join("\n");
+  const entryText = [vehicle.description, vehicle.eligibility, vehicle.lensAnnotations.tax, vehicle.lensAnnotations.legal].join("\n");
 
   it("says $350 and $1,100 (and $300 for older cars), each found in a held quote of Income Tax Regulations s.7307", () => {
-    expect(amountsIn(onScreen).sort()).toEqual(["$1,100", "$300", "$350"]);
+    expect(amountsIn(entryText).sort()).toEqual(["$1,100", "$300", "$350"]);
     const s7307 = vehicle.citations.filter((c) => c.url.endsWith("/regulations/C.R.C.,_c._945/section-7307.html"));
     expect(s7307).toHaveLength(1);
-    for (const amount of amountsIn(onScreen)) expect(inQuotes(quotesOf(s7307), amount), amount).toBe(true);
+    for (const amount of amountsIn(entryText)) expect(inQuotes(quotesOf(s7307), amount), amount).toBe(true);
     expect(s7307[0]!.toolCheck?.checkedOn).toBe("2026-10-23");
     // Tool-checked, never marked as read by a person (d-call-5).
     expect(s7307[0]).not.toHaveProperty("readBy");
+  });
+
+  it("says each cap is an amount for each 30 days, as the Act's A × B / 30 makes it", () => {
+    // A blind review of this branch (2026-10-24): "$350" with no period reads as the whole deductible interest.
+    expect(vehicle.eligibility).toMatch(/\$350 for each 30 days of interest/);
+    expect(vehicle.eligibility).toMatch(/\$1,100 plus sales tax for each 30 days of a lease/);
   });
 
   it("planted control: the text before this fix showed the Act's defaults, which no held quote carries", () => {
@@ -278,12 +326,30 @@ describe("4. The vehicle caps are the amounts the Regulations prescribe", () => 
 
 describe("5. The Small Business Financing Program says what ISED's loans page says", () => {
   const csbfp = grantProgramsV2026.find((p) => p.id === "grant-csbfp")!;
-  const onScreen = [csbfp.description, csbfp.eligibility, csbfp.lensAnnotations.tax, csbfp.lensAnnotations.legal, csbfp.estimatedValue ?? ""].join("\n");
+  const entryText = [csbfp.description, csbfp.eligibility, csbfp.lensAnnotations.tax, csbfp.lensAnnotations.legal, csbfp.estimatedValue ?? ""].join("\n");
 
   it("every amount it states is in a held quote, and the 365-day line and 'specifically for equipment' are gone", () => {
-    expect(amountsIn(onScreen).length).toBeGreaterThan(0);
-    for (const amount of amountsIn(onScreen)) expect(inQuotes(quotesOf(csbfp.citations), amount), amount).toBe(true);
-    expect(onScreen).not.toMatch(/365|specifically for equipment|\$500K/);
+    expect(amountsIn(entryText).length).toBeGreaterThan(0);
+    for (const amount of amountsIn(entryText)) expect(inQuotes(quotesOf(csbfp.citations), amount), amount).toBe(true);
+    expect(entryText).not.toMatch(/365|specifically for equipment|\$500K/);
+  });
+
+  it("the tax line the card shows as its payoff and the eligibility text state nothing but ISED's held words", () => {
+    // A blind review of this branch (2026-10-24): the on-screen tax line still said, in DotAmi's own words, that the
+    // program "may make financing available without revenue history" and "Loan interest and fees may be
+    // deductible; the loan itself is not income" (tax information no ISED citation holds), and the eligibility
+    // text "under the revenue ceiling ... no revenue history required".
+    // A quote opens after a space or colon and closes before punctuation, so "venture's" isn't one.
+    const quoted = /(?<=[\s:])'([^']+)'(?=[.,;]|$)/g;
+    const own = (line: string) => line.replace(quoted, "");
+    for (const line of [csbfp.lensAnnotations.tax, csbfp.eligibility]) {
+      expect(line).not.toMatch(/deductible|not income|revenue history|revenue ceiling/);
+      const quotes = [...line.matchAll(quoted)].map((m) => m[1]!);
+      expect(quotes.length).toBeGreaterThan(0);
+      for (const quote of quotes) expect(quotesOf(csbfp.citations)).toContain(quote);
+      // Outside the quotes: the compass's "if" and the names of things, never a claim of what the program may do.
+      expect(own(line)).not.toMatch(/\b(may|can|will|must|should)\b/);
+    }
   });
 
   it("planted control: the text before this fix had an amount no quote holds and the unsourced day count", () => {

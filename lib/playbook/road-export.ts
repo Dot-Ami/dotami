@@ -120,6 +120,12 @@ export function renderRoadExport(args: PlanArgs): string {
         body.push(`- *${e.taxImpact}:* ${node.taxImpact}`);
         body.push(`- *${e.lensTax}:* ${node.lensAnnotations.tax}`);
         body.push(`- *${e.lensLegal}:* ${node.lensAnnotations.legal}`);
+        body.push(`- *${e.financialSummary}:* ${node.financialImpact.summary}`);
+        // The catalog's notes, as the step panel's "More about this stage" lists them.
+        if (node.financialImpact.projectionNotes.length > 0) {
+          body.push(`- *${e.projectionNotes}:*`);
+          for (const note of node.financialImpact.projectionNotes) body.push(`  - ${note}`);
+        }
         body.push("");
       }
 

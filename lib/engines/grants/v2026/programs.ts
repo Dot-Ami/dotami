@@ -193,9 +193,14 @@ export const grantProgramsV2026 = [
     eligibility:
       // The line on rolling in equipment bought "within the past 365 days" came out 2026-10-23: no ISED page held it
       // (the maintainer's reading list, item grant-csbfp/365-days).
-      "Canadian small businesses under the revenue ceiling; startup-friendly — no revenue history required.",
+      // Since a review of 2026-10-24, ISED's words only: "under the revenue ceiling" and "no revenue history
+      // required" were DotAmi's own, and no citation held them.
+      "Borrowers, in ISED's words: 'Small businesses or start-ups operating in Canada'.",
     lensAnnotations: {
-      tax: "If equipment is on the venture's path, CSBFP may make financing available without revenue history. Loan interest and fees may be deductible; the loan itself is not income.",
+      // Shown on screen as the card's payoff. Until a review of 2026-10-24 it also said, in DotAmi's own words, that
+      // the program "may make financing available without revenue history" and that "Loan interest and fees may be
+      // deductible; the loan itself is not income": tax information no citation held.
+      tax: "If equipment or leasehold improvements are on the venture's path, ISED's loans page on this program: 'makes it easier for small businesses to get loans from financial institutions by sharing the risk with lenders'.",
       legal: "If applying, the lender relationship is a real credit obligation — personal guarantees and registration fees apply. This is financing, not free money.",
     },
     citations: [

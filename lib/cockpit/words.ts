@@ -97,8 +97,10 @@ export const cockpitWords = {
       onlyIf: (n: number) => `${count(n, "official fee applies", "official fees apply")} only sometimes, not added up`,
       notPriced: (n: number) => `${n} not priced yet`,
       leftOut: (n: number) => `${n} left out: not on your path`,
-      // The official fees among the waiting lines are named with their sum, so the gauge's total plus them is
-      // what Compare shows for an ending (pre-release fix, 2026-10-23): none is added to the total above.
+      // The official fees among the waiting lines are named with their sum (pre-release fix, 2026-10-23): none is
+      // added to the total above. Where both endings carry the same waiting fees (the apprentice road today), the
+      // total plus them is what Compare shows for an ending; where the endings carry different fees it adds both
+      // sides' fees, more than any one ending reaches (a review of 2026-10-24).
       waiting: (n: number, fork: string, feeCents = 0, feeLines = 0) =>
         `${n} ${n === 1 ? "waits" : "wait"} on a pick at ${quoted(fork)}` +
         (feeLines > 0 ? `, ${count(feeLines, "official fee", "official fees")} among them (${formatMoney(feeCents)})` : ""),
@@ -693,6 +695,8 @@ export const cockpitWords = {
     taxImpact: "Tax impact",
     lensTax: "Lens — tax",
     lensLegal: "Lens — legal",
+    financialSummary: "Financial impact (summary)",
+    projectionNotes: "Notes from the catalog",
   },
 
   /**

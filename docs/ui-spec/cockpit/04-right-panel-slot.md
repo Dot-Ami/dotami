@@ -48,7 +48,8 @@ relevance — `lib/brain/node-items.ts`; the M12 hint-map module is deleted).
 ## Downstream consumers (where the data goes today)
 
 `PreviewLensPanel` → `lens-chat-panel` → POST `/api/lens/chat` (**C1 open**: scenario
-not validated server-side). `PlaybookExportPanel` → POST `/api/playbook`.
+not validated server-side). `PlaybookExportPanel` → POST `/api/playbook` until 2026-10-23; since then it builds
+the markdown in the page (`lib/playbook/road-export.ts`) and sends nothing (the note at the top).
 `NodeDetailPanel` is read-only over catalog + annotation data.
 
 ## Cleanup / open questions

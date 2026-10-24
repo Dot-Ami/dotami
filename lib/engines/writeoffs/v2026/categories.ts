@@ -57,8 +57,9 @@ export const writeOffCategoriesV2026 = [
       "Vehicle costs for business use — fuel, insurance, maintenance, lease, or CCA on owned vehicles.",
     eligibility:
       // The amounts are the ones Income Tax Regulations s.7307 prescribe, not the Act's own $250 and $600 (each
-      // "or such other amount as may be prescribed"): corrected 2026-10-23 from the maintainer's reading list.
-      "Logbook or reasonable basis for business-use percentage; personal use portion not deductible. Two statutory caps apply to passenger vehicles regardless of business use: loan interest under the Act's s.67.2, whose amount Income Tax Regulations s.7307 prescribe as $350 for a car acquired after 2023 ($300 for one acquired after 2000 and before 2024), and lease costs under s.67.3, whose amount s.7307 prescribes as $1,100 plus sales tax for a lease entered into after 2024 (earlier leases have their own amounts in the same section).",
+      // "or such other amount as may be prescribed"): corrected 2026-10-23 from the maintainer's reading list. Each is
+      // an amount per 30 days (the Act's A × B / 30 in s.67.2 and s.67.3(c)), said since a review of 2026-10-24.
+      "Logbook or reasonable basis for business-use percentage; personal use portion not deductible. Two statutory caps apply to passenger vehicles regardless of business use: loan interest under the Act's s.67.2, whose amount Income Tax Regulations s.7307 prescribe as $350 for each 30 days of interest for a car acquired after 2023 ($300 for one acquired after 2000 and before 2024), and lease costs under s.67.3, whose amount s.7307 prescribes as $1,100 plus sales tax for each 30 days of a lease entered into after 2024 (earlier leases have their own amounts in the same section).",
     lensAnnotations: {
       tax: "If the venture requires travel to clients or job sites, business-use vehicle costs may be deductible proportionally.",
       legal: "If employees drive company vehicles, insurance and safety obligations differ from owner-operated use.",
@@ -76,7 +77,7 @@ export const writeOffCategoriesV2026 = [
         jurisdiction: "CA",
         url: "https://laws-lois.justice.gc.ca/eng/acts/I-3.3/section-67.3.html",
         lastVerified: "2026-09-13",
-        verification: { status: "supported", method: "Provision text read from the consolidated Act in corpus.db (2026-09-13); the 67.2 / 67.3 caps the reading found are now in the entry text." },
+        verification: { status: "supported", method: "Provision text read from the consolidated Act in corpus.db (2026-09-13): the 67.2 / 67.3 caps and their A × B / 30 formula. The amounts in the entry text are the ones Income Tax Regulations s.7307 prescribe (the next source), which that reading didn't cover." },
         note: "Read from the consolidated Act (the maintainers' statute store). Proportionality rests on 18(1)(a) 'to the extent... for the purpose of gaining or producing income'; 67 requires reasonableness. 67.2 limits interest and 67.3 limits lease charges; the Act's own figures, $250 and $600, each stand 'or such other amount as may be prescribed', and the amounts prescribed are in Income Tax Regulations s.7307 (the next source).",
       },
       {

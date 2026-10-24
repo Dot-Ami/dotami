@@ -43,10 +43,13 @@ person is asked).
   Keeps: nothing new. Until now the cockpit's **Export** sent the idea's map answers and the road to DotAmi's own
   server on this computer (`POST /api/playbook`), which answered with the tax map's catalog stages. Now the
   panel builds the markdown in the page itself from what the cockpit already read (`lib/playbook/road-export.ts`),
-  and nothing is sent for it, to DotAmi's server or off the computer. What it holds is what Your plan shows for
-  the idea: your words typed for it and your newest destination, your agreed yearly income, the road and the
-  endings picked, in Alberta your area and economic region as picked, your step statuses and ticks, your skill
-  marks, your agreed cost quotes, and *What you've told DotAmi*. So the line of 2026-10-22 below that Export
+  and nothing is sent for it, to DotAmi's server or off the computer. What it holds: what Your plan shows for the
+  idea (your words typed for it and your newest destination, your agreed yearly income, the road and the endings
+  picked, in Alberta your area and economic region as picked, the four gauges with your pick of job, your savings
+  and your month, your step statuses and ticks, your skill marks, your agreed cost quotes, and *What you've told
+  DotAmi*), and, as the old Export did, the idea's answers to the map: its name, kind, province, first- and
+  third-year revenue estimates (or *not said*), structure, employment status and the hire-first answer (corrected
+  2026-10-24 by a blind review: this line named only what Your plan shows). So the line of 2026-10-22 below that Export
   "doesn't carry" the area and region is no longer true: it carries them, as Your plan does. It stays on screen
   until you press **Copy markdown** (your clipboard) or **Save as .md** (a file where you choose, *Files you save
   yourself* in [`lib/privacy/inventory.ts`](../lib/privacy/inventory.ts)). The route `/api/playbook` still
