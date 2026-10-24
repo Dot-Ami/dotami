@@ -132,11 +132,37 @@ const TOOL_CHECKS_OF_THE_DAY: { where: string; url: string; quotes: string[] }[]
   { where: "risk risk-immediate-expensing-timing", url: PAGE.t4002, quotes: [UNDER_PROPOSED_CHANGES] },
 ];
 
+/**
+ * Every other citation of those pages (not on an entry the list corrected, and not a road's copy of a corrected map
+ * stage, which is the stage's own object), with the check it had before the corrections (main at 694007d): its day
+ * and how many quotes. None of them changes (the maintainer's answer 2 of 2026-10-24: only the entries he checked).
+ */
+const OTHER_CITATIONS_BEFORE: { where: string; url: string; checkedOn: string | null; quotes: number }[] = [
+  { where: "structure structure-ccpc", url: PAGE.t2Guide, checkedOn: "2026-10-13", quotes: 2 },
+  { where: "writeoffs writeoff-cca-class-50", url: PAGE.t4002, checkedOn: null, quotes: 0 },
+  ...["road-starting-any-business-ab", "road-federal-steps-ca"].flatMap((road) => [
+    { where: `roads ${road} dw-start-incsred-ccpc`, url: PAGE.relationships, checkedOn: "2026-10-12", quotes: 5 },
+    { where: `roads ${road} dw-start-incsred-associated`, url: PAGE.relationships, checkedOn: "2026-10-12", quotes: 4 },
+    { where: `roads ${road} dw-start-hire-status`, url: PAGE.payrollAccount, checkedOn: "2026-10-12", quotes: 2 },
+    { where: `roads ${road} dw-start-hire-payroll-account`, url: PAGE.payrollAccount, checkedOn: "2026-10-12", quotes: 2 },
+    { where: `roads ${road} step-start-keep-records`, url: PAGE.records, checkedOn: "2026-10-14", quotes: 2 },
+    { where: `roads ${road} dw-start-records-where-how-long`, url: PAGE.records, checkedOn: "2026-10-14", quotes: 10 },
+  ]),
+  { where: "roads road-apprentice-to-own-shop-ab step-shop-keep-records", url: PAGE.records, checkedOn: "2026-10-14", quotes: 2 },
+  { where: "roads road-apprentice-to-own-shop-ab dw-shop-records-where-how-long", url: PAGE.records, checkedOn: "2026-10-14", quotes: 10 },
+  { where: "roads road-apprentice-to-own-shop-ab step-shop-first-hire", url: PAGE.payrollAccount, checkedOn: "2026-10-12", quotes: 1 },
+  { where: "roads road-apprentice-to-own-shop-ab dw-shop-hire-payroll", url: PAGE.payrollAccount, checkedOn: "2026-10-12", quotes: 2 },
+];
+/** structure-ccpc's citation of the T2 guide before the corrections: the reading list's new quote went to the map stage only. */
+const STRUCTURE_CCPC_T2_QUOTES = [THROUGHOUT, "reduces Part I tax that the corporation would otherwise have to pay."];
+
 const all = allCatalogCitations();
 /** The runs of words in curly quote marks, the way the cards quote a page. */
 const quoted = (text: string) => [...text.matchAll(/“([^”]+)”/g)].map((m) => m[1]!);
 /** A text with its quoted runs taken out: what DotAmi says in its own words. */
 const ownWords = (text: string) => text.replace(/“[^”]*”/g, " ");
+/** DotAmi's own words with each quote taken out and the spaces closed up, to pin them exactly. */
+const ownWordsFlat = (text: string) => ownWords(text).replace(/\s+/g, " ").trim();
 const citationsAt = (where: string) => all.filter((l) => l.where === where).map((l) => l.citation);
 function citationOf(where: string, url: string): ListedCitation {
   const found = citationsAt(where).filter((c) => c.url === url);
@@ -206,17 +232,25 @@ describe("2. The words the reading list's tool found on 2026-10-23", () => {
 
   it("the same pages under entries the reading list didn't correct keep the check they had", () => {
     // A guard (only the entries the maintainer checked; his answer of 2026-10-24): the Class 50 write-off's T4002
-    // chapter, structure-ccpc's T2 guide, road 0's payroll and records lines and the like keep their own checks. A map
-    // stage's own citations are listed again under each road that draws the stage (the same objects).
+    // chapter, structure-ccpc's T2 guide, the roads' payroll and records lines and the like keep their own checks, as
+    // they were before. A map stage's own citations are listed again under each road that draws the stage (the same
+    // objects).
     const corrected = new Set(TOOL_CHECKS_OF_THE_DAY.map((t) => t.where));
     const stageIds = [...corrected].filter((w) => w.startsWith("cfe ")).map((w) => w.slice("cfe ".length));
     const roadCopy = (where: string) => stageIds.some((id) => new RegExp(`^roads \\S+ ${id}$`).test(where));
     const pages = new Set(TOOL_CHECKS_OF_THE_DAY.map((t) => t.url));
-    const extended = all
+    const others = all
       .filter(({ where, citation }) => pages.has(citation.url) && !corrected.has(where) && !roadCopy(where))
-      .filter(({ citation }) => citation.toolCheck?.checkedOn === LIST_DAY)
-      .map(({ where, citation }) => `${where}: ${citation.url}`);
-    expect(extended).toEqual([]);
+      .map(({ where, citation }) => ({
+        where,
+        url: citation.url,
+        checkedOn: citation.toolCheck?.checkedOn ?? null,
+        quotes: citation.toolCheck?.quotes.length ?? 0,
+      }));
+    const key = (o: { where: string; url: string }) => `${o.where} ${o.url}`;
+    expect(others.map(key).sort()).toEqual(OTHER_CITATIONS_BEFORE.map(key).sort());
+    for (const before of OTHER_CITATIONS_BEFORE) expect(others.find((o) => key(o) === key(before)), key(before)).toEqual(before);
+    expect(rawQuotes(citationOf("structure structure-ccpc", PAGE.t2Guide))).toEqual(STRUCTURE_CCPC_T2_QUOTES);
   });
 
   it("no worked example, page disclaimer or reading-list label is kept as words an entry relies on", () => {
@@ -313,6 +347,10 @@ describe("4. The map's stages say what their own pages say", () => {
     const note = stage.financialImpact.projectionNotes.find((n) => n.includes("$30,000"));
     expect(note, "a note on the $30,000 tests").toBeDefined();
     expect(quoted(note!)).toEqual([SOLE_PROP_COUNTS, ...NOT_COUNTED]);
+    // Outside the quotes, only the tests' name and where they are quoted in full: no period of DotAmi's own.
+    expect(ownWordsFlat(note!)).toBe(
+      "For the CRA's two $30,000 small-supplier tests (quoted in full on Mandatory GST registration), its page says: And, on what is left out:",
+    );
     const page = citationOf("cfe stage-1-sole-prop-activation", PAGE.whenToRegister);
     for (const run of quoted(note!)) expect(inQuotes(run, rawQuotes(page)), run).toBe(true);
     // The $30,000 said outside the quotes is in a quote of the same page.
@@ -433,6 +471,9 @@ describe("6. The risk reads say only what their sources say", () => {
     const entry = risk("risk-home-office-percentage");
     const text = `${entry.why} ${entry.mitigation}`;
     expect(text).not.toMatch(/floor.?area|exclusive|measured|calculation|typical/i);
+    // Outside the quotes, only the page's name and the words that join its conditions (s.18(12)'s "or"), exactly.
+    expect(ownWordsFlat(entry.why)).toBe("The CRA's page on business-use-of-home expenses: if , or if .");
+    expect(ownWordsFlat(entry.mitigation)).toBe("The same page, on the amount: it .");
     const page = citationOf("risk risk-home-office-percentage", PAGE.homeOffice);
     const runs = quoted(text);
     expect(runs.length).toBeGreaterThan(0);
@@ -461,6 +502,9 @@ describe("6. The risk reads say only what their sources say", () => {
       // From the first quote on, only punctuation between the quotes: no words of DotAmi's joining the Act's.
       expect(ownWords(line.slice(line.indexOf("“"))), line).toMatch(/^[\s;,.]*$/);
     }
+    // And before the first quote, only the section's name: DotAmi's own words, exactly.
+    expect(ownWordsFlat(entry.why)).toBe("Income Tax Act s.245, in its own words: ; ; .");
+    expect(ownWordsFlat(entry.mitigation)).toBe("The same section: .");
     // Planted control: the joined sentence that was considered is caught.
     const joined = `It “${GLOSSARY_S245[1]}” or “${GLOSSARY_S245[2]}”.`;
     expect(ownWords(joined.slice(joined.indexOf("“")))).not.toMatch(/^[\s;,.]*$/);
@@ -494,6 +538,9 @@ describe("6. The risk reads say only what their sources say", () => {
     expect(runs.length).toBeGreaterThan(0);
     // The whole rule, never a part of it.
     for (const run of runs) expect(run.replace(/\.$/, "")).toBe(ISED_SECURITY.replace(/\.$/, ""));
+    // Outside the quote, only whose words they are and from which page, exactly.
+    expect(ownWordsFlat(entry.why)).toBe("");
+    expect(ownWordsFlat(entry.mitigation)).toBe("ISED's words, from its page on loans under this program.");
     const page = citationOf("risk risk-self-declared-valuation", PAGE.isedLoans);
     expect(page.toolCheck?.checkedOn).toBe(LIST_DAY);
     expect(rawQuotes(page)).toContain(ISED_SECURITY);
