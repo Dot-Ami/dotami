@@ -76,16 +76,25 @@ export const destinationWords = {
   answeredPlace: (name: string) => name,
   answeredAmount: (cents: number) => `${formatMoney(cents)} a year, before tax`,
   skipped: "Skipped",
-  // Under the receipts of questions 2 and 3 (2026-10-23): nothing about the person sits in window storage,
-  // so until a future is picked these two are held in the page's memory only (lib/journey/window-storage.ts).
-  heldUntilPicked:
-    "Kept with the future you pick. Until then only this page holds it: a reload or a new window asks it again.",
+  // Under the receipts of questions 2 and 3 (2026-10-23): nothing about the person sits in window storage, so these
+  // two are held in the window's memory (lib/journey/held-journey.ts) and kept, in the data file, only with each
+  // future picked. /start never reads them back from there (lib/front-door/kept.ts), so a page loaded afresh asks
+  // them again even after a pick. It names every such way: the desktop app's Go menu is one (desktop/main.mjs opens
+  // its pages with loadURL); moving between DotAmi's pages, the example included, isn't. "Kept with the future you
+  // pick. Until then …" until 2026-10-24, which read as if a pick ended the asking.
+  keptWithEachFuture:
+    "Kept with each future you pick, and nowhere else: a reload, a new window or the desktop app's Go menu asks it again, a future picked or not.",
   receipts: {
     // The goal bar shows the destination only on an idea with no first sentence of its own, which is what
     // Pick a future saves; an idea described on the front door shows its own (components/cockpit/goal-bar.tsx).
     destinationKept: (day: string) =>
       `Kept word for word, dated ${day}. It goes at the top of each future you pick on Pick a future; an idea you describe in your own sentence shows that sentence instead.`,
-    destinationTabOnly: "Not kept: no database reachable. Only this page holds it: a reload or a new window asks it again.",
+    // The words, with no database: shown back from the window's memory, which any fresh load empties (the id is
+    // the old name, from when the tab's storage held them).
+    destinationTabOnly: "Not kept: no database reachable. A reload, a new window or the desktop app's Go menu asks it again.",
+    // The yearly income whose proposal didn't reach the server: nothing was proposed and nothing is held, only the
+    // box keeps the amount (2026-10-24; the words receipt above was shown here until then).
+    incomeNotKept: "Not kept: no database reachable. The amount is still in the box.",
     destinationDontKnow: "Nothing kept. You can say it later; nothing here waits on it.",
     // "I don't know yet" deletes nothing: statements are never edited away one by one.
     destinationStillKept: (day: string) =>

@@ -16,7 +16,7 @@ const words = destinationWords.receipts;
 /** What became of the answer to question 1. */
 export type DestinationAnswer =
   | { kept: "saved"; text: string; saidAt: string }
-  /** The words, with no database to keep them in: only the page's memory holds them (the id is the old name). */
+  /** The words, with no database to keep them in: only the window's memory holds them (lib/journey/held-journey.ts; the id is the old name). */
   | { kept: "tab-only"; text: string; saidAt: string }
   /**
    * "I don't know yet". It deletes nothing, so `stillKept` is the person's newest destination already in

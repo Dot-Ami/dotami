@@ -3,8 +3,9 @@
 Page: `/start` · Component: `components/front-door/destination-page.tsx` (questions:
 `lib/front-door/questions.ts`; receipts: `lib/front-door/receipts.ts`; words: `lib/front-door/words.ts`)
 
-Last updated: 2026-10-12 (built; the maintainer's decision 6 of 2026-10-11; design:
-docs/architecture/future-cockpit.md § 1, The way in as built)
+Last updated: 2026-10-24 (the answers held in the window's memory, which the example keeps and a reload, a new
+window or the desktop app's Go menu empties, and the words that say so; built 2026-10-12, the maintainer's
+decision 6 of 2026-10-11; design: docs/architecture/future-cockpit.md § 1, The way in as built)
 
 ## Page job
 
@@ -34,4 +35,11 @@ words and how they were kept, the *business / career / both* choice, the place c
 question came to). It is held in the window's memory only, never in its storage (since 2026-10-24,
 `lib/journey/held-journey.ts`; from 2026-10-12 to 2026-10-23 it was also written to the tab's
 `sessionStorage`, `dotami-journey-v3`); the destination and the income are also in the data file as soon
-as they are kept, and business-or-career and the place once a future is picked.
+as they are kept, and business-or-career and the place with each future picked.
+
+That memory outlives the journey's own pages: the answers are still there when the person moves between
+DotAmi's pages, *Show me an example first* and back included. A page loaded afresh (a reload, a new window, or
+the desktop app's Go menu, which opens its pages with `loadURL`) starts it empty, and `/start` reads only 1 and
+4 back from the data file (`lib/front-door/kept.ts`), so 2 and 3 are asked again, a future picked or not. The
+words say so where an answer is not kept: the line under the receipts of 2 and 3, and the no-database receipt
+of 1 ([01-questions.md](./01-questions.md)).

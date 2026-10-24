@@ -11,7 +11,7 @@
 Page: Cockpit (`/cockpit`) · Component: `components/cockpit/cockpit-page.tsx`
 Type: sidebar (mixed display + button group + links)
 
-Last updated: 2026-10-11 ("In your words" also lists each idea's front-door sentence, tagged with its idea); 2026-10-07 ([8e] the figure reminder banner under the venture block); 2026-09-13 (S2.5.4a — archetype hidden for real ventures, "In your words" section added; rest is the 2026-07-05 workshop)
+Last updated: 2026-10-24 (the save line says only this window holds unsaved edits, and what loses them); 2026-10-11 ("In your words" also lists each idea's front-door sentence, tagged with its idea); 2026-10-07 ([8e] the figure reminder banner under the venture block); 2026-09-13 (S2.5.4a — archetype hidden for real ventures, "In your words" section added; rest is the 2026-07-05 workshop)
 
 > **Changed 2026-10-12 — part 2 of the cockpit screen.** The rail is a little wider (up to 280 px) and opens with *What you've told DotAmi* and *Not told yet*, with the one-question box ([12-told-list.md](./12-told-list.md)). Everything below is the rail as it was, now under them and unfolded. Changing the structure here gives a receipt at the top of the told list ([13-receipts.md](./13-receipts.md)).
 Workshop status: documented, sign-off pending
@@ -95,8 +95,10 @@ spot in the product — it carries 6+ unrelated concerns.
   changes…"*, and `AUTOSAVE_DELAY_MS` (800 ms) after the last edit `persist()` POSTs
   `{ scenario }` to `/api/scenario/save` via `lib/journey/save-scenario.ts` (an upsert keyed
   by `scenario.id` — repeat saves are idempotent). Outcome on the line: *"Saved · 12:04"*
-  (sage, local time, stays until the next edit) or *"Save unavailable — kept in this tab.
-  Save now retries."* (maple). Before any edit the line reads *"Edits save
+  (sage, local time, stays until the next edit) or *"Save unavailable — only this window holds it; a
+  reload or the desktop app's Go menu loses it. Save now retries."* (maple; until 2026-10-24 *"… kept in this
+  tab …"*: the edits are in the journey held in the window's memory, `lib/journey/held-journey.ts`, never its
+  storage, and every fresh load empties it). Before any edit the line reads *"Edits save
   automatically."* **"Save now"** skips the pause and is the retry. The intake already
   saved the venture on **Open my map**, so a cockpit reached from the intake is on disk
   before it renders. (H7 transactionality still open.)
@@ -114,7 +116,8 @@ change or persist it. The archetype switcher is a dev/review affordance (per the
 "Venture" · `<name>` · `<archetype label> · <type> · <province>` · `<planningFocus>` ·
 FieldRow labels: Type / Province / Target Y1 / Target Y3 / Structure / Employed ·
 "Switch labeled example" · "Save now" / "Saving…" · save line: "Edits save automatically." /
-"Unsaved changes…" / "Saved · <hh:mm>" / "Save unavailable — kept in this tab. Save now retries."
+"Unsaved changes…" / "Saved · <hh:mm>" / "Save unavailable — only this window holds it; a reload or the desktop
+app's Go menu loses it. Save now retries."
 · "Edit venture profile" · "Compass, not GPS. Profile drives which surfaces appear on
 the map. DotAmi never files, predicts, or replaces an accountant."
 

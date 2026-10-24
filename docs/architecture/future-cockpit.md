@@ -159,7 +159,9 @@ each choice that differs from the table above says why.
      *"Nothing new kept. Your words of 2026-10-12 are still kept and still show on top of your futures;
      Delete on What DotAmi knows about you removes them, with all your statements."* (statements are
      deleted all at once, never one by one, by design). With no database: *"Not kept: no database
-     reachable. It stays in this tab only."* Changing it adds a new statement; none is written over.
+     reachable. A reload, a new window or the desktop app's Go menu asks it again."* (2026-10-24: the words are
+     held in the window's memory only, never its storage; *"It stays in this tab only"* until 2026-10-23).
+     Changing it adds a new statement; none is written over.
   2. *"Are you after a business of your own, a job or career, or both?"*: **A business of my own** ·
      **A job or career** · **Both, or not sure** (the last is the *I don't know*). The receipt counts the
      futures *Pick a future* lists that have that in them, by each road's `kind` (a *both* road has a
@@ -190,10 +192,15 @@ each choice that differs from the table above says why.
 
   **What is already kept counts as answered.** `/start` is drawn on the server, which reads the person's
   newest destination and the income they agreed to (`lib/front-door/kept.ts`), so a returning person
-  (a new tab, the desktop app started again, or after door 2's *Map it*, which starts the tab's journey
-  afresh) sees 1 and 4 answered from the data file, with **Change**, and is asked only 2 and 3, which
-  live in the tab until a future is picked. The answers to 2 and 3, and what 1 and 4 came to, wait in
-  the tab (the journey draft); 1 and 4 are already in the data file. **Pick a future →** shows once 3
+  (a reload, a new tab or window, the desktop app started again or its Go menu, or after door 2's *Map it*,
+  which starts the journey afresh) sees 1 and 4 answered from the data file, with **Change**, and is asked 2
+  and 3 again. The answers to 2 and 3, and what 1 and 4 came to, wait in the journey draft, held in the
+  window's memory only (`lib/journey/held-journey.ts`, since 2026-10-24; in the tab's storage until
+  2026-10-23): moving between DotAmi's pages, the invented example included, keeps them, and a page loaded
+  afresh empties it. Each future picked keeps 2 and 3 on its idea, and `/start` never reads them back from
+  there, so the line under their receipts says *"Kept with each future you pick, and nowhere else: a reload, a
+  new window or the desktop app's Go menu asks it again, a future picked or not."* 1 and 4 are already in
+  the data file. **Pick a future →** shows once 3
   is answered and 4 answered or skipped.
 
   For the keyboard and a screen reader: the page has one level 1 heading, *Your destination* (seen only

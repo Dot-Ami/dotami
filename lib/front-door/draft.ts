@@ -4,11 +4,11 @@ import { DESTINATION_QUESTIONS, type DestinationQuestionId, type LookingFor } fr
 import type { DestinationAnswer, IncomeAnswer } from "./receipts";
 
 /**
- * *Your destination*'s answers so far, in the journey draft the page holds in memory: never in window storage
- * (2026-10-23; lib/journey/window-storage.ts says why).
+ * *Your destination*'s answers so far, in the journey draft held in the window's memory
+ * (lib/journey/held-journey.ts): never in window storage (2026-10-23; lib/journey/window-storage.ts says why).
  * Questions 1 and 4 are also in the data file as soon as they are kept (a statement, a number the person
- * agreed to); these record what each came to, for the receipts. Questions 2 and 3 wait here until a
- * future is picked, which keeps them on the idea.
+ * agreed to); these record what each came to, for the receipts. Questions 2 and 3 wait here, and each
+ * future picked keeps them on its idea.
  */
 export interface DestinationDraft {
   destination?: DestinationAnswer;
@@ -54,8 +54,9 @@ export interface KeptOnRecord {
 /**
  * The draft with what is already kept counted as answered (review of 2026-10-12): a returning person, in a
  * new tab, after a restart or after the front door's Map it started the tab's journey afresh, isn't asked
- * questions 1 and 4 again. An answer given on this page wins, since it is the newer one; 2 and 3 are held
- * in the page's memory only until a future is picked (which keeps them with it), so they are asked again.
+ * questions 1 and 4 again. An answer given in this window wins, since it is the newer one; 2 and 3 are held
+ * in the window's memory only (each future picked keeps them with its idea, and nothing reads them back from
+ * there), so a page loaded afresh asks them again.
  */
 export function withKept(draft: DestinationDraft, kept: KeptOnRecord): DestinationDraft {
   const out: DestinationDraft = { ...draft };

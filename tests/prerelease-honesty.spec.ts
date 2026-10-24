@@ -5,7 +5,8 @@
  *
  * 1. Nothing about the person in window storage (2026-10-24, the maintainer's rule): no code reads or writes
  *    the journey there, a page removes what an older DotAmi left without reading it, and Delete reaches what
- *    the window holds in memory (lib/journey/held-journey.ts, lib/journey/window-storage.ts).
+ *    the window holds in memory (lib/journey/held-journey.ts, lib/journey/window-storage.ts). Every line that
+ *    says where an unsaved answer is names each way a page is loaded afresh, the desktop app's Go menu included.
  * 2. The map never shows a stage as done, or as where the person is, unless the person marked it; the ideas
  *    card never shows a kind of venture nobody gave.
  * 3. Time words the no-times check missed ("first years", "time-boxed"), the Lens lines, and official pages'
@@ -29,7 +30,7 @@ import { PAGE_QUOTES_LEAD } from "@/lib/engines/shared/citation-check";
 import type { DestinationDraft } from "@/lib/front-door/draft";
 import { hasSavedIdea } from "@/lib/front-door/saved-idea";
 import { scenarioForPickedFuture } from "@/lib/front-door/start-future";
-import { frontDoorWords } from "@/lib/front-door/words";
+import { destinationWords, frontDoorWords } from "@/lib/front-door/words";
 import { heldJourney, holdJourney } from "@/lib/journey/held-journey";
 import { applyIntentToDraft } from "@/lib/journey/intent";
 import { parseIntentFallback } from "@/lib/journey/intent-fallback";
@@ -123,6 +124,12 @@ function fakeWindow(refuse: { removeFromSession?: boolean } = {}) {
 }
 
 const storedText = (store: Map<string, string>) => [...store.values()].join("\n");
+
+/** Every way a page is loaded afresh, which empties the window's memory (lib/journey/held-journey.ts). */
+const FRESH_LOADS = ["a reload", "a new window", "Go menu"];
+
+/** Which of these words a line doesn't say, a capital at the start of a sentence aside. Empty = it names them all. */
+const waysMissing = (line: string, ways: readonly string[]) => ways.filter((way) => !line.toLowerCase().includes(way.toLowerCase()));
 
 describe("1. Nothing about the person in window storage", () => {
   afterEach(() => {
@@ -228,6 +235,42 @@ describe("1. Nothing about the person in window storage", () => {
     expect(intakeAfterDelete(held, ["ideas", "expenses"])).toEqual(defaultIntakeDraft());
     // Planted control: a Delete of something else leaves what the window holds as it was.
     expect(intakeAfterDelete(held, ["expenses", "skill-marks"])).toEqual(held);
+  });
+
+  it("every line that says where an unsaved answer is names each way a page is loaded afresh, the desktop Go menu tied to its loadURL", () => {
+    // The desktop app's Go menu (Home, Your futures, Settings) opens its pages with loadURL: a fresh load, which
+    // empties the window's memory as a reload does. A change to buildMenu's helper fails this on purpose.
+    const main = readFileSync("desktop/main.mjs", "utf8");
+    expect(main).toMatch(/const go = \(pathname\) => \(\) => win\?\.loadURL\(/);
+    expect(main).toMatch(/label: "Go",\s*submenu: \[\s*\{ label: "Home", click: go\("\/"\) \}/);
+    expect(waysMissing(destinationWords.keptWithEachFuture, FRESH_LOADS)).toEqual([]);
+    expect(waysMissing(destinationWords.receipts.destinationTabOnly, FRESH_LOADS)).toEqual([]);
+    // The cockpit's unsaved answer is in this window only; a new window opens the idea as the data file holds it.
+    expect(waysMissing(cockpitWords.receipts.notSaved, ["only this window holds", "a reload", "Go menu"])).toEqual([]);
+    expect(waysMissing(cockpitWords.rail.save.unavailable, ["only this window holds", "a reload", "Go menu"])).toEqual([]);
+    // Planted control: the line as it stood on 2026-10-23 is caught: it left out the Go menu.
+    expect(waysMissing("Kept with the future you pick. Until then only this page holds it: a reload or a new window asks it again.", FRESH_LOADS)).toEqual(["Go menu"]);
+  });
+
+  it("none of those lines says the tab keeps an answer, or holds a time; the income's says only the box holds it", () => {
+    const lines = [
+      destinationWords.keptWithEachFuture,
+      destinationWords.receipts.destinationTabOnly,
+      destinationWords.receipts.incomeNotKept,
+      cockpitWords.receipts.notSaved,
+      cockpitWords.rail.save.unavailable,
+    ];
+    // "the tab" kept them in its storage until 2026-10-24; nothing about the person is kept there now.
+    const sayTheTabKeepsIt = (all: readonly string[]) => all.filter((line) => /\btab\b/i.test(line));
+    expect(sayTheTabKeepsIt(lines)).toEqual([]);
+    expect(lines.flatMap((line) => findTimeWords(line))).toEqual([]);
+    // The line under 2 and 3 no longer says "Until then": /start reads neither answer back after a pick.
+    expect(destinationWords.keptWithEachFuture).not.toMatch(/until then/i);
+    // Nothing of the income is held anywhere when its proposal fails: its line names no way of losing it.
+    expect(destinationWords.receipts.incomeNotKept).not.toMatch(/reload|window|Go menu/i);
+    // Planted control: the cockpit's save line as it stood on 2026-10-23 is caught by the same check.
+    const old = "Save unavailable — kept in this tab. Save now retries.";
+    expect(sayTheTabKeepsIt([...lines, old])).toEqual([old]);
   });
 
   it("destinationAfterDelete: words with the statements, income with the income, all with the ideas", () => {

@@ -99,17 +99,24 @@ describe("Your destination: the four questions are data", () => {
 });
 
 describe("the receipts: worked out from the answer and the catalogs, never a verdict", () => {
-  it("your words: kept, held on this page only, or not given", () => {
+  it("your words: kept, not kept with no database reachable, or not given", () => {
     // Only a future picked on Pick a future shows the destination on top; an idea with its own sentence
     // shows that sentence (components/cockpit/goal-bar.tsx), so the receipt says both (review, 2026-10-12).
     expect(destinationReceipt({ kept: "saved", text: "My own shop", saidAt: "2026-10-12" })).toBe(
       "Kept word for word, dated 2026-10-12. It goes at the top of each future you pick on Pick a future; an idea you describe in your own sentence shows that sentence instead.",
     );
     expect(destinationReceipt({ kept: "tab-only", text: "My own shop", saidAt: "2026-10-12" })).toBe(
-      // Held in the page's memory only since 2026-10-23, never in window storage (lib/journey/window-storage.ts).
-      "Not kept: no database reachable. Only this page holds it: a reload or a new window asks it again.",
+      // Held in the window's memory only (lib/journey/held-journey.ts), never in window storage: every way a page
+      // is loaded afresh empties it, the desktop app's Go menu among them (2026-10-24).
+      "Not kept: no database reachable. A reload, a new window or the desktop app's Go menu asks it again.",
     );
     expect(destinationReceipt({ kept: "dont-know" })).toBe("Nothing kept. You can say it later; nothing here waits on it.");
+  });
+
+  it("the yearly income with no database reachable: not kept, and the amount still in its box, nothing held anywhere else", () => {
+    // Until 2026-10-24 the words receipt above was shown here, though nothing was held: the proposal never
+    // reached the server, and only the box holds the amount (components/front-door/destination-page.tsx).
+    expect(destinationWords.receipts.incomeNotKept).toBe("Not kept: no database reachable. The amount is still in the box.");
   });
 
   it("I don't know yet, with words already kept: says they are still kept and still shown, and how to remove them", () => {

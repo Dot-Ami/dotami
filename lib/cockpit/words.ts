@@ -416,7 +416,13 @@ export const cockpitWords = {
     nothingAfter: (what: string) => `Saved: ${what}. Nothing on the road changed.`,
     /** The idea's own answers wait for the map's save before their receipt is worked out. */
     saving: "Saving your answer…",
-    notSaved: "Not saved yet: the save didn't go through. Your answer stays in this tab, and Save now tries again.",
+    /**
+     * The answer is in the journey held in the window's memory (lib/journey/held-journey.ts), never its storage:
+     * a fresh load empties it, the desktop app's Go menu among them (it opens its pages with loadURL). A new window
+     * opens the idea as the data file holds it. "Your answer stays in this tab" until 2026-10-24.
+     */
+    notSaved:
+      "Not saved yet: the save didn't go through. Only this window holds your answer: a reload or the desktop app's Go menu loses it. Save now tries again.",
     /**
      * This visit's newest receipt lines (2026-10-12, after review: named for what they hold; "Since last
      * time" is kept for the return visit's list, which isn't built).
@@ -699,7 +705,8 @@ export const cockpitWords = {
       saving: "Saving…",
       unsaved: "Unsaved changes…",
       savedAt: (when: string) => `Saved · ${when}`,
-      unavailable: "Save unavailable — kept in this tab. Save now retries.",
+      // Where the unsaved edits are, as receipts.notSaved says it ("kept in this tab" until 2026-10-24).
+      unavailable: "Save unavailable — only this window holds it; a reload or the desktop app's Go menu loses it. Save now retries.",
       automatic: "Edits save automatically.",
     },
     editProfile: "Edit venture profile",
