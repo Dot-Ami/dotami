@@ -97,18 +97,34 @@ const GOAL_KEYWORDS: Record<IntakeGoalId, string[]> = {
   "discover-now": ["don't know", "dont know", "not sure", "no idea", "what's available", "whats available", "where to start", "ideas", "monetize", "monetise", "turn into a business", "make money from"],
 };
 
-/** The provinces' and territories' own names: a place in Canada whatever else the sentence says. */
+/**
+ * A French name as people type it: with and without its accents, and, where `spaces` says so, with spaces for its
+ * hyphens ("Colombie-Britannique", "colombie britannique", "Nouvelle-Ecosse").
+ */
+function frenchSpellings(name: string, spaces = true): string[] {
+  const plain = name.normalize("NFD").replace(/\p{M}/gu, "");
+  const forms = [name, plain];
+  if (spaces) forms.push(name.replace(/-/g, " "), plain.replace(/-/g, " "));
+  return [...new Set(forms)];
+}
+
+/**
+ * The provinces' and territories' own names, in English and in French (the maintainer's call a-call-14,
+ * 2026-10-23): a place in Canada whatever else the sentence says. Alberta, Manitoba, Nunavut, Ontario,
+ * Saskatchewan and Yukon are spelt the same in both. "Terre-Neuve" only with its hyphen: "une terre neuve" is new
+ * land.
+ */
 const PROVINCE_NAMES: Record<Province, string[]> = {
   AB: ["alberta"],
-  BC: ["british columbia"],
+  BC: ["british columbia", ...frenchSpellings("colombie-britannique")],
   MB: ["manitoba"],
-  NB: ["new brunswick"],
-  NL: ["newfoundland", "labrador"],
-  NS: ["nova scotia"],
-  NT: ["northwest territories"],
+  NB: ["new brunswick", ...frenchSpellings("nouveau-brunswick")],
+  NL: ["newfoundland", "labrador", ...frenchSpellings("terre-neuve", false)],
+  NS: ["nova scotia", ...frenchSpellings("nouvelle-écosse")],
+  NT: ["northwest territories", ...frenchSpellings("territoires du nord-ouest")],
   NU: ["nunavut"],
   ON: ["ontario"],
-  PE: ["prince edward island", "pei"],
+  PE: ["prince edward island", "pei", ...frenchSpellings("île-du-prince-édouard")],
   QC: ["quebec", "québec"],
   SK: ["saskatchewan"],
   YT: ["yukon"],
@@ -137,7 +153,11 @@ const CITIES: Record<Province, string[]> = {
  * ("Victoria BC").
  */
 const NAME_LIKE_CITIES = new Set(["victoria", "regina", "brandon", "hamilton"]);
-const PLACE_WORD_BEFORE = /\b(?:in|from|near|around|to|outside|at|of)\s+$/;
+/**
+ * The words that put the person in a place, in English and in French (a-call-14: "à Regina", "au Québec", "en
+ * Alberta", "dans Hamilton"), each a whole word. Not a bare "a", the English article ("a Victoria sponge cake").
+ */
+const PLACE_WORD_BEFORE = /(?:^|[^\p{L}\p{N}])(?:in|from|near|around|to|outside|at|of|à|au|aux|en|dans)\s+$/u;
 
 /**
  * Places outside Canada, read in two spots only (2026-10-17, the review of PR #182): right after a Canadian

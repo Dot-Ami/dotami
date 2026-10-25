@@ -32,10 +32,12 @@ place of a step, each a region named by its title with a × button named *Close*
   [../futures/01-whats-closest-to-your-work.md](../futures/01-whats-closest-to-your-work.md),
   `components/front-door/job-search.tsx` in its compact form): the box *The work, in your own words*, the
   government's example titles searched for the words typed, the jobs grouped by how many of the words their
-  titles hold, in code order, each a button named *Pick Cabinetmakers, 72311.00* with the title it matched under
-  it, at most 50 per group with *Showing the first 50 of n in this group, in code order. Add a word to narrow it.*
-  (until then it was a search of job names and codes, ten at most); then the licence's line with its link, as
-  below. With one picked: *Cabinetmakers · 72311.00 · picked 2026-10-12*, **Change**
+  titles hold, each group about the government's titles in two labelled parts since 2026-10-23 (whole words
+  first: step 1's spec, its top note) and in code order inside each, each a button named *Pick Cabinetmakers,
+  72311.00* with the title it matched under it, at most 50 per part with *Showing the first 50 of n in this part,
+  in code order. Add a word to narrow it.* (per group until 2026-10-23; DotAmi's word-list group, which has no
+  parts, still lists 50 per group, with *… in this group …*). Until 2026-10-22 it was a search of job names and
+  codes, ten at most. Then the licence's line with its link, as below. With one picked: *Cabinetmakers · 72311.00 · picked 2026-10-12*, **Change**
   (the search again, with **Cancel**) and **Take back**; *This is the government's list for the job you
   picked. DotAmi doesn't say which skills a business needs.*; then **Skills** and
   **Knowledge**, each with its source once (the dataset's page, checked by a tool) and its items in the

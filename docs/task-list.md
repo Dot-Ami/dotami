@@ -509,12 +509,19 @@ placed in phase 3.
   - [x] 28b: *What's closest to your work?*: the person searches the example titles and picks the job;
     matches in code order, labelled "matches your words · your pick"; *Skip* allowed; nothing set without a
     click. The search itself is built (`lib/engines/oasis/v2026/title-search.ts`, with DotAmi's word list the
-    maintainer approves line by line): 153 of 220 corpus ideas find their job in the group shown first, against
-    20 before. Built 2026-10-22: step 1 of Pick a future's three steps, on Pick a future and at the end of the
-    intake (`components/front-door/job-and-road-steps.tsx`, searched on DotAmi's own server,
-    `POST /api/jobs/search`), and the cockpit's **Pick a job** runs the same search. Step 3 lists the road
-    written for the picked job first (spec 03, case A); a job with no road gets the honest line, a marked place
-    for *About this job* (25h fills it) and the general road, and saves nothing until a future is opened
+    maintainer approves line by line): 150 of 220 corpus ideas find their job in the group shown first, as the
+    screen lists it (each group's first 50; 153 counted past that cap, the number this line gave until
+    2026-10-23), against 20 before. Built 2026-10-22: step 1 of Pick a future's three steps, on Pick a future
+    and at the end of the intake (`components/front-door/job-and-road-steps.tsx`, searched on DotAmi's own
+    server, `POST /api/jobs/search`), and the cockpit's **Pick a job** runs the same search. Step 3 lists the
+    road written for the picked job first (spec 03, case A); a job with no road gets the honest line, a marked
+    place for *About this job* (25h fills it) and the general road, and saves nothing until a future is opened
+  - [x] 28b-2: whole words first (the maintainer's call a-call-11, 2026-10-23): inside each group, the jobs
+    one of whose titles holds, word for word, as many of the person's words as the group counts (all, all but
+    one, at least one), then the rest, each part headed in that count (the #206 review) and in code order, the
+    closest group open whole. On the corpus: 152 in the open group (was 150),
+    181 listed (was 172), none that was listed drops out; "I build custom kitchen cabinets" lists
+    Cabinetmakers on row 10 (was not listed)
   - [x] 28c: the road written for the picked job comes first; otherwise "No road is written for this job
     yet", with *About this job* and the general road; no silent fallback for a new idea; a job with no written
     road saves nothing until a future is opened (the maintainer's call of 2026-10-21; a kind of saved idea with
@@ -591,8 +598,9 @@ placed in phase 3.
       words name, the job found by the person's words on step 1, and step 3's roads; Lloydminster never sets a
       single province; "Calgary"/"calgary" and "Québec"/"Quebec" are planted controls. Found 2026-10-22, listed
       with no story yet, waiting on the maintainer's call: a misspelt word in the kind of work finds the job only by its own name (84 of 220
-      ideas), and "à Regina" in French names no province (the parser reads a city that is also a first name
-      only after an English place word)
+      ideas). Fixed 2026-10-23 (the maintainer's call a-call-14): "à Regina" in French names Saskatchewan, as
+      "in Regina" does; the parser reads "à", "au", "aux", "en" and "dans" before a place and the provinces'
+      French names (French rewording gaps 1 → 0; a planted control in `tests/rewording-plants.spec.ts`)
     - [x] The idea harness's time budget (60 s) is held on the run's own CPU time, not the wall clock, and a
       run keeps step 1's search answers for its own length: about 36 s alone before, 27 s after on this
       machine; under the full parallel run the wall clock had reached 60.5 s and 65.7 s

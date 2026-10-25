@@ -387,7 +387,7 @@ export function qualityMarkdown(q: QualityNumbers): string {
   if (!s) lines.push("Not counted in this run (`--clutter-only`).", "");
   else {
     lines.push(
-      `"What's closest to your work?" (searchJobTitles) on each idea's kind of work, each group as the screen lists it (its first ${JOB_SEARCH_GROUP_CAP} jobs). ${s.withJob} of ${s.ideas} ideas name an expected job. Counted once in tests/helpers/job-search-corpus.ts, whose floors tests/job-title-search.spec.ts holds.`,
+      `"What's closest to your work?" (searchJobTitles) on each idea's kind of work, each group as the screen lists it (each part's first ${JOB_SEARCH_GROUP_CAP} jobs; a group without parts, its first ${JOB_SEARCH_GROUP_CAP}). ${s.withJob} of ${s.ideas} ideas name an expected job. Counted once in tests/helpers/job-search-corpus.ts, whose floors tests/job-title-search.spec.ts holds.`,
       "",
     );
     table(
@@ -397,8 +397,8 @@ export function qualityMarkdown(q: QualityNumbers): string {
         ["in any group, as listed", of(s.anyGroup, s.withJob)],
         ["not listed, though other jobs were", of(s.notListed, s.withJob)],
         ["no job found at all", of(s.noResults, s.withJob)],
-        [`in the first group, counting past its first ${JOB_SEARCH_GROUP_CAP}`, of(s.firstGroupUncapped, s.withJob)],
-        [`in any group, counting past each group's first ${JOB_SEARCH_GROUP_CAP}`, of(s.anyGroupUncapped, s.withJob)],
+        [`in the first group, counting past each part's first ${JOB_SEARCH_GROUP_CAP}`, of(s.firstGroupUncapped, s.withJob)],
+        [`in any group, counting past each part's first ${JOB_SEARCH_GROUP_CAP}`, of(s.anyGroupUncapped, s.withJob)],
         [
           `among the first ${COCKPIT_LIST_MEASURE_LIMIT} results of the cockpit's older job list (searchOasisJobs, by job name or code), the before`,
           of(s.cockpitList, s.withJob),

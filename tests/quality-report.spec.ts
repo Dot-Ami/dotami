@@ -443,7 +443,8 @@ describe("the report and the Quality line", () => {
     expect(md).toContain("| on the general road, all told | 8 of 10 (80.0%) | 6 of 10 (60.0%) |");
     expect(md).toContain("- idea-v1-0001: typed: planted");
     expect(md).toContain("| in the first group shown (the open one) | 5 of 8 (62.5%) |");
-    expect(md).toContain("| in any group, counting past each group's first 50 | 7 of 8 (87.5%) |");
+    // Counted past the cap, which since whole words first (a-call-11) is each part's, not each group's.
+    expect(md).toContain("| in any group, counting past each part's first 50 | 7 of 8 (87.5%) |");
     expect(md).toContain("results of the cockpit's older job list (searchOasisJobs, by job name or code), the before | 2 of 8 (25.0%) |");
     expect(md).toContain("1 of 2 screen sizes within their budget");
     expect(md).toContain("| front-door | 375 px | 4 / 4 | 9 / 7 | 8 / 8 | 9.5 / 9.5 | **no** |");
