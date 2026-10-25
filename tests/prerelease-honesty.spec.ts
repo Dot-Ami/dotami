@@ -749,13 +749,10 @@ function everyLensLine(): { where: string; text: string }[] {
 /**
  * Lens lines with a time in them today that another open pull request removes. Listed so the test reads every
  * catalog now; an entry the scan no longer finds fails the test, so it comes out the day that pull request lands.
+ * Empty since #208 merged (2026-10-25): it rewrote the last one, CSBFP's tax line ("the 365-day retroactive
+ * window"), to ISED's words.
  */
-const LENS_TIME_GAPS: readonly { where: string; why: string }[] = [
-  {
-    where: "grants grant-csbfp tax",
-    why: "\"the 365-day retroactive window\": no ISED page holds it. PR #208 (fix/prerelease-numbers) rewrites this line to ISED's words; whichever of #208 and #210 lands second deletes this entry.",
-  },
-];
+const LENS_TIME_GAPS: readonly { where: string; why: string }[] = [];
 
 /** Every string a file writes (quoted, a plain template, or a template's fixed parts with `${…}` for its holes), never a comment. */
 function stringsWritten(source: string, file: string): { line: number; text: string }[] {
