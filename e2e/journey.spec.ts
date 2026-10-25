@@ -48,6 +48,10 @@ const ASN = skillLabel("skill-ab-alberta-student-number");
 const AGREEMENT = skillLabel("skill-ab-apprenticeship-education-agreement");
 const sponsorStep = roadApprenticeToOwnShopAB.steps.find((s) => s.id === "step-shop-sponsor-hours")!;
 const handTools = sponsorStep.costs.find((c) => c.id === "cost-shop-hand-tools")!;
+// A line whose name rests on an Alberta page, priced before the change of place below, so the walk reads its row there.
+const classroomStep = roadApprenticeToOwnShopAB.steps.find((s) => s.id === "step-shop-classroom-exams")!;
+const books = classroomStep.costs.find((c) => c.id === "cost-shop-books")!;
+const registerApprentice = roadApprenticeToOwnShopAB.steps.find((s) => s.id === "step-shop-register-apprentice")!;
 const fork = roadApprenticeToOwnShopAB.forks[0]!;
 const stepLabel = (id: string) => roadApprenticeToOwnShopAB.steps.find((s) => s.id === id)!.label;
 const ownShop = stepLabel(fork.sides[1]!);
@@ -81,6 +85,7 @@ test("the whole journey: front door → destination → pick a future → the co
   expect(listedSkills).toContain("skill-ab-alberta-student-number");
   expect(listedSkills).toContain("skill-ab-apprenticeship-education-agreement");
   expect(handTools.kind).toBe("named");
+  expect(books.kind === "named" && books.nameSource?.jurisdiction).toBe("AB");
   expect(fork.sides).toHaveLength(2);
 
   const seen: Seen[] = [];
@@ -312,6 +317,40 @@ test("the whole journey: front door → destination → pick a future → the co
   await skillsList(page).getByRole("listitem").filter({ hasText: own }).getByRole("button", { name: "Remove", exact: true }).click();
   await expect(skillsList(page).getByRole("listitem").filter({ hasText: own })).toHaveCount(0);
 
+  // ---- A change of place (S2.5.33's bug 33a; the second review of #207): a line resting on an Alberta page priced,
+  // then the idea moved to Ontario. Its receipt names only the place, the quote stays named and uncounted, and a
+  // step resting on Alberta's pages says why it lists nothing; words drawn only after these, so read here. Then back
+  // to Alberta, and the quote taken back, so the idea is as it was.
+  await stage(page, classroomStep.label).click();
+  const booksLine = stepPanel(page).getByRole("listitem").filter({ has: page.getByText(books.label, { exact: true }) });
+  await booksLine.getByRole("button", { name: "Add your quote" }).click();
+  await booksLine.getByLabel("Amount").fill("300");
+  await booksLine.getByLabel("Where it came from").selectOption("your-guess");
+  await booksLine.getByRole("button", { name: "Next: agree" }).click();
+  await figures.getByRole("button", { name: "Agree", exact: true }).click();
+  await expect(figures).toHaveCount(0);
+  await expect(booksLine).toContainText("$300");
+  await stepPanel(page).getByRole("button", { name: "Close", exact: true }).click();
+  const booksTold = `You told us your number for “${books.label}” on “${classroomStep.label}” is $300`;
+  await told(page).getByRole("button", { name: "Change: you told us your place is Alberta" }).click();
+  await told(page).getByRole("combobox", { name: Q3 }).selectOption("ON");
+  await button(page, "Save").click();
+  await expect(told(page).getByRole("status")).toContainText("Because you told us your place is Ontario");
+  await expect(told(page).getByText(`${booksTold}; it is kept with this idea and not counted for your place`, { exact: false })).toBeVisible();
+  // The Start-up money gauge counts it as kept, never as a number not given (third review of #207).
+  await expect(gauge(page, "Start-up money")).toContainText("1 of your numbers kept, not counted for your place");
+  await look(seen, page, "cockpit after a change of place to Ontario, with a quote on an Alberta line");
+  await stage(page, registerApprentice.label).click();
+  await expect(stepPanel(page)).toContainText("rest on other provinces' pages, so none is shown for your place.");
+  await look(seen, page, "cockpit, a step resting on Alberta's pages, seen from Ontario");
+  await stepPanel(page).getByRole("button", { name: "Close", exact: true }).click();
+  await told(page).getByRole("button", { name: "Change: you told us your place is Ontario" }).click();
+  await told(page).getByRole("combobox", { name: Q3 }).selectOption("AB");
+  await button(page, "Save").click();
+  await expect(told(page).getByRole("status")).toContainText("Because you told us your place is Alberta");
+  await told(page).getByRole("button", { name: `Take back: ${booksTold}` }).click();
+  await expect(told(page).getByText(booksTold, { exact: true })).toHaveCount(0);
+
   // ---- Your futures lists it, and opens it in the cockpit.
   await page.goto("/ventures");
   const card = page.getByRole("heading", { name: ideaName, level: 2 });
@@ -330,6 +369,8 @@ test("the whole journey: front door → destination → pick a future → the co
   expect(at("cockpit, Compare after This is mine")).toContain(`Because you picked “${ownShop}”`);
   expect(at("cockpit, Others in this line of work")).toContain("A stall at the weekend market.");
   expect(at("cockpit, the first visit as it opens")).toContain("Start anywhere. Each thing you tell us lights up part of the road.");
+  expect(at("cockpit after a change of place to Ontario")).toContain("not counted for your place");
+  expect(at("cockpit, a step resting on Alberta's pages")).toContain("so none is shown for your place.");
   expect(verdictsIn(seen)).toEqual([]);
 });
 

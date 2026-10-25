@@ -1,7 +1,7 @@
 import { itemsForStep } from "@/lib/brain/node-items";
 import type { ConfirmedFigure, UnlockItem } from "@/lib/brain/types";
 import type { JobList } from "@/lib/engines/oasis/v2026";
-import { forksAreTheMapToggles, type Road, type SkillItem } from "@/lib/engines/roads/v2026";
+import { forksAreTheMapToggles, roadForPlace, type Road, type RoadStep, type SkillItem } from "@/lib/engines/roads/v2026";
 import { formatMoney } from "@/lib/format/money-and-months";
 import { BUSINESS_TOTAL_KINDS, COST_LINE_AMOUNT_FROM_LABELS, type FigureView } from "@/lib/figures/types";
 import type { PersonFigureView } from "@/lib/futures/person-figures";
@@ -47,6 +47,8 @@ export interface KeptFuture {
  *    line's quote) reach the money sums through `agreedPlanning`, and a proposed number reaches nothing.
  *  - A step's status comes only from step progress, the person's own clicks. The map's active, done and
  *    set-aside lists are worked out from its toggles and are never passed in as statuses.
+ * The road is drawn for the idea's own place (`roadForPlace`, a-call-12): another province's done-when lines,
+ * cost lines and links are left out and counted, so the cockpit and the plan never list them.
  */
 export function cockpitInput(args: {
   road: Road;
@@ -93,7 +95,7 @@ export function cockpitInput(args: {
   }
 
   return {
-    road: args.road,
+    road: roadForPlace(args.road, args.scenario.profile.province),
     roadChosen: args.roadChosen,
     skillItems: args.skillItems,
     scenario: args.scenario,
@@ -107,6 +109,37 @@ export function cockpitInput(args: {
     whatIf: null,
     today: args.today,
   };
+}
+
+/**
+ * The skill the map dims by: the one selected, only while the road drawn for the idea's place lists it. A change of
+ * place can leave it out, and with it every row that unselects it, which would leave every card dimmed (second
+ * review of #207). The selection itself is kept: back in a place that lists the item, the map dims by it again.
+ */
+export function linkedSkill(road: Pick<Road, "steps">, selected: string | null): string | null {
+  return selected !== null && road.steps.some((step) => step.needs.includes(selected)) ? selected : null;
+}
+
+/**
+ * The line a step's section shows with nothing drawn in it (second review of #207): that its lines rest on other
+ * provinces' pages, when the road drawn for the idea's place left them all out (`leftOutForPlace`), else that none
+ * is written yet. The step panel and Your plan ask here, so the two can't say different things.
+ */
+export function emptySectionLine(step: Pick<RoadStep, "leftOutForPlace">, section: "doneWhen" | "skills" | "costs"): string {
+  const left = step.leftOutForPlace;
+  if (section === "doneWhen") return left?.doneWhenIds.length ? words.panel.doneWhenNoneForPlace : words.panel.doneWhenNone;
+  if (section === "skills") return left?.needs.length ? words.panel.skillsNoneForPlace : words.panel.skillsNone;
+  return left?.costs.length ? words.panel.costsNoneForPlace : words.panel.costsNone;
+}
+
+/**
+ * A road listing no skills: none written yet, or every one left out for the idea's place (`roadForPlace`). For the
+ * Skills list (`list`), and the Skills gauge in the goal bar and on Your plan (`gauge`).
+ */
+export function roadSkillsNone(road: Pick<Road, "steps">): { list: string; gauge: string } {
+  return road.steps.some((step) => step.leftOutForPlace?.needs.length)
+    ? { list: words.lists.skillsNoneForPlace, gauge: words.gauges.skills.noneListedForPlace }
+    : { list: words.lists.skillsNone, gauge: words.gauges.skills.noneListed };
 }
 
 /**
@@ -257,7 +290,7 @@ export function gaugeView(evaluation: RoadEvaluation, road: Road, scenario: Scen
   ];
   const skills: GaugeLines =
     s.listed === 0
-      ? { value: words.gauges.skills.noneListed, lines: ownLine, invite: ownLine.length === 0 ? words.gauges.skills.addOwn : null }
+      ? { value: roadSkillsNone(road).gauge, lines: ownLine, invite: ownLine.length === 0 ? words.gauges.skills.addOwn : null }
       : {
           value: words.gauges.skills.value(s.have, s.learning, s.notYet),
           lines: [words.gauges.skills.notMarked(s.notMarked, s.listed), ...ownLine],
@@ -269,15 +302,22 @@ export function gaugeView(evaluation: RoadEvaluation, road: Road, scenario: Scen
   const savingsLine = m.savingsCents === null ? words.gauges.money.noSavings : words.gauges.money.savings(m.savingsCents);
   // Each part only with lines behind it, and its count: no line means no amount, so never "$0 your numbers"
   // for a person who gave none (the same rule as the badges, where a blank is never $0).
+  // A number kept on a line the idea's place leaves out was given: with none counted, the part says none is counted
+  // for the place, never "not given yet", and a line counts what is kept (third review of #207).
+  const keptForPlace = m.notCountedForPlaceLines;
   const moneyParts = [
     ...(m.officialFeeLines > 0 ? [words.gauges.money.fees(m.officialFeesCents, m.officialFeeLines)] : []),
     m.yourNumberLines > 0
       ? person
         ? words.example.theirs.numbers(person, m.yourNumbersCents, m.yourNumberLines)
         : words.gauges.money.yours(m.yourNumbersCents, m.yourNumberLines)
-      : person
-        ? words.example.theirs.numbersNone(person)
-        : words.gauges.money.yoursNone,
+      : keptForPlace > 0
+        ? person
+          ? words.example.theirs.numbersNoneForPlace(person)
+          : words.gauges.money.yoursNoneForPlace
+        : person
+          ? words.example.theirs.numbersNone(person)
+          : words.gauges.money.yoursNone,
   ];
   const money: GaugeLines = {
     value: anyLines ? moneyParts.join(" · ") : words.gauges.money.noLines,
@@ -286,6 +326,9 @@ export function gaugeView(evaluation: RoadEvaluation, road: Road, scenario: Scen
       ...(m.onlyIfFeeLines > 0 ? [words.gauges.money.onlyIf(m.onlyIfFeeLines)] : []),
       ...(m.notPricedLines > 0 ? [words.gauges.money.notPriced(m.notPricedLines)] : []),
       ...(m.leftOutLines > 0 ? [words.gauges.money.leftOut(m.leftOutLines)] : []),
+      ...(keptForPlace > 0
+        ? [person ? words.example.theirs.notCountedForPlace(person, keptForPlace) : words.gauges.money.notCountedForPlace(keptForPlace)]
+        : []),
       ...m.waitingOnForks.map((w) => words.gauges.money.waiting(w.lines, w.label, w.officialFeesCents, w.officialFeeLines)),
       savingsLine,
       // Road evaluation gives the difference only when there are savings and a line with an amount.

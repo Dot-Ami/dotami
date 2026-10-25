@@ -278,7 +278,7 @@ export const TABLES: readonly TableEntry[] = [
     holds:
       "For each idea, the steps on its road you marked doing, done or not for me (on every road, today's Alberta road included, since 2026-10-12), the “done when” lines you ticked on each, and when you changed each step's status (the newest 100 changes per step). Set from the cockpit's step panel. It is never used to rank anything.",
     removedBy:
-      "Pressing a step's status that is on takes it back, and unticking a line removes the tick, in the cockpit's step panel; the list of changes stays. Deleting your ideas (Delete, at the bottom of this page) deletes it with them.",
+      "Pressing a step's status that is on takes it back, and unticking a line removes the tick, in the cockpit's step panel (a tick on a line the idea's place leaves out, because it rests on another province's page, is kept until you untick it where the line is shown again; since 2026-10-24); the list of changes stays. Deleting your ideas (Delete, at the bottom of this page) deletes it with them.",
   },
   {
     model: "Setting",

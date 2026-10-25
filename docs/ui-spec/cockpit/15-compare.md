@@ -45,7 +45,7 @@ in the step panel at a fork, or a *Not told yet* ending row, each only at a fork
 | Skills listed on your path | 2 have · 0 learning · 1 not yet · 2 not marked |
 | Legal requirements among them | 1 |
 | Official fees | $1,860 (3 lines), or *none* |
-| Your numbers | $3,400 (1 line), or *not given yet* |
+| Your numbers | $3,400 (1 line), or *not given yet*, or *none counted for your place* when every number the person agreed is on a line the idea's place leaves out (2026-10-24, as the Start-up money gauge says it) |
 | Not priced yet | 4 lines |
 | Official fees that apply only sometimes | 1 line, not added up |
 | Rules and tax cards | 6 apply · 2 check first |

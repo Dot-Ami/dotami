@@ -45,7 +45,7 @@ import {
   type ToldRow,
 } from "@/lib/cockpit/told";
 import type { PlanArgs } from "@/lib/cockpit/plan";
-import { cockpitInput, costLineNote, nextOnYourRoad, overlayCounts, type GaugeId } from "@/lib/cockpit/view";
+import { cockpitInput, costLineNote, linkedSkill, nextOnYourRoad, overlayCounts, type GaugeId } from "@/lib/cockpit/view";
 import { cockpitWords as words } from "@/lib/cockpit/words";
 import { aboutJobWords } from "@/lib/about-job/words";
 import { landscapeWords } from "@/lib/landscape/words";
@@ -53,11 +53,11 @@ import type { CostLineAmountFrom, FigureView } from "@/lib/figures/types";
 import { useLocalToday } from "@/lib/figures/use-local-today";
 import type { CFENodeId } from "@/lib/engines/cfe/v2026";
 import { oasisListForJob } from "@/lib/engines/oasis/v2026";
-import { forksAreTheMapToggles, roadsV2026, roadsWrittenForJob, skillItemsV2026 } from "@/lib/engines/roads/v2026";
-import { templatesCatalogV2026 } from "@/lib/engines/templates/v2026";
+import { forksAreTheMapToggles, roadForPlace, roadsV2026, roadsWrittenForJob, skillItemsForPlace, skillItemsV2026 } from "@/lib/engines/roads/v2026";
+import { templateIdsForPlace } from "@/lib/engines/templates/v2026";
 import type { ExampleFuture } from "@/lib/examples";
 import { exampleStory } from "@/lib/examples/story";
-import { roadForFuture, SHIPPED_ROADS_CATALOG, type SkillMarkValue, type StepStatus } from "@/lib/futures/types";
+import { roadForFuture, SHIPPED_ROADS_CATALOG, ticksToSave, type SkillMarkValue, type StepStatus } from "@/lib/futures/types";
 import { AUTOSAVE_DELAY_MS, formatSavedAt, saveScenario } from "@/lib/journey/save-scenario";
 import { evaluateRoad, withoutIdeaAnswer, type RoadEvaluationInput } from "@/lib/roads";
 import { EMPLOYMENT_WORDS } from "@/lib/roads/words";
@@ -180,9 +180,6 @@ function keptAnswers(kept: KeptForIdea | null, figures: FigureView[] | null): Ke
   };
 }
 
-/** Every prep-tool reference, once the structure is set — there are four; no persona picks them. */
-const ALL_TEMPLATE_IDS = templatesCatalogV2026.entries.map((entry) => entry.id);
-
 interface CockpitPageProps {
   /** The most recently saved venture (or the one named by `?venture=`), or null when nothing is saved. */
   initialScenario: Scenario | null;
@@ -282,9 +279,17 @@ export function CockpitPage({ initialScenario, pinned = false, example }: Cockpi
   const reload = saved.reload;
   const ideaFigures = ventureId && figures ? { ideaId: ventureId, figures } : null;
 
-  // The road this idea is drawn on: its own when it names one the catalog has, else today's general road.
+  // The road this idea is drawn on: its own when it names one the catalog has, else today's general road,
+  // drawn for the idea's own place (`roadForPlace`, as road evaluation's input is: lib/cockpit/view.ts).
   const roadId = kept?.future.roadId ?? null;
-  const road = useMemo(() => roadForFuture(SHIPPED_ROADS_CATALOG, roadId), [roadId]);
+  const roadPlace = currentScenario?.profile.province ?? null;
+  const road = useMemo(() => {
+    const whole = roadForFuture(SHIPPED_ROADS_CATALOG, roadId);
+    return roadPlace ? roadForPlace(whole, roadPlace) : whole;
+  }, [roadId, roadPlace]);
+  // The skill items as the step panel and the Skills list draw them: each one's sources for the idea's place
+  // (`skillItemsForPlace`). Road evaluation reads the items as written (ids and labels only).
+  const skillItemsHere = useMemo(() => (roadPlace ? skillItemsForPlace(skillItemsV2026, roadPlace) : skillItemsV2026), [roadPlace]);
   // The government's skills list for the job the person picked as closest to their work, or none.
   const jobCode = kept?.future.job?.code ?? null;
   const job = useMemo(() => (jobCode ? oasisListForJob(jobCode) : null), [jobCode]);
@@ -663,11 +668,26 @@ export function CockpitPage({ initialScenario, pinned = false, example }: Cockpi
     void saveAnswer(() => postJson(`/api/futures/${encodeURIComponent(ventureId)}/progress`, { roadId: road.id, stepId, status }), "step");
   }
 
+  /**
+   * The ticks to send for one step: `ids`, plus those kept on its lines the road drawn for the place on screen leaves
+   * out (`ticksToSave`). The storage keeps them too, but by the place in the file, which trails the screen until a
+   * change of place is saved.
+   */
+  function ticksFor(stepId: string, ids: string[]): string[] {
+    const written = roadForFuture(SHIPPED_ROADS_CATALOG, roadId).steps.find((s) => s.id === stepId);
+    const drawn = road.steps.find((s) => s.id === stepId);
+    const keptTicks = kept?.progress.find((p) => p.stepId === stepId)?.doneWhenIds ?? [];
+    return written && drawn ? ticksToSave(ids, keptTicks, written, drawn) : ids;
+  }
+
   /** Resolves once the ticks are saved and read back, so the step panel can hold its boxes until then. */
   function handleTicks(doneWhenIds: string[]): Promise<unknown> {
     if (!ventureId || !selectedNodeId) return Promise.resolve();
     const stepId = selectedNodeId;
-    return saveAnswer(() => postJson(`/api/futures/${encodeURIComponent(ventureId)}/progress`, { roadId: road.id, stepId, doneWhenIds }), "step");
+    return saveAnswer(
+      () => postJson(`/api/futures/${encodeURIComponent(ventureId)}/progress`, { roadId: road.id, stepId, doneWhenIds: ticksFor(stepId, doneWhenIds) }),
+      "step",
+    );
   }
 
   function handleMark(skill: SkillKey, mark: SkillMarkValue | null, place: ReceiptPlace) {
@@ -770,7 +790,8 @@ export function CockpitPage({ initialScenario, pinned = false, example }: Cockpi
     if (back.kind === "skill-mark") void saveAnswer(() => postJson("/api/skill-marks", { skillItemId: back.skillItemId, mark: null }), "told", empty);
     else if (back.kind === "own-skill") void saveAnswer(() => postJson("/api/skill-marks", { ownLabel: back.ownLabel, mark: null }), "told", empty);
     else if (back.kind === "step-status") void saveAnswer(() => postJson(`/api/futures/${id}/progress`, { roadId: road.id, stepId: back.stepId, status: null }), "told", empty);
-    else if (back.kind === "step-ticks") void saveAnswer(() => postJson(`/api/futures/${id}/progress`, { roadId: road.id, stepId: back.stepId, doneWhenIds: [] }), "told", empty);
+    else if (back.kind === "step-ticks")
+      void saveAnswer(() => postJson(`/api/futures/${id}/progress`, { roadId: road.id, stepId: back.stepId, doneWhenIds: ticksFor(back.stepId, []) }), "told", empty);
     else if (back.kind === "figures") void saveAnswer(() => postJson("/api/figures/retract", { ventureId, figureIds: back.figureIds }), "told", empty);
     else if (back.kind === "date") void saveAnswer(() => postJson(`/api/futures/${id}/date`, { month: null }), "told", empty);
     else if (back.kind === "ending") void saveAnswer(() => postJson(`/api/futures/${id}/ending`, { forkId: back.forkId, stepId: null }), "told", empty);
@@ -1231,7 +1252,9 @@ export function CockpitPage({ initialScenario, pinned = false, example }: Cockpi
                 <p className="mt-1 text-small leading-snug text-stone-dim">{words.rail.prepToolsWait}</p>
               </section>
             ) : (
-              <TemplatesRail templateIds={ALL_TEMPLATE_IDS} />
+              // Every prep-tool reference once the structure is set (no persona picks them), drawn for the idea's place:
+              // the federal ones, and its own province's.
+              <TemplatesRail templateIds={templateIdsForPlace(scenario.profile.province)} />
             )}
 
             {/* The example keeps nothing, so it has no save line: its one way on is to start your own. */}
@@ -1313,7 +1336,8 @@ export function CockpitPage({ initialScenario, pinned = false, example }: Cockpi
                   onBranchChange={handleBranchChange}
                   overlays={overlays}
                   stepEvaluations={stepEvaluations}
-                  linkedSkillId={selectedSkillId}
+                  // A skill the idea's place left out dims nothing: no row is drawn to unselect it.
+                  linkedSkillId={linkedSkill(road, selectedSkillId)}
                   cockpit={{
                     legendFolded: folds.legend,
                     onToggleLegend: () => toggle("legend"),
@@ -1387,7 +1411,7 @@ export function CockpitPage({ initialScenario, pinned = false, example }: Cockpi
                     step={selectedStep}
                     evaluation={selectedStepEvaluation}
                     rules={evaluation.rules}
-                    skillItems={skillItemsV2026}
+                    skillItems={skillItemsHere}
                     marks={markOf}
                     selectedSkillId={selectedSkillId}
                     branch={
@@ -1430,7 +1454,7 @@ export function CockpitPage({ initialScenario, pinned = false, example }: Cockpi
               {rightPanel === "skills" ? (
                 <SkillsListPanel
                   road={road}
-                  skillItems={skillItemsV2026}
+                  skillItems={skillItemsHere}
                   marks={kept?.skillMarks ?? []}
                   selectedSkillId={selectedSkillId}
                   canSave={canSave}

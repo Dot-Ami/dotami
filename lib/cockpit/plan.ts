@@ -7,12 +7,12 @@ import type { SkillMarkValue } from "@/lib/futures/types";
 import { evaluateRoad, type RoadEvaluationInput, type StepEvaluation } from "@/lib/roads";
 import type { BranchDecisionId } from "@/lib/scenarios/branches";
 import { isBranchDecided } from "@/lib/scenarios/graph";
-import { citationsForPlace, forksAreTheMapToggles } from "@/lib/engines/roads/v2026";
+import { forksAreTheMapToggles, stepSourcesForPlace } from "@/lib/engines/roads/v2026";
 import { areaLabel, regionLabel } from "@/lib/front-door/where";
 
 import { goalRoadLine } from "./road-line";
 import { dayOfMoment, toldDay, toldRows, type KeptAnswers } from "./told";
-import { gaugeView } from "./view";
+import { emptySectionLine, gaugeView, roadSkillsNone } from "./view";
 import { cockpitWords as words } from "./words";
 
 /**
@@ -182,7 +182,8 @@ export function buildPlan(args: PlanArgs): PlanView {
 
   function planStep(step: (typeof road.steps)[number], evaluated: StepEvaluation): PlanStep {
     const ticked = new Set(evaluated.doneWhen.tickedIds);
-    const sources = citationsForPlace(road, step.citations, place);
+    // Its own sources and the pages left out of its lines and links for the idea's place, in one count.
+    const sources = stepSourcesForPlace(road, step, place);
     return {
       id: step.id,
       label: step.label,
@@ -190,7 +191,7 @@ export function buildPlan(args: PlanArgs): PlanView {
       status: evaluated.status ? words.plan.status(words.road.statusChip[evaluated.status]) : words.plan.noStatus,
       state: words.plan.state[evaluated.state],
       because: evaluated.because,
-      doneWhenTitle: step.doneWhen.length === 0 ? words.panel.doneWhenNone : words.plan.doneWhen(evaluated.doneWhen.ticked, evaluated.doneWhen.total),
+      doneWhenTitle: step.doneWhen.length === 0 ? emptySectionLine(step, "doneWhen") : words.plan.doneWhen(evaluated.doneWhen.ticked, evaluated.doneWhen.total),
       doneWhen: step.doneWhen.map((line) => ({
         text: line.text,
         ticked: ticked.has(line.id),
@@ -306,7 +307,7 @@ export function buildPlan(args: PlanArgs): PlanView {
         const item = itemById.get(id)!;
         return { label: item.label, kind: words.panel.skillKind[item.kind], mark: markWords(markOf.get(id)) };
       }),
-      roadNone: roadItemIds.length === 0 ? words.gauges.skills.noneListed : null,
+      roadNone: roadItemIds.length === 0 ? roadSkillsNone(road).gauge : null,
       own,
       ownNone: own.length === 0 ? words.plan.ownNone : null,
       job: job

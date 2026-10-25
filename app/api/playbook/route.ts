@@ -71,8 +71,8 @@ export async function POST(request: Request) {
     return Response.json({ error: "scenario payload required" }, { status: 400 });
   }
 
-  // The road the cockpit draws, so the sources are the ones it shows (on the federal road, the idea's own
-  // province's and the federal ones, task 28d). Left out, every source, as before; one nobody wrote is refused.
+  // The road the cockpit draws; one nobody wrote is refused. The sources are drawn for the idea's own place, the
+  // federal pages and its province's, whether a road is named or not (`citationsForPlace`, a-call-12).
   const roadId = (bodyUnknown as { roadId?: unknown }).roadId;
   const road = roadId === undefined ? undefined : typeof roadId === "string" ? roadById(roadId) : undefined;
   if (roadId !== undefined && !road) {

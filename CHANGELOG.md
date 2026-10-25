@@ -287,6 +287,44 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   `citationsForPlace`). *Hire first employee* now cites Alberta's own *Employment standards* page, checked by a
   tool on 2026-10-23 and labelled so until a person reads it (it is on the reading list in
   docs/engines/citations.md). The province swap's `PLACE_GAPS` list is empty: the test passes with no known gap.
+  The same goes for what rests on a page (review of the pull request): on a road written for Alberta opened from
+  another province, such as an Alberta idea moved to Ontario, the cockpit and Your plan still listed Alberta's
+  name-registry pages, the WCB-Alberta *done when* line and the Alberta name fee. Now a step's *done when* lines,
+  cost lines and official links resting on another province's page are left out too, and counted in the same
+  line (`roadForPlace` and `stepSourcesForPlace` in `lib/engines/roads/v2026/index.ts`). In a road's own province
+  nothing changes. Each step's name and one-line summary stay as the road wrote them. The pull request's second
+  review (2026-10-24) found the change of place could still lose or misstate the person's own answers. A tick on a
+  *done when* line left out for the idea's new place was deleted the next time any tick on that step was saved
+  there (the step panel sends the lines it draws, and the storage replaced the list), or by *Take back* on the
+  step's ticks. It is now kept whatever list a save sends (`ticksToSave` in `lib/futures/types.ts`, used by
+  `lib/futures/step-progress.ts`), and the cockpit sends it too, so a tick made while a change of place is still
+  being saved can't lose one; moving back shows it again (`tests/places-and-programs.spec.ts` and
+  `e2e/place-change.spec.ts`: on the old code the WCB-Alberta tick was gone after a tick in Ontario; with the
+  place's save held back, it is gone after that tick when the cockpit sends only the lines it draws). Road 1's
+  skill items, all resting on Alberta's pages (*Alberta Student Number* listed four tradesecrets.alberta.ca pages
+  in Ontario), are left out of a step's list for another province, their pages counted in the same line, and a
+  listed item's sources are drawn for the place too (`skillItemsForPlace`); a skill selected on the map that the
+  new place leaves out no longer dims the whole map (`linkedSkill`). A section left empty by the place says so
+  (*This step's “done when” lines rest on other provinces' pages, so none is shown for your place.*), in the step
+  panel, the Skills list, the Skills gauge and Your plan, where it said none is written yet (road 1 from Ontario:
+  13 of its 17 steps). The change of place's receipt said *you ticked 1 of 3 “done when” lines …* and *you took
+  back your number for …*, neither of which the person did; it now names only the place, and with road 1's skill
+  items left out for another province it says neither that a mark was taken back nor that a step lost one
+  (`lib/roads/receipts.ts`). On road 1 it still said *the skills now read 0 have, 0 learning, 0 not yet, 0 not
+  marked* on the way out, as if the marks were gone, and *4 steps now have every skill they list marked have* on
+  the way back; it now says *this road's skills rest on other provinces' pages, so none is listed for your place*,
+  as the Skills gauge does, and counts no step whose skills only came back into view. An agreed number on a cost line left out for the place dropped out of the money,
+  *What you've told DotAmi* and Your plan without a word; it is now listed in both as kept with this idea and not
+  counted for the place, with **Take back** and no **Change** (the maintainer's decision of 2026-10-24, option B).
+  The Start-up money gauge, Your plan's money sums and *Compare the two endings* still said *your numbers: not
+  given yet* beside that row; they now say *your numbers: none counted for your place*, with *1 of your numbers
+  kept, not counted for your place* (`tests/places-and-programs.spec.ts`: *not given yet* on the old code).
+  Pick a future's card for an Alberta road, seen from another province, counts what that person will be shown
+  inside (call 34; road 1 from Ontario: 17 lines to price, no official fee and no skill listed, where it said 30,
+  9 and 3; `tests/three-steps.spec.ts`). The cockpit rail's prep tools no longer link Alberta's business-name page
+  (*Provincial business name registration*) for an idea in another province, which they did before this pull
+  request too (`templateIdsForPlace`; `e2e/place-change.spec.ts`: four links after a move to Ontario on the old
+  code, three now).
 - **Your answer to "Are you buying equipment, a vehicle or tools?" on a future picked on Pick a future is
   kept** (the maintainer's "Yes, fix both", 2026-10-20). Pick a future saves equipment as not said, since it
   never asks it. Answering in the cockpit's one-question box showed the answer for a moment, but left

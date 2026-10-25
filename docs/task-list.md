@@ -533,7 +533,10 @@ placed in phase 3.
     rules and tax cards, fees, sources and map follow; a road written for Alberta stays drawn with its honest
     line; the Alberta area and region aren't shown outside Alberta (About this job, Your plan), still kept for
     a later history (`e2e/place-change.spec.ts`, `tests/places-and-programs.spec.ts`). The full Change box,
-    the history and outside Canada are phase 3 (a-call-8, a-call-9, a-call-10)
+    the history and outside Canada are phase 3 (a-call-8, a-call-9, a-call-10). Second review, 2026-10-24: ticks
+    kept across a change of place (by the storage and the cockpit, `ticksToSave`), its receipt names only the
+    place, a quote kept on a cost line the place leaves out named and not counted, skill items, empty sections
+    and Pick a future's card counts drawn for the place, and the rail's prep tools by place
   - [x] Pre-release numbers and amounts (2026-10-23, the screen review 30f and the maintainer's reading list):
     Export is the road on screen, its steps, done-when lines, cost lines and the place's sources
     (`lib/playbook/road-export.ts`); Compare and the Rules & tax switch count the cards one way; the money gauge
@@ -585,7 +588,9 @@ placed in phase 3.
       leaked and where; one that leaves out the person's own province (a step's sources, the ways to
       incorporate) fails naming what is missing and where. Found 2026-10-22 and fixed 2026-10-23 (the
       maintainer's call a-call-12): in Alberta, road 0's *Hire first employee* showed Ontario's and British
-      Columbia's employment-standards pages; every road now shows a step's sources for the person's own place,
+      Columbia's employment-standards pages; every road now shows a step's sources for the person's own place
+      (and, since the pull request's review, only the *done when* lines, cost lines and links resting on those
+      pages, the rest counted in the same line: `roadForPlace`),
       the step cites Alberta's own page (checked by a tool, waiting for a person's read), and `PLACE_GAPS` in
       `tests/fixtures/ideas/accuracy-gaps.ts` is empty
     - [x] 37b (moved here too): the corpus reworded (capitals, lower case, a typo, another order, emoji, no
