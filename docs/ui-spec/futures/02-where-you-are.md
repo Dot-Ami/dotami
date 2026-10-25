@@ -194,12 +194,12 @@ says only what is true: the region can be changed later.
 **Privacy inventory lines** (`lib/privacy/inventory.ts`; the privacy test fails until each exists):
 
 - *Your area*: *"The area you picked (one of Alberta's four census metropolitan areas, somewhere else in Alberta,
-  or I don't know) and the day. Kept with the idea on this computer; shown on Your plan and in About this job;
-  deleted with it. A backup you save (File → Back up…) holds the whole data file, so it holds this too. Nothing
+  or I don't know) and the day. Kept with the idea on this computer; shown on Your plan and in About this job
+  while the idea's place is Alberta (after a change of place it stays kept, shown nowhere); deleted with it. A backup you save (File → Back up…) holds the whole data file, so it holds this too. Nothing
   else reads it in this version."*
 - *Your economic region*: *"The economic region you picked, or I don't know, and the day, from Pick a future's
   step 2 or from About this job's Change. Kept with the idea on this computer; shown on Your plan and in About
-  this job; deleted with it. A backup you save (File → Back up…) holds the whole data file, so it holds this
+  this job while the idea's place is Alberta (after a change of place it stays kept, shown nowhere); deleted with it. A backup you save (File → Back up…) holds the whole data file, so it holds this
   too. About this job reads it to choose which published wage row to show."*
 
 As built (2026-10-22, the PR #202 review): each is a line of its own under *Your ideas* on *What DotAmi knows

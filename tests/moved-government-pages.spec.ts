@@ -5,9 +5,10 @@
  * lib/engines/all-citations.ts) twice, with a normal browser's user-agent: 20 answered 404 both times.
  * For 19 of them the same government body has the content at a new address, and the words each entry
  * relies on were found there by `node scripts/check-quotes.mjs` that day, so 23 citations on them
- * now point at the new page and carry that tool check. Three citations are left as they are, for a
+ * now point at the new page and carry that tool check. Two citations are left as they are, for a
  * person to decide (STILL_DEAD, tests/fixtures/still-dead-pages.ts): what each says may no longer be true, and no rule here rewrites
  * it.
+ * (A third, the Alberta Investor Tax Credit page, left with its program on 2026-10-23, the maintainer's call a-call-1.)
  *
  * A read of the old page is not a read of the new one, so a moved citation drops its old read date
  * (lastVerified) and shows its tool check until a person reads the new page. Nothing here reaches the
@@ -137,7 +138,7 @@ describe("government pages that moved", () => {
 
   it("the ones left for a person are exactly these, unchanged", () => {
     // The retained-earnings stage's one old address is the dividends-received line listed as moved above.
-    expect(STILL_DEAD[1].url).toBe(MOVED[7].old);
+    expect(STILL_DEAD[0].url).toBe(MOVED[7].old);
     for (const { url, where } of STILL_DEAD) {
       expect(listed.filter(({ citation }) => citation.url === url).map((l) => l.where).sort(), url).toEqual([...where].sort());
     }

@@ -512,7 +512,9 @@ answer), the what-if bar, *Compare* and *This is mine*. The left rail stays as i
   - **Start-up money** (*yours + cited*): official fees and the person's own numbers, each with its
     count of lines (*$1,860 official fees (3 lines) · $3,400 your numbers (1 line)*). A part with no line
     behind it shows no amount: no official fee part when no fee counts, and *your numbers: not given yet*
-    when the person agreed to none, never *$0* (the badges' rule: a blank is never $0); *n official fees apply only sometimes, not added
+    when the person agreed to none (*your numbers: none counted for your place*, with *n of your numbers kept,
+    not counted for your place*, when the ones they agreed are all on lines the idea's place leaves out, since
+    2026-10-24), never *$0* (the badges' rule: a blank is never $0); *n official fees apply only sometimes, not added
     up* (an `onlyIf` fee is in neither part: the badges leave it out of a step's sum and say so, and the
     step panel and the money list show its condition); *n not priced yet*; the lines left out (off the path, or waiting on a fork with no pick); the
     savings; and *savings minus both* only when road evaluation gives that difference. A road with no
@@ -697,7 +699,9 @@ answer, before and after it or with and without it. Choices made while building 
   today's general road).
 - **Change and Take back.** *Change* goes to where the answer is given: the step (status, ticks, a
   quote), the Skills list (marks), *Compare* (an ending), the one-question box (the month, savings, the
-  structure, buying equipment, *I'd incorporate at*, a map pick), the intake (the idea's other answers)
+  place, the structure, buying equipment, *I'd incorporate at*, a map pick), the intake (the idea's other answers;
+  the place moved to the box on 2026-10-23, S2.5.33's bug 33a: the intake's save is always a new idea, so its
+  Change made a second idea and left the first in the old province)
   or the idea's figures on *Your ideas* (agreed business figures). *Take back* removes the answer the
   same way `withoutAnswer` does: a mark or a status through its route with *I don't know* / none; ticks
   emptied; a quote or savings retracted through `/api/figures/retract` (kept in the history as
@@ -1701,7 +1705,9 @@ a position or a title), the status (**doing · done · not for me**, or none), t
 the person ticked, and a list of status changes with the moment of each (the newest 100 per step), for
 *Since last time*. One row per future, road and step. Every id is checked against the road catalog when
 it is written: the road must be the future's own road, the step must be on it, and each ticked line must
-be one of that step's *done when* lines. The step's own date (*your date* on a step) is left out: dates
+be one of that step's *done when* lines. A save's list replaces the ticks on the lines the road draws for the
+idea's place; a tick on a line its place leaves out (another province's page) is kept whatever list is sent
+(`ticksToSave` in `lib/futures/types.ts`, second review of #207, 2026-10-24). The step's own date (*your date* on a step) is left out: dates
 beyond the target date are not in phase 1 (§ 12), and it is a plain added column when they are.
 
 - **On road 0 a step's status is the map's, kept in one place (settled 2026-10-12).** The map already
