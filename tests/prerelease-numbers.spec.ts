@@ -24,7 +24,7 @@ import { cockpitInput, gaugeView, overlayCounts, rulesCardsOnMap } from "@/lib/c
 import { cockpitWords } from "@/lib/cockpit/words";
 import { cfeCatalogV2026, type CFENodeId } from "@/lib/engines/cfe/v2026";
 import { grantProgramsV2026 } from "@/lib/engines/grants/v2026/programs";
-import { citationsForPlace, forksAreTheMapToggles, roadApprenticeToOwnShopAB, roadsV2026, skillItemsV2026, type Road } from "@/lib/engines/roads/v2026";
+import { citationsForPlace, forksAreTheMapToggles, roadApprenticeToOwnShopAB, roadForPlace, roadsV2026, skillItemsV2026, type Road } from "@/lib/engines/roads/v2026";
 import type { EngineCitation } from "@/lib/engines/shared/types";
 import { writeOffCategoriesV2026 } from "@/lib/engines/writeoffs/v2026/categories";
 import { scenarioForPickedFuture } from "@/lib/front-door/start-future";
@@ -88,16 +88,22 @@ function leftOutOfExport(road: Road, place: string, markdown: string): string[] 
   return missing;
 }
 
-/** Step sources for other provinces only (no step shows them for this place) that an export prints anyway. */
+/**
+ * Pages the road cites that the road drawn for this place shows nowhere (another province's: its step sources,
+ * done-when lines, cost lines and links, `roadForPlace` since #207) and that an export prints anyway.
+ */
 function otherProvincesPrinted(road: Road, place: string, markdown: string): string[] {
-  const shown = new Set(road.steps.flatMap((step) => citationsForPlace(road, step.citations, place).shown.map((c) => c.url)));
-  const doneWhenAndFees = new Set(
-    road.steps.flatMap((step) => [...step.doneWhen.map((l) => l.citation.url), ...step.costs.flatMap((l) => (l.kind === "official-fee" ? [l.citation.url] : []))]),
-  );
-  const others = road.steps.flatMap((step) => step.citations.filter((c) => !shown.has(c.url) && !doneWhenAndFees.has(c.url)).map((c) => c.url));
+  const drawn = roadForPlace(road, place);
+  const pages = (step: Road["steps"][number]) => [
+    ...step.doneWhen.map((l) => l.citation.url),
+    ...step.costs.flatMap((l) => (l.kind === "official-fee" ? [l.citation.url] : l.nameSource ? [l.nameSource.url] : [])),
+    ...step.officialLinks.map((l) => l.url),
+  ];
+  const shown = new Set(drawn.steps.flatMap((step) => [...citationsForPlace(drawn, step.citations, place).shown.map((c) => c.url), ...pages(step)]));
+  const cited = road.steps.flatMap((step) => [...step.citations.map((c) => c.url), ...pages(step)]);
   // As a link's address, so one page's address that starts another's (".../about-classroom-instruction/" and its
   // ".../pay-for-classes/") isn't taken for it.
-  return [...new Set(others)].filter((url) => markdown.includes(`(${url})`));
+  return [...new Set(cited)].filter((url) => !shown.has(url) && markdown.includes(`(${url})`));
 }
 
 describe("1. Export is the road on screen", () => {
@@ -107,7 +113,9 @@ describe("1. Export is the road on screen", () => {
         const args = exportArgs(road, place);
         const md = renderRoadExport(args);
         const province = args.input.scenario.profile.province;
-        expect(leftOutOfExport(road, province, md)).toEqual([]);
+        // The road on screen is the one drawn for the idea's place (#207): a road written for another province
+        // leaves that province's done-when lines, cost lines and links out, on screen and so in the export.
+        expect(leftOutOfExport(roadForPlace(road, province), province, md)).toEqual([]);
         expect(otherProvincesPrinted(road, province, md)).toEqual([]);
         // How each source was checked, as every screen says it (docs/engines/citations.md).
         expect(md).toMatch(/sources_read_by_a_person: \d+ of \d+/);
@@ -136,6 +144,12 @@ describe("1. Export is the road on screen", () => {
     const ontarioOnly: EngineCitation = { ...step.citations[0]!, jurisdiction: "ON", url: "https://example.invalid/ontario-only" };
     const planted: Road = { ...road, steps: road.steps.map((s) => (s.id === step.id ? { ...s, citations: [...s.citations, ontarioOnly] } : s)) };
     expect(otherProvincesPrinted(planted, "AB", `${md}\n[planted](${ontarioOnly.url})`)).toEqual([ontarioOnly.url]);
+    // And road 0 opened in Ontario: an Alberta done-when line's page printed in its export is caught.
+    const general = roadsV2026[0]!;
+    const albertaLine = general.steps.flatMap((s) => s.doneWhen).find((l) => l.citation.jurisdiction === "AB")!;
+    const inOntario = renderRoadExport(exportArgs(general, "CA-ON"));
+    expect(otherProvincesPrinted(general, "ON", inOntario)).toEqual([]);
+    expect(otherProvincesPrinted(general, "ON", `${inOntario}\n[planted](${albertaLine.citation.url})`)).toEqual([albertaLine.citation.url]);
   });
 
   it("on road 0 a stage of the tax map keeps the catalog's own fields under its step", () => {
