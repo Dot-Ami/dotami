@@ -223,7 +223,8 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   province. Each check fails on a planted fault. Three things they found today are listed rather than skipped;
   none has a story yet, and each waits on the maintainer's call: in Alberta, *Hire first employee* on the general road lists Ontario's and
   British Columbia's employment-standards pages as its sources; a misspelt word in the kind of work finds the job
-  only by its own name (84 of the 220 test ideas with a job); and "à Regina" in French names no province.
+  only by its own name (84 of the 220 test ideas with a job); and "à Regina" in French names no province (fixed
+  2026-10-23, below).
 ### Fixed
 - **Export is the road on screen** (pre-release fix of 2026-10-23; review 30f, gap 22). Export printed the tax
   map's catalog stages for the idea's branch picks, whatever road was drawn: a cabinetmaker's export had 0 of
@@ -265,6 +266,18 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   a new source, checked by a tool on 2026-10-23 (not read by a person yet).
 - **About this job says "as published" beside two wage levels that are the same** (gap 15). Ontario bakers'
   *low $17.60 · median $17.60* looked like a mistake; the line now ends *· low and median the same, as published*.
+- **A place said in French is read as a place, the way one said in English is** (the maintainer's call a-call-14,
+  2026-10-23). When the words you type at the door name your place, the place question starts on it, for you to
+  keep or change. In French, a city that is also a first name (Regina, Victoria, Brandon, Hamilton) was never read
+  as the place: "je suis adjointe administrative à Regina" started the question empty, where "in Regina" starts
+  it on Saskatchewan. The provinces' French names (Colombie-Britannique, Nouveau-Brunswick, Nouvelle-Écosse,
+  Terre-Neuve, Île-du-Prince-Édouard, Territoires du Nord-Ouest) weren't read at all, and "de Winnipeg à Regina"
+  proposed Manitoba where two provinces are named (the person picks). Now "à", "au", "aux", "en" and "dans" before
+  a place count as "in", "at" and "to" do, and the French names count, with or without accents and hyphens.
+  Lloydminster still names no province, and a first name is still a person ("Victoria et moi…"). Nothing is
+  derived: the person still sees the place and can change it (`lib/journey/intent-fallback.ts`;
+  `tests/intent-fallback.spec.ts`; the French rewording gaps go from 1 to 0, and a planted control in
+  `tests/rewording-plants.spec.ts` brings it back).
 - **Changing your place on a saved idea changes that idea** (S2.5.33, bug 33a; the maintainer's calls of
   2026-10-22 and 2026-10-23). *Change* on *You told us your place is …* in the cockpit's *What you've told
   DotAmi* opened the intake, whose save is always a new idea: the person ended with two ideas, the first still in
@@ -374,6 +387,21 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   written for the job listed after another on step 3 was counted among the ideas but on neither way in.
 
 ### Changed
+- **"What's closest to your work?" lists whole-word matches first** (the maintainer's call a-call-11,
+  2026-10-23). Inside each group of jobs, the jobs with a government title that has, word for word, as many of
+  your words as the group counts now come first, under a heading that says so in the group's count (*One of their
+  titles has all your words exactly*; in the at-least-one group, *One of their titles has at least one of your
+  words exactly*), and the rest come after, under the heading that says the opposite (*None of their titles has
+  all your words exactly*; *None of their titles has any of your words exactly, only words that start like
+  them*). Each heading is true of every job under it and of none under the other, and *and n more of its titles*
+  counts only the titles like the one named; each part in the government's code order and showing its first 50, and the closest group opens with both parts. Nothing is scored or picked: the part is a
+  plain fact about the match. Typing "I build custom kitchen cabinets" now lists Cabinetmakers on row 10 without
+  a click (before, it was 64th of 85 in one group and not listed); "bookkeeping for small businesses" lists
+  Accounting technicians and bookkeepers on row 2 (was 13), "wedding photography" Photographers on row 3 (was
+  11). On the 220 test ideas that name a job: 152 find it in the open group (was 150), 181 anywhere listed (was
+  172), and none that was listed drops out (`lib/engines/oasis/v2026/title-search.ts`,
+  `components/front-door/job-search.tsx`; `tests/job-title-search.spec.ts` holds the new floors and every idea
+  listed before, with a planted control). The cockpit's **Pick a job** runs the same search.
 - **Two ended programs are off** (the maintainer's call a-call-1, before release 0.5.0). The *Alberta Investor
   Tax Credit* (its page answers page not found) and the *Canada-Alberta Job Grant* (its page now opens the
   Canada-Alberta Productivity Grant) are gone from the programs catalog and from every screen. The Job Grant

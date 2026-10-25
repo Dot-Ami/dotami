@@ -11,7 +11,7 @@
  * so a change to one screen that breaks the way to the next fails here.
  *
  * It also reads the page after each thing a person does on the way (an answer and its receipt, an agree
- * prompt, a skill marked, a line priced, a date, a what-if, This is mine, the plan with all of it in) and
+ * prompt, words typed into step 1's search, a skill marked, a line priced, a date, a what-if, This is mine, the plan with all of it in) and
  * fails on a verdict there, with the same findVerdicts as e2e/no-verdict.spec.ts, which reads every
  * screen as it opens. Words a component writes only once something is done, such as the what-if banner,
  * are on no screen as opened, so this is where they are read.
@@ -25,6 +25,8 @@
 import { expect, test, type Page } from "@playwright/test";
 
 import { generalRoadV2026, roadApprenticeToOwnShopAB, skillItemsV2026 } from "../lib/engines/roads/v2026";
+import { partHeading } from "../lib/front-door/job-search-lines";
+import { jobStepWords } from "../lib/front-door/words";
 import { waitForReact } from "../tests/helpers/react-ready";
 import { findVerdicts } from "../tests/helpers/verdict-words";
 
@@ -153,6 +155,16 @@ test("the whole journey: front door → destination → pick a future → the co
   // ---- Pick a future: both written futures, in the order written, never ranked.
   await page.getByRole("link", { name: "Pick a future →" }).click();
   await expect(page).toHaveURL(/\/futures$/);
+  // Step 1's part headings are drawn only once words are typed, so they are read here (the #206 review).
+  const jobBox = page.getByRole("searchbox", { name: jobStepWords.boxLabel });
+  await waitForReact(jobBox);
+  await jobBox.fill("registered nurse");
+  await expect(page.getByRole("heading", { level: 4, name: `${partHeading("word-start", "all", 2)}, 1` })).toBeVisible();
+  await look(seen, page, "Pick a future, step 1, “registered nurse” typed");
+  await jobBox.fill("wedding photography");
+  await expect(page.getByRole("heading", { level: 4, name: `${partHeading("exact", "some", 2)}, 6` })).toBeVisible();
+  await look(seen, page, "Pick a future, step 1, “wedding photography” typed");
+  await jobBox.fill("");
   // Pick a future opens on its first step since 2026-10-22: skipped, every future is listed with no job to match.
   await skipTheJob(page);
   const cards = page.getByRole("list", { name: "Written futures" }).getByRole("listitem");
