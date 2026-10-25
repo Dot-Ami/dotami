@@ -152,6 +152,13 @@ export const answer = {
     takenBack: `you took back your number for ${quoted(line)} on ${quoted(step)}`,
     fact: `your number for ${quoted(line)} (${formatMoney(cents)})`,
   }),
+  // A quote the person agreed on a cost line the road leaves out for the idea's place (`roadForPlace`: the line rests
+  // on another province's page): kept, named, counted in no sum (second review of #207, 2026-10-24).
+  costLineForAnotherPlace: (line: string, step: string, cents: number): AnswerWords => ({
+    said: `you told us your number for ${quoted(line)} on ${quoted(step)} is ${formatMoney(cents)}; it is kept with this idea and not counted for your place, because that line rests on another province's page`,
+    takenBack: `you took back your number for ${quoted(line)} on ${quoted(step)}`,
+    fact: `your number for ${quoted(line)} (${formatMoney(cents)}, kept, not counted for your place)`,
+  }),
   savings: (cents: number): AnswerWords => ({
     said: `you told us you'd put ${formatMoney(cents)} of savings toward starting`,
     takenBack: "you took back your savings number",
@@ -332,6 +339,8 @@ export const changed = {
   stepsDone: (done: number, total: number) => `${done} of ${count(total, "step is", "steps are")} now done`,
   skills: (have: number, learning: number, notYet: number, notMarked: number) =>
     `the skills now read ${have} have, ${learning} learning, ${notYet} not yet, ${notMarked} not marked`,
+  /** The road drawn for the idea's new place left every listed item out (the Skills gauge's own words, lib/cockpit/words.ts). */
+  skillsNoneForPlace: "this road's skills rest on other provinces' pages, so none is listed for your place",
   ownSkills: (have: number, learning: number, notYet: number) =>
     `the skills you added now read ${have} have, ${learning} learning, ${notYet} not yet`,
   job: (label: string | null) => (label === null ? "no job is picked now" : `your pick of job is now ${quoted(label)}`),

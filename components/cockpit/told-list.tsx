@@ -220,7 +220,9 @@ export type BoxControl =
   | { kind: "month"; min: string; value: string | null }
   | { kind: "dollars"; label: string; value: number | null }
   | { kind: "money" }
-  | { kind: "choice"; options: readonly { id: string; label: string }[]; value: string | null };
+  | { kind: "choice"; options: readonly { id: string; label: string }[]; value: string | null }
+  /** A drop-down, for a list too long to show as one row of radio buttons (the thirteen provinces and territories). */
+  | { kind: "select"; options: readonly { id: string; label: string }[]; value: string | null; choose: string };
 
 /**
  * The one-question box (§ 2, "Overlays on top of everything"): one question, its why line, one control,
@@ -248,14 +250,14 @@ export function QuestionBox({
   const [text, setText] = useState(
     control.kind === "month" ? (control.value ?? "") : control.kind === "dollars" && control.value !== null ? String(control.value) : "",
   );
-  const [choice, setChoice] = useState<string | null>(control.kind === "choice" ? control.value : null);
+  const [choice, setChoice] = useState<string | null>(control.kind === "choice" || control.kind === "select" ? control.value : null);
   const [problem, setProblem] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
   async function save(event: React.FormEvent) {
     event.preventDefault();
     let value: string | number;
-    if (control.kind === "choice") {
+    if (control.kind === "choice" || control.kind === "select") {
       if (choice === null) return setProblem(words.questions.box.pickOne);
       value = choice;
     } else if (control.kind === "month") {
@@ -296,6 +298,21 @@ export function QuestionBox({
             </label>
           ))}
         </fieldset>
+      ) : control.kind === "select" ? (
+        <select
+          aria-labelledby={`${id}-title`}
+          aria-describedby={`${id}-why`}
+          value={choice ?? ""}
+          onChange={(e) => setChoice(e.target.value === "" ? null : e.target.value)}
+          className="w-56 max-w-full rounded-sm border border-rule bg-ink2 px-2 py-1 text-body text-paper outline-hidden focus:border-maple-soft"
+        >
+          <option value="">{control.choose}</option>
+          {control.options.map((option) => (
+            <option key={option.id} value={option.id}>
+              {option.label}
+            </option>
+          ))}
+        </select>
       ) : (
         <>
           <label htmlFor={`${id}-value`} className="font-mono text-label uppercase tracking-wider text-stone">

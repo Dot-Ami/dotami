@@ -9,6 +9,7 @@ import { MarkButtons, SkillRow } from "@/components/cockpit/step-panel";
 import { JobSearchBox } from "@/components/front-door/job-search";
 import { CitationLinks } from "@/components/shared/citation-links";
 import { Pill } from "@/components/ui";
+import { roadSkillsNone } from "@/lib/cockpit/view";
 import { cockpitWords as words } from "@/lib/cockpit/words";
 import { OASIS_LICENCE_URL, type JobList } from "@/lib/engines/oasis/v2026";
 import type { Road, SkillItem } from "@/lib/engines/roads/v2026";
@@ -117,7 +118,7 @@ export function SkillsListPanel({
       {!canSave ? <CantKeepNote className="text-body text-amber" /> : null}
       <h3 className={heading}>{words.lists.roadTitle}</h3>
       {listed.length === 0 ? (
-        <p className="text-body text-stone">{words.lists.skillsNone}</p>
+        <p className="text-body text-stone">{roadSkillsNone(road).list}</p>
       ) : (
         <ul className="space-y-2">
           {listed.map((item) => (

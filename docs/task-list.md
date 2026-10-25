@@ -535,6 +535,15 @@ placed in phase 3.
     future picked from outside Alberta is an honest end while both labels say so (35), the typed way's last
     step at 5 text sizes (37) and, with the job skipped, its own row at 6 controls on a tablet (38). Known gaps
     22 → 0 ideas (`tests/fixtures/ideas/known-gaps.ts`). Changing your place after a pick (the maintainer's note on calls 33 and 35: someone whose dream is to open shop somewhere else, or who picked by mistake) is its own story, not this one
+  - [x] 33a (S2.5.33's bug, 2026-10-23): *Change* on the place row of *What you've told DotAmi* changes this
+    idea's place in the cockpit's one-question box, where it opened the intake and saved a second idea; the
+    rules and tax cards, fees, sources and map follow; a road written for Alberta stays drawn with its honest
+    line; the Alberta area and region aren't shown outside Alberta (About this job, Your plan), still kept for
+    a later history (`e2e/place-change.spec.ts`, `tests/places-and-programs.spec.ts`). The full Change box,
+    the history and outside Canada are phase 3 (a-call-8, a-call-9, a-call-10). Second review, 2026-10-24: ticks
+    kept across a change of place (by the storage and the cockpit, `ticksToSave`), its receipt names only the
+    place, a quote kept on a cost line the place leaves out named and not counted, skill items, empty sections
+    and Pick a future's card counts drawn for the place, and the rail's prep tools by place
   - [x] 28d: outside Alberta, the federal steps that apply everywhere, plus "Written for Alberta" with the
     person's own province named; Alberta-only steps and pages left out (full B.C. and Ontario roads come
     later). Built 2026-10-21 (`lib/engines/roads/v2026/federal-steps-ca.ts`, 13 steps; *Pick a future* lists it
@@ -577,9 +586,13 @@ placed in phase 3.
       *done when* line, fee and way to incorporate the catalogs write for the run's own province shown. A filter
       that ignores the place (the ways to incorporate, a step's sources, the wage look-up) fails naming what
       leaked and where; one that leaves out the person's own province (a step's sources, the ways to
-      incorporate) fails naming what is missing and where. Found 2026-10-22, listed in
-      `tests/fixtures/ideas/accuracy-gaps.ts` with no story yet, waiting on the maintainer's call: in Alberta,
-      road 0's *Hire first employee* shows Ontario's and British Columbia's employment-standards pages
+      incorporate) fails naming what is missing and where. Found 2026-10-22 and fixed 2026-10-23 (the
+      maintainer's call a-call-12): in Alberta, road 0's *Hire first employee* showed Ontario's and British
+      Columbia's employment-standards pages; every road now shows a step's sources for the person's own place
+      (and, since the pull request's review, only the *done when* lines, cost lines and links resting on those
+      pages, the rest counted in the same line: `roadForPlace`),
+      the step cites Alberta's own page (checked by a tool, waiting for a person's read), and `PLACE_GAPS` in
+      `tests/fixtures/ideas/accuracy-gaps.ts` is empty
     - [x] 37b (moved here too): the corpus reworded (capitals, lower case, a typo, another order, emoji, no
       accents, the city swapped for its province, French; `tests/rewording.spec.ts`) keeps the province the
       words name, the job found by the person's words on step 1, and step 3's roads; Lloydminster never sets a
@@ -994,14 +1007,15 @@ roadmap's build order.
   - [ ] A model proposes the quotes for a source (not built)
 - ⬜ **[11c] Flag stale sources automatically** — with #37
   - [ ] Kept open on purpose (the maintainer, 2026-10-14), so a person decides later:
-    - [ ] *Alberta Investor Tax Credit* (`grant-abti`, `lib/engines/grants/v2026/programs.ts`): its
-      page answers "page not found", and other sites say Alberta closed the program in 2019. The entry
-      is left as it was until a person reads an official source; then keep it, mark it closed, or
-      retire it (its id stays either way).
+    - [x] *Alberta Investor Tax Credit* (`grant-abti`): taken off on 2026-10-23 (the maintainer's call
+      a-call-1); its page answers "page not found" (docs/engines/grants.md, *Retired programs*).
     - [ ] *Retained earnings planning*'s "Paying dividends" and "Salary or dividends" (see [14a]): no
       current CRA page found; the T5 guide could back "Paying dividends". Left as they are for now.
-    - [ ] *Canada-Alberta Job Grant* (`grant-cajg`): its page now redirects to the Canada-Alberta
-      Productivity Grant. A person reads whether the entry still says what the program does.
+    - [x] *Canada-Alberta Job Grant* (`grant-cajg`): taken off on 2026-10-23 (a-call-1); its page now
+      opens the Canada-Alberta Productivity Grant's. The Productivity Grant waits for the maintainer to read its
+      amounts.
+    - [ ] *Employment standards* (alberta.ca), on *Hire first employee* since 2026-10-23: checked by a tool, for
+      a person to read (docs/engines/citations.md, *Waiting for the maintainer's read*).
 - ⬜ **[11d] Two people per change** — the checker of a source is never its author.
 - ⬜ **[11e] Reviewed by an accountant** — a roadmap is *reviewed* only after a professional reads it.
 - ⬜ **[11f] Strategy roadmaps** · roadmap §6 · #47 — each cited, with its audit and anti-avoidance read:

@@ -1,4 +1,4 @@
-import { generalRoadV2026, roadsV2026, skillItemsV2026, type Road, type SkillItem } from "@/lib/engines/roads/v2026";
+import { generalRoadV2026, roadsV2026, skillItemsV2026, type Road, type RoadStep, type SkillItem } from "@/lib/engines/roads/v2026";
 
 /**
  * Phase 1 storage for the future cockpit — shared types (docs/architecture/future-cockpit.md § 7,
@@ -39,6 +39,25 @@ export const SHIPPED_ROADS_CATALOG: RoadsCatalog = { roads: roadsV2026, skillIte
 /** The road a saved future is drawn on: its own when it names one the catalog has, else today's general road. */
 export function roadForFuture(catalog: RoadsCatalog, roadId: string | null): Road {
   return (roadId !== null && catalog.roads.find((road) => road.id === roadId)) || generalRoadV2026;
+}
+
+/**
+ * The ticks one save of a step keeps (second review of #207, 2026-10-24): the list sent, plus each tick already
+ * kept on a line of the step as written that the road drawn for a place leaves out (`roadForPlace`: the line
+ * rests on another province's page). No screen for that place draws the line, so a list sent from one never means
+ * to untick it; it shows again where the place draws it. A kept id that is no line of the step is dropped, as
+ * before. The storage asks with the idea's place as kept; the cockpit with the place on screen, which runs ahead
+ * of the file while a change of place is being saved, or after that save failed.
+ */
+export function ticksToSave(
+  sent: readonly string[],
+  kept: readonly string[],
+  written: Pick<RoadStep, "doneWhen">,
+  drawn: Pick<RoadStep, "doneWhen">,
+): string[] {
+  const shown = new Set(drawn.doneWhen.map((line) => line.id));
+  const leftOut = new Set(written.doneWhen.filter((line) => !shown.has(line.id)).map((line) => line.id));
+  return [...new Set([...sent, ...kept.filter((id) => leftOut.has(id))])];
 }
 
 /** The caller sent something the storage refuses; the message is plain English, and never holds an amount. */

@@ -58,34 +58,6 @@ export const grantProgramsV2026 = [
     ],
   },
   {
-    id: "grant-cajg",
-    label: "Canada-Alberta Job Grant (CAJG)",
-    kind: "grant",
-    authority: "Alberta / federal",
-    description:
-      "Employer-driven training grant covering a portion of third-party training costs for employees.",
-    eligibility:
-      "Alberta employers with Canada Revenue Agency business number; training must be third-party and job-related.",
-    lensAnnotations: {
-      tax: "If hiring and upskilling staff, CAJG may unlock partial training cost recovery — separate from wage deductibility.",
-      legal: "If workers are employees, employment standards and payroll obligations apply alongside grant eligibility.",
-    },
-    citations: [
-      {
-        title: "Canada-Alberta Job Grant",
-        authority: "provincial",
-        jurisdiction: "AB",
-        url: "https://www.alberta.ca/canada-alberta-job-grant",
-        lastVerified: LAST_VERIFIED,
-        note: "Alberta CAJG program page.",
-      },
-    ],
-    provinces: ["AB"],
-    structures: ["sole-prop-gst", "ccpc"],
-    activityTags: ["Trades", "Consulting", "Hospitality"],
-    estimatedValue: "Up to 2/3 of training costs",
-  },
-  {
     id: "grant-irap",
     label: "NRC IRAP",
     kind: "grant",
@@ -120,34 +92,6 @@ export const grantProgramsV2026 = [
     structures: ["ccpc"],
     activityTags: ["Software / SaaS", "AI / ML / R&D", "Manufacturing"],
     estimatedValue: "Varies by project",
-  },
-  {
-    id: "grant-abti",
-    label: "Alberta Investor Tax Credit (ABTIC)",
-    kind: "tax-credit",
-    authority: "Alberta",
-    description:
-      "Tax credit for investors in eligible Alberta small businesses — relevant when raising capital.",
-    eligibility:
-      "Eligible Alberta small business corporation; investor and corporation must meet program criteria.",
-    lensAnnotations: {
-      tax: "If raising equity from Alberta investors, ABTIC may unlock investor-side credits — subject to annual caps.",
-      legal: "If securities are issued, prospectus and private placement rules may apply alongside program eligibility.",
-    },
-    citations: [
-      {
-        title: "Alberta Investor Tax Credit",
-        authority: "provincial",
-        jurisdiction: "AB",
-        url: "https://www.alberta.ca/alberta-investor-tax-credit",
-        lastVerified: LAST_VERIFIED,
-        note: "Alberta ABTIC program page.",
-      },
-    ],
-    provinces: ["AB"],
-    structures: ["ccpc"],
-    activityTags: ["Software / SaaS", "Manufacturing"],
-    estimatedValue: "30% investor credit on eligible investments",
   },
   {
     id: "grant-bc-innovate",
@@ -267,3 +211,38 @@ export const grantProgramsV2026 = [
 ] satisfies GrantProgram[];
 
 export type GrantProgramId = (typeof grantProgramsV2026)[number]["id"];
+
+/** A program taken off the catalog: why, in the official page's own terms, and the day that page was read. */
+export interface RetiredGrantProgram {
+  id: string;
+  label: string;
+  /** The program's own page, as the catalog cited it. */
+  url: string;
+  /** The day a tool opened that page to see what it says now. */
+  readOn: string;
+  why: string;
+}
+
+/**
+ * Programs taken off (the maintainer's call a-call-1, 2026-10-23: "take both off" before release 0.5.0). Their ids
+ * are never reused for another program. Nothing here reaches a screen; docs/engines/grants.md keeps the same list.
+ * The Canada-Alberta Productivity Grant, which replaced the Job Grant, is added only after the maintainer reads its
+ * amounts.
+ */
+export const RETIRED_GRANT_PROGRAMS: readonly RetiredGrantProgram[] = [
+  {
+    id: "grant-abti",
+    label: "Alberta Investor Tax Credit (ABTIC)",
+    url: "https://www.alberta.ca/alberta-investor-tax-credit",
+    readOn: "2026-10-23",
+    why:
+      "Alberta's page for it answers page not found. A search finds Alberta's corporate tax special notice Vol. 5 No. 54, titled 'Budget 2019 elimination of corporate tax credits' (open.alberta.ca); its page refused the tool, so its words were not checked.",
+  },
+  {
+    id: "grant-cajg",
+    label: "Canada-Alberta Job Grant (CAJG)",
+    url: "https://www.alberta.ca/canada-alberta-job-grant",
+    readOn: "2026-10-23",
+    why: "Alberta's page for it now opens the Canada-Alberta Productivity Grant's page (https://www.alberta.ca/canada-alberta-productivity-grant), a different program with its own amounts.",
+  },
+];

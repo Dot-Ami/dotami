@@ -20,7 +20,15 @@ import { createDatabaseClient } from "@/lib/db/client";
 import { ensureVentureFromScenario } from "@/lib/db/ensure-venture-from-scenario";
 import { parseFirstSave } from "@/lib/db/parse-scenario-input";
 import { searchJobTitles } from "@/lib/engines/oasis/v2026/title-search";
-import { citationsForPlace, generalRoadV2026, roadApprenticeToOwnShopAB, roadFederalStepsCA, roadsV2026, skillItemsV2026 } from "@/lib/engines/roads/v2026";
+import {
+  citationsForPlace,
+  generalRoadV2026,
+  roadApprenticeToOwnShopAB,
+  roadFederalStepsCA,
+  roadForPlace,
+  roadsV2026,
+  skillItemsV2026,
+} from "@/lib/engines/roads/v2026";
 import { futureCards, listedRoads, notHereRoad, sourcesLine } from "@/lib/front-door/futures";
 import { groupOrderLine, leftOutLine, onlyLeftOutWords, partHeading, searchBoxStatusLine, searchStatusLine, showsEnglishOnly } from "@/lib/front-door/job-search-lines";
 import { roadJobNames } from "@/lib/front-door/road-jobs";
@@ -318,11 +326,41 @@ describe("the steps as drawn", () => {
     const shown = roadFederalStepsCA.steps.reduce((n, step) => n + citationsForPlace(roadFederalStepsCA, step.citations, "ON").shown.length, 0);
     const all = roadFederalStepsCA.steps.reduce((n, step) => n + step.citations.length, 0);
     expect(total(federalFor(null)) - total(federalFor("ON"))).toBe(all - shown);
-    // A road written for particular provinces shows every source, so its count is the same with or without a place.
-    expect(futureCards([generalRoadV2026], skillItemsV2026, "ON")[0]!.sources).toEqual(futureCards([generalRoadV2026], skillItemsV2026)[0]!.sources);
+    // Every road counts the place's pages only since 2026-10-23 (a-call-12): road 0 in Alberta counts fewer than all.
+    const road0 = (place: "AB" | null) => total(futureCards([generalRoadV2026], skillItemsV2026, place)[0]!.sources);
+    expect(road0("AB")).toBeLessThan(road0(null));
     // As drawn: the federal card on Pick a future in Ontario carries the place's count.
     const html = draw("futures", skipped(), "CA-ON");
     for (const part of sourcesLine(federalFor("ON"))) expect(html).toContain(esc(part.text));
+  });
+
+  it("an Alberta road's card, for a person in another province, counts what the cockpit draws there (second review of #207)", () => {
+    const card = (road: (typeof roadsV2026)[number], place: string) => futureCards([road], skillItemsV2026, place)[0]!;
+    const total = (c: ReturnType<typeof card>["sources"]) => c.person + c.unrecorded + c.model + c.tool;
+    // Every road, in Alberta, Ontario, British Columbia and Yukon: the lines, fees and skills the road drawn for the
+    // place holds (`roadForPlace`), as the step panel and the Skills list show them.
+    for (const road of roadsV2026) {
+      for (const place of ["AB", "ON", "BC", "YT"]) {
+        const drawn = roadForPlace(road, place).steps;
+        const costs = drawn.flatMap((step) => step.costs);
+        expect(
+          [card(road, place).linesToPrice, card(road, place).officialFees, card(road, place).skillsListed],
+          `${road.id} in ${place}`,
+        ).toEqual([
+          costs.filter((c) => c.kind === "named").length,
+          costs.filter((c) => c.kind === "official-fee").length,
+          new Set(drawn.flatMap((step) => step.needs)).size,
+        ]);
+      }
+    }
+    // Road 1 from Ontario: 17 lines to price, no official fee and no skill listed, where it said 30, 9 and 3, and the
+    // sources of what is drawn there only.
+    const road1 = card(roadApprenticeToOwnShopAB, "ON");
+    expect([road1.linesToPrice, road1.officialFees, road1.skillsListed, total(road1.sources)]).toEqual([17, 0, 0, 18]);
+    // Road 0 from Ontario: 9 lines to price, where it said 11 (the Alberta name registry's two).
+    expect(card(generalRoadV2026, "ON").linesToPrice).toBe(9);
+    // Control: in Alberta road 1 counts as written.
+    expect([card(roadApprenticeToOwnShopAB, "AB").linesToPrice, card(roadApprenticeToOwnShopAB, "AB").officialFees]).toEqual([30, 9]);
   });
 
   it("on the intake page step 3's headings use the lead size the intake already draws, never the title size (call 37)", () => {
