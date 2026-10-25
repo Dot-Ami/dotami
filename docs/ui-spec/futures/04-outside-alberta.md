@@ -173,9 +173,10 @@ Every string in the words block was run through `VERDICT_WORDS`, `findVerdicts` 
 - **Sources filtered when drawn**, not in the catalog: the road keeps each step's sources as road 0 has them;
   the step panel and *Your plan* draw the federal ones and the idea's own province's (`citationsForPlace`) and
   say *<n> sources for other provinces aren't shown.* On map stages the heading keeps its own words, *Sources for
-  this stage · n*. **Export** does the same since 2026-10-22 (review of 28d): the cockpit sends the drawn road
-  with the request (`app/api/playbook/route.ts`, a road nobody wrote is refused), and each section of the
-  export lists the same sources with the same line under them (`lib/playbook/build-skeleton.ts`). Since
+  this stage · n*. **Export** does the same since 2026-10-22 (review of 28d); since 2026-10-23 it is built in the
+  page from what *Your plan* shows (`lib/playbook/road-export.ts`; until then the cockpit sent the drawn road to
+  `app/api/playbook/route.ts` and `lib/playbook/build-skeleton.ts` built it), and each step lists the same sources,
+  for the idea's own place, with the same line under them. Since
   2026-10-23 (the maintainer's call a-call-12) road 0 and road 1 draw them the same way, for the idea's own place:
   until then every source was kept there, so a person in Alberta saw Ontario's and British Columbia's
   employment-standards pages under *Hire first employee*, which now cites Alberta's own. The same day (review of

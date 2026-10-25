@@ -544,6 +544,13 @@ placed in phase 3.
     kept across a change of place (by the storage and the cockpit, `ticksToSave`), its receipt names only the
     place, a quote kept on a cost line the place leaves out named and not counted, skill items, empty sections
     and Pick a future's card counts drawn for the place, and the rail's prep tools by place
+  - [x] Pre-release numbers and amounts (2026-10-23, the screen review 30f and the maintainer's reading list):
+    Export is the road on screen, its steps, done-when lines, cost lines and the place's sources
+    (`lib/playbook/road-export.ts`); Compare and the Rules & tax switch count the cards one way; the money gauge
+    names the official fees waiting on a fork, so it adds up to Compare; the vehicle caps are Income Tax
+    Regulations s.7307's $350 / $300 and $1,100, and the Small Business Financing Program says ISED's own words
+    with no 365-day line (both sources checked by a tool, on the reading list); About this job says "as
+    published" beside two equal wage levels (`tests/prerelease-numbers.spec.ts`)
   - [x] 28d: outside Alberta, the federal steps that apply everywhere, plus "Written for Alberta" with the
     person's own province named; Alberta-only steps and pages left out (full B.C. and Ontario roads come
     later). Built 2026-10-21 (`lib/engines/roads/v2026/federal-steps-ca.ts`, 13 steps; *Pick a future* lists it

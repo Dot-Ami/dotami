@@ -517,7 +517,7 @@ describe("the page", () => {
     const shown: string[] = [];
     const walk = (value: unknown, key = "") => {
       if (typeof value === "string") {
-        if (key !== "id" && key !== "lineId") shown.push(value);
+        if (key !== "id" && key !== "lineId" && key !== "stepId") shown.push(value);
       } else if (Array.isArray(value)) for (const v of value) walk(v);
       else if (value && typeof value === "object") for (const [k, v] of Object.entries(value)) walk(v, k);
     };
