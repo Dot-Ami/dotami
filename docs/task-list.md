@@ -509,12 +509,19 @@ placed in phase 3.
   - [x] 28b: *What's closest to your work?*: the person searches the example titles and picks the job;
     matches in code order, labelled "matches your words · your pick"; *Skip* allowed; nothing set without a
     click. The search itself is built (`lib/engines/oasis/v2026/title-search.ts`, with DotAmi's word list the
-    maintainer approves line by line): 153 of 220 corpus ideas find their job in the group shown first, against
-    20 before. Built 2026-10-22: step 1 of Pick a future's three steps, on Pick a future and at the end of the
-    intake (`components/front-door/job-and-road-steps.tsx`, searched on DotAmi's own server,
-    `POST /api/jobs/search`), and the cockpit's **Pick a job** runs the same search. Step 3 lists the road
-    written for the picked job first (spec 03, case A); a job with no road gets the honest line, a marked place
-    for *About this job* (25h fills it) and the general road, and saves nothing until a future is opened
+    maintainer approves line by line): 150 of 220 corpus ideas find their job in the group shown first, as the
+    screen lists it (each group's first 50; 153 counted past that cap, the number this line gave until
+    2026-10-23), against 20 before. Built 2026-10-22: step 1 of Pick a future's three steps, on Pick a future
+    and at the end of the intake (`components/front-door/job-and-road-steps.tsx`, searched on DotAmi's own
+    server, `POST /api/jobs/search`), and the cockpit's **Pick a job** runs the same search. Step 3 lists the
+    road written for the picked job first (spec 03, case A); a job with no road gets the honest line, a marked
+    place for *About this job* (25h fills it) and the general road, and saves nothing until a future is opened
+  - [x] 28b-2: whole words first (the maintainer's call a-call-11, 2026-10-23): inside each group, the jobs
+    one of whose titles holds, word for word, as many of the person's words as the group counts (all, all but
+    one, at least one), then the rest, each part headed in that count (the #206 review) and in code order, the
+    closest group open whole. On the corpus: 152 in the open group (was 150),
+    181 listed (was 172), none that was listed drops out; "I build custom kitchen cabinets" lists
+    Cabinetmakers on row 10 (was not listed)
   - [x] 28c: the road written for the picked job comes first; otherwise "No road is written for this job
     yet", with *About this job* and the general road; no silent fallback for a new idea; a job with no written
     road saves nothing until a future is opened (the maintainer's call of 2026-10-21; a kind of saved idea with
@@ -533,7 +540,17 @@ placed in phase 3.
     rules and tax cards, fees, sources and map follow; a road written for Alberta stays drawn with its honest
     line; the Alberta area and region aren't shown outside Alberta (About this job, Your plan), still kept for
     a later history (`e2e/place-change.spec.ts`, `tests/places-and-programs.spec.ts`). The full Change box,
-    the history and outside Canada are phase 3 (a-call-8, a-call-9, a-call-10)
+    the history and outside Canada are phase 3 (a-call-8, a-call-9, a-call-10). Second review, 2026-10-24: ticks
+    kept across a change of place (by the storage and the cockpit, `ticksToSave`), its receipt names only the
+    place, a quote kept on a cost line the place leaves out named and not counted, skill items, empty sections
+    and Pick a future's card counts drawn for the place, and the rail's prep tools by place
+  - [x] Pre-release numbers and amounts (2026-10-23, the screen review 30f and the maintainer's reading list):
+    Export is the road on screen, its steps, done-when lines, cost lines and the place's sources
+    (`lib/playbook/road-export.ts`); Compare and the Rules & tax switch count the cards one way; the money gauge
+    names the official fees waiting on a fork, so it adds up to Compare; the vehicle caps are Income Tax
+    Regulations s.7307's $350 / $300 and $1,100, and the Small Business Financing Program says ISED's own words
+    with no 365-day line (both sources checked by a tool, on the reading list); About this job says "as
+    published" beside two equal wage levels (`tests/prerelease-numbers.spec.ts`)
   - [x] 28d: outside Alberta, the federal steps that apply everywhere, plus "Written for Alberta" with the
     person's own province named; Alberta-only steps and pages left out (full B.C. and Ontario roads come
     later). Built 2026-10-21 (`lib/engines/roads/v2026/federal-steps-ca.ts`, 13 steps; *Pick a future* lists it
@@ -578,7 +595,9 @@ placed in phase 3.
       leaked and where; one that leaves out the person's own province (a step's sources, the ways to
       incorporate) fails naming what is missing and where. Found 2026-10-22 and fixed 2026-10-23 (the
       maintainer's call a-call-12): in Alberta, road 0's *Hire first employee* showed Ontario's and British
-      Columbia's employment-standards pages; every road now shows a step's sources for the person's own place,
+      Columbia's employment-standards pages; every road now shows a step's sources for the person's own place
+      (and, since the pull request's review, only the *done when* lines, cost lines and links resting on those
+      pages, the rest counted in the same line: `roadForPlace`),
       the step cites Alberta's own page (checked by a tool, waiting for a person's read), and `PLACE_GAPS` in
       `tests/fixtures/ideas/accuracy-gaps.ts` is empty
     - [x] 37b (moved here too): the corpus reworded (capitals, lower case, a typo, another order, emoji, no
@@ -586,8 +605,9 @@ placed in phase 3.
       words name, the job found by the person's words on step 1, and step 3's roads; Lloydminster never sets a
       single province; "Calgary"/"calgary" and "Québec"/"Quebec" are planted controls. Found 2026-10-22, listed
       with no story yet, waiting on the maintainer's call: a misspelt word in the kind of work finds the job only by its own name (84 of 220
-      ideas), and "à Regina" in French names no province (the parser reads a city that is also a first name
-      only after an English place word)
+      ideas). Fixed 2026-10-23 (the maintainer's call a-call-14): "à Regina" in French names Saskatchewan, as
+      "in Regina" does; the parser reads "à", "au", "aux", "en" and "dans" before a place and the provinces'
+      French names (French rewording gaps 1 → 0; a planted control in `tests/rewording-plants.spec.ts`)
     - [x] The idea harness's time budget (60 s) is held on the run's own CPU time, not the wall clock, and a
       run keeps step 1's search answers for its own length: about 36 s alone before, 27 s after on this
       machine; under the full parallel run the wall clock had reached 60.5 s and 65.7 s

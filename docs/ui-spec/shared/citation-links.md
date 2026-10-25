@@ -74,7 +74,8 @@ The words come from one function, `howCheckedWords`; no screen writes them itsel
   on the CRA's 2025 T2125 ("Gross business or professional income"). Read by a person on 2026-10-10.`
   A year's form always has a person's read (`tests/engine-integrity.spec.ts`), because this sentence
   and the other-year one say DotAmi "has read" it; so this hint is never amber for how it was checked.
-- **The playbook export** (Export on the map, `lib/playbook/render-markdown.ts`): each citation line
+- **The playbook export** (Export on the map; since 2026-10-23 `lib/playbook/road-export.ts`, the same lines,
+  until then `lib/playbook/render-markdown.ts`, which no page calls now): each citation line
   ends `· <the words>` where it ended `· verified <date>`; a tool check's line is followed by one
   sub-bullet per quote, `  - *Words found on the page:* "<quote>"`, before the note. In the front
   matter, `catalog_last_verified` keeps its name but is the oldest day one of the sources was read,

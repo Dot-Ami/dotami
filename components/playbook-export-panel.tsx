@@ -1,18 +1,19 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { Pill } from "@/components/ui";
+import type { PlanArgs } from "@/lib/cockpit/plan";
 import { cockpitWords as words } from "@/lib/cockpit/words";
-import type { PlaybookSkeleton } from "@/lib/playbook/types";
-import { renderPlaybookMarkdown } from "@/lib/playbook/render-markdown";
-import type { Scenario } from "@/lib/scenarios/types";
+import { renderRoadExport } from "@/lib/playbook/road-export";
 import { saveTextFile } from "@/lib/utils/save-file";
 
 interface PlaybookExportPanelProps {
-  scenario: Scenario;
-  /** The road the cockpit draws, so the export's sources are the ones the screen shows (task 28d). */
-  roadId: string;
+  /**
+   * The road on screen as the cockpit holds it: its own road-evaluation input (without any what-if), the days
+   * kept with each answer and the person's words, exactly what *Your plan* reads (lib/cockpit/plan.ts).
+   */
+  planArgs: PlanArgs;
   /** The saved idea's id, for the link to its plan; null for an idea held only in the window's memory. */
   ventureId: string | null;
   onClose: () => void;
@@ -32,51 +33,15 @@ function slugifyFileStem(name: string): string {
 }
 
 /**
- * The prep-tool export: the scenario's catalog skeleton (profile, branch picks, every visible
- * node with its citations) rendered to markdown for an accountant or lawyer. S2.5.4h: facts
- * only — the LLM narrative paragraphs are gone with the rest of the in-app AI.
+ * The prep-tool export: the road on screen, step by step (lib/playbook/road-export.ts), rendered to markdown for
+ * an accountant or lawyer. Since the pre-release fix of 2026-10-23 it is built here, from what the cockpit
+ * already holds, rather than from the tax map's catalog stages on the server: so the export is the road the
+ * person is looking at, on every road. Facts only (S2.5.4h).
  */
-export function PlaybookExportPanel({ scenario, roadId, ventureId, onClose }: PlaybookExportPanelProps) {
-  const [skeleton, setSkeleton] = useState<PlaybookSkeleton | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
+export function PlaybookExportPanel({ planArgs, ventureId, onClose }: PlaybookExportPanelProps) {
   const [copyHint, setCopyHint] = useState<string | null>(null);
 
-  const markdown = useMemo(() => (skeleton ? renderPlaybookMarkdown(skeleton) : ""), [skeleton]);
-
-  useEffect(() => {
-    const controller = new AbortController();
-    setSkeleton(null);
-    setError(null);
-    setLoading(true);
-
-    fetch("/api/playbook", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ scenario, roadId }),
-      signal: controller.signal,
-    })
-      .then(async (response) => {
-        const envelope = (await response.json().catch(() => ({}))) as {
-          skeleton?: PlaybookSkeleton;
-          error?: string;
-        };
-        if (!response.ok || !envelope.skeleton) {
-          setError(typeof envelope.error === "string" ? envelope.error : `Request failed (${response.status}).`);
-          return;
-        }
-        setSkeleton(envelope.skeleton);
-      })
-      .catch((err: unknown) => {
-        if (controller.signal.aborted) return;
-        setError(err instanceof Error ? err.message : "Network error while building the playbook.");
-      })
-      .finally(() => {
-        if (!controller.signal.aborted) setLoading(false);
-      });
-
-    return () => controller.abort();
-  }, [scenario, roadId]);
+  const markdown = useMemo(() => renderRoadExport(planArgs), [planArgs]);
 
   async function handleCopyMarkdown() {
     if (!markdown) return;
@@ -91,8 +56,8 @@ export function PlaybookExportPanel({ scenario, roadId, ventureId, onClose }: Pl
   }
 
   function handleSaveMarkdown() {
-    if (!markdown || !skeleton) return;
-    saveTextFile(`${slugifyFileStem(skeleton.profile.name)}-playbook.md`, "text/markdown;charset=utf-8", markdown);
+    if (!markdown) return;
+    saveTextFile(`${slugifyFileStem(planArgs.ideaName)}-playbook.md`, "text/markdown;charset=utf-8", markdown);
   }
 
   return (
@@ -103,7 +68,7 @@ export function PlaybookExportPanel({ scenario, roadId, ventureId, onClose }: Pl
             Export playbook
           </p>
           <h2 className="mt-2 font-serif text-xl font-bold leading-tight text-paper">
-            {scenario.profile.name}
+            {planArgs.ideaName}
           </h2>
           <p className="mt-2 text-body leading-relaxed text-stone">
             Planning map from catalog data — not advice. Verify with CRA, provincial sources,
@@ -141,21 +106,9 @@ export function PlaybookExportPanel({ scenario, roadId, ventureId, onClose }: Pl
       </div>
 
       {copyHint ? <p className="px-5 py-1 text-body text-sage">{copyHint}</p> : null}
-      {error ? (
-        <p className="mx-5 mt-2 rounded-lg border border-maple-soft bg-maple/10 px-3 py-2 text-body text-maple">
-          {error}
-        </p>
-      ) : null}
 
       <div className="min-h-0 flex-1 overflow-y-auto p-5">
-        {loading ? <p className="text-lead text-stone">Building playbook…</p> : null}
-        {markdown ? (
-          <pre className="whitespace-pre-wrap wrap-break-word font-sans text-body leading-relaxed text-stone">
-            {markdown}
-          </pre>
-        ) : !loading && !error ? (
-          <p className="text-lead text-stone">No playbook content available.</p>
-        ) : null}
+        <pre className="whitespace-pre-wrap wrap-break-word font-sans text-body leading-relaxed text-stone">{markdown}</pre>
       </div>
     </aside>
   );

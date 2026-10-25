@@ -6,6 +6,8 @@ Type: panel (table + toggle buttons)
 
 Last updated: 2026-10-13 (offered only where a fork's own pick puts steps on or off the path; docs/architecture/future-cockpit.md § 2, Cockpit screen as built, part 2)
 
+> **Changed 2026-10-23 — the cards row counts as the switch does** (pre-release fix; review 30f, gap 16). *Rules and tax cards* counts, on each ending, the cards the map would draw with that ending picked: those a step on the road names, none from a card drawn dashed (`lib/cockpit/view.ts` `rulesCardsOnMap`, which the *Rules & tax* switch counts too). Until then it counted every card the rules lit, so on the apprentice road, where no step names a card, it said *2 apply · 0 check first* beside a switch saying *0 cards*. Test: `tests/prerelease-numbers.spec.ts`.
+
 > **Changed 2026-10-17 — Look closer.** The goal bar's way in is now the item *Compare the two endings* in its **Look closer** menu ([07-goal-bar.md](./07-goal-bar.md)); the step panel's *Compare the endings* is unchanged.
 
 > **Changed 2026-10-13 — the maintainer's answer to PR #159's question 1.** Compare is offered only at a
@@ -43,7 +45,7 @@ in the step panel at a fork, or a *Not told yet* ending row, each only at a fork
 | Skills listed on your path | 2 have · 0 learning · 1 not yet · 2 not marked |
 | Legal requirements among them | 1 |
 | Official fees | $1,860 (3 lines), or *none* |
-| Your numbers | $3,400 (1 line), or *not given yet* |
+| Your numbers | $3,400 (1 line), or *not given yet*, or *none counted for your place* when every number the person agreed is on a line the idea's place leaves out (2026-10-24, as the Start-up money gauge says it) |
 | Not priced yet | 4 lines |
 | Official fees that apply only sometimes | 1 line, not added up |
 | Rules and tax cards | 6 apply · 2 check first |

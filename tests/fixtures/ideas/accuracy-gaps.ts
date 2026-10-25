@@ -44,23 +44,20 @@ export const REWORDING_GAPS: readonly RewordingGap[] = [
     // in its longest word ("home baekry"). Step 1's search matches whole words and the first five letters of a
     // longer one (lib/engines/oasis/v2026/title-search.ts), so the misspelt word matches nothing; the job is still
     // found by its own name, as the no-match line suggests, never a different job.
+    // 2026-10-23 (whole words first, a-call-11): still 84, four off and four on. Off: ideas 111, 271, 297 and 326,
+    // whose misspelt words now list the job through the words spelt right (the exact-word part comes first). On:
+    // ideas 54, 253, 284 and 316 ("electrical work", "office cleaning", "electrician" twice) now find their job by the
+    // person's own words, where on main 694007d they found it only by its name (it sat past the first 50 of one
+    // group: Electricians 55th of 101 for "electrician", now 4th); misspelt, they still find it only by its name, so
+    // the rewording now changes what they are shown. The same gap as the rest, not a new one.
     why: "Step 1's search finds the job by the person's words only when every word is spelt as the government's titles spell it: with one word misspelt, these ideas find their job only by typing its own name.",
     ideas: [
-      4, 10, 12, 13, 27, 31, 35, 39, 50, 51, 53, 55, 56, 57, 58, 59, 60, 65, 70, 72, 78, 79, 84, 85, 92, 94, 98, 104, 110, 111, 122, 129, 136, 149,
-      156, 160, 161, 162, 164, 172, 176, 177, 178, 179, 181, 193, 198, 201, 213, 216, 220, 231, 233, 235, 255, 256, 266, 271, 273, 274, 275, 277,
-      278, 279, 280, 283, 285, 287, 297, 299, 300, 302, 308, 309, 311, 314, 318, 326, 332, 334, 336, 337, 338, 339,
+      4, 10, 12, 13, 27, 31, 35, 39, 50, 51, 53, 54, 55, 56, 57, 58, 59, 60, 65, 70, 72, 78, 79, 84, 85, 92, 94, 98, 104, 110, 122, 129, 136, 149,
+      156, 160, 161, 162, 164, 172, 176, 177, 178, 179, 181, 193, 198, 201, 213, 216, 220, 231, 233, 235, 253, 255, 256, 266, 273, 274, 275, 277,
+      278, 279, 280, 283, 284, 285, 287, 299, 300, 302, 308, 309, 311, 314, 316, 318, 332, 334, 336, 337, 338, 339,
     ],
   },
-  {
-    how: "French",
-    what: "province",
-    kind: "bug",
-    story: "none yet: found by task 37b, the maintainer's call (read a city that is also a first name after French place words too)",
-    // lib/journey/intent-fallback.ts: "Regina", "Victoria", "Brandon" and "Hamilton" are also people's names, so they
-    // name a place only after a word that puts the person there ("in", "from", "near", …: PLACE_WORD_BEFORE), all
-    // English. "à Regina" names no province, where "in Regina" names Saskatchewan. The person still answers the
-    // place question themselves, so nothing is derived: the question just starts empty.
-    why: "In French (“je suis adjointe administrative à Regina”) the parser doesn't read Regina as the place, so the intake's place question starts empty, where the English words start it on Saskatchewan.",
-    ideas: [32],
-  },
+  // The French place words gap (idea 32, "je suis adjointe administrative à Regina") is fixed: the maintainer's call
+  // a-call-14 of 2026-10-23, lib/journey/intent-fallback.ts reads "à", "au", "aux", "en" and "dans" before a place,
+  // and the provinces' French names, as it reads the English ones. French entries: 1 idea → 0.
 ];

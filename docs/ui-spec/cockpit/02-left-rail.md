@@ -1,6 +1,6 @@
 # Left rail: venture block, field rows, archetype switcher, save / edit
 
-> **S2.5.4h (2026-09-14) — removed.** “Switch labeled example” and the archetype label/planning line are removed; prep-tool references show all four catalog entries once the structure is set. The behaviour below is the pre-cut record, kept for reference; the shipped surface is described in `CLAUDE.md` § What the app is.
+> **S2.5.4h (2026-09-14) — removed.** “Switch labeled example” and the archetype label/planning line are removed; prep-tool references show all four catalog entries once the structure is set (three outside Alberta since 2026-10-24: [05-rails-ladder-templates.md](./05-rails-ladder-templates.md)). The behaviour below is the pre-cut record, kept for reference; the shipped surface is described in `CLAUDE.md` § What the app is.
 
 > **2026-10-12 — the rail folds.** **Fold venture details** at the rail's top folds it to a narrow strip with **Show venture details**; remembered in this browser. Below 768 px the rail is not a column: **Venture details** in the header opens it as a full-width sheet. [12-folding-and-phone.md](./12-folding-and-phone.md).
 

@@ -39,6 +39,21 @@ person is asked).
 
 ### What DotAmi keeps, and where
 
+- **Export is built in the page, from what Your plan shows (2026-10-23, pre-release fix).** Asks: nothing new.
+  Keeps: nothing new. Until now the cockpit's **Export** sent the idea's map answers and the road to DotAmi's own
+  server on this computer (`POST /api/playbook`), which answered with the tax map's catalog stages. Now the
+  panel builds the markdown in the page itself from what the cockpit already read (`lib/playbook/road-export.ts`),
+  and nothing is sent for it, to DotAmi's server or off the computer. What it holds: what Your plan shows for the
+  idea (your words typed for it and your newest destination, your agreed yearly income, the road and the endings
+  picked, in Alberta your area and economic region as picked, the four gauges with your pick of job, your savings
+  and your month, your step statuses and ticks, your skill marks, your agreed cost quotes, and *What you've told
+  DotAmi*), and, as the old Export did, the idea's answers to the map: its name, kind, province, first- and
+  third-year revenue estimates (or *not said*), structure, employment status and the hire-first answer (corrected
+  2026-10-24 by a blind review: this line named only what Your plan shows). So the line of 2026-10-22 below that Export
+  "doesn't carry" the area and region is no longer true: it carries them, as Your plan does. It stays on screen
+  until you press **Copy markdown** (your clipboard) or **Save as .md** (a file where you choose, *Files you save
+  yourself* in [`lib/privacy/inventory.ts`](../lib/privacy/inventory.ts)). The route `/api/playbook` still
+  answers, unchanged, but no page calls it any more.
 - **Nothing about you sits in the window's storage any more (2026-10-24, the pre-release review and the
   maintainer's rule; Your destination's answers since 2026-10-23).** Where it was, on this computer only and
   sent nowhere: the tab's `sessionStorage` held the intake in progress under `dotami-journey-v3` (the sentence
@@ -93,7 +108,14 @@ person is asked).
   history of places reads them, the maintainer's call a-call-9) but are shown nowhere, not on Your plan and not
   in About this job ([`lib/futures/future.ts`](../lib/futures/future.ts) `readFuture`;
   [`lib/privacy/inventory.ts`](../lib/privacy/inventory.ts), *Your area*, *Your economic region*). Removed with
-  *Your ideas* on What DotAmi knows about you, as before.
+  *Your ideas* on What DotAmi knows about you, as before. Since the pull request's second review (2026-10-24): a
+  tick on a *done when* line the idea's new place leaves out (it rests on another province's page) stays kept with
+  the idea, where a save of that step's ticks from the new place deleted it, and shows again once the place draws
+  the line ([`lib/futures/step-progress.ts`](../lib/futures/step-progress.ts) `setStepProgress`, *Your progress on
+  each step* in the inventory). An agreed number on a cost line the place leaves out stays kept, as before, and is
+  now listed in *What you've told DotAmi* and on Your plan as kept and not counted
+  ([`lib/roads/evaluate-road.ts`](../lib/roads/evaluate-road.ts)). Nothing new is asked, and nothing leaves the
+  computer.
 - **About this job's Change keeps your region, and About this job shows in place for a job with no written road
   (2026-10-22, task 28h).** Asks: in Alberta, *Which region are you in?* again, from About this job's **Change**
   in the cockpit, the same eight regions and *I don't know* as Pick a future's step 2b, opened on your own answer

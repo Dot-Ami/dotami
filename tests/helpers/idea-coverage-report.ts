@@ -90,7 +90,7 @@ export function coverageReport(args: {
     `- Kinds of work the words name that the keyword parser missed: ${tagMisses.length} of ${parsed.length} ideas.`,
     `- A province or territory the words name that the parser found none for: ${placeMisses.length} of ${parsed.filter((r) => r.idea.named.length > 0).length} ideas.`,
     `- The expected job among the first ${COCKPIT_LIST_MEASURE_LIMIT} results of the cockpit's older job list (searchOasisJobs, by job name or code, research 28f's before): ${search.cockpitList} of ${search.withJob} ideas with an expected job.`,
-    `- The expected job in the open group of the government-titles search ("What's closest to your work?", the first ${JOB_SEARCH_GROUP_CAP} of each group, as listed): ${search.firstGroup} of ${search.withJob}; in any group as listed, ${search.anyGroup}; no job found, ${search.noResults} (tests/job-title-search.spec.ts holds the floors).`,
+    `- The expected job in the open group of the government-titles search ("What's closest to your work?", as listed: each part's first ${JOB_SEARCH_GROUP_CAP}, and a group without parts its first ${JOB_SEARCH_GROUP_CAP}): ${search.firstGroup} of ${search.withJob}; in any group as listed, ${search.anyGroup}; no job found, ${search.noResults} (tests/job-title-search.spec.ts holds the floors).`,
     "",
     "## Each idea",
     "",

@@ -54,9 +54,16 @@ picked or not); 2026-10-13 (the first written future listed; design: docs/archit
 >   your pick of job, not written for it, or saved before a road was picked.
 > - **Since the batch 4 follow-up (2026-10-22, the maintainer's calls on the batch 4 page):** *Not here yet?*
 >   opens the federal steps outside Alberta, with its three lines saying so (call 33); each card counts the
->   sources the person will be shown inside, the federal card's through the step panel's own filter (call 34); and
+>   sources the person will be shown inside, the federal card's through the step panel's own filter (call 34; on
+>   every road since 2026-10-24, its lines, fees and skills too, the road as drawn for the person's place); and
 >   step 2's three lines about *About this job* are drawn again, now that it reads the region and has its
 >   **Change** (02, top).
+> - **Since 2026-10-23 (the maintainer's call a-call-11): whole words first** on step 1. Inside each group, two
+>   labelled parts headed in the group's own count, *One of their titles has all your words exactly* (or *all but
+>   one*, or *at least one of your words*) and *None of their titles has …* (the #206 review), in code order inside
+>   each, the closest group open with both (01, top). Words added: `partExact` and `partWordStart` (one line per
+>   count), `partsOrder`, `cappedPart`. Nothing new is kept; the clutter rows are unchanged (they are measured as
+>   the step opens, before anything is typed).
 > - **Kept:** the job, the area and the region, each with its day, by the save that creates the idea at
 >   **Look inside** (02, *What is kept*); `Venture.landscapeArea`, `landscapeAreaSetAt`, `economicRegion`,
 >   `economicRegionSetAt` are new (migration `20261022000000_where_you_are`, four added columns). A save that

@@ -12,7 +12,7 @@ function escapeYamlScalar(value: string): string {
   return value;
 }
 
-function formatProfileBlock(profile: PlaybookSkeleton["profile"]): string {
+export function formatProfileBlock(profile: PlaybookSkeleton["profile"]): string {
   // What a picked future was saved without is written "not said", never as the intake's starting values.
   // Each sales target is said or not on its own (2026-10-21): Keep on the what-if gives the first year only.
   const target = (year: 1 | 3, dollars: number) => (isNotSaid(profile, salesTargetField(year)) ? "not said" : dollars.toLocaleString("en-CA"));

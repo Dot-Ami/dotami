@@ -107,7 +107,8 @@ pick that is the default reads **default** again). A saved idea whose pick isn't
 **your pick** after a reload: the database keeps the picks but not the clicks, so a saved pick off the
 default counts as decided, whether the person's click or a program saving through DotAmi's own save
 route put it there (`isBranchDecided`; the toggle's "default, not your pick yet" follows the same
-rule). The same test marks a default in the playbook export ("(default, not picked yet)" beside the
+rule). The same test marks a default in the playbook export (since 2026-10-23, *The map's default pick: “…”,
+not yours yet*, from `buildPlan`, as *Your plan* says it; until then "(default, not picked yet)" beside the
 selection) and in the readout API (each node's `chip`: `your-pick`, `default`, `open-choice`,
 `first-stage`, `starting-point`, `ahead` or `not-on-your-path`: where the stage sits on the map, never the
 person's status; `now` and `done` until 2026-10-23). The person's own mark is the node's `yourStatus`

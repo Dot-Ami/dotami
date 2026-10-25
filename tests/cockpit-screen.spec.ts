@@ -351,7 +351,8 @@ describe("the gauges", () => {
     expect(view.money.lines).toContain("savings $12,000");
     // Official fees on the path with nothing picked: Tuition $1,500 and the exam $300 (Own shop waits on the pick).
     expect(view.money.lines).toContain("savings minus both: $10,200");
-    expect(view.money.lines).toContain("5 wait on a pick at “Ending (test only)”");
+    // Among the five, Own shop's $60 fee, named so the gauge and Compare add up (pre-release fix, 2026-10-23).
+    expect(view.money.lines).toContain("5 wait on a pick at “Ending (test only)”, 1 official fee among them ($60)");
     expect(view.date.value).toBe("May 2029");
     expect(view.date.lines).toContain("31 months from today");
   });

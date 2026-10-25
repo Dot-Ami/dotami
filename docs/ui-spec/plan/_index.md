@@ -54,14 +54,17 @@ splits across two pages, and every link is printed as its address (each link's t
    out because of its state): the step's name and one line; *Your status: doing / done / not for me*
    or *Your status: not set*; its state in the map's words (*applies as answered*, *check first*, *not
    on your path*) with road evaluation's reason sentence; *Done when (x of y ticked)* with each line
-   marked *ticked* or *not ticked* and its source; the skills it needs, each with the person's mark;
+   marked *ticked* or *not ticked* and its source (a step whose *done when* lines all rest on other provinces'
+   pages says *This step's “done when” lines rest on other provinces' pages, so none is shown for your place.*,
+   since 2026-10-24, as the step panel does); the skills it needs, each with the person's mark;
    how many cost lines it has (the lines themselves are under *Start-up money*, by step); official pages; and its sources, each with how it was checked
    (`lib/engines/shared/citation-check.ts` `howCheckedWords`) and the quotes a tool found: *Words found on the
    page:* on a line of its own, then each quote in quotation marks and italics on a line of its own
    (`components/shared/page-quotes.tsx`, `layout="lines"`; since 2026-10-23, before which they stood bare).
 5. **Skills and requirements, with your marks** — names only. *On this road's steps*: every skill item the road lists, marked or not, once,
    with *legal requirement* / *listed skill* and the person's mark (*have*, *learning*, *not yet*, or
-   *not marked*). *Your own skills*: each with its mark and day. *Your pick of job*: the job's name and
+   *not marked*); with none listed because the place left them out, *This road's skills rest on other
+   provinces' pages* (since 2026-10-24). *Your own skills*: each with its mark and day. *Your pick of job*: the job's name and
    code and the day picked, the items the person marked (names only, never the government's ratings),
    *"n not marked, of m on the government's list"*, and the licence's attribution line word for word.
    No job picked: *"No job picked for the government's skills list."*
@@ -75,13 +78,16 @@ splits across two pages, and every link is printed as its address (each link's t
    - a **named line not priced yet** shows its name and *not priced yet*, and no amount at all: never
      $0, never a typical number.
    Above the lines, the Start-up money gauge's sums (official fees, your numbers, not priced yet, left
-   out, waiting on a pick, savings, savings minus both), each only where the gauge shows it.
+   out, waiting on a pick, savings, savings minus both), each only where the gauge shows it; a number
+   agreed on a line the idea's place leaves out reads as the gauge says it (*your numbers: none counted for
+   your place*, *1 of your numbers kept, not counted for your place*; 2026-10-24).
    A step's lines carry the step panel's note when they aren't counted (*not on your path*, *waits on
    a pick*).
 7. **What you've told DotAmi** — the cockpit's left list, row for row: what was said, its day (or *day
    not kept*), and what it unlocked (the receipt lines; *"Nothing on the road changes with or without
    it."* when none). The what-if is never here: it is never kept. Nothing told: the list's own empty
-   line.
+   line. Since 2026-10-24 a number agreed on a cost line the idea's place leaves out is a row too, saying it is
+   kept with this idea and not counted for the place, as the cockpit's list does.
 8. **What this plan is** — the standing line: *"DotAmi is not legal or tax advice. This plan is a
    preparation tool for your accountant and lawyer: it shows what you told DotAmi and where each fact
    comes from, and it ranks nothing."*

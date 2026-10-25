@@ -4,7 +4,7 @@ Page: Cockpit (`/cockpit?venture=<id>`) · Component: `components/cockpit/gauge-
 (`SkillsListPanel`, `MoneyListPanel`, `DatePanel`)
 Type: panel (list + toggle buttons + forms)
 
-Last updated: 2026-10-12 (built; docs/architecture/future-cockpit.md § 2, Cockpit screen as built; *Your pick of job* from § 6, Skills as built)
+Last updated: 2026-10-24 (the road's items drawn for the idea's place, second review of #207; built 2026-10-12; docs/architecture/future-cockpit.md § 2, Cockpit screen as built; *Your pick of job* from § 6, Skills as built)
 
 > **Changed 2026-10-12 — part 2.** A mark, a skill of one's own, savings once agreed or a month saved in one of these lists shows its receipt under the list's title ([13-receipts.md](./13-receipts.md)). The lists also open from *Not told yet* (**Open the skills list**, **Open the money list**) and from a told row's **Change**.
 
@@ -16,8 +16,12 @@ place of a step, each a region named by its title with a × button named *Close*
 - **Skills on this road**: under the heading *On this road's steps* (so the job's list below never reads
   as the road's), every skill item the road lists, once, in the order the road first needs it,
   each with the same row as the step panel (name, kind, **Have / Learning / Not yet / I don't know**, its
-  sources, *you said you hold this*, the official way to get it). With none: *No skills are listed on this road yet.
-  Your own skills are below.* Then **Your own skills**: each one the person added, tagged *added by you*,
+  sources, *you said you hold this*, the official way to get it). Since 2026-10-24 the items and their sources are
+  drawn for the idea's place, as in the step panel ([09-step-panel.md](./09-step-panel.md) item 5): an item resting
+  only on another province's pages isn't listed. With none: *No skills are listed on this road yet.
+  Your own skills are below.*; where the road's skills rest on other provinces' pages: *The skills this road
+  lists rest on other provinces' pages, so none is shown for your place. Your own skills are below.*
+  (`roadSkillsNone` in `lib/cockpit/view.ts`). Then **Your own skills**: each one the person added, tagged *added by you*,
   with **Have / Learning / Not yet** and **Remove** in place of *I don't know*, since taking the mark off
   a skill the person typed removes the skill (*None added yet.* when empty); and **Add a skill**: a box (*A skill in your own words*,
   up to 120 characters) and **Add as have**, **Add as learning**, **Add as not yet** (off until something
@@ -28,10 +32,12 @@ place of a step, each a region named by its title with a × button named *Close*
   [../futures/01-whats-closest-to-your-work.md](../futures/01-whats-closest-to-your-work.md),
   `components/front-door/job-search.tsx` in its compact form): the box *The work, in your own words*, the
   government's example titles searched for the words typed, the jobs grouped by how many of the words their
-  titles hold, in code order, each a button named *Pick Cabinetmakers, 72311.00* with the title it matched under
-  it, at most 50 per group with *Showing the first 50 of n in this group, in code order. Add a word to narrow it.*
-  (until then it was a search of job names and codes, ten at most); then the licence's line with its link, as
-  below. With one picked: *Cabinetmakers · 72311.00 · picked 2026-10-12*, **Change**
+  titles hold, each group about the government's titles in two labelled parts since 2026-10-23 (whole words
+  first: step 1's spec, its top note) and in code order inside each, each a button named *Pick Cabinetmakers,
+  72311.00* with the title it matched under it, at most 50 per part with *Showing the first 50 of n in this part,
+  in code order. Add a word to narrow it.* (per group until 2026-10-23; DotAmi's word-list group, which has no
+  parts, still lists 50 per group, with *… in this group …*). Until 2026-10-22 it was a search of job names and
+  codes, ten at most. Then the licence's line with its link, as below. With one picked: *Cabinetmakers · 72311.00 · picked 2026-10-12*, **Change**
   (the search again, with **Cancel**) and **Take back**; *This is the government's list for the job you
   picked. DotAmi doesn't say which skills a business needs.*; then **Skills** and
   **Knowledge**, each with its source once (the dataset's page, checked by a tool) and its items in the

@@ -65,7 +65,10 @@ translate it, but never decide for them — Screen A is where they confirm.
 state (the idea harness's findings): a province only when they name one place in Canada (a city named
 with a place outside Canada right after it doesn't count, nor does anything when the person is moving out
 of Canada, read as the move's own first "to"; none with two provinces; a city that is also a first name
-only after "in", "to"… or beside its province; a place outside Canada named anywhere else changes nothing,
+only after "in", "to"… or beside its province, and since 2026-10-23 (the maintainer's call a-call-14) after the
+French "à", "au", "aux", "en" and "dans" too, with the provinces' French names read as their English ones
+("Colombie-Britannique", "Nouvelle-Écosse", with or without accents and hyphens; "Terre-Neuve" only with its
+hyphen); a place outside Canada named anywhere else changes nothing,
 "moving to Calgary to open a store that ships to the USA" included); a kind of work only where it is the
 person's own (not the customers', not their day job, not an app or AI tool they use); and "Equipment /
 vehicle purchase on the path" only when they say buying, leasing, getting, needing or writing one off, with
