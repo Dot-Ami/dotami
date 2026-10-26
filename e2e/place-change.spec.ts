@@ -16,6 +16,7 @@ import path from "node:path";
 
 import { expect, test, type Page } from "@playwright/test";
 
+import { cockpitWords } from "../lib/cockpit/words";
 import { generalRoadV2026, roadApprenticeToOwnShopAB } from "../lib/engines/roads/v2026";
 
 import { lookCloser, showRail, showRoadAhead } from "./cockpit-calm";
@@ -203,7 +204,8 @@ test("third review of #207: a tick made in Ontario before the move is saved keep
   await told(page).getByRole("button", { name: "Change: you told us your place is Alberta" }).click();
   await told(page).getByRole("combobox", { name: "Which province or territory are you in?" }).selectOption("ON");
   await told(page).getByRole("button", { name: "Save", exact: true }).click();
-  await expect(page.getByText("Save unavailable — kept in this tab. Save now retries.")).toBeVisible();
+  // The save line as the words file says it (it said "kept in this tab" until the window stopped keeping it).
+  await expect(page.getByText(cockpitWords.rail.save.unavailable, { exact: true })).toBeVisible();
 
   panel = await openHire(page);
   await expect(panel).not.toContainText("WCB-Alberta");
