@@ -1,0 +1,96 @@
+@import "tailwindcss";
+
+/*
+ * Semantic colours. Each kind of content (what a source says, our interpretation, an open
+ * question, a proposed action) has its own colour AND its own written label, so nothing depends
+ * on colour alone. Dark mode follows the system setting.
+ */
+@theme {
+  --color-paper: #fbfaf7;
+  --color-ink: #1f2328;
+  --color-muted: #59636e;
+  --color-line: #d8dee4;
+  --color-card: #ffffff;
+  --color-doc: #0b5cad;
+  --color-doc-bg: #eef5fc;
+  --color-interp: #6a3fb5;
+  --color-interp-bg: #f4effb;
+  --color-open: #8a5a00;
+  --color-open-bg: #fdf6e3;
+  --color-act: #1a7f37;
+  --color-act-bg: #eef8f0;
+  --color-warn: #a4370c;
+  --color-warn-bg: #fdf0ea;
+  --color-demo: #7a2e8c;
+  --color-demo-bg: #f8eefa;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-paper: #15181c;
+    --color-ink: #e6e8eb;
+    --color-muted: #a3acb6;
+    --color-line: #353b42;
+    --color-card: #1c2026;
+    --color-doc: #79b8ff;
+    --color-doc-bg: #16263a;
+    --color-interp: #c4a6f5;
+    --color-interp-bg: #261d36;
+    --color-open: #e3b341;
+    --color-open-bg: #2d2412;
+    --color-act: #56d364;
+    --color-act-bg: #14281a;
+    --color-warn: #ff9b70;
+    --color-warn-bg: #33190f;
+    --color-demo: #e2a5ef;
+    --color-demo-bg: #2e1834;
+  }
+}
+
+html {
+  background: var(--color-paper);
+  color: var(--color-ink);
+}
+
+body {
+  background: var(--color-paper);
+  font-family:
+    ui-sans-serif,
+    system-ui,
+    -apple-system,
+    "Segoe UI",
+    Roboto,
+    "Helvetica Neue",
+    Arial,
+    sans-serif;
+  line-height: 1.55;
+}
+
+a {
+  color: var(--color-doc);
+  text-underline-offset: 2px;
+}
+
+a:hover {
+  text-decoration-thickness: 2px;
+}
+
+:focus-visible {
+  outline: 3px solid var(--color-doc);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+/* The passage a link points at, on a source page. */
+:target {
+  scroll-margin-top: 6rem;
+  outline: 3px solid var(--color-open);
+  outline-offset: 4px;
+  background: var(--color-open-bg);
+}
+
+@media print {
+  .no-print {
+    display: none !important;
+  }
+}

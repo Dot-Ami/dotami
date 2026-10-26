@@ -1118,4 +1118,8 @@ export const UNSCANNED_FOLDERS: readonly UnscannedFolder[] = [
     folder: "e2e-desktop",
     why: "The desktop app's own tests (Playwright driving the packaged app): run by developers and CI, never shipped.",
   },
+  {
+    folder: "civic",
+    why: "A separate prototype (a civic investigation tool on made-up demo data) with its own package.json, dependencies and server, run by hand from that folder. It imports nothing from DotAmi and DotAmi imports nothing from it; it is not part of DotAmi's server build, its typecheck (tsconfig.json excludes it) or the desktop app, whose packager stages a fixed list of files.",
+  },
 ];
