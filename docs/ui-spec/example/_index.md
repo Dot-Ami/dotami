@@ -180,9 +180,11 @@ what-if of hers, that note and the bar's `note` prop are gone.
 - **No write of any kind.** The example sends no request that writes (no `POST` to any `/api/…` route),
   and reads none of the person's data either: it doesn't ask `/api/ventures`, `/api/figures` or
   `/api/futures/<id>`, so nothing of the real person's appears in it.
-- **No browser storage.** The page is outside the journey's pages (`app/(journey)/`), so the journey
-  draft in `sessionStorage` is neither read nor written; the fold answers are not read from or written to
-  `localStorage`; *In your words* reads no list of unsaved statements. The browser test
+- **No browser storage.** The page is outside the journey's pages (`app/(journey)/`) and draws under its own
+  read-only journey, so the person's journey, held in the window's memory (`lib/journey/held-journey.ts`,
+  never the window's storage since 2026-10-24), is neither read nor changed, and is there again on the way
+  back; the removal of the keys an older DotAmi left in the window's storage runs on the journey's pages
+  only; the fold answers are not read from or written to `localStorage`. The browser test
   (`e2e/example-future.spec.ts`) compares both storages, the data file's row counts and the requests sent
   before and after clicking **Keep** and **Export**, the two save controls that answer in the banner; it
   checks that every other control in the table above is disabled (the step's status and skill marks, the

@@ -14,7 +14,7 @@ interface PlaybookExportPanelProps {
    * kept with each answer and the person's words, exactly what *Your plan* reads (lib/cockpit/plan.ts).
    */
   planArgs: PlanArgs;
-  /** The saved idea's id, for the link to its plan; null for an idea kept only in this tab. */
+  /** The saved idea's id, for the link to its plan; null for an idea held only in the window's memory. */
   ventureId: string | null;
   onClose: () => void;
 }

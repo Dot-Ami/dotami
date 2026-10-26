@@ -3,7 +3,7 @@
 Page: Intake (`/intake`) · Component: `components/discovery/intake-page.tsx`
 Type: confirm screen (intent-parse output)
 
-Last updated: 2026-10-11 (the box's sentence and the goal picks are saved with the idea; 2026-07-02: page-mechanics workshop, verified line-by-line against shipped code)
+Last updated: 2026-10-24 (the text is held in the window's memory, never its storage); 2026-10-11 (the box's sentence and the goal picks are saved with the idea; 2026-07-02: page-mechanics workshop, verified line-by-line against shipped code)
 Workshop status: **signed off**
 
 ## What it is
@@ -59,8 +59,10 @@ fallback box's `applyIntentToDraft`, identical to Landing's flow).
 
 `POST /api/intent/parse` (only reachable from this screen via the empty-state fallback
 box) — Anthropic tool-use (suggestions only), keyword fallback
-(`lib/journey/intent-fallback.ts`) when no API key or on error. Whether to persist the
-query text is unbuilt and undecided — same as Landing, this text only lives in `sessionStorage`.
+(`lib/journey/intent-fallback.ts`) when no API key or on error. As on Landing, the text is held
+in the window's memory with the rest of the intake (never its storage, since 2026-10-24; a reload
+before the idea is saved starts the intake afresh) until the idea's first save keeps it as one of
+the person's statements (since 2026-10-11).
 
 ## Fixed 2026-07-02
 

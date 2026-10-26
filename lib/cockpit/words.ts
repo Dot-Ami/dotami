@@ -435,7 +435,13 @@ export const cockpitWords = {
     nothingAfter: (what: string) => `Saved: ${what}. Nothing on the road changed.`,
     /** The idea's own answers wait for the map's save before their receipt is worked out. */
     saving: "Saving your answer…",
-    notSaved: "Not saved yet: the save didn't go through. Your answer stays in this tab, and Save now tries again.",
+    /**
+     * The answer is in the journey held in the window's memory (lib/journey/held-journey.ts), never its storage:
+     * a fresh load empties it, the desktop app's Go menu among them (it opens its pages with loadURL). A new window
+     * opens the idea as the data file holds it. "Your answer stays in this tab" until 2026-10-24.
+     */
+    notSaved:
+      "Not saved yet: the save didn't go through. Only this window holds your answer: a reload or the desktop app's Go menu loses it. Save now tries again.",
     /**
      * This visit's newest receipt lines (2026-10-12, after review: named for what they hold; "Since last
      * time" is kept for the return visit's list, which isn't built).
@@ -750,7 +756,8 @@ export const cockpitWords = {
       saving: "Saving…",
       unsaved: "Unsaved changes…",
       savedAt: (when: string) => `Saved · ${when}`,
-      unavailable: "Save unavailable — kept in this tab. Save now retries.",
+      // Where the unsaved edits are, as receipts.notSaved says it ("kept in this tab" until 2026-10-24).
+      unavailable: "Save unavailable — only this window holds it; a reload or the desktop app's Go menu loses it. Save now retries.",
       automatic: "Edits save automatically.",
     },
     editProfile: "Edit venture profile",
@@ -794,12 +801,14 @@ export const cockpitWords = {
    */
   map: {
     /** The chip's words (lib/scenarios/graph.ts `stageChipFor` decides which; issue #5, 2026-10-11). */
+    // Where the stage sits on the map, never the person's status (2026-10-23): "first stage" and "starting
+    // point" were "now" and "done" until then, said of every idea whatever the person had told DotAmi.
     chips: {
-      now: "now",
+      "first-stage": "first stage",
       "your-pick": "your pick",
       default: "default",
       "open-choice": "open choice",
-      done: "done",
+      "starting-point": "starting point",
       ahead: "ahead",
       "not-on-your-path": "not on your path",
     },
@@ -815,6 +824,12 @@ export const cockpitWords = {
     /** A lever card: its state in a word, the one dated fact it carries, and its accessible name. */
     lever: {
       applies: "applies",
+      /**
+       * An item that has an end date (`UnlockItem.expires`), on its open row in node detail and on the intake's
+       * preview, before `inUseBefore`: the legend's own words (`legend.checkFirst`). "Time-boxed" until 2026-10-24,
+       * a time word of DotAmi's own written in the two components, where no words check read it.
+       */
+      endDate: "has an end date",
       /** The one dated fact the evaluator carries for an item: in use before the year it expires. */
       inUseBefore: (year: string) => `in use before ${year}`,
       name: (typeChip: string, title: string, state: string, fork: boolean, partial: boolean, fact: string | null) =>
@@ -825,8 +840,9 @@ export const cockpitWords = {
     defaultNotPicked: "· default, not your pick yet",
     legend: {
       arrows: "Hover a card: arrows show where it leads — solid next, dashed further on",
-      chip: "Stage chip = where it sits on your path",
-      checkFirst: "check first — confirm, time-boxed, or one fork away",
+      chip: "Stage chip = where it sits on the map; doing, done or not for me only when you mark it",
+      // "time-boxed" until 2026-10-23: a time word of DotAmi's own. The items it means carry a date they end.
+      checkFirst: "check first — confirm, has an end date, or one fork away",
       leftBar: "left bar = what your answers support",
       federalOnly: "federal rules only for this province",
     },

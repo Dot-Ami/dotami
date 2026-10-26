@@ -4,7 +4,8 @@ Page: Cockpit (`/cockpit?venture=<id>`) · Component: `components/cockpit/goal-b
 `lib/cockpit/words.ts`; numbers: `lib/cockpit/view.ts` `gaugeView`, from `lib/roads/` `evaluateRoad`)
 Type: display + button group
 
-Last updated: 2026-10-12 (built; docs/architecture/future-cockpit.md § 2, Cockpit screen as built; the same
+Last updated: 2026-10-23 (the Steps gauge's *next on your road* starts at the map's starting point until the
+person marks it done); 2026-10-12 (built; docs/architecture/future-cockpit.md § 2, Cockpit screen as built; the same
 day, **Fold goal and gauges** folds the bar to one line that keeps the four gauges as buttons, name and value
 only, with **Show goal and gauges**; remembered in this browser, [12-folding-and-phone.md](./12-folding-and-phone.md);
 and an idea with no first sentence, such as one picked on *Pick a future*, shows the person's newest destination
@@ -18,6 +19,8 @@ from *Your destination* in its place, with its day: *where you want to be · you
 > **Changed 2026-10-17 — Others in this line of work.** After *Compare* (or after the future's name where Compare isn't offered), on every road, a button **Others in this line of work** opens that panel in the right-hand slot ([landscape.md](./landscape.md)). It is on the open bar only; the folded bar keeps the gauges alone.
 >
 > **Changed 2026-10-17 — Look closer (the calm first view, S2.5.30c).** *Compare* and *Others in this line of work* are no longer buttons of their own: they are the items of one **Look closer ▾** menu button after the future's name, the same place, in that order (*Compare the two endings* only where it was offered before). *About this job* joins the menu when it is built ([research-kit.md](../../architecture/research-kit.md) § 4.2). It is a WAI-ARIA menu button (`components/cockpit/look-closer-menu.tsx`): `aria-haspopup="menu"` and `aria-expanded`; Enter, Space or the down arrow opens it on its first item, the up arrow on its last; the arrows, Home and End move between items; Enter or Space picks one, which opens it in the right-hand panel; Escape closes the menu and puts focus back on the button; Tab or a click elsewhere closes it. Closed, its items aren't drawn. On a road with nothing to look closer at there is no button. The bar sits under the header in one strip with it, the header's background behind both; it is still a region of its own for the clutter limit.
+>
+> **Changed 2026-10-23 — the Steps gauge starts where the map starts (the pre-release review).** With nothing marked, *next on your road* names *Employee/Apprentice baseline* on today's road; until then it named the first *before you open* step, because the map's chip called the baseline *done*. Once the person marks it done, it names the step after it. The value, *x of y marked done*, already counted only the person's marks (`e2e/cockpit.spec.ts`).
 >
 > **Changed 2026-10-20 — Look closer shows the folded legend and what-if bar (the maintainer's pick).** After the panel's items the menu lists **Show the legend** and **Show the what-if bar** while each is folded (both are on a first visit), in place of the button each had at the end of *Next on your road*: Mara's example at 1280 × 720 counted 23 controls against a limit of 21 with those buttons in view, and the limits only go down. Picking one shows it and moves focus to its fold button; folding it again moves focus back to **Look closer** (without scrolling the page, which on a phone would jump back up from the map). The folded bar's one line carries the menu too, after the gauges, with all its items, so neither is ever more than the menu away, and *Compare* and *Others in this line of work* are now reachable from the folded bar as well (until now they were on the open bar only, as the note above says). On a road with no panel item the menu is still drawn while something is folded under the map.
 
@@ -40,7 +43,7 @@ A band under the header, across the whole page, named *Your goal and gauges* for
 
 | Gauge | Tag | Value | Lines | Invitation |
 |---|---|---|---|---|
-| **Steps** | count | *1 of 10 marked done* | *2 doing* (when any); *next on your road: “Sole Prop activation”*, or *no step on your path is waiting* | — |
+| **Steps** | count | *1 of 10 marked done* | *2 doing* (when any); *next on your road: “Employee/Apprentice baseline”*, or *no step on your path is waiting* | — |
 | **Skills** | your marks | *1 have · 1 learning · 1 not yet*, or *No skills are listed on this road yet*, or *This road's skills rest on other provinces' pages* where the road drawn for the idea's place left every listed item out (2026-10-24, `roadSkillsNone`) | *2 not marked, out of 5 listed*; *your own skills: 1 have · 0 learning · 0 not yet* when the person added any; *your pick of job: 1 have · 0 learning · 0 not yet, of 44 listed* when the person picked a job (2026-10-12) | *Mark them to see what each step still needs* while any is unmarked; *Add skills of your own in the list* when the road lists none and none are added |
 | **Start-up money** | yours + cited | *$1,860 official fees (3 lines) · $3,400 your numbers (1 line)*; a part with no lines is left out, and with no number of the person's it reads *your numbers: not given yet*, never $0; with every number the person agreed on a line the idea's place leaves out, *your numbers: none counted for your place* (2026-10-24); or *No cost lines on this road yet* | *1 official fee applies only sometimes, not added up* (an `onlyIf` fee, in neither part); *4 not priced yet*; *2 left out: not on your path*; *1 of your numbers kept, not counted for your place* (a number agreed on a line the idea's place leaves out: it rests on another province's page; named in *What you've told DotAmi*, 2026-10-24); *5 wait on a pick at “Ending”*, and since 2026-10-23 with the official fees among them named, *21 wait on a pick at “Stay employed or open your own shop”, 2 official fees among them ($150)*, so on a road whose endings carry the same waiting fees (the apprentice road today) the gauge's fees plus those are what Compare shows for an ending (review 30f, gap 17), and on one whose endings carry different fees they add both sides' fees, more than any one ending reaches; *savings $12,000* or *savings: not given yet*; *savings minus both: $10,200* only when road evaluation gives that difference | *Add your savings in the list* while there are none |
 | **Your date** | yours | *May 2029*, or *not set* | *31 months from today* | *Add your month and year to count the months to it* while not set |
@@ -82,9 +85,10 @@ None: display only.
 
 - The yearly income target is shown when agreed, but no screen asks for it yet (the *Your destination*
   screen does).
-- A step counts as done only when the person marked it done; the map's own *done* chip on stage 0 (worked
-  out from its toggles) is not counted. It isn't offered as *next on your road* either, since its card
-  reads *done*.
+- A step counts as done only when the person marked it done. Stage 0 on today's road, which the map's own
+  lists put first on every idea, reads *starting point* on its card (*done* until 2026-10-23). It is not
+  counted, and it is offered as *next on your road* until the person marks it done (until 2026-10-23 it was
+  left out, since its card read *done*).
 
 ## Backend wiring
 

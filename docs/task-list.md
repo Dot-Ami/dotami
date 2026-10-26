@@ -1139,6 +1139,52 @@ roadmap's build order.
   - [ ] **Tested:** a browser test covers its main path and edge cases
   - [x] Already found: the intake's field labels aren't tied to their dropdowns (a screen reader can't
     name them) — fixed 2026-10-12: province, employment and the name box are named by their labels.
+  - [x] Pre-release honesty and privacy, found by the review of 2026-10-23 and fixed the same day
+    (`tests/prerelease-honesty.spec.ts`, `e2e/front-door.spec.ts`): nothing about the person in window storage
+    (`tests/privacy-inventory.spec.ts`, `e2e/window-storage.spec.ts`; 2026-10-24): the journey held in the
+    window's memory, a statement that couldn't be saved left in its box, no list of earlier *Other…*
+    descriptions, the three old keys removed unread when a journey page opens, and Delete reaching what the
+    window holds; no *done* or *now* chip on the map for anything the person never marked (*starting point*,
+    *first stage*), and the readout API giving the person's own mark (`yourStatus`) in place of the map's
+    worked-out `status` and lists (2026-10-24, the maintainer's decision 3); *type not said* on the ideas card,
+    drawn in lower case; the time words the check missed (*First years on
+    your own*, *time-boxed* in the legend, in two item rows written in their components and in a citation's
+    note, the ride-share Lens line's "with 30 days to apply" and its closing advice, the file drop's "A big one
+    can take a little while." and the book reader's "after a minute") reworded and taught to the check, which
+    now reads every catalog's Lens lines, every words file and the text each component writes itself
+    (2026-10-24), and a tool check's quotes only inside the official-quote component; the front door's chips in
+    the words file without a tax promise; *Your futures* and *Open cockpit* only once an idea is saved, and
+    with none *Your expenses* while the Expenses page lists a record (2026-10-24); the screen specs and design
+    docs of all of it brought up to date, with a test that reads them (`tests/prerelease-honesty.spec.ts` § 6)
+  - [ ] Left open by #210, each written down where it applies: the desktop app's Go menu loads its pages
+    afresh (`loadURL`, `desktop/main.mjs`), which empties the journey held in the window's memory, and the words
+    say so (moving inside the page instead needs a message through `desktop/window-preload.cjs`, its own
+    review); Help → Licences loads its page the same way (the same `go` helper), which the privacy log and
+    docs/ui-spec/start/_index.md say but the words on screen, naming the Go menu only (the maintainer's words
+    of 2026-10-24), don't: the same message would fix both, or the words could name it; in a browser copy, Back and Forward show the front door's links as first drawn
+    (docs/ui-spec/landing/03-escape-hatches.md); the line under the receipts of questions 2 and 3 sits outside
+    the receipt's `role="status"`, so a screen reader doesn't hear it with the receipt; and CLAUDE.md's Data
+    paragraph still says of the front-door sentence that "the tab marks it done" (since 2026-10-24 the journey
+    held in the window's memory does), for the maintainer to reword
+  - [ ] For the maintainer's later call (the decision of 2026-10-24 kept it for now): the intake's *Other…*
+    employment box. Its words are held in the window's memory only, kept with no idea (the idea keeps `other`)
+    and read by nothing since its list of earlier descriptions went with `dotami-employment-suggestions`: keep
+    the words with the idea (a new column, an inventory line, a privacy-log line), or remove the box and keep
+    the *Other…* choice alone
+  - [ ] Anthropic's retention period on *What DotAmi knows about you* (`components/your-data/your-data-page.tsx`,
+    under *How long Anthropic keeps it:*) is DotAmi's paraphrase, "deleted within 30 days, with exceptions". The
+    maintainer's decision 2 of 2026-10-24: a provider's period is quoted word for word under a label, and DotAmi
+    holds no copy of that page's exact words yet. Read the page, keep its words with the day read, quote them
+    under the label, and take the entry out of `COMPONENT_TIME_WORDS` (`tests/fixtures/ideas/known-gaps.ts`)
+  - [ ] For the maintainer's call, found by the review of #210: the *Replace income* goal card's payoff, "If
+    this applies, paths with faster revenue and simpler compliance can rank higher." (`lib/brain/goal-effects.ts`,
+    shown when the intake preview's row is opened), a time word and a ranking nothing does, like the other goal
+    cards' "DotAmi can prioritize … earlier" and "move up the map". Not part of #210: what goal cards say at all
+    (goals are read by no rule), for all five
+  - [ ] Two edge cases the last review of #210 found, both there before it: a map change held in the window's
+    memory because its save failed is dropped, without a word, if the person then starts a new idea from the
+    front door's *Map it* (or opens another idea and then a new one); and the intake's failed first save leaves
+    an idea never saved in the window's memory, which the front door's *Open cockpit* would then draw as if kept
 - ✅ **[13i] The landing page and intake were dead in production builds** — fixed in #64.
 
 ## 15 — Real examples: how real people started (later)

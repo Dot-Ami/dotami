@@ -183,7 +183,7 @@ function keptAnswers(kept: KeptForIdea | null, figures: FigureView[] | null): Ke
 interface CockpitPageProps {
   /** The most recently saved venture (or the one named by `?venture=`), or null when nothing is saved. */
   initialScenario: Scenario | null;
-  /** S2.5.4i: `?venture=<id>` was explicit — it wins over the session and becomes the session. */
+  /** S2.5.4i: `?venture=<id>` was explicit — it wins over the journey's idea and becomes it. */
   pinned?: boolean;
   /** An invented example future, drawn read-only in place of a saved idea (docs/ui-spec/example/_index.md). */
   example?: ExampleFuture;
@@ -191,25 +191,38 @@ interface CockpitPageProps {
 
 export function CockpitPage({ initialScenario, pinned = false, example }: CockpitPageProps) {
   const isExample = example !== undefined;
-  const { scenario: journeyScenario, setScenario, hydrated } = useJourney();
+  const { scenario: journeyScenario, setScenario, hydrated, unsavedEdits, holdUnsavedEdit, editKept } = useJourney();
+  /** The window's copy of this idea with an edit no save has kept yet, if it holds one; else the idea as given. */
+  const asHeld = (idea: Scenario | null) => (idea ? (unsavedEdits.find((copy) => copy.id === idea.id) ?? idea) : null);
   const [currentScenario, setCurrentScenario] = useState<Scenario | null>(
-    example ? example.scenario : pinned ? initialScenario : (journeyScenario ?? initialScenario),
+    example ? example.scenario : asHeld(pinned ? initialScenario : (journeyScenario ?? initialScenario)),
   );
 
-  // `JourneyProvider` reads sessionStorage in its own effect, so on first paint
-  // `journeyScenario` is still null and the server-loaded scenario is used. Once hydration
-  // settles, adopt the session's scenario if one exists and differs — the user's most recent
-  // unsaved edits win over the server snapshot (audit-2026-07-04 C2).
+  // `JourneyProvider` takes up the journey held in the window's memory in its own effect, so on first
+  // paint `journeyScenario` may still be null and the server-loaded scenario is used. Once that settles,
+  // adopt the journey's scenario if one exists and differs — the idea last open in this window, with any
+  // edit not saved yet, wins over the server snapshot (audit-2026-07-04 C2). After a reload the memory is
+  // empty and the server's idea stays (nothing is in the window's storage since 2026-10-24).
   useEffect(() => {
-    // The example is its own: no session scenario ever replaces it.
+    // The example is its own: no journey's scenario ever replaces it.
     if (!hydrated || isExample) return;
     if (pinned) {
-      // An explicit `?venture=` is a deliberate choice: make it the session's scenario.
+      // An explicit `?venture=` is a deliberate choice: make it the journey's scenario.
       if (initialScenario && journeyScenario?.id !== initialScenario.id) setScenario(initialScenario);
-      return;
-    }
-    if (journeyScenario && journeyScenario.id !== currentScenario?.id) {
+    } else if (journeyScenario && journeyScenario.id !== currentScenario?.id) {
       setCurrentScenario(journeyScenario);
+    }
+    // An edit of this idea that no save kept (its save failed, or the page was left before it went and the save
+    // sent then didn't come back kept) is newer than the data file's copy: it is drawn, whichever way the idea was
+    // opened, and saved again, and the save line says how that went. Until a review of 2026-10-24 the window's
+    // copy was drawn under "Edits save automatically." with no save on its way, or the data file's copy replaced
+    // it on screen, and the next reload lost the edit without a word.
+    const drawn = pinned ? initialScenario : (journeyScenario ?? currentScenario);
+    const unsaved = drawn ? unsavedEdits.find((copy) => copy.id === drawn.id) : undefined;
+    if (unsaved) {
+      setCurrentScenario(unsaved);
+      setScenario(unsaved);
+      void persist(unsaved);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [hydrated]);
@@ -259,11 +272,19 @@ export function CockpitPage({ initialScenario, pinned = false, example }: Cockpi
   );
   const [savedAt, setSavedAt] = useState<Date | null>(null);
   const autosaveTimer = useRef<number | null>(null);
+  // The edit waiting out the pause, so leaving the page sends it rather than dropping it.
+  const waitingSave = useRef<Scenario | null>(null);
   useEffect(
     () => () => {
-      if (autosaveTimer.current !== null) window.clearTimeout(autosaveTimer.current);
+      if (autosaveTimer.current === null) return;
+      window.clearTimeout(autosaveTimer.current);
+      const target = waitingSave.current;
+      // Left within the pause (a link of the app's own, which keeps the window's memory): the save goes now. No
+      // save line is left to say how it went, so a copy not kept stays held, and the cockpit saves it again and
+      // says so when the idea is opened again in this window. Until a review of 2026-10-24 the save was dropped.
+      if (target) void saveScenario(target).then((result) => result.ok && editKept(target));
     },
-    [],
+    [editKept],
   );
 
   // The saved idea behind this scenario, its figures (every state: the reminder banner needs to know
@@ -435,6 +456,7 @@ export function CockpitPage({ initialScenario, pinned = false, example }: Cockpi
     const waiting = pendingReceipt.current;
     const result = await saveScenario(target);
     if (result.ok) {
+      editKept(target);
       setSaveState("saved");
       setSavedAt(new Date());
       // A new place (the place row's Change, bug 33a): what the server builds from the place (About this job's
@@ -461,8 +483,10 @@ export function CockpitPage({ initialScenario, pinned = false, example }: Cockpi
   function scheduleSave(next: Scenario) {
     setSaveState("dirty");
     if (autosaveTimer.current !== null) window.clearTimeout(autosaveTimer.current);
+    waitingSave.current = next;
     autosaveTimer.current = window.setTimeout(() => {
       autosaveTimer.current = null;
+      waitingSave.current = null;
       void persist(next);
     }, AUTOSAVE_DELAY_MS);
   }
@@ -496,6 +520,8 @@ export function CockpitPage({ initialScenario, pinned = false, example }: Cockpi
     const before = opts.before !== undefined ? opts.before : inputFor();
     setCurrentScenario(next);
     setScenario(next);
+    // Held as not kept until a save keeps this very copy (`persist`).
+    holdUnsavedEdit(next);
     if (place && before) {
       counter.current += 1;
       const seq = counter.current;
@@ -556,6 +582,7 @@ export function CockpitPage({ initialScenario, pinned = false, example }: Cockpi
     if (autosaveTimer.current !== null) {
       window.clearTimeout(autosaveTimer.current);
       autosaveTimer.current = null;
+      waitingSave.current = null;
     }
     void persist(scenario);
   }

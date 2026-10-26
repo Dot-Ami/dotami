@@ -278,6 +278,120 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   derived: the person still sees the place and can change it (`lib/journey/intent-fallback.ts`;
   `tests/intent-fallback.spec.ts`; the French rewording gaps go from 1 to 0, and a planted control in
   `tests/rewording-plants.spec.ts` brings it back).
+- **Nothing about you sits in the window's storage any more** (the pre-release screen review of 2026-10-23; the
+  maintainer's rule: the window's storage holds only how the screen was left). Three keys held your own words
+  and answers, on this computer only, and Delete reached none of them: the intake in progress
+  (`dotami-journey-v3`, `sessionStorage`: the sentence you typed, your kinds of work, province or territory,
+  employment and the words typed under *Other…*, revenue estimates, and the idea open on the map with its place;
+  from 2026-10-12 also your answers on Your destination), a statement that couldn't be saved
+  (`dotami-person-unsaved`), and the job descriptions typed under *Other…* on the intake
+  (`dotami-employment-suggestions`, `localStorage`, with no end date). Now the journey is held in the window's
+  memory only (`lib/journey/held-journey.ts`, `components/shared/journey-provider.tsx`): moving between pages
+  keeps it, Mara's example and back included, and a reload, a new window, or the desktop app's Go menu or Help →
+  Licences starts it afresh. What you answer is kept in the data file where it already was: your destination words and agreed
+  income at once, the sentence and goals with the idea's first save, business-or-career and the place with the
+  future you pick, the map's changes by its autosave. A statement that couldn't be saved stays in its box, said
+  not kept, with *Keep this* to try again (`lib/person/words.ts`); the box under *Other…* no longer offers
+  earlier descriptions. A journey page removes the three keys where an older copy left them, without reading
+  them (`lib/journey/window-storage.ts`). Delete takes from the window's memory what it takes from the data file:
+  *Your statements* the sentence (until now it stayed in the tab, marked never to be sent again) and your
+  destination words, *The yearly income you said you want* the income, *Your ideas* everything
+  (`intakeAfterDelete`, `components/your-data/delete-menu.tsx`). Tests: `tests/privacy-inventory.spec.ts` (only
+  `dotami-cockpit-folds` may be read or written, a key only removed must be a listed retired one, with planted
+  reads and writes the scan catches), `tests/prerelease-honesty.spec.ts` (no read or write of a retired key, the
+  removal unread, Delete on the memory, each with a planted control), `tests/first-words.spec.ts`, and the
+  browser tests `e2e/window-storage.spec.ts` (the typed way end to end with a statement the server didn't keep,
+  old keys planted, a reload mid-intake), `e2e/front-door.spec.ts`, the failed statement in
+  `e2e/journey.spec.ts`, and a last test in `e2e/your-data.spec.ts` that reaches Delete only by the app's own
+  links, so the window's memory comes through: after Delete, questions 1 and 4 are asked again while 2 and 3
+  stay answered. The clutter check now reaches Pick a future by its link, as a person does
+  (`e2e/clutter-budget.spec.ts`): a fresh load of `/futures` has no place any more, so its eight rows failed;
+  no budget changed. Replaced, not weakened: the tests of the window-storage filter that no longer exists
+  (a stricter check finds no read or write at all), and the `typed · not saved` tag's test (the tag and its
+  field are gone).
+- **A change on the map is no longer lost without a word when you leave the cockpit** (a review of PR #210,
+  2026-10-24). Leaving the cockpit by one of its own links within the autosave's short pause cancelled the save,
+  and a save that had failed was forgotten once you left: coming back by *Open cockpit* drew your change under
+  *"Edits save automatically."* with no save on its way (by *Open in cockpit*, the data file's older copy), and
+  the next reload lost it. With the journey held only in the window's memory since the same day, nothing else
+  held it. Now leaving sends the waiting save at once, and each change no save has kept yet is held with the
+  journey (`unsavedEdits`, `components/shared/journey-provider.tsx`) until one does: opened again in the same
+  window, either way, the idea is drawn as you left it and saved again, and the save line says *"Saved · …"* or
+  *"Save unavailable — …"* (`components/cockpit/cockpit-page.tsx`;
+  [docs/ui-spec/cockpit/02-left-rail.md](docs/ui-spec/cockpit/02-left-rail.md)). Delete of your ideas drops
+  those copies too. Tests: two in `e2e/cockpit-told.spec.ts` (a change, then *Your futures* at once, reaches the
+  data file; a failed save, away and back by *Open cockpit* and by *Open in cockpit*, says it failed each time,
+  then *Save now* keeps it).
+- **The lines that say where an answer isn't kept name every way of losing it, and none says the tab keeps it.**
+  Under Your destination's questions 2 and 3: *"Kept with each future you pick, and nowhere else: a reload, a new
+  window or the desktop app's Go menu asks it again, a future picked or not."* (it said *"Kept with the future you
+  pick. Until then only this page holds it: …"*, as if a pick ended the asking, and left out the Go menu, which
+  opens its pages afresh). Words kept with no database: *"Not kept: no database reachable. A reload, a new window
+  or the desktop app's Go menu asks it again."* The cockpit's failed save, in its receipt and on the save line:
+  *"Only this window holds your answer: a reload or the desktop app's Go menu loses it."* (it said the tab kept
+  it). An income not proposed: the server's own words when it sends some (no database, its 503: *"No database
+  reachable — nothing was changed."*), *"Not kept: the server didn't answer. The amount is still in the box, and
+  Keep it tries again."* when it doesn't answer, else *"Not kept. The amount is still in the box, and Keep it
+  tries again."*, where the words receipt of question 1 was shown; question 1 likewise says *"Not kept: the
+  server didn't answer. …"* with no answer and *"Not kept. Your words are still in the box, and Keep my words
+  tries again."* for a refusal with no words of its own, no longer "no database reachable" where nobody had seen
+  that (`lib/front-door/receipts.ts` `wordsNotKept`, `incomeNotKeptLine`; `lib/front-door/words.ts`,
+  `lib/cockpit/words.ts`; [docs/ui-spec/start/01-questions.md](docs/ui-spec/start/01-questions.md)). Tests:
+  `tests/prerelease-honesty.spec.ts` (each line names its ways, the Go menu tied to `desktop/main.mjs`'s
+  `loadURL`; no "tab" and no time, with the old lines as planted controls), `tests/front-door.spec.ts`, and in
+  `e2e/front-door.spec.ts` the answers out to Mara's example and back, a reload and a new window asking 2 and 3
+  again, the income with its proposal cut off or answered by a crash's page, and question 1's words the same two ways.
+- **The map no longer says *done* and *now* for things you never told DotAmi.** On every idea the map's own
+  lists put *Employee/Apprentice baseline* first and *Sole Prop activation* next, and their chips read *done*
+  and *now*, as if that were where the person was. They now read *starting point* and *first stage*; *done*,
+  *doing* and *not for me* appear only where you marked a step, and the legend says so (*Stage chip = where it
+  sits on the map; doing, done or not for me only when you mark it*). *Next on your road* and the Steps gauge
+  start at the baseline until you mark it done (`lib/scenarios/graph.ts`, `lib/cockpit/view.ts`). On *Your
+  futures*, an idea saved without a kind of venture (a future picked on *Pick a future*) says *type not said*
+  instead of *Service*, in lower case as written: the card's line sets each word in capitals, which had drawn
+  it *Type Not Said* (`lib/db/ventures.ts`, `lib/ventures/words.ts`, `components/ventures/ventures-page.tsx`
+  `VentureFacts`; drawn in `tests/prerelease-honesty.spec.ts` and read as drawn in `e2e/front-door.spec.ts`).
+- **The readout API no longer says you completed the baseline** (the maintainer's decision 3 of 2026-10-24).
+  `GET /api/readout` gave each stage the map's list name as `status` (*complete* for *Employee/Apprentice
+  baseline* and *active* for *Sole Prop activation*, on every idea, from nothing you said), and `scenario.state`
+  held the same lists as `completedNodeIds` and `activeNodeIds`. All three are gone. Each node's `chip` says
+  where the stage sits on the map, and its values changed with the map's: `now` is `first-stage`, `done` is
+  `starting-point`. The new `yourStatus` is your own mark on the step (`doing`, `done`, `not-for-me`), or null
+  where you gave none, the same mark the map draws (`lib/readout/nodes.ts`). A program that reads `status`, or
+  posts the readout's `scenario` to `/api/playbook` (which still needs the two lists), has to change; nothing in
+  DotAmi does either. Tests: `tests/prerelease-honesty.spec.ts` (no `status` key and no lists, with the old shape
+  as a planted control the same check catches), `e2e/app.spec.ts` and `e2e/cockpit.spec.ts` (after *Done* on
+  Sole Prop activation the readout gives `yourStatus: "done"` there and null on the baseline); on the old route
+  both browser tests failed.
+- **Time words the no-times check missed.** The apprentice road's last column *First years on your own* is now
+  *Running your own shop*; the legend's *check first — confirm, time-boxed, or one fork away* now says *has an
+  end date*, and so do the two rows that said it of an item, written in their components where no check read
+  them: a step panel's item (*Time-boxed · in use before 2027*) and the intake preview's (*Time-boxed — in use
+  before 2027*), now both *has an end date · in use before 2027*, from the words file (`cockpitWords.map.lever`).
+  The CCA Class 50 citation's note in the Export panel says *the first-year factor with its end date*, not *the
+  time-boxed first-year factor*. The ride-share Lens line no longer paraphrases GI-196 as "with 30 days to
+  apply" but points to its own words under the card's sources, and no longer ends "That date is worth taking to
+  your accountant". A GnuCash book being read no longer says "A big one can take a little while.", and a read
+  DotAmi stops says it stopped "before the read finished", not "after a minute". The check
+  (`tests/helpers/time-words.ts`) now catches "first years", "the early months", "time-boxed" and the like (not
+  "opening hours"), and reads every catalog's Lens lines, every words file under `lib/`, every string a catalog
+  writes for "time-boxed", and the text each component writes itself, with the pieces it lets through listed
+  and why (`tests/fixtures/ideas/known-gaps.ts` `COMPONENT_TIME_WORDS`: words the patterns misread, *What
+  DotAmi knows about you*'s retention lines, and Anthropic's period, paraphrased until DotAmi holds its exact
+  words). Corporations Canada's fee lines ("It will cost $200 and will take 1 day.") were drawn in bare
+  quotation marks on the Incorporating step's ways to incorporate and on *Your plan*; they are now inside the
+  official-quote component that draws every tool check's quotes, after *Words found on the page:*
+  (`components/shared/page-quotes.tsx`). No amount changed.
+- **The front door.** Its three example chips are in the words file (`frontDoorWords.examplePrompts`), and the
+  second now reads *I'm already running a business — show me the write-off rules for it* instead of *optimize my
+  write-offs*, which read as a promise about your taxes. *Your futures* and *Open cockpit* show only once an idea
+  is saved; with nothing saved both opened empty pages (`lib/front-door/saved-idea.ts`). With no idea saved,
+  *Your expenses →* shows while the Expenses page has a record to list, such as the records Delete keeps when it
+  takes the ideas, or an agent's proposals waiting, which otherwise had no way in from the front door
+  (`hasListedExpenses`, counted by the Expenses page's own rule, `lib/expenses/store.ts` `LISTED_EXPENSE`); the
+  header still holds three links at most. In a browser copy, Back and Forward show the links as first drawn
+  (docs/ui-spec/landing/03-escape-hatches.md). Tests: `tests/prerelease-honesty.spec.ts`, and in
+  `e2e/your-data.spec.ts` the front door before and after Delete takes the ideas.
 - **Changing your place on a saved idea changes that idea** (S2.5.33, bug 33a; the maintainer's calls of
   2026-10-22 and 2026-10-23). *Change* on *You told us your place is …* in the cockpit's *What you've told
   DotAmi* opened the intake, whose save is always a new idea: the person ended with two ideas, the first still in
@@ -433,6 +547,16 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   entries are gone, so the words-file scan and the browser sweep now fail if either comes back.
 
 ### Documented
+- **The screen specs say what the pre-release fixes changed** (2026-10-24). Each control the fixes above
+  changed has its spec changed with it: where the journey is held and what loses it (docs/ui-spec/start/,
+  landing/, intake/, futures/_index.md, cockpit/09-step-panel.md, plan/_index.md), the map's chips and the
+  readout's ids (cockpit/03-canvas.md, 08-overlays.md), *Next on your road* and the Steps gauge starting at the
+  map's starting point (cockpit/11-next-on-your-road.md, 07-goal-bar.md), an official page's words after
+  *Words found on the page:* (cockpit/07-node-detail.md, plan/_index.md, shared/citation-links.md), the front
+  door's links and the ideas card (landing/_index.md, ventures/_index.md); and the design docs that described
+  them (docs/architecture/future-cockpit.md, overview.md, settings-and-edge-cases.md,
+  figures-privacy-review.md, docs/engines/roads.md and cfe.md). `tests/prerelease-honesty.spec.ts` § 6 reads
+  them for the words files' own strings and a few fixed phrases, with the old start spec as a planted control.
 - **Official wage ranges are allowed in the design docs; outlook ratings aren't** (the maintainer's call K5,
   answered "B" on 2026-10-16, written down 2026-10-20). A government's own published wage range for a job may
   appear, labelled with its area level (economic region, province-wide figure or small-area estimate), its

@@ -13,7 +13,7 @@ Current UI still has four goal tiles. Direction: expand/replace them with a rich
 
 - Click a tile toggles selection on/off (multi-select).
 - Selected tiles show maple border + tinted background.
-- Selection updates `intake.goals[]` immediately in journey state (sessionStorage via `JourneyProvider`).
+- Selection updates `intake.goals[]` immediately in journey state (held in the window's memory via `JourneyProvider`; never in the window's storage since 2026-10-24).
 - On final launch (`Next: Exploration →`), goals are converted to `goalWeights` via `seedGoalWeightsFromIntakeGoals()` before navigation.
 
 Future behavior:

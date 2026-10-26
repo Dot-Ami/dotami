@@ -54,6 +54,50 @@ person is asked).
   until you press **Copy markdown** (your clipboard) or **Save as .md** (a file where you choose, *Files you save
   yourself* in [`lib/privacy/inventory.ts`](../lib/privacy/inventory.ts)). The route `/api/playbook` still
   answers, unchanged, but no page calls it any more.
+- **Nothing about you sits in the window's storage any more (2026-10-24, the pre-release review and the
+  maintainer's rule; Your destination's answers since 2026-10-23).** Where it was, on this computer only and
+  sent nowhere: the tab's `sessionStorage` held the intake in progress under `dotami-journey-v3` (the sentence
+  typed on the front door, the kinds of work, province or territory, employment and the words typed under
+  *Other…*, revenue estimates, the idea's name) and the idea open on the map with its answers, a future picked on
+  *Pick a future* included, with its place; from 2026-10-12 to 2026-10-23 also your answers on Your destination.
+  It lasted until the tab closed; after Delete → *Your statements* the sentence stayed in it, marked never to be
+  sent again. `dotami-person-unsaved` held a statement that couldn't be saved, until the tab closed.
+  `localStorage` held up to 20 job descriptions typed under *Other…* (`dotami-employment-suggestions`) with no
+  end date, read again at each launch of the desktop app since 0.4.1. Delete reached none of the three. Now
+  DotAmi reads and writes none of them. The journey is held in the window's memory only
+  ([`lib/journey/held-journey.ts`](../lib/journey/held-journey.ts), through
+  [`components/shared/journey-provider.tsx`](../components/shared/journey-provider.tsx)): moving between
+  DotAmi's pages keeps it, Mara's example and back included, and a reload, a new window, or the desktop app's Go
+  menu or Help → Licences (each opens its page with `loadURL`) starts it afresh. What you answer is kept in the data file where it already was: your destination words
+  and agreed income as soon as you give them, the sentence and the goal chips with the idea's first save,
+  business-or-career and the place with the future you pick, and every change on the map by its autosave (sent at
+  once when you leave the cockpit before its pause ends, and sent again when you open the idea again in the same
+  window after a save that didn't go through; a review of 2026-10-24, until which leaving cancelled it). A
+  statement that couldn't be saved stays in its box, said not kept, with *Keep this* to try again. The box under
+  *Other…* offers no earlier descriptions; what is typed there was never kept with the idea, and still isn't
+  (whether to keep it or remove the box is the maintainer's later call, docs/task-list.md). The window's storage
+  now holds only how you left the cockpit (`dotami-cockpit-folds`), as before. When one of the journey's pages
+  opens (every page but Mara's example), it removes the three old keys where an older copy left them, without
+  reading them ([`lib/journey/window-storage.ts`](../lib/journey/window-storage.ts)
+  `removeRetiredWindowStorage`). In the desktop app, a launch on another address (the usual one taken) can't
+  reach the copy kept for the usual address, which goes at the next launch there. Not checked: whether the
+  browser's own files on disk still hold removed values until it rewrites them. Delete takes from the window's
+  memory what it takes from the data file: the sentence (with its copies) and the destination words with *Your
+  statements*, the income with *The yearly income you said you want*, and everything with *Your ideas*
+  ([`components/your-data/delete-menu.tsx`](../components/your-data/delete-menu.tsx), `intakeAfterDelete`).
+  *What DotAmi knows about you* lists one key under the window's own storage
+  ([`lib/privacy/inventory.ts`](../lib/privacy/inventory.ts) `WINDOW_STORAGE`; the three old keys are in
+  `RETIRED_WINDOW_STORAGE`), and [`tests/privacy-inventory.spec.ts`](../tests/privacy-inventory.spec.ts) fails
+  on any other key read or written. No table, column or migration.
+
+- **The readout API gives your own mark on each of today's map steps, and no longer the map's worked-out lists
+  (2026-10-24, the maintainer's decision 3).** `GET /api/readout` now answers, for each stage, your own status on
+  it (doing, done, not for me, or none) from `StepProgress`, which `GET /api/futures/<id>` already answers to the
+  same programs on this computer. It no longer gives the map's list names (each stage's `status`, and
+  `completedNodeIds` and `activeNodeIds` in the idea), which said *complete* and *active* of two stages on every
+  idea though the person said nothing of the kind. Nothing new is kept and nothing leaves the computer
+  ([`lib/readout/nodes.ts`](../lib/readout/nodes.ts)).
+
 - **Changing your place on a saved idea changes that idea (2026-10-23, S2.5.33's bug 33a).** Asks: *Which
   province or territory are you in?*, from *Change* on *You told us your place is …* in the cockpit's *What
   you've told DotAmi*, the thirteen provinces and territories in a drop-down, opened on the idea's own place.
@@ -134,8 +178,25 @@ person is asked).
   environment for that launch only; never on the disk, never in the log. Nothing new is kept and nothing
   leaves the computer.
 
+### How to remove it
+
+- **The job descriptions typed under *Other…*** (`dotami-employment-suggestions`), which 0.4.1 said to remove
+  by hand, no longer need it: the first of the journey's pages to open in this version removes them, with the
+  intake in progress (`dotami-journey-v3`) and a statement that couldn't be saved (`dotami-person-unsaved`),
+  without reading them (in the desktop app, a launch on another address leaves the usual address's copy for the
+  next launch there, as above). **How you left the cockpit** (`dotami-cockpit-folds`) is removed as before:
+  Delete doesn't reach it; in the desktop app, close DotAmi and delete the “Local Storage” folder in the data
+  folder; in a browser, clear the site's data ([`lib/privacy/inventory.ts`](../lib/privacy/inventory.ts)
+  `NOT_CLEARED_BY_DELETE`). The journey held in the window's memory goes with a reload, a new window, the
+  desktop app's Go menu or Help → Licences, or closing DotAmi, and Delete takes from it what it takes from the
+  data file.
+
 ### What the policy will need to say
 
+- **"The window's own storage holds nothing you typed or answered, only how you left the cockpit's screen.
+  Until this version it also held the intake in progress, a statement that couldn't be saved and the job
+  descriptions typed under Other…; this version removes those where it finds them."**
+  ([`lib/privacy/inventory.ts`](../lib/privacy/inventory.ts) `WINDOW_STORAGE`, `RETIRED_WINDOW_STORAGE`.)
 - **"DotAmi's desktop app answers only its own window. It does not protect your data from a program running
   under your own Windows account, which can read the app's memory and files. A copy run from source answers
   every program on the computer while it runs."** ([figures-privacy-review.md](architecture/figures-privacy-review.md),

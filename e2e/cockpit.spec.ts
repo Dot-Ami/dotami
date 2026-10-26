@@ -82,18 +82,20 @@ test("the cockpit: gauges, overlays, a step's status, your own skill, your savin
   await expect(gauge(page, "Start-up money")).not.toContainText("$0");
   await expect(gauge(page, "Your date")).toContainText("not set");
 
-  // Next on your road agrees with the map's chips: stage 0 is drawn done, so the list starts at the
-  // before-you-open steps that follow it in the first column. The panel shows three items, so the fourth,
-  // Keep your records from day one (2026-10-14), shows there only once one of these is done. The Steps
-  // gauge names the same first step.
+  // Next on your road agrees with the map's chips: nothing is done until the person marks it (2026-10-23;
+  // until then stage 0 was drawn done for everyone and left off), so the list starts at stage 0, then the
+  // before-you-open steps that follow it in the first column. The panel shows three items. The Steps gauge
+  // names the same first step, and the map calls stage 0 its starting point, never "done".
   const next = page.getByRole("region", { name: "Next on your road" });
   // Its list of steps (the line carried the folded legend's and what-if bar's buttons 2026-10-17 to 10-20).
   await expect(next.getByRole("listitem").getByRole("button")).toHaveText([
-    "1 · Register your business name, if you use one",
-    "2 · Look up your permits and licences (BizPaL)",
-    "3 · A separate bank account for the business, if it has a name other than yours",
+    "1 · Employee/Apprentice baseline",
+    "2 · Register your business name, if you use one",
+    "3 · Look up your permits and licences (BizPaL)",
   ]);
-  await expect(gauge(page, "Steps")).toContainText("next on your road: “Register your business name, if you use one”");
+  await expect(gauge(page, "Steps")).toContainText("next on your road: “Employee/Apprentice baseline”");
+  await expect(stage(page, "Employee/Apprentice baseline")).toHaveAccessibleName(/^Employee\/Apprentice baseline, starting point, /);
+  await expect(stage(page, "Sole Prop activation")).toHaveAccessibleName(/^Sole Prop activation, first stage, /);
 
   // The overlays: Road is always on. A first visit has only Road and Skills on (the calm first view,
   // 2026-10-17; until then Rules & tax started on). Money and Rules & tax are off with their switches drawn,
@@ -140,6 +142,19 @@ test("the cockpit: gauges, overlays, a step's status, your own skill, your savin
   await expect(done).toHaveAttribute("aria-pressed", "true");
   await expect(gauge(page, "Steps")).toContainText(`1 of ${road0Steps} marked done`);
   await expect(stage(page, "Sole Prop activation")).toHaveAccessibleName(/^Sole Prop activation, done, /);
+  // The readout says the same from the person's own mark, and only there; each chip stays where the stage sits on
+  // the map (2026-10-24).
+  await expect
+    .poll(async () => {
+      const readout = (await (await page.request.get(`/api/readout?venture=${ventureId}`)).json()) as {
+        nodes: { id: string; chip: string; yourStatus: string | null }[];
+      };
+      return readout.nodes.filter((n) => n.id === soleProp.id || n.id === "stage-0-employee-apprentice-baseline");
+    })
+    .toEqual([
+      expect.objectContaining({ id: "stage-0-employee-apprentice-baseline", chip: "starting-point", yourStatus: null }),
+      expect.objectContaining({ id: soleProp.id, chip: "first-stage", yourStatus: "done" }),
+    ]);
   // Its cited "done when" lines (2026-10-12): marking the step done ticks none of them.
   await expect(stepPanel(page).getByText(`0 of ${soleProp.doneWhen.length} ticked`)).toBeVisible();
   await expect(stepPanel(page).getByRole("checkbox", { name: soleProp.doneWhen[0]!.text })).not.toBeChecked();

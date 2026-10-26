@@ -112,11 +112,17 @@ async function scopeWhere(prisma: PrismaClient, ventureId: ExpenseScope): Promis
   return userId ? { OR: [{ ventureId: null }, { venture: { userId } }] } : { ventureId: null };
 }
 
+/**
+ * A record the Expenses page lists: every one but those turned down. One rule, so the front door's check
+ * for a record to list (lib/front-door/saved-idea.ts `hasListedExpenses`, 2026-10-24) can't drift from the page.
+ */
+export const LISTED_EXPENSE: Prisma.ExpenseWhereInput = { status: { not: "discarded" } };
+
 /** Every record in the scope except the discarded ones, by purchase day then by when it was proposed. */
 export async function listExpenses(prisma: PrismaClient, ventureId: ExpenseScope): Promise<ExpenseView[]> {
   const scope = await scopeWhere(prisma, ventureId);
   const rows = await prisma.expense.findMany({
-    where: { AND: [scope, { status: { not: "discarded" } }] },
+    where: { AND: [scope, LISTED_EXPENSE] },
     orderBy: BY_DAY,
     include: WITH_RECEIPT,
   });

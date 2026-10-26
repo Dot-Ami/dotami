@@ -49,7 +49,7 @@ engine did all of it. About 25 seconds, loops.*
   operates) and the map opens. Nothing is pre-filled; blank stays blank.
 - **The map.** Tier columns of stage cards and lever cards. A card says *applies* only when
   the rules engine says your answers meet the conditions; *check first* when it is
-  plausible, time-boxed, or one decision away. Hover a card to see where it leads.
+  plausible, has an end date, or is one decision away. Hover a card to see where it leads.
 - **The law, on the card.** Every catalog entry cites the statute, the regulation or the tax
   authority's own page (today: the Income Tax Act, the Regulations, CRA and provincial
   sources), with a verification status and the day it was checked, saying how: read by a person, read by someone the record doesn't name, read by an AI model, or checked by a tool that found the quoted words on the page.

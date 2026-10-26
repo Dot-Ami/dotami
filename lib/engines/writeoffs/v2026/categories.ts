@@ -156,7 +156,10 @@ export const writeOffCategoriesV2026 = [
         url: "https://laws-lois.justice.gc.ca/eng/regulations/C.R.C.,_c._945/section-1100.html",
         lastVerified: "2026-09-13",
         verification: { status: "confirmed", method: "Read verbatim from corpus.db (Regulations current to 2026-06-21). Sch. II Class 50: 'general-purpose electronic data processing equipment and systems software for that equipment'. s.1100(1)(a)(xxxvi): 'of Class 50, 55 per cent'. s.1100(2)(c.3): 'if the class is Class 50, (i) 9/11, for property that was acquired and became available for use by the taxpayer after April 15, 2024 and before 2027, and (ii) nil … after 2026'. The 100% first year is arithmetic on that factor: 0.55 × (1 + 9/11) = 1.00." },
-        note: "The delegate the Act points to. Class definition, declining-balance rate and the time-boxed first-year factor all read from the Regulations' own text with its currency date — the numbers are the provision's words, not a stored rate.",
+        // "the time-boxed first-year factor" until 2026-10-24: a time word of DotAmi's own, drawn in the cockpit's
+        // Export panel (the playbook's markdown, lib/playbook/render-markdown.ts "Note:"). The factor has an end
+        // date, as the map's legend says.
+        note: "The delegate the Act points to. Class definition, declining-balance rate and the first-year factor with its end date all read from the Regulations' own text with its currency date — the numbers are the provision's words, not a stored rate.",
       },
       {
         title: "Classes of depreciable property",
