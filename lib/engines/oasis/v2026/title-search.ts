@@ -22,9 +22,17 @@ import type { OasisTitleType } from "./types";
  *    word, and a job found only that way sits in its own last group, never under a heading about the
  *    government's titles. A job that is in a government group anyway carries the line too, so the screen can
  *    say where the other word was matched.
- * 5. Inside a group, jobs are in the government's code order. Nothing is scored or ranked: the group is a
- *    count of the person's own words. Each group lists its first 50 jobs (the app's own measure) and says
- *    how many it holds.
+ * 5. Whole words first (the maintainer's call a-call-11, 2026-10-23; research lane "search gap", option b;
+ *    the part rule settled in the #206 review, the maintainer's call of 2026-10-24): inside each of the
+ *    government groups, a job comes first, in a part of its own, when one of its titles holds, word for word,
+ *    as many of the person's words as the group's heading counts: all of them, all but one, or, in the "at
+ *    least one" group, one. The rest come after, in a second part: none of their titles holds that many word
+ *    for word. The count is always the group's, never a job's own (which the screen doesn't show), so each
+ *    part's heading is true of every job under it and of none in the other. That is a plain fact about the
+ *    titles, said on screen, not a score. Inside each part, jobs are in the government's code order. Nothing
+ *    is scored or ranked: the group is a count of the person's own words. Each part lists its first 50 jobs
+ *    (the app's own measure) and says how many it holds.
+ * 6. The first group that holds a job opens whole, with both its parts.
  *
  * Nothing is picked: the result is a list for the person to click. The typed words aren't kept anywhere.
  *
@@ -32,7 +40,10 @@ import type { OasisTitleType } from "./types";
  * that only shows a job's skills list doesn't carry the titles (about 1 MB of them) with it.
  */
 
-/** How many jobs a group lists, unless the caller says otherwise (tests/helpers/idea-coverage-report.ts uses 50). */
+/**
+ * How many jobs each part of a group lists (a group without parts: the group), unless the caller says otherwise
+ * (tests/helpers/idea-coverage-report.ts uses 50).
+ */
 export const JOB_SEARCH_GROUP_CAP = 50;
 
 /** Fewer letters and digits than this, all told, and the search waits ("Type at least 3 letters."). */
@@ -41,6 +52,13 @@ export const JOB_SEARCH_MIN_LETTERS = 3;
 /** The groups, in the order a screen shows them. */
 export const JOB_SEARCH_GROUP_KINDS = ["all", "all-but-one", "some", "word-list"] as const;
 export type JobSearchGroupKind = (typeof JOB_SEARCH_GROUP_KINDS)[number];
+
+/**
+ * The two parts of a government group, in the order a screen shows them (a-call-11): the jobs one of whose titles
+ * holds the group's count of the person's words word for word, then the rest (rule 5 above).
+ */
+export const JOB_SEARCH_PART_KINDS = ["exact", "word-start"] as const;
+export type JobSearchPartKind = (typeof JOB_SEARCH_PART_KINDS)[number];
 
 /** Where a job's matching words were found: one of the government's example titles, the job's name, or its code. */
 export type JobMatchSource = OasisTitleType | "job name" | "job code";
@@ -63,23 +81,45 @@ export interface JobSearchHit {
   /** How many of the searched words the job's best-holding title has. 0 only in the word-list group. */
   wordsHeld: number;
   /**
-   * The title that holds them: the first, in the government file's order, of the titles holding that many
-   * (example titles first, then the job's name). Null only in the word-list group.
+   * The title named under the job: the first, in the government file's order (example titles first, then the
+   * job's name), of the titles that place it in its part, holding the most of the words. In the first part those
+   * are the titles holding the group's count of the person's words word for word (all, all but one, or one in the
+   * "at least one" group); in the second, the titles holding the job's count. Null only in the word-list group.
    */
   matched: JobMatch | null;
-  /** How many more of the job's titles hold that many words. */
+  /**
+   * How many more of the job's titles are like the named one: they place it in its part and hold as many of the
+   * words (in the first part, the group's count word for word).
+   */
   moreTitles: number;
+  /**
+   * Which part of its group the job is in: "exact" when one of its titles holds, word for word, as many of the
+   * person's words as the group's heading counts (all of them, all but one, at least one); "word-start" when none
+   * does. Null in the word-list group and for a typed code, which have no parts.
+   */
+  part: JobSearchPartKind | null;
   /** The person's words that reached this job only through DotAmi's word list (none of its titles holds them). */
   viaWordList: readonly ViaWordList[];
+}
+
+/** One part of a government group: which, and how many jobs it holds. */
+export interface JobSearchPart {
+  kind: JobSearchPartKind;
+  total: number;
 }
 
 export interface JobSearchGroup {
   kind: JobSearchGroupKind;
   /** How many jobs the group holds. */
   total: number;
-  /** The first `cap` of them, in the government's code order. */
+  /**
+   * The parts that hold a job, in JOB_SEARCH_PART_KINDS order; none for the word-list group and a typed code.
+   * Their totals add up to the group's.
+   */
+  parts: readonly JobSearchPart[];
+  /** The first `cap` jobs of each part, part by part, in the government's code order inside each. */
   jobs: readonly JobSearchHit[];
-  /** True for the first group that holds a job: the one shown open (the rest are one click away). */
+  /** True for the first group that holds a job: the one shown open, whole (the rest are one click away). */
   open: boolean;
 }
 
@@ -174,9 +214,9 @@ const EVERYDAY = EVERYDAY_WORDS.map((line) => ({ ...line, keys: searchWords(line
 const CODE_QUERY = /^\d[\d.]*$/;
 
 /**
- * The jobs whose government titles hold the person's words, grouped by how many they hold, in code order
- * inside each group, with DotAmi's word list's finds in their own last group. `cap` is how many jobs each
- * group lists (it always says how many it holds).
+ * The jobs whose government titles hold the person's words, grouped by how many they hold, each government group
+ * in its two parts (rule 5) with code order inside each, and DotAmi's word list's finds in their own last group.
+ * `cap` is how many jobs each part lists (a group without parts: the group); each says how many it holds.
  */
 export function searchJobTitles(query: string, cap: number = JOB_SEARCH_GROUP_CAP): JobSearch {
   const trimmed = query.trim();
@@ -196,18 +236,23 @@ export function searchJobTitles(query: string, cap: number = JOB_SEARCH_GROUP_CA
   }
   if (searched.length === 0) return { state: "no-match", searched, leftOut, groups: [], total: 0 };
 
-  // For each title word that matches any searched word, which searched words (by place) it matches.
+  // For each title word that matches any searched word, which searched words (by place) it matches; and, for a
+  // title word that is one of the searched words exactly, which.
   const matchedBy = new Map<string, number[]>();
+  const exactBy = new Map<string, number[]>();
   for (const t of VOCABULARY) {
     const at = searched.flatMap((word, i) => (wordsMatch(word, t) ? [i] : []));
     if (at.length > 0) matchedBy.set(t, at);
+    const exact = searched.flatMap((word, i) => (word === t ? [i] : []));
+    if (exact.length > 0) exactBy.set(t, exact);
   }
-  /** The places of the searched words a title holds. */
-  const heldBy = (c: Candidate) => {
+  /** The places of the searched words a title holds (exactly, or by a word that starts like one). */
+  const heldIn = (c: Candidate, by: ReadonlyMap<string, number[]>) => {
     const held = new Set<number>();
-    for (const w of c.words) for (const i of matchedBy.get(w) ?? []) held.add(i);
+    for (const w of c.words) for (const i of by.get(w) ?? []) held.add(i);
     return held;
   };
+  const heldBy = (c: Candidate) => heldIn(c, matchedBy);
 
   // DotAmi's lines whose words stand, in a row, among the searched words: [line, the searched words' places].
   // A line's words must be the person's words exactly (no word-start rule), so "rideshare" never reads "ride".
@@ -245,13 +290,28 @@ export function searchJobTitles(query: string, cap: number = JOB_SEARCH_GROUP_CA
     else if (viaWordList.length > 0) kind = "word-list";
     if (kind === null) continue;
 
-    const first = wordsHeld > 0 ? counts.indexOf(wordsHeld) : -1;
+    // Whole words first (a-call-11), in the group's own count (the #206 review): the job is in the first part when
+    // one of its titles holds, word for word, as many of the person's words as its group's heading counts. In "all"
+    // and "all-but-one" every job holds that many, so it is the job's own count; in "some" it is one word, since a
+    // job's own count isn't shown and a heading using it would be true of some jobs only. (No titles are counted
+    // for the word-list group, which has no parts.)
+    const exactCounts = wordsHeld > 0 ? job.candidates.map((c) => heldIn(c, exactBy).size) : [];
+    const needed = kind === "some" ? 1 : wordsHeld;
+    const exactTitles = exactCounts.flatMap((e, i) => (e >= needed ? [i] : []));
+    const part: JobSearchPartKind | null = wordsHeld === 0 ? null : exactTitles.length > 0 ? "exact" : "word-start";
+    // The titles that place the job, holding the most of the words: in the first part those just found, otherwise
+    // those holding its count. The first, in the file's order, is named; the rest are its "n more".
+    const placing = part === "exact" ? exactTitles : counts.flatMap((c, i) => (wordsHeld > 0 && c === wordsHeld ? [i] : []));
+    const most = Math.max(0, ...placing.map((i) => counts[i]!));
+    const like = placing.filter((i) => counts[i] === most);
+    const first = like[0] ?? -1;
     byKind.get(kind)!.push({
       code: job.code,
       label: job.label,
       wordsHeld,
       matched: first >= 0 ? { title: job.candidates[first]!.title, from: job.candidates[first]!.from } : null,
-      moreTitles: first >= 0 ? counts.filter((c) => c === wordsHeld).length - 1 : 0,
+      moreTitles: Math.max(0, like.length - 1),
+      part,
       viaWordList,
     });
   }
@@ -266,16 +326,24 @@ function codeSearch(code: string, cap: number): JobSearch {
     wordsHeld: 1,
     matched: { title: job.code, from: "job code" as const },
     moreTitles: 0,
+    part: null,
     viaWordList: [],
   }));
   return finish([code], [], new Map([["all", hits]]), cap);
 }
 
-/** The groups that hold a job, each capped, the first one open. */
+/**
+ * The groups that hold a job, the first one open. A group whose jobs have parts lists each part's first `cap`,
+ * the first part first, each in the code order the jobs came in; a group without parts lists its first `cap`.
+ */
 function finish(searched: string[], leftOut: LeftOutWord[], byKind: Map<JobSearchGroupKind, JobSearchHit[]>, cap: number): JobSearch {
-  const groups = JOB_SEARCH_GROUP_KINDS.flatMap((kind) => {
-    const jobs = byKind.get(kind) ?? [];
-    return jobs.length === 0 ? [] : [{ kind, total: jobs.length, jobs: jobs.slice(0, cap), open: false }];
+  const groups = JOB_SEARCH_GROUP_KINDS.flatMap((kind): JobSearchGroup[] => {
+    const all = byKind.get(kind) ?? [];
+    if (all.length === 0) return [];
+    const byPart = JOB_SEARCH_PART_KINDS.map((part) => ({ kind: part, hits: all.filter((h) => h.part === part) })).filter((p) => p.hits.length > 0);
+    const unparted = all.filter((h) => h.part === null);
+    const jobs = [...byPart.flatMap((p) => p.hits.slice(0, cap)), ...unparted.slice(0, cap)];
+    return [{ kind, total: all.length, parts: byPart.map((p) => ({ kind: p.kind, total: p.hits.length })), jobs, open: false }];
   });
   if (groups.length > 0) groups[0]!.open = true;
   const total = groups.reduce((sum, g) => sum + g.total, 0);
@@ -283,8 +351,9 @@ function finish(searched: string[], leftOut: LeftOutWord[], byKind: Map<JobSearc
 }
 
 /**
- * The codes of the jobs the open group lists (rule H's own view: the closest group that holds any job). For
- * the corpus measure (tests/job-title-search.spec.ts) and the coverage report.
+ * The codes of the jobs the open group lists, both its parts, in the order the screen shows them (rule H's own
+ * view: the closest group that holds any job, opened whole). For the corpus measure
+ * (tests/job-title-search.spec.ts) and the coverage report.
  */
 export function openGroupCodes(result: JobSearch): string[] {
   const open = result.groups.find((g) => g.open);

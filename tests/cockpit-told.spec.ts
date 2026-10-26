@@ -588,7 +588,9 @@ describe("What you've told DotAmi", () => {
     expect(row(`fork:${FORK}`).change).toEqual({ kind: "compare", forkId: FORK });
     expect(row("date").change).toEqual({ kind: "box", question: "date" });
     expect(row("idea:structure").change).toEqual({ kind: "box", question: "structure" });
-    expect(row("idea:place").change).toEqual({ kind: "intake" });
+    // The place is changed on this idea in the box (bug 33a); the intake's save is always a new idea.
+    expect(row("idea:place").change).toEqual({ kind: "box", question: "place" });
+    expect(row("idea:venture-type").change).toEqual({ kind: "intake" });
     expect(row("idea:figures").change).toEqual({ kind: "figures" });
   });
 });

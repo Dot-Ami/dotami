@@ -1,6 +1,6 @@
 # Left rail: venture block, field rows, archetype switcher, save / edit
 
-> **S2.5.4h (2026-09-14) — removed.** “Switch labeled example” and the archetype label/planning line are removed; prep-tool references show all four catalog entries once the structure is set. The behaviour below is the pre-cut record, kept for reference; the shipped surface is described in `CLAUDE.md` § What the app is.
+> **S2.5.4h (2026-09-14) — removed.** “Switch labeled example” and the archetype label/planning line are removed; prep-tool references show all four catalog entries once the structure is set (three outside Alberta since 2026-10-24: [05-rails-ladder-templates.md](./05-rails-ladder-templates.md)). The behaviour below is the pre-cut record, kept for reference; the shipped surface is described in `CLAUDE.md` § What the app is.
 
 > **2026-10-12 — the rail folds.** **Fold venture details** at the rail's top folds it to a narrow strip with **Show venture details**; remembered in this browser. Below 768 px the rail is not a column: **Venture details** in the header opens it as a full-width sheet. [12-folding-and-phone.md](./12-folding-and-phone.md).
 
@@ -11,7 +11,7 @@
 Page: Cockpit (`/cockpit`) · Component: `components/cockpit/cockpit-page.tsx`
 Type: sidebar (mixed display + button group + links)
 
-Last updated: 2026-10-11 ("In your words" also lists each idea's front-door sentence, tagged with its idea); 2026-10-07 ([8e] the figure reminder banner under the venture block); 2026-09-13 (S2.5.4a — archetype hidden for real ventures, "In your words" section added; rest is the 2026-07-05 workshop)
+Last updated: 2026-10-24 (the save line says only this window holds unsaved edits, and what loses them); 2026-10-11 ("In your words" also lists each idea's front-door sentence, tagged with its idea); 2026-10-07 ([8e] the figure reminder banner under the venture block); 2026-09-13 (S2.5.4a — archetype hidden for real ventures, "In your words" section added; rest is the 2026-07-05 workshop)
 
 > **Changed 2026-10-12 — part 2 of the cockpit screen.** The rail is a little wider (up to 280 px) and opens with *What you've told DotAmi* and *Not told yet*, with the one-question box ([12-told-list.md](./12-told-list.md)). Everything below is the rail as it was, now under them and unfolded. Changing the structure here gives a receipt at the top of the told list ([13-receipts.md](./13-receipts.md)).
 Workshop status: documented, sign-off pending
@@ -95,11 +95,24 @@ spot in the product — it carries 6+ unrelated concerns.
   changes…"*, and `AUTOSAVE_DELAY_MS` (800 ms) after the last edit `persist()` POSTs
   `{ scenario }` to `/api/scenario/save` via `lib/journey/save-scenario.ts` (an upsert keyed
   by `scenario.id` — repeat saves are idempotent). Outcome on the line: *"Saved · 12:04"*
-  (sage, local time, stays until the next edit) or *"Save unavailable — kept in this tab.
-  Save now retries."* (maple). Before any edit the line reads *"Edits save
+  (sage, local time, stays until the next edit) or *"Save unavailable — only this window holds it; a
+  reload or the desktop app's Go menu loses it. Save now retries."* (maple; until 2026-10-24 *"… kept in this
+  tab …"*: the edits are in the journey held in the window's memory, `lib/journey/held-journey.ts`, never its
+  storage, and every fresh load empties it). Before any edit the line reads *"Edits save
   automatically."* **"Save now"** skips the pause and is the retry. The intake already
   saved the venture on **Open my map**, so a cockpit reached from the intake is on disk
   before it renders. (H7 transactionality still open.)
+- **Leaving with an edit not kept (a review of 2026-10-24).** Every edit is also held in the journey, in the
+  window's memory, as not kept (`unsavedEdits`, `components/shared/journey-provider.tsx`) until a save keeps that
+  very copy. Leaving the page within the pause by one of the app's own links (the rail's *Your futures*, *Edit
+  venture profile*, the header) sends the waiting save at once instead of dropping it; nothing on the page is
+  left to show how it went. When the idea is opened again in the same window, by the front door's *Open cockpit*
+  or by *Open in cockpit* on Your futures, a copy still held as not kept (its save failed, or the save sent on
+  leaving didn't come back kept) is drawn instead of the data file's, and saved again at once: the button reads
+  *"Saving…"*, then the line *"Saved · 12:04"* or *"Save unavailable — …"* as above. Until that review the save
+  was cancelled on leaving, and the window's copy came back under *"Edits save automatically."* with no save on its
+  way (or the data file's copy replaced it on screen), so the next reload lost the edit without a word. Delete of
+  the ideas drops every held copy with the rest of the journey, so none is saved back.
 - **"Edit venture profile"** — link to `/intake` (whole-journey walkthrough; the
   quick-edit vs full-intake question from 2026-06-10 stands).
 
@@ -114,14 +127,15 @@ change or persist it. The archetype switcher is a dev/review affordance (per the
 "Venture" · `<name>` · `<archetype label> · <type> · <province>` · `<planningFocus>` ·
 FieldRow labels: Type / Province / Target Y1 / Target Y3 / Structure / Employed ·
 "Switch labeled example" · "Save now" / "Saving…" · save line: "Edits save automatically." /
-"Unsaved changes…" / "Saved · <hh:mm>" / "Save unavailable — kept in this tab. Save now retries."
+"Unsaved changes…" / "Saved · <hh:mm>" / "Save unavailable — only this window holds it; a reload or the desktop
+app's Go menu loses it. Save now retries."
 · "Edit venture profile" · "Compass, not GPS. Profile drives which surfaces appear on
 the map. DotAmi never files, predicts, or replaces an accountant."
 
 ## State touched (field names only)
 
-Reads `currentScenario.profile`, archetype config. Writes `currentScenario` + session
-`scenario` (switcher, save), local `saveState`.
+Reads `currentScenario.profile`, archetype config. Writes `currentScenario` + the journey's
+`scenario` and `unsavedEdits` (held in the window's memory, never its storage), local `saveState`.
 
 ## Downstream consumers (where the data goes today)
 

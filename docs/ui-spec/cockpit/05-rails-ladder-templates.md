@@ -2,6 +2,8 @@
 
 > **S2.5.4h (2026-09-14) — removed.** The projection footer is gone; the templates rail lists all four references (no archetype picks them). The behaviour below is the pre-cut record, kept for reference; the shipped surface is described in `CLAUDE.md` § What the app is.
 
+> **2026-10-24 — prep tools for the idea's place.** A reference is drawn only when one of its sources is a federal page or one for the idea's own province (`templateIdsForPlace` in `lib/engines/templates/v2026/index.ts`, second review of #207): *Provincial business name registration* (alberta.ca) isn't drawn for an idea outside Alberta, so the rail lists three references there. A change of place redraws the rail at once.
+
 Page: Cockpit (`/cockpit`) · Components: `components/cockpit/structure-ladder-rail.tsx`,
 `components/cockpit/templates-rail.tsx` (rendered inside the left rail, surface 7)
 Type: display list + external-link list

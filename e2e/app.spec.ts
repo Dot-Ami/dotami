@@ -497,8 +497,14 @@ test("the map quotes the CRA, shows both ways to incorporate, and lights Incorpo
   // The readout API says "default" where the map does, instead of a bare "decision".
   const readout = await page.request.get(`/api/readout?venture=${ventureId}`);
   expect(readout.ok()).toBe(true);
-  const { nodes } = (await readout.json()) as { nodes: { id: string; chip: string }[] };
-  expect(nodes.find((n) => n.id === "stage-3a-incorporation-80k-net")?.chip).toBe("default");
+  const body = (await readout.json()) as { nodes: Record<string, unknown>[]; scenario: { state: Record<string, unknown> } };
+  expect(body.nodes.find((n) => n.id === "stage-3a-incorporation-80k-net")?.chip).toBe("default");
+  // Where a stage sits on the map, never a status the person didn't give (2026-10-24): no node has the map's
+  // list name as `status` (it said "complete" of the baseline on every idea), and the idea carries no such lists.
+  expect(body.nodes.find((n) => n.id === "stage-0-employee-apprentice-baseline")).toMatchObject({ chip: "starting-point", yourStatus: null });
+  expect(body.nodes.filter((n) => "status" in n)).toEqual([]);
+  expect(body.scenario.state).not.toHaveProperty("completedNodeIds");
+  expect(body.scenario.state).not.toHaveProperty("activeNodeIds");
   await stage("Incorporating").click();
   const inc = page.getByRole("complementary").filter({ has: page.getByRole("heading", { name: "Incorporating" }) });
   await expect(inc.getByRole("heading", { name: "Federal (Corporations Canada)" })).toBeVisible();

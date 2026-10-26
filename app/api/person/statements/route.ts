@@ -99,9 +99,8 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: true as const, statement });
   } catch (error) {
     logRouteError("person/statements POST", error);
-    return NextResponse.json(
-      { error: "No database reachable — not saved. It stays in this tab only." },
-      { status: 503 },
-    );
+    // Nothing keeps it anywhere else: the box that sent it still holds the words (until 2026-10-24 this said
+    // "It stays in this tab only", when About you's box put it in the window's storage).
+    return NextResponse.json({ error: "No database reachable — not saved." }, { status: 503 });
   }
 }

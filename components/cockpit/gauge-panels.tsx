@@ -9,6 +9,7 @@ import { MarkButtons, SkillRow } from "@/components/cockpit/step-panel";
 import { JobSearchBox } from "@/components/front-door/job-search";
 import { CitationLinks } from "@/components/shared/citation-links";
 import { Pill } from "@/components/ui";
+import { roadRequirementsNone, roadSkillsNone } from "@/lib/cockpit/view";
 import { cockpitWords as words } from "@/lib/cockpit/words";
 import { OASIS_LICENCE_URL, type JobList } from "@/lib/engines/oasis/v2026";
 import type { Road, SkillItem } from "@/lib/engines/roads/v2026";
@@ -116,6 +117,9 @@ export function SkillsListPanel({
     .filter((item): item is SkillItem => item !== undefined);
   const requirements = items.filter((item) => item.kind === "legal-requirement");
   const listed = items.filter((item) => item.kind !== "legal-requirement");
+  // With none listed for the idea's place, the heading still says its legal requirements rest on other provinces'
+  // pages, as the skills' line below does of the skills (lib/cockpit/view.ts).
+  const requirementsLeftOut = requirements.length === 0 ? roadRequirementsNone(road, skillItems) : null;
   const markOf = new Map(marks.flatMap((m) => (m.skillItemId !== null ? [[m.skillItemId, m.mark] as const] : [])));
   const own = marks.filter((m) => m.ownLabel !== null);
   const itemRow = (item: SkillItem) => (
@@ -133,16 +137,20 @@ export function SkillsListPanel({
   return (
     <PanelShell title={words.lists.skillsTitle} onClose={onClose} error={error} receipt={receipt}>
       {!canSave ? <CantKeepNote className="text-body text-amber" /> : null}
-      {requirements.length > 0 ? (
+      {requirements.length > 0 || requirementsLeftOut ? (
         <div>
           <h3 className={heading}>{words.lists.requirementsTitle}</h3>
-          <ul className="space-y-2">{requirements.map(itemRow)}</ul>
+          {requirementsLeftOut ? (
+            <p className="text-body text-stone">{requirementsLeftOut.list}</p>
+          ) : (
+            <ul className="space-y-2">{requirements.map(itemRow)}</ul>
+          )}
         </div>
       ) : null}
       <div>
         <h3 className={heading}>{words.lists.roadTitle}</h3>
         {listed.length === 0 ? (
-          <p className="text-body text-stone">{words.lists.skillsNone}</p>
+          <p className="text-body text-stone">{roadSkillsNone(road, skillItems).list}</p>
         ) : (
           <ul className="space-y-2">{listed.map(itemRow)}</ul>
         )}

@@ -37,11 +37,31 @@ export function wageLevelLabel(row: WageRowView): string {
   }
 }
 
-/** "Hourly · low $18.00 · median $23.00 · high $30.00" (or Yearly), a figure the file leaves empty said as such. */
+/**
+ * "Hourly · low $18.00 · median $23.00 · high $30.00" (or Yearly), a figure the file leaves empty said as such.
+ * Where two or three published levels are the same amount, the line says so beside them, "as published"
+ * (pre-release fix of 2026-10-23: Ontario bakers' "low $17.60 · median $17.60" read as a mistake).
+ */
 export function wageFiguresLine(row: WageRowView): string {
   const shown = (figure: string | null) => (figure === null ? words.wages.figureNotPublished : wageAmount(figure, row.basis));
   const line = row.basis === "annual" ? words.wages.yearly : words.wages.hourly;
-  return line(shown(row.low), shown(row.median), shown(row.high));
+  const figures = line(shown(row.low), shown(row.median), shown(row.high));
+  const same = sameLevels(row);
+  return same.length < 2 ? figures : `${figures} · ${words.wages.sameAsPublished(joinLevels(same))}`;
+}
+
+type Level = keyof typeof words.wages.levelNames;
+
+/** The published levels that share one amount with another level, in the row's order; none when all differ. */
+function sameLevels(row: WageRowView): Level[] {
+  const levels = (["low", "median", "high"] as const).flatMap((level) => (row[level] === null ? [] : [{ level, amount: wageAmount(row[level]!, row.basis) }]));
+  return levels.filter((a) => levels.some((b) => b.level !== a.level && b.amount === a.amount)).map((a) => a.level);
+}
+
+/** "low and median"; "low, median and high". */
+function joinLevels(levels: readonly Level[]): string {
+  const names = levels.map((level) => words.wages.levelNames[level]);
+  return names.length <= 2 ? names.join(` ${words.wages.and} `) : `${names.slice(0, -1).join(", ")} ${words.wages.and} ${names.at(-1)}`;
 }
 
 /** A method the file names; "NA" and "" are no method. */

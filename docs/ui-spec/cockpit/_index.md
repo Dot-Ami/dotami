@@ -44,8 +44,10 @@ Server route `app/(journey)/cockpit/page.tsx` (`force-dynamic`) loads the stub u
 latest venture from the database (`loadLatestVentureScenarioForStubUser`), falling back to
 `defaultExampleScenario` (Maya) on no-DB/no-rows/error. Client `CockpitPage` resolves the
 working scenario by priority: session (`useJourney().scenario`) → `?sample=<archetypeId>`
-→ server prop → Maya; after sessionStorage hydration it re-adopts the session scenario
-once (audit C2 fix, verified present). All graph state is derived: `buildScenarioGraph`
+→ server prop → Maya; once the journey provider has taken up the journey held in the window's
+memory it re-adopts that scenario once (audit C2 fix, verified present). Since 2026-10-24 the
+journey is held in the window's memory only, never its storage (until then the tab's
+`sessionStorage`), so after a reload the server's idea is drawn. All graph state is derived: `buildScenarioGraph`
 maps the 10-node CFE catalog + `scenario.state` node-id lists to React Flow nodes/edges,
 laid out left-to-right by dagre. Node status comes from `scenario.state`
 (completed/active/decision/ghosted id lists recomputed by `recomputeScenarioState` from

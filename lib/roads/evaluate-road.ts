@@ -8,6 +8,7 @@ import {
   type CostLineAsShown,
   type Fork,
   type Road,
+  type RoadStep,
   type SkillItem,
 } from "@/lib/engines/roads/v2026";
 import type { SkillMarkValue, StepStatus } from "@/lib/futures/types";
@@ -150,6 +151,17 @@ export interface ToldAnswer extends AnswerWords {
    * pick changes a receipt doesn't count it coming into or out of view as given or taken back.
    */
   onJobList?: true;
+  /**
+   * True on an answer read through the road drawn for the idea's place (`roadForPlace`): a step's tick count, a
+   * quote on a cost line, a mark on an item the road lists. A change of place can bring one into or out of view,
+   * or change its count, with nothing the person did, so the place's receipt says neither (./receipts.ts).
+   */
+  drawnForPlace?: true;
+  /**
+   * True on a quote kept on a cost line the road drawn for the idea's place leaves out (`leftOutForPlace`): counted in
+   * no sum, and no step drawn here shows its line, so its row in the told list has no Change (lib/cockpit/told.ts).
+   */
+  forAnotherPlace?: true;
 }
 
 export interface RoadGauges {
@@ -183,8 +195,18 @@ export interface RoadGauges {
     notPricedLines: number;
     /** Lines on steps not on the person's path. */
     leftOutLines: number;
-    /** Lines waiting on a fork with no pick yet, per fork, in road order. */
-    waitingOnForks: { forkId: string; label: string; lines: number }[];
+    /**
+     * The person's agreed numbers on named lines the road drawn for the idea's place leaves out (`leftOutForPlace`: the
+     * line rests on another province's page). Kept with the idea and listed among what they told DotAmi, counted in no
+     * sum, so a gauge can say so, never that no number was given (third review of #207).
+     */
+    notCountedForPlaceLines: number;
+    /**
+     * Lines waiting on a fork with no pick yet, per fork, in road order, with the official fees among them (not
+     * the ones that apply only sometimes) and their sum: none is in the totals above, and the gauge names them so
+     * its total and Compare's for an ending add up (pre-release fix, 2026-10-23).
+     */
+    waitingOnForks: { forkId: string; label: string; lines: number; officialFeesCents: number; officialFeeLines: number }[];
     savingsCents: number | null;
     /** Savings minus (official fees + your numbers): only when there are savings and a line with an amount. */
     differenceCents: number | null;
@@ -552,15 +574,24 @@ function gauges(
     yourNumberLines: 0,
     notPricedLines: 0,
     leftOutLines: 0,
+    notCountedForPlaceLines: 0,
     waitingOnForks: [],
     savingsCents: input.agreed.savingsCents,
     differenceCents: null,
   };
-  const waiting = new Map<string, number>();
+  const waiting = new Map<string, { lines: number; officialFeesCents: number; officialFeeLines: number }>();
   for (const step of steps) {
     if (step.money === "left-out") money.leftOutLines += step.costs.length;
     else if (step.money === "waits-on-a-pick") {
-      waiting.set(step.waitsOnForkId!, (waiting.get(step.waitsOnForkId!) ?? 0) + step.costs.length);
+      const w = waiting.get(step.waitsOnForkId!) ?? { lines: 0, officialFeesCents: 0, officialFeeLines: 0 };
+      w.lines += step.costs.length;
+      for (const line of step.costs) {
+        if (line.kind === "official-fee" && line.onlyIf === undefined) {
+          w.officialFeesCents += line.amountCents;
+          w.officialFeeLines += 1;
+        }
+      }
+      waiting.set(step.waitsOnForkId!, w);
     } else {
       for (const line of step.costs) {
         if (line.kind === "official-fee" && line.onlyIf !== undefined) {
@@ -579,9 +610,15 @@ function gauges(
       }
     }
   }
-  money.waitingOnForks = road.forks.flatMap((fork) =>
-    (waiting.get(fork.id) ?? 0) > 0 ? [{ forkId: fork.id, label: fork.label, lines: waiting.get(fork.id)! }] : [],
-  );
+  // Read the way the told list reads them (`personAnswers`), whether or not the step is on the person's path.
+  const stepById = new Map(road.steps.map((s) => [s.id, s]));
+  money.notCountedForPlaceLines = input.agreed.costLines.filter(
+    (q) => usableQuote(q.amountCents) && lineLeftOutForPlace(stepById.get(q.stepId), q.lineId) !== undefined,
+  ).length;
+  money.waitingOnForks = road.forks.flatMap((fork) => {
+    const w = waiting.get(fork.id);
+    return w && w.lines > 0 ? [{ forkId: fork.id, label: fork.label, ...w }] : [];
+  });
   // Plain arithmetic, and only on numbers that exist: savings and at least one line with an amount.
   if (money.savingsCents !== null && money.officialFeeLines + money.yourNumberLines > 0) {
     money.differenceCents = money.savingsCents - (money.officialFeesCents + money.yourNumbersCents);
@@ -626,6 +663,16 @@ function gauges(
   };
 }
 
+/** A number that isn't a whole, non-negative number of cents is shown as not priced, so it isn't an answer either. */
+function usableQuote(amountCents: number): boolean {
+  return Number.isSafeInteger(amountCents) && amountCents >= 0;
+}
+
+/** The named line a quote is on, when the road drawn for the idea's place leaves it out (`leftOutForPlace`). */
+function lineLeftOutForPlace(step: RoadStep | undefined, lineId: string) {
+  return step?.leftOutForPlace?.costs.find((c) => c.id === lineId && c.kind === "named");
+}
+
 /** The person's own answers about this road, in plain words, for the receipts. Each one was given. */
 function personAnswers(input: RoadEvaluationInput, road: Road): ToldAnswer[] {
   const out: Omit<ToldAnswer, "given">[] = [];
@@ -650,7 +697,7 @@ function personAnswers(input: RoadEvaluationInput, road: Road): ToldAnswer[] {
       if (!listed.has(mark.skillItemId)) continue;
       const label = itemLabel.get(mark.skillItemId) ?? mark.skillItemId;
       // Read here only because of the pick of job (not one of the road's own items): say so, for the receipts.
-      const onJobList = onRoad.has(mark.skillItemId) ? {} : { onJobList: true as const };
+      const onJobList = onRoad.has(mark.skillItemId) ? { drawnForPlace: true as const } : { onJobList: true as const };
       out.push({ id: `skill:${mark.skillItemId}`, group: "skill", ...answer.skill(label, mark.mark, false), ...onJobList });
     } else if (mark.ownLabel !== null) {
       // One skill whatever its capital letters, as the storage keeps it.
@@ -664,14 +711,27 @@ function personAnswers(input: RoadEvaluationInput, road: Road): ToldAnswer[] {
       out.push({ id: `step:${step.id}`, group: "step", ...answer.stepStatus(step.label, p.status) });
     }
     const ticked = new Set(p.doneWhenIds.filter((id) => step.doneWhen.some((line) => line.id === id))).size;
-    if (ticked > 0) out.push({ id: `ticks:${step.id}`, group: "ticks", ...answer.ticks(step.label, ticked, step.doneWhen.length) });
+    if (ticked > 0) {
+      out.push({ id: `ticks:${step.id}`, group: "ticks", ...answer.ticks(step.label, ticked, step.doneWhen.length), drawnForPlace: true });
+    }
   }
   for (const quote of input.agreed.costLines) {
     const step = stepById.get(quote.stepId);
     const line = step?.costs.find((c) => c.id === quote.lineId && c.kind === "named");
-    // A number that isn't a whole, non-negative number of cents is shown as not priced, so it isn't an answer either.
-    if (!step || !line || !Number.isSafeInteger(quote.amountCents) || quote.amountCents < 0) continue;
-    out.push({ id: `cost-line:${step.id}/${line.id}`, group: "cost-line", ...answer.costLine(line.label, step.label, quote.amountCents) });
+    // A line the road drawn for the idea's place leaves out (it rests on another province's page): the person's
+    // number is still theirs, so it is listed, saying it isn't counted for this place (quoteOf never prices it).
+    const elsewhere = line ? undefined : lineLeftOutForPlace(step, quote.lineId);
+    if (!step || !(line ?? elsewhere) || !usableQuote(quote.amountCents)) continue;
+    const said = line
+      ? answer.costLine(line.label, step.label, quote.amountCents)
+      : answer.costLineForAnotherPlace(elsewhere!.label, step.label, quote.amountCents);
+    out.push({
+      id: `cost-line:${step.id}/${quote.lineId}`,
+      group: "cost-line",
+      ...said,
+      drawnForPlace: true,
+      ...(line ? {} : { forAnotherPlace: true as const }),
+    });
   }
   if (input.agreed.savingsCents !== null) out.push({ id: "savings", group: "money", ...answer.savings(input.agreed.savingsCents) });
   if (input.agreed.incomeWantedCents !== null) {

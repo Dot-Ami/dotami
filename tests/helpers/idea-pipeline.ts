@@ -1,7 +1,7 @@
 import { buildPlan, type PlanView } from "@/lib/cockpit/plan";
 import { answerEquipment, answerSalesYear3, compareEndings, forksToCompare, notToldYet, type KeptAnswers, type NotToldRow } from "@/lib/cockpit/told";
 import { cockpitInput, gaugeView, nextOnYourRoad, stepBadges, type KeptFuture } from "@/lib/cockpit/view";
-import { FEDERAL_ROAD_ID, forksAreTheMapToggles, generalRoadV2026, roadsV2026, skillItemsV2026, type Road } from "@/lib/engines/roads/v2026";
+import { FEDERAL_ROAD_ID, forksAreTheMapToggles, generalRoadV2026, roadForPlace, roadsV2026, skillItemsV2026, type Road } from "@/lib/engines/roads/v2026";
 import type { FigureView } from "@/lib/figures/types";
 import { futureCards, groupedForPlace, LISTED_ROAD_IDS, listedRoads, notHereRoad, sourcesLine } from "@/lib/front-door/futures";
 import type { LookingFor as DoorLookingFor } from "@/lib/front-door/questions";
@@ -298,7 +298,8 @@ function answersTo(row: NotToldRow, road: Road, evaluation: RoadEvaluation, idea
         : [];
     }
     case "skills": {
-      const item = [...new Set(road.steps.flatMap((s) => s.needs))][0];
+      // An item the screen draws for the idea's place (`roadForPlace` leaves out one resting only on another province's pages).
+      const item = [...new Set(roadForPlace(road, scenario.profile.province).steps.flatMap((s) => s.needs))][0];
       return item ? [(k: Kept) => void k.skillMarks.push({ skillItemId: item, ownLabel: null, mark: "have" })] : [];
     }
     case "structure":
@@ -352,7 +353,8 @@ function answerEverything(row: NotToldRow, road: Road, evaluation: RoadEvaluatio
   }
   if (row.id === "skills") {
     const marked = new Set(k.skillMarks.map((m) => m.skillItemId));
-    for (const item of new Set(road.steps.flatMap((s) => s.needs))) {
+    // Every item the screen lists for the idea's place, as the person clicks them.
+    for (const item of new Set(roadForPlace(road, k.scenario.profile.province).steps.flatMap((s) => s.needs))) {
       if (!marked.has(item)) k.skillMarks.push({ skillItemId: item, ownLabel: null, mark: "have" });
     }
     return;
@@ -448,7 +450,8 @@ function runCockpit(
       void k.figures.push(figure(idea, { kind: "start-up-cost-line", amountCents: own.quoteCents, costLine: { roadId: road.id, ...line, amountFrom: "quote" } })),
     );
   }
-  const item = [...new Set(road.steps.flatMap((s) => s.needs))][0];
+  // An item the screen draws for the idea's place (`roadForPlace` leaves out one resting only on another province's pages).
+  const item = [...new Set(roadForPlace(road, kept.scenario.profile.province).steps.flatMap((s) => s.needs))][0];
   if (item) answer("skill", (k) => void k.skillMarks.push({ skillItemId: item, ownLabel: null, mark: "have" }));
   const fork = road.forks[0];
   if (fork) {

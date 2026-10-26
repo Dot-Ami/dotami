@@ -44,7 +44,8 @@ import {
   type NotToldRow,
   type ToldRow,
 } from "@/lib/cockpit/told";
-import { cockpitInput, costLineNote, nextOnYourRoad, overlayCounts, type GaugeId } from "@/lib/cockpit/view";
+import type { PlanArgs } from "@/lib/cockpit/plan";
+import { cockpitInput, costLineNote, linkedSkill, nextOnYourRoad, overlayCounts, type GaugeId } from "@/lib/cockpit/view";
 import { cockpitWords as words } from "@/lib/cockpit/words";
 import { aboutJobWords } from "@/lib/about-job/words";
 import { landscapeWords } from "@/lib/landscape/words";
@@ -52,11 +53,11 @@ import type { CostLineAmountFrom, FigureView } from "@/lib/figures/types";
 import { useLocalToday } from "@/lib/figures/use-local-today";
 import type { CFENodeId } from "@/lib/engines/cfe/v2026";
 import { oasisListForJob } from "@/lib/engines/oasis/v2026";
-import { drawsTheStructureLadder, forksAreTheMapToggles, roadsV2026, roadsWrittenForJob, skillItemsV2026 } from "@/lib/engines/roads/v2026";
-import { templatesCatalogV2026 } from "@/lib/engines/templates/v2026";
+import { drawsTheStructureLadder, forksAreTheMapToggles, roadForPlace, roadsV2026, roadsWrittenForJob, skillItemsForPlace, skillItemsV2026 } from "@/lib/engines/roads/v2026";
+import { templateIdsForPlace } from "@/lib/engines/templates/v2026";
 import type { ExampleFuture } from "@/lib/examples";
 import { exampleStory } from "@/lib/examples/story";
-import { roadForFuture, SHIPPED_ROADS_CATALOG, type SkillMarkValue, type StepStatus } from "@/lib/futures/types";
+import { roadForFuture, SHIPPED_ROADS_CATALOG, ticksToSave, type SkillMarkValue, type StepStatus } from "@/lib/futures/types";
 import { AUTOSAVE_DELAY_MS, formatSavedAt, saveScenario } from "@/lib/journey/save-scenario";
 import { evaluateRoad, withoutIdeaAnswer, type RoadEvaluationInput } from "@/lib/roads";
 import { EMPLOYMENT_WORDS } from "@/lib/roads/words";
@@ -69,7 +70,9 @@ import {
 } from "@/lib/scenarios/branches";
 import { isBranchDecided } from "@/lib/scenarios/graph";
 import { isNotSaid } from "@/lib/scenarios/not-said";
-import type { Scenario, VentureStructure } from "@/lib/scenarios/types";
+import { PROVINCE_LABELS, PROVINCES, type Province, type Scenario, type VentureStructure } from "@/lib/scenarios/types";
+import { DESTINATION_QUESTIONS } from "@/lib/front-door/questions";
+import { destinationWords } from "@/lib/front-door/words";
 import Link from "next/link";
 
 /**
@@ -177,13 +180,10 @@ function keptAnswers(kept: KeptForIdea | null, figures: FigureView[] | null): Ke
   };
 }
 
-/** Every prep-tool reference, once the structure is set — there are four; no persona picks them. */
-const ALL_TEMPLATE_IDS = templatesCatalogV2026.entries.map((entry) => entry.id);
-
 interface CockpitPageProps {
   /** The most recently saved venture (or the one named by `?venture=`), or null when nothing is saved. */
   initialScenario: Scenario | null;
-  /** S2.5.4i: `?venture=<id>` was explicit — it wins over the session and becomes the session. */
+  /** S2.5.4i: `?venture=<id>` was explicit — it wins over the journey's idea and becomes it. */
   pinned?: boolean;
   /** An invented example future, drawn read-only in place of a saved idea (docs/ui-spec/example/_index.md). */
   example?: ExampleFuture;
@@ -191,25 +191,38 @@ interface CockpitPageProps {
 
 export function CockpitPage({ initialScenario, pinned = false, example }: CockpitPageProps) {
   const isExample = example !== undefined;
-  const { scenario: journeyScenario, setScenario, hydrated } = useJourney();
+  const { scenario: journeyScenario, setScenario, hydrated, unsavedEdits, holdUnsavedEdit, editKept } = useJourney();
+  /** The window's copy of this idea with an edit no save has kept yet, if it holds one; else the idea as given. */
+  const asHeld = (idea: Scenario | null) => (idea ? (unsavedEdits.find((copy) => copy.id === idea.id) ?? idea) : null);
   const [currentScenario, setCurrentScenario] = useState<Scenario | null>(
-    example ? example.scenario : pinned ? initialScenario : (journeyScenario ?? initialScenario),
+    example ? example.scenario : asHeld(pinned ? initialScenario : (journeyScenario ?? initialScenario)),
   );
 
-  // `JourneyProvider` reads sessionStorage in its own effect, so on first paint
-  // `journeyScenario` is still null and the server-loaded scenario is used. Once hydration
-  // settles, adopt the session's scenario if one exists and differs — the user's most recent
-  // unsaved edits win over the server snapshot (audit-2026-07-04 C2).
+  // `JourneyProvider` takes up the journey held in the window's memory in its own effect, so on first
+  // paint `journeyScenario` may still be null and the server-loaded scenario is used. Once that settles,
+  // adopt the journey's scenario if one exists and differs — the idea last open in this window, with any
+  // edit not saved yet, wins over the server snapshot (audit-2026-07-04 C2). After a reload the memory is
+  // empty and the server's idea stays (nothing is in the window's storage since 2026-10-24).
   useEffect(() => {
-    // The example is its own: no session scenario ever replaces it.
+    // The example is its own: no journey's scenario ever replaces it.
     if (!hydrated || isExample) return;
     if (pinned) {
-      // An explicit `?venture=` is a deliberate choice: make it the session's scenario.
+      // An explicit `?venture=` is a deliberate choice: make it the journey's scenario.
       if (initialScenario && journeyScenario?.id !== initialScenario.id) setScenario(initialScenario);
-      return;
-    }
-    if (journeyScenario && journeyScenario.id !== currentScenario?.id) {
+    } else if (journeyScenario && journeyScenario.id !== currentScenario?.id) {
       setCurrentScenario(journeyScenario);
+    }
+    // An edit of this idea that no save kept (its save failed, or the page was left before it went and the save
+    // sent then didn't come back kept) is newer than the data file's copy: it is drawn, whichever way the idea was
+    // opened, and saved again, and the save line says how that went. Until a review of 2026-10-24 the window's
+    // copy was drawn under "Edits save automatically." with no save on its way, or the data file's copy replaced
+    // it on screen, and the next reload lost the edit without a word.
+    const drawn = pinned ? initialScenario : (journeyScenario ?? currentScenario);
+    const unsaved = drawn ? unsavedEdits.find((copy) => copy.id === drawn.id) : undefined;
+    if (unsaved) {
+      setCurrentScenario(unsaved);
+      setScenario(unsaved);
+      void persist(unsaved);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [hydrated]);
@@ -261,11 +274,19 @@ export function CockpitPage({ initialScenario, pinned = false, example }: Cockpi
   );
   const [savedAt, setSavedAt] = useState<Date | null>(null);
   const autosaveTimer = useRef<number | null>(null);
+  // The edit waiting out the pause, so leaving the page sends it rather than dropping it.
+  const waitingSave = useRef<Scenario | null>(null);
   useEffect(
     () => () => {
-      if (autosaveTimer.current !== null) window.clearTimeout(autosaveTimer.current);
+      if (autosaveTimer.current === null) return;
+      window.clearTimeout(autosaveTimer.current);
+      const target = waitingSave.current;
+      // Left within the pause (a link of the app's own, which keeps the window's memory): the save goes now. No
+      // save line is left to say how it went, so a copy not kept stays held, and the cockpit saves it again and
+      // says so when the idea is opened again in this window. Until a review of 2026-10-24 the save was dropped.
+      if (target) void saveScenario(target).then((result) => result.ok && editKept(target));
     },
-    [],
+    [editKept],
   );
 
   // The saved idea behind this scenario, its figures (every state: the reminder banner needs to know
@@ -281,9 +302,17 @@ export function CockpitPage({ initialScenario, pinned = false, example }: Cockpi
   const reload = saved.reload;
   const ideaFigures = ventureId && figures ? { ideaId: ventureId, figures } : null;
 
-  // The road this idea is drawn on: its own when it names one the catalog has, else today's general road.
+  // The road this idea is drawn on: its own when it names one the catalog has, else today's general road,
+  // drawn for the idea's own place (`roadForPlace`, as road evaluation's input is: lib/cockpit/view.ts).
   const roadId = kept?.future.roadId ?? null;
-  const road = useMemo(() => roadForFuture(SHIPPED_ROADS_CATALOG, roadId), [roadId]);
+  const roadPlace = currentScenario?.profile.province ?? null;
+  const road = useMemo(() => {
+    const whole = roadForFuture(SHIPPED_ROADS_CATALOG, roadId);
+    return roadPlace ? roadForPlace(whole, roadPlace) : whole;
+  }, [roadId, roadPlace]);
+  // The skill items as the step panel and the Skills list draw them: each one's sources for the idea's place
+  // (`skillItemsForPlace`). Road evaluation reads the items as written (ids and labels only).
+  const skillItemsHere = useMemo(() => (roadPlace ? skillItemsForPlace(skillItemsV2026, roadPlace) : skillItemsV2026), [roadPlace]);
   // The government's skills list for the job the person picked as closest to their work, or none.
   const jobCode = kept?.future.job?.code ?? null;
   const job = useMemo(() => (jobCode ? oasisListForJob(jobCode) : null), [jobCode]);
@@ -350,6 +379,26 @@ export function CockpitPage({ initialScenario, pinned = false, example }: Cockpi
   // the path (the maintainer, 2026-10-13). None on today's Alberta road, whose sides the tax rules colour
   // whichever is picked, so both columns' counts would come out the same.
   const compareForks = useMemo(() => (told ? forksToCompare(told.input) : []), [told]);
+  // Export's input (pre-release fix, 2026-10-23): the road on screen as Your plan reads it, from the same kept
+  // answers and the same input without the what-if, so Export prints this road's own steps on every road.
+  const exportArgs = useMemo<PlanArgs | null>(
+    () =>
+      told
+        ? {
+            ideaName: told.input.scenario.profile.name,
+            input: told.input,
+            kept: keptAnswers(kept, figures),
+            firstWords: kept?.firstWords ?? null,
+            destination: kept?.destination ?? null,
+            incomeWanted: kept?.incomeWanted ?? null,
+            roadChosenOn: kept?.future.roadChosenOn ?? null,
+            jobPickedOn: kept?.future.job?.pickedOn ?? null,
+            where: { area: kept?.future.area ?? null, region: kept?.future.region ?? null },
+            today,
+          }
+        : null,
+    [told, kept, figures, today],
+  );
   // The example's story: what each of the example person's answers changed, from road evaluation.
   const story = useMemo(
     () => (example && told ? exampleStory(told.input, example.whatIfFirstYearSalesDollars) : null),
@@ -409,8 +458,13 @@ export function CockpitPage({ initialScenario, pinned = false, example }: Cockpi
     const waiting = pendingReceipt.current;
     const result = await saveScenario(target);
     if (result.ok) {
+      editKept(target);
       setSaveState("saved");
       setSavedAt(new Date());
+      // A new place (the place row's Change, bug 33a): what the server builds from the place (About this job's
+      // rows, the area and region read only in Alberta) is read again, so nothing on screen keeps the old one.
+      const keptPlace = kept?.future.place ?? null;
+      if (keptPlace !== null && keptPlace !== `CA-${target.profile.province}`) void reload();
       // Only when no newer edit came in meanwhile: that edit's own save brings its receipt.
       if (waiting && pendingReceipt.current === waiting) {
         pendingReceipt.current = null;
@@ -431,8 +485,10 @@ export function CockpitPage({ initialScenario, pinned = false, example }: Cockpi
   function scheduleSave(next: Scenario) {
     setSaveState("dirty");
     if (autosaveTimer.current !== null) window.clearTimeout(autosaveTimer.current);
+    waitingSave.current = next;
     autosaveTimer.current = window.setTimeout(() => {
       autosaveTimer.current = null;
+      waitingSave.current = null;
       void persist(next);
     }, AUTOSAVE_DELAY_MS);
   }
@@ -466,6 +522,8 @@ export function CockpitPage({ initialScenario, pinned = false, example }: Cockpi
     const before = opts.before !== undefined ? opts.before : inputFor();
     setCurrentScenario(next);
     setScenario(next);
+    // Held as not kept until a save keeps this very copy (`persist`).
+    holdUnsavedEdit(next);
     if (place && before) {
       counter.current += 1;
       const seq = counter.current;
@@ -526,6 +584,7 @@ export function CockpitPage({ initialScenario, pinned = false, example }: Cockpi
     if (autosaveTimer.current !== null) {
       window.clearTimeout(autosaveTimer.current);
       autosaveTimer.current = null;
+      waitingSave.current = null;
     }
     void persist(scenario);
   }
@@ -640,11 +699,26 @@ export function CockpitPage({ initialScenario, pinned = false, example }: Cockpi
     void saveAnswer(() => postJson(`/api/futures/${encodeURIComponent(ventureId)}/progress`, { roadId: road.id, stepId, status }), "step");
   }
 
+  /**
+   * The ticks to send for one step: `ids`, plus those kept on its lines the road drawn for the place on screen leaves
+   * out (`ticksToSave`). The storage keeps them too, but by the place in the file, which trails the screen until a
+   * change of place is saved.
+   */
+  function ticksFor(stepId: string, ids: string[]): string[] {
+    const written = roadForFuture(SHIPPED_ROADS_CATALOG, roadId).steps.find((s) => s.id === stepId);
+    const drawn = road.steps.find((s) => s.id === stepId);
+    const keptTicks = kept?.progress.find((p) => p.stepId === stepId)?.doneWhenIds ?? [];
+    return written && drawn ? ticksToSave(ids, keptTicks, written, drawn) : ids;
+  }
+
   /** Resolves once the ticks are saved and read back, so the step panel can hold its boxes until then. */
   function handleTicks(doneWhenIds: string[]): Promise<unknown> {
     if (!ventureId || !selectedNodeId) return Promise.resolve();
     const stepId = selectedNodeId;
-    return saveAnswer(() => postJson(`/api/futures/${encodeURIComponent(ventureId)}/progress`, { roadId: road.id, stepId, doneWhenIds }), "step");
+    return saveAnswer(
+      () => postJson(`/api/futures/${encodeURIComponent(ventureId)}/progress`, { roadId: road.id, stepId, doneWhenIds: ticksFor(stepId, doneWhenIds) }),
+      "step",
+    );
   }
 
   function handleMark(skill: SkillKey, mark: SkillMarkValue | null, place: ReceiptPlace) {
@@ -751,7 +825,8 @@ export function CockpitPage({ initialScenario, pinned = false, example }: Cockpi
     if (back.kind === "skill-mark") void saveAnswer(() => postJson("/api/skill-marks", { skillItemId: back.skillItemId, mark: null }), "told", empty);
     else if (back.kind === "own-skill") void saveAnswer(() => postJson("/api/skill-marks", { ownLabel: back.ownLabel, mark: null }), "told", empty);
     else if (back.kind === "step-status") void saveAnswer(() => postJson(`/api/futures/${id}/progress`, { roadId: road.id, stepId: back.stepId, status: null }), "told", empty);
-    else if (back.kind === "step-ticks") void saveAnswer(() => postJson(`/api/futures/${id}/progress`, { roadId: road.id, stepId: back.stepId, doneWhenIds: [] }), "told", empty);
+    else if (back.kind === "step-ticks")
+      void saveAnswer(() => postJson(`/api/futures/${id}/progress`, { roadId: road.id, stepId: back.stepId, doneWhenIds: ticksFor(back.stepId, []) }), "told", empty);
     else if (back.kind === "figures") void saveAnswer(() => postJson("/api/figures/retract", { ventureId, figureIds: back.figureIds }), "told", empty);
     else if (back.kind === "date") void saveAnswer(() => postJson(`/api/futures/${id}/date`, { month: null }), "told", empty);
     else if (back.kind === "ending") void saveAnswer(() => postJson(`/api/futures/${id}/ending`, { forkId: back.forkId, stepId: null }), "told", empty);
@@ -788,6 +863,20 @@ export function CockpitPage({ initialScenario, pinned = false, example }: Cockpi
       why = q.savings.why;
       control = { kind: "money" };
       save = async (cents) => done(await proposeNumber({ kind: "savings-for-start", amountCents: cents }, "told"));
+    } else if (question === "place") {
+      // S2.5.33, bug 33a: the place is changed on this idea, saved with it like the structure, in Your destination's
+      // own words. The rules and tax cards, fees, sources and the map follow at once; About this job and Your plan
+      // read the new place once the save has answered (`persist` reloads what is kept).
+      const asked = DESTINATION_QUESTIONS.find((d) => d.id === "place")!;
+      title = asked.ask;
+      why = asked.why;
+      control = {
+        kind: "select",
+        options: PROVINCES.map((code) => ({ id: code, label: PROVINCE_LABELS[code] })),
+        value: scenario.profile.province,
+        choose: destinationWords.choosePlace,
+      };
+      save = (value) => viaScenario({ ...scenario, profile: { ...scenario.profile, province: value as Province } });
     } else if (question === "structure") {
       title = q.structure.question;
       why = q.structure.why;
@@ -1202,7 +1291,9 @@ export function CockpitPage({ initialScenario, pinned = false, example }: Cockpi
                 <p className="mt-1 text-small leading-snug text-stone-dim">{words.rail.prepToolsWait}</p>
               </section>
             ) : (
-              <TemplatesRail templateIds={ALL_TEMPLATE_IDS} />
+              // Every prep-tool reference once the structure is set (no persona picks them), drawn for the idea's place:
+              // the federal ones, and its own province's.
+              <TemplatesRail templateIds={templateIdsForPlace(scenario.profile.province)} />
             )}
 
             {/* The example keeps nothing, so it has no save line: its one way on is to start your own. */}
@@ -1284,7 +1375,8 @@ export function CockpitPage({ initialScenario, pinned = false, example }: Cockpi
                   onBranchChange={handleBranchChange}
                   overlays={overlays}
                   stepEvaluations={stepEvaluations}
-                  linkedSkillId={selectedSkillId}
+                  // A skill the idea's place left out dims nothing: no row is drawn to unselect it.
+                  linkedSkillId={linkedSkill(road, selectedSkillId)}
                   cockpit={{
                     legendFolded: folds.legend,
                     onToggleLegend: () => toggle("legend"),
@@ -1359,7 +1451,7 @@ export function CockpitPage({ initialScenario, pinned = false, example }: Cockpi
                     step={selectedStep}
                     evaluation={selectedStepEvaluation}
                     rules={evaluation.rules}
-                    skillItems={skillItemsV2026}
+                    skillItems={skillItemsHere}
                     marks={markOf}
                     selectedSkillId={selectedSkillId}
                     branch={
@@ -1405,7 +1497,7 @@ export function CockpitPage({ initialScenario, pinned = false, example }: Cockpi
                   key={jobListOpen ? "job-list-open" : "job-list-folded"}
                   jobListOpen={jobListOpen}
                   road={road}
-                  skillItems={skillItemsV2026}
+                  skillItems={skillItemsHere}
                   marks={kept?.skillMarks ?? []}
                   selectedSkillId={selectedSkillId}
                   canSave={canSave}
@@ -1501,9 +1593,9 @@ export function CockpitPage({ initialScenario, pinned = false, example }: Cockpi
                 />
               ) : null}
 
-              {rightPanel === "playbook" ? (
+              {rightPanel === "playbook" && exportArgs ? (
                 <div className="h-full overflow-y-auto border-l border-rule bg-ink3 max-lg:border-l-0">
-                  <PlaybookExportPanel scenario={scenario} roadId={road.id} ventureId={ventureId} onClose={() => setRightPanel(null)} />
+                  <PlaybookExportPanel planArgs={exportArgs} ventureId={ventureId} onClose={() => setRightPanel(null)} />
                 </div>
               ) : null}
             </div>

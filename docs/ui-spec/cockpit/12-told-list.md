@@ -5,8 +5,10 @@ Page: Cockpit (`/cockpit?venture=<id>`) · Component: `components/cockpit/told-l
 `lib/roads/` `withoutAnswer` + `roadReceipt`)
 Type: list + buttons + inline form
 
-Last updated: 2026-10-12 (built; after review the same day: what the save keeps, the receipt's focus,
-buttons named by row; docs/architecture/future-cockpit.md § 2, Cockpit screen as built, part 2)
+Last updated: 2026-10-24 (the place row's Change opens the one-question box, 2026-10-23, S2.5.33's bug 33a; a
+quote kept on a line the place leaves out, and ticks kept by Take back, second review of #207; built 2026-10-12;
+after review the same day: what the save keeps, the receipt's focus, buttons named by row;
+docs/architecture/future-cockpit.md § 2, Cockpit screen as built, part 2)
 
 ## What it is
 
@@ -24,6 +26,12 @@ ladder, the save line). Two regions:
     words a receipt uses), or *Nothing on the road changes with or without it.*; for the place, the kind
     of venture and the work situation, *The map needs this answer: it can be changed, not taken back.*;
   - **Change** and **Take back** (see below).
+  - A number agreed on a cost line the idea's place leaves out (it rests on another province's page, such as
+    the Alberta registry agent's fee after a move to Ontario) stays a row (since 2026-10-24, the maintainer's
+    decision of that day, option B): *You told us your number for “…” on “…” is $…; it is kept with this idea and
+    not counted for your place, because that line rests on another province's page*, with **Take back** and no
+    **Change** (no step drawn for the place shows its line); no sum counts it, and the Start-up money gauge and
+    Compare say none is counted for the place, never that no number was given ([07-goal-bar.md](07-goal-bar.md)).
 - **Not told yet** (a region with that name). Each missing answer as *<question> → unlocks <what>*, in
   the order DotAmi asks them (a line says *In the order DotAmi asks them, not importance*): your date;
   your savings; your numbers for the cost lines not priced yet; your marks on the skills and legal requirements
@@ -54,16 +62,20 @@ the same kinds: the question, its *why we ask* line, one control, **Save**, **I 
 | Your structure | Sole prop · Corporation | the map's save |
 | Buying equipment, a vehicle or tools? | Yes · No | the map's save (Yes in `Venture.capitalPurchasePlanned`, No under the map's key `equipmentNo`) |
 | The yearly sales at which you'd incorporate | whole dollars | the map's save |
+| Which province or territory are you in? (from the place row's Change, since 2026-10-23) | a drop-down of the thirteen provinces and territories, opened on the idea's own | the map's save, on this idea (`Venture.province`) |
 
 ## What it does (behavior on interact)
 
 - **Change**: opens where the answer is given: the step panel (a status, ticks, a quote), the Skills list
-  (a mark, a skill of one's own), *Compare* (an ending), the one-question box (above), the intake (the
-  idea's other answers: place, kind of venture, work situation, kinds of work, sales, hire-first), or the
-  idea's figures on *Your ideas* (agreed business figures).
+  (a mark, a skill of one's own), *Compare* (an ending), the one-question box (above; the place since
+  2026-10-23, S2.5.33's bug 33a, where it opened the intake, whose save is always a new idea), the intake (the
+  idea's other answers: kind of venture, work situation, kinds of work, sales, hire-first), or the
+  idea's figures on *Your ideas* (agreed business figures). A quote kept on a line the idea's place leaves out
+  has no Change (above).
 - **Take back**: removes that one answer, the way `withoutAnswer` does: a skill mark or own skill through
   `POST /api/skill-marks` with no mark; a status or the ticks through `POST /api/futures/<id>/progress`
-  (`status: null`, `doneWhenIds: []`); a quote or savings through `POST /api/figures/retract` (kept as
+  (`status: null`, `doneWhenIds: []`; ticks on lines the idea's place leaves out stay kept, sent along by the
+  cockpit and kept by the storage whatever list arrives, `ticksToSave`, 2026-10-24); a quote or savings through `POST /api/figures/retract` (kept as
   retracted); the month through the date route with `null`; an ending through `POST
   /api/futures/<id>/ending { stepId: null }`; the idea's own answers through the map's save (structure
   back to not set, a map pick back to the default, kinds of work emptied, a sales number to none,

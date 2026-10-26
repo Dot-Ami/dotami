@@ -7,12 +7,12 @@ import type { SkillMarkValue } from "@/lib/futures/types";
 import { evaluateRoad, type RoadEvaluationInput, type StepEvaluation } from "@/lib/roads";
 import type { BranchDecisionId } from "@/lib/scenarios/branches";
 import { isBranchDecided } from "@/lib/scenarios/graph";
-import { citationsForPlace, forksAreTheMapToggles } from "@/lib/engines/roads/v2026";
+import { forksAreTheMapToggles, stepSourcesForPlace } from "@/lib/engines/roads/v2026";
 import { areaLabel, regionLabel } from "@/lib/front-door/where";
 
 import { goalRoadLine } from "./road-line";
 import { dayOfMoment, toldDay, toldRows, type KeptAnswers } from "./told";
-import { gaugeView } from "./view";
+import { emptySectionLine, gaugeView, roadRequirementsNone, roadSkillsNone } from "./view";
 import { cockpitWords as words } from "./words";
 
 /**
@@ -86,7 +86,7 @@ export interface PlanStep {
   /** "n cost lines, under Start-up money", or null for a step with none. */
   costCount: string | null;
   officialLinks: { label: string; url: string }[];
-  /** The step's sources for the idea's place (on a road written for all of Canada, the federal ones and its province's). */
+  /** The step's sources for the idea's place: the federal ones and its province's, on every road (a-call-12). */
   sources: PlanSource[];
   /** How many sources for other provinces the list leaves out, said in a line; null when none is left out. */
   sourcesLeftOut: string | null;
@@ -116,7 +116,8 @@ export interface PlanView {
     job: { title: string; items: { label: string; mark: string }[]; notMarked: string; attribution: string } | null;
     noJob: string | null;
   };
-  money: { sums: string[]; byStep: { step: string; note: string | null; lines: PlanCostLine[] }[]; none: string | null };
+  /** `stepId` lets the export put each step's lines under the step itself (lib/playbook/road-export.ts). */
+  money: { sums: string[]; byStep: { stepId: string; step: string; note: string | null; lines: PlanCostLine[] }[]; none: string | null };
   told: { rows: { said: string; day: string; unlocked: string[] }[]; none: string | null };
   notAdvice: string;
 }
@@ -181,7 +182,8 @@ export function buildPlan(args: PlanArgs): PlanView {
 
   function planStep(step: (typeof road.steps)[number], evaluated: StepEvaluation): PlanStep {
     const ticked = new Set(evaluated.doneWhen.tickedIds);
-    const sources = citationsForPlace(road, step.citations, place);
+    // Its own sources and the pages left out of its lines and links for the idea's place, in one count.
+    const sources = stepSourcesForPlace(road, step, place);
     return {
       id: step.id,
       label: step.label,
@@ -189,7 +191,7 @@ export function buildPlan(args: PlanArgs): PlanView {
       status: evaluated.status ? words.plan.status(words.road.statusChip[evaluated.status]) : words.plan.noStatus,
       state: words.plan.state[evaluated.state],
       because: evaluated.because,
-      doneWhenTitle: step.doneWhen.length === 0 ? words.panel.doneWhenNone : words.plan.doneWhen(evaluated.doneWhen.ticked, evaluated.doneWhen.total),
+      doneWhenTitle: step.doneWhen.length === 0 ? emptySectionLine(step, "doneWhen") : words.plan.doneWhen(evaluated.doneWhen.ticked, evaluated.doneWhen.total),
       doneWhen: step.doneWhen.map((line) => ({
         text: line.text,
         ticked: ticked.has(line.id),
@@ -209,6 +211,7 @@ export function buildPlan(args: PlanArgs): PlanView {
 
   // --- Skills: the road's items once each, in road order, then the person's own, then the job's list.
   const roadItemIds = [...new Set(road.steps.flatMap((s) => s.needs))].filter((id) => itemById.has(id));
+  const roadRequirementsLeftOut = roadRequirementsNone(road, input.skillItems);
   const ownDay = new Map(args.kept.skillMarks.flatMap((m) => (m.skillItemId === null && m.ownLabel ? [[m.ownLabel, m.markedOn] as const] : [])));
   const own = input.skillMarks.flatMap((m) =>
     m.skillItemId === null && m.ownLabel ? [{ label: m.ownLabel, mark: markWords(m.mark), day: ownDay.get(m.ownLabel) ?? words.told.dayNotKept }] : [],
@@ -230,7 +233,7 @@ export function buildPlan(args: PlanArgs): PlanView {
           : evaluated.money === "waits-on-a-pick" && evaluated.waitsOnForkId
             ? words.panel.costsWaiting(road.forks.find((f) => f.id === evaluated.waitsOnForkId)?.label ?? evaluated.waitsOnForkId)
             : null;
-      return [{ step: step.label, note, lines: evaluated.costs.map((line) => costLine(step.id, line)) }];
+      return [{ stepId: step.id, step: step.label, note, lines: evaluated.costs.map((line) => costLine(step.id, line)) }];
     });
 
   function costLine(stepId: string, line: CostLineAsShown): PlanCostLine {
@@ -305,7 +308,11 @@ export function buildPlan(args: PlanArgs): PlanView {
         const item = itemById.get(id)!;
         return { label: item.label, kind: words.panel.skillKind[item.kind], mark: markWords(markOf.get(id)) };
       }),
-      roadNone: roadItemIds.length === 0 ? words.gauges.skills.noneListed : null,
+      // As the Skills gauge says it: its skills' line, and its legal requirements' when the place left them out.
+      roadNone:
+        roadItemIds.length === 0
+          ? [roadSkillsNone(road, input.skillItems).gauge, ...(roadRequirementsLeftOut ? [roadRequirementsLeftOut.gauge] : [])].join(" · ")
+          : null,
       own,
       ownNone: own.length === 0 ? words.plan.ownNone : null,
       job: job

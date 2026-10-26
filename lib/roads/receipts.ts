@@ -30,8 +30,10 @@ export function roadReceipt(before: RoadEvaluation, after: RoadEvaluation): stri
   // Steps whose every listed skill is now marked have, and the other way round. A count of skills
   // only: the step's "done when" lines and money are counted elsewhere.
   const allHave = (s: StepEvaluation) => s.needs.listed > 0 && s.needs.have === s.needs.listed;
-  const nowAllHave = both.filter(([b, a]) => !allHave(b) && allHave(a)).length;
-  const noLonger = both.filter(([b, a]) => allHave(b) && !allHave(a)).length;
+  // A step that listed no skill before, or lists none now (the road drawn for a new place brought its items back, or
+  // left them out), gained or lost no mark: not counted either way.
+  const nowAllHave = both.filter(([b, a]) => !allHave(b) && allHave(a) && b.needs.listed > 0).length;
+  const noLonger = both.filter(([b, a]) => allHave(b) && !allHave(a) && a.needs.listed > 0).length;
   if (nowAllHave > 0) changes.push(changed.allSkillsHave(nowAllHave));
   if (noLonger > 0) changes.push(changed.notAllSkillsHave(noLonger));
 
@@ -44,7 +46,10 @@ export function roadReceipt(before: RoadEvaluation, after: RoadEvaluation): stri
   const s0 = g0.skills;
   const s1 = g1.skills;
   if (s0.have !== s1.have || s0.learning !== s1.learning || s0.notYet !== s1.notYet || s0.notMarked !== s1.notMarked) {
-    changes.push(changed.skills(s1.have, s1.learning, s1.notYet, s1.notMarked));
+    // The road's list changes only with the road drawn for the idea's place (`roadForPlace`; a mark changes the counts,
+    // never the list), so a list gone empty is the place leaving every item out: said as the Skills gauge says it,
+    // never as counts of nothing that read as marks gone (third review of #207).
+    changes.push(s1.listed === 0 && s0.listed > 0 ? changed.skillsNoneForPlace : changed.skills(s1.have, s1.learning, s1.notYet, s1.notMarked));
   }
   const o0 = s0.addedByYou;
   const o1 = s1.addedByYou;
@@ -109,20 +114,27 @@ export function roadReceipt(before: RoadEvaluation, after: RoadEvaluation): stri
  * When the pick of job changed, a mark on the job's list that is in only one of the two runs came into or
  * out of view with the pick: the mark itself is kept whatever the pick is (future-cockpit.md § 6, "Taking
  * back the pick of job keeps the marks"), so it is neither said nor taken back, and the pick names itself.
+ *
+ * When the place changed, an answer read through the road drawn for the place (`drawnForPlace`) is neither said
+ * nor taken back either (second review of #207): the road is drawn again for the new place (`roadForPlace`), so a
+ * tick count, a quote or a mark on what it left out or brought back came into or out of view with it, and the
+ * person's ticks, quotes and marks are kept whatever the place is. The place names itself.
  */
 function answersThatChanged(before: readonly ToldAnswer[], after: readonly ToldAnswer[], jobChanged: boolean): string | null {
   const was = new Map(before.map((a) => [a.id, a]));
   const now = new Map(after.map((a) => [a.id, a]));
   const cameWithThePick = (a: ToldAnswer) => jobChanged && a.onJobList === true;
+  const placeChanged = was.get("idea:place")?.said !== now.get("idea:place")?.said;
+  const cameWithThePlace = (a: ToldAnswer) => placeChanged && a.drawnForPlace === true;
   type Way = "said" | "taken-back";
   const differ: { group: AnswerGroup; way: Way; clause: string }[] = [];
   for (const a of after) {
     const b = was.get(a.id);
-    if (!b && cameWithThePick(a)) continue;
+    if ((!b && cameWithThePick(a)) || cameWithThePlace(a)) continue;
     if (!b || b.said !== a.said) differ.push({ group: a.group, way: "said", clause: a.said });
   }
   for (const b of before) {
-    if (!now.has(b.id) && !cameWithThePick(b)) differ.push({ group: b.group, way: "taken-back", clause: b.takenBack });
+    if (!now.has(b.id) && !cameWithThePick(b) && !cameWithThePlace(b)) differ.push({ group: b.group, way: "taken-back", clause: b.takenBack });
   }
   if (differ.length === 0) return null;
 

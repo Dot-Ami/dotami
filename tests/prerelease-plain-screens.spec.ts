@@ -26,12 +26,14 @@ import {
   drawsTheStructureLadder,
   roadApprenticeToOwnShopAB,
   roadFederalStepsCA,
+  roadForPlace,
   roadsV2026,
   roadStartingAnyBusinessAB,
+  skillItemsForPlace,
   skillItemsV2026,
 } from "@/lib/engines/roads/v2026";
 import { futureCards, listedRoads } from "@/lib/front-door/futures";
-import { destinationReceipt } from "@/lib/front-door/receipts";
+import { destinationReceipt, incomeNotKeptLine, wordsNotKept } from "@/lib/front-door/receipts";
 import { roadJobNames } from "@/lib/front-door/road-jobs";
 import { FIRST_STEP } from "@/lib/front-door/three-steps";
 import { TYPED_WAY_SCREENS, typedWayCount } from "@/lib/front-door/typed-way";
@@ -233,6 +235,91 @@ describe("the Skills gauge, its list and its switch: a legal requirement is not 
   });
 });
 
+describe("seen from another province, legal requirements left out are said as legal requirements, not as skills", () => {
+  // The merge with main (2026-10-25): #207's lines for a section the idea's place left empty said "The skills this
+  // step lists rest on other provinces' pages" for road 1's Alberta Student Number seen from Ontario, a legal
+  // requirement. Now What it needs says it, and Skills it needs says none is written.
+  const road = roadForPlace(roadApprenticeToOwnShopAB, "ON");
+  const items = skillItemsForPlace(skillItemsV2026, "ON");
+  const step = road.steps.find((s) => s.id === "step-shop-register-apprentice")!;
+  const result = evaluateRoad(input({ road, roadChosen: true, skillItems: [...skillItemsV2026] }));
+
+  it("the step panel: What it needs says the legal requirements rest on other provinces' pages", () => {
+    const text = shown(
+      renderToStaticMarkup(
+        createElement(StepPanel, {
+          road,
+          step,
+          evaluation: result.steps.find((s) => s.stepId === step.id)!,
+          rules: result.rules,
+          skillItems: items,
+          marks: new Map(),
+          selectedSkillId: null,
+          branch: null,
+          canSave: true,
+          error: null,
+          job: null,
+          onStatus: () => {},
+          onTicks: () => {},
+          onMark: () => {},
+          onSelectSkill: () => {},
+          onOpenJobList: () => {},
+          onProposeQuote: async () => null,
+          province: "ON",
+          ownNumber: null,
+          onOwnNumberChange: () => {},
+          onClose: () => {},
+        }),
+      ),
+    );
+    const needsAt = text.indexOf(cockpitWords.panel.whatItNeeds);
+    const skillsAt = text.indexOf(cockpitWords.panel.skills);
+    expect(needsAt).toBeGreaterThan(-1);
+    expect(text.slice(needsAt, skillsAt)).toContain(cockpitWords.panel.requirementsNoneForPlace);
+    expect(text.slice(skillsAt)).toContain(cockpitWords.panel.skillsNone);
+    expect(text).not.toContain(cockpitWords.panel.skillsNoneForPlace);
+  });
+
+  it("the Skills list: its legal requirements' heading says so, its skills' heading says none is listed", () => {
+    const text = shown(
+      renderToStaticMarkup(
+        createElement(SkillsListPanel, {
+          road,
+          skillItems: items,
+          marks: [],
+          selectedSkillId: null,
+          canSave: true,
+          error: null,
+          job: null,
+          jobPickedOn: null,
+          onMark: () => {},
+          onSelectSkill: () => {},
+          onPickJob: () => {},
+          onClose: () => {},
+        }),
+      ),
+    );
+    const requirementsAt = text.indexOf(cockpitWords.lists.requirementsTitle);
+    const skillsAt = text.indexOf(cockpitWords.lists.roadTitle);
+    expect(requirementsAt).toBeGreaterThan(-1);
+    expect(text.slice(requirementsAt, skillsAt)).toContain(cockpitWords.lists.requirementsNoneForPlace);
+    expect(text.slice(skillsAt)).toContain(cockpitWords.lists.skillsNone);
+    expect(text).not.toContain(cockpitWords.lists.skillsNoneForPlace);
+  });
+
+  it("the Skills gauge: no skills listed, and a line for the legal requirements left out", () => {
+    const gauge = gaugeView(result, road, inventedIdea({ province: "ON" })).skills;
+    expect(gauge.value).toBe(cockpitWords.gauges.skills.noneListed);
+    expect(gauge.lines).toContain(cockpitWords.gauges.skills.requirementsNoneForPlace);
+  });
+
+  it("the new words carry no verdict", () => {
+    for (const line of [cockpitWords.panel.requirementsNoneForPlace, cockpitWords.lists.requirementsNoneForPlace, cockpitWords.gauges.skills.requirementsNoneForPlace]) {
+      expect(line).not.toMatch(VERDICT_WORDS);
+    }
+  });
+});
+
 describe("a future's card on Pick a future: a legal requirement is not counted as a skill", () => {
   // The same review fix, on the card that opens the road: the apprentice road's card read "3 skills listed" for its
   // Alberta Student Number, apprenticeship agreement and certificate (2026-10-24).
@@ -294,21 +381,29 @@ describe("the Structure ladder: only on the tax and structure roads, in plain wo
   });
 });
 
+// Since the merge with main (2026-10-25) the cause is worked out by #210's `wordsNotKept` and `incomeNotKeptLine`
+// (lib/front-door/receipts.ts; tests/front-door.spec.ts), which landed first and say the same: these keep
+// this pull request's checks, on those functions.
 describe("Your destination names the cause when DotAmi's own server doesn't answer", () => {
   it("no answer from the server: says so, not that no database was reachable", () => {
-    const receipt = destinationReceipt({ kept: "tab-only", text: "Words", saidAt: TODAY, cause: "no-server" });
-    expect(receipt).toBe(destinationWords.receipts.destinationNoServer);
-    expect(receipt).toContain("DotAmi's own server didn't answer");
+    const outcome = wordsNotKept(null, "Words", TODAY);
+    if (!("held" in outcome)) throw new Error("no answer at all should hold the words");
+    const receipt = destinationReceipt(outcome.held);
+    expect(receipt).toBe(destinationWords.receipts.destinationNoAnswer);
+    expect(receipt).toContain("the server didn't answer");
     expect(receipt).not.toContain("database");
   });
 
   it("the server answered that no database was reachable: that receipt stays", () => {
-    expect(destinationReceipt({ kept: "tab-only", text: "Words", saidAt: TODAY })).toBe(destinationWords.receipts.destinationTabOnly);
+    const outcome = wordsNotKept({ status: 503, body: null }, "Words", TODAY);
+    if (!("held" in outcome)) throw new Error("a 503 should hold the words");
+    expect(destinationReceipt(outcome.held)).toBe(destinationWords.receipts.destinationTabOnly);
   });
 
   it("the income's own failure says the server didn't answer, not that the words stay in this tab", () => {
-    expect(destinationWords.receipts.incomeNoServer).toContain("DotAmi's own server didn't answer");
-    expect(destinationWords.receipts.incomeNoServer).not.toContain("tab");
+    expect(incomeNotKeptLine(null)).toBe(destinationWords.receipts.incomeNoAnswer);
+    expect(incomeNotKeptLine(null)).toContain("the server didn't answer");
+    expect(incomeNotKeptLine(null)).not.toContain("tab");
   });
 });
 

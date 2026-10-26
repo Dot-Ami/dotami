@@ -4,7 +4,8 @@ Page: Cockpit (`/cockpit?venture=<id>`) · Components: `components/cockpit/overl
 `components/cockpit/strategy-map.tsx` (props `overlays`, `stepEvaluations`, `linkedSkillId`)
 Type: toggle group + map decoration
 
-Last updated: 2026-10-13 (the chip on a step for some kinds of work only, issue #40; built 2026-10-12, docs/architecture/future-cockpit.md § 2, Cockpit screen as built)
+Last updated: 2026-10-23 (the map's own chips say where a stage sits, *first stage* and *starting point*, never
+*now* and *done*); 2026-10-13 (the chip on a step for some kinds of work only, issue #40; built 2026-10-12, docs/architecture/future-cockpit.md § 2, Cockpit screen as built)
 
 > **Changed 2026-10-17 — the calm first view (S2.5.30c).** A first visit opens with **Road** and **Skills** on (until now Rules & tax started on and Skills off), as designed (future-cockpit.md § 2, "First visit and return visits"). **Money** and **Rules & tax** are off, their switches drawn beside Skills, so each layer is one click away (for a few hours that day they folded behind *Show more layers*; a review found the rules and tax cards two clicks away and keyboard focus lost when a switch left the page, so they no longer fold). A switch whose layer has nothing on the road (road 1 has no rules and tax cards: *Rules & tax · 0 cards*) is drawn off and can't be pressed; its count says why, and the answer kept for other roads is left as it is. The overlays the person last had on are remembered in this browser with the folds (`dotami-cockpit-folds`, `overlays`), so a return visit opens on them. The row is the top line of the road's column and still a region of its own for the clutter limit; while the road ahead is open, **Fold the road ahead** ends it ([12-folding-and-phone.md](./12-folding-and-phone.md)).
 
@@ -45,12 +46,15 @@ Also on the map, from road evaluation (`evaluateRoad`):
   aside by you, not a reading of your answers* while any card is set aside.
 - **The chip** shows the person's own status where they set one (*doing*, *done*, *not for me*; *not for
   me* draws the card dashed and hides its lever cards). Where they set none, the map's worked-out chip
-  is shown as before (*now · your pick · done · ahead · not on your path*), except on a step the road
+  is shown as before (*first stage · your pick · default · open choice · starting point · ahead · not on
+  your path*: where the stage sits on the map, never the person's status; *first stage* and *starting point*
+  said *now* and *done* until 2026-10-23), except on a step the road
   writes for some kinds of work only, on an idea with none of them (since 2026-10-13, road 0's *SR&ED
   deepening*, issue #40): **not on your path**, dashed, no lever cards, and the reason as its line
   ([03-canvas.md](./03-canvas.md)).
 - **A fork's column** says *The road splits here: you choose* under its line.
-- **A skill selected** in the step panel or the skills list dims every step that doesn't list it.
+- **A skill selected** in the step panel or the skills list dims every step that doesn't list it, while the road
+  drawn for the idea's place lists it ([09-step-panel.md](./09-step-panel.md) item 5, 2026-10-24).
 
 Drawn without these props the map is byte for byte what it was (`tests/road-map.spec.ts`).
 

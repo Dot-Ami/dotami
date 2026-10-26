@@ -8,8 +8,9 @@ import type { IntakeDraft, IntakeGoalId } from "@/lib/journey/types";
  *
  * Only the intake's first save sends this (since 2026-10-22, step 3's Look inside at the end of the intake;
  * until then "Open my map"); the cockpit's autosave never does. Every one makes a new idea, though, so the server's "only when the save creates the idea" isn't enough on its
- * own: the tab's draft also marks the sentence done once a save kept it, or once the person deleted
- * their statements (`afterFirstSave`, `afterStatementsDeleted`), and a done sentence is never sent again.
+ * own: the draft held in the window's memory also marks the sentence done once a save kept it
+ * (`afterFirstSave`), and a done sentence is never sent again; once the person deleted their statements the
+ * sentence is gone from the draft altogether (`afterStatementsDeleted`).
  * Design: docs/ui-spec/landing/01-free-text-entry.md § Persistence.
  */
 export interface FirstSave {
@@ -75,10 +76,21 @@ export function afterFirstSave(draft: IntakeDraft, sent: FirstSave, saved: { ok:
 }
 
 /**
- * The draft after Delete removed the person's statements: the sentence in the tab is one of them now
- * or would have become one, so it is never sent again. The words stay in the tab, as typed, for the
- * intake to show; only a new sentence is kept again.
+ * The draft after Delete removed the person's statements. The sentence typed on the front door is one of them,
+ * or would have become one, so it goes from the window's memory too (2026-10-24; until then the words stayed in
+ * the tab's draft, marked never to be sent again). Its copy in `description` and the parse's reading of it
+ * (`intentParse`, whose `rawLabel` and `unmapped` are the person's words) go with it. What was confirmed from it
+ * (the kind of venture, the kinds of work, the goals) stays: those are picks for the idea, deleted with "Your
+ * ideas". A new sentence typed afterwards is kept with the next idea.
  */
 export function afterStatementsDeleted(draft: IntakeDraft): IntakeDraft {
-  return draft.manualEntry ? { ...draft, manualEntryDone: true } : draft;
+  if (draft.manualEntry === undefined && draft.description === "" && !draft.intentParse) return draft;
+  return {
+    ...draft,
+    manualEntry: undefined,
+    manualEntrySaidAt: undefined,
+    manualEntryDone: undefined,
+    description: "",
+    intentParse: null,
+  };
 }

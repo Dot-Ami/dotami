@@ -29,8 +29,8 @@ export interface PlaybookSection {
   nodes: PlaybookNodeSlice[];
   citations: PlaybookCitationRef[];
   /**
-   * On a road written for all of Canada, how many of the section's sources were for other provinces and left
-   * out (as the step panel and the plan leave them out, task 28d); absent when none was.
+   * How many of the section's sources were for other provinces and left out (as the step panel and the plan
+   * leave them out: task 28d on the federal road, every road since a-call-12, 2026-10-23); absent when none was.
    */
   sourcesLeftOut?: number;
 }

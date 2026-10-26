@@ -187,19 +187,20 @@ know, and says so.
 ([../cockpit/about-this-job.md](../cockpit/about-this-job.md), row 2), including for a person who skipped the job
 here, picked one later in the skills list and so was never asked. Outside Alberta there is no **Change** in
 this version: no region is asked there (call 2, above). The area: nothing changes it after the flow
-in this version, because nothing reads it yet; it is shown on *Your plan* and in *What DotAmi knows about you*,
+in this version, because nothing reads it yet; it is shown on *Your plan*, in the cockpit's *Export* (since
+2026-10-23) and in *What DotAmi knows about you*,
 and deleted with the idea. A way to change it comes with the counts that read it (phase 3). The `kept` line
 says only what is true: the region can be changed later.
 
 **Privacy inventory lines** (`lib/privacy/inventory.ts`; the privacy test fails until each exists):
 
 - *Your area*: *"The area you picked (one of Alberta's four census metropolitan areas, somewhere else in Alberta,
-  or I don't know) and the day. Kept with the idea on this computer; shown on Your plan and in About this job;
-  deleted with it. A backup you save (File → Back up…) holds the whole data file, so it holds this too. Nothing
+  or I don't know) and the day. Kept with the idea on this computer; shown on Your plan, in the cockpit's Export (on screen until you copy or save it) and in About this job
+  while the idea's place is Alberta (after a change of place it stays kept, shown nowhere); deleted with it. A backup you save (File → Back up…) holds the whole data file, so it holds this too. Nothing
   else reads it in this version."*
 - *Your economic region*: *"The economic region you picked, or I don't know, and the day, from Pick a future's
-  step 2 or from About this job's Change. Kept with the idea on this computer; shown on Your plan and in About
-  this job; deleted with it. A backup you save (File → Back up…) holds the whole data file, so it holds this
+  step 2 or from About this job's Change. Kept with the idea on this computer; shown on Your plan, in the cockpit's Export (on screen until you copy or save it) and in About
+  this job while the idea's place is Alberta (after a change of place it stays kept, shown nowhere); deleted with it. A backup you save (File → Back up…) holds the whole data file, so it holds this
   too. About this job reads it to choose which published wage row to show."*
 
 As built (2026-10-22, the PR #202 review): each is a line of its own under *Your ideas* on *What DotAmi knows
@@ -216,6 +217,10 @@ Updated 2026-10-22, the batch 4 follow-up (task 28h): the region's line says it 
 area or the region, so neither line says "exported"; the desktop app's **Back up…** (`desktop/backup.mjs`) writes
 the whole data file, rebuilt from its live rows, so a backup the person saves holds both, and both lines say so.
 Step 2's three lines about About this job are drawn again (see the note at the top).
+
+Updated 2026-10-24 (a blind review of the pre-release numbers fix): since 2026-10-23 the cockpit's **Export** is
+built in the page from what *Your plan* shows (`lib/playbook/road-export.ts`, `buildPlan`), so it carries the area
+and the region as the plan does, while the idea's place is Alberta. Both lines say so; nothing is sent for it.
 
 **Privacy log, under [Unreleased], in the build's pull request:** *"Asks: which area and which economic region
 you're in, once, right after you pick a job. Keeps: your answers and the day, on this computer only; deleted

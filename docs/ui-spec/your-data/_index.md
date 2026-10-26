@@ -1,6 +1,7 @@
 # What DotAmi knows about you (`/your-data`) — page overview
 
-Last updated: 2026-10-17 (the "Businesses you're watching" card, the first with an "About other people" line, and its Delete box; 2026-10-10: [8i] — the four rows for turning locking off, and the data file key's row says when DotAmi deletes it; Bring these receipts back in the receipts folder's row; Delete's safety-copies box also clears the receipt folders set aside in the backups folder, with a warning; after Start a new key the desktop app restarts by itself; 2026-10-09: [8i] — how the receipt files are kept, and the key's file; Start a new key while the key can't be opened; 2026-10-08: [8h] — the "Books / file" kind; [8d] — the Delete menu, and its safety-copies box and unfinished-wipe note; deleting ideas keeps their expense records, "not attached yet", and the menu says how many before you confirm; first slice read-only 2026-10-06; a card for expense records, [8i])
+Last updated: 2026-10-24 (the window's storage holds only how the cockpit was left; the three keys that held the
+person's words go, and Delete reaches the journey held in the window's memory); 2026-10-17 (the "Businesses you're watching" card, the first with an "About other people" line, and its Delete box; 2026-10-10: [8i] — the four rows for turning locking off, and the data file key's row says when DotAmi deletes it; Bring these receipts back in the receipts folder's row; Delete's safety-copies box also clears the receipt folders set aside in the backups folder, with a warning; after Start a new key the desktop app restarts by itself; 2026-10-09: [8i] — how the receipt files are kept, and the key's file; Start a new key while the key can't be opened; 2026-10-08: [8h] — the "Books / file" kind; [8d] — the Delete menu, and its safety-copies box and unfinished-wipe note; deleting ideas keeps their expense records, "not attached yet", and the menu says how many before you confirm; first slice read-only 2026-10-06; a card for expense records, [8i])
 
 **Route:** `/your-data` · **Page:** `app/(journey)/your-data/page.tsx` (server-rendered on every
 visit, `force-dynamic`, like `/settings`) · **Components:** `components/your-data/` · **Reader:**
@@ -80,7 +81,8 @@ jump links, then five sections in this order:
    what it holds, including that a start that fails writes DotAmi's message, which can name the
    data folder, with the error's name and code, and that a failed database update adds the
    database's words about which update failed and what it objected to); and the window's
-   own storage (what DotAmi puts in `localStorage`/`sessionStorage`, how long it stays). A row for
+   own storage (what DotAmi puts in `localStorage`/`sessionStorage`, how long it stays; since 2026-10-24
+   one row, how the cockpit was left, `lib/privacy/inventory.ts` `WINDOW_STORAGE`). A row for
    the "wipe pending" note Delete leaves beside the data file while a wipe is still owed ("None: no
    wipe is owed." when it isn't there). A line pointing at disk encryption in Settings. The receipts folder's row ([8i], 2026-10-09) also says
    whether this copy encrypts receipt files (the same sentences as Settings,
@@ -158,7 +160,8 @@ logs only the error's name and code.
   delete-one-idea or delete-one-figure control here.
 - **Delete doesn't clear what the window keeps in its own storage.** The menu says so in plain words,
   and how to remove it by hand; since 2026-10-17 the desktop app reads that storage again at every
-  launch. A Delete box for it is a later decision. The safety copies
+  launch. Since 2026-10-24 it holds only how the cockpit was left, nothing the person typed or answered
+  (the three keys that did are removed unread when a journey page opens). A Delete box for it is a later decision. The safety copies
   in the backups folder have their own box (2026-10-08).
 - **No query string, no amounts in a URL** (privacy review, rule 1): the page takes none, and the
   source names it shows are text on the page, never links.

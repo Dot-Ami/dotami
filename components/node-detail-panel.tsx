@@ -5,6 +5,8 @@ import type { NodeItems } from "@/lib/brain/node-items";
 import type { UnlockItem } from "@/lib/brain/types";
 import { CitationLinks, StatusChip, worstStatus } from "@/components/shared/citation-links";
 import { OfficialWordsBlock } from "@/components/shared/official-words";
+import { PageQuotes } from "@/components/shared/page-quotes";
+import { cockpitWords } from "@/lib/cockpit/words";
 import type { CFENode, CFEOwnNumber, CFERoute, CFERouteLine } from "@/lib/engines/cfe/v2026";
 import { incorporationRoutesFor, provinceNotWrittenNote, routesHeading } from "@/lib/engines/cfe/v2026/incorporation-routes";
 import { howCheckedWords, isCheckFirst } from "@/lib/engines/shared/citation-check";
@@ -250,7 +252,10 @@ export function ItemRow({ item }: { item: UnlockItem }) {
         <div className="mt-3 space-y-2.5 border-t border-rule-soft pt-3 text-body leading-5 text-stone">
           <p className="text-paper-dim">{item.payoff}</p>
           {item.expires ? (
-            <p className="font-mono text-small text-amber">Time-boxed · in use before {item.expires.slice(0, 4)}</p>
+            // The map legend's words, from the words file (2026-10-24: "Time-boxed" was written here, unread by the checks).
+            <p className="font-mono text-small text-amber">
+              {cockpitWords.map.lever.endDate} · {cockpitWords.map.lever.inUseBefore(item.expires.slice(0, 4))}
+            </p>
           ) : null}
           {item.fork ? (
             <div className="rounded-sm border border-amber/40 bg-amber/5 p-2.5">
@@ -352,11 +357,9 @@ function RoutesSideBySide({ routes, provinceNotWritten }: { routes: CFERoute[]; 
                     <span className="shrink-0 font-mono text-body text-paper">{lineAmount(line)}</span>
                   </div>
                   <p className="mt-0.5 text-stone">
-                    {line.quotes.map((quote, i) => (
-                      <q key={i} className="mr-1">
-                        {quote}
-                      </q>
-                    ))}
+                    {/* The fee page's own words, after their label (2026-10-23): "will take 1 day" and "in 4
+                        hours" are the page's processing times, never a line of DotAmi's own. */}
+                    <PageQuotes quotes={line.quotes} className="mr-1" />
                     <a
                       href={line.citation.url}
                       target="_blank"

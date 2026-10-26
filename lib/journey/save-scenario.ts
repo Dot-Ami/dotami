@@ -12,7 +12,7 @@ export type SaveScenarioResult = { ok: true; ventureId: string; kept: Scenario |
  * an upsert keyed by `scenario.id`, so calling it again for the same scenario is idempotent).
  *
  * Issue #1 (2026-09-20): the intake calls this before it opens the map, and the cockpit calls
- * it (debounced) after every edit — nothing the person did should live only in the tab.
+ * it (debounced) after every edit — nothing the person did should live only in the window's memory.
  * Fails soft: a 503 (no database) or a network error returns `{ ok: false }` and the caller
  * decides what to show; it never throws.
  *

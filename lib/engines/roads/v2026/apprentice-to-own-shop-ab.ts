@@ -418,7 +418,8 @@ export const roadApprenticeToOwnShopAB: Road = {
     },
     {
       id: "col-shop-first-years",
-      label: "First years on your own",
+      // "First years on your own" until 2026-10-23: a span of time in DotAmi's own words (NO TIMES).
+      label: "Running your own shop",
       summary: "GST/HST, your first hire, and training an apprentice of your own.",
       steps: ["step-shop-gst-small-supplier", "step-shop-first-hire", "step-shop-sponsor-apprentice"],
     },
@@ -1127,7 +1128,7 @@ export const roadApprenticeToOwnShopAB: Road = {
       ],
     },
 
-    // ---- First years on your own
+    // ---- Running your own shop
     {
       id: "step-shop-gst-small-supplier",
       label: "GST/HST: the small-supplier test",

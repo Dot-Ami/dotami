@@ -1,6 +1,7 @@
 # Cockpit canvas — the map as tier columns
 
-Last updated: 2026-10-14 (road 0's Tier 1 gains a fifth card, *Keep your records from day one*, and the
+Last updated: 2026-10-24 (the readout API gives each stage's chip and the person's own mark, `yourStatus`,
+and no longer the map's `status` or its worked-out lists; the accessible names' example says *first stage*; 2026-10-14: road 0's Tier 1 gains a fifth card, *Keep your records from day one*, and the
 apprentice road's *Open the doors* starts with the same step; 2026-10-13: in the cockpit, SR&ED deepening on an idea without a research kind of work is
 drawn dashed, chip "not on your path" with its reason, instead of "ahead", issue #40; 2026-10-12: road 0 gains three "before you open" cards in Tier 1, which road evaluation
 colours as on your road, and drawn without road evaluation a card no rule colours says "no rule yet"
@@ -77,13 +78,15 @@ stage card one **lever card** per evaluator item relevant to that stage
 
 | Card | Shows | Click |
 |---|---|---|
-| Stage | name · chip (**now · your pick · default · open choice · done · ahead · not on your path**, from the branch picks; `stageChipFor` in `lib/scenarios/graph.ts`) · trigger (2 lines) · on Incorporating and Liability / SR&ED, one line saying which of the person's answers set the colour (`EvaluationResult.nodeReasons`) · left bar coloured by the evaluator (green met · amber plausible · grey n/a), run on the person's own branch picks | opens node detail |
+| Stage | name · chip (**first stage · your pick · default · open choice · starting point · ahead · not on your path**, from the branch picks; `stageChipFor` in `lib/scenarios/graph.ts`; where the stage sits on the map, never the person's status: "first stage" and "starting point" said **now** and **done** of every idea until 2026-10-23; the person's own Doing, Done or Not for me replaces the chip) · trigger (2 lines) · on Incorporating and Liability / SR&ED, one line saying which of the person's answers set the colour (`EvaluationResult.nodeReasons`) · left bar coloured by the evaluator (green met · amber plausible · grey n/a), run on the person's own branch picks | opens node detail |
 | Stage the rules don't colour, on a map drawn without road evaluation (road 0's before-you-open steps, 2026-10-12; in the cockpit, road evaluation gives them a state, so they are coloured and open the step panel like any card) | name · chip **no rule yet** · its one line (2 lines) · a neutral left bar, no colour | selects it and keeps its arrows; no panel opens (it has no catalog entry; the step panel comes later in phase 1). The right-hand panel is left as it was: an open Export panel stays open, and an open node detail panel closes, since it was about the card no longer selected |
-| Lever | dot + type chip (Write-off / Grant / Threshold / …) · title · **applies** (green) or **check first** (amber) · `fork` when incorporating would change it · `in use before <year>` when time-boxed · PARTIAL chip when a citation is partial | opens the stage's node detail |
+| Lever | dot + type chip (Write-off / Grant / Threshold / …) · title · **applies** (green) or **check first** (amber) · `fork` when incorporating would change it · `in use before <year>` when the item has an end date · PARTIAL chip when a citation is partial | opens the stage's node detail |
 
-Stage and lever buttons have explicit accessible names. Stage names include the current status,
-the left bar's colour in words and the action — "Sole Prop activation, now, applies as answered,
-opens detail"; the words are **applies as answered** (green), **check first** (amber) and
+Stage and lever buttons have explicit accessible names. Stage names include the chip's words (where the
+stage sits on the map, or the person's own status where they set one), the left bar's colour in words and the
+action — "Sole Prop activation, first stage, applies as answered, opens detail", with any badges an overlay
+draws before the action ("…, applies as answered, 7 not priced, opens detail"; `cockpitWords.map.cardName`;
+"now" in place of "first stage" until 2026-10-23); the words are **applies as answered** (green), **check first** (amber) and
 **doesn't apply as answered** (grey), so the colour is never the only way to tell. A card the rules
 don't colour claims no colour and no place on the path: "Register your business name, if you use one,
 no rule reads this step yet, shows where it leads" (grey would say "doesn't apply as answered", which no
@@ -104,9 +107,16 @@ pick that is the default reads **default** again). A saved idea whose pick isn't
 **your pick** after a reload: the database keeps the picks but not the clicks, so a saved pick off the
 default counts as decided, whether the person's click or a program saving through DotAmi's own save
 route put it there (`isBranchDecided`; the toggle's "default, not your pick yet" follows the same
-rule). The same test marks a default in the playbook export ("(default, not picked yet)" beside the
-selection) and in the readout API (each node's `chip`: `your-pick`, `default`, `open-choice`, `now`,
-`done`, `ahead` or `not-on-your-path`). *Hire first
+rule). The same test marks a default in the playbook export (since 2026-10-23, *The map's default pick: “…”,
+not yours yet*, from `buildPlan`, as *Your plan* says it; until then "(default, not picked yet)" beside the
+selection) and in the readout API (each node's `chip`: `your-pick`, `default`, `open-choice`,
+`first-stage`, `starting-point`, `ahead` or `not-on-your-path`: where the stage sits on the map, never the
+person's status; `now` and `done` until 2026-10-23). The person's own mark is the node's `yourStatus`
+(`doing`, `done`, `not-for-me`, or null where they gave none), from the same progress the map draws in place
+of the chip. Since 2026-10-24 the readout gives no `status` (the map's list name, which said `complete` of
+the employee baseline and `active` of Sole Prop activation on every idea) and no `completedNodeIds` or
+`activeNodeIds` in `scenario.state` (`lib/readout/nodes.ts`; `tests/prerelease-honesty.spec.ts`,
+`e2e/app.spec.ts`, `e2e/cockpit.spec.ts`). *Hire first
 employee* reads **your pick** (it is on the map only when the person turned on "Show a hire-first
 path"), and *Service vs. productize*, drawn on every map, reads **open choice**. Until then every
 such card said "your pick", so the GST/HST card said "your pick" under a toggle saying "default, not
@@ -173,8 +183,10 @@ work only, as built*.
 
 Lever cards are hidden under a stage that is "not on your path". Grey (not applicable) items
 are never drawn. A legend sits under the grid, with the three colours in the same words as the
-cards' accessible names: **applies as answered**, **check first — confirm, time-boxed, or one fork
-away** and **doesn't apply as answered** (the grey entry added 2026-10-11).
+cards' accessible names: **applies as answered**, **check first — confirm, has an end date, or one fork
+away** ("time-boxed" until 2026-10-23, a time word of DotAmi's own) and **doesn't apply as answered** (the
+grey entry added 2026-10-11). Its chip line says **Stage chip = where it sits on the map; doing, done or not
+for me only when you mark it** (2026-10-23).
 
 **Hover / select a stage card (ruling 2, same day):** `components/cockpit/map-arrows.tsx` draws
 an SVG overlay of arrows from that card along the road's `RoadStep.next` (road 0: the nodes'

@@ -56,7 +56,10 @@ export const writeOffCategoriesV2026 = [
     description:
       "Vehicle costs for business use — fuel, insurance, maintenance, lease, or CCA on owned vehicles.",
     eligibility:
-      "Logbook or reasonable basis for business-use percentage; personal use portion not deductible. Two statutory caps apply to passenger vehicles regardless of business use: loan interest is limited to a prescribed daily amount ($250 per 30 days in the Act), and lease costs to a prescribed monthly amount ($600 per 30 days in the Act) — both 'or such other amount as may be prescribed', so confirm the current figure.",
+      // The amounts are the ones Income Tax Regulations s.7307 prescribe, not the Act's own $250 and $600 (each
+      // "or such other amount as may be prescribed"): corrected 2026-10-23 from the maintainer's reading list. Each is
+      // an amount per 30 days (the Act's A × B / 30 in s.67.2 and s.67.3(c)), said since a review of 2026-10-24.
+      "Logbook or reasonable basis for business-use percentage; personal use portion not deductible. Two statutory caps apply to passenger vehicles regardless of business use: loan interest under the Act's s.67.2, whose amount Income Tax Regulations s.7307 prescribe as $350 for each 30 days of interest for a car acquired after 2023 ($300 for one acquired after 2000 and before 2024), and lease costs under s.67.3, whose amount s.7307 prescribes as $1,100 plus sales tax for each 30 days of a lease entered into after 2024 (earlier leases have their own amounts in the same section).",
     lensAnnotations: {
       tax: "If the venture requires travel to clients or job sites, business-use vehicle costs may be deductible proportionally.",
       legal: "If employees drive company vehicles, insurance and safety obligations differ from owner-operated use.",
@@ -74,8 +77,32 @@ export const writeOffCategoriesV2026 = [
         jurisdiction: "CA",
         url: "https://laws-lois.justice.gc.ca/eng/acts/I-3.3/section-67.3.html",
         lastVerified: "2026-09-13",
-        verification: { status: "supported", method: "Provision text read from the consolidated Act in corpus.db (2026-09-13); the 67.2 / 67.3 caps the reading found are now in the entry text." },
-        note: "Read from the consolidated Act (the maintainers' statute store). Proportionality rests on 18(1)(a) 'to the extent... for the purpose of gaining or producing income'; 67 requires reasonableness. The earlier text mentioned lease costs without the caps: 67.2 limits interest ($250/30 days) and 67.3 limits lease charges ($600/30 days), each 'or such other amount as may be prescribed'.",
+        verification: { status: "supported", method: "Provision text read from the consolidated Act in corpus.db (2026-09-13): the 67.2 / 67.3 caps and their A × B / 30 formula. The amounts in the entry text are the ones Income Tax Regulations s.7307 prescribe (the next source), which that reading didn't cover." },
+        note: "Read from the consolidated Act (the maintainers' statute store). Proportionality rests on 18(1)(a) 'to the extent... for the purpose of gaining or producing income'; 67 requires reasonableness. 67.2 limits interest and 67.3 limits lease charges; the Act's own figures, $250 and $600, each stand 'or such other amount as may be prescribed', and the amounts prescribed are in Income Tax Regulations s.7307 (the next source).",
+      },
+      {
+        title: "Income Tax Regulations s.7307 — the amounts prescribed for the interest and lease caps (ss.67.2, 67.3)",
+        corpus: [
+          { source: "itr", label: "7307", sub: "(2)" },
+          { source: "itr", label: "7307", sub: "(3)" },
+        ],
+        authority: "federal",
+        jurisdiction: "CA",
+        // Added 2026-10-23 (the maintainer's reading list, item writeoff-vehicle/interest-and-lease-caps): a tool
+        // found these words on the consolidated Regulations' page that day; no person has read it yet (option B).
+        url: "https://laws-lois.justice.gc.ca/eng/regulations/C.R.C.,_c._945/section-7307.html",
+        toolCheck: {
+          checkedOn: "2026-10-23",
+          quotes: [
+            "For the purpose of the description of A in section 67.2 of the Act, the amount prescribed in respect of an automobile that is acquired",
+            "or after 2000 and before 2024, is $300; and",
+            "after 2023, is $350.",
+            "For the purpose of the description of A in paragraph 67.3(c) of the Act, the amount prescribed in respect of a taxation year of a lessee is",
+            "for leases entered into after 2024, $1,100, and",
+            "is the sum of the federal and provincial sales taxes that would have been payable on a monthly payment under the lease",
+          ],
+        },
+        note: "The consolidated Income Tax Regulations: s.7307(2) prescribes the interest amount for s.67.2 of the Act by when the car was acquired, s.7307(3) the lease amount for s.67.3 by when the lease was entered into, plus sales tax.",
       },
       {
         title: "Motor vehicle expenses",
@@ -129,7 +156,10 @@ export const writeOffCategoriesV2026 = [
         url: "https://laws-lois.justice.gc.ca/eng/regulations/C.R.C.,_c._945/section-1100.html",
         lastVerified: "2026-09-13",
         verification: { status: "confirmed", method: "Read verbatim from corpus.db (Regulations current to 2026-06-21). Sch. II Class 50: 'general-purpose electronic data processing equipment and systems software for that equipment'. s.1100(1)(a)(xxxvi): 'of Class 50, 55 per cent'. s.1100(2)(c.3): 'if the class is Class 50, (i) 9/11, for property that was acquired and became available for use by the taxpayer after April 15, 2024 and before 2027, and (ii) nil … after 2026'. The 100% first year is arithmetic on that factor: 0.55 × (1 + 9/11) = 1.00." },
-        note: "The delegate the Act points to. Class definition, declining-balance rate and the time-boxed first-year factor all read from the Regulations' own text with its currency date — the numbers are the provision's words, not a stored rate.",
+        // "the time-boxed first-year factor" until 2026-10-24: a time word of DotAmi's own, drawn in the cockpit's
+        // Export panel (the playbook's markdown, lib/playbook/render-markdown.ts "Note:"). The factor has an end
+        // date, as the map's legend says.
+        note: "The delegate the Act points to. Class definition, declining-balance rate and the first-year factor with its end date all read from the Regulations' own text with its currency date — the numbers are the provision's words, not a stored rate.",
       },
       {
         title: "Classes of depreciable property",

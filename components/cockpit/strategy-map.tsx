@@ -102,11 +102,11 @@ interface StrategyMapProps {
  * drawn on every map says "open choice".
  */
 const STAGE_CHIP: Record<StageChipKind, { label: string; className: string }> = {
-  now: { label: cockpitWords.map.chips.now, className: "text-maple bg-maple/15" },
+  "first-stage": { label: cockpitWords.map.chips["first-stage"], className: "text-maple bg-maple/15" },
   "your-pick": { label: cockpitWords.map.chips["your-pick"], className: "text-amber bg-amber/15" },
   default: { label: cockpitWords.map.chips.default, className: "text-stone border border-amber/50" },
   "open-choice": { label: cockpitWords.map.chips["open-choice"], className: "text-stone border border-rule" },
-  done: { label: cockpitWords.map.chips.done, className: "text-sage bg-sage/15" },
+  "starting-point": { label: cockpitWords.map.chips["starting-point"], className: "text-stone bg-rule/30" },
   ahead: { label: cockpitWords.map.chips.ahead, className: "text-stone bg-rule/30" },
   "not-on-your-path": { label: cockpitWords.map.chips["not-on-your-path"], className: "text-stone-dim border border-stone-dim" },
 };
