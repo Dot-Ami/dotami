@@ -384,8 +384,10 @@ test("the map draws today's road: columns, cards, toggles and hover arrows, plus
 // lib/engines/shared/citation-check.ts gives its citation. The map's own stages were read by someone
 // nobody recorded, so their sources and the playbook export say "Read on <date>. Who read it wasn't
 // recorded." and never claim a person. Since 2026-10-24 Sole Prop activation also cites the CRA's page
-// its $30,000 note quotes, which only a tool has checked, so that source says so (the maintainer's
-// reading list of 2026-10-23). The readout says the same words as the screens, and none says "verified".
+// its $30,000 note quotes, which until 2026-10-27 only a tool had checked (the maintainer's reading list of
+// 2026-10-23). The maintainer read all three of the stage's pages in full on 2026-10-25, so since 2026-10-27
+// each says "Read by a person on 2026-10-25" (tests/maintainer-reads.spec.ts); stages he didn't read keep their
+// words. The readout says the same words as the screens, and none says "verified".
 test("every source says how it was checked: the map's sources, the playbook export and the readout", async ({ page }) => {
   const scenario = {
     id: `checked-${Date.now()}`,
@@ -426,12 +428,16 @@ test("every source says how it was checked: the map's sources, the playbook expo
     expect(expected.some((words) => text.includes(words.toLowerCase())), text).toBe(true);
     await expect(item).not.toContainText(/verified/i);
   }
-  // No one is recorded as having read these pages, so none claims a person ("Not read by a person yet" is a tool's line).
-  await expect(sources.filter({ hasText: /Read by a person on \d{4}-\d{2}-\d{2}/i })).toHaveCount(0);
-  // The page the $30,000 note quotes: checked by a tool, and saying so.
+  // The maintainer read each of these pages in full on 2026-10-25, so each says so, and none says a tool's or an
+  // unrecorded reader's line.
+  await expect(sources.filter({ hasText: /Read by a person on 2026-10-25/i })).toHaveCount(stage.citations.length);
+  await expect(sources.filter({ hasText: /Not read by a person yet|wasn't recorded/i })).toHaveCount(0);
+  // The page the $30,000 note quotes: checked by a tool on 2026-10-12, then read by him; the read wins on screen, so
+  // the words the tool found aren't listed under it.
   const quotedPage = sources.filter({ has: page.locator(`a[href="${CRA_WHEN_TO_REGISTER_URL}"]`) });
   await expect(quotedPage).toHaveCount(1);
-  await expect(quotedPage).toContainText(/Checked by a tool on \d{4}-\d{2}-\d{2}: .*Not read by a person yet\./);
+  await expect(quotedPage).toContainText(/Read by a person on 2026-10-25/i);
+  await expect(quotedPage).not.toContainText("Words found on the page");
 
   // The playbook export, in the same words.
   await page.getByRole("button", { name: "Export", exact: true }).click();

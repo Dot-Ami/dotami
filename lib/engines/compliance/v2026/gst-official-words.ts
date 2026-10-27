@@ -8,8 +8,9 @@ export const CRA_WHEN_TO_REGISTER_URL =
  * How the words below were checked on that page (the maintainer's option B, 2026-10-11;
  * docs/engines/citations.md): `node scripts/check-quotes.mjs` found every one of these quotes on the
  * live page on the day given. It says the words are there, not that a person read the page. Every
- * citation of the page that these words rest on carries this as its `toolCheck`, instead of a read
- * date.
+ * citation of the page that these words rest on carries this as its `toolCheck`. The maintainer read
+ * the page in full on 2026-10-25, so those citations also carry his read, which wins on screen
+ * (docs/engines/citations.md, § The maintainer's reads of 2026-10-25).
  *
  * The page puts a footnote number straight after "threshold" in its two tests ("threshold1"), so the
  * tool can't find those two sentences as typed: what it found is the words on each side of that number

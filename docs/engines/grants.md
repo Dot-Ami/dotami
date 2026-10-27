@@ -31,15 +31,16 @@ off on 2026-10-23 (see *Retired programs* below), and the Productivity Grant cam
   get part of the credit refunded, and no held quote says how much, so that card says neither and
   quotes the CRA's “Your business may earn the credit at a basic rate of 15%.” and “Some businesses
   may also earn a refundable ITC.” The CCPC's said refundable ("35% (refundable)", "35% refundable
-  treatment") on the maintainer's read alone, which isn't recorded yet, and none of its quotes says
+  treatment") on the maintainer's word alone, which no record held, and none of its quotes says
   it, so it says neither too ([citations.md](citations.md), *Blocked*). The 35% is the CRA's “Some CCPCs may earn an ITC
   at an enhanced rate of 35% on qualified SR&ED expenditures up to their expenditure limit for the
   year.”, and the limit, $6 million, is on the card only inside the CRA's *What's new for
   corporations* line (Income Tax Act s.127(10.2) holds the formula). The tax years it applies from
   are in no held quote, so no screen or field says them ([citations.md](citations.md), *The reading
   list's tool checks*). Until then the CCPC's note said "confirm the current limit with an advisor".
-  The four pages added for these quotes are tool checks of 2026-10-23; no person is recorded as
-  having read them.
+  The four pages added for these quotes are tool checks of 2026-10-23. The maintainer read each of
+  them in full on 2026-10-25, with the program's own page ([citations.md](citations.md), § The
+  maintainer's reads of 2026-10-25), so their sources say *Read by a person on 2026-10-25*.
 
 ## The Canada-Alberta Productivity Grant (`grant-capg`)
 
@@ -56,12 +57,14 @@ never reused.
   "If" and the page's name: who contributes the 25% and who the 75% isn't in the words held, so no
   line names it. The card's payoff (`lensAnnotations.tax`) shows the first three, in curly quote
   marks. The one-year rule is a time, so it is on no card's line (it is in `eligibility`, which no
-  screen draws for a program); it shows only among the words found on the page, under the card's
-  source, as every tool check's quotes do. The screens' no-times check (`e2e/idea-sweep.spec.ts`)
-  lets a quoted time through only while a tool check alone holds it; once a read of the page is
-  recorded, the read wins on screen and that list of words is no longer drawn.
-- **How it was checked.** A tool check of 2026-10-23, with no read on record, so its card says
-  *Checked by a tool* in amber and lists the four quotes. A networked
+  screen draws for a program). It showed only among the words found on the page, under the card's
+  source, as every tool check's quotes do, until the maintainer's read of the page was recorded
+  (2026-10-25): the read wins on screen and that list of words is no longer drawn, so no screen
+  shows the one-year rule now. The screens' no-times check (`e2e/idea-sweep.spec.ts`) lets a quoted
+  time through only while a tool check alone holds it.
+- **How it was checked.** A tool check of 2026-10-23, then the maintainer's read of the page in
+  full on 2026-10-25, which wins on screen: its card says *Read by a person on 2026-10-25* and no
+  longer lists the four quotes, which the tool check keeps in the catalog. A networked
   `node scripts/check-quotes.mjs` run should find them again before merge (rule 4 of
   [citations.md](citations.md)).
 - **Who sees it.** Every idea in Alberta, at every structure and kind of work, always *check

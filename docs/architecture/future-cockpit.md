@@ -2099,6 +2099,8 @@ The maintainer expects the layout, and so the back end, to change as this is bui
 - ~~**Listing a road nobody has read.**~~ Settled 2026-10-13: the maintainer said yes, *Pick a future*
   lists the first written future, its card saying in amber that its sources were checked by a tool and
   not read by a person yet (`LISTED_ROAD_IDS` in `lib/front-door/futures.ts`; § 1, The way in as built).
+  Since 2026-10-27 the card also counts, in grey, the sources the maintainer read in full on 2026-10-25
+  (three CRA pages on the road: GST/HST, payroll account, records; docs/engines/citations.md).
   The question as it was asked: the first written future's sources are all tool checks (option B):
   every quote was found on its live page, but no person is recorded as having read one. Whether *Pick a
   future* may list such a road (each card saying "Checked by a tool" in amber), or only once a person

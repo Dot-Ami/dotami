@@ -6,6 +6,8 @@ import { complianceCatalogV2026 } from "@/lib/engines/compliance/v2026";
 import { roadStartingAnyBusinessAB, skillItemsV2026, type RoadStep } from "@/lib/engines/roads/v2026";
 import type { EngineCitation } from "@/lib/engines/shared/types";
 
+import { MAINTAINER_READ_DAY, MAINTAINER_READ_PAGES } from "./fixtures/maintainer-reads-2026-10-25";
+
 /**
  * Road 0's content (docs/architecture/future-cockpit.md § 6, "Road 0's content as built"): about three
  * cited done-when lines on each of today's ten steps, and the three "before you open" steps the design
@@ -260,11 +262,21 @@ describe("every new source is a tool check made on 2026-10-12 (the records step'
     }
   });
 
-  it("none has a read date or a reader, so no card can say a person read these pages", () => {
+  it("only the pages the maintainer read in full have a read date and a reader, so no card says a person read the others", () => {
+    // Until 2026-10-27 none had a read date or a reader. The maintainer read some of these pages in full on 2026-10-25
+    // (tests/maintainer-reads.spec.ts): every citation of those has his read, and no other has any.
+    const hisPages = new Set(MAINTAINER_READ_PAGES.map((p) => p.url));
     for (const { where, citation } of all) {
-      expect(citation.lastVerified, where).toBeUndefined();
-      expect(citation.readBy, where).toBeUndefined();
+      if (hisPages.has(citation.url)) {
+        expect(citation.lastVerified, where).toBe(MAINTAINER_READ_DAY);
+        expect(citation.readBy, where).toBe("person");
+      } else {
+        expect(citation.lastVerified, where).toBeUndefined();
+        expect(citation.readBy, where).toBeUndefined();
+      }
     }
+    expect(all.filter(({ citation }) => hisPages.has(citation.url)).length).toBeGreaterThan(0);
+    expect(all.filter(({ citation }) => !hisPages.has(citation.url)).length).toBeGreaterThan(0);
     // A tool check is not a read: the road's date stays the newest read among the map stages' sources.
     // Some stage sources are tool checks too (the CRA's small-supplier page, since #145), so they have no
     // read date and are skipped here; sort() would otherwise put their undefined last.

@@ -106,8 +106,9 @@ From the maintainers' seed research (2026-07-01) + standard CRA audit-trigger kn
 The maintainer's reading list of 2026-10-23 checked five of these reads against their pages. Since
 2026-10-24 the four kept say only what a page they cite says, quoted, with a few words naming the page,
 or the words the maintainer found match its page. The other three (vehicle logbook, mixed-use
-equipment, SR&ED documentation) weren't on the list and are unchanged. No source is recorded as read
-by him yet (his saved reads come in a later change).
+equipment, SR&ED documentation) weren't on the list and are unchanged. The pages the four kept cite were
+read in full by him on 2026-10-25, and their citations say so since 2026-10-27
+([citations.md](../engines/citations.md), § The maintainer's reads of 2026-10-25).
 
 | Read | What it says now | What came out | Its quotes and their check |
 | --- | --- | --- | --- |

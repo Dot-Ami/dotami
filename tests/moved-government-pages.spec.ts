@@ -11,7 +11,8 @@
  * (A third, the Alberta Investor Tax Credit page, left with its program on 2026-10-23, the maintainer's call a-call-1.)
  *
  * A read of the old page is not a read of the new one, so a moved citation drops its old read date
- * (lastVerified) and shows its tool check until a person reads the new page. Nothing here reaches the
+ * (lastVerified) and shows its tool check until a person reads the new page (since 2026-10-27, the
+ * maintainer's reads of 2026-10-25 for the new pages he read in full). Nothing here reaches the
  * network: the addresses are written down, and the live check is the script's job.
  */
 import { describe, expect, it } from "vitest";
@@ -19,6 +20,7 @@ import { describe, expect, it } from "vitest";
 import { GOAL_EFFECTS } from "@/lib/brain/goal-effects";
 import { allCatalogCitations } from "@/lib/engines/all-citations";
 
+import { MAINTAINER_READ_DAY, MAINTAINER_READ_PAGES } from "./fixtures/maintainer-reads-2026-10-25";
 import { STILL_DEAD } from "./fixtures/still-dead-pages";
 
 const CRA = "https://www.canada.ca/en/revenue-agency/services";
@@ -145,6 +147,7 @@ describe("government pages that moved", () => {
   });
 
   it("each moved citation points at its new page, with a tool check and no read of the old one", () => {
+    const hisPages = new Set(MAINTAINER_READ_PAGES.map((p) => p.url));
     for (const { old, now } of MOVED) {
       for (const { where, url } of now) {
         const found = listed.filter((l) => l.where === where && l.citation.url === url);
@@ -153,8 +156,15 @@ describe("government pages that moved", () => {
           expect(citation.toolCheck, `${where}: ${url}`).toBeDefined();
           expect(citation.toolCheck?.checkedOn, `${where}: ${url}`).toMatch(/^\d{4}-\d{2}-\d{2}$/);
           expect(citation.toolCheck?.quotes.length, `${where}: ${url}`).toBeGreaterThan(0);
-          // The read was of the old address; it says nothing about the new page.
-          expect(citation.lastVerified, `${where}: ${url}`).toBeUndefined();
+          // The read was of the old address; it says nothing about the new page. The only read a moved citation may
+          // carry is a person's read of the new page: since 2026-10-27, the maintainer's of 2026-10-25, on the pages he
+          // read in full (tests/maintainer-reads.spec.ts), and on no other.
+          if (hisPages.has(url)) {
+            expect(citation.lastVerified, `${where}: ${url}`).toBe(MAINTAINER_READ_DAY);
+            expect(citation.readBy, `${where}: ${url}`).toBe("person");
+          } else {
+            expect(citation.lastVerified, `${where}: ${url}`).toBeUndefined();
+          }
         }
       }
     }

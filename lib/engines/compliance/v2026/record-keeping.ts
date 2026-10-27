@@ -1,3 +1,4 @@
+import { MAINTAINER_READ_ON } from "@/lib/engines/shared/maintainer-reads";
 import type { EngineCitation } from "@/lib/engines/shared/types";
 
 /**
@@ -34,14 +35,16 @@ export const recordRetentionV2026: RecordRetentionEntry = {
       authority: "CRA",
       jurisdiction: "CA",
       url: "https://www.canada.ca/en/revenue-agency/services/tax/businesses/topics/keeping-records/where-keep-your-records-long-request-permission-destroy-them-early.html",
-      // The read of 2026-10-08 (who read it wasn't recorded) still wins on screen. Since 2026-10-24 the citation also
+      // Read on 2026-10-08 (who read it wasn't recorded), then in full by the maintainer on 2026-10-25: his read wins
+      // on screen, and the tool check stays. Since 2026-10-24 the citation also
       // keeps the CRA's own sentences, its "Generally" first, so the six years are never restated without it: the
       // maintainer's reading list found both on the live page on 2026-10-23 with the repo's matcher (the same
       // whole-word, one-block match as scripts/check-quotes.mjs), with every other quote held for this page. Every
       // road's Keep your records step holds the same two (lib/engines/roads/v2026/keep-records.ts, checked
       // 2026-10-14). A networked `node scripts/check-quotes.mjs` run should find them again (docs/engines/citations.md,
       // rule 4).
-      lastVerified: "2026-10-08",
+      lastVerified: MAINTAINER_READ_ON,
+      readBy: "person",
       toolCheck: {
         checkedOn: "2026-10-23",
         quotes: [

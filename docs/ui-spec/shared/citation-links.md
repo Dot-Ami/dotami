@@ -114,7 +114,12 @@ that say "Checked by a tool" too (§ When a cited page moves there). Since 2026-
 reading list of 2026-10-23) so do the sources it added: the SR&ED card's four new pages, the
 Canada-Alberta Productivity Grant's page and *SR&ED deepening*'s third source ("Checked by a tool on
 2026-10-23"), and *Sole Prop activation*'s third ("on 2026-10-12", the check its words already had;
-§ The reading list's tool checks there). A source with a read and no record of who did it says
+§ The reading list's tool checks there). Since 2026-10-27 every source of the 31 pages the maintainer read
+in full on 2026-10-25 says "Read by a person on 2026-10-25", in grey, with no words found listed under it
+(the read wins on screen; § The maintainer's reads of 2026-10-25 there): the CRA's "When to register for
+and start charging the GST/HST", the SR&ED card's pages, the Productivity Grant's page and *Sole Prop
+activation*'s third among them. The five pages behind the two ways to incorporate still say "Checked by
+a tool". A source with a read and no record of who did it says
 "Read on <date>. Who read it wasn't recorded." No citation is read by an AI model any more.
 `e2e/app.spec.ts` ("every source says how it was checked") checks a stage's sources, the playbook
 export and the readout in the browser.

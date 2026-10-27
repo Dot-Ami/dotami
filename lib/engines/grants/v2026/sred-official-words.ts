@@ -7,7 +7,8 @@
  * The reading list's tool found them with the repo's matcher, the same whole-word, one-block match as
  * scripts/check-quotes.mjs, so each citation that relies on them records a tool check of that day. Before merge, a
  * networked `node scripts/check-quotes.mjs --url … --quote …` run should find each again (docs/engines/citations.md,
- * rule 4); change one only after it does. No person is recorded as having read these pages yet.
+ * rule 4); change one only after it does. The maintainer read each of these pages in full on 2026-10-25, so their
+ * citations carry his read too, which wins on screen (§ The maintainer's reads of 2026-10-25).
  */
 
 /** The day the reading list's tool found every quote below on its page. */

@@ -1,3 +1,5 @@
+import { MAINTAINER_READ_ON } from "@/lib/engines/shared/maintainer-reads";
+
 import { CRA_SMALL_SUPPLIER_TESTS, CRA_WHEN_TO_REGISTER_TOOL_CHECK, CRA_WHEN_TO_REGISTER_URL } from "./gst-official-words";
 import {
   CRA_GI_196_TOOL_CHECK,
@@ -16,8 +18,6 @@ import {
   ETA_240_URL,
 } from "./ride-share-official-words";
 import type { ComplianceRule, RetiredComplianceRule } from "./types";
-
-const LAST_VERIFIED = "2026-06-08";
 
 export const complianceRulesV2026 = [
   {
@@ -44,7 +44,10 @@ export const complianceRulesV2026 = [
         jurisdiction: "CA",
         url: CRA_WHEN_TO_REGISTER_URL,
         // Option B (docs/engines/citations.md): a tool found the words this entry relies on, the two
-        // tests on the card and the exclusions in its description, on the live page. No person has read it.
+        // tests on the card and the exclusions in its description, on the live page. The maintainer read the
+        // page in full on 2026-10-25; the read wins on screen, and the tool check stays.
+        lastVerified: MAINTAINER_READ_ON,
+        readBy: "person",
         toolCheck: {
           checkedOn: CRA_WHEN_TO_REGISTER_TOOL_CHECK.checkedOn,
           quotes: [
@@ -77,7 +80,9 @@ export const complianceRulesV2026 = [
         authority: "provincial",
         jurisdiction: "BC",
         url: "https://www2.gov.bc.ca/gov/content/taxes/sales-taxes/pst",
-        lastVerified: LAST_VERIFIED,
+        // Read on 2026-06-08 (who read it wasn't recorded); the maintainer read it in full on 2026-10-25.
+        lastVerified: MAINTAINER_READ_ON,
+        readBy: "person",
         note: "BC PST overview.",
       },
     ],
@@ -102,7 +107,9 @@ export const complianceRulesV2026 = [
         url: "https://www.canada.ca/en/revenue-agency/services/tax/businesses/topics/gst-hst-businesses/charge-collect-which-rate.html",
         // No tool check (the maintainer's reading list, 2026-10-23): the page's table of rates isn't in its HTML, and
         // the one 13% sentence a tool found there is a worked example (a furniture store's sale), not the rate.
-        lastVerified: LAST_VERIFIED,
+        // Read on 2026-06-08 (who read it wasn't recorded); the maintainer read it in full on 2026-10-25.
+        lastVerified: MAINTAINER_READ_ON,
+        readBy: "person",
         note: "CRA HST rate guidance for participating provinces.",
       },
     ],
@@ -131,8 +138,10 @@ export const complianceRulesV2026 = [
         authority: "CRA",
         jurisdiction: "AB",
         url: "https://www.canada.ca/en/revenue-agency/services/tax/businesses/topics/gst-hst-businesses/charge-collect-which-rate.html",
-        // No tool check, for the reason above: the table's Alberta row isn't in the page's words.
-        lastVerified: LAST_VERIFIED,
+        // No tool check, for the reason above: the table's Alberta row isn't in the page's words. Read on 2026-06-08
+        // (who read it wasn't recorded); the maintainer read it in full on 2026-10-25.
+        lastVerified: MAINTAINER_READ_ON,
+        readBy: "person",
         note: "CRA GST rate for non-HST provinces.",
       },
     ],
@@ -154,7 +163,9 @@ export const complianceRulesV2026 = [
         authority: "CRA",
         jurisdiction: "CA",
         url: "https://www.canada.ca/en/revenue-agency/services/tax/businesses/small-businesses-self-employed-income/setting-your-business.html",
-        lastVerified: LAST_VERIFIED,
+        // Read on 2026-06-08 (who read it wasn't recorded); the maintainer read it in full on 2026-10-25.
+        lastVerified: MAINTAINER_READ_ON,
+        readBy: "person",
         note: "CRA business vs. personal activity framing.",
       },
     ],

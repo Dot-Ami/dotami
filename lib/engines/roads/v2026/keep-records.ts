@@ -1,3 +1,4 @@
+import { MAINTAINER_READ, type PageRead } from "../../shared/maintainer-reads";
 import type { EngineCitation } from "../../shared/types";
 import type { RoadStep } from "./types";
 
@@ -16,15 +17,26 @@ import type { RoadStep } from "./types";
  * steps, so it is on the path for every idea; on the apprentice road it follows "Open your own shop", so
  * it is on the path once the person picks that side of the fork, and off it if they stay employed.
  *
- * Every source is a tool check, not a read (option B, docs/engines/citations.md): each quote was found
- * word for word on the CRA's live Keeping records pages by `node scripts/check-quotes.mjs --url …
- * --quote …` on CHECKED_ON. Nobody is recorded as having read these pages, so none has a read date.
+ * Every source has a tool check (option B, docs/engines/citations.md): each quote was found word for
+ * word on the CRA's live Keeping records pages by `node scripts/check-quotes.mjs --url … --quote …` on
+ * CHECKED_ON. The where-and-how-long page was read in full by the maintainer on 2026-10-25: its
+ * citations carry his read (the page's `read`), which wins on screen. The other two have no read on
+ * record, so their citations have no read date.
  */
 
 /** The day scripts/check-quotes.mjs found every quote below on its page. */
 const CHECKED_ON = "2026-10-14";
 
 const RECORDS = "https://www.canada.ca/en/revenue-agency/services/tax/businesses/topics/keeping-records";
+
+interface Page {
+  title: string;
+  url: string;
+  /** What the page is, in one line; the quotes say what this entry relies on. */
+  note: string;
+  /** A read of the whole page, when one is on record: every citation of the page carries it. */
+  read?: Readonly<PageRead>;
+}
 
 const PAGES = {
   whatAndWho: {
@@ -41,12 +53,21 @@ const PAGES = {
     title: "Where to keep your records, for how long and how to request the permission to destroy them early (CRA)",
     url: `${RECORDS}/where-keep-your-records-long-request-permission-destroy-them-early.html`,
     note: "Where records must be kept, the usual six-year period and its exceptions, and destroying records early only with the CRA's permission.",
+    // The maintainer read it in full on 2026-10-25 (docs/engines/citations.md).
+    read: MAINTAINER_READ,
   },
-} as const;
+} as const satisfies Record<string, Page>;
 
-/** A citation of one CRA page, checked by the tool on CHECKED_ON: the quotes are the exact words it found. */
-function checked(page: (typeof PAGES)[keyof typeof PAGES], ...quotes: string[]): EngineCitation {
-  return { ...page, authority: "CRA", jurisdiction: "CA", toolCheck: { checkedOn: CHECKED_ON, quotes } };
+/**
+ * A citation of one CRA page, checked by the tool on CHECKED_ON: the quotes are the exact words it found.
+ * It carries a read only when the page has one on record (its `read`), never otherwise.
+ */
+function checked(page: Page, ...quotes: string[]): EngineCitation {
+  const { read, ...cited } = page;
+  const toolCheck = { checkedOn: CHECKED_ON, quotes };
+  return read
+    ? { ...cited, authority: "CRA", jurisdiction: "CA", ...read, toolCheck }
+    : { ...cited, authority: "CRA", jurisdiction: "CA", toolCheck };
 }
 
 // Quotes used more than once, kept in one place so two citations of the same words can't drift.

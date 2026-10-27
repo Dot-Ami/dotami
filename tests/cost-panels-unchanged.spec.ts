@@ -77,7 +77,15 @@
  * Productivity Grant's card, its count one higher, and the five word changes just listed; and from the pull
  * request's only by main's changes above (no Job Grant card, its count one lower; Mandatory GST registration's What
  * it needs heading; the Incorporating panels' quotes after "Words found on the page:"; Hire first employee's
- * Alberta source and its "2 sources for other provinces aren't shown."). The only cards allowed to change are the
+ * Alberta source and its "2 sources for other provinces aren't shown."). Redrawn on 2026-10-27 for 14 panels only,
+ * when the maintainer's reads of 2026-10-25 were recorded (tests/maintainer-reads.spec.ts): road 0's Employee/Apprentice
+ * baseline, Sole Prop activation, both GST/HST registrations, both Incorporating panels, Incorporation for
+ * liability/SR&ED, Hire first employee, SR&ED deepening, A separate bank account and Keep your records, and the
+ * apprentice road's Keep your records, GST/HST: the small-supplier test and Hiring your first worker. Each was checked to differ
+ * only in its sources' check lines, 53 in all: each "Checked by a tool on …" in amber, with the words found on the
+ * page under it (42), or "Read on <date>. Who read it wasn't recorded." (11), is now "Read by a person on
+ * 2026-10-25" after the source's authority and place, in grey. No other word, class or panel changed, and both
+ * money lists are unchanged. The only cards allowed to change are the
  * ones that gained road 0's named start-up cost lines (docs/architecture/future-cockpit.md § 6, "The official
  * fees catalog and start-up cost lines as built"); with those seven lines taken out, they match too.
  */

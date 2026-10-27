@@ -1,7 +1,11 @@
+import { MAINTAINER_READ_ON } from "@/lib/engines/shared/maintainer-reads";
+
 import type { WriteOffCategory } from "./types";
 
 // Until 2026-10-13 the CRA pages here shared one read date, 2026-06-08. Each of those pages moved; the
 // new addresses carry a tool check instead, and each comment names the old address and its read date.
+// A page the maintainer read in full on 2026-10-25 carries his read too, which wins on screen
+// (docs/engines/citations.md, § The maintainer's reads of 2026-10-25).
 
 export const writeOffCategoriesV2026 = [
   {
@@ -31,9 +35,11 @@ export const writeOffCategoriesV2026 = [
         authority: "CRA",
         jurisdiction: "CA",
         // The page moved: its old address (…/report-business-income-expenses/business-expenses/business-use-home-expenses.html,
-        // read 2026-06-08) answered 404 on 2026-10-13. A tool found these words on the new page that day;
-        // no person has read it yet (option B, docs/engines/citations.md).
+        // read 2026-06-08) answered 404 on 2026-10-13. A tool found these words on the new page that day
+        // (option B, docs/engines/citations.md), and the maintainer read it in full on 2026-10-25.
         url: "https://www.canada.ca/en/revenue-agency/services/tax/businesses/topics/sole-proprietorships-partnerships/report-business-income-expenses/completing-form-t2125/business-use-home-expenses.html",
+        lastVerified: MAINTAINER_READ_ON,
+        readBy: "person",
         toolCheck: {
           checkedOn: "2026-10-13",
           quotes: [
@@ -76,7 +82,10 @@ export const writeOffCategoriesV2026 = [
         authority: "federal",
         jurisdiction: "CA",
         url: "https://laws-lois.justice.gc.ca/eng/acts/I-3.3/section-67.3.html",
-        lastVerified: "2026-09-13",
+        // Read from the statute store on 2026-09-13 (who read it wasn't recorded; `verification` keeps that check);
+        // the maintainer read the page in full on 2026-10-25.
+        lastVerified: MAINTAINER_READ_ON,
+        readBy: "person",
         verification: { status: "supported", method: "Provision text read from the consolidated Act in corpus.db (2026-09-13): the 67.2 / 67.3 caps and their A × B / 30 formula. The amounts in the entry text are the ones Income Tax Regulations s.7307 prescribe (the next source), which that reading didn't cover." },
         note: "Read from the consolidated Act (the maintainers' statute store). Proportionality rests on 18(1)(a) 'to the extent... for the purpose of gaining or producing income'; 67 requires reasonableness. 67.2 limits interest and 67.3 limits lease charges; the Act's own figures, $250 and $600, each stand 'or such other amount as may be prescribed', and the amounts prescribed are in Income Tax Regulations s.7307 (the next source).",
       },
@@ -89,8 +98,11 @@ export const writeOffCategoriesV2026 = [
         authority: "federal",
         jurisdiction: "CA",
         // Added 2026-10-23 (the maintainer's reading list, item writeoff-vehicle/interest-and-lease-caps): a tool
-        // found these words on the consolidated Regulations' page that day; no person has read it yet (option B).
+        // found these words on the consolidated Regulations' page that day (option B), and the maintainer read it in
+        // full on 2026-10-25.
         url: "https://laws-lois.justice.gc.ca/eng/regulations/C.R.C.,_c._945/section-7307.html",
+        lastVerified: MAINTAINER_READ_ON,
+        readBy: "person",
         toolCheck: {
           checkedOn: "2026-10-23",
           quotes: [
@@ -109,8 +121,11 @@ export const writeOffCategoriesV2026 = [
         authority: "CRA",
         jurisdiction: "CA",
         // Moved: the old address (…/report-business-income-expenses/business-expenses/motor-vehicle-expenses.html,
-        // read 2026-06-08) answered 404 on 2026-10-13; a tool found this sentence on the new page that day.
+        // read 2026-06-08) answered 404 on 2026-10-13; a tool found this sentence on the new page that day, and the
+        // maintainer read it in full on 2026-10-25.
         url: "https://www.canada.ca/en/revenue-agency/services/tax/businesses/topics/sole-proprietorships-partnerships/business-expenses/motor-vehicle-expenses.html",
+        lastVerified: MAINTAINER_READ_ON,
+        readBy: "person",
         toolCheck: {
           checkedOn: "2026-10-13",
           quotes: ["You can deduct expenses you incur to run a motor vehicle you use to earn business income."],
@@ -182,7 +197,9 @@ export const writeOffCategoriesV2026 = [
         authority: "CRA",
         jurisdiction: "CA",
         url: "https://www.canada.ca/en/revenue-agency/services/forms-publications/publications/t4002/t4002-6.html",
-        lastVerified: "2026-07-02",
+        // Read on 2026-07-02 (who read it wasn't recorded); the maintainer read it in full on 2026-10-25.
+        lastVerified: MAINTAINER_READ_ON,
+        readBy: "person",
         note: "Class 50 enhanced 100% first-year deduction for property acquired after 2024-04-15 and available for use before 2027.",
       },
     ],
@@ -270,8 +287,11 @@ export const writeOffCategoriesV2026 = [
         authority: "CRA",
         jurisdiction: "CA",
         // Moved: the old address (…/scientific-research-experimental-development-tax-incentive/claim-sred-expenditures.html,
-        // read 2026-06-08) answered 404 on 2026-10-13; a tool found these words on the new page that day.
+        // read 2026-06-08) answered 404 on 2026-10-13; a tool found these words on the new page that day, and the
+        // maintainer read it in full on 2026-10-25.
         url: "https://www.canada.ca/en/revenue-agency/services/scientific-research-experimental-development-tax-incentive-program/sred-claim.html",
+        lastVerified: MAINTAINER_READ_ON,
+        readBy: "person",
         toolCheck: {
           checkedOn: "2026-10-13",
           quotes: ["determine which expenditures may be allowable (salary or wages, materials, contracts, overhead, and third-party payments)"],

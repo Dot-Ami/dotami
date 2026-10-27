@@ -1,7 +1,7 @@
+import { MAINTAINER_READ_ON } from "@/lib/engines/shared/maintainer-reads";
+
 import { S245_CITATION, S245_QUOTES } from "./gaar-official-words";
 import type { RetiredRiskEntry, RiskCombination, RiskEntry } from "./types";
-
-const LAST_VERIFIED = "2026-07-02";
 
 /**
  * Audit-trigger catalog. Seed entries from the maintainers' validated research
@@ -36,7 +36,10 @@ export const riskEntriesV2026 = [
         // read 2026-07-02) answered 404 on 2026-10-13; a tool found these words on the new page that day. The last two
         // joined on 2026-10-24: the same day's check found them for the home office write-off's citation of this page
         // (lib/engines/writeoffs/v2026/categories.ts), and the reading list found all four there again on 2026-10-23.
+        // The maintainer read the new page in full on 2026-10-25.
         url: "https://www.canada.ca/en/revenue-agency/services/tax/businesses/topics/sole-proprietorships-partnerships/report-business-income-expenses/completing-form-t2125/business-use-home-expenses.html",
+        lastVerified: MAINTAINER_READ_ON,
+        readBy: "person",
         toolCheck: {
           checkedOn: "2026-10-13",
           quotes: [
@@ -120,7 +123,9 @@ export const riskEntriesV2026 = [
         authority: "CRA",
         jurisdiction: "CA",
         url: "https://www.canada.ca/en/revenue-agency/services/forms-publications/publications/t4002/t4002-6.html",
-        lastVerified: LAST_VERIFIED,
+        // Read on 2026-07-02 (who read it wasn't recorded); the maintainer read it in full on 2026-10-25.
+        lastVerified: MAINTAINER_READ_ON,
+        readBy: "person",
         // The guide's sentence on the dates, which the reading list's tool found on the live page on 2026-10-23 with
         // the repo's matcher (the same whole-word, one-block match as scripts/check-quotes.mjs); a networked
         // `node scripts/check-quotes.mjs` run should find it again (docs/engines/citations.md, rule 4). It ends on a
@@ -207,8 +212,11 @@ export const riskEntriesV2026 = [
         // Until 2026-10-24 the read cited ISED's program hub (…/canada-small-business-financing-program/en, read
         // 2026-07-02), which holds none of these words. The reading list's tool found this sentence on the loans page
         // on 2026-10-23 with the repo's matcher (the same whole-word, one-block match as scripts/check-quotes.mjs); a
-        // networked `node scripts/check-quotes.mjs` run should find it again (docs/engines/citations.md, rule 4).
+        // networked `node scripts/check-quotes.mjs` run should find it again (docs/engines/citations.md, rule 4). The
+        // maintainer read the page in full on 2026-10-25.
         url: "https://ised-isde.canada.ca/site/canada-small-business-financing-program/en/canada-small-business-financing-program/find-loan-your-small-business/helping-small-businesses-get-loans",
+        lastVerified: MAINTAINER_READ_ON,
+        readBy: "person",
         toolCheck: {
           checkedOn: "2026-10-23",
           quotes: ["For real property and equipment, security must be taken on the assets financed."],

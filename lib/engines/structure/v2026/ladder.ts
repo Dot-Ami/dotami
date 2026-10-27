@@ -1,8 +1,7 @@
 import { CRA_WHEN_TO_REGISTER_TOOL_CHECK, CRA_WHEN_TO_REGISTER_URL } from "@/lib/engines/compliance/v2026/gst-official-words";
 import { S245_CITATION } from "@/lib/engines/risk/v2026/gaar-official-words";
+import { MAINTAINER_READ_ON } from "@/lib/engines/shared/maintainer-reads";
 import type { StructureStep } from "./types";
-
-const LAST_VERIFIED = "2026-06-08";
 
 export const structureLadderV2026 = [
   {
@@ -25,7 +24,9 @@ export const structureLadderV2026 = [
         authority: "CRA",
         jurisdiction: "CA",
         url: "https://www.canada.ca/en/revenue-agency/services/tax/businesses/small-businesses-self-employed-income/setting-your-business/sole-proprietorship.html",
-        lastVerified: LAST_VERIFIED,
+        // Read on 2026-06-08 (who read it wasn't recorded); the maintainer read it in full on 2026-10-25.
+        lastVerified: MAINTAINER_READ_ON,
+        readBy: "person",
         note: "CRA overview of sole proprietorship reporting and obligations.",
       },
     ],
@@ -70,9 +71,11 @@ export const structureLadderV2026 = [
         authority: "CRA",
         jurisdiction: "CA",
         // The old address (…/when-register.html) answers 404 since at least 2026-10-06; this rung's
-        // wording now follows the page's two tests, which a tool found there on 2026-10-12 (option B;
-        // no person has read the page).
+        // wording now follows the page's two tests, which a tool found there on 2026-10-12 (option B).
+        // The maintainer read the page in full on 2026-10-25; the read wins on screen.
         url: CRA_WHEN_TO_REGISTER_URL,
+        lastVerified: MAINTAINER_READ_ON,
+        readBy: "person",
         toolCheck: CRA_WHEN_TO_REGISTER_TOOL_CHECK,
         note: "CRA small-supplier tests and mandatory registration (page details 2026-06-16).",
       },
@@ -113,8 +116,11 @@ export const structureLadderV2026 = [
         jurisdiction: "CA",
         // Moved: the old address (…/corporation-income-tax/small-business-deduction.html, read
         // 2026-06-08) answered 404 on 2026-10-13. The CRA's T2 guide explains the deduction at line 430
-        // on this page; a tool found these words on it that day.
+        // on this page; a tool found these words on it that day. The maintainer read the page in full on
+        // 2026-10-25.
         url: "https://www.canada.ca/en/revenue-agency/services/forms-publications/publications/t4012/t2-corporation-income-tax-guide-chapter-4-page-4-t2-return.html",
+        lastVerified: MAINTAINER_READ_ON,
+        readBy: "person",
         toolCheck: {
           checkedOn: "2026-10-13",
           quotes: [

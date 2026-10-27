@@ -483,8 +483,10 @@ test("Delete: tick ideas and statements, see what goes and what stays, say yes t
   await expect(removing).toContainText("generally kept for six years");
   await expect(removing.getByRole("link", { name: /^CRA: Where to keep your records/ })).toHaveAttribute("href", /canada\.ca\/en\/revenue-agency/);
   // Its citation also keeps a tool check since 2026-10-24; the read outranks it, so the line says the read, in grey,
-  // and lists none of the tool's words (docs/engines/citations.md, rule 3).
-  await expect(removing).toContainText("(Read on 2026-10-08. Who read it wasn't recorded.)");
+  // and lists none of the tool's words (docs/engines/citations.md, rule 3). Since 2026-10-27 the read is the
+  // maintainer's of the page in full on 2026-10-25; until then it said "(Read on 2026-10-08. Who read it wasn't recorded.)".
+  await expect(removing).toContainText("(Read by a person on 2026-10-25)");
+  await expect(removing).not.toContainText("Who read it wasn't recorded");
   await expect(removing).not.toContainText("Checked by a tool");
   await expect(removing).toContainText("What this window keeps in its own storage. Not cleared.");
   await expect(removing).not.toContainText("earlier launches");

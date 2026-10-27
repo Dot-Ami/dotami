@@ -2,8 +2,9 @@
  * The Canada-Alberta Productivity Grant (`grant-capg`; the maintainer's call a-call-1, "ADD it", on his reading list of
  * 2026-10-23): in the programs catalog under its own id, saying only what Alberta's page says in the four quotes the
  * reading list's tool found on it that day, shown for every Alberta idea as a grant to check first and never as needing
- * incorporation, and named by road 0's Hire first employee. Its source is a tool check: no person is recorded as having
- * read the page yet (his saved reads come in a later change). Every check fails on the code before (no such entry),
+ * incorporation, and named by road 0's Hire first employee. Its source is a tool check, and since 2026-10-27 also the
+ * maintainer's read of the page in full on 2026-10-25 (tests/maintainer-reads.spec.ts), which wins on screen, so the
+ * words the tool found are no longer listed under it. Every check fails on the code before (no such entry),
  * except the planted controls beside the ones that could pass on nothing, and "no idea outside Alberta", which holds
  * before as after.
  *
@@ -42,6 +43,8 @@ const HELD = [
   "be operational in Alberta for at least one year",
 ];
 const TODAY = "2026-10-24";
+/** The day the maintainer's reads of 2026-10-25 were recorded: no read date may be after the day a check runs. */
+const READS_RECORDED_ON = "2026-10-27";
 const capg = (): GrantProgram | undefined => grantProgramsV2026.find((p) => p.id === ID);
 // Quotes in curly quote marks, the way the cards and the citations' word lists quote a page.
 const QUOTED = /“([^”]+)”/g;
@@ -79,17 +82,16 @@ describe("the Canada-Alberta Productivity Grant in the programs catalog", () => 
     expect(p.citations.map((c) => c.url)).not.toContain(OLD_JOB_GRANT_PAGE);
   });
 
-  it("its one source is Alberta's page, checked by a tool on 2026-10-23, holding the four quotes found that day and no other", () => {
+  it("its one source is Alberta's page, checked by a tool on 2026-10-23, holding the four quotes found that day and no other, and read by the maintainer", () => {
     const [c, ...rest] = capg()!.citations;
     expect(rest).toEqual([]);
     expect(c).toMatchObject({ authority: "provincial", jurisdiction: "AB", url: PAGE });
     expect(c!.toolCheck).toEqual({ checkedOn: "2026-10-23", quotes: HELD });
-    // No read is on record, so the card says a tool checked it and that no person has read it, in amber.
-    expect(howChecked(c!).kind).toBe("tool");
-    expect(howCheckedWords(c!)).toBe(
-      "Checked by a tool on 2026-10-23: it found on the page the exact words this entry relies on. Not read by a person yet.",
-    );
-    expect(citationCheckProblems(c!, TODAY)).toEqual([]);
+    // Until 2026-10-27 no read was on record, and the card said a tool checked it and that no person had read it, in
+    // amber. The maintainer read the page in full on 2026-10-25: his read wins on screen, in grey.
+    expect(howChecked(c!)).toEqual({ kind: "person", on: "2026-10-25" });
+    expect(howCheckedWords(c!)).toBe("Read by a person on 2026-10-25");
+    expect(citationCheckProblems(c!, READS_RECORDED_ON)).toEqual([]);
   });
 
   it("every amount and share it states sits inside a quote of that page", () => {
@@ -115,8 +117,8 @@ describe("the Canada-Alberta Productivity Grant in the programs catalog", () => 
       expect(findTimeWords(own(line)), line).toEqual([]);
     }
     // The line the card shows holds no time even inside its quotes: the page's one-year rule stays off it (and in
-    // `eligibility`, which no screen draws for a program). It shows only among the words found on the page, under the
-    // card's source (next check).
+    // `eligibility`, which no screen draws for a program). It showed only among the words found on the page, under the
+    // card's source, until the maintainer's read was recorded (next check).
     expect(findTimeWords(p.lensAnnotations.tax)).toEqual([]);
   });
 
@@ -126,10 +128,21 @@ describe("the Canada-Alberta Productivity Grant in the programs catalog", () => 
     expect(own("Alberta's page on this program, on the employer's own share: “Must contribute 25%”.")).toMatch(/employer/);
   });
 
-  it("the page's one-year rule shows under the card's source, among the words found on the page, and the docs say so", () => {
+  it("the page's one-year rule is kept in the source's tool check, on no screen since the maintainer's read, and the docs say so", () => {
     // components/shared/citation-links.tsx draws a tool check's quotes under "Words found on the page:", and the
-    // playbook export prints them (lib/playbook/render-markdown.ts), so the rule is on screen as the page's own words.
-    expect(toolCheckQuotes(capg()!.citations[0]!)).toContain(HELD[3]);
+    // playbook export prints them (lib/playbook/render-markdown.ts), only while no read is on record: until 2026-10-27
+    // the rule was on screen there, as the page's own words. The maintainer's read of 2026-10-25 wins on screen (rule 3
+    // of docs/engines/citations.md), so the words aren't drawn; the tool check keeps them, and `eligibility` too.
+    const source = capg()!.citations[0]!;
+    expect(source.toolCheck?.quotes).toContain(HELD[3]);
+    expect(toolCheckQuotes(source)).toEqual([]);
+    expect(capg()!.eligibility).toContain(HELD[3]);
+    for (const [file, words] of [
+      ["docs/engines/grants.md", "so no screen shows the one-year rule now"],
+      ["docs/engines/citations.md", "so it is on no screen now"],
+    ] as const) {
+      expect(readFlat(file).includes(words), `${file} says “${words}”`).toBe(true);
+    }
     const saidItWasOnNoScreen: [string, string][] = [
       ["CHANGELOG.md", "is kept in the entry, quoted, and not drawn on the card"],
       ["docs/engines/grants.md", "The one-year rule is in `eligibility` only, which no screen draws"],

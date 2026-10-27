@@ -39,10 +39,10 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   eligible for up to a maximum amount of $100,000 per fiscal year” (who contributes which share isn't in the words
   DotAmi holds, so no line names it). Outside the quotes it says only "If training employees is on the venture's
   path" and the page's name. The page's “be operational in Alberta for at least one year” is a time, so it is not
-  on the card's line; it shows only among the words found on the page, under the card's source. That source
-  says "Checked by a tool on 2026-10-23" in amber, with the four quotes the reading list's matcher found on the
-  page that day (a networked `node scripts/check-quotes.mjs` run should find them again); no read of the page is
-  recorded yet. It shows for every idea in Alberta, at every structure and kind of work (the page's words DotAmi
+  on the card's line. The reading list's matcher found the four quotes on the page on 2026-10-23, kept as a tool
+  check (a networked `node scripts/check-quotes.mjs` run should find them again), and the maintainer read the page
+  in full on 2026-10-25, so the card's source says "Read by a person on 2026-10-25"; a read wins on screen, so the
+  words the tool found, the one-year rule among them, are not listed under it (see *Changed*). It shows for every idea in Alberta, at every structure and kind of work (the page's words DotAmi
   holds name neither), as a grant to check first, never as needing incorporation, and its reason says only "Shown
   because you selected Alberta." (a provincial program that lists no kind of work no longer says "your venture
   activity match this program", `lib/brain/evaluate.ts` `evaluateGrant`). Road 0's *Hire first employee* names it,
@@ -683,6 +683,23 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   in amber).
 
 ### Changed
+- **31 source pages now say "Read by a person on 2026-10-25"** (the maintainer's reads). On 2026-10-25 the
+  maintainer read 31 of the pages DotAmi cites in full, and ticked each one on his reading list; on 2026-10-24 he
+  had decided that his reads made with an AI model's help count as a person's, for the pages he checked himself.
+  Every place DotAmi cites one of those pages (136 sources: the map's stages on the three roads, the program,
+  write-off, rule, structure and risk cards, the GST/HST registration requirement and the records line under
+  Delete) now says "Read by a person on 2026-10-25", in grey, where it said "Checked by a tool on …" in amber or
+  "Read on <date>. Who read it wasn't recorded." Among them are the CRA's pages on GST/HST registration, payroll,
+  sole proprietorships, corporations, keeping records and SR&ED, the T2 and T4002 guides, the Income Tax Act's
+  s.127, s.245 and s.67.3, Income Tax Regulations s.7307, the Canada-Alberta Productivity Grant's page, ISED's two
+  loan program pages, and the employment-standards pages of Alberta, British Columbia and Ontario. A read wins on
+  screen, so the words a tool found on those pages are no longer listed under them; the tool checks stay in the
+  catalogs and the readout. On *Pick a future*, the apprentice road's card now counts the sources a person read.
+  Nothing else changed: no title, address, quote or tool check. His reads don't replace the networked
+  `node scripts/check-quotes.mjs` run the tool checks of 2026-10-23 still wait for, and they don't record what he
+  found in the CRA's table of GST/HST rates, so the Alberta and Ontario sales-tax lines are unchanged
+  ([docs/engines/citations.md](docs/engines/citations.md), § The maintainer's reads of 2026-10-25). Test:
+  `tests/maintainer-reads.spec.ts`.
 - **Ontario food premises licensing is off the map** (the maintainer's reading list of 2026-10-23). The rule
   cited Ontario Regulation 562/90 (Food Premises), which is revoked, and said food service and certain
   hospitality ventures "require public health and municipal licensing in Ontario", more than that regulation

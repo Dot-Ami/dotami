@@ -1,7 +1,9 @@
 import { feeLine } from "../../fees/v2026";
+import { MAINTAINER_READ, type PageRead } from "../../shared/maintainer-reads";
 import type { CitationAuthority, EngineCitation, Province } from "../../shared/types";
 import { keepRecordsStep } from "./keep-records";
 import type { NamedCostLine, Road, SkillItem } from "./types";
+import { newestReadDate } from "./validate";
 
 /**
  * Road 1, the first written future (decision 1 of 2026-10-11): "From apprentice to your own shop
@@ -10,13 +12,15 @@ import type { NamedCostLine, Road, SkillItem } from "./types";
  * column it joins road 0 at "Incorporating". Design: docs/architecture/future-cockpit.md § 6 ("The
  * first written future as built"). The example trade is Cabinetmaker, Alberta's official name for it.
  *
- * Every source here is a tool check, not a read (option B, docs/engines/citations.md): each quote was
- * found word for word on its live page by `node scripts/check-quotes.mjs --url … --quote …` on
- * CHECKED_ON (the citations added when its blanks were looked up again, on BLANKS_CHECKED_ON). Nobody is
- * recorded as having read these pages, so no citation has a read date and the road's own `lastVerified` is
- * empty. A line says only what its quotes say; anything a page doesn't state (Alberta's registry fees,
- * which sit in a catalogue that stops tools; a wage figure; a WCB rate) is a named line or left out, never
- * guessed, and a named line for a fee says in its label why it has no amount.
+ * Every source here has a tool check (option B, docs/engines/citations.md): each quote was found word
+ * for word on its live page by `node scripts/check-quotes.mjs --url … --quote …` on CHECKED_ON (the
+ * citations added when its blanks were looked up again, on BLANKS_CHECKED_ON). Three of its CRA pages
+ * were read in full by the maintainer on 2026-10-25 (the GST/HST and payroll pages here, and the records
+ * page of ./keep-records.ts): their citations carry his read, which wins on screen, and the road's own
+ * `lastVerified` is that day, worked out from its sources. No other page has a read on record, so no other
+ * citation has a read date. A line says only what its quotes say; anything a page doesn't state
+ * (Alberta's registry fees, which sit in a catalogue that stops tools; a wage figure; a WCB rate) is a
+ * named line or left out, never guessed, and a named line for a fee says in its label why it has no amount.
  *
  * Its official fees are written once, in the official fees catalog (lib/engines/fees/v2026/, since
  * 2026-10-12): each fee line here names its fee by id through `feeLine`, which copies the amount, source
@@ -44,6 +48,8 @@ interface Page {
   url: string;
   /** What the page is, in one line; the quotes say what this entry relies on. */
   note: string;
+  /** A read of the whole page, when one is on record: every citation of the page carries it. */
+  read?: Readonly<PageRead>;
 }
 
 const TRADESECRETS = "https://tradesecrets.alberta.ca";
@@ -226,6 +232,8 @@ const PAGES = {
     jurisdiction: "CA",
     url: "https://www.canada.ca/en/revenue-agency/services/tax/businesses/topics/gst-hst-businesses/when-register-charge.html",
     note: "The CRA's small-supplier tests, and when a business must or may register for the GST/HST.",
+    // The maintainer read it in full on 2026-10-25 (docs/engines/citations.md).
+    read: MAINTAINER_READ,
   },
   wcbWorkerCoverage: {
     title: "Worker coverage (WCB-Alberta)",
@@ -247,12 +255,14 @@ const PAGES = {
     jurisdiction: "CA",
     url: "https://www.canada.ca/en/revenue-agency/services/tax/businesses/topics/payroll/open-manage-payroll-account/determine-need-register.html",
     note: "Who must register for a CRA payroll account, and by when.",
+    // The maintainer read it in full on 2026-10-25 (docs/engines/citations.md).
+    read: MAINTAINER_READ,
   },
 } as const satisfies Record<string, Page>;
 
 /**
  * A citation of one page, checked by the tool on CHECKED_ON: the quotes are the exact words it found
- * there. Never a read date: nobody is recorded as having read these pages.
+ * there. It carries a read only when the page has one on record (its `read`), never otherwise.
  */
 function checked(page: Page, ...quotes: string[]): EngineCitation {
   return checkedOn(CHECKED_ON, page, ...quotes);
@@ -260,8 +270,11 @@ function checked(page: Page, ...quotes: string[]): EngineCitation {
 
 /** The same, for a citation whose quotes the tool found on another day. */
 function checkedOn(day: string, page: Page, ...quotes: string[]): EngineCitation {
-  const { title, authority, jurisdiction, url, note } = page;
-  return { title, authority, jurisdiction, url, note, toolCheck: { checkedOn: day, quotes } };
+  const { title, authority, jurisdiction, url, note, read } = page;
+  const toolCheck = { checkedOn: day, quotes };
+  return read
+    ? { title, authority, jurisdiction, url, note, ...read, toolCheck }
+    : { title, authority, jurisdiction, url, note, toolCheck };
 }
 
 /** A cost line the person prices; never an amount here. */
@@ -377,7 +390,7 @@ export const skillItemsApprenticeToOwnShopAB: readonly SkillItem[] = [
 
 // ---- The road ------------------------------------------------------------------------------------
 
-export const roadApprenticeToOwnShopAB: Road = {
+const road: Road = {
   id: "road-apprentice-to-own-shop-ab",
   label: "From apprentice to your own shop (Alberta)",
   kind: "both",
@@ -1293,7 +1306,12 @@ export const roadApprenticeToOwnShopAB: Road = {
       sides: ["step-shop-stay-employed", "step-shop-open-own-shop"],
     },
   ],
-  // None of its sources has been read yet (every one is a tool check), so it carries no read date.
+  // Worked out below from its sources' reads, as roadFromCfe does for road 0.
   lastVerified: "",
   joins: { roadId: "road-starting-any-business-ab", columnId: "tier-3-incorporating" },
 };
+// The newest day any of its sources was read (the maintainer's reads of 2026-10-25), never typed by hand, so it
+// can't fall behind a newer read; a tool check is not a read, so a road with none would stay "".
+road.lastVerified = newestReadDate(road) ?? "";
+
+export const roadApprenticeToOwnShopAB: Road = road;

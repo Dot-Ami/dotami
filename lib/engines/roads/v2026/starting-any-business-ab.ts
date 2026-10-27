@@ -2,6 +2,7 @@ import { cfeNodesV2026, type CFENodeId } from "../../cfe/v2026/nodes";
 import { cfeTiersV2026 } from "../../cfe/v2026/tiers";
 import { CRA_NOT_COUNTED, CRA_SOLE_PROPRIETOR_COUNTS } from "../../compliance/v2026/gst-official-words";
 import { complianceRulesV2026 } from "../../compliance/v2026/rules";
+import { MAINTAINER_READ, type PageRead } from "../../shared/maintainer-reads";
 import type { CitationAuthority, EngineCitation, Province } from "../../shared/types";
 import { roadFromCfe } from "./from-cfe";
 import { keepRecordsStep } from "./keep-records";
@@ -22,15 +23,16 @@ import type { DoneWhenLine, NamedCostLine, RoadStep, SkillItem } from "./types";
  * tests/engine-integrity.spec.ts still checks every id names a real catalog entry.
  *
  * Its own content (2026-10-12, § 6 "Road 0's content as built"): about three done-when lines on each
- * of the ten map stages, and three "before you open" steps in the first column. Every source here is a
- * tool check, not a read (option B, docs/engines/citations.md): each quote was found word for word on
- * its live page by `node scripts/check-quotes.mjs --url … --quote …` on CHECKED_ON, and nobody is
- * recorded as having read these pages, so none has a read date. A line says only what its quotes say,
- * and no amount is written anywhere: Alberta's registry fees sit in a catalogue that stops tools, and
- * permit fees vary, so they are named lines the person prices. Sole Prop activation also carries the
- * seven named start-up cost lines the design names (tools, a space deposit, insurance, …), names only.
- * Since 2026-10-14 the first column also holds "Keep your records from day one" (./keep-records.ts),
- * whose sources were checked by the tool that day.
+ * of the ten map stages, and three "before you open" steps in the first column. Every source here has a
+ * tool check (option B, docs/engines/citations.md): each quote was found word for word on its live page
+ * by `node scripts/check-quotes.mjs --url … --quote …` on CHECKED_ON. A page the maintainer read in full
+ * on 2026-10-25 carries his read (its `read`), which every citation of it copies and which wins on
+ * screen; the other pages have no read on record, so their citations have no read date. A line says
+ * only what its quotes say, and no amount is written anywhere: Alberta's registry fees sit in a
+ * catalogue that stops tools, and permit fees vary, so they are named lines the person prices. Sole Prop
+ * activation also carries the seven named start-up cost lines the design names (tools, a space deposit,
+ * insurance, …), names only. Since 2026-10-14 the first column also holds "Keep your records from day
+ * one" (./keep-records.ts), whose sources were checked by the tool that day.
  */
 
 /** The day scripts/check-quotes.mjs found every quote below on its page. */
@@ -43,6 +45,8 @@ interface Page {
   url: string;
   /** What the page is, in one line; the quotes say what this entry relies on. */
   note: string;
+  /** A read of the whole page, when one is on record: every citation of the page carries it. */
+  read?: Readonly<PageRead>;
 }
 
 const CRA = "https://www.canada.ca/en/revenue-agency/services";
@@ -64,6 +68,8 @@ const PAGES = {
     jurisdiction: "CA",
     url: `${CRA}/tax/businesses/small-businesses-self-employed-income/setting-your-business/sole-proprietorship.html`,
     note: "What a sole proprietorship is, how its owner reports and pays tax, and billing in the business's name.",
+    // The maintainer read it in full on 2026-10-25 (docs/engines/citations.md).
+    read: MAINTAINER_READ,
   },
   businessRecords: {
     title: "Business records (CRA)",
@@ -92,6 +98,8 @@ const PAGES = {
     jurisdiction: "CA",
     url: `${CRA}/tax/businesses/topics/gst-hst-businesses/when-register-charge.html`,
     note: "The CRA's small-supplier tests, and when a business must or may register for the GST/HST.",
+    // The maintainer read it in full on 2026-10-25 (docs/engines/citations.md).
+    read: MAINTAINER_READ,
   },
   corporation: {
     title: "Corporation (CRA)",
@@ -99,6 +107,8 @@ const PAGES = {
     jurisdiction: "CA",
     url: `${CRA}/tax/businesses/small-businesses-self-employed-income/setting-your-business/corporation.html`,
     note: "What a corporation is, how one is set up, its T2 return, and a shareholder's and a director's liability.",
+    // The maintainer read it in full on 2026-10-25 (docs/engines/citations.md).
+    read: MAINTAINER_READ,
   },
   federalIncorporation: {
     title: "Federal incorporation (Corporations Canada)",
@@ -106,6 +116,8 @@ const PAGES = {
     jurisdiction: "CA",
     url: "https://ised-isde.canada.ca/site/corporations-canada/en/federal-incorporation",
     note: "Incorporating a business federally: what it creates and who can.",
+    // The maintainer read it in full on 2026-10-25 (docs/engines/citations.md).
+    read: MAINTAINER_READ,
   },
   relationships: {
     title: "How certain relationships affect the small business deduction and SR&ED investment tax credits (CRA)",
@@ -113,6 +125,8 @@ const PAGES = {
     jurisdiction: "CA",
     url: `${CRA}/tax/businesses/topics/corporations/business-tax-credits/how-relationships-affect-small-business-deduction-sred-investment-tax-credits.html`,
     note: "What a CCPC is, and how associated corporations share the business limit and the SR&ED expenditure limit.",
+    // The maintainer read it in full on 2026-10-25 (docs/engines/citations.md).
+    read: MAINTAINER_READ,
   },
   newEmployee: {
     title: "Set up and manage employee payroll information (CRA)",
@@ -120,6 +134,8 @@ const PAGES = {
     jurisdiction: "CA",
     url: `${CRA}/tax/businesses/topics/payroll/set-up-new-employee.html`,
     note: "What an employer gets from a new employee before paying them.",
+    // The maintainer read it in full on 2026-10-25 (docs/engines/citations.md).
+    read: MAINTAINER_READ,
   },
   payrollAccount: {
     title: "Determine if you need to register for a payroll account (CRA)",
@@ -127,6 +143,8 @@ const PAGES = {
     jurisdiction: "CA",
     url: `${CRA}/tax/businesses/topics/payroll/open-manage-payroll-account/determine-need-register.html`,
     note: "Who must register for a CRA payroll account, by when, and how a worker's status is decided.",
+    // The maintainer read it in full on 2026-10-25 (docs/engines/citations.md).
+    read: MAINTAINER_READ,
   },
   wcbWorkerCoverage: {
     title: "Worker coverage (WCB-Alberta)",
@@ -209,11 +227,14 @@ const PAGES = {
 
 /**
  * A citation of one page, checked by the tool on CHECKED_ON: the quotes are the exact words it found
- * there. Never a read date: nobody is recorded as having read these pages.
+ * there. It carries a read only when the page has one on record (its `read`), never otherwise.
  */
 function checked(page: Page, ...quotes: string[]): EngineCitation {
-  const { title, authority, jurisdiction, url, note } = page;
-  return { title, authority, jurisdiction, url, note, toolCheck: { checkedOn: CHECKED_ON, quotes } };
+  const { title, authority, jurisdiction, url, note, read } = page;
+  const toolCheck = { checkedOn: CHECKED_ON, quotes };
+  return read
+    ? { title, authority, jurisdiction, url, note, ...read, toolCheck }
+    : { title, authority, jurisdiction, url, note, toolCheck };
 }
 
 function named(id: string, label: string, nameSource?: EngineCitation): NamedCostLine {

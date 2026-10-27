@@ -5,9 +5,10 @@
  * (the same whole-word, one-block match as scripts/check-quotes.mjs), kept as a tool check of that day on the
  * entry he checked and on no other citation of the page. Where neither says it, the line says less.
  *
- * No source is marked as read by him yet: he is sending the reading list with his saved reads, and those marks
- * come in a later change, which also changes the first check below. Entries taken off: tests/retired-entries.spec.ts;
- * the program added: tests/productivity-grant.spec.ts.
+ * No source was marked as read by him then. His reads came on 2026-10-25, when he read 31 pages in full from his
+ * reading list; since 2026-10-27 every citation of those pages carries them (tests/maintainer-reads.spec.ts), which
+ * changed the first check below and the two that said a page had no read. Entries taken off:
+ * tests/retired-entries.spec.ts; the program added: tests/productivity-grant.spec.ts.
  *
  * Addresses and quotes are written out here, not imported, so a change to a catalog's constant can't move the test
  * with it. Each check fails on the code before the corrections unless its comment says it is a guard.
@@ -26,6 +27,7 @@ import type { GrantProgram } from "@/lib/engines/grants/v2026/types";
 import { riskEntriesV2026 } from "@/lib/engines/risk/v2026";
 import { howChecked } from "@/lib/engines/shared/citation-check";
 
+import { MAINTAINER_READ_DAY, MAINTAINER_READ_PAGES } from "./fixtures/maintainer-reads-2026-10-25";
 import { findTimeWords } from "./helpers/time-words";
 
 const TODAY = "2026-10-24";
@@ -214,12 +216,18 @@ const card = (p: EvaluationProfile, id: string) => {
   return c!;
 };
 
-describe("1. No source says the maintainer read it yet", () => {
-  // A guard: it passes on the code before too. His reads come with the reading list he is sending back, in a later
-  // change, which records each one he made (readBy "person") and changes this check.
-  it("no citation in any catalog claims a read made on the reading list's day or after", () => {
+describe("1. The only reads since the reading list's day are the maintainer's", () => {
+  // Until 2026-10-27 no citation claimed a read made on the reading list's day or after. His reads came with the
+  // reading list he sent back: 31 pages read in full on 2026-10-25, recorded with readBy "person" on every citation of
+  // those pages (tests/maintainer-reads.spec.ts), and on no other.
+  it("every citation that claims a read made on the reading list's day or after is the maintainer's of 2026-10-25, of a page he read", () => {
+    const hisPages = new Set(MAINTAINER_READ_PAGES.map((p) => p.url));
     const claims = all.filter(({ citation }) => citation.lastVerified !== undefined && citation.lastVerified >= LIST_DAY);
-    expect(claims.map(({ where, citation }) => `${where}: ${citation.url} (${citation.lastVerified})`)).toEqual([]);
+    expect(claims.length).toBeGreaterThan(0);
+    const other = claims.filter(
+      ({ citation }) => citation.lastVerified !== MAINTAINER_READ_DAY || citation.readBy !== "person" || !hisPages.has(citation.url),
+    );
+    expect(other.map(({ where, citation }) => `${where}: ${citation.url} (${citation.lastVerified}, ${citation.readBy ?? "no reader"})`)).toEqual([]);
   });
 });
 
@@ -290,8 +298,13 @@ describe("3. SR&ED: the credit's rates in the CRA's words", () => {
     const ccpc = sred().ratesByStructure!.find((r) => r.structure === "ccpc")!;
     expect(ccpc.note).not.toMatch(/advisor/i);
     expect(quoted(ccpc.note ?? "")).toEqual([CCPC_ENHANCED, LIMIT_SIX_MILLION]);
-    // The two pages for the limit, checked by a tool only: no person is recorded as having read them.
-    for (const url of [PAGE.whatsNew, PAGE.act127]) expect(howChecked(citationOf("grants grant-sred", url)).kind, url).toBe("tool");
+    // The two pages for the limit, checked by a tool on the list's day, and read in full by the maintainer on 2026-10-25
+    // (until 2026-10-27 a tool check only, with no read on record).
+    for (const url of [PAGE.whatsNew, PAGE.act127]) {
+      const c = citationOf("grants grant-sred", url);
+      expect(c.toolCheck?.checkedOn, url).toBe(LIST_DAY);
+      expect(howChecked(c), url).toEqual({ kind: "person", on: MAINTAINER_READ_DAY });
+    }
     // Every dollar amount the card shows is inside a quote.
     const shown = [card(idea({ structure: "ccpc" }), "grant-sred").payoff, card(idea(), "grant-sred").fork?.note ?? ""];
     for (const text of shown) expect(ownWords(text).match(/\$\s?\d/g) ?? [], text).toEqual([]);
@@ -305,7 +318,7 @@ describe("3. SR&ED: the credit's rates in the CRA's words", () => {
   });
 
   it("the CCPC's 35% is never called refundable in DotAmi's own words: none of the card's quotes says so", () => {
-    // The word rested only on the maintainer's read, which isn't on record yet (his answer 1 of 2026-10-24): the CRA's
+    // The word rested only on the maintainer's read, which wasn't on record then (his answer 1 of 2026-10-24): the CRA's
     // “Some businesses may also earn a refundable ITC.” says neither which businesses nor which rate.
     expect(sred().ratesByStructure!.find((r) => r.structure === "ccpc")!.refundable).toBeUndefined();
     const shown = [card(idea({ structure: "ccpc" }), "grant-sred").payoff, card(idea(), "grant-sred").fork?.note ?? ""];
@@ -331,11 +344,15 @@ describe("3. SR&ED: the credit's rates in the CRA's words", () => {
     }
   });
 
-  it("the CRA's What are SR&ED tax incentives page, with no read on record, says checked by a tool", () => {
+  it("the CRA's What are SR&ED tax incentives page says the maintainer read it, and keeps the list's tool check", () => {
+    // Until 2026-10-27 it had no read on record and said checked by a tool.
     const c = citationOf("grants grant-sred", PAGE.sredWhatAre);
-    expect(howChecked(c).kind).toBe("tool");
-    // The program's own page keeps the check it had (2026-10-13), and no read.
-    expect(citationOf("grants grant-sred", PAGE.sredProgram).toolCheck?.checkedOn).toBe("2026-10-13");
+    expect(howChecked(c)).toEqual({ kind: "person", on: MAINTAINER_READ_DAY });
+    expect(c.toolCheck?.checkedOn).toBe(LIST_DAY);
+    // The program's own page keeps the check it had (2026-10-13), and has the maintainer's read too.
+    const program = citationOf("grants grant-sred", PAGE.sredProgram);
+    expect(program.toolCheck?.checkedOn).toBe("2026-10-13");
+    expect(howChecked(program)).toEqual({ kind: "person", on: MAINTAINER_READ_DAY });
   });
 });
 

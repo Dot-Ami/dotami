@@ -7,9 +7,15 @@ import {
   CRA_WHEN_TO_REGISTER_URL,
 } from "@/lib/engines/compliance/v2026/gst-official-words";
 import { SRED_PAGES, SRED_QUOTES_FOUND_ON, SRED_WORDS } from "@/lib/engines/grants/v2026/sred-official-words";
+import { MAINTAINER_READ_ON } from "@/lib/engines/shared/maintainer-reads";
 
 import type { CFENode } from "./types";
 
+/**
+ * The day the stages' first sources were read, by someone nobody recorded. A source the maintainer read in full on
+ * 2026-10-25 says MAINTAINER_READ_ON and `readBy: "person"` instead (docs/engines/citations.md, § The maintainer's
+ * reads of 2026-10-25), and its comment says when it was read before.
+ */
 const LAST_VERIFIED = "2026-05-01";
 
 /**
@@ -18,8 +24,8 @@ const LAST_VERIFIED = "2026-05-01";
  * first employee now quote (the two SR&ED stages' 35% is SRED_QUOTES_FOUND_ON, the same day). Each is kept as a
  * tool check of that day on the stage the list checked, and on no other citation of the page (his answer of
  * 2026-10-24). A networked `node scripts/check-quotes.mjs` run should find each again before merge
- * (docs/engines/citations.md, § The reading list's tool checks). Where a stage's citation also has its read of
- * 2026-05-01, which nobody recorded who made, the read still wins on screen.
+ * (docs/engines/citations.md, § The reading list's tool checks). Each of these pages was then read in full by the
+ * maintainer on 2026-10-25, and the read wins on screen; the tool checks stay.
  */
 const READING_LIST_FOUND_ON = "2026-10-23";
 
@@ -62,7 +68,9 @@ export const cfeNodesV2026 = [
         authority: "CRA",
         jurisdiction: "CA",
         url: "https://www.canada.ca/en/revenue-agency/services/tax/businesses/small-businesses-self-employed-income/setting-your-business/sole-proprietorship.html",
-        lastVerified: LAST_VERIFIED,
+        // Read on 2026-05-01 (who read it wasn't recorded); the maintainer read it in full on 2026-10-25.
+        lastVerified: MAINTAINER_READ_ON,
+        readBy: "person",
         note: "CRA framing for when income is reported as self-employed business income.",
       },
     ],
@@ -104,7 +112,9 @@ export const cfeNodesV2026 = [
         authority: "CRA",
         jurisdiction: "CA",
         url: "https://www.canada.ca/en/revenue-agency/services/tax/businesses/small-businesses-self-employed-income/setting-your-business/sole-proprietorship.html",
-        lastVerified: LAST_VERIFIED,
+        // Read on 2026-05-01 (who read it wasn't recorded); the maintainer read it in full on 2026-10-25.
+        lastVerified: MAINTAINER_READ_ON,
+        readBy: "person",
         note: "CRA guidance on sole proprietors reporting business income and related obligations.",
       },
       {
@@ -112,18 +122,22 @@ export const cfeNodesV2026 = [
         authority: "CRA",
         jurisdiction: "CA",
         url: "https://www.canada.ca/en/services/taxes/business-registration.html",
-        lastVerified: LAST_VERIFIED,
+        // Read on 2026-05-01 (who read it wasn't recorded); the maintainer read it in full on 2026-10-25.
+        lastVerified: MAINTAINER_READ_ON,
+        readBy: "person",
         note: "CRA business registration entry point for business numbers and program accounts.",
       },
       {
         // Since 2026-10-24 (the maintainer's reading list): the page the first projection note quotes, for what
         // counts toward the $30,000 tests, so the stage that says $30,000 cites the page that sets it. Each quote is
         // one the two GST/HST stages or road 0's dw-start-gstman-tests line holds from scripts/check-quotes.mjs on
-        // 2026-10-12, so it keeps that day; no person is recorded as having read the page.
+        // 2026-10-12, so it keeps that day. The maintainer read the page in full on 2026-10-25.
         title: "When to register for and start charging the GST/HST",
         authority: "CRA",
         jurisdiction: "CA",
         url: CRA_WHEN_TO_REGISTER_URL,
+        lastVerified: MAINTAINER_READ_ON,
+        readBy: "person",
         toolCheck: {
           checkedOn: CRA_WHEN_TO_REGISTER_TOOL_CHECK.checkedOn,
           quotes: ["You exceed the $30,000", CRA_SOLE_PROPRIETOR_COUNTS, ...CRA_NOT_COUNTED],
@@ -179,7 +193,10 @@ export const cfeNodesV2026 = [
         authority: "CRA",
         jurisdiction: "CA",
         url: CRA_WHEN_TO_REGISTER_URL,
-        // A tool found the words this stage quotes on the live page (option B); no person has read it.
+        // A tool found the words this stage quotes on the live page (option B), and the maintainer read the page in
+        // full on 2026-10-25; the read wins on screen.
+        lastVerified: MAINTAINER_READ_ON,
+        readBy: "person",
         toolCheck: CRA_WHEN_TO_REGISTER_TOOL_CHECK,
         note: "CRA page with the small-supplier tests and the line on registering voluntarily (page details 2026-06-16).",
       },
@@ -241,7 +258,10 @@ export const cfeNodesV2026 = [
         authority: "CRA",
         jurisdiction: "CA",
         url: CRA_WHEN_TO_REGISTER_URL,
-        // A tool found the words this stage quotes on the live page (option B); no person has read it.
+        // A tool found the words this stage quotes on the live page (option B), and the maintainer read the page in
+        // full on 2026-10-25; the read wins on screen.
+        lastVerified: MAINTAINER_READ_ON,
+        readBy: "person",
         toolCheck: CRA_WHEN_TO_REGISTER_TOOL_CHECK,
         note: "CRA guidance on small supplier status, mandatory registration, and timing (page details 2026-06-16). The two tests in this stage's detail are copied from its table.",
       },
@@ -304,7 +324,9 @@ export const cfeNodesV2026 = [
         authority: "CRA",
         jurisdiction: "CA",
         url: "https://www.canada.ca/en/revenue-agency/services/tax/businesses/small-businesses-self-employed-income/setting-your-business/corporation.html",
-        lastVerified: LAST_VERIFIED,
+        // Read on 2026-05-01 (who read it wasn't recorded); the maintainer read it in full on 2026-10-25.
+        lastVerified: MAINTAINER_READ_ON,
+        readBy: "person",
         note: "CRA overview of corporations as separate legal entities and tax filers.",
       },
       {
@@ -312,7 +334,9 @@ export const cfeNodesV2026 = [
         authority: "CRA",
         jurisdiction: "CA",
         url: "https://www.canada.ca/en/revenue-agency/services/forms-publications/publications/t4012/t2-corporation-income-tax-guide-chapter-4-page-4-t2-return.html",
-        lastVerified: LAST_VERIFIED,
+        // Read on 2026-05-01 (who read it wasn't recorded); the maintainer read it in full on 2026-10-25.
+        lastVerified: MAINTAINER_READ_ON,
+        readBy: "person",
         // The two runs of words the business-limit estimate below quotes. The reading list's matcher found both on the
         // page on 2026-10-23: the first was its suggested quote, the second the words structure-ccpc's citation of
         // the page already held (2026-10-13), which that citation keeps.
@@ -372,9 +396,11 @@ export const cfeNodesV2026 = [
         authority: "CRA",
         jurisdiction: "CA",
         url: SRED_PAGES.relationships,
-        lastVerified: LAST_VERIFIED,
+        // Read on 2026-05-01 (who read it wasn't recorded); the maintainer read it in full on 2026-10-25.
+        lastVerified: MAINTAINER_READ_ON,
+        readBy: "person",
         // The sentence the 35% estimate below quotes: the reading list's matcher found it on the page on 2026-10-23
-        // (lib/engines/grants/v2026/sred-official-words.ts). The read of 2026-05-01 still wins on screen.
+        // (lib/engines/grants/v2026/sred-official-words.ts). The read wins on screen.
         toolCheck: { checkedOn: SRED_QUOTES_FOUND_ON, quotes: [SRED_WORDS.ccpcEnhanced] },
         note: "CRA guidance on CCPC relationships, SBD, and SR&ED investment tax credits.",
       },
@@ -383,7 +409,9 @@ export const cfeNodesV2026 = [
         authority: "federal",
         jurisdiction: "CA",
         url: "https://ised-isde.canada.ca/site/corporations-canada/en/federal-incorporation",
-        lastVerified: LAST_VERIFIED,
+        // Read on 2026-05-01 (who read it wasn't recorded); the maintainer read it in full on 2026-10-25.
+        lastVerified: MAINTAINER_READ_ON,
+        readBy: "person",
         note: "Corporations Canada guidance on federal incorporation.",
       },
     ],
@@ -432,7 +460,9 @@ export const cfeNodesV2026 = [
         authority: "CRA",
         jurisdiction: "CA",
         url: "https://www.canada.ca/en/revenue-agency/services/tax/businesses/topics/payroll/set-up-new-employee.html",
-        lastVerified: LAST_VERIFIED,
+        // Read on 2026-05-01 (who read it wasn't recorded); the maintainer read it in full on 2026-10-25.
+        lastVerified: MAINTAINER_READ_ON,
+        readBy: "person",
         note: "CRA guidance for setting up payroll information for a new employee.",
       },
       {
@@ -440,7 +470,9 @@ export const cfeNodesV2026 = [
         authority: "CRA",
         jurisdiction: "CA",
         url: "https://www.canada.ca/en/revenue-agency/services/tax/businesses/topics/payroll/open-manage-payroll-account/determine-need-register.html",
-        lastVerified: LAST_VERIFIED,
+        // Read on 2026-05-01 (who read it wasn't recorded); the maintainer read it in full on 2026-10-25.
+        lastVerified: MAINTAINER_READ_ON,
+        readBy: "person",
         // The two sentences the payroll-timing estimate below quotes, both held by road 0's
         // dw-start-hire-payroll-account from its check of 2026-10-12, which keeps that date. The reading list's
         // matcher found both on the page again on 2026-10-23 (the second was its suggested quote).
@@ -458,7 +490,9 @@ export const cfeNodesV2026 = [
         authority: "provincial",
         jurisdiction: "ON",
         url: "https://www.ontario.ca/document/your-guide-employment-standards-act-0/small-business",
-        lastVerified: LAST_VERIFIED,
+        // Read on 2026-05-01 (who read it wasn't recorded); the maintainer read it in full on 2026-10-25.
+        lastVerified: MAINTAINER_READ_ON,
+        readBy: "person",
         note: "Ontario employment standards reference for small businesses.",
       },
       {
@@ -466,17 +500,21 @@ export const cfeNodesV2026 = [
         authority: "provincial",
         jurisdiction: "BC",
         url: "https://www2.gov.bc.ca/gov/content/employment-business/employment-standards-advice/employment-standards",
-        lastVerified: LAST_VERIFIED,
+        // Read on 2026-05-01 (who read it wasn't recorded); the maintainer read it in full on 2026-10-25.
+        lastVerified: MAINTAINER_READ_ON,
+        readBy: "person",
         note: "BC employment standards reference for employers and workers.",
       },
       {
         // The maintainer's call a-call-12 (2026-10-23): Alberta's own page, since every road now shows a person
-        // only the federal pages and their own province's. A tool found these words on it; no person has read it
-        // yet (it waits on the maintainer's reading list, docs/engines/citations.md).
+        // only the federal pages and their own province's. A tool found these words on it on 2026-10-23, and the
+        // maintainer read it in full on 2026-10-25 (docs/engines/citations.md).
         title: "Employment standards",
         authority: "provincial",
         jurisdiction: "AB",
         url: "https://www.alberta.ca/employment-standards",
+        lastVerified: MAINTAINER_READ_ON,
+        readBy: "person",
         toolCheck: {
           checkedOn: "2026-10-23",
           quotes: [
@@ -641,8 +679,11 @@ export const cfeNodesV2026 = [
         jurisdiction: "CA",
         // Moved: the old address (…/scientific-research-experimental-development-tax-incentive/claim-sred-expenditures.html,
         // read 2026-05-01) answered 404 on 2026-10-13; a tool found these words on the new page that day
-        // (the second is how the page describes its "Get ready to claim" step: the records to keep).
+        // (the second is how the page describes its "Get ready to claim" step: the records to keep). The maintainer
+        // read the new page in full on 2026-10-25.
         url: "https://www.canada.ca/en/revenue-agency/services/scientific-research-experimental-development-tax-incentive-program/sred-claim.html",
+        lastVerified: MAINTAINER_READ_ON,
+        readBy: "person",
         toolCheck: {
           checkedOn: "2026-10-13",
           quotes: [
@@ -659,8 +700,11 @@ export const cfeNodesV2026 = [
         // Moved: the old address (…/scientific-research-experimental-development-tax-incentive/glossary.html,
         // read 2026-05-01) answered 404 on 2026-10-13; a tool found these words on the new page that day:
         // its entry for the systematic investigation the stage's records track, and one of the kinds of
-        // work the law's definition of SR&ED leaves out (routine work, kept apart from SR&ED).
+        // work the law's definition of SR&ED leaves out (routine work, kept apart from SR&ED). The maintainer read
+        // the new page in full on 2026-10-25.
         url: "https://www.canada.ca/en/revenue-agency/services/scientific-research-experimental-development-tax-incentive-program/glossary.html",
+        lastVerified: MAINTAINER_READ_ON,
+        readBy: "person",
         toolCheck: {
           checkedOn: "2026-10-13",
           quotes: [
@@ -673,12 +717,14 @@ export const cfeNodesV2026 = [
       {
         // Added 2026-10-24 for the stage's 35% (the maintainer's answer of that day: quote this page's line, as
         // Incorporation for liability/SR&ED does). He asked for the glossary's line stating 35%, which no tool has
-        // found, so the stage quotes the sentence the reading list's matcher found here on 2026-10-23. A tool check
-        // only: no person is recorded as having read the page.
+        // found, so the stage quotes the sentence the reading list's matcher found here on 2026-10-23. The maintainer
+        // read the page in full on 2026-10-25.
         title: "How certain relationships affect the small business deduction and SR&ED investment tax credits",
         authority: "CRA",
         jurisdiction: "CA",
         url: SRED_PAGES.relationships,
+        lastVerified: MAINTAINER_READ_ON,
+        readBy: "person",
         toolCheck: { checkedOn: SRED_QUOTES_FOUND_ON, quotes: [SRED_WORDS.ccpcEnhanced] },
         note: "Which CCPCs may earn the enhanced 35% rate, up to their expenditure limit for the year.",
       },

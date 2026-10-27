@@ -167,6 +167,8 @@ page's words in quotation marks, and the page is among the stage's own sources (
   property” “and goodwill from the sale of a business.”), and names Mandatory GST registration, where the
   tests are quoted in full. *Sources for this stage* gains the CRA's *When to register for and start
   charging the GST/HST* (3 sources), in amber: checked by a tool on 2026-10-12, not read by a person.
+  Since the maintainer's read of that page in full on 2026-10-25 (recorded 2026-10-27), it says *Read by
+  a person on 2026-10-25*, as the stage's other two sources do.
 - **Hire first employee**'s **Payroll account timing** box reads “before the first remittance due date”,
   on the CRA's two sentences (registering before the first remittance due date, and that date: “the 15th
   day of the month following the month in which you began withholding deductions …”), in place of

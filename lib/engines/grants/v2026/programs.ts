@@ -1,3 +1,5 @@
+import { MAINTAINER_READ_ON } from "@/lib/engines/shared/maintainer-reads";
+
 import { SRED_PAGES, SRED_QUOTES_FOUND_ON, SRED_WORDS } from "./sred-official-words";
 import type { GrantProgram } from "./types";
 
@@ -30,8 +32,11 @@ export const grantProgramsV2026 = [
         authority: "CRA",
         jurisdiction: "CA",
         // Moved: the old address (…/scientific-research-experimental-development-tax-incentive.html, read
-        // 2026-06-08) answered 404 on 2026-10-13; a tool found these words on the new page that day.
+        // 2026-06-08) answered 404 on 2026-10-13; a tool found these words on the new page that day. The maintainer
+        // read the new page in full on 2026-10-25.
         url: "https://www.canada.ca/en/revenue-agency/services/scientific-research-experimental-development-tax-incentive-program.html",
+        lastVerified: MAINTAINER_READ_ON,
+        readBy: "person",
         toolCheck: {
           checkedOn: "2026-10-13",
           quotes: ["tax incentives are intended to encourage businesses to conduct research and development in Canada."],
@@ -40,13 +45,15 @@ export const grantProgramsV2026 = [
       },
       // The four below were added 2026-10-24 for the rates and the limit the card quotes (the maintainer's reading
       // list of 2026-10-23, items grant-sred/* and sred-expenditure-limit-6-million). Its tool found each quote on its
-      // page that day (./sred-official-words.ts); no read of these pages is on record, so each card says "Checked by a
-      // tool" in amber and lists the words.
+      // page that day (./sred-official-words.ts), and the maintainer read each page in full on 2026-10-25: the read wins
+      // on screen ("Read by a person"), and the tool checks stay.
       {
         title: "SR&ED tax incentives: the credit's rates",
         authority: "CRA",
         jurisdiction: "CA",
         url: SRED_PAGES.whatAre,
+        lastVerified: MAINTAINER_READ_ON,
+        readBy: "person",
         toolCheck: {
           checkedOn: SRED_QUOTES_FOUND_ON,
           quotes: [SRED_WORDS.basicRate, SRED_WORDS.enhancedRate, SRED_WORDS.someRefundable],
@@ -58,6 +65,8 @@ export const grantProgramsV2026 = [
         authority: "CRA",
         jurisdiction: "CA",
         url: SRED_PAGES.relationships,
+        lastVerified: MAINTAINER_READ_ON,
+        readBy: "person",
         toolCheck: { checkedOn: SRED_QUOTES_FOUND_ON, quotes: [SRED_WORDS.ccpcEnhanced] },
         note: "Which CCPCs may earn the enhanced 35% rate, up to their expenditure limit for the year, and how associated corporations share that limit.",
       },
@@ -66,6 +75,8 @@ export const grantProgramsV2026 = [
         authority: "CRA",
         jurisdiction: "CA",
         url: SRED_PAGES.whatsNew,
+        lastVerified: MAINTAINER_READ_ON,
+        readBy: "person",
         toolCheck: { checkedOn: SRED_QUOTES_FOUND_ON, quotes: [SRED_WORDS.limitSixMillion] },
         note: "The CRA's list of corporation income tax changes; its line on the SR&ED expenditure limit sits under 2025 – Federal.",
       },
@@ -74,6 +85,8 @@ export const grantProgramsV2026 = [
         authority: "federal",
         jurisdiction: "CA",
         url: SRED_PAGES.act127,
+        lastVerified: MAINTAINER_READ_ON,
+        readBy: "person",
         toolCheck: { checkedOn: SRED_QUOTES_FOUND_ON, quotes: [SRED_WORDS.actFormula] },
         note: "The formula for a CCPC's expenditure limit for a taxation year, from $6 million (the consolidated Act).",
       },
@@ -267,15 +280,20 @@ export const grantProgramsV2026 = [
         authority: "federal",
         jurisdiction: "CA",
         url: "https://ised-isde.canada.ca/site/canada-small-business-financing-program/en",
-        lastVerified: "2026-07-02",
+        // Read on 2026-07-02 (who read it wasn't recorded); the maintainer read it in full on 2026-10-25.
+        lastVerified: MAINTAINER_READ_ON,
+        readBy: "person",
         note: "ISED program hub — equipment financing with government loan guarantee.",
       },
       {
         title: "Helping small businesses get loans (Canada Small Business Financing Program)",
         authority: "federal",
         jurisdiction: "CA",
-        // Added 2026-10-23: a tool found these words on ISED's loans page that day; no person has read it yet (option B).
+        // Added 2026-10-23: a tool found these words on ISED's loans page that day (option B), and the maintainer read
+        // the page in full on 2026-10-25.
         url: "https://ised-isde.canada.ca/site/canada-small-business-financing-program/en/canada-small-business-financing-program/find-loan-your-small-business/helping-small-businesses-get-loans",
+        lastVerified: MAINTAINER_READ_ON,
+        readBy: "person",
         toolCheck: {
           checkedOn: "2026-10-23",
           quotes: [
@@ -308,8 +326,9 @@ export const grantProgramsV2026 = [
     description:
       "In the words of Alberta's page on this program: “Must contribute 25% of the total eligible training costs for existing employees or individuals (includes unemployed individuals) they intend to hire”; “Contributes the other 75% of the cost to a maximum of $5,000 per employed trainee per fiscal year”; “An employer is eligible for up to a maximum amount of $100,000 per fiscal year”.",
     // No screen draws a program's eligibility. The page's one-year rule is a time, which DotAmi shows only as the
-    // page's quoted words, so it stays off the card's line (lensAnnotations.tax); it is on screen only among the
-    // words found on the page, under the card's source.
+    // page's quoted words, so it stays off the card's line (lensAnnotations.tax). It was on screen among the words
+    // found on the page, under the card's source, until the maintainer's read of 2026-10-25, which wins there
+    // (docs/engines/citations.md, rule 3): it is kept in the source's tool check and here.
     eligibility: "Employers, in Alberta's words, one of the requirements its page lists: “be operational in Alberta for at least one year”.",
     lensAnnotations: {
       // Shown on screen as the card's payoff (lib/brain/evaluate.ts evaluateGrant). Outside the quotes: the compass's
@@ -327,10 +346,12 @@ export const grantProgramsV2026 = [
         // The maintainer's reading list (2026-10-23, items capg-75-percent, capg-5000-per-trainee,
         // capg-100000-per-employer and capg-operational-one-year) fetched the page that day from the Job Grant's old
         // address, which redirects here, and its tool (the repo's matcher, the same whole-word, one-block match as
-        // scripts/check-quotes.mjs) found these four quotes on it. No read of the page is on record yet, so its card
-        // says "Checked by a tool" in amber. A networked `node scripts/check-quotes.mjs` run should find them again
-        // before merge (docs/engines/citations.md, rule 4).
+        // scripts/check-quotes.mjs) found these four quotes on it. The maintainer read the page in full on 2026-10-25,
+        // so its card says "Read by a person" (the read wins on screen); the tool check stays. A networked
+        // `node scripts/check-quotes.mjs` run should find them again before merge (docs/engines/citations.md, rule 4).
         url: "https://www.alberta.ca/canada-alberta-productivity-grant",
+        lastVerified: MAINTAINER_READ_ON,
+        readBy: "person",
         toolCheck: {
           checkedOn: "2026-10-23",
           quotes: [

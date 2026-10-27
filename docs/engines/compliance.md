@@ -133,7 +133,10 @@ personal services). Each is a separate change.
 ## From the maintainer's reading list (2026-10-23)
 
 His reading list of 2026-10-23 checked five entries here, and his answers of 2026-10-24 decided what
-changed. None of their sources is marked as read by him yet: his saved reads come in a later change.
+changed. None of their sources was marked as read by him then; since 2026-10-27 the sources of the four
+still here say he read them in full on 2026-10-25 ([citations.md](citations.md), § The maintainer's reads
+of 2026-10-25). His read of the rate page's table is recorded, but what he found there isn't, so the two
+lines below that rest on it are unchanged.
 
 - **Ontario HST (13%)** and **Alberta — no provincial sales tax** cite the CRA's page on which GST/HST
   rate to charge. Its table of rates isn't in the page's HTML, so no tool can find one of its rows, and
@@ -150,8 +153,9 @@ changed. None of their sources is marked as read by him yet: his saved reads com
   tool has checked yet, and it says nothing of the 5%.
 - **BC Provincial Sales Tax (PST)**: unchanged.
 - **Ontario food premises licensing** came off: § Retired rules.
-- **The Delete menu's records line** (`record-keeping.ts`, not a map rule) keeps its read of
-  2026-10-08, which still shows, and now also a tool check of 2026-10-23 holding the CRA's own
+- **The Delete menu's records line** (`record-keeping.ts`, not a map rule) keeps a read, which
+  shows (2026-10-08 until the maintainer's of 2026-10-25), and now also a tool check of 2026-10-23
+  holding the CRA's own
   sentences, "Generally, you must keep all required records and supporting documents for a period of
   six years from the end of the last tax year they relate to." and "In some situations, you must
   retain your records for a different period of time.", the same two every road's *Keep your records
