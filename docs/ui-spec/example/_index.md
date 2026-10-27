@@ -166,9 +166,9 @@ instead (`lib/cockpit/words.ts` `example.theirs`, given to the goal bar, `gaugeV
 | *$14,993.62 your numbers (1 line)*; *your pick of job: …*; *your own skills: …* | *$14,993.62 Mara's numbers (1 line)*; *Mara's pick of job: …*; *Mara's own skills: …* |
 | *What you've told DotAmi*, *16 things you've told DotAmi* | *What Mara told DotAmi*, *16 things Mara told DotAmi* |
 
-The receipt lines (*"Because you marked 9 skills…"*) and the step panel's buttons keep the words every
+The receipt lines (*"Because you told us you have “Alberta Student Number”…"*) and the step panel's buttons keep the words every
 cockpit uses; the banner and *What Mara did* say once that "you" there means Mara. *What Mara did*'s
-headings say her name, not a pronoun (*Mara's skill marks*, *Mara's start-up cost, from listed prices*, *The
+headings say her name, not a pronoun (*Mara's marks*, *Mara's skill marks* until 2026-10-26, when the review of #209's merge found it named her legal requirements skills; *Mara's start-up cost, from listed prices*, *The
 step Mara marked done*), so a second example person never inherits hers. The what-if bar has no words of
 its own on the example (since 2026-10-15): it starts empty, and a what-if the visitor tries reads as on any
 cockpit (*Your what-if, not a forecast*, *First-year sales of $…, for this look only*). From 2026-10-14 to
@@ -200,9 +200,13 @@ The told list shows, for each of Mara's answers, what it unlocked, through the s
 `roadReceipt` every cockpit uses. Measured on the catalog of 2026-10-14 with her real numbers
 (`tests/example-future.spec.ts` keeps them true):
 
-- Her 9 marks: *"Because you marked 9 skills, 4 steps now have every skill they list marked have."* (the
-  appendix wrote *3 steps now say needs 0 more*; road 1 lists three skills of its own, and her two *have*
-  marks cover every skill on four steps).
+- Her 9 marks: *"Because you told us you have “Alberta Student Number”, you told us you have “An
+  apprenticeship education agreement with a sponsor” and you marked 7 skills, 4 steps now have every legal
+  requirement they list marked have."* (the appendix wrote *3 steps now say needs 0 more*; road 1 lists three
+  legal requirements of its own and no skills, and her two *have* marks cover every legal requirement on four
+  steps; her seven other marks are on the job's list, which are skills). Until 2026-10-26 the line said
+  *"Because you marked 9 skills, 4 steps now have every skill they list marked have."*, calling the road's legal
+  requirements skills (the review of #209's merge).
 - The Steps gauge: *1 of 17 marked done* (the appendix wrote *0 of 22* before she marked one; road 1 has
   17 steps since 2026-10-14, when *Keep your records from day one* was added; 16 before).
 - The money gauge, plain arithmetic: *$1,220 official fees (7 lines) · $14,993.62 Mara's numbers (1 line)*,

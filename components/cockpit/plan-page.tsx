@@ -1,5 +1,5 @@
 import Link from "next/link";
-import type { ReactNode } from "react";
+import { Fragment, type ReactNode } from "react";
 
 import { PrintButton } from "@/components/cockpit/print-button";
 import { PageQuotes } from "@/components/shared/page-quotes";
@@ -86,18 +86,27 @@ function Step({ step }: { step: PlanStep }) {
         </ul>
       ) : null}
 
-      {step.skills.length > 0 ? (
-        <>
-          <p className="mt-3 text-body font-semibold">{words.panel.skills}</p>
-          <ul className="mt-1 list-disc pl-5 text-body">
-            {step.skills.map((skill) => (
-              <li key={skill.label}>
-                {skill.label}: {skill.mark}
-              </li>
-            ))}
-          </ul>
-        </>
-      ) : null}
+      {/* Its legal requirements, then its skills, under the step panel's own headings, each only when it lists one:
+          a legal requirement (the Alberta Student Number) is never listed as a skill. */}
+      {(
+        [
+          [words.panel.whatItNeeds, step.requirements],
+          [words.panel.skills, step.skills],
+        ] as const
+      ).map(([title, items]) =>
+        items.length > 0 ? (
+          <Fragment key={title}>
+            <p className="mt-3 text-body font-semibold">{title}</p>
+            <ul className="mt-1 list-disc pl-5 text-body">
+              {items.map((item) => (
+                <li key={item.label}>
+                  {item.label}: {item.mark}
+                </li>
+              ))}
+            </ul>
+          </Fragment>
+        ) : null,
+      )}
 
       {step.costCount ? <p className="mt-3 text-body">{step.costCount}</p> : null}
 
@@ -196,6 +205,10 @@ export function PlanPage({ view, backHref }: { view: PlanView; backHref: string 
         </Section>
 
         <Section id="steps" index={2}>
+          {/* The order line first, for the contents list and the steps alike. Under the list it left the list's
+              first link inside a tablet's first window once main's changes came in (768x1024: three controls, over
+              the plan's budget of two; the review of #209's merge, 2026-10-26). */}
+          <p className="mb-3 text-body italic">{view.steps.order}</p>
           {/* The contents list of the plan's steps, each a link to its step (the screen review of 2026-10-23: the
               plan was 42,553 px tall on a phone). At the top of the steps rather than of the plan: the plan's first
               window may hold two controls (e2e/budgets.ts), and a link per step there would be far more. */}
@@ -213,7 +226,6 @@ export function PlanPage({ view, backHref }: { view: PlanView; backHref: string 
                 ))}
             </ol>
           </nav>
-          <p className="mb-3 text-body italic">{view.steps.order}</p>
           <div className="grid gap-5">
             {view.steps.columns.map((column) => (
               <div key={column.label}>

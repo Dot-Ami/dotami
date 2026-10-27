@@ -234,13 +234,18 @@ test("second review of #207: road 1 opened from Ontario lists no skill item rest
   await expect(panel).toBeVisible();
   await expect(panel).not.toContainText("Alberta Student Number");
   expect(await panel.locator(ALBERTA_LINKS).count()).toBe(0);
+  // What the step drew instead: under What it needs, that its legal requirements rest on other provinces' pages.
+  await expect(panel).toContainText(cockpitWords.panel.requirementsNoneForPlace);
   await panel.getByRole("button", { name: "Close", exact: true }).click();
 
   await goalBar(page).getByRole("button", { name: /^Skills/ }).click();
-  const skills = page.getByRole("region", { name: "Skills on this road" });
+  // The list's own name, from the words file (#209 renamed it "Skills and legal requirements"; #207's test, written
+  // first, looked for "Skills on this road" and found nothing once the two were merged).
+  const skills = page.getByRole("region", { name: cockpitWords.lists.skillsTitle });
   await expect(skills).toBeVisible();
   await expect(skills).not.toContainText("Alberta Student Number");
   expect(await skills.locator(ALBERTA_LINKS).count()).toBe(0);
+  await expect(skills).toContainText(cockpitWords.lists.requirementsNoneForPlace);
 });
 
 test("control: road 1 in Alberta lists Alberta Student Number with its Alberta pages, so the check above can see them", async ({ page }) => {

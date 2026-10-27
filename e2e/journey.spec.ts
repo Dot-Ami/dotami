@@ -25,6 +25,7 @@
  */
 import { expect, test, type Page } from "@playwright/test";
 
+import { cockpitWords } from "../lib/cockpit/words";
 import { generalRoadV2026, roadApprenticeToOwnShopAB, skillItemsV2026 } from "../lib/engines/roads/v2026";
 import { partHeading } from "../lib/front-door/job-search-lines";
 import { jobStepWords } from "../lib/front-door/words";
@@ -50,6 +51,21 @@ const listedSkills = new Set(roadApprenticeToOwnShopAB.steps.flatMap((s) => s.ne
 const skillLabel = (id: string) => skillItemsV2026.find((item) => item.id === id)!.label;
 const ASN = skillLabel("skill-ab-alberta-student-number");
 const AGREEMENT = skillLabel("skill-ab-apprenticeship-education-agreement");
+/**
+ * The Skills gauge on road 1 once ASN is marked have and the agreement learning, in the words file's own values.
+ * Road 1 lists no skills, only legal requirements (an ID number, an agreement, a certificate), which the gauge counts
+ * apart, never as skills (the screen review of 2026-10-23). Until the review of #209's merge this expected "1 have · 1
+ * learning · 0 not yet", the road's three items counted as skills; the merged gauge draws the lines below.
+ */
+const SKILLS_GAUGE_MARKED = [
+  cockpitWords.gauges.skills.noneListed,
+  cockpitWords.gauges.skills.requirements(listedSkills.size, 1, 1, 0, listedSkills.size - 2),
+];
+/**
+ * The gauge's line for the person's own skills, with any counts: they are the person's across every future, so a skill
+ * of their own another test left in the shared data file counts there too.
+ */
+const OWN_SKILLS_LINE = new RegExp(cockpitWords.gauges.skills.own(0, 0, 0).replace(/[.*+?^${}()|[\]\\]/g, "\\$&").replace(/0/g, "\\d+"));
 const sponsorStep = roadApprenticeToOwnShopAB.steps.find((s) => s.id === "step-shop-sponsor-hours")!;
 const handTools = sponsorStep.costs.find((c) => c.id === "cost-shop-hand-tools")!;
 // A line whose name rests on an Alberta page, priced before the change of place below, so the walk reads its row there.
@@ -203,7 +219,10 @@ test("the whole journey: front door → destination → pick a future → the co
     "aria-pressed",
     "true",
   );
-  await expect(gauge(page, "Skills")).toContainText("1 have · 1 learning · 0 not yet");
+  for (const line of SKILLS_GAUGE_MARKED) await expect(gauge(page, "Skills")).toContainText(line);
+  await expect(gauge(page, "Skills")).toContainText(OWN_SKILLS_LINE);
+  // The own skills' line as it stands now, which a reload must draw again word for word.
+  const ownSkillsLine = (await gauge(page, "Skills").innerText()).match(OWN_SKILLS_LINE)![0];
   await look(seen, page, "cockpit, the Skills list with marks and their receipts");
   await gauge(page, "Skills").click();
   await expect(skillsList(page)).toHaveCount(0);
@@ -313,7 +332,7 @@ test("the whole journey: front door → destination → pick a future → the co
   await expect(page).toHaveURL(new RegExp(`/cockpit\\?venture=${ventureId}$`));
   await page.reload();
   await expect(goalBar(page)).toContainText(`Future: ${APPRENTICE}`);
-  await expect(gauge(page, "Skills")).toContainText("1 have · 1 learning · 0 not yet");
+  for (const line of [...SKILLS_GAUGE_MARKED, ownSkillsLine]) await expect(gauge(page, "Skills")).toContainText(line);
   await expect(gauge(page, "Start-up money")).toContainText("$1,250 your numbers (1 line)");
   await expect(gauge(page, "Your date")).toContainText("May 2099");
   await expect(told(page).getByText(pricedTold, { exact: true })).toBeVisible();

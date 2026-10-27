@@ -251,6 +251,20 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   Alberta items, seen from Ontario), the step panel, the Skills list, the Skills gauge and *Your plan* say *The
   legal requirements … rest on other provinces' pages*, not that its skills do. No money amount, rule or kept data
   changed.
+- **The same fixes, checked again after main's changes came in** (2026-10-26). A legal requirement is never called a
+  skill anywhere now: a receipt counts and names legal requirements apart (*the legal requirements now read …*, *you
+  marked 3 legal requirements*, and from Ontario *this road's legal requirements rest on other provinces' pages*,
+  where it said *skills*), and *Your plan* and Export list a step's legal requirements under *What it needs* (the
+  Alberta Student Number was listed under *Skills it needs*). The Structure ladder shows each way a business can be
+  set up by its plain name only: the one-line definitions under them were tax and legal claims in DotAmi's own words,
+  with no source, and the one for a company was wrong. On a phone, a save that fails shows its line and **Save now**
+  in a bar of its own at the foot of the window (they were only in the rail, a closed sheet, so nothing on screen
+  could be pressed), and Tab inside an open sheet reaches it too. Mara's example heads her marks *Mara's marks*
+  (*Mara's skill marks* named her legal requirements skills). The phone check now also catches a box that scrolls sideways inside itself, and opens the
+  place box, the Export panel and *Your destination* with its answers given. *Your plan* says *In the order the road
+  shows them, not importance.* above its list of steps rather than under it, so on a tablet the list's first link is
+  out of the first view again (main's changes had brought it in, one control over the plan's limit). The browser
+  tests that read the old names of the Skills list and gauge read the words file instead.
 - **Export is the road on screen** (pre-release fix of 2026-10-23; review 30f, gap 22). Export printed the tax
   map's catalog stages for the idea's branch picks, whatever road was drawn: a cabinetmaker's export had 0 of
   the apprentice road's 17 steps, and a baker's on the federal road had none of its BizPaL, bank account or

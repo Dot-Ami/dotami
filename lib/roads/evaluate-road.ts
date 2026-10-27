@@ -124,6 +124,12 @@ export interface StepEvaluation {
   doneWhen: { ticked: number; total: number; tickedIds: string[] };
   /** What the step needs from the shared skill list, against the person's marks: "needs 3 · you have 2". */
   needs: MarkCounts;
+  /**
+   * The same split by kind, as the step panel draws them: its listed skills, and its legal requirements (an ID number,
+   * an agreement, a certificate), so a receipt never calls a legal requirement a skill (the review of #209's merge,
+   * 2026-10-26). An item missing from the catalog counts as a listed skill, as the step panel draws it.
+   */
+  needsByKind: { skills: MarkCounts; legalRequirements: MarkCounts };
   /** Each cost line as a screen shows it: official fee, your quote, or named and not priced yet. */
   costs: CostLineAsShown[];
   /**
@@ -453,6 +459,7 @@ export function evaluateRoad(input: RoadEvaluationInput): RoadEvaluation {
   const itemMarks = new Map(
     input.skillMarks.flatMap((m) => (m.skillItemId !== null ? [[m.skillItemId, m.mark] as const] : [])),
   );
+  const legalItems = new Set(input.skillItems.filter((item) => item.kind === "legal-requirement").map((item) => item.id));
   const quoteOf = new Map(input.agreed.costLines.map((q) => [`${q.stepId}/${q.lineId}`, q.amountCents]));
 
   const roadOrder = [...new Set([...road.columns.flatMap((c) => c.steps), ...road.steps.map((s) => s.id)])].filter((id) =>
@@ -538,6 +545,16 @@ export function evaluateRoad(input: RoadEvaluationInput): RoadEvaluation {
         return { ticked: tickedIds.length, total: step.doneWhen.length, tickedIds };
       })(),
       needs: countMarks(step.needs, itemMarks),
+      needsByKind: {
+        skills: countMarks(
+          step.needs.filter((id) => !legalItems.has(id)),
+          itemMarks,
+        ),
+        legalRequirements: countMarks(
+          step.needs.filter((id) => legalItems.has(id)),
+          itemMarks,
+        ),
+      },
       costs: step.costs.map((line) => costLineAsShown(line, quoteOf.get(`${stepId}/${line.id}`))),
       money: state === "not-on-your-path" ? "left-out" : waitsOn !== null ? "waits-on-a-pick" : "counted",
       waitsOnForkId: state === "not-on-your-path" ? null : waitsOn,
@@ -682,6 +699,8 @@ function personAnswers(input: RoadEvaluationInput, road: Road): ToldAnswer[] {
   const onRoad = new Set(road.steps.flatMap((s) => s.needs));
   const listed = new Set([...onRoad, ...jobItems.map((item) => item.id)]);
   const itemLabel = new Map([...input.skillItems, ...jobItems].map((item) => [item.id, item.label]));
+  // A mark on a legal requirement is grouped apart, so three of them are counted as legal requirements, never skills.
+  const legal = new Set(input.skillItems.filter((item) => item.kind === "legal-requirement").map((item) => item.id));
 
   for (const fork of road.forks) {
     const pick = input.forkPicks[fork.id];
@@ -698,7 +717,8 @@ function personAnswers(input: RoadEvaluationInput, road: Road): ToldAnswer[] {
       const label = itemLabel.get(mark.skillItemId) ?? mark.skillItemId;
       // Read here only because of the pick of job (not one of the road's own items): say so, for the receipts.
       const onJobList = onRoad.has(mark.skillItemId) ? { drawnForPlace: true as const } : { onJobList: true as const };
-      out.push({ id: `skill:${mark.skillItemId}`, group: "skill", ...answer.skill(label, mark.mark, false), ...onJobList });
+      const group = legal.has(mark.skillItemId) ? "requirement" : "skill";
+      out.push({ id: `skill:${mark.skillItemId}`, group, ...answer.skill(label, mark.mark, false), ...onJobList });
     } else if (mark.ownLabel !== null) {
       // One skill whatever its capital letters, as the storage keeps it.
       out.push({ id: `own-skill:${mark.ownLabel.toLocaleLowerCase()}`, group: "own-skill", ...answer.skill(mark.ownLabel, mark.mark, true) });

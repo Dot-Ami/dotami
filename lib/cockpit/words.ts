@@ -596,7 +596,9 @@ export const cockpitWords = {
       note: "Each line is worked out by the rules: the road without the answer, compared with the road with it.",
       // By the person's name, not a pronoun: an example is any entry of lib/examples/, not Mara alone.
       parts: {
-        marks: (person: string) => `${person}'s skill marks`,
+        // Her marks on skills and on legal requirements alike, so neither is called the other ("Mara's skill marks"
+        // until the review of #209's merge, 2026-10-26).
+        marks: (person: string) => `${person}'s marks`,
         costs: (person: string) => `${person}'s start-up cost, from listed prices`,
         savings: (person: string) => `${person}'s savings`,
         "this-is-mine": (person: string) => `${person}'s pick: This is mine`,
@@ -743,7 +745,6 @@ export const cockpitWords = {
     title: (idea: string) => `${idea} — DotAmi playbook`,
     lead: "Planning information from the DotAmi catalog and the road on screen, not tax or legal advice.",
     profile: "Venture profile",
-    skills: "Skills and requirements on this step",
     officialLinks: "Official links",
     costs: "Cost lines",
     noAmount: "no amount yet",
@@ -784,19 +785,21 @@ export const cockpitWords = {
     /** The structure ladder (lib/engines/structure/): where the idea's structure sits on it. */
     // In plain words since the screen review of 2026-10-23 ("Holding company (Holdco) … Estate freeze" on the
     // apprentice road), and drawn only on the tax and structure roads (lib/engines/roads/v2026
-    // `drawsTheStructureLadder`). Each rung says what the set-up is, never which one to pick.
+    // `drawsTheStructureLadder`). Each rung is named, never ranked. Since the review of #209's merge (2026-10-26) a
+    // rung is its plain name only: the one-line definitions under them were tax and legal claims in DotAmi's own
+    // words with no citation behind them ("A corporation, owned and controlled in Canada." for a CCPC was wrong).
     ladder: {
       title: "Ways a business can be set up",
       note: "From a business in your own name to companies that own companies, in Canada. Something to take to your accountant, not tax or legal advice.",
       noRung: "None is marked: once you say how the business is set up, it shows here.",
-      /** Each rung of the catalog's ladder (lib/engines/structure/v2026/ladder.ts), by its id. */
+      /** Each rung of the catalog's ladder (lib/engines/structure/v2026/ladder.ts), by its id: its plain name. */
       rungs: {
-        "structure-sole-prop": { name: "In your own name", line: "A business you run yourself, not a company of its own (a sole proprietorship)." },
-        "structure-sole-prop-gst": { name: "In your own name, registered for GST/HST", line: "The same, with a GST/HST account for the sales tax." },
-        "structure-ccpc": { name: "A company of its own", line: "A corporation, owned and controlled in Canada." },
-        "structure-holdco": { name: "A company that owns companies", line: "A corporation that holds shares of another corporation (a holding company)." },
-        "structure-family-trust": { name: "A family trust", line: "An arrangement where someone holds property for members of a family." },
-      } as Record<string, { name: string; line: string }>,
+        "structure-sole-prop": "In your own name",
+        "structure-sole-prop-gst": "In your own name, registered for GST/HST",
+        "structure-ccpc": "A company of its own",
+        "structure-holdco": "A company that owns companies",
+        "structure-family-trust": "A family trust",
+      } as Record<string, string>,
       current: "Current",
       passed: "Passed",
       ahead: "Ahead",

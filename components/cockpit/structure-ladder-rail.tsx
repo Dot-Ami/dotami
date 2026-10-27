@@ -11,9 +11,11 @@ interface StructureLadderRailProps {
 }
 
 /**
- * The ways a business can be set up, in the catalog's order, each in plain words (the catalog's own labels and
- * trigger lines are tax terms: "Holding company (Holdco)", "Estate freeze, succession, or income splitting").
- * The cockpit draws it only on the tax and structure roads (lib/engines/roads/v2026 `drawsTheStructureLadder`).
+ * The ways a business can be set up, in the catalog's order, each by its plain name (the catalog's own labels and
+ * trigger lines are tax terms: "Holding company (Holdco)", "Estate freeze, succession, or income splitting"). A
+ * rung is its name only: no line under it says what the set-up is in law (that would be a tax or legal claim in
+ * DotAmi's own words). The cockpit draws it only on the tax and structure roads (lib/engines/roads/v2026
+ * `drawsTheStructureLadder`).
  */
 export function StructureLadderRail({ activeStepId }: StructureLadderRailProps) {
   const activeIndex =
@@ -29,7 +31,7 @@ export function StructureLadderRail({ activeStepId }: StructureLadderRailProps) 
           const isActive = step.id === activeStepId;
           const isPast = activeIndex >= 0 && index < activeIndex;
           // A rung the words file doesn't name yet shows the catalog's label, never nothing.
-          const plain = words.rungs[step.id] ?? { name: step.label, line: "" };
+          const name = words.rungs[step.id] ?? step.label;
           return (
             <li
               key={step.id}
@@ -48,8 +50,7 @@ export function StructureLadderRail({ activeStepId }: StructureLadderRailProps) 
               >
                 {isActive ? words.current : isPast ? words.passed : activeStepId === null ? "" : words.ahead}
               </p>
-              <p className={`text-body font-semibold ${isActive ? "text-paper" : "text-stone"}`}>{plain.name}</p>
-              {plain.line ? <p className="mt-0.5 text-small leading-snug text-stone-dim">{plain.line}</p> : null}
+              <p className={`text-body font-semibold ${isActive ? "text-paper" : "text-stone"}`}>{name}</p>
             </li>
           );
         })}

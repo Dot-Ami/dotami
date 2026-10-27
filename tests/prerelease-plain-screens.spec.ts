@@ -38,9 +38,12 @@ import { roadJobNames } from "@/lib/front-door/road-jobs";
 import { FIRST_STEP } from "@/lib/front-door/three-steps";
 import { TYPED_WAY_SCREENS, typedWayCount } from "@/lib/front-door/typed-way";
 import { destinationWords, pickWords, typedWayWords } from "@/lib/front-door/words";
-import { evaluateRoad } from "@/lib/roads";
+import { structureLadderV2026 } from "@/lib/engines/structure/v2026";
+import { evaluateRoad, roadReceipt } from "@/lib/roads";
+import { changed, manyAnswers, manyTakenBack } from "@/lib/roads/words";
 
 import { input, inventedIdea, roadToEvaluate, TODAY } from "./helpers/road-to-evaluate";
+import { findTimeWords } from "./helpers/time-words";
 import { VERDICT_WORDS } from "./helpers/verdict-words";
 
 /** The text a person reads in drawn markup. */
@@ -324,7 +327,9 @@ describe("a future's card on Pick a future: a legal requirement is not counted a
   // The same review fix, on the card that opens the road: the apprentice road's card read "3 skills listed" for its
   // Alberta Student Number, apprenticeship agreement and certificate (2026-10-24).
   const kindOf = new Map(skillItemsV2026.map((i) => [i.id, i.kind]));
-  const cards = futureCards(listedRoads(roadsV2026, "AB"), skillItemsV2026);
+  // In Alberta, as Pick a future draws them for a person there: the place is a province code, "AB", as the catalogs'
+  // citations name it (until the review of #209's merge this passed none, so the road as written was counted).
+  const cards = futureCards(listedRoads(roadsV2026, "AB"), skillItemsV2026, "AB");
   const cardText = (roadId: string) =>
     shown(
       renderToStaticMarkup(
@@ -349,9 +354,83 @@ describe("a future's card on Pick a future: a legal requirement is not counted a
     }
   });
 
+  it("from Ontario: road 1 lists no skill and no legal requirement; road 0 only its legal requirements with a federal source", () => {
+    const fromOntario = futureCards(listedRoads(roadsV2026, "ON"), skillItemsV2026, "ON");
+    const road1 = fromOntario.find((c) => c.roadId === roadApprenticeToOwnShopAB.id)!;
+    expect([road1.skillsListed, road1.requirementsListed]).toEqual([0, 0]);
+    // Road 0's legal requirements resting on a federal page (or Ontario's): the ones its card counts from Ontario.
+    const road0 = fromOntario.find((c) => c.roadId === roadStartingAnyBusinessAB.id)!;
+    const road0Items = [...new Set(roadStartingAnyBusinessAB.steps.flatMap((s) => s.needs))].flatMap((id) => skillItemsV2026.filter((i) => i.id === id));
+    const federal = road0Items.filter((i) => i.kind === "legal-requirement" && i.citations.some((c) => c.jurisdiction === "CA" || c.jurisdiction === "ON"));
+    expect(federal.length).toBeGreaterThan(0);
+    expect(road0.requirementsListed).toBe(federal.length);
+    // Control: in Alberta the same cards count road 1's three legal requirements, so the check above can see them.
+    expect(cards.find((c) => c.roadId === roadApprenticeToOwnShopAB.id)!.requirementsListed).toBe(3);
+  });
+
   it("planted control: a road with no legal requirement keeps the line as it was", () => {
     expect(pickWords.counts(4, 2, 0, 1, 3)).toBe("4 steps · 2 skills listed · 1 official fee found · 3 cost lines you'd price");
     expect(pickWords.counts(4, 2, 1, 1, 3)).toBe("4 steps · 2 skills listed · 1 legal requirement · 1 official fee found · 3 cost lines you'd price");
+  });
+});
+
+describe("a receipt never calls a legal requirement a skill", () => {
+  // The review of #209's merge (2026-10-26): the receipts said "you marked 3 skills" and "3 steps now have every skill
+  // they list marked have" for road 1's Alberta Student Number, apprenticeship agreement and certificate, all legal
+  // requirements, while the Skills gauge counts them apart from skills.
+  const ROAD_1_ITEMS = ["skill-ab-alberta-student-number", "skill-ab-apprenticeship-education-agreement", "skill-ab-recognized-outside-trade-certificate"];
+  const on1 = (marked: readonly string[]) =>
+    evaluateRoad(
+      input({
+        road: roadApprenticeToOwnShopAB,
+        skillItems: skillItemsV2026,
+        skillMarks: marked.map((skillItemId) => ({ skillItemId, ownLabel: null, mark: "have" as const })),
+      }),
+    );
+
+  it("three marked on road 1: counted as legal requirements, and every line names them so", () => {
+    expect(ROAD_1_ITEMS.every((id) => skillItemsV2026.find((i) => i.id === id)?.kind === "legal-requirement")).toBe(true);
+    const lines = roadReceipt(on1([]), on1(ROAD_1_ITEMS));
+    expect(lines.length).toBeGreaterThan(0);
+    for (const line of lines) {
+      expect(line).toMatch(/^Because you marked 3 legal requirements, /);
+      expect(line).not.toMatch(/\bskills?\b/);
+    }
+    expect(lines).toContain("Because you marked 3 legal requirements, 5 steps now have every legal requirement they list marked have.");
+    expect(lines).toContain("Because you marked 3 legal requirements, the legal requirements now read 3 have, 0 learning, 0 not yet, 0 not marked.");
+  });
+
+  it("three taken back on road 1: counted as legal requirements taken back", () => {
+    const lines = roadReceipt(on1(ROAD_1_ITEMS), on1([]));
+    expect(lines.length).toBeGreaterThan(0);
+    for (const line of lines) {
+      expect(line).toMatch(/^Because you took back your marks on 3 legal requirements, /);
+      expect(line).not.toMatch(/\bskills?\b/);
+    }
+  });
+
+  it("control: three skills marked on a road that lists skills are still counted as skills", () => {
+    const marks = ["skill-eval-math", "skill-eval-drawings", "skill-eval-quoting"].map((skillItemId) => ({ skillItemId, ownLabel: null, mark: "have" as const }));
+    const lines = roadReceipt(evaluateRoad(input()), evaluateRoad(input({ skillMarks: marks })));
+    expect(lines[0]).toBe("Because you marked 3 skills, 2 steps now have every skill they list marked have.");
+  });
+
+  it("the new words carry no verdict and no time", () => {
+    const all = [
+      changed.requirementsNoneForPlace,
+      changed.requirements(1, 0, 0, 2),
+      changed.allRequirementsHave(1),
+      changed.allRequirementsHave(2),
+      changed.notAllRequirementsHave(1),
+      changed.notAllRequirementsHave(2),
+      manyAnswers("requirement", 3),
+      manyTakenBack("requirement", 3),
+    ];
+    for (const line of all) {
+      expect(line).not.toMatch(VERDICT_WORDS);
+      expect(findTimeWords(line)).toEqual([]);
+      expect(line).not.toMatch(/\bskills?\b/);
+    }
   });
 });
 
@@ -368,9 +447,25 @@ describe("the Structure ladder: only on the tax and structure roads, in plain wo
       expect(text).not.toContain(jargon);
     }
     expect(text).toContain(cockpitWords.rail.ladder.title);
-    for (const plain of Object.values(cockpitWords.rail.ladder.rungs)) {
-      expect(text).toContain(plain.name);
-      expect(text).toContain(plain.line);
+    for (const name of Object.values(cockpitWords.rail.ladder.rungs)) expect(text).toContain(name);
+  });
+
+  // The review of #209's merge (2026-10-26): each rung had a line defining the set-up in DotAmi's own words, with no
+  // citation behind it ("A corporation, owned and controlled in Canada." for a CCPC, which is not what makes one).
+  // DotAmi makes no tax or legal claim in its own voice: a rung is its plain name and nothing more.
+  it("draws each rung as its plain name only, with no definition in DotAmi's own words", () => {
+    for (const active of [null, "structure-ccpc"] as const) {
+      const html = renderToStaticMarkup(createElement(StructureLadderRail, { activeStepId: active }));
+      const rungs = [...html.matchAll(/<li[^>]*>([\s\S]*?)<\/li>/g)].map((m) => shown(m[1]!).trim());
+      const status = (i: number) => {
+        const at = structureLadderV2026.findIndex((step) => step.id === active);
+        const ladder = cockpitWords.rail.ladder;
+        return active === null ? "" : i === at ? `${ladder.current} ` : i < at ? `${ladder.passed} ` : `${ladder.ahead} `;
+      };
+      expect(rungs).toEqual(structureLadderV2026.map((step, i) => `${status(i)}${cockpitWords.rail.ladder.rungs[step.id]}`));
+    }
+    for (const definition of ["owned and controlled", "sole proprietorship", "holds shares", "holds property", "account for the sales tax"]) {
+      expect(JSON.stringify(cockpitWords.rail.ladder)).not.toContain(definition);
     }
   });
 
@@ -408,7 +503,9 @@ describe("Your destination names the cause when DotAmi's own server doesn't answ
 });
 
 describe("a future's card says what 'checked by a tool only' means", () => {
-  const cards = futureCards(listedRoads(roadsV2026, "AB"), skillItemsV2026, "CA-AB");
+  // "AB", a province code, as the catalogs' citations name it: "CA-AB" (the data file's code) matched no citation,
+  // so the cards were counted as if every Alberta page were another province's (the review of #209's merge).
+  const cards = futureCards(listedRoads(roadsV2026, "AB"), skillItemsV2026, "AB");
   const withTool = cards.find((c) => c.sources.tool > 0)!;
   const withoutTool = cards.find((c) => c.sources.tool === 0);
   const draw = (card: (typeof cards)[number]) =>

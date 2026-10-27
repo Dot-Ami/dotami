@@ -421,12 +421,38 @@ export function CockpitPage({ initialScenario, pinned = false, example }: Cockpi
   const panelRef = useRef<HTMLDivElement>(null);
   const railModal = isPhone && railSheet;
   const panelModal = isPhone && rightPanel !== null && !folds.panel;
+  // The failed-save bar (`saveBar`, below) sits over the panel's sheet, so the sheet's Tab ring reaches it too.
+  const saveBarRef = useRef<HTMLDivElement>(null);
   useSheet(railModal, railRef, () => setRailSheet(false));
-  useSheet(panelModal, panelRef, () => {
-    setSelectedNodeId(null);
-    setRightPanel(null);
-    setActiveGauge(null);
-  });
+  useSheet(
+    panelModal,
+    panelRef,
+    () => {
+      setSelectedNodeId(null);
+      setRightPanel(null);
+      setActiveGauge(null);
+    },
+    saveBarRef,
+  );
+
+  // Below 768 px the rail, which holds the save line and the only "Save now", is a closed sheet, and inert while the
+  // panel is open: a save that failed then said "Save now tries again." with nothing to press on screen (the review of
+  // #209's merge, 2026-10-26). So a failed save also draws a bar of its own on a phone, at the foot of the window,
+  // outside the rail and every inert wrapper and over the panel's sheet: not while the rail's own sheet is open, which
+  // shows the line itself, and never on the example, which keeps nothing. Its height is measured so the open panel's
+  // sheet ends above it rather than under it.
+  const saveBar = isPhone && !isExample && saveState === "error" && !railModal;
+  const [saveBarHeight, setSaveBarHeight] = useState(0);
+  useLayoutEffect(() => {
+    const el = saveBarRef.current;
+    if (!saveBar || !el) return;
+    const measure = () => setSaveBarHeight(el.getBoundingClientRect().height);
+    measure();
+    // The line wraps to more rows on a narrower phone.
+    const observer = new ResizeObserver(measure);
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [saveBar]);
 
   // Folding the rail hides what it holds, which scrolls it back to the top; it comes back where it was.
   const railScroll = useRef(0);
@@ -1422,6 +1448,8 @@ export function CockpitPage({ initialScenario, pinned = false, example }: Cockpi
             ref={panelRef}
             inert={railModal}
             {...(folds.panel ? { "data-cockpit-bottom-bar": "" } : {})}
+            // On a phone, room at the foot of the open sheet for the failed save's bar drawn over it (below).
+            style={panelModal && saveBar ? { paddingBottom: saveBarHeight } : undefined}
             className={`flex min-h-0 min-w-0 flex-col bg-ink3 ${
               folds.panel
                 ? "max-lg:fixed max-lg:inset-x-0 max-lg:bottom-0 max-lg:z-40 max-lg:border-t max-lg:border-rule"
@@ -1617,6 +1645,24 @@ export function CockpitPage({ initialScenario, pinned = false, example }: Cockpi
         />
       ) : null}
     </div>
+    {/* A failed save on a phone (`saveBar`, above): the rail's own words and its "Save now", in a bar outside the
+        grid, the rail and every inert wrapper. Sticky at the foot of the window while the page scrolls (above the
+        folded panel's bar when there is one), so it never covers the page's last line; fixed while the panel's
+        sheet is open, whose foot is kept clear for it. Over the sheets (z-40), under a dialog (z-50). */}
+    {saveBar ? (
+      <div
+        ref={saveBarRef}
+        data-region="save-bar"
+        className={`z-[45] flex items-center gap-3 border-t border-rule bg-ink3 px-4 py-2.5 md:hidden ${
+          panelModal ? "fixed inset-x-0 bottom-0" : `sticky ${showRightSlot && folds.panel ? "bottom-[45px]" : "bottom-0"}`
+        }`}
+      >
+        <p className="min-w-0 flex-1 text-small text-maple">{words.rail.save.unavailable}</p>
+        <Pill variant="maple" size="small" className="shrink-0" onClick={() => handleSave()}>
+          {words.rail.save.now}
+        </Pill>
+      </div>
+    ) : null}
     </ExampleFrame>
     </ExampleNoteContext.Provider>
   );

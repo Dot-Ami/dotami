@@ -19,7 +19,8 @@ import { cockpitInput, gaugeView } from "@/lib/cockpit/view";
 import { cockpitWords } from "@/lib/cockpit/words";
 import { OASIS_ATTRIBUTION } from "@/lib/engines/oasis/v2026/licence";
 import { oasisJobs, oasisListForJob } from "@/lib/engines/oasis/v2026";
-import type { Road } from "@/lib/engines/roads/v2026";
+import { renderRoadExport } from "@/lib/playbook/road-export";
+import { roadApprenticeToOwnShopAB, skillItemsV2026, type Road, type SkillItem } from "@/lib/engines/roads/v2026";
 import type { FigureView } from "@/lib/figures/types";
 import { evaluateRoad } from "@/lib/roads";
 
@@ -61,6 +62,8 @@ function args(over: {
   skillMarks?: { skillItemId: string | null; ownLabel: string | null; mark: "have" | "learning" | "not-yet"; markedOn: string }[];
   forkPicks?: Record<string, { stepId: string; pickedOn: string | null; from: "you" | "map" }>;
   jobCode?: string | null;
+  /** The skill items the road's steps list; the invented road's own unless a real road is drawn. */
+  items?: readonly SkillItem[];
   change?: Partial<PlanArgs>;
 } = {}): PlanArgs {
   const road = over.road ?? roadToEvaluate();
@@ -76,7 +79,7 @@ function args(over: {
   const input = cockpitInput({
     road,
     roadChosen: true,
-    skillItems,
+    skillItems: over.items ?? skillItems,
     scenario: inventedIdea(),
     figures,
     personFigures: [],
@@ -227,6 +230,39 @@ describe("each step", () => {
     ]);
     expect(train.costCount).toBe(cockpitWords.plan.costCount(2));
     expect(stepOf(plan, "step-eval-employed").costCount).toBeNull();
+  });
+
+  // The review of #209's merge (2026-10-26): every item a step listed was drawn under "Skills it needs", so road 1's
+  // register step listed the Alberta Student Number as a skill, on Your plan and in Export.
+  it("lists a step's legal requirements apart from its skills, as the step panel does", () => {
+    const ticket = stepOf(buildPlan(args()), "step-eval-ticket");
+    expect(ticket.requirements).toEqual([{ label: "Trade ticket (test only)", mark: cockpitWords.plan.mark.none }]);
+    expect(ticket.skills).toEqual([]);
+    expect(stepOf(buildPlan(args()), "step-eval-train").requirements).toEqual([]);
+  });
+
+  it("road 1's register step lists the Alberta Student Number as a legal requirement, not a skill, on Your plan and in Export", () => {
+    const planArgs = args({ road: roadApprenticeToOwnShopAB, items: skillItemsV2026 });
+    const register = stepOf(buildPlan(planArgs), "step-shop-register-apprentice");
+    expect(register.requirements).toEqual([{ label: "Alberta Student Number", mark: cockpitWords.plan.mark.none }]);
+    expect(register.skills).toEqual([]);
+
+    // Drawn: under the step panel's own heading for legal requirements, and no "Skills it needs" heading over it.
+    const html = renderToStaticMarkup(createElement(PlanPage, { view: buildPlan(planArgs), backHref: "/cockpit?venture=v1" }));
+    const article = html.slice(html.indexOf('id="plan-step-step-shop-register-apprentice"'));
+    const own = article.slice(0, article.indexOf("</article>"));
+    expect(own).toContain(cockpitWords.panel.whatItNeeds);
+    expect(own).toContain("Alberta Student Number");
+    expect(own).not.toContain(cockpitWords.panel.skills);
+
+    // Export, from the same plan: the same heading, the same item.
+    const md = renderRoadExport(planArgs);
+    const section = md.slice(md.indexOf("### Register as a Cabinetmaker apprentice"));
+    // Up to the next step or column, whichever comes first.
+    const ends = ["\n### ", "\n## "].map((h) => section.indexOf(h, 4)).filter((i) => i > 0);
+    const step = section.slice(0, Math.min(...ends));
+    expect(step).toContain(`**${cockpitWords.panel.whatItNeeds}**\n\n- Alberta Student Number (${cockpitWords.plan.mark.none})`);
+    expect(step).not.toContain(cockpitWords.panel.skills);
   });
 });
 
