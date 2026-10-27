@@ -23,6 +23,7 @@ import { priceSummary, softwareSummaries, toolsTotalCents } from "@/lib/examples
 import { formatMoney } from "@/lib/format/money-and-months";
 
 import { readSource, simplify, sourceFiles, TS_FILES } from "./helpers/source-scan";
+import { findTimeWords } from "./helpers/time-words";
 import { FRAMING, VERDICT } from "./helpers/verdict-words";
 
 const ex = exampleMara;
@@ -149,7 +150,7 @@ describe("the software: plans listed in Canadian dollars", () => {
       if (s.per === "month-billed-yearly") expect(s.quote, ref).toMatch(/billed annually/i);
     }
     const design = softwareSummaries(src.software, src.softwareCategories).find((x) => x.category === "design")!;
-    // Control: SketchUp Go and Pro monthly and Fusion's 1-month term, (2899 + 13999 + 12000) / 3.
+    // Control: SketchUp Go and Pro monthly and Fusion's monthly plan, (2899 + 13999 + 12000) / 3.
     expect(design.monthly).toEqual({ count: 3, meanCents: 9_633, medianCents: 12_000, lowCents: 2_899, highCents: 13_999 });
     expect(src.software.filter((s) => s.per === "month-billed-yearly").map((s) => s.plan)).toEqual(["Go, annual", "Pro, annual"]);
     expect(cockpitWords.example.sources.per["month-billed-yearly"](1_508)).toBe("$15.08 a month, billed yearly");
@@ -447,6 +448,29 @@ describe("information and options, never a verdict", () => {
     walk(src);
     expect(strings.length).toBeGreaterThan(200);
     expect(strings.filter((s) => VERDICT.test(s) || FRAMING.test(s))).toEqual([]);
+  });
+
+  // No times (the maintainer, 2026-10-17: "NO TIMES!"). A seller's page may say how long its promotion runs,
+  // inside the quote; DotAmi's own words about it don't. One phrase is let through, how a plan is billed, as
+  // whole words and exactly as often as the sources use it today, so a new use, or any other time word, fails.
+  it("DotAmi's own words in the sources hold no duration, past the one billing phrase", () => {
+    const BILLED = { phrase: "billed month to month", uses: 5, why: "how a plan is billed, which keeps month-to-month plans apart from yearly ones" };
+    const own: string[] = [];
+    const walk = (v: unknown, key = "") => {
+      if (key === "quote" || key === "url" || key === "seenOn") return;
+      if (typeof v === "string") own.push(v);
+      else if (v && typeof v === "object") for (const [k, x] of Object.entries(v)) walk(x, k);
+    };
+    walk(src);
+    expect(own.length).toBeGreaterThan(500);
+    const billed = new RegExp(`(?<![\\w-])${BILLED.phrase}(?![\\w-])`, "gi");
+    let uses = 0;
+    const withTimes = own.filter((text) => {
+      uses += text.match(billed)?.length ?? 0;
+      return findTimeWords(text.replace(billed, " ")).length > 0;
+    });
+    expect(withTimes).toEqual([]);
+    expect(uses, BILLED.why).toBe(BILLED.uses);
   });
 
   // The words module isn't the only place text can be typed: a component can hold a string of its own.

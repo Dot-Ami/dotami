@@ -249,6 +249,16 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   only by its own name (84 of the 220 test ideas with a job); and "à Regina" in French names no province (fixed
   2026-10-23, below).
 ### Fixed
+- **Mara's example: its prices re-opened, and no promotion length in DotAmi's own words** (2026-10-27). The
+  sellers' pages a review couldn't re-open were opened again: every Busy Bee Tools, Autodesk and QuickBooks
+  price is the same as on 2026-10-14 (Autodesk's appear once a browser draws the page); Lee Valley's showed a
+  bot check that was not bypassed, so its clamp price rests on the checks of 2026-10-14. Busy Bee's planer
+  is in stock now, at the same clearance price; its note says both days. Eight software notes said how long a
+  promotion runs ("a promotion showed $3/mo for 6 months"); they now say the promotional price only, and the
+  seller's quote keeps its own words. Three more time words are gone from DotAmi's own: Fusion's plans are
+  *Annual* and *Monthly* (were "1-year term" and "1-month term"), alis rates "the job market" (was "the 3-year
+  job market") and ISED's not profitable is "in the data year". A test holds every word of DotAmi's own in the
+  sources to no duration, past one billing phrase used exactly as often as today (`tests/example-sources.spec.ts`).
 - **Every page fits a phone, one step counter, and plainer screens** (the screen review of 2026-10-23, its
   pre-release fixes "Phone and layout"). At 375 px: the cockpit's four gauges are stacked, each inside the window
   (Start-up money and Your date were out of sight in a strip that scrolled sideways; two by two from 640 px, four

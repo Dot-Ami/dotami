@@ -252,9 +252,17 @@ placed in phase 3.
       from*, labelled an industry average over existing businesses of every age, not a first-year figure
       and not one of Mara's numbers; the what-if bar's example note removed; and her Steps gauge caught up
       with main (road 1 has 17 steps since *Keep your records from day one*)
-    - [ ] Still open on it: the review couldn't re-open Autodesk Fusion (403), Busy Bee Tools and Lee
-      Valley (429) or QuickBooks (timed out), so those prices rest on the first research's two checks
-      only; and whether Fusion's personal-use page shows the CA$120 monthly price its entry cites
+    - [x] Re-opened on 2026-10-27 (the review couldn't: Autodesk Fusion 403, Busy Bee Tools and Lee Valley
+      429, QuickBooks timed out): every Busy Bee Tools, Autodesk and QuickBooks price is the same as on
+      2026-10-14. Fusion's personal-use page does show "CA$940 /YEAR (OR CA$120 /MONTH)", once a browser draws
+      it (a plain fetch sees no amount: Autodesk fills its prices in with a script). Lee Valley's page showed
+      a bot check that was not bypassed, so its clamp price still rests on the two checks of 2026-10-14. The
+      Busy Bee planer's page now says it is in stock online, at the same clearance price; its note says both
+      days. The software notes' promotion lengths ("for 6 months", "for 3 months", "for a year") are out of
+      DotAmi's own words (the QuickBooks and FreshBooks quotes keep them, as the pages wrote them), and so are
+      three more time words: Fusion's plans are *Annual* and *Monthly* (they were "1-year term" and "1-month
+      term"), alis's rating is of "the job market", and ISED's test of not profitable is "in the data year"
+      (`tests/example-sources.spec.ts`, "hold no duration")
     - [ ] Still open on it: the other cost lines on *Open your own shop* (insurance, vehicle, first
       materials, legal advice, money to live on, design software), not researched yet; re-seeing the
       prices when sales end or pages move

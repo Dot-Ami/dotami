@@ -105,7 +105,7 @@ closed by the banner's button. Read-only; it sends nothing and keeps nothing. In
    says *Average of N plans billed month to month: $X a month (median…; from… to…)* over its plans billed
    month to month only (a yearly price is never turned into a monthly one; a plan billed once a year that
    its page prints by the month, SketchUp's annual plans, reads *$15.08 a month, billed yearly* and is
-   listed apart, the same as Fusion's yearly term, since 2026-10-14 after review; a free tier never pulls an
+   listed apart, the same as Fusion's annual plan, since 2026-10-14 after review; a free tier never pulls an
    average down), then every plan with its price as listed, how it is billed, its words and link.
 4. **What cabinetmakers earn in Alberta**, **Small furniture and cabinet businesses in Canada**, **Industrial
    space rents in Alberta, for context**: every statistic with its value as the source prints it, its unit
