@@ -72,11 +72,11 @@ The words come from one function, `howCheckedWords`; no screen writes them itsel
 - **"Show the words"**: unchanged; its "current to <date>" is the law store's date for the Act, not
   a check of the citation. The citation's own line above it says how it was checked.
 - **What DotAmi knows about you, Delete** ([../your-data/delete-menu.md](../your-data/delete-menu.md)):
-  the record-keeping line ends `(Read on 2026-10-08. Who read it wasn't recorded.)` where it said
+  from 2026-10-11 the record-keeping line ended `(Read on 2026-10-08. Who read it wasn't recorded.)` where it said
   `(read 2026-10-08)`, in grey; a model's read, or a tool check with no read, there would be amber,
   like the card. It doesn't list a tool check's words. Since 2026-10-24 that citation also keeps a
   tool check of 2026-10-23 (the CRA's "Generally, …" sentence on the six years and the one after it);
-  the read outranks it, so the line still says the read, in grey. Since 2026-10-27 that read is the
+  the read outranks it, so the line still said that read, in grey. Since 2026-10-27 that read is the
   maintainer's, of the page in full on 2026-10-25, so the line ends `(Read by a person on 2026-10-25)`.
 - **Your ideas, Add a figure, Tax year** ([../ventures/_index.md](../ventures/_index.md)): `Line 8299
   on the CRA's 2025 T2125 ("Gross business or professional income"). Read by a person on 2026-10-10.`
@@ -113,7 +113,7 @@ two ways to incorporate: Corporations Canada's "Services, fees and processing ti
 federal corporation in a province or territory", and Alberta's "Incorporate an Alberta
 corporation", "Find a business registry" and "Annual returns for corporations, cooperatives and
 organizations" (docs/engines/citations.md, § Tool checks in the catalogs). The pages that moved after
-that said "Checked by a tool" too (§ When a cited page moves there). Since 2026-10-24 (the maintainer's
+that said "Checked by a tool" too (§ When a cited page moves there). From 2026-10-24 (the maintainer's
 reading list of 2026-10-23) so did the sources it added: the SR&ED card's four new pages, the
 Canada-Alberta Productivity Grant's page and *SR&ED deepening*'s third source ("Checked by a tool on
 2026-10-23"), and *Sole Prop activation*'s third ("on 2026-10-12", the check its words already had;

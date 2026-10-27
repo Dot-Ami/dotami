@@ -385,8 +385,8 @@ test("the map draws today's road: columns, cards, toggles and hover arrows, plus
 // nobody recorded, so their sources and the playbook export said "Read on <date>. Who read it wasn't
 // recorded." and never claimed a person; a source on a page the maintainer didn't read still does
 // (Mandatory GST registration's *Small suppliers* in this idea's export). Since 2026-10-24 Sole Prop
-// activation also cites the CRA's page its $30,000 note quotes, which until 2026-10-27 only a tool had
-// checked (the maintainer's reading list of 2026-10-23). The maintainer read all three of the stage's pages
+// activation also cites the CRA's page its $30,000 note quotes, which until 2026-10-27 carried only a tool's
+// check (the maintainer's reading list of 2026-10-23). The maintainer read all three of the stage's pages
 // in full on 2026-10-25, so since 2026-10-27 each says "Read by a person on 2026-10-25"
 // (tests/maintainer-reads.spec.ts); stages he didn't read keep their words. The readout says the same words
 // as the screens, and none says "verified".

@@ -185,8 +185,9 @@ page's words in quotation marks, and the page is among the stage's own sources (
   income limits", which no held quote says).
 
 Each stage's other sources said how they were checked as before ("Read on 2026-05-01. Who read it wasn't
-recorded.", or on SR&ED deepening "Checked by a tool on 2026-10-13" in amber) until the maintainer's reads
-of 2026-10-25 were recorded (2026-10-27). He read every page these four stages cite in full, so each of
+recorded.", or "Checked by a tool" in amber: on SR&ED deepening "on 2026-10-13", and on Hire first employee,
+for an Alberta idea, Alberta's *Employment standards* "on 2026-10-23") until the maintainer's reads of
+2026-10-25 were recorded (2026-10-27). He read every page these four stages cite in full, so each of
 their sources now says *Read by a person on 2026-10-25*, in grey: a read wins on screen over the tool
 checks these pages also carry (docs/engines/citations.md, § The maintainer's reads of 2026-10-25).
 Retained earnings planning (Tier 4) lights only when the person set their structure to a corporation.

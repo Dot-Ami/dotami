@@ -683,7 +683,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
   The words new to a stage were found on their pages on 2026-10-23 by the reading list's matcher, kept as a
   tool check of that day on the stage the list checked (a networked `node scripts/check-quotes.mjs` run
-  should find them again); the stages' other sources kept their read of 2026-05-01, which still showed then.
+  should find them again); the stages' other sources kept what they had then: a read of 2026-05-01, which
+  still showed, or a tool check in amber (SR&ED deepening's two moved pages, of 2026-10-13, and Hire first
+  employee's Alberta *Employment standards*, of 2026-10-23).
   Since the maintainer's reads of 2026-10-25 every source of these five stages, old and new, says "Read by a
   person on 2026-10-25" (see *Changed*). Road 0's line on what counts toward the tests and Sole Prop
   activation's note now read one copy of the CRA's words (`gst-official-words.ts`). Tests:
