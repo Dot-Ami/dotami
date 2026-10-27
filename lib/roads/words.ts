@@ -152,6 +152,13 @@ export const answer = {
     takenBack: `you took back your number for ${quoted(line)} on ${quoted(step)}`,
     fact: `your number for ${quoted(line)} (${formatMoney(cents)})`,
   }),
+  // A quote the person agreed on a cost line the road leaves out for the idea's place (`roadForPlace`: the line rests
+  // on another province's page): kept, named, counted in no sum (second review of #207, 2026-10-24).
+  costLineForAnotherPlace: (line: string, step: string, cents: number): AnswerWords => ({
+    said: `you told us your number for ${quoted(line)} on ${quoted(step)} is ${formatMoney(cents)}; it is kept with this idea and not counted for your place, because that line rests on another province's page`,
+    takenBack: `you took back your number for ${quoted(line)} on ${quoted(step)}`,
+    fact: `your number for ${quoted(line)} (${formatMoney(cents)}, kept, not counted for your place)`,
+  }),
   savings: (cents: number): AnswerWords => ({
     said: `you told us you'd put ${formatMoney(cents)} of savings toward starting`,
     takenBack: "you took back your savings number",
@@ -249,10 +256,15 @@ export const answer = {
   }),
 };
 
-/** Kinds of answer, so three or more changed at once are counted rather than listed one by one. */
+/**
+ * Kinds of answer, so three or more changed at once are counted rather than listed one by one. A mark on one of the
+ * road's legal requirements (an ID number, an agreement, a certificate) is a "requirement", never a "skill", so a
+ * count of them never calls them skills (the review of #209's merge, 2026-10-26).
+ */
 export type AnswerGroup =
   | "job"
   | "skill"
+  | "requirement"
   | "own-skill"
   | "step"
   | "ticks"
@@ -269,6 +281,8 @@ export function manyAnswers(group: AnswerGroup, n: number): string {
   switch (group) {
     case "skill":
       return `you marked ${count(n, "skill", "skills")}`;
+    case "requirement":
+      return `you marked ${count(n, "legal requirement", "legal requirements")}`;
     case "own-skill":
       return `you marked ${count(n, "skill", "skills")} of your own`;
     case "step":
@@ -293,6 +307,8 @@ export function manyTakenBack(group: AnswerGroup, n: number): string {
   switch (group) {
     case "skill":
       return `you took back ${count(n, "skill mark", "skill marks")}`;
+    case "requirement":
+      return `you took back your marks on ${count(n, "legal requirement", "legal requirements")}`;
     case "own-skill":
       return `you took back your marks on ${count(n, "skill", "skills")} of your own`;
     case "step":
@@ -322,16 +338,36 @@ export const changed = {
         ? `${count(n, "step", "steps")} now ${n === 1 ? "says" : "say"} check first`
         : `${count(n, "step", "steps")} ${n === 1 ? "is" : "are"} now not on your path`,
   // About skills only: a step with every skill marked can still have "done when" lines and money to go,
-  // so these never say the step needs nothing more, or that it is ready.
+  // so these never say the step needs nothing more, or that it is ready. A step's legal requirements are counted
+  // apart, in their own words below: never called skills (the review of #209's merge, 2026-10-26).
   allSkillsHave: (n: number) =>
     n === 1 ? "1 step now has every skill it lists marked have" : `${n} steps now have every skill they list marked have`,
   notAllSkillsHave: (n: number) =>
     n === 1
       ? "1 step no longer has every skill it lists marked have"
       : `${n} steps no longer have every skill they list marked have`,
+  allRequirementsHave: (n: number) =>
+    n === 1
+      ? "1 step now has every legal requirement it lists marked have"
+      : `${n} steps now have every legal requirement they list marked have`,
+  notAllRequirementsHave: (n: number) =>
+    n === 1
+      ? "1 step no longer has every legal requirement it lists marked have"
+      : `${n} steps no longer have every legal requirement they list marked have`,
   stepsDone: (done: number, total: number) => `${done} of ${count(total, "step is", "steps are")} now done`,
+  /** The road's listed skills only; its legal requirements are `requirements`, as the Skills gauge counts them apart. */
   skills: (have: number, learning: number, notYet: number, notMarked: number) =>
     `the skills now read ${have} have, ${learning} learning, ${notYet} not yet, ${notMarked} not marked`,
+  /** The road drawn for the idea's new place left every listed skill out (the Skills gauge's own words, lib/cockpit/words.ts). */
+  skillsNoneForPlace: "this road's skills rest on other provinces' pages, so none is listed for your place",
+  /** The road's legal requirements (an ID number, an agreement, a certificate), counted apart from its skills. */
+  requirements: (have: number, learning: number, notYet: number, notMarked: number) =>
+    `the legal requirements now read ${have} have, ${learning} learning, ${notYet} not yet, ${notMarked} not marked`,
+  /**
+   * The road drawn for the idea's new place left every legal requirement out (the Skills gauge's own line for them,
+   * lib/cockpit/words.ts `gauges.skills.requirementsNoneForPlace`): road 1's three, seen from Ontario.
+   */
+  requirementsNoneForPlace: "this road's legal requirements rest on other provinces' pages, so none is listed for your place",
   ownSkills: (have: number, learning: number, notYet: number) =>
     `the skills you added now read ${have} have, ${learning} learning, ${notYet} not yet`,
   job: (label: string | null) => (label === null ? "no job is picked now" : `your pick of job is now ${quoted(label)}`),

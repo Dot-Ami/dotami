@@ -10,6 +10,8 @@ import { expect, test, type Page } from "@playwright/test";
 
 import { aboutJobWords } from "../lib/about-job/words";
 import { generalRoadV2026, roadApprenticeToOwnShopAB, roadFederalStepsCA } from "../lib/engines/roads/v2026";
+import { partHeading } from "../lib/front-door/job-search-lines";
+import { typedWayCount } from "../lib/front-door/typed-way";
 import { intakeStepsWords, jobStepWords, pickWords, whereStepWords } from "../lib/front-door/words";
 import { waitForReact } from "../tests/helpers/react-ready";
 
@@ -100,7 +102,8 @@ test("step 1 searches the government's example titles, grouped and labelled, and
   const barbers = page.getByRole("button", { name: jobStepWords.pickName(BARBERS.label, BARBERS.code), exact: true });
   await expect(barbers).toBeVisible();
   await expect(page.getByRole("heading", { level: 3, name: new RegExp(`^${jobStepWords.groupOne}, \\d+$`) })).toBeVisible();
-  await expect(page.getByText(jobStepWords.groupOrder).first()).toBeVisible();
+  // "barber" is held word for word (Barbers, the barber shop manager) and as a word start ("barbed wire"): two parts.
+  await expect(page.getByText(jobStepWords.partsOrder, { exact: true })).toBeVisible();
   await expect(barbers).toHaveAccessibleDescription(/Matched the government's example title “barber/);
   // Still step 1: a single result is a button the person clicks, never picked for them.
   await expect(page.getByRole("heading", { name: jobStepWords.heading, level: 1 })).toBeVisible();
@@ -112,10 +115,35 @@ test("step 1 searches the government's example titles, grouped and labelled, and
   await later.click();
   await expect(page.getByRole("heading", { level: 3, name: new RegExp(`^${jobStepWords.groupSome}, \\d+$`) })).toBeFocused();
 
+  // Whole words first (a-call-11), headed in the group's own count (the #206 review): inside the open group, the
+  // jobs one of whose titles holds the group's count of words word for word, then the rest, both open.
+  await box.fill("I build custom kitchen cabinets");
+  await expect(page.getByRole("heading", { level: 4, name: `${partHeading("exact", "some", 4)}, 15` })).toBeVisible();
+  await expect(page.getByRole("heading", { level: 4, name: `${partHeading("word-start", "some", 4)}, 70` })).toBeVisible();
+  await expect(page.getByText(jobStepWords.partsOrder, { exact: true })).toBeVisible();
+  // Before: 64th of 85 in one group, past the first 50, so not listed. Now in the exact part, without a click.
+  await expect(page.getByRole("button", { name: "Pick Cabinetmakers, 72311.00", exact: true })).toBeVisible();
+  await expect(page.getByText(jobStepWords.cappedPart(50, 70), { exact: true })).toBeVisible();
+  await box.fill("wedding photography");
+  const photographers = page.getByRole("button", { name: "Pick Photographers, 53110.00", exact: true });
+  await expect(photographers).toBeVisible();
+  await expect(page.getByRole("heading", { level: 4, name: `${partHeading("exact", "some", 2)}, 6` })).toBeVisible();
+  await expect(page.getByRole("heading", { level: 4, name: `${partHeading("word-start", "some", 2)}, 18` })).toBeVisible();
+  // "and n more" counts only the titles like the one named: of the rest, only one holds "photography" word for word.
+  await expect(photographers).toHaveAccessibleDescription(`${jobStepWords.matched("photography supervisor")} ${jobStepWords.matchedMore(1)}`);
+  await shotsAtEveryWidth(page, "futures-whole-words-first");
+  // An "all your words" group: General duty registered nurses has each word in a different title, so it is second,
+  // under the heading that says none of its titles has both.
+  await box.fill("registered nurse");
+  await expect(page.getByRole("heading", { level: 4, name: `${partHeading("exact", "all", 2)}, 5` })).toBeVisible();
+  await expect(page.getByRole("heading", { level: 4, name: `${partHeading("word-start", "all", 2)}, 1` })).toBeVisible();
+
   // DotAmi's word list: "dayhome" finds a job only through it, in its own last group, headed as DotAmi's.
   await box.fill("dayhome");
   await expect(page.getByRole("heading", { level: 3, name: new RegExp(`^${jobStepWords.groupList}, \\d+$`) })).toBeVisible();
   await expect(page.getByText(jobStepWords.listChip, { exact: true }).first()).toBeVisible();
+  // The word list's group has no parts: its order line is the code order's.
+  await expect(page.getByText(jobStepWords.groupOrder, { exact: true })).toBeVisible();
 
   // The search ran on DotAmi's own server, as a POST: the words are in no web address.
   const searched: string[] = [];
@@ -451,11 +479,18 @@ test("the typed way ends on the same three steps, on the intake page, and keeps 
   const confirm = page.getByRole("heading", { name: /Did we get this/ });
   const aboutYou = page.getByRole("heading", { name: /about you/ });
   await expect(aboutYou.or(confirm).first()).toBeVisible();
-  if (await aboutYou.isVisible()) await page.getByRole("button", { name: "Continue →" }).click();
+  // About you opens the typed way only before the first saved idea (issue #38); the count starts where it opens.
+  const startsAtAbout = await aboutYou.isVisible();
+  if (startsAtAbout) await page.getByRole("button", { name: "Continue →" }).click();
   await page.getByRole("button", { name: "Looks right →" }).click();
   await page.getByRole("combobox", { name: "Province / territory", exact: true }).selectOption("AB");
   await page.getByRole("combobox", { name: "Current employment", exact: true }).selectOption("self-employed");
+  await expect(page.getByText(typedWayCount("ground", startsAtAbout), { exact: true })).toBeVisible();
   await page.getByRole("button", { name: intakeStepsWords.next, exact: true }).click();
+
+  // One numbering from the first screen to the last (2026-10-23): the step goes on from Ground it, never "1 of 3".
+  await expect(page.getByText(typedWayCount("work", startsAtAbout), { exact: true })).toBeVisible();
+  await expect(page.getByText(jobStepWords.stepCount, { exact: true })).toHaveCount(0);
 
   // The person's own words shown, not searched: the box starts empty.
   await expect(page.getByText(jobStepWords.yourIdea(sentence), { exact: true })).toBeVisible();

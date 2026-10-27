@@ -588,7 +588,9 @@ describe("What you've told DotAmi", () => {
     expect(row(`fork:${FORK}`).change).toEqual({ kind: "compare", forkId: FORK });
     expect(row("date").change).toEqual({ kind: "box", question: "date" });
     expect(row("idea:structure").change).toEqual({ kind: "box", question: "structure" });
-    expect(row("idea:place").change).toEqual({ kind: "intake" });
+    // The place is changed on this idea in the box (bug 33a); the intake's save is always a new idea.
+    expect(row("idea:place").change).toEqual({ kind: "box", question: "place" });
+    expect(row("idea:venture-type").change).toEqual({ kind: "intake" });
     expect(row("idea:figures").change).toEqual({ kind: "figures" });
   });
 });
@@ -605,7 +607,7 @@ describe("Not told yet", () => {
     }
     // The gauge's own count: with no ending picked, only the textbooks line is counted; the rest wait on the fork.
     expect(rows.find((r) => r.id === "cost-lines")!.question).toBe("Your numbers for 1 cost line not priced yet");
-    expect(rows.find((r) => r.id === "skills")!.question).toBe("Your marks on 5 skills not marked");
+    expect(rows.find((r) => r.id === "skills")!.question).toBe("Your marks on 4 skills and 1 legal requirement not marked");
     expect(rows.find((r) => r.id === `ending:${FORK}`)).toMatchObject({ answer: "compare", forkId: FORK });
     expect(rows.find((r) => r.id === "date")).toMatchObject({ answer: "box" });
   });

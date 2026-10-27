@@ -132,18 +132,19 @@ describe("a step's sources, drawn for the idea's own place", () => {
   const service = stepOf(road, "branch-service-vs-productize");
   const places = (cs: readonly { jurisdiction: string }[]) => cs.map((c) => c.jurisdiction);
 
-  it("an Ontario idea's Hire first employee shows the CRA's pages and Ontario's guide, not British Columbia's, and counts it", () => {
-    expect(places(hire.citations)).toEqual(["CA", "CA", "ON", "BC"]);
+  it("an Ontario idea's Hire first employee shows the CRA's pages and Ontario's guide, not British Columbia's or Alberta's, and counts them", () => {
+    // Alberta's own page since 2026-10-23 (a-call-12).
+    expect(places(hire.citations)).toEqual(["CA", "CA", "ON", "BC", "AB"]);
     const on = citationsForPlace(road, hire.citations, "ON");
     expect(places(on.shown)).toEqual(["CA", "CA", "ON"]);
-    expect(on.leftOut).toBe(1);
+    expect(on.leftOut).toBe(2);
     const bc = citationsForPlace(road, hire.citations, "BC");
     expect(places(bc.shown)).toEqual(["CA", "CA", "BC"]);
-    expect(bc.leftOut).toBe(1);
-    // A place with no page of its own here: the federal ones only, and both others counted.
+    expect(bc.leftOut).toBe(2);
+    // A place with no page of its own here: the federal ones only, and the three others counted.
     const yt = citationsForPlace(road, hire.citations, "YT");
     expect(places(yt.shown)).toEqual(["CA", "CA"]);
-    expect(yt.leftOut).toBe(2);
+    expect(yt.leftOut).toBe(3);
   });
 
   it("Service vs. productize shows the CRA's pages, not Alberta's register-a-name page, and counts it", () => {
@@ -152,9 +153,11 @@ describe("a step's sources, drawn for the idea's own place", () => {
     expect(on.leftOut).toBe(1);
   });
 
-  it("on a road written for particular provinces, every source is shown, whoever opens it", () => {
+  it("on a road written for particular provinces too, the person's own place's sources (a-call-12, 2026-10-23)", () => {
     const step = stepOf(road0, "branch-hire-first-employee");
-    expect(citationsForPlace(road0, step.citations, "ON")).toEqual({ shown: step.citations, leftOut: 0 });
+    expect(places(citationsForPlace(road0, step.citations, "AB").shown)).toEqual(["CA", "CA", "AB"]);
+    expect(citationsForPlace(road0, step.citations, "AB")).toEqual(citationsForPlace(road, step.citations, "AB"));
+    expect(places(citationsForPlace(road0, step.citations, "ON").shown)).toEqual(["CA", "CA", "ON"]);
   });
 
   it("the step panel draws only the place's sources and says how many it left out", () => {
@@ -207,15 +210,18 @@ describe("a step's sources, drawn for the idea's own place", () => {
     expect(ontario).toContain(onPage);
     expect(ontario).not.toContain(bcPage);
     expect(ontario).toContain("Sources for this stage · 3");
-    expect(ontario).toContain("1 source for other provinces isn&#x27;t shown.");
-    // Yukon: both provinces' pages left out, said in the plural.
-    expect(draw(road, "branch-hire-first-employee", "YT")).toContain("2 sources for other provinces aren&#x27;t shown.");
+    expect(ontario).toContain("2 sources for other provinces aren&#x27;t shown.");
+    // Yukon: the three provinces' pages left out.
+    expect(draw(road, "branch-hire-first-employee", "YT")).toContain("3 sources for other provinces aren&#x27;t shown.");
+    // One left out is said in the singular: Service vs. productize leaves out Alberta's register-a-name page.
+    expect(draw(road, "branch-service-vs-productize", "ON")).toContain("1 source for other provinces isn&#x27;t shown.");
     // A step that cites no other province's page says nothing about it.
     expect(draw(road, "step-start-keep-records", "ON")).not.toContain("other provinces");
-    // Road 0, opened from Ontario: every source, as before.
+    // Road 0, opened from Ontario: Ontario's sources too since 2026-10-23 (a-call-12), the rest counted.
     const onRoad0 = draw(road0, "branch-hire-first-employee", "ON");
-    expect(onRoad0).toContain(bcPage);
-    expect(onRoad0).not.toContain("other provinces");
+    expect(onRoad0).toContain(onPage);
+    expect(onRoad0).not.toContain(bcPage);
+    expect(onRoad0).toContain("2 sources for other provinces aren&#x27;t shown.");
   });
 });
 
@@ -238,21 +244,23 @@ describe("Export draws a step's sources the way the step panel and the plan do",
     expect(md).not.toContain(bcPage);
     expect(md).not.toContain(nameOnlyInAlberta);
     expect(new Set(skeleton.sections.flatMap((s) => s.citations.map((c) => c.jurisdiction)))).toEqual(new Set(["CA", "ON"]));
-    // Each section says how many it left out, in the step panel's words; the Branch points section left out both.
+    // Each section says how many it left out, in the step panel's words; the Branch points section left out
+    // British Columbia's and Alberta's employment-standards pages and Alberta's register-a-name page.
     const branch = skeleton.sections.find((s) => s.stageKey === "branch")!;
-    expect(branch.sourcesLeftOut).toBe(2);
-    expect(md).toContain(cockpitWords.panel.sourcesOtherProvinces(2));
+    expect(branch.sourcesLeftOut).toBe(3);
+    expect(md).toContain(cockpitWords.panel.sourcesOtherProvinces(3));
     // Yukon: no page of its own here, so the federal pages only.
     const yukon = exportOf(everyStage("YT"), road);
     expect(new Set(yukon.sections.flatMap((s) => s.citations.map((c) => c.jurisdiction)))).toEqual(new Set(["CA"]));
   });
 
-  it("on road 0 every source is in the export, whoever opens it, as before", () => {
+  it("on road 0 too, the export has the person's own place's sources (a-call-12, 2026-10-23)", () => {
     const md = renderPlaybookMarkdown(exportOf(everyStage("ON"), road0));
-    expect(md).toContain(bcPage);
-    expect(md).toContain(nameOnlyInAlberta);
-    expect(md).not.toContain("other provinces");
-    // No road named is the export as it was: every source.
+    expect(md).toContain(onPage);
+    expect(md).not.toContain(bcPage);
+    expect(md).not.toContain(nameOnlyInAlberta);
+    expect(md).toContain("other provinces");
+    // No road named draws the same sources.
     expect(exportOf(everyStage("ON"), road0)).toEqual(exportOf(everyStage("ON")));
   });
 
@@ -266,7 +274,8 @@ describe("Export draws a step's sources the way the step panel and the plan do",
     expect(md).toContain(onPage);
     expect(md).not.toContain(bcPage);
     const general = await ask({ scenario, roadId: road0.id });
-    expect(renderPlaybookMarkdown(((await general.json()) as { skeleton: PlaybookSkeleton }).skeleton)).toContain(bcPage);
+    expect(general.status).toBe(200);
+    expect(renderPlaybookMarkdown(((await general.json()) as { skeleton: PlaybookSkeleton }).skeleton)).not.toContain(bcPage);
     expect((await ask({ scenario, roadId: "road-nobody-wrote" })).status).toBe(400);
   });
 });
@@ -341,7 +350,7 @@ describe("the cockpit's goal bar and the plan name the province whose own steps 
     expect(plan.road.future).toBe("Future: The federal steps for any business in Canada · Ontario's own steps aren't written yet");
     const hire = plan.steps.columns.flatMap((c) => c.steps).find((s) => s.id === "branch-hire-first-employee")!;
     expect(hire.sources).toHaveLength(3);
-    expect(hire.sourcesLeftOut).toBe("1 source for other provinces isn't shown.");
+    expect(hire.sourcesLeftOut).toBe("2 sources for other provinces aren't shown.");
     const records = plan.steps.columns.flatMap((c) => c.steps).find((s) => s.id === "step-start-keep-records")!;
     expect(records.sourcesLeftOut).toBeNull();
   });

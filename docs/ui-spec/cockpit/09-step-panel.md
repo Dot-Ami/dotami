@@ -4,7 +4,7 @@ Page: Cockpit (`/cockpit?venture=<id>`) · Component: `components/cockpit/step-p
 step it wraps `components/node-detail-panel.tsx`; the quote box is `components/cockpit/amount-form.tsx`)
 Type: panel (display + toggle buttons + checkboxes + form)
 
-Last updated: 2026-10-13 (*Why this colour* on SR&ED deepening without a research kind of work, issue #40; built 2026-10-12, docs/architecture/future-cockpit.md § 1 row 5 and § 2, Cockpit screen as built)
+Last updated: 2026-10-24 (a tick on a line the idea's place leaves out is kept, and skill items drawn for the place, second review of #207; an idea not saved yet is held in the window's memory, never its storage); 2026-10-13 (*Why this colour* on SR&ED deepening without a research kind of work, issue #40; built 2026-10-12, docs/architecture/future-cockpit.md § 1 row 5 and § 2, Cockpit screen as built)
 
 > **Changed 2026-10-12 — part 2.** Every answer given here (a status, ticks, a skill mark, a quote once agreed, the fork's toggle) shows its receipt under the panel's refusal line ([13-receipts.md](./13-receipts.md)); opening another step clears it. At a fork, **Compare the endings** opens *Compare the two endings* on that fork ([15-compare.md](./15-compare.md)); since 2026-10-13 (the maintainer's answer to PR #159's question 1) only at a fork whose own pick, not the rules, puts steps on or off the path (`lib/cockpit/told.ts` `forksToCompare`), so not on a road 0 step, where the toggle is the pick, the tax rules colour the sides whichever is picked, and no Compare button shows. The *I'd incorporate at* box saves as the person types and gives no receipt.
 >
@@ -39,27 +39,47 @@ The sections, in order:
    under it; *1 of 2 ticked*. Ticking or unticking saves at once: the box shows the click straight away
    and the boxes wait (disabled) until the save is read back; a refused save puts the box back as kept and
    shows the reason above, so a box never stays ticked over a refusal. The count is what is kept. Empty:
-   *No “done when” lines are written for this step yet.*
-5. **Skills it needs** — each skill item the step lists: its name (a button that selects it and dims the
+   *No “done when” lines are written for this step yet.* Only the lines drawn for the idea's place are listed
+   (`roadForPlace`); a tick on a line it leaves out is kept whatever list a save sends, and shows again where
+   the line is drawn (second review of #207, 2026-10-24). Empty because the place left every line out: *This
+   step's “done when” lines rest on other provinces' pages, so none is shown for your place.* (`emptySectionLine`
+   in `lib/cockpit/view.ts`, which Your plan asks too).
+5. **What it needs** and **Skills it needs** (split on 2026-10-23: the screen review found the Alberta
+   Student Number listed as a skill) — the step's legal requirements (an ID number, an agreement) under *What
+   it needs*, drawn only on a step that has one, then its listed skills under *Skills it needs*; each item: its name (a button that selects it and dims the
    steps that don't list it), its kind (*legal requirement* or *listed skill*), **Have**, **Learning**,
    **Not yet** (`aria-pressed`) and **I don't know** (removes the mark; off when there is none), and the
    item's own sources through `CitationLinks`, mark or no mark. A legal requirement marked have reads
    *you said you hold this*; one marked not yet shows *The official way to get it:* with its cited route.
-   Empty: *No skills are listed for this step yet.* Under the step's own items (2026-10-12), one line about
+   With no listed skill: *No skills are listed for this step yet.*, or, where the place left every listed skill
+   out, *The skills this step lists rest on other provinces' pages, so none is shown for your place.* (2026-10-24).
+   Where the place left every legal requirement of the step out, *What it needs* is still drawn, with *The legal
+   requirements this step lists rest on other provinces' pages, so none is shown for your place.* under it
+   (`stepRequirementsNone`, 2026-10-25: a legal requirement is never called a skill). Under the step's own items (2026-10-12), one line about
    the government's list for the person's pick of job, which belongs to the job, never to a step: with a job
    picked, *Your pick of job, “Cabinetmakers”: 44 on the government's list, 1 marked. The list is for the
    job, not for this step.* and **Open the list**; with none, *Pick the job closest to your work to see the
    government's skills list for it.* and **Pick a job**. Either button opens the Skills list behind the
-   Skills gauge (and switches the Skills overlay on). Road 0's *Mandatory GST registration* lists its one
-   legal requirement here, *A GST/HST registration with the Canada Revenue Agency*, with the compliance
-   catalog's source.
+   Skills gauge (and switches the Skills overlay on); **Open the list** opens it with the job's list unfolded.
+   Road 0's *Mandatory GST registration* lists its one legal requirement under *What it needs*, *A GST/HST registration with the Canada Revenue Agency*, with the compliance
+   catalog's source. Since 2026-10-24 (second review of #207) the items are drawn for the idea's place: an item
+   none of whose sources is federal or the place's own isn't listed there (`roadForPlace`; road 1's three Alberta
+   items, *Alberta Student Number* among them, seen from Ontario), its pages counted in the step's *n sources for
+   other provinces aren't shown.* line, and a mark on it stays the person's; a listed item shows its federal and
+   own-province sources and its way to get it only when that page is one of them, with *n sources for other
+   provinces aren't shown.* under them when some were left out (`skillItemsForPlace`). An item selected before
+   the idea's place leaves it out stops dimming the map, so the map never stays dimmed with no row to unselect it
+   (`linkedSkill` in `lib/cockpit/view.ts`); the selection itself is kept, so a later move to a place that lists the
+   item again dims the map by it again and shows its row pressed.
 6. **Costs** — each line in one of the three kinds: an official fee with its amount, *official fee ·
    source and day read* and its citation (one that applies only sometimes adds *Only if: <its condition>.
    Not added to any total.*, where a condition that already ends in a full stop gets no second one); the person's agreed number with *your quote · agreed* and
    **Change your number**; or a named line with *not priced yet* and **Add your quote**. A named line whose
    name has a source (a blank template) shows that citation too. Above them, *Not
    counted in the sums: this step is not on your path.* or *Not counted yet: it waits on a pick at “…”.*
-   when road evaluation leaves them out. Empty: *No cost lines are written for this step yet.*
+   when road evaluation leaves them out. Empty: *No cost lines are written for this step yet.*, or, where the
+   place left every line out, *This step's cost lines rest on other provinces' pages, so none is shown for your
+   place.* (2026-10-24).
 7. **Official pages you open yourself** — the step's own links (a registry, BizPaL), each opening in a new
    tab. Drawn only when the step has any; no shipped step has one yet.
 
@@ -73,14 +93,21 @@ guess), *Nothing counts until you agree to it.*, **Next: agree** and **Cancel**.
   doneWhenIds }`; on success the page reads back what is kept and the map, gauges and *Next on your road*
   change. A refusal shows in an amber line at the top of the panel, in the server's words. Each save of
   ticks sends the step's whole list, so the boxes are off from a tick until that save is read back (a
-  second quick tick would otherwise send a list without the first).
+  second quick tick would otherwise send a list without the first). The list sent holds the ticks kept on
+  lines the place on screen leaves out, and the storage keeps those by the place in the file whatever list
+  arrives (`ticksToSave`, 2026-10-24), so a tick from another province, or *Take back*, never removes one
+  (`e2e/place-change.spec.ts` holds the place's save back to test the cockpit's side). The place in the file
+  trails the screen until the change of place is saved (the map's autosave pause, or a save that failed): in
+  that gap a line the screen draws again but the file's place still leaves out can't be unticked, and the
+  read-back shows it ticked again; unticked once the place is saved, it stays unticked.
 - Marks: `POST /api/skill-marks { skillItemId, mark }` (`mark: null` for I don't know).
 - **Next: agree**: `POST /api/figures/propose` with source *typed by you*, one figure of kind
   `start-up-cost-line`, dated today at both ends, with `costLine { roadId, stepId, lineId, amountFrom }`;
   then the agree prompt opens, its row reading *A start-up cost (your number) · … · “Tools” on “Set up
   your shop”, from a quote*. The number counts only after **Agree**; closing the prompt leaves it
   waiting. Agreeing to a new number for the same line takes back the old one (storage).
-- An idea not saved yet (only in this tab): every control is off and *This idea is not saved yet, so
+- An idea not saved yet (held in the window's memory only, never its storage; until 2026-10-24 also in the
+  tab's storage): every control is off and *This idea is not saved yet, so
   nothing here can be kept.* shows.
 - × closes the panel.
 

@@ -2,6 +2,7 @@
 
 import { Pill } from "@/components/ui";
 import { sortStatementsNewestFirst, STATEMENT_MAX_CHARS, statementSourceLabel, type PersonStatement } from "@/lib/person/types";
+import { statementWords } from "@/lib/person/words";
 import { useCallback, useEffect, useState } from "react";
 
 /**
@@ -12,8 +13,9 @@ import { useCallback, useEffect, useState } from "react";
  * the vault, newest first) and appends via POST. Deliberately holds NO venture state and
  * never touches the journey draft — the evaluator cannot see anything here, by construction.
  *
- * Fail-soft is on-surface: no database → "saving is off" and the statement stays in this
- * tab (sessionStorage) tagged as unsaved. An empty list is never silently indistinguishable
+ * Fail-soft is on-surface: no database → "saving is off", and a statement that couldn't be kept
+ * stays in its box, said not kept, with Keep this to try again; nothing goes to the window's storage
+ * (until 2026-10-24 it went to the tab's, tagged as unsaved). An empty list is never silently indistinguishable
  * from "couldn't load". No external source ("vault") → nothing on screen (#6, 2026-10-12):
  * no copy of DotAmi has one, so a line saying so only told every person about a feature they
  * never set up. The route still reports it; a build that adds a source adds its own line.
@@ -28,26 +30,6 @@ interface StatementsPayload {
   vault: Availability;
 }
 
-const UNSAVED_KEY = "dotami-person-unsaved";
-
-function readUnsaved(): PersonStatement[] {
-  if (typeof window === "undefined") return [];
-  try {
-    const raw = sessionStorage.getItem(UNSAVED_KEY);
-    return raw ? (JSON.parse(raw) as PersonStatement[]) : [];
-  } catch {
-    return [];
-  }
-}
-
-function writeUnsaved(items: PersonStatement[]) {
-  try {
-    sessionStorage.setItem(UNSAVED_KEY, JSON.stringify(items));
-  } catch {
-    // Storage blocked — the in-memory list still renders for this page life.
-  }
-}
-
 /** The person's LOCAL calendar day — `toISOString()` is UTC and reads as tomorrow in the evening anywhere west of UTC. */
 function todayIso(): string {
   return new Date().toLocaleDateString("en-CA"); // en-CA formats as YYYY-MM-DD
@@ -56,7 +38,6 @@ function todayIso(): string {
 export function PersonStatements({ variant = "full" }: { variant?: "full" | "rail" }) {
   const [loaded, setLoaded] = useState<StatementsPayload | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
-  const [unsaved, setUnsaved] = useState<PersonStatement[]>([]);
   const [draft, setDraft] = useState("");
   const [saidAt, setSaidAt] = useState(todayIso);
   const [saving, setSaving] = useState(false);
@@ -76,7 +57,6 @@ export function PersonStatements({ variant = "full" }: { variant?: "full" | "rai
   }, []);
 
   useEffect(() => {
-    setUnsaved(readUnsaved());
     void load();
   }, [load]);
 
@@ -99,38 +79,22 @@ export function PersonStatements({ variant = "full" }: { variant?: "full" | "rai
             : prev,
         );
         setDraft("");
-        setSaveNote("Kept, with the date.");
+        setSaveNote(statementWords.kept);
       } else if (res.status === 400) {
-        setSaveNote(json.error ?? "Couldn't keep that.");
+        setSaveNote(json.error ?? statementWords.couldNotKeep);
       } else {
-        keepLocally(text, json.error);
+        // Kept nowhere else: the words stay in the box, and Keep this tries again. The status line above
+        // already says why (no database), so this one stays short.
+        setSaveNote(statementWords.notKept);
       }
     } catch {
-      keepLocally(text, undefined);
+      setSaveNote(statementWords.noAnswer);
     } finally {
       setSaving(false);
     }
   }
 
-  function keepLocally(text: string, reason?: string) {
-    const local: PersonStatement = {
-      id: `local:${Date.now()}`,
-      text,
-      saidAt,
-      source: "typed",
-      sourceRef: "this tab",
-      recordedAt: new Date().toISOString(),
-      persisted: false,
-    };
-    const next = [local, ...unsaved];
-    setUnsaved(next);
-    writeUnsaved(next);
-    setDraft("");
-    // The status line above already says why; keep this one short.
-    setSaveNote(reason ? "Kept in this tab only." : "Server didn't answer — kept in this tab only.");
-  }
-
-  const statements = sortStatementsNewestFirst([...unsaved, ...(loaded?.statements ?? [])]);
+  const statements = sortStatementsNewestFirst(loaded?.statements ?? []);
   const isRail = variant === "rail";
 
   return (
@@ -181,7 +145,7 @@ export function PersonStatements({ variant = "full" }: { variant?: "full" | "rai
           {saveNote ? (
             <p
               className={`text-body ${
-                saveNote.startsWith("Kept, with") ? "text-sage" : "text-amber"
+                saveNote === statementWords.kept ? "text-sage" : "text-amber"
               }`}
             >
               {saveNote}
@@ -217,11 +181,7 @@ export function PersonStatements({ variant = "full" }: { variant?: "full" | "rai
               <li key={s.id} className="rounded-lg border border-rule-soft bg-ink px-3 py-2.5">
                 <div className="flex min-w-0 items-baseline gap-2">
                   <span className="shrink-0 whitespace-nowrap font-mono text-small tracking-[0.08em] text-stone">{s.saidAt}</span>
-                  <span
-                    className={`min-w-0 truncate font-mono text-label uppercase tracking-[0.12em] ${
-                      s.persisted === false ? "text-amber" : "text-stone-dim"
-                    }`}
-                  >
+                  <span className="min-w-0 truncate font-mono text-label uppercase tracking-[0.12em] text-stone-dim">
                     {statementSourceLabel(s)}
                   </span>
                   {s.body ? (

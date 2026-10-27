@@ -214,6 +214,29 @@ Product Catalogue, and that the Business Name Report is provided by NUANS member
 whole-word match was also shown to fail where it should: *"Red Seal Application | $15"* was reported NOT
 FOUND on the same page.
 
+On 2026-10-23 (the maintainer's call a-call-12) map stage *Hire first employee* gained Alberta's own
+*Employment standards* page (https://www.alberta.ca/employment-standards,
+[`lib/engines/cfe/v2026/nodes.ts`](../../lib/engines/cfe/v2026/nodes.ts)), now that every road shows a
+person only the federal pages and their own province's: a tool found *"Employment standards set out the
+rights and obligations of employers and employees in Alberta."* and *"This includes the minimum
+standards that employers must provide to employees."* on it that day. It has no read date, so its card
+says *Checked by a tool on 2026-10-23* in amber until a person reads it.
+
+## Waiting for the maintainer's read
+
+Sources added with a tool check only, for a person to read (the maintainer's call d-call-5: a person
+reads money amounts and the rules that add a step; a source page is added checked by a tool and
+labelled so). Once read, the citation gains `lastVerified` (the day) and `readBy: "person"`, and
+its row leaves this list. The pages the reading list's corrections added with a tool check only (the
+Canada-Alberta Productivity Grant's page and the SR&ED pages among them) wait for his read the same way,
+and are listed under § The reading list's tool checks, not here.
+
+| Added | Page | Where it is cited | What to read for |
+|---|---|---|---|
+| 2026-10-23 | Alberta, *Employment standards* (https://www.alberta.ca/employment-standards) | map stage *Hire first employee* (road 0 in Alberta; Alberta's page on the federal road) | that it is the page an Alberta employer reads for the employment standards the stage names (minimum wage, overtime, holidays, leaves, vacations, termination) |
+| 2026-10-23 | Income Tax Regulations s.7307 (https://laws-lois.justice.gc.ca/eng/regulations/C.R.C.,_c._945/section-7307.html) | write-off *Motor vehicle expenses* (`writeoff-vehicle`) | the amounts now in the entry's eligibility text (which no screen draws yet), each for 30 days: $350 loan interest for a car acquired after 2023, $300 for one acquired after 2000 and before 2024 (s.7307(2), for s.67.2 of the Act), and $1,100 plus sales tax for a lease entered into after 2024 (s.7307(3), for s.67.3); they replace the Act's own $250 and $600 |
+| 2026-10-23 | ISED, *Helping small businesses get loans* (https://ised-isde.canada.ca/site/canada-small-business-financing-program/en/canada-small-business-financing-program/find-loan-your-small-business/helping-small-businesses-get-loans) | program *Canada Small Business Financing Program* (`grant-csbfp`) | the amounts now quoted in the entry (its description and estimated value, which no screen reads yet): up to $1,000,000 in term loans for any one borrower, of which no more than $500,000 for leasehold improvements and equipment; that security is taken on the assets financed |
+
 ## When a cited page moves
 
 On 2026-10-13 every distinct address the catalogs cite (104, from
@@ -237,14 +260,14 @@ What was done, for each dead address:
   one that states the rule as it is today is cited (the tax on split income cites the CRA's line 40424
   page, not its guidance on the 2017 draft proposals).
 - **Where no current page carries those words**, the citation is left exactly as it was, for the
-  maintainer: the entry's claim may have changed, and no tool rewrites a rule. Three citations, on two
-  addresses: the Alberta Investor Tax Credit (its page answers page not found; news reports say the
-  program ended in 2019, not checked against an official page),
-  and the two sources of the *Retained earnings planning* stage, "Paying dividends" and "Salary or
+  maintainer: the entry's claim may have changed, and no tool rewrites a rule. Two citations, on one
+  address: the two sources of the *Retained earnings planning* stage, "Paying dividends" and "Salary or
   dividends", which shared one address that was a corporation-return line about dividends received.
+  (A third, the Alberta Investor Tax Credit's page, left on 2026-10-23 with the program itself: the
+  maintainer took it off the catalog, call a-call-1; docs/engines/grants.md, *Retired programs*.)
 
 [`tests/moved-government-pages.spec.ts`](../../tests/moved-government-pages.spec.ts) holds the list: no
-citation may cite a dead address except the three left for a person, and each moved citation points at
+citation may cite a dead address except the two left for a person, and each moved citation points at
 its new page with a tool check and no old read date. It never reaches the network; running
 `node scripts/check-quotes.mjs` with no arguments re-checks the new pages with the rest.
 

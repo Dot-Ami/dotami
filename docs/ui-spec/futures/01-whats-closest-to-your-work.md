@@ -29,6 +29,35 @@ then phone width).
 > Try a word for the work itself, or skip this question.*, with *Not searched: …* above it as designed, and
 > without the English-only line (nothing was looked for, so there is no miss to explain). The no-match line now
 > only ever names words that were searched. The lines live in `lib/front-door/job-search-lines.ts`.
+>
+> **Whole words first, as built 2026-10-23 (the maintainer's call a-call-11; research lane "search gap",
+> option b), its part rule settled in the #206 review (the maintainer's call of 2026-10-24).** Rules 5, 6 and 7
+> below are amended so: inside each group about the government's titles, a job comes first when one of its
+> titles holds, word for word, as many of the person's words as the group's heading counts: all of them (or the
+> one word), all but one, or, in the *at least one* group, one. Its part heading says so in the group's count:
+> *One of their titles has your word exactly* / *… all your words exactly* / *… all but one of your words
+> exactly* / *… at least one of your words exactly, n*. The rest come after, under the heading that says the
+> opposite: *None of their titles has your word exactly, only a word that starts like it* / *… all your words
+> exactly* / *… all but one of your words exactly* / *None of their titles has any of your words exactly, only
+> words that start like them, n*. The count is always the group's, never a job's own (no screen shows a job's
+> own count), so each heading is true of every job under it and of none under the other. (First built as
+> *Their titles have your exact word*, then *One of their titles has your exact words*. The first was also true
+> of jobs in the second part: *registered nurse* puts General duty registered nurses second, though each of its
+> words is in one of its titles exactly. The second read as all the words in the *at least one* group, where
+> *wedding photography* put Directors of photography first through *director of photography*, and it was still
+> true of jobs in the second part there: *AI consulting for law firms* put Data scientists second, though
+> *artificial intelligence (AI) consultant* holds *AI*.) Each part is in the government's code order and lists
+> its first 50. The closest group opens whole, both parts together. In the first part, the title named under a
+> job is the first, in the file's order, that puts it there (*plumbing* names *plumbing installer*, before
+> *plumber apprentice*); in the *at least one* group, the first holding the most of the words among those
+> (*short-term rental management* names *property management agent* for Property administrators). *and n more
+> of its titles* counts only the titles like the one named. A group with both parts says *In two parts, each in
+> the government's code order. Not ranked.* in place of *In the government's code order, not ranked.*, and a
+> part past 50 says *Showing the first 50 of n in this part, …*. The word-list group has no parts. Nothing is
+> scored: the part is a plain fact about the titles. On the 220 corpus ideas that name a job:
+> 152 find it in the open group (was 150), 181 anywhere listed (was 172), 121 within the open view's first 10
+> rows (was 112); no idea that was listed drops out (`tests/job-title-search.spec.ts`). The screen's clutter
+> count, taken as the step opens with nothing typed, doesn't change.
 
 ## Where it sits, on both ways in
 
@@ -99,23 +128,30 @@ The page's step region (the same block that holds the cards today, so no region 
    hold one of two words, and whose other word came through the list, sits under *at least one of your
    words*, with the list's chip and line saying where the other word was matched.
 5. Inside a group, jobs are in the government's code order. Nothing is scored. The group is a plain count
-   of the person's own words, said on screen, never DotAmi's view of which job fits.
-6. **Which groups are open.** The first group that holds any job is shown open; each later group is one
+   of the person's own words, said on screen, never DotAmi's view of which job fits. **Amended 2026-10-23
+   (a-call-11, whole words first):** inside each group about the government's titles, two labelled parts:
+   first the jobs one of whose titles holds, word for word, as many of the person's words as the group counts
+   (all, all but one, at least one), then the rest; code order inside each (see the note at the top).
+6. **Which groups are open.** The first group that holds any job is shown open (since 2026-10-23, whole: both
+   its parts); each later group is one
    button, *Show the n jobs whose example titles have …*, which opens it in place (and **Hide these n jobs**
    folds it again). This is rule H's own view (look further only when the closer group is empty), with the
    rest one click away rather than hidden.
-7. At most 50 jobs are listed per group (the app's own measure, `tests/helpers/idea-coverage-report.ts:85`),
-   with *Showing the first 50 of n in this group, in code order. Add a word to narrow it.* when there are
-   more.
+7. At most 50 jobs are listed per group (the app's own measure, `JOB_SEARCH_GROUP_CAP` in
+   `lib/engines/oasis/v2026/title-search.ts`), with *Showing the first 50 of n in this group, in code order.
+   Add a word to narrow it.* when there are more. Since 2026-10-23, a group with parts lists at most 50 per part, with *Showing the first 50 of n in
+   this part, in code order. Add a word to narrow it.*
 
 Each job in a list is one button: its name and code (*Barbers · 63210.02*), and under it, in the mono label
 type, *Matched the government's example title “barber”* (and *and n more of its titles* when several hold
-the words; the first in the file's order is the one named). Clicking it picks the job: the step closes and
+the words as the one named does: in a group's first part, only the titles that put the job there; the first
+in the file's order is the one named). Clicking it picks the job: the step closes and
 step 2 opens with *Your pick of job: Barbers · 63210.02* at its top. The pick is tagged *your pick of job*
 wherever it shows, as today (`lib/cockpit/words.ts` `lists.job.tag`).
 
 **Nothing derived.** The search never picks, pre-selects, highlights or orders a job by anything but the
-count of the person's words and the government's code. A job with one result is still a button the person
+count of the person's words, whether one of its titles holds the group's count of them word for word (the two
+parts, since 2026-10-23), and the government's code. A job with one result is still a button the person
 clicks. The typed way's sentence is never searched without the person typing.
 
 ## Words (as they would sit in `lib/front-door/words.ts`)
@@ -140,6 +176,21 @@ jobStepWords = {
   groupSome: "Jobs whose example titles have at least one of your words",
   groupList: "Jobs found only through DotAmi's word list, not by a government title",
   groupOrder: "In the government's code order, not ranked.",
+  // Added 2026-10-23 (a-call-11, whole words first); headings in the group's count since the #206 review
+  partExact: {
+    one: "One of their titles has your word exactly",
+    all: "One of their titles has all your words exactly",
+    "all-but-one": "One of their titles has all but one of your words exactly",
+    some: "One of their titles has at least one of your words exactly",
+  },
+  partWordStart: {
+    one: "None of their titles has your word exactly, only a word that starts like it",
+    all: "None of their titles has all your words exactly",
+    "all-but-one": "None of their titles has all but one of your words exactly",
+    some: "None of their titles has any of your words exactly, only words that start like them",
+  },
+  partsOrder: "In two parts, each in the government's code order. Not ranked.",
+  cappedPart: "Showing the first <shown> of <total> in this part, in code order. Add a word to narrow it.",
   showGroup: "Show the <n> jobs whose example titles have all but one of your words",
   showGroupSome: "Show the <n> jobs whose example titles have at least one of your words",
   showGroupList: "Show the <n> jobs found only through DotAmi's word list",
@@ -189,7 +240,7 @@ meaning, and it passes the check.
 | The cards show as the page opens | Step 1 shows as the page opens; the cards are step 3 |
 | *Name it (optional)* above the cards | Unchanged, on step 3 with the cards |
 | No job question | This step |
-| Job search only in the cockpit's skills list, by job name or code (20 of 219 corpus ideas find their job, research 28f) | The same search, over the government's example titles with rule H (167 of 219 uncapped, 153 under the app's 50-result cap, research 28f) and DotAmi's word list on top |
+| Job search only in the cockpit's skills list, by job name or code (20 of 219 corpus ideas find their job, research 28f) | The same search, over the government's example titles with rule H (167 of 219 uncapped, 153 under the app's 50-result cap, research 28f) and DotAmi's word list on top. As built on the 220-idea corpus: 150 in the open group under the cap (153 counted past it), 172 listed; with whole words first (2026-10-23), 152 and 181 |
 
 ## Regions and controls (the clutter limit, `e2e/budgets.ts`)
 
@@ -229,6 +280,9 @@ the intake page are counted in their own files ([02](./02-where-you-are.md), [03
   list (`<ul>`) of buttons. Each button's name is *Pick Barbers, 63210.02*, described by its matched line
   (*Matched the government's example title “barber”*) and, for a match through DotAmi's list, by that line
   too, so the source is heard before the click.
+- Inside a group in two parts, each part is a level 4 heading with its count, said in the group's own count
+  (*One of their titles has all your words exactly, 5*; *None of their titles has all your words exactly, 1*),
+  then its list; a part past 50 ends with *Showing the first 50 of n in this part, …*.
 - A folded group is one button whose name says what it shows; opening it moves focus to the group's heading.
 - **Skip this question** is a button, described by its hint.
 
@@ -265,7 +319,8 @@ recorded click) and the coverage report's *expected job among the matches* line.
 - The main-duties search as its own labelled section (research 28f option 3).
 - The industry question (phase 3, with the business counts; the maintainer's pick of 2026-10-20).
 - A model guessing the job (research 28f option 5: not for the picker).
-- Any order but the count of the person's words, then the government's code.
+- Any order but the count of the person's words, then the part (whether one of a job's titles holds the
+  group's count of them word for word, since 2026-10-23), then the government's code.
 
 ## Checked against the rules
 

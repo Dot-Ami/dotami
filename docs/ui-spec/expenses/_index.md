@@ -1,6 +1,6 @@
 # Your expenses page (`/expenses`) — page overview
 
-Last updated: 2026-10-10 (a set-aside receipt says Settings can bring it back once its old key opens; after Start a new key the desktop app restarts by itself, saying so first; a copy run from source says to restart it by hand); 2026-10-09 (HEIC photos kept as receipts and shown by the graphics chip, option D of the HEIC decoder review; receipt files encrypted in the desktop app: the note before adding one says whether, and an amber line when the key can't be opened, with Start a new key); 2026-10-08 (new page, [8i] typed records, with the maintainer's decisions of 2026-10-08; records of a deleted idea show here as not attached yet; receipts added and removed)
+Last updated: 2026-10-24 (reached from the front door's Your expenses while no idea is saved); 2026-10-10 (a set-aside receipt says Settings can bring it back once its old key opens; after Start a new key the desktop app restarts by itself, saying so first; a copy run from source says to restart it by hand); 2026-10-09 (HEIC photos kept as receipts and shown by the graphics chip, option D of the HEIC decoder review; receipt files encrypted in the desktop app: the note before adding one says whether, and an amber line when the key can't be opened, with Start a new key); 2026-10-08 (new page, [8i] typed records, with the maintainer's decisions of 2026-10-08; records of a deleted idea show here as not attached yet; receipts added and removed)
 
 **Route:** `/expenses` · `/expenses?idea=<idea id>` (opened on one idea) · **Component:**
 `components/expenses/expenses-page.tsx` (+ `expense-form.tsx`, `expense-review.tsx`) ·
@@ -23,6 +23,11 @@ filtered by idea. Nothing typed here is kept until the person agrees to it; anyt
 proposed waits here for the same click. The page never picks a category, never sets a business share,
 never works out a "deductible" amount and never says how a refund is taxed. No URL ever holds a
 record's words or amounts: only an idea's id, in `?idea=`.
+
+Reached from *Your futures* (its nav, and **Expense records for this idea →** on each card) and, while no
+idea is saved, from the front door's **Your expenses →**, drawn only when this page has a record to list
+(2026-10-24; `../landing/03-escape-hatches.md`): the way back to records kept when Delete took the ideas,
+or an agent's proposals waiting.
 
 | Control | Behaviour | Persists to |
 |---|---|---|
@@ -100,6 +105,12 @@ and hands it to the page (`components/expenses/receipt-protection.tsx`); the key
   can no longer open ("…A backup made before then still holds it: File → Restore from a backup…"), or,
   in a copy run from source, one the desktop app encrypted ("Open it in the desktop app"). A damaged or
   swapped encrypted file is "changed on this computer", as before.
+
+## Phone width (2026-10-23)
+
+At 375 px the page fits the window: the **Show** drop-down, as wide as its longest idea name, made the page
+429 px wide (the screen review); no drop-down is wider than its box now (`app/globals.css`), a long choice cut
+on screen and whole in the open list. `e2e/phone-width.spec.ts` checks it.
 
 ## What it deliberately does not do
 

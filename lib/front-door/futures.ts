@@ -3,6 +3,8 @@ import {
   FEDERAL_ROAD_ID,
   generalRoadV2026,
   roadApprenticeToOwnShopAB,
+  roadForPlace,
+  skillItemsForPlace,
   type Road,
   type RoadKind,
   type SkillItem,
@@ -84,8 +86,13 @@ export interface FutureCard {
   kind: RoadKind;
   writtenFor: readonly Province[];
   steps: number;
-  /** Skill items the road lists, each once. */
+  /** Skill items the road lists, each once: its listed skills, never its legal requirements. */
   skillsListed: number;
+  /**
+   * The road's legal requirements (an ID number, an agreement, a certificate), each once, counted apart from its
+   * skills as the cockpit counts them (a review of 2026-10-23: the apprentice road's card read "3 skills listed").
+   */
+  requirementsListed: number;
   officialFees: number;
   /** Named cost lines: the ones the person prices themselves. */
   linesToPrice: number;
@@ -102,7 +109,8 @@ function roadCitations(road: Road, skillItems: readonly SkillItem[], place: stri
   return [
     ...road.steps.flatMap((step) => [
       // A step's own sources as its panel shows them for the person's place (`citationsForPlace`, the step panel's
-      // filter): on a road written for all of Canada, the federal pages and the place's own; on any other road, all.
+      // filter): the federal pages and the place's own, on every road since 2026-10-23 (a-call-12); its *done when*
+      // lines and cost lines are already the place's (`roadForPlace`, second review of #207).
       ...(place === null ? step.citations : citationsForPlace(road, step.citations, place).shown),
       ...step.doneWhen.map((line) => line.citation),
       ...step.costs.flatMap((cost) =>
@@ -128,28 +136,37 @@ function countSources(citations: readonly EngineCitation[]): SourceCounts {
 }
 
 /**
- * The cards for `roads`. With `place` (the person's province, "ON"), each card counts only the sources that person
- * will be shown inside (the maintainer's call 34 of 2026-10-22): on the federal road, a step's own sources are the
- * federal pages and the place's own, as the step panel draws them; on a road written for particular provinces every
- * source shows, so the count is the same as without a place.
+ * The cards for `roads`. With `place` (the person's province, "ON"), each card counts only what that person will be
+ * shown inside (the maintainer's call 34 of 2026-10-22): the road as the cockpit draws it for their place
+ * (`roadForPlace`: no *done when* line, cost line, fee or skill item resting on another province's page) and each
+ * source drawn for that place (`citationsForPlace`, `skillItemsForPlace`), on every road since the second review of
+ * #207 (2026-10-24). Without a place, the road as written.
  */
 export function futureCards(
   roads: readonly Road[],
   skillItems: readonly SkillItem[],
   place: string | null = null,
 ): FutureCard[] {
-  return roads.map((road) => {
+  const legal = new Set(skillItems.filter((item) => item.kind === "legal-requirement").map((item) => item.id));
+  return roads.map((written) => {
+    // What this person will be shown inside (call 34): the road as the cockpit draws it for their place, and its
+    // skill items' sources for that place (second review of #207). `skillItems` are passed as written.
+    const road = place === null ? written : roadForPlace(written, place, skillItems);
+    const items = place === null ? skillItems : skillItemsForPlace(skillItems, place);
     const costs = road.steps.flatMap((step) => step.costs);
+    // The road's items for this place, each once, split by kind as the cockpit counts them.
+    const needed = [...new Set(road.steps.flatMap((step) => step.needs))];
     return {
       roadId: road.id,
       label: road.label,
       kind: road.kind,
       writtenFor: road.provinces,
       steps: road.steps.length,
-      skillsListed: new Set(road.steps.flatMap((step) => step.needs)).size,
+      skillsListed: needed.filter((id) => !legal.has(id)).length,
+      requirementsListed: needed.filter((id) => legal.has(id)).length,
       officialFees: costs.filter((cost) => cost.kind === "official-fee").length,
       linesToPrice: costs.filter((cost) => cost.kind === "named").length,
-      sources: countSources(roadCitations(road, skillItems, place)),
+      sources: countSources(roadCitations(road, items, place)),
     };
   });
 }

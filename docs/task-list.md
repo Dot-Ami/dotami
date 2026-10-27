@@ -509,12 +509,19 @@ placed in phase 3.
   - [x] 28b: *What's closest to your work?*: the person searches the example titles and picks the job;
     matches in code order, labelled "matches your words · your pick"; *Skip* allowed; nothing set without a
     click. The search itself is built (`lib/engines/oasis/v2026/title-search.ts`, with DotAmi's word list the
-    maintainer approves line by line): 153 of 220 corpus ideas find their job in the group shown first, against
-    20 before. Built 2026-10-22: step 1 of Pick a future's three steps, on Pick a future and at the end of the
-    intake (`components/front-door/job-and-road-steps.tsx`, searched on DotAmi's own server,
-    `POST /api/jobs/search`), and the cockpit's **Pick a job** runs the same search. Step 3 lists the road
-    written for the picked job first (spec 03, case A); a job with no road gets the honest line, a marked place
-    for *About this job* (25h fills it) and the general road, and saves nothing until a future is opened
+    maintainer approves line by line): 150 of 220 corpus ideas find their job in the group shown first, as the
+    screen lists it (each group's first 50; 153 counted past that cap, the number this line gave until
+    2026-10-23), against 20 before. Built 2026-10-22: step 1 of Pick a future's three steps, on Pick a future
+    and at the end of the intake (`components/front-door/job-and-road-steps.tsx`, searched on DotAmi's own
+    server, `POST /api/jobs/search`), and the cockpit's **Pick a job** runs the same search. Step 3 lists the
+    road written for the picked job first (spec 03, case A); a job with no road gets the honest line, a marked
+    place for *About this job* (25h fills it) and the general road, and saves nothing until a future is opened
+  - [x] 28b-2: whole words first (the maintainer's call a-call-11, 2026-10-23): inside each group, the jobs
+    one of whose titles holds, word for word, as many of the person's words as the group counts (all, all but
+    one, at least one), then the rest, each part headed in that count (the #206 review) and in code order, the
+    closest group open whole. On the corpus: 152 in the open group (was 150),
+    181 listed (was 172), none that was listed drops out; "I build custom kitchen cabinets" lists
+    Cabinetmakers on row 10 (was not listed)
   - [x] 28c: the road written for the picked job comes first; otherwise "No road is written for this job
     yet", with *About this job* and the general road; no silent fallback for a new idea; a job with no written
     road saves nothing until a future is opened (the maintainer's call of 2026-10-21; a kind of saved idea with
@@ -528,6 +535,22 @@ placed in phase 3.
     future picked from outside Alberta is an honest end while both labels say so (35), the typed way's last
     step at 5 text sizes (37) and, with the job skipped, its own row at 6 controls on a tablet (38). Known gaps
     22 → 0 ideas (`tests/fixtures/ideas/known-gaps.ts`). Changing your place after a pick (the maintainer's note on calls 33 and 35: someone whose dream is to open shop somewhere else, or who picked by mistake) is its own story, not this one
+  - [x] 33a (S2.5.33's bug, 2026-10-23): *Change* on the place row of *What you've told DotAmi* changes this
+    idea's place in the cockpit's one-question box, where it opened the intake and saved a second idea; the
+    rules and tax cards, fees, sources and map follow; a road written for Alberta stays drawn with its honest
+    line; the Alberta area and region aren't shown outside Alberta (About this job, Your plan), still kept for
+    a later history (`e2e/place-change.spec.ts`, `tests/places-and-programs.spec.ts`). The full Change box,
+    the history and outside Canada are phase 3 (a-call-8, a-call-9, a-call-10). Second review, 2026-10-24: ticks
+    kept across a change of place (by the storage and the cockpit, `ticksToSave`), its receipt names only the
+    place, a quote kept on a cost line the place leaves out named and not counted, skill items, empty sections
+    and Pick a future's card counts drawn for the place, and the rail's prep tools by place
+  - [x] Pre-release numbers and amounts (2026-10-23, the screen review 30f and the maintainer's reading list):
+    Export is the road on screen, its steps, done-when lines, cost lines and the place's sources
+    (`lib/playbook/road-export.ts`); Compare and the Rules & tax switch count the cards one way; the money gauge
+    names the official fees waiting on a fork, so it adds up to Compare; the vehicle caps are Income Tax
+    Regulations s.7307's $350 / $300 and $1,100, and the Small Business Financing Program says ISED's own words
+    with no 365-day line (both sources checked by a tool, on the reading list); About this job says "as
+    published" beside two equal wage levels (`tests/prerelease-numbers.spec.ts`)
   - [x] 28d: outside Alberta, the federal steps that apply everywhere, plus "Written for Alberta" with the
     person's own province named; Alberta-only steps and pages left out (full B.C. and Ontario roads come
     later). Built 2026-10-21 (`lib/engines/roads/v2026/federal-steps-ca.ts`, 13 steps; *Pick a future* lists it
@@ -570,16 +593,21 @@ placed in phase 3.
       *done when* line, fee and way to incorporate the catalogs write for the run's own province shown. A filter
       that ignores the place (the ways to incorporate, a step's sources, the wage look-up) fails naming what
       leaked and where; one that leaves out the person's own province (a step's sources, the ways to
-      incorporate) fails naming what is missing and where. Found 2026-10-22, listed in
-      `tests/fixtures/ideas/accuracy-gaps.ts` with no story yet, waiting on the maintainer's call: in Alberta,
-      road 0's *Hire first employee* shows Ontario's and British Columbia's employment-standards pages
+      incorporate) fails naming what is missing and where. Found 2026-10-22 and fixed 2026-10-23 (the
+      maintainer's call a-call-12): in Alberta, road 0's *Hire first employee* showed Ontario's and British
+      Columbia's employment-standards pages; every road now shows a step's sources for the person's own place
+      (and, since the pull request's review, only the *done when* lines, cost lines and links resting on those
+      pages, the rest counted in the same line: `roadForPlace`),
+      the step cites Alberta's own page (checked by a tool, waiting for a person's read), and `PLACE_GAPS` in
+      `tests/fixtures/ideas/accuracy-gaps.ts` is empty
     - [x] 37b (moved here too): the corpus reworded (capitals, lower case, a typo, another order, emoji, no
       accents, the city swapped for its province, French; `tests/rewording.spec.ts`) keeps the province the
       words name, the job found by the person's words on step 1, and step 3's roads; Lloydminster never sets a
       single province; "Calgary"/"calgary" and "Québec"/"Quebec" are planted controls. Found 2026-10-22, listed
       with no story yet, waiting on the maintainer's call: a misspelt word in the kind of work finds the job only by its own name (84 of 220
-      ideas), and "à Regina" in French names no province (the parser reads a city that is also a first name
-      only after an English place word)
+      ideas). Fixed 2026-10-23 (the maintainer's call a-call-14): "à Regina" in French names Saskatchewan, as
+      "in Regina" does; the parser reads "à", "au", "aux", "en" and "dans" before a place and the provinces'
+      French names (French rewording gaps 1 → 0; a planted control in `tests/rewording-plants.spec.ts`)
     - [x] The idea harness's time budget (60 s) is held on the run's own CPU time, not the wall clock, and a
       run keeps step 1's search answers for its own length: about 36 s alone before, 27 s after on this
       machine; under the full parallel run the wall clock had reached 60.5 s and 65.7 s
@@ -1028,14 +1056,16 @@ roadmap's build order.
     record says supports neither
 - ⬜ **[11c] Flag stale sources automatically** — with #37
   - [ ] Kept open on purpose (the maintainer, 2026-10-14), so a person decides later:
-    - [ ] *Alberta Investor Tax Credit* (`grant-abti`, `lib/engines/grants/v2026/programs.ts`): its
-      page answers "page not found", and other sites say Alberta closed the program in 2019. The entry
-      is left as it was until a person reads an official source; then keep it, mark it closed, or
-      retire it (its id stays either way).
+    - [x] *Alberta Investor Tax Credit* (`grant-abti`): taken off on 2026-10-23 (the maintainer's call
+      a-call-1); its page answers "page not found" (docs/engines/grants.md, *Retired programs*).
     - [ ] *Retained earnings planning*'s "Paying dividends" and "Salary or dividends" (see [14a]): no
       current CRA page found; the T5 guide could back "Paying dividends". Left as they are for now.
-    - [ ] *Canada-Alberta Job Grant* (`grant-cajg`): its page now redirects to the Canada-Alberta
-      Productivity Grant. A person reads whether the entry still says what the program does.
+    - [x] *Canada-Alberta Job Grant* (`grant-cajg`): taken off on 2026-10-23 (a-call-1); its page now
+      opens the Canada-Alberta Productivity Grant's. The Productivity Grant is in the catalog as `grant-capg`
+      since 2026-10-24, on the quotes a tool found on its page; his read of its amounts waits with the reading
+      list's other reads ([11b]).
+    - [ ] *Employment standards* (alberta.ca), on *Hire first employee* since 2026-10-23: checked by a tool, for
+      a person to read (docs/engines/citations.md, *Waiting for the maintainer's read*).
 - ⬜ **[11d] Two people per change** — the checker of a source is never its author.
 - ⬜ **[11e] Reviewed by an accountant** — a roadmap is *reviewed* only after a professional reads it.
 - ⬜ **[11f] Strategy roadmaps** · roadmap §6 · #47 — each cited, with its audit and anti-avoidance read:
@@ -1152,6 +1182,61 @@ roadmap's build order.
   - [ ] **Tested:** a browser test covers its main path and edge cases
   - [x] Already found: the intake's field labels aren't tied to their dropdowns (a screen reader can't
     name them) — fixed 2026-10-12: province, employment and the name box are named by their labels.
+  - [x] Pre-release honesty and privacy, found by the review of 2026-10-23 and fixed the same day
+    (`tests/prerelease-honesty.spec.ts`, `e2e/front-door.spec.ts`): nothing about the person in window storage
+    (`tests/privacy-inventory.spec.ts`, `e2e/window-storage.spec.ts`; 2026-10-24): the journey held in the
+    window's memory, a statement that couldn't be saved left in its box, no list of earlier *Other…*
+    descriptions, the three old keys removed unread when a journey page opens, and Delete reaching what the
+    window holds; no *done* or *now* chip on the map for anything the person never marked (*starting point*,
+    *first stage*), and the readout API giving the person's own mark (`yourStatus`) in place of the map's
+    worked-out `status` and lists (2026-10-24, the maintainer's decision 3); *type not said* on the ideas card,
+    drawn in lower case; the time words the check missed (*First years on
+    your own*, *time-boxed* in the legend, in two item rows written in their components and in a citation's
+    note, the ride-share Lens line's "with 30 days to apply" and its closing advice, the file drop's "A big one
+    can take a little while." and the book reader's "after a minute") reworded and taught to the check, which
+    now reads every catalog's Lens lines, every words file and the text each component writes itself
+    (2026-10-24), and a tool check's quotes only inside the official-quote component; the front door's chips in
+    the words file without a tax promise; *Your futures* and *Open cockpit* only once an idea is saved, and
+    with none *Your expenses* while the Expenses page lists a record (2026-10-24); the screen specs and design
+    docs of all of it brought up to date, with a test that reads them (`tests/prerelease-honesty.spec.ts` § 6)
+  - [ ] Left open by #210, each written down where it applies: the desktop app's Go menu loads its pages
+    afresh (`loadURL`, `desktop/main.mjs`), which empties the journey held in the window's memory, and the words
+    say so (moving inside the page instead needs a message through `desktop/window-preload.cjs`, its own
+    review); Help → Licences loads its page the same way (the same `go` helper), which the privacy log and
+    docs/ui-spec/start/_index.md say but the words on screen, naming the Go menu only (the maintainer's words
+    of 2026-10-24), don't: the same message would fix both, or the words could name it; in a browser copy, Back and Forward show the front door's links as first drawn
+    (docs/ui-spec/landing/03-escape-hatches.md); the line under the receipts of questions 2 and 3 sits outside
+    the receipt's `role="status"`, so a screen reader doesn't hear it with the receipt; and CLAUDE.md's Data
+    paragraph still says of the front-door sentence that "the tab marks it done" (since 2026-10-24 the journey
+    held in the window's memory does), for the maintainer to reword
+  - [ ] For the maintainer's later call (the decision of 2026-10-24 kept it for now): the intake's *Other…*
+    employment box. Its words are held in the window's memory only, kept with no idea (the idea keeps `other`)
+    and read by nothing since its list of earlier descriptions went with `dotami-employment-suggestions`: keep
+    the words with the idea (a new column, an inventory line, a privacy-log line), or remove the box and keep
+    the *Other…* choice alone
+  - [ ] Anthropic's retention period on *What DotAmi knows about you* (`components/your-data/your-data-page.tsx`,
+    under *How long Anthropic keeps it:*) is DotAmi's paraphrase, "deleted within 30 days, with exceptions". The
+    maintainer's decision 2 of 2026-10-24: a provider's period is quoted word for word under a label, and DotAmi
+    holds no copy of that page's exact words yet. Read the page, keep its words with the day read, quote them
+    under the label, and take the entry out of `COMPONENT_TIME_WORDS` (`tests/fixtures/ideas/known-gaps.ts`)
+  - [ ] For the maintainer's call, found by the review of #210: the *Replace income* goal card's payoff, "If
+    this applies, paths with faster revenue and simpler compliance can rank higher." (`lib/brain/goal-effects.ts`,
+    shown when the intake preview's row is opened), a time word and a ranking nothing does, like the other goal
+    cards' "DotAmi can prioritize … earlier" and "move up the map". Not part of #210: what goal cards say at all
+    (goals are read by no rule), for all five
+  - [ ] Two edge cases the last review of #210 found, both there before it: a map change held in the window's
+    memory because its save failed is dropped, without a word, if the person then starts a new idea from the
+    front door's *Map it* (or opens another idea and then a new one); and the intake's failed first save leaves
+    an idea never saved in the window's memory, which the front door's *Open cockpit* would then draw as if kept
+  - [x] Pre-release fixes, "Phone and layout" (the review of 2026-10-23), fixed in the pull request "every page
+    fits a phone, one step counter, and plainer screens": the cockpit at 375 px (gauges stacked, the idea's
+    name on its own line, the tip off the road); *Your futures* and *Your expenses* fit 375 px, with
+    `e2e/phone-width.spec.ts` over every page the review walked; one step counter on the typed way; legal
+    requirements under *What it needs*; the job's list folded under **Show the 44**; the Structure ladder only
+    on the tax and structure roads, in plain words; *Your plan*'s contents list; one sentence on "checked by a
+    tool only" (its server-down message on *Your destination* gave way, at the merge with main, to #210's
+    `wordsNotKept` and `incomeNotKeptLine`, which say the same). Still open from the review: the intake's tax
+    words for newcomers (not in this pull request).
 - ✅ **[13i] The landing page and intake were dead in production builds** — fixed in #64.
 
 ## 15 — Real examples: how real people started (later)

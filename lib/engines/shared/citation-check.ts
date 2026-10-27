@@ -52,6 +52,13 @@ export function howCheckedWords(c: CitationCheck): string {
   }
 }
 
+/**
+ * The label every screen writes before words copied from an official page (components/shared/page-quotes.tsx):
+ * the official-quote component. An official page's own durations ("It will cost $200 and will take 1 day.")
+ * are shown only after it, on the row that cites the page (2026-10-23; NO TIMES in DotAmi's own words).
+ */
+export const PAGE_QUOTES_LEAD = "Words found on the page:";
+
 /** The words a tool check found, when that is what a screen shows; empty otherwise. */
 export function toolCheckQuotes(c: CitationCheck): readonly string[] {
   const h = howChecked(c);

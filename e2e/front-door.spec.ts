@@ -13,20 +13,26 @@
  */
 import { expect, test, type Page } from "@playwright/test";
 
+import { cockpitWords } from "../lib/cockpit/words";
 import { roadApprenticeToOwnShopAB, roadFederalStepsCA } from "../lib/engines/roads/v2026";
+import { destinationWords, frontDoorWords } from "../lib/front-door/words";
 import { waitForReact } from "../tests/helpers/react-ready";
 
 import { showRail } from "./cockpit-calm";
+import {
+  answerBusinessAndPlace,
+  answerBusinessAndPlaceOnly,
+  expectBusinessAndPlaceAsked,
+  Q1,
+  Q2,
+  Q3,
+  Q4,
+  skipQuestionOneIfAsked,
+} from "./destination";
 import { openTheMapFromTheIntake, skipTheJob } from "./three-steps";
 
 const GENERAL = "Starting any business in Alberta (tax and structure)";
 const APPRENTICE = "From apprentice to your own shop (Alberta)";
-
-// Case-blind: the question starts with "What" since 2026-10-20 (it began "In a few years, what …").
-const Q1 = /what do you want your work and life to look like/i;
-const Q2 = "Are you after a business of your own, a job or career, or both?";
-const Q3 = "Which province or territory are you in?";
-const Q4 = "What yearly income do you want, before tax?";
 
 /** The person's own calendar day, as the page sees it. */
 const todayIn = (page: Page) => page.evaluate(() => new Date().toLocaleDateString("en-CA"));
@@ -123,7 +129,7 @@ test("door 1: four answers, each with its receipt and focus moving on, then the 
   const general = cards.first();
   await expect(general).toContainText("A business");
   await expect(general).toContainText("Written for Alberta");
-  await expect(general).toContainText(/\d+ steps · \d+ skills? listed · \d+ official fees? found · \d+ cost lines? you'd price/);
+  await expect(general).toContainText(/\d+ steps · \d+ skills? listed · (\d+ legal requirements? · )?\d+ official fees? found · \d+ cost lines? you'd price/);
   await expect(page.getByText("In the order they were written, not ranked. More futures are being written.")).toBeVisible();
 
   await general.getByRole("button", { name: `Look inside ${GENERAL}` }).click();
@@ -148,9 +154,18 @@ test("door 1: four answers, each with its receipt and focus moving on, then the 
   };
   expect(kept.future).toMatchObject({ roadId: "road-starting-any-business-ab", roadChosen: true, lookingFor: "both-or-not-sure", place: "CA-AB" });
 
-  // And it is one of the person's futures.
+  // And it is one of the person's futures. Its card says the kind of venture was not said: this way in never
+  // asks it, and the "service" it was saved with is only the intake's starting value (2026-10-23).
   await page.goto("/ventures");
-  await expect(page.getByRole("heading", { name: GENERAL, level: 2 }).first()).toBeVisible();
+  const href = `/cockpit?venture=${encodeURIComponent(ventureId)}`;
+  const card = page.getByRole("listitem").filter({ has: page.locator(`a[href="${href}"]`, { hasText: "Open in cockpit" }) });
+  await expect(card.getByRole("heading", { name: GENERAL, level: 2 })).toBeVisible();
+  // Found by its words as written; read as drawn. The line's `capitalize` once drew them "Type Not Said"
+  // (2026-10-24), which a check on the text alone never saw.
+  await expect(card.getByText(/^type not said · AB · /i)).toHaveText(/^type not said · AB · /, { useInnerText: true });
+  // Control: an idea whose kind was given keeps it on its card (the demo idea saved as a product).
+  const typed = page.getByRole("listitem").filter({ has: page.getByRole("heading", { name: "Demo — Salish Trail Maps", level: 2 }) });
+  await expect(typed.getByText(/^product · BC · /)).toBeVisible();
 });
 
 test("door 2 is today's box and intake; with an idea saved, the intake skips About you, and Back still reaches it (#38)", async ({ page }) => {
@@ -270,22 +285,9 @@ test("the first written future, picked on Pick a future, opens in the cockpit on
   const first = road.steps[0]!;
   await page.goto("/start");
   // Questions 1 and 4 are normally answered from the data file by the first test; 2 and 3 are asked here.
-  // Run on its own, question 1 is asked first: "I don't know yet" keeps nothing and moves on.
-  const q1 = page.getByRole("textbox", { name: Q1 });
-  await expect(q1.or(page.getByRole("heading", { name: Q2, level: 2 })).first()).toBeVisible();
-  if (await q1.isVisible()) {
-    const dontKnow = page.getByRole("button", { name: "I don't know yet" });
-    await waitForReact(dontKnow);
-    await dontKnow.click();
-  }
-  const business = page.getByRole("button", { name: "A business of my own" });
-  await waitForReact(business);
-  await business.click();
-  await page.getByRole("combobox", { name: Q3 }).selectOption("CA-AB");
-  await page.getByRole("button", { name: "Use this place" }).click();
-  // Run on its own, without the first test's income, question 4 is still asked: skipped, it waits on nothing.
-  const skip = page.getByRole("button", { name: "Skip" });
-  if (await skip.isVisible()) await skip.click();
+  // Run on its own, question 1 is asked first and question 4 after the place: both are passed over.
+  await skipQuestionOneIfAsked(page);
+  await answerBusinessAndPlace(page, "CA-AB");
   await page.getByRole("link", { name: "Pick a future →" }).click();
   await expect(page).toHaveURL(/\/futures$/);
   // Pick a future opens on its first step since 2026-10-22: skipped, every future is listed with no job to match.
@@ -323,4 +325,142 @@ test("the first written future, picked on Pick a future, opens in the cockpit on
     future: { roadId: string; roadChosen: boolean; lookingFor: string; place: string };
   };
   expect(kept.future).toMatchObject({ roadId: road.id, roadChosen: true, lookingFor: "business", place: "CA-AB" });
+});
+
+/** Everything this page's window storage holds, as text (both stores, every key). */
+const windowStorage = (page: Page) =>
+  page.evaluate(() => {
+    const dump = (s: Storage) => Object.fromEntries(Array.from({ length: s.length }, (_, i) => [s.key(i)!, s.getItem(s.key(i)!)]));
+    return JSON.stringify({ local: dump(localStorage), session: dump(sessionStorage) });
+  });
+
+test("Your destination's answers never sit in window storage; a visit to the example keeps them, a reload or a new window asks 2 and 3 again, and the idea picked keeps them (2026-10-23)", async ({ page, context }) => {
+  // Nothing about the person in window storage: questions 2 and 3 are held in the window's memory
+  // (lib/journey/held-journey.ts) and kept only with a future picked, in the data file. A page loaded afresh asks
+  // them again, a future picked or not, and the line under each receipt says so (destinationWords.keptWithEachFuture).
+  await page.goto("/start");
+  await skipQuestionOneIfAsked(page);
+  await answerBusinessAndPlace(page, "CA-NS");
+  await expect(page.getByText(destinationWords.keptWithEachFuture, { exact: true })).toHaveCount(2);
+
+  // Answered on screen, and none of it in either store: not the place code, not the pick, not the draft.
+  const stored = await windowStorage(page);
+  expect(stored).not.toContain("CA-NS");
+  expect(stored).not.toContain("lookingFor");
+  expect(stored).not.toContain('\\"destination\\"');
+  // Nothing of the journey is there at all (2026-10-24): the session store is empty, and the local one holds at
+  // most how the cockpit was left.
+  const { local, session } = JSON.parse(stored) as { local: Record<string, string>; session: Record<string, string> };
+  expect(session).toEqual({});
+  expect(Object.keys(local).filter((k) => k !== "dotami-cockpit-folds")).toEqual([]);
+
+  // Out to the invented example and back by the links a person uses: the example sits outside the journey's
+  // pages, and the answers are still there, held in the window's memory and still not in its storage.
+  await page.getByRole("link", { name: destinationWords.back, exact: true }).click();
+  const example = page.getByRole("link", { name: frontDoorWords.doors.example.go });
+  await waitForReact(example);
+  await example.click();
+  await expect(page).toHaveURL(/\/example\/mara$/);
+  const startOwn = page.getByRole("region", { name: cockpitWords.example.region }).getByRole("link", { name: cockpitWords.example.startOwn });
+  await waitForReact(startOwn);
+  await startOwn.click();
+  await expect(page).toHaveURL(/\/start$/);
+  await expect(page.getByText("Nova Scotia", { exact: true })).toBeVisible();
+  await expect(page.getByText(destinationWords.keptWithEachFuture, { exact: true })).toHaveCount(2);
+  await expect(page.getByRole("link", { name: destinationWords.next })).toBeVisible();
+  expect(await windowStorage(page)).not.toContain("CA-NS");
+
+  // A reload keeps this tab's sessionStorage, where both answers were kept until 2026-10-23 and would come back.
+  // Only the window's memory held them, so both are asked again.
+  await page.reload();
+  await expectBusinessAndPlaceAsked(page);
+  // A new window shares localStorage and the data file with this one, never its memory: asked again there too.
+  const second = await context.newPage();
+  await second.goto("/start");
+  await expectBusinessAndPlaceAsked(second);
+  await second.close();
+
+  // Answered again and picked: the idea keeps both in the data file, and a new window reads them there.
+  await answerBusinessAndPlace(page, "CA-NS");
+  await page.getByRole("link", { name: destinationWords.next }).click();
+  await skipTheJob(page);
+  await page.getByRole("button", { name: `Look inside ${roadFederalStepsCA.label}` }).click();
+  await expect(page).toHaveURL(/\/cockpit\?venture=/);
+  const ventureId = new URL(page.url()).searchParams.get("venture")!;
+  const third = await context.newPage();
+  const kept = (await (await third.request.get(`/api/futures/${ventureId}`)).json()) as {
+    future: { lookingFor: string; place: string };
+  };
+  expect(kept.future).toMatchObject({ lookingFor: "business", place: "CA-NS" });
+  await third.goto(`/cockpit?venture=${encodeURIComponent(ventureId)}`);
+  await expect(third.getByRole("region", { name: "Your goal and gauges" })).toContainText("Nova Scotia");
+  await third.close();
+  // After the pick: not the place code, not the idea's own province either ("NS", which "CA-NS" never matched),
+  // and not the pick: the idea open on the map is held in the window's memory, not its storage.
+  const after = await windowStorage(page);
+  expect(after).not.toContain("CA-NS");
+  expect(after).not.toContain('\\"NS\\"');
+  expect(after).not.toContain("lookingFor");
+  expect((JSON.parse(after) as { session: Record<string, string> }).session).toEqual({});
+});
+
+/** A server that answers with a crash's own page, no JSON: nothing in it says why. */
+const CRASH_PAGE = { status: 500, contentType: "text/html", body: "<!doctype html><title>Internal Server Error</title>" };
+
+test("words the server didn't keep: a refusal with no words of its own keeps the question open, no answer at all is said as such (2026-10-24)", async ({ page }) => {
+  // Both said "Not kept: no database reachable" until a review of 2026-10-24, though the database was never asked.
+  await page.goto("/start");
+  const box = page.getByRole("textbox", { name: Q1 });
+  await expect(box.or(page.getByRole("heading", { name: Q2, level: 2 })).first()).toBeVisible();
+  // Words an earlier test kept answer question 1 from the data file: Change asks it here.
+  if (!(await box.isVisible())) await page.getByRole("button", { name: destinationWords.change }).first().click();
+  const typed = `Words the server didn't keep (invented ${Date.now()})`;
+  await waitForReact(box);
+  await box.fill(typed);
+
+  // The question's own region: Next.js keeps a route announcer of its own with the alert role.
+  const question = page.getByRole("region", { name: Q1 });
+  await page.route("**/api/person/statements", (route) => route.fulfill(CRASH_PAGE));
+  await question.getByRole("button", { name: destinationWords.keepWords }).click();
+  await expect(question.getByRole("alert")).toHaveText(destinationWords.receipts.destinationNotKept);
+  await expect(box).toHaveValue(typed);
+
+  await page.unroute("**/api/person/statements");
+  await page.route("**/api/person/statements", (route) => route.abort());
+  await question.getByRole("button", { name: destinationWords.keepWords }).click();
+  await expect(question.getByRole("status")).toHaveText(destinationWords.receipts.destinationNoAnswer);
+  await expect(question.getByText(`“${typed}”`, { exact: true })).toBeVisible();
+  await page.unroute("**/api/person/statements");
+});
+
+test("a yearly income the server can't take is said not kept, and the amount stays in its box (2026-10-24)", async ({ page }) => {
+  // The words with no database reachable said "Only this page holds it" here until 2026-10-24, though nothing was
+  // held: the proposal never reached the server, and only the box holds the amount. Until a review of the same day
+  // the line said "no database reachable" though the database was never asked; a server that answers 503 gives
+  // its own words.
+  await page.route("**/api/person-figures/propose", (route) => route.abort());
+  await page.goto("/start");
+  await skipQuestionOneIfAsked(page);
+  await answerBusinessAndPlaceOnly(page, "CA-AB");
+  // Question 4 is asked, or answered from the data file (the first test's income): Change opens it again.
+  const income = page.getByRole("region", { name: Q4 });
+  const amount = income.getByRole("textbox", { name: Q4 });
+  const change = income.getByRole("button", { name: destinationWords.change });
+  await expect(amount.or(change).first()).toBeVisible();
+  if (await change.isVisible()) await change.click();
+  await amount.fill("61,234");
+  await income.getByRole("button", { name: destinationWords.keepAmount }).click();
+  await expect(income.getByRole("alert")).toHaveText(destinationWords.receipts.incomeNoAnswer);
+  await expect(amount).toHaveValue("61,234");
+  // Nothing was proposed, so there is nothing to agree to.
+  await expect(page.getByRole("dialog")).toHaveCount(0);
+
+  // A server that answers with no words of its own: not kept, and no cause DotAmi doesn't know.
+  await page.unroute("**/api/person-figures/propose");
+  await page.route("**/api/person-figures/propose", (route) => route.fulfill(CRASH_PAGE));
+  await income.getByRole("button", { name: destinationWords.keepAmount }).click();
+  await expect(income.getByRole("alert")).toHaveText(destinationWords.receipts.incomeNotKept);
+  await expect(amount).toHaveValue("61,234");
+  await expect(page.getByRole("dialog")).toHaveCount(0);
+  await page.unroute("**/api/person-figures/propose");
 });

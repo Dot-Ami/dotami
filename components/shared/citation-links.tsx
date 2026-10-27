@@ -7,6 +7,8 @@ import type { CitationVerificationStatus, CorpusPointer, EngineCitation } from "
 import { httpsOnly } from "@/lib/http/safe-url";
 import { provisionLines } from "@/lib/law/provision-lines";
 
+import { PageQuotes } from "./page-quotes";
+
 /**
  * S2.5.4f (decided 2026-09-13) — show the law on every item, as clickable official links.
  * Every citation is a link to its official URL (Justice Canada for the Act, canada.ca for
@@ -78,16 +80,8 @@ export function CitationLinks({ citations, compact = false }: { citations: Engin
                   {c.authority} · {c.jurisdiction}
                 </span>
                 <span className="mt-1 block text-small leading-4 text-amber">{howCheckedWords(c)}</span>
-                {toolCheckQuotes(c).length > 0 ? (
-                  <span className="mt-0.5 block text-small leading-4 text-stone">
-                    Words found on the page:{" "}
-                    {toolCheckQuotes(c).map((q, i) => (
-                      <span key={q} className="text-paper-dim">
-                        {i > 0 ? " · " : ""}“{q}”
-                      </span>
-                    ))}
-                  </span>
-                ) : null}
+                {/* The official-quote component: the page's own words, after their label. */}
+                <PageQuotes quotes={toolCheckQuotes(c)} className="mt-0.5 block text-small leading-4 text-stone" />
               </>
             )}
             {c.verification?.status === "partial" ? (

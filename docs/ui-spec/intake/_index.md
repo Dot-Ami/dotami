@@ -57,7 +57,7 @@ hardcoded content.
 
 ## Layout
 
-- Top nav: Back (home from Screen 0, `screen` state flip from A and B) + WordMark + "1 of 3 / 2 of 3 / 3 of 3" progress label
+- Top nav: Back (home from Screen 0, `screen` state flip from A and B) + WordMark + progress label: since 2026-10-23 one numbering for the typed way from its first screen to its last (`lib/front-door/typed-way.ts`): *1 of 6 · About you*, *2 of 6 · Confirm*, *3 of 6 · Ground it*, then Pick a future's three steps on this page *4 of 6 · Your work*, *5 of 6 · Where you are*, *6 of 6 · Pick a future* in their own heading (the nav says *Pick a future*); for a person with a saved idea, whose intake opens on Confirm, *1 of 5 · Confirm* to *5 of 5 · Pick a future* (About you reached by Back then shows its name alone). It used to say *3 of 3 · Ground it* and then *1 of 3 · Your work*
 - Main column (`flex-1`): active screen
 - Right column (`420px`, `lg:` breakpoint): live preview rail, always visible
 

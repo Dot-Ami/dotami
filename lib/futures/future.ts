@@ -155,6 +155,7 @@ export async function readFuture(prisma: PrismaClient, ventureId: string, catalo
   // Only an answer the question offers; a hand-edited file's other text reads as none, never guessed.
   const lookingFor = (LOOKING_FOR as readonly (string | null)[]).includes(row.lookingFor) ? (row.lookingFor as LookingFor) : null;
   const job = row.occupationCode === null ? undefined : oasisJobByCode(row.occupationCode);
+  const inAlberta = row.province === "AB";
   return {
     ventureId,
     roadId: road.id,
@@ -167,9 +168,12 @@ export async function readFuture(prisma: PrismaClient, ventureId: string, catalo
     lookingFor,
     lookingForOn: lookingFor === null ? null : dayOf(row.lookingForSetAt),
     job: job ? { ...job, pickedOn: dayOf(row.occupationPickedAt) } : null,
-    area: isAlbertaArea(row.landscapeArea) ? { value: row.landscapeArea, setOn: dayOf(row.landscapeAreaSetAt) } : null,
+    // Asked in Alberta only, so read only while the idea's place is Alberta (S2.5.33, bug 33a): after Change moves
+    // the idea to another province, its Alberta area and region aren't shown anywhere (Your plan, About this job),
+    // though the columns keep them for a later history of places (the maintainer's call a-call-9).
+    area: inAlberta && isAlbertaArea(row.landscapeArea) ? { value: row.landscapeArea, setOn: dayOf(row.landscapeAreaSetAt) } : null,
     region:
-      row.economicRegion !== null && regionThePersonPicked(row.economicRegion, row.province === "AB" ? "AB" : null).kind !== "not-on-the-list"
+      inAlberta && row.economicRegion !== null && regionThePersonPicked(row.economicRegion, "AB").kind !== "not-on-the-list"
         ? { value: row.economicRegion, setOn: dayOf(row.economicRegionSetAt) }
         : null,
   };

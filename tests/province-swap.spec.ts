@@ -51,15 +51,21 @@ vi.mock("@/lib/engines/cfe/v2026/incorporation-routes", async (importOriginal) =
 
 vi.mock("@/lib/engines/roads/v2026", async (importOriginal) => {
   const real = await importOriginal<typeof import("@/lib/engines/roads/v2026")>();
+  const citationsForPlace = (...args: Parameters<typeof real.citationsForPlace>) =>
+    // As the real filter, on a road written for all of Canada only, but keeping the federal pages alone.
+    plants.sourcesLeaveOutTheOwnPlace && (args[0].provinces as readonly string[]).includes("CA")
+      ? { shown: args[1].filter((c) => c.jurisdiction === "CA"), leftOut: args[1].filter((c) => c.jurisdiction !== "CA").length }
+      : plants.sourcesIgnoreThePlace
+        ? { shown: [...args[1]], leftOut: 0 }
+        : real.citationsForPlace(...args);
   return {
     ...real,
-    citationsForPlace: (...args: Parameters<typeof real.citationsForPlace>) =>
-      // As the real filter, on a road written for all of Canada only, but keeping the federal pages alone.
-      plants.sourcesLeaveOutTheOwnPlace && (args[0].provinces as readonly string[]).includes("CA")
-        ? { shown: args[1].filter((c) => c.jurisdiction === "CA"), leftOut: args[1].filter((c) => c.jurisdiction !== "CA").length }
-        : plants.sourcesIgnoreThePlace
-          ? { shown: [...args[1]], leftOut: 0 }
-          : real.citationsForPlace(...args),
+    citationsForPlace,
+    // The step panel and the plan ask through this one (review of #207), so the planted filters reach them too.
+    stepSourcesForPlace: (...args: Parameters<typeof real.stepSourcesForPlace>) => {
+      const { shown, leftOut } = citationsForPlace(args[0], args[1].citations, args[2]);
+      return { shown, leftOut: leftOut + (args[1].pagesLeftOutForPlace ?? 0) };
+    },
   };
 });
 

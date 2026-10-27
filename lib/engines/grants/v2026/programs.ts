@@ -116,34 +116,6 @@ export const grantProgramsV2026 = [
     ],
   },
   {
-    id: "grant-cajg",
-    label: "Canada-Alberta Job Grant (CAJG)",
-    kind: "grant",
-    authority: "Alberta / federal",
-    description:
-      "Employer-driven training grant covering a portion of third-party training costs for employees.",
-    eligibility:
-      "Alberta employers with Canada Revenue Agency business number; training must be third-party and job-related.",
-    lensAnnotations: {
-      tax: "If hiring and upskilling staff, CAJG may unlock partial training cost recovery — separate from wage deductibility.",
-      legal: "If workers are employees, employment standards and payroll obligations apply alongside grant eligibility.",
-    },
-    citations: [
-      {
-        title: "Canada-Alberta Job Grant",
-        authority: "provincial",
-        jurisdiction: "AB",
-        url: "https://www.alberta.ca/canada-alberta-job-grant",
-        lastVerified: LAST_VERIFIED,
-        note: "Alberta CAJG program page.",
-      },
-    ],
-    provinces: ["AB"],
-    structures: ["sole-prop-gst", "ccpc"],
-    activityTags: ["Trades", "Consulting", "Hospitality"],
-    estimatedValue: "Up to 2/3 of training costs",
-  },
-  {
     id: "grant-irap",
     label: "NRC IRAP",
     kind: "grant",
@@ -178,34 +150,6 @@ export const grantProgramsV2026 = [
     structures: ["ccpc"],
     activityTags: ["Software / SaaS", "AI / ML / R&D", "Manufacturing"],
     estimatedValue: "Varies by project",
-  },
-  {
-    id: "grant-abti",
-    label: "Alberta Investor Tax Credit (ABTIC)",
-    kind: "tax-credit",
-    authority: "Alberta",
-    description:
-      "Tax credit for investors in eligible Alberta small businesses — relevant when raising capital.",
-    eligibility:
-      "Eligible Alberta small business corporation; investor and corporation must meet program criteria.",
-    lensAnnotations: {
-      tax: "If raising equity from Alberta investors, ABTIC may unlock investor-side credits — subject to annual caps.",
-      legal: "If securities are issued, prospectus and private placement rules may apply alongside program eligibility.",
-    },
-    citations: [
-      {
-        title: "Alberta Investor Tax Credit",
-        authority: "provincial",
-        jurisdiction: "AB",
-        url: "https://www.alberta.ca/alberta-investor-tax-credit",
-        lastVerified: LAST_VERIFIED,
-        note: "Alberta ABTIC program page.",
-      },
-    ],
-    provinces: ["AB"],
-    structures: ["ccpc"],
-    activityTags: ["Software / SaaS", "Manufacturing"],
-    estimatedValue: "30% investor credit on eligible investments",
   },
   {
     id: "grant-bc-innovate",
@@ -300,11 +244,21 @@ export const grantProgramsV2026 = [
     kind: "financing",
     authority: "ISED / federal",
     description:
-      "Federal loan-guarantee program (not a grant): borrow from a bank or credit union with the government guaranteeing most of the lender's loss. Up to $500K specifically for equipment; collateral is the financed equipment itself.",
+      // Reworded 2026-10-23 to ISED's loans page (the maintainer's reading list, item grant-csbfp/equipment-limit):
+      // the $500,000 is the most of a term loan for leasehold improvements and equipment together, not for
+      // equipment alone.
+      "Federal loan-guarantee program (not a grant), through a bank, caisse populaire or credit union. ISED's loans page says it 'makes it easier for small businesses to get loans from financial institutions by sharing the risk with lenders': 'Up to a maximum of $1,000,000 for term loans for any one borrower, of which no more than $500,000 can be used for purchasing leasehold improvements and purchasing or improving new or used equipment'; 'For real property and equipment, security must be taken on the assets financed.'",
     eligibility:
-      "Canadian small businesses under the revenue ceiling; startup-friendly — no revenue history required. Equipment purchased within the past 365 days may be rolled into a CSBFP loan retroactively.",
+      // The line on rolling in equipment bought "within the past 365 days" came out 2026-10-23: no ISED page held it
+      // (the maintainer's reading list, item grant-csbfp/365-days).
+      // Since a review of 2026-10-24, ISED's words only: "under the revenue ceiling" and "no revenue history
+      // required" were DotAmi's own, and no citation held them.
+      "Borrowers, in ISED's words: 'Small businesses or start-ups operating in Canada'.",
     lensAnnotations: {
-      tax: "If equipment is on the venture's path, CSBFP may make financing available without revenue history — and the 365-day retroactive window means buying now does not forfeit the option. Loan interest and fees may be deductible; the loan itself is not income.",
+      // Shown on screen as the card's payoff. Until a review of 2026-10-24 it also said, in DotAmi's own words, that
+      // the program "may make financing available without revenue history" and that "Loan interest and fees may be
+      // deductible; the loan itself is not income": tax information no citation held.
+      tax: "If equipment or leasehold improvements are on the venture's path, ISED's loans page on this program: 'makes it easier for small businesses to get loans from financial institutions by sharing the risk with lenders'.",
       legal: "If applying, the lender relationship is a real credit obligation — personal guarantees and registration fees apply. This is financing, not free money.",
     },
     citations: [
@@ -316,11 +270,29 @@ export const grantProgramsV2026 = [
         lastVerified: "2026-07-02",
         note: "ISED program hub — equipment financing with government loan guarantee.",
       },
+      {
+        title: "Helping small businesses get loans (Canada Small Business Financing Program)",
+        authority: "federal",
+        jurisdiction: "CA",
+        // Added 2026-10-23: a tool found these words on ISED's loans page that day; no person has read it yet (option B).
+        url: "https://ised-isde.canada.ca/site/canada-small-business-financing-program/en/canada-small-business-financing-program/find-loan-your-small-business/helping-small-businesses-get-loans",
+        toolCheck: {
+          checkedOn: "2026-10-23",
+          quotes: [
+            "makes it easier for small businesses to get loans from financial institutions by sharing the risk with lenders",
+            "Small businesses or start-ups operating in Canada",
+            "Discuss your business needs with a financial officer at any bank, caisse populaire, or credit union in Canada.",
+            "Up to a maximum of $1,000,000 for term loans for any one borrower, of which no more than $500,000 can be used for purchasing leasehold improvements and purchasing or improving new or used equipment",
+            "For real property and equipment, security must be taken on the assets financed.",
+          ],
+        },
+        note: "ISED's page on the program's loans: who can borrow, the most that can be borrowed and for what, rates, the registration fee and security.",
+      },
     ],
     provinces: ["AB", "BC", "ON", "CA"],
     structures: ["sole-prop", "sole-prop-gst", "ccpc"],
     activityTags: ["Software / SaaS", "AI / ML / R&D", "Trades", "Manufacturing", "Hospitality"],
-    estimatedValue: "Up to $500K equipment financing (loan guarantee, not a grant)",
+    estimatedValue: "Up to $500,000 of a term loan for leasehold improvements and equipment (loan guarantee, not a grant)",
   },
   {
     // The maintainer's call a-call-1 on his reading list of 2026-10-23: "ADD it". The program whose page the
@@ -384,3 +356,39 @@ export const grantProgramsV2026 = [
 ] satisfies GrantProgram[];
 
 export type GrantProgramId = (typeof grantProgramsV2026)[number]["id"];
+
+/** A program taken off the catalog: why, in the official page's own terms, and the day that page was read. */
+export interface RetiredGrantProgram {
+  id: string;
+  label: string;
+  /** The program's own page, as the catalog cited it. */
+  url: string;
+  /** The day a tool opened that page to see what it says now. */
+  readOn: string;
+  why: string;
+}
+
+/**
+ * Programs taken off (the maintainer's call a-call-1, 2026-10-23: "take both off" before release 0.5.0). Their ids
+ * are never reused for another program. Nothing here reaches a screen; docs/engines/grants.md keeps the same list.
+ * The Canada-Alberta Productivity Grant, whose page the Job Grant's address now opens, is in the catalog above under its
+ * own id, `grant-capg` (2026-10-24, the same call: "ADD it"), saying only the quotes a tool found on its page; no read
+ * of its amounts is on record yet.
+ */
+export const RETIRED_GRANT_PROGRAMS: readonly RetiredGrantProgram[] = [
+  {
+    id: "grant-abti",
+    label: "Alberta Investor Tax Credit (ABTIC)",
+    url: "https://www.alberta.ca/alberta-investor-tax-credit",
+    readOn: "2026-10-23",
+    why:
+      "Alberta's page for it answers page not found. A search finds Alberta's corporate tax special notice Vol. 5 No. 54, titled 'Budget 2019 elimination of corporate tax credits' (open.alberta.ca); its page refused the tool, so its words were not checked.",
+  },
+  {
+    id: "grant-cajg",
+    label: "Canada-Alberta Job Grant (CAJG)",
+    url: "https://www.alberta.ca/canada-alberta-job-grant",
+    readOn: "2026-10-23",
+    why: "Alberta's page for it now opens the Canada-Alberta Productivity Grant's page (https://www.alberta.ca/canada-alberta-productivity-grant), a different program with its own amounts.",
+  },
+];

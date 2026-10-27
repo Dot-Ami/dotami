@@ -2,7 +2,8 @@
 
 Page: Landing (`/`) · Component: `components/discovery/landing-page.tsx`
 
-Last updated: 2026-10-12 (the box, its chips and Map it now sit inside the second of three doors, *I already have an idea*, with everything below unchanged: [04-three-doors.md](./04-three-doors.md)); 2026-10-11 (words typed before the page has finished loading are kept; the sentence is saved with the idea, dated and word for word, once per sentence typed; the box takes up to 2,000 characters and says so when full)
+Last updated: 2026-10-24 (the draft is held in the window's memory, never its storage; Delete → Your statements
+takes the sentence from it); 2026-10-12 (the box, its chips and Map it now sit inside the second of three doors, *I already have an idea*, with everything below unchanged: [04-three-doors.md](./04-three-doors.md)); 2026-10-11 (words typed before the page has finished loading are kept; the sentence is saved with the idea, dated and word for word, once per sentence typed; the box takes up to 2,000 characters and says so when full)
 
 ## What it is
 
@@ -64,7 +65,10 @@ translate it, but never decide for them — Screen A is where they confirm.
 state (the idea harness's findings): a province only when they name one place in Canada (a city named
 with a place outside Canada right after it doesn't count, nor does anything when the person is moving out
 of Canada, read as the move's own first "to"; none with two provinces; a city that is also a first name
-only after "in", "to"… or beside its province; a place outside Canada named anywhere else changes nothing,
+only after "in", "to"… or beside its province, and since 2026-10-23 (the maintainer's call a-call-14) after the
+French "à", "au", "aux", "en" and "dans" too, with the provinces' French names read as their English ones
+("Colombie-Britannique", "Nouvelle-Écosse", with or without accents and hyphens; "Terre-Neuve" only with its
+hyphen); a place outside Canada named anywhere else changes nothing,
 "moving to Calgary to open a store that ships to the USA" included); a kind of work only where it is the
 person's own (not the customers', not their day job, not an app or AI tool they use); and "Equipment /
 vehicle purchase on the path" only when they say buying, leasing, getting, needing or writing one off, with
@@ -73,8 +77,11 @@ have it, it is the customers' or the customers need work done on it ("contractor
 or the work is a service on other people's ("I replace computers for small offices"). Each case is in
 `tests/intent-fallback.spec.ts`.
 
-**Persistence:** merged draft written to `sessionStorage` (`journey-provider.tsx`) —
-browser-tab-scoped, no server log. Since 2026-10-11 the sentence is also **saved with the idea**:
+**Persistence:** the merged draft is held in the window's memory only (`journey-provider.tsx`,
+`lib/journey/held-journey.ts`), never in the window's storage (since 2026-10-24; until then the tab's
+`sessionStorage`, `dotami-journey-v3`, which a journey page now removes unread). No server log. A
+reload, a new window or the desktop app's Go menu before the idea is saved starts the intake afresh;
+moving between DotAmi's pages, Mara's example included, keeps it. Since 2026-10-11 the sentence is also **saved with the idea**:
 when the intake's "Open my map →" first saves the idea (`POST /api/scenario/save` with
 `firstWords: { text, saidAt }` and `goals`), the sentence becomes one dated statement in the
 person's own words (`PersonStatement`, linked to the idea by a nullable `ventureId`), and the goal
@@ -91,18 +98,20 @@ Written once per sentence typed, in two places (`lib/journey/first-save.ts`):
 
 - **The server** writes it only when the save creates the idea, so a later save of the same idea
   (the cockpit's autosave) can never write it again.
-- **The tab** sends it only while it isn't done. Every "Open my map →" makes a new idea (a new
+- **The window** sends it only while it isn't done. Every "Open my map →" makes a new idea (a new
   scenario id), for instance after "Edit venture profile" on the map leads back through the intake,
-  so the server's rule alone would copy the sentence onto every new idea and write back one the
-  person deleted. The draft's `manualEntryDone` is set once a save that carried the sentence
-  succeeds (`afterFirstSave`), and when Delete on `/your-data` removes "Your statements" from this
-  tab (`afterStatementsDeleted`; "Your ideas" resets the whole draft already). A done sentence
-  stays in the draft, so the intake still shows it, but is never sent again. A new sentence typed
-  here or in the intake's box clears the mark and goes with the next idea.
+  so the server's rule alone would copy the sentence onto every new idea. The draft's
+  `manualEntryDone` is set once a save that carried the sentence succeeds (`afterFirstSave`); a done
+  sentence stays in the draft, so the intake still shows it, but is never sent again. When Delete on
+  `/your-data` removes "Your statements", the sentence goes from the window's memory too, with its
+  copy in `description` and the parse's reading of it, `intentParse` (`afterStatementsDeleted`
+  through `intakeAfterDelete`, since 2026-10-24; until then it stayed in the tab's draft, marked
+  done); the picks confirmed from it stay, as picks for the idea ("Your ideas" resets the whole draft).
+  A new sentence typed here or in the intake's box clears the mark and goes with the next idea.
 
 A save that fails (no database) leaves the sentence not done, so the next "Open my map →" from
-this tab can still keep it; the cockpit's save line says the save failed. Another tab open at the
-time of a Delete keeps its own draft: it writes its sentence only if no save there had kept it yet.
+this window can still keep it; the cockpit's save line says the save failed. Another window open at
+the time of a Delete keeps its own memory: it writes its sentence only if no save there had kept it yet.
 
 The goals are chips, not words, so they belong to the idea (deleted with "Your ideas") and go with
 every new idea as they stand. Some can be marked by the parser from the sentence (step 3 above) and

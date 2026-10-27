@@ -15,7 +15,9 @@ and structure)* ([roads.md](./roads.md), since 2026-10-11): tiers become columns
 
 **Today:** `recomputeScenarioState()` (`lib/scenarios/branches.ts`) applies a fixed
 template — stage-0 completed, stage-1 active, two binary branch picks, hire-first toggle —
-for the chips. The colours come from `evaluateProfile` (`lib/brain/evaluate.ts`
+for the chips (since 2026-10-23 stage 0's chip reads *starting point* and stage 1's *first stage*: where they
+sit on the map, never the person's status, `stageChipFor` in `lib/scenarios/graph.ts`; the readout API stopped
+giving the two lists on 2026-10-24). The colours come from `evaluateProfile` (`lib/brain/evaluate.ts`
 `computeNodeStates`), always run on the venture's own picks through
 `lib/scenarios/evaluate-scenario.ts` (since 2026-10-11; before that the cockpit ran it on the
 default picks, so flipping a toggle didn't recolour the cards).

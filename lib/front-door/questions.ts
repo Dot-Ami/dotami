@@ -7,7 +7,7 @@ import { STATEMENT_MAX_CHARS } from "@/lib/person/types";
  * its order, so the later step-by-step questionnaire starts from these same four: a question is added
  * here, not written into a screen.
  *
- * Every id is permanent: the tab's draft, the data file (`Venture.lookingFor`) and the tests keep them.
+ * Every id is permanent: the journey held in the window's memory, the data file (`Venture.lookingFor`) and the tests keep them.
  * Add, never rename or reuse. A question's own words live here with it, because they are the question;
  * every other sentence on the screen is in lib/front-door/words.ts.
  */

@@ -2,16 +2,18 @@
 
 Last updated: 2026-10-24 (the Delete menu's record-keeping line: its citation also keeps a tool check,
 which its read outranks, so the line doesn't change; § Today: the reading list's new sources say "Checked
-by a tool"; 2026-10-12: § Today: the honest map's six pages now
+by a tool"; 2026-10-23: the words a tool check found are drawn by one component, `PageQuotes`, also on
+the ways to incorporate and *Your plan*; 2026-10-12: § Today: the honest map's six pages now
 carry a tool check; before that,
 2026-10-11: read or checked by a tool, the maintainer's decision of 2026-10-11, option B; same day,
 after review: "Read by a person" only when a person is recorded as the reader;
 docs/engines/citations.md)
 
 Page: every page that shows a citation (the map's node detail, the intake's live preview, *What
-DotAmi knows about you*, *Your ideas*' Tax year hint) and the playbook export and readout API ·
-Component: `components/shared/citation-links.tsx` (`CitationLinks`) · Words:
-`lib/engines/shared/citation-check.ts` (`howCheckedWords`, `isCheckFirst`, `toolCheckQuotes`) ·
+DotAmi knows about you*, *Your ideas*' Tax year hint, *Your plan*) and the playbook export and readout API ·
+Component: `components/shared/citation-links.tsx` (`CitationLinks`), the words a tool check found drawn by
+`components/shared/page-quotes.tsx` (`PageQuotes`) · Words: `lib/engines/shared/citation-check.ts`
+(`howCheckedWords`, `isCheckFirst`, `toolCheckQuotes`, `PAGE_QUOTES_LEAD`) ·
 Type: link list
 
 ## What it is
@@ -49,7 +51,10 @@ the catalog records that one did.
 - `Read on <YYYY-MM-DD>. Who read it wasn't recorded.`
 - `Read by an AI model on <YYYY-MM-DD>. Not read by a person yet.`
 - `Checked by a tool on <YYYY-MM-DD>: it found on the page the exact words this entry relies on. Not read by a person yet.`
-- `Words found on the page: “<quote>” · “<quote>”` (under a tool check, on the card only)
+- `Words found on the page: “<quote>” · “<quote>”` (under a tool check, on the card). The label is
+  `PAGE_QUOTES_LEAD`, drawn only by `PageQuotes`, the one component that draws the words a tool check found
+  on an official page (since 2026-10-23). An official page's own durations, such as "It will cost $200 and
+  will take 1 day.", may stand only there, never as a line of DotAmi's own (`tests/prerelease-honesty.spec.ts`).
 
 The words come from one function, `howCheckedWords`; no screen writes them itself, and
 `tests/citation-check.spec.ts` fails on any file in `app/`, `components/` or `lib/` other than
@@ -58,7 +63,8 @@ The words come from one function, `howCheckedWords`; no screen writes them itsel
 ## Everywhere the same words show
 
 - **The map's node detail** (`components/node-detail-panel.tsx`): each item's sources and
-  *Sources for this stage*, through `CitationLinks`.
+  *Sources for this stage*, through `CitationLinks`; on Incorporating's ways to incorporate, each fee line's
+  own quotes after the same label, through `PageQuotes` (since 2026-10-23).
 - **The intake's live preview** ([../intake/live-preview.md](../intake/live-preview.md)), through
   `CitationLinks`.
 - **"Show the words"**: unchanged; its "current to <date>" is the law store's date for the Act, not
@@ -73,12 +79,16 @@ The words come from one function, `howCheckedWords`; no screen writes them itsel
   on the CRA's 2025 T2125 ("Gross business or professional income"). Read by a person on 2026-10-10.`
   A year's form always has a person's read (`tests/engine-integrity.spec.ts`), because this sentence
   and the other-year one say DotAmi "has read" it; so this hint is never amber for how it was checked.
-- **The playbook export** (Export on the map, `lib/playbook/render-markdown.ts`): each citation line
+- **The playbook export** (Export on the map; since 2026-10-23 `lib/playbook/road-export.ts`, the same lines,
+  until then `lib/playbook/render-markdown.ts`, which no page calls now): each citation line
   ends `· <the words>` where it ended `· verified <date>`; a tool check's line is followed by one
   sub-bullet per quote, `  - *Words found on the page:* "<quote>"`, before the note. In the front
   matter, `catalog_last_verified` keeps its name but is the oldest day one of the sources was read,
   by anyone (a tool check is not a read; `n/a` when none was read), and
   `sources_read_by_a_person: <n> of <total>` follows it.
+- **Your plan** ([../plan/_index.md](../plan/_index.md)): each source's line says how it was checked, and
+  the words a tool found follow under `Words found on the page:`, one quote a line, in italics (`PageQuotes`
+  `layout="lines"`, since 2026-10-23).
 - **The readout API** (`GET /api/readout`): each citation under `evaluation.unlocks[].citations`
   keeps its fields (`lastVerified`, `readBy` and `toolCheck` when it has them) and gains
   `howChecked`, the same words.
@@ -93,7 +103,7 @@ Every citation in the catalogs was read or checked by a tool. The T2125 lines' s
 a person on 2026-10-10" (the maintainer checked them, as their notes record). Six pages say "Checked
 by a tool on 2026-10-12: it found on the page the exact words this entry relies on. Not read by a
 person yet.", in amber (a source line lists the words found under it; each way to incorporate
-quotes them on its own line, `components/node-detail-panel.tsx`): the CRA's "When to register for and start
+quotes them on its own line after *Words found on the page:*, `components/node-detail-panel.tsx`): the CRA's "When to register for and start
 charging the GST/HST" (the compliance entry, both GST/HST stages and the sole proprietor + GST/HST
 rung; until 2026-10-12 it said "Read by an AI model on 2026-10-06"), and the five pages behind the
 two ways to incorporate: Corporations Canada's "Services, fees and processing times" and "Register a

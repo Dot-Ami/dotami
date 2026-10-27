@@ -2,7 +2,9 @@
  * [8d] "What DotAmi knows about you" (/your-data), in a real browser on the production build.
  *
  * Runs after e2e/app.spec.ts in the same throwaway database, so it makes its own figure and
- * statement rather than relying on what the earlier tests left, and asserts only on those.
+ * statement rather than relying on what the earlier tests left, and asserts only on those. It is the last
+ * file the suite runs, and its last test deletes every statement and every yearly income: a file that sorts
+ * after it would find none.
  */
 import { existsSync, mkdirSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import path from "node:path";
@@ -11,7 +13,11 @@ import type { PrismaClient } from "@prisma/client";
 import { expect, test, type Locator, type Page } from "@playwright/test";
 
 import { createDatabaseClient } from "../lib/db/client";
+import { destinationWords, frontDoorWords, incomePromptWords } from "../lib/front-door/words";
 import { FOLDERS, SENT_ELSEWHERE, SET_ASIDE_RECEIPTS_WARNING as WARNING, TABLES, WINDOW_STORAGE } from "../lib/privacy/inventory";
+import { waitForReact } from "../tests/helpers/react-ready";
+
+import { answerBusinessAndPlaceOnly, Q1, Q2, Q4 } from "./destination";
 
 /** The amount typed in the test. It must never appear in a URL, and the statement's words only as a count. */
 const AMOUNT_TYPED = "12,345.67";
@@ -235,9 +241,9 @@ test("expense records: an agent can propose but not agree, and what DotAmi knows
   }
 });
 
-// [8d] Delete. These three run LAST in the last browser-test file (files run A to Z, one worker): the
-// last deletes every idea, which the earlier tests rely on. A new e2e file named after
-// "your-data" would run after them and find no demo ideas.
+// [8d] Delete. These run LAST in the last browser-test file (files run A to Z, one worker): one deletes
+// every idea, which the earlier tests rely on, and the last deletes every statement and every yearly
+// income. A new e2e file named after "your-data" would run after them and find none of those.
 
 /** Reads a table card's count on /your-data: "None" is 0. */
 async function tableCount(page: Page, name: string): Promise<number> {
@@ -261,6 +267,7 @@ async function openDeleteMenu(page: Page) {
 const STATEMENTS_BOX = "Your statements (“In your words”)";
 const IDEAS_BOX = "Your ideas, with their notes, links and map progress";
 const BACKUPS_BOX = "Safety copies in the backups folder";
+const INCOME_BOX = "The yearly income you said you want";
 
 // This run's data file is prisma/e2e/dotami.db (playwright.config.ts), so its backups folder and its
 // wipe-pending note sit beside it in prisma/e2e/. Tests that put files there remove them again.
@@ -437,6 +444,11 @@ test("Delete: tick ideas and statements, see what goes and what stays, say yes t
   await expect(turnedRow).toHaveCount(0);
   await page.keyboard.press("Escape");
 
+  // With ideas saved, the front door leads to the records through Your futures, not a link of their own.
+  await page.goto("/");
+  await expect(page.getByRole("link", { name: frontDoorWords.nav.futures })).toBeVisible();
+  await expect(page.getByRole("link", { name: frontDoorWords.nav.expenses })).toHaveCount(0);
+
   // Every table checked for 0 after the reload holds something now, so each 0 is a real change.
   await page.goto("/your-data");
   const goneAfter = ["Your statements", "Map progress", "Your figures", "Links between ideas"];
@@ -536,8 +548,14 @@ test("Delete: tick ideas and statements, see what goes and what stays, say yes t
   await page.goto("/ventures");
   await expect(page.getByText("Nothing saved yet.")).toBeVisible();
 
+  // The front door, with no idea saved, offers the Expenses page, which still has records to list
+  // (2026-10-24), and not Your futures, whose page is empty now.
+  await page.goto("/");
+  await expect(page.getByRole("link", { name: frontDoorWords.nav.futures })).toHaveCount(0);
+  await page.getByRole("link", { name: frontDoorWords.nav.expenses }).click();
+  await expect(page).toHaveURL(/\/expenses$/);
+
   // On the Expenses page the record that was on the idea now shows as not attached to an idea.
-  await page.goto("/expenses");
   const banner = page.getByRole("region", { name: "Waiting for you" });
   await banner.getByRole("button", { name: "Review" }).click();
   const review = page.getByRole("dialog", { name: "Agree to these proposed records?" });
@@ -686,4 +704,77 @@ test("Delete: a wipe an earlier Delete left owed is said on the page, and Finish
   } finally {
     rmSync(WIPE_NOTE, { force: true });
   }
+});
+
+test("Delete also takes Your destination's answers from the window's memory: the words with the statements, the income with the income; business or career and the place stay", async ({ page }) => {
+  // It deletes every statement and every yearly income in this run's data file: keep it the suite's last test.
+  const words = `Delete takes these words from the window's memory too (invented ${Date.now()})`;
+  const income = destinationWords.answeredAmount(6_123_400);
+  const marked = () => page.evaluate(() => (window as Window & { samePage?: boolean }).samePage === true);
+
+  // One full load, then only the app's own links: the answers are held in the window's memory
+  // (lib/journey/held-journey.ts), which a page.goto or a reload empties, and the test would prove nothing.
+  await page.goto("/");
+  const start = page.getByRole("link", { name: frontDoorWords.doors.dream.go });
+  await waitForReact(start);
+  await start.click();
+  await page.waitForURL("**/start");
+  // A mark on the window itself: it is still there at the end only if no step loaded a page afresh.
+  await page.evaluate(() => {
+    (window as Window & { samePage?: boolean }).samePage = true;
+  });
+
+  // 1, kept in the data file and held in memory. Words an earlier test kept answer it from the file: Change asks it here.
+  const box = page.getByRole("textbox", { name: Q1 });
+  await expect(box.or(page.getByRole("heading", { name: Q2, level: 2 })).first()).toBeVisible();
+  if (!(await box.isVisible())) await page.getByRole("button", { name: destinationWords.change }).first().click();
+  await box.fill(words);
+  await page.getByRole("button", { name: destinationWords.keepWords }).click();
+  await expect(page.getByText(`“${words}”`, { exact: true })).toBeVisible();
+  // 2 and 3, held in memory only.
+  await answerBusinessAndPlaceOnly(page, "CA-NS");
+  // 4, agreed. An income an earlier test agreed to answers it from the file: Change asks it here.
+  const amount = page.getByRole("textbox", { name: Q4 });
+  const pick = page.getByRole("link", { name: destinationWords.next });
+  await expect(amount.or(pick).first()).toBeVisible();
+  if (await pick.isVisible()) await page.getByRole("button", { name: destinationWords.change }).last().click();
+  await amount.fill("61,234");
+  await page.getByRole("button", { name: destinationWords.keepAmount }).click();
+  await page.getByRole("dialog", { name: incomePromptWords.title }).getByRole("button", { name: incomePromptWords.agree }).click();
+  await expect(page.getByText(income, { exact: true })).toBeVisible();
+
+  // To Delete by the app's own links: the front door, Settings, What DotAmi knows about you.
+  await page.getByRole("link", { name: destinationWords.back }).click();
+  await page.getByRole("link", { name: frontDoorWords.nav.settings, exact: true }).click();
+  await page.getByRole("region", { name: "Privacy" }).getByRole("link", { name: "What DotAmi knows about you" }).click();
+  await page.waitForURL("**/your-data");
+  const removing = page.getByRole("region", { name: "Taking things out" });
+  await removing.getByRole("button", { name: "Delete", exact: true }).click();
+  await removing.getByLabel(STATEMENTS_BOX).check();
+  await removing.getByLabel(INCOME_BOX).check();
+  await removing.getByRole("button", { name: "Delete what's ticked…" }).click();
+  await page.getByRole("dialog", { name: "Delete these?" }).getByRole("button", { name: "Yes, continue" }).click();
+  await page.getByRole("dialog", { name: "Delete them now?" }).getByRole("button", { name: "Delete now" }).click();
+  await expect(removing.getByRole("status")).toContainText("Deleted.");
+
+  // Back to Your destination the same way.
+  await page.getByRole("link", { name: "← Settings" }).click();
+  await page.getByRole("link", { name: "← Back" }).click();
+  await page.getByRole("link", { name: frontDoorWords.doors.dream.go }).click();
+  await page.waitForURL("**/start");
+  // The same window, so its memory came through: the mark is there, and 2 and 3 are still answered from memory (the
+  // controls, so the checks below can fail only because of what Delete did to memory).
+  expect(await marked()).toBe(true);
+  await expect(page.getByText("Nova Scotia", { exact: true })).toBeVisible();
+  await expect(page.getByRole("button", { name: "A business of my own" })).toHaveCount(0);
+  // The words went with the statements: question 1 is asked again, with its box empty (the box is filled from
+  // what memory holds, and text matching doesn't read a box's value), and the words are nowhere on the page.
+  await expect(box).toBeVisible();
+  await expect(box).toHaveValue("");
+  await expect(page.getByText(words)).toHaveCount(0);
+  // The income went with the income: past question 1, question 4 is asked, not shown answered.
+  await page.getByRole("button", { name: "I don't know yet" }).click();
+  await expect(amount).toBeVisible();
+  await expect(page.getByText(income)).toHaveCount(0);
+  await expect(pick).toHaveCount(0);
 });

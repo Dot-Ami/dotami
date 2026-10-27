@@ -15,9 +15,9 @@ export interface JobSearchCorpusMeasure {
   ideas: number;
   withJob: number;
   /**
-   * Of the ideas with an expected job, as "What's closest to your work?" lists the jobs (each group's first
-   * JOB_SEARCH_GROUP_CAP): in the group it opens, in any group listed, not listed though other jobs were, and
-   * no job found at all.
+   * Of the ideas with an expected job, as "What's closest to your work?" lists the jobs (each part's first
+   * JOB_SEARCH_GROUP_CAP; a group without parts, its first JOB_SEARCH_GROUP_CAP): in the group it opens, in any
+   * group listed, not listed though other jobs were, and no job found at all.
    */
   firstGroup: number;
   anyGroup: number;
@@ -25,7 +25,7 @@ export interface JobSearchCorpusMeasure {
   noResults: number;
   /** Of every idea: no job found at all for its kind of work. */
   noResultsAll: number;
-  /** The same, counting past each group's first JOB_SEARCH_GROUP_CAP (a match a person sees only by adding a word). */
+  /** The same, counting past each part's first JOB_SEARCH_GROUP_CAP (a match a person sees only by adding a word). */
   firstGroupUncapped: number;
   anyGroupUncapped: number;
   /** Of the ideas with an expected job: the cockpit's older job list finds it (first COCKPIT_LIST_MEASURE_LIMIT), or finds no job at all. */
@@ -35,6 +35,22 @@ export interface JobSearchCorpusMeasure {
 
 const codesOf = (r: JobSearch) => r.groups.flatMap((g) => g.jobs.map((j) => j.code));
 const holds = (codes: readonly string[], expected: readonly string[]) => expected.some((code) => codes.includes(code));
+
+/**
+ * Of the ideas given by number, those whose expected job the search no longer lists (in any group, as the screen
+ * lists them), as "<number>: <work>". `search` is the screen's own unless a planted control passes another.
+ */
+export function ideasNoLongerListed(
+  numbers: readonly number[],
+  search: (work: string) => JobSearch = (work) => searchJobTitles(work, JOB_SEARCH_GROUP_CAP),
+  ideas: readonly Idea[] = IDEAS_V1,
+): string[] {
+  return numbers.flatMap((n) => {
+    const idea = ideas.find((i) => i.id === `idea-v1-${String(n).padStart(4, "0")}`);
+    if (!idea) return [`${n}: no such idea`];
+    return holds(codesOf(search(idea.work)), idea.jobs ?? []) ? [] : [`${n}: ${idea.work}`];
+  });
+}
 
 /**
  * The one count of the job search against the corpus (research 28f's measure, on tests/fixtures/ideas/v1.ts):

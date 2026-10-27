@@ -1,7 +1,7 @@
 import { buildPlan, type PlanView } from "@/lib/cockpit/plan";
 import { answerEquipment, answerSalesYear3, compareEndings, forksToCompare, notToldYet, type KeptAnswers, type NotToldRow } from "@/lib/cockpit/told";
 import { cockpitInput, gaugeView, nextOnYourRoad, stepBadges, type KeptFuture } from "@/lib/cockpit/view";
-import { FEDERAL_ROAD_ID, forksAreTheMapToggles, generalRoadV2026, roadsV2026, skillItemsV2026, type Road } from "@/lib/engines/roads/v2026";
+import { FEDERAL_ROAD_ID, forksAreTheMapToggles, generalRoadV2026, roadForPlace, roadsV2026, skillItemsV2026, type Road } from "@/lib/engines/roads/v2026";
 import type { FigureView } from "@/lib/figures/types";
 import { futureCards, groupedForPlace, LISTED_ROAD_IDS, listedRoads, notHereRoad, sourcesLine } from "@/lib/front-door/futures";
 import type { LookingFor as DoorLookingFor } from "@/lib/front-door/questions";
@@ -17,6 +17,7 @@ import { ALBERTA_ECONOMIC_REGIONS, DONT_KNOW_REGION, economicRegionsCreditLine }
 import { roadJobNames } from "@/lib/front-door/road-jobs";
 import { cardJobLine, roadMatch, type RoadMatchCase } from "@/lib/front-door/road-match";
 import { answersOf, asksWhere, type StepsState } from "@/lib/front-door/three-steps";
+import { typedWayCount } from "@/lib/front-door/typed-way";
 import { jobStepWords, whereStepWords } from "@/lib/front-door/words";
 import { ALBERTA_AREAS } from "@/lib/places/alberta-areas";
 import { applyIntentToDraft, type IntentParseResult } from "@/lib/journey/intent";
@@ -297,7 +298,8 @@ function answersTo(row: NotToldRow, road: Road, evaluation: RoadEvaluation, idea
         : [];
     }
     case "skills": {
-      const item = [...new Set(road.steps.flatMap((s) => s.needs))][0];
+      // An item the screen draws for the idea's place (`roadForPlace` leaves out one resting only on another province's pages).
+      const item = [...new Set(roadForPlace(road, scenario.profile.province).steps.flatMap((s) => s.needs))][0];
       return item ? [(k: Kept) => void k.skillMarks.push({ skillItemId: item, ownLabel: null, mark: "have" })] : [];
     }
     case "structure":
@@ -351,7 +353,8 @@ function answerEverything(row: NotToldRow, road: Road, evaluation: RoadEvaluatio
   }
   if (row.id === "skills") {
     const marked = new Set(k.skillMarks.map((m) => m.skillItemId));
-    for (const item of new Set(road.steps.flatMap((s) => s.needs))) {
+    // Every item the screen lists for the idea's place, as the person clicks them.
+    for (const item of new Set(roadForPlace(road, k.scenario.profile.province).steps.flatMap((s) => s.needs))) {
       if (!marked.has(item)) k.skillMarks.push({ skillItemId: item, ownLabel: null, mark: "have" });
     }
     return;
@@ -447,7 +450,8 @@ function runCockpit(
       void k.figures.push(figure(idea, { kind: "start-up-cost-line", amountCents: own.quoteCents, costLine: { roadId: road.id, ...line, amountFrom: "quote" } })),
     );
   }
-  const item = [...new Set(road.steps.flatMap((s) => s.needs))][0];
+  // An item the screen draws for the idea's place (`roadForPlace` leaves out one resting only on another province's pages).
+  const item = [...new Set(roadForPlace(road, kept.scenario.profile.province).steps.flatMap((s) => s.needs))][0];
   if (item) answer("skill", (k) => void k.skillMarks.push({ skillItemId: item, ownLabel: null, mark: "have" }));
   const fork = road.forks[0];
   if (fork) {
@@ -887,7 +891,8 @@ function piecesOfSteps(pieces: TextPiece[], way: "typed" | "picked", idea: Idea,
   const place = isProvince(idea.place) ? idea.place : null;
   const placeLabel = place ? placeName(placeCode(place)) : null;
   // 1. Your work.
-  add("work › kicker", jobStepWords.stepCount);
+  // On the typed way the steps carry its one numbering, after the intake's two screens (lib/front-door/typed-way.ts).
+  add("work › kicker", way === "typed" ? typedWayCount("work", false) : jobStepWords.stepCount);
   add("work › heading", jobStepWords.heading);
   add("work › lead", jobStepWords.lead);
   add("work › hint", jobStepWords.boxHint);
@@ -920,7 +925,7 @@ function piecesOfSteps(pieces: TextPiece[], way: "typed" | "picked", idea: Idea,
     }
   }
   // 3. Pick a future: the pick line, the case's own lines and each card as the page writes it.
-  add("road › kicker", pickWords.stepCount);
+  add("road › kicker", way === "typed" ? typedWayCount("pick", false) : pickWords.stepCount);
   add("road › heading", pickWords.heading);
   add("road › order", pickWords.order);
   if (steps.job) add("road › pick line", pickWords.pickLine(steps.job.label, steps.job.code));
@@ -959,7 +964,7 @@ function piecesOfSteps(pieces: TextPiece[], way: "typed" | "picked", idea: Idea,
     add(`${at} › written for`, pickWords.writtenFor(names));
     if (place && placeLabel && !places.includes("CA") && !places.includes(place)) add(`${at} › you said`, pickWords.youSaid(placeLabel));
     if (placeLabel && places.includes("CA")) add(`${at} › federal only`, pickWords.federalOnly(placeLabel));
-    add(`${at} › counts`, pickWords.counts(card.steps, card.skillsListed, card.officialFees, card.linesToPrice));
+    add(`${at} › counts`, pickWords.counts(card.steps, card.skillsListed, card.requirementsListed, card.officialFees, card.linesToPrice));
     for (const part of sourcesLine(card.sources)) add(`${at} › sources`, part.text);
     // The card's job line, from the same function the screen draws it with (tests/future-card-honest-pick.spec.ts
     // finds it, and the card's other labels, in what components/front-door/future-card.tsx draws).

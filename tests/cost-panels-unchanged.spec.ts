@@ -36,25 +36,49 @@
  * again on 2026-10-17 for one sentence only (the second review of PR #182): road 0's two Incorporating panels
  * (Alberta and British Columbia), whose "Your answers" line for an idea with no third-year estimate no longer
  * says "set your own number to see this light", a light no number could give, but that it needs that
- * estimate too (lib/brain/evaluate.ts computeNodeStates). Redrawn on 2026-10-24 for road 0's 11 panels only
- * (the maintainer's reading list of 2026-10-23: tests/reading-list-corrections.spec.ts and
- * tests/productivity-grant.spec.ts), drawn with today's named text sizes. The keys, each under
- * road-starting-any-business-ab/: stage-0-employee-apprentice-baseline, stage-1-sole-prop-activation,
- * stage-2a-voluntary-gst-registration, stage-2b-mandatory-gst-registration, stage-3a-incorporation-80k-net and
- * stage-3a-incorporation-80k-net/BC, stage-3b-incorporation-liability-sred, branch-hire-first-employee,
- * branch-service-vs-productize, stage-4-retained-earnings-planning and stage-4-sred-deepening. Each gains the
- * Canada-Alberta Productivity Grant's card (`grant-capg`, the maintainer's call a-call-1): under "For you on
- * this stage" on Hire first employee (1 → 2), under "Elsewhere on your map" on the other ten (one higher each).
- * Five also change their words: Sole Prop activation's note quotes what the CRA says a sole proprietor counts
- * toward the $30,000 tests, and its sources gain the CRA's When to register for and start charging the GST/HST
- * (2 → 3, checked by a tool); both Incorporating panels say "Up to $500,000" on the T2 guide's two quotes;
- * Incorporation for liability/SR&ED's and SR&ED deepening's 35% bases quote the CRA's relationships page, which
- * SR&ED deepening gains as a third source (checked by a tool), and its tax impact names the expenditure limit,
- * not taxable income limits; Hire first employee's payroll account timing is "before the first remittance due
- * date", on the CRA's two sentences. No other entry changes; the apprentice road's panels and both money lists
- * are unchanged. PR #207 redraws the same 11 keys (the Job Grant's card off): whichever merges second redraws
- * them again from the merged head. The only cards allowed to change are the ones
- * that gained road 0's named start-up cost lines (docs/architecture/future-cockpit.md § 6, "The official
+ * estimate too (lib/brain/evaluate.ts computeNodeStates). Redrawn on 2026-10-23 for road 0's 11 panels only
+ * (tests/places-and-programs.spec.ts), drawn with today's named text sizes: the Canada-Alberta Job Grant card
+ * is gone from each (taken off the catalog, the maintainer's call a-call-1), so each "Elsewhere on your map" or
+ * "For you on this stage" count is one lower; and Hire first employee's sources are the CRA's two pages and
+ * Alberta's own employment-standards page (checked by a tool), with "2 sources for other provinces aren't
+ * shown." for Ontario's and British Columbia's (a-call-12). No other word changes. Redrawn on 2026-10-23 for two
+ * panels only (tests/prerelease-honesty.spec.ts), road 0's two Incorporating panels (Alberta and British
+ * Columbia): every quote on a way to incorporate's fee lines was drawn in bare quotation marks, 19 quotes on 14
+ * lines (12 on the Alberta panel, from Corporations Canada and Alberta's Corporate Registry; 7 on the British
+ * Columbia panel, the federal way's), Corporations Canada's "It will cost $200 and will take 1 day." among them.
+ * Each line's quotes are now inside the official-quote component, after "Words found on the page:", in “ ” marks
+ * and joined by " · " (components/shared/page-quotes.tsx), so a page's processing time is never a line of
+ * DotAmi's own. No other word changes. Redrawn on 2026-10-23 for six panels whose step needs a legal requirement
+ * (road 0's Mandatory GST registration and five of the apprentice road's), when legal requirements moved from
+ * "Skills it needs" to a "What it needs" heading of their own (the screen review's pre-release fixes): each was
+ * checked to differ from the recording only between its first of those two headings and its Costs heading, then
+ * redrawn; no other panel changed. At the merge of that pull request with main (2026-10-25) every panel was drawn
+ * again from the merged code: 33 of 34 are main's or the pull request's recording byte for byte, and the one both
+ * had redrawn, road 0's Mandatory GST registration, differs from main's only in its What it needs and Skills it
+ * needs headings and from the pull request's only in the Canada-Alberta Job Grant card's absence. Redrawn on
+ * 2026-10-24 for road 0's 11 panels only, drawn from a main without the Job Grant's removal (the maintainer's reading
+ * list of 2026-10-23: tests/reading-list-corrections.spec.ts and tests/productivity-grant.spec.ts), with today's
+ * named text sizes. The keys, each under road-starting-any-business-ab/: stage-0-employee-apprentice-baseline,
+ * stage-1-sole-prop-activation, stage-2a-voluntary-gst-registration, stage-2b-mandatory-gst-registration,
+ * stage-3a-incorporation-80k-net and stage-3a-incorporation-80k-net/BC, stage-3b-incorporation-liability-sred,
+ * branch-hire-first-employee, branch-service-vs-productize, stage-4-retained-earnings-planning and
+ * stage-4-sred-deepening. Each gains the Canada-Alberta Productivity Grant's card (`grant-capg`, the maintainer's
+ * call a-call-1): under "For you on this stage" on Hire first employee (one higher), under "Elsewhere on your map"
+ * on the other ten (one higher each). Five also change their words: Sole Prop activation's note quotes what the CRA
+ * says a sole proprietor counts toward the $30,000 tests, and its sources gain the CRA's When to register for and
+ * start charging the GST/HST (2 → 3, checked by a tool); both Incorporating panels say "Up to $500,000" on the T2
+ * guide's two quotes; Incorporation for liability/SR&ED's and SR&ED deepening's 35% bases quote the CRA's
+ * relationships page, which SR&ED deepening gains as a third source (checked by a tool), and its tax impact names
+ * the expenditure limit, not taxable income limits; Hire first employee's payroll account timing is "before the
+ * first remittance due date", on the CRA's two sentences. No other entry changes; the apprentice road's panels and
+ * both money lists are unchanged. At the merge of main into that pull request (2026-10-27, after the Job Grant's
+ * removal above) the same 11 were drawn again from the merged code by this test's own path, and only they: the
+ * other 23 are main's recording byte for byte. Each of the 11 differs from main's recording only by the
+ * Productivity Grant's card, its count one higher, and the five word changes just listed; and from the pull
+ * request's only by main's changes above (no Job Grant card, its count one lower; Mandatory GST registration's What
+ * it needs heading; the Incorporating panels' quotes after "Words found on the page:"; Hire first employee's
+ * Alberta source and its "2 sources for other provinces aren't shown."). The only cards allowed to change are the
+ * ones that gained road 0's named start-up cost lines (docs/architecture/future-cockpit.md § 6, "The official
  * fees catalog and start-up cost lines as built"); with those seven lines taken out, they match too.
  */
 import { readFileSync } from "node:fs";

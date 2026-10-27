@@ -80,7 +80,7 @@ async function readCockpit(seen: Seen[], page: Page, road: string, offersCompare
   await read(seen, page, `cockpit (${road}), as opened`);
 
   for (const [name, region] of [
-    ["Skills", "Skills on this road"],
+    ["Skills", "Skills and legal requirements"],
     ["Start-up money", "Start-up money"],
     ["Your date", "Your date"],
   ] as const) {

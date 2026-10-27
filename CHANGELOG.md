@@ -246,8 +246,274 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   province. Each check fails on a planted fault. Three things they found today are listed rather than skipped;
   none has a story yet, and each waits on the maintainer's call: in Alberta, *Hire first employee* on the general road lists Ontario's and
   British Columbia's employment-standards pages as its sources; a misspelt word in the kind of work finds the job
-  only by its own name (84 of the 220 test ideas with a job); and "à Regina" in French names no province.
+  only by its own name (84 of the 220 test ideas with a job); and "à Regina" in French names no province (fixed
+  2026-10-23, below).
 ### Fixed
+- **Every page fits a phone, one step counter, and plainer screens** (the screen review of 2026-10-23, its
+  pre-release fixes "Phone and layout"). At 375 px: the cockpit's four gauges are stacked, each inside the window
+  (Start-up money and Your date were out of sight in a strip that scrolled sideways; two by two from 640 px, four
+  across from 1024 px); the idea's name has a line of its own in the header (it showed "In…"); the first visit's
+  tip sits after *Next on your road*, off the road. *Your futures* (415 px wide) and *Your expenses* (429 px, the
+  **Show** drop-down) fit: the nav and the Stage row wrap, and no drop-down is wider than its box. A new browser
+  test, `e2e/phone-width.spec.ts`, checks at 375 px that no page the review walked scrolls sideways, held to a
+  planted control (a 600 px element fails it). The typed way numbers its screens once, *1 of 6 · About you* to
+  *6 of 6 · Pick a future* (it said *3 of 3 · Ground it* and then *1 of 3 · Your work*; `lib/front-door/typed-way.ts`).
+  The step panel lists a legal requirement such as the Alberta Student Number under *What it needs*, not as a
+  skill, and so do the Skills gauge, its list and its switch over the map: on the apprentice road, whose three
+  items are all legal requirements, the gauge said *3 not marked, out of 3 listed* and the switch *Skills · 3
+  listed*; now *No skills are listed on this road yet* and *3 legal requirements, apart from skills: 3 not
+  marked*, the switch *Skills · 0 listed · 3 legal requirements*, and the list draws them under *Legal
+  requirements on this road's steps*, above *Skills on this road's steps* (it is titled *Skills and legal
+  requirements*), and so does a future's card on *Pick a future* (*0 skills listed · 3 legal requirements*, not *3
+  skills listed*). On a phone the overlay row's own label and Road's *always on* are left to screen readers, so
+  the longer switch keeps the row on two lines. The Skills list folds the job's own list (Cabinetmakers' 44) under one **Show the 44 on this job's list**
+  button below the road's own items. The Structure ladder is drawn only on the tax and structure roads, in plain
+  words (*Ways a business can be set up*: *In your own name* … *A family trust*). *Your plan* has *The steps in this
+  plan* at the top of its steps, each a link to its step. A future's card says in one sentence what "checked by a
+  tool only" means. Where the idea's place leaves a road's legal requirements out (the apprentice road's three
+  Alberta items, seen from Ontario), the step panel, the Skills list, the Skills gauge and *Your plan* say *The
+  legal requirements … rest on other provinces' pages*, not that its skills do. No money amount, rule or kept data
+  changed.
+- **The same fixes, checked again after main's changes came in** (2026-10-26). A legal requirement is never called a
+  skill anywhere now: a receipt counts and names legal requirements apart (*the legal requirements now read …*, *you
+  marked 3 legal requirements*, and from Ontario *this road's legal requirements rest on other provinces' pages*,
+  where it said *skills*), and *Your plan* and Export list a step's legal requirements under *What it needs* (the
+  Alberta Student Number was listed under *Skills it needs*). The Structure ladder shows each way a business can be
+  set up by its plain name only: the one-line definitions under them were tax and legal claims in DotAmi's own words,
+  with no source, and the one for a company was wrong. On a phone, a save that fails shows its line and **Save now**
+  in a bar of its own at the foot of the window (they were only in the rail, a closed sheet, so nothing on screen
+  could be pressed), and Tab inside an open sheet reaches it too. Mara's example heads her marks *Mara's marks*
+  (*Mara's skill marks* named her legal requirements skills). The phone check now also catches a box that scrolls sideways inside itself, and opens the
+  place box, the Export panel and *Your destination* with its answers given. *Your plan* says *In the order the road
+  shows them, not importance.* above its list of steps rather than under it, so on a tablet the list's first link is
+  out of the first view again (main's changes had brought it in, one control over the plan's limit). The browser
+  tests that read the old names of the Skills list and gauge read the words file instead.
+- **Export is the road on screen** (pre-release fix of 2026-10-23; review 30f, gap 22). Export printed the tax
+  map's catalog stages for the idea's branch picks, whatever road was drawn: a cabinetmaker's export had 0 of
+  the apprentice road's 17 steps, and a baker's on the federal road had none of its BizPaL, bank account or
+  records steps. It is now built in the page from the same run as Your plan (`lib/playbook/road-export.ts`):
+  every step of the road on screen, with its state and the person's status, its done-when lines and their
+  sources, its cost lines (an official fee with its amount and source, the person's agreed quote, or "no amount
+  yet"), its official links and its sources for the idea's place. A road 0 step that is a tax-map stage keeps the
+  stage's catalog fields under it. Nothing is sent to DotAmi's server to build it (`tests/prerelease-numbers.spec.ts`:
+  on the old code the checker finds 17 of 17 apprentice steps missing; a step, a done-when line or a source
+  taken out of the export is caught).
+- **Compare and the Rules & tax switch count the cards one way** (gap 16). On the apprentice road Compare said
+  *Rules and tax cards: 2 apply · 0 check first* while the switch said *0 cards*: Compare counted every card the
+  rules lit, the switch only those a step on the road names. Both now count the cards the map draws
+  (`lib/cockpit/view.ts` `rulesCardsOnMap`); on that road both say none.
+- **The money gauge names the fees that wait on a fork** (gap 17). The gauge showed *$1,070 official fees (5
+  lines)* and Compare *$1,220* for each ending, with no reason. The gauge's waiting line now names them: *21
+  wait on a pick at “Stay employed or open your own shop”, 2 official fees among them ($150)*, so $1,070 + $150
+  is Compare's $1,220 (the Blue Seal fee and the $0 business number, on the steps after the fork; on a road whose
+  endings carried different fees, the line would add both sides' fees, more than any one ending).
+- **The vehicle loan-interest and lease caps are the amounts in force** (the maintainer's reading list, item
+  `writeoff-vehicle/interest-and-lease-caps`). The vehicle write-off's catalog entry said $250 and $600, the Income
+  Tax Act's own figures, which stand "or such other amount as may be prescribed" (in its eligibility text, which
+  no screen draws today: the card's panel shows its tax line and sources). It now says the amounts Income
+  Tax Regulations s.7307 prescribe, each for 30 days: $350 of interest for a car acquired after 2023 ($300 for one
+  acquired after 2000 and before 2024), and $1,100 plus sales tax for a lease entered into after 2024, with s.7307 as a new source whose words a
+  tool found on the consolidated Regulations' page on 2026-10-23 (not read by a person yet), listed with its
+  words in the card's panel.
+- **The Canada Small Business Financing Program says what ISED's page says** (items `grant-csbfp/equipment-limit`
+  and `grant-csbfp/365-days`). "Up to $500K specifically for equipment" became ISED's own words, quoted: up to
+  $1,000,000 in term loans for any one borrower, of which no more than $500,000 for leasehold improvements and
+  equipment together; security is taken on the assets financed. The line that equipment bought "within the past
+  365 days" can be rolled in is gone, from the entry and from the card's tax line on screen ("the 365-day
+  retroactive window means buying now does not forfeit the option"): none of the ISED pages DotAmi cites holds it
+  (the maintainer's own read found the rule in the program's Guidelines, s.5.1; it can come back cited to them).
+  The card's tax line, shown as its payoff, and the entry's eligibility text keep only ISED's words: what they said
+  in DotAmi's own words ("may make financing available without revenue history", "Loan interest and fees may be
+  deductible; the loan itself is not income", "under the revenue ceiling") no citation held. ISED's loans page is
+  a new source, checked by a tool on 2026-10-23 (not read by a person yet).
+- **About this job says "as published" beside two wage levels that are the same** (gap 15). Ontario bakers'
+  *low $17.60 · median $17.60* looked like a mistake; the line now ends *· low and median the same, as published*.
+- **A place said in French is read as a place, the way one said in English is** (the maintainer's call a-call-14,
+  2026-10-23). When the words you type at the door name your place, the place question starts on it, for you to
+  keep or change. In French, a city that is also a first name (Regina, Victoria, Brandon, Hamilton) was never read
+  as the place: "je suis adjointe administrative à Regina" started the question empty, where "in Regina" starts
+  it on Saskatchewan. The provinces' French names (Colombie-Britannique, Nouveau-Brunswick, Nouvelle-Écosse,
+  Terre-Neuve, Île-du-Prince-Édouard, Territoires du Nord-Ouest) weren't read at all, and "de Winnipeg à Regina"
+  proposed Manitoba where two provinces are named (the person picks). Now "à", "au", "aux", "en" and "dans" before
+  a place count as "in", "at" and "to" do, and the French names count, with or without accents and hyphens.
+  Lloydminster still names no province, and a first name is still a person ("Victoria et moi…"). Nothing is
+  derived: the person still sees the place and can change it (`lib/journey/intent-fallback.ts`;
+  `tests/intent-fallback.spec.ts`; the French rewording gaps go from 1 to 0, and a planted control in
+  `tests/rewording-plants.spec.ts` brings it back).
+- **Nothing about you sits in the window's storage any more** (the pre-release screen review of 2026-10-23; the
+  maintainer's rule: the window's storage holds only how the screen was left). Three keys held your own words
+  and answers, on this computer only, and Delete reached none of them: the intake in progress
+  (`dotami-journey-v3`, `sessionStorage`: the sentence you typed, your kinds of work, province or territory,
+  employment and the words typed under *Other…*, revenue estimates, and the idea open on the map with its place;
+  from 2026-10-12 also your answers on Your destination), a statement that couldn't be saved
+  (`dotami-person-unsaved`), and the job descriptions typed under *Other…* on the intake
+  (`dotami-employment-suggestions`, `localStorage`, with no end date). Now the journey is held in the window's
+  memory only (`lib/journey/held-journey.ts`, `components/shared/journey-provider.tsx`): moving between pages
+  keeps it, Mara's example and back included, and a reload, a new window, or the desktop app's Go menu or Help →
+  Licences starts it afresh. What you answer is kept in the data file where it already was: your destination words and agreed
+  income at once, the sentence and goals with the idea's first save, business-or-career and the place with the
+  future you pick, the map's changes by its autosave. A statement that couldn't be saved stays in its box, said
+  not kept, with *Keep this* to try again (`lib/person/words.ts`); the box under *Other…* no longer offers
+  earlier descriptions. A journey page removes the three keys where an older copy left them, without reading
+  them (`lib/journey/window-storage.ts`). Delete takes from the window's memory what it takes from the data file:
+  *Your statements* the sentence (until now it stayed in the tab, marked never to be sent again) and your
+  destination words, *The yearly income you said you want* the income, *Your ideas* everything
+  (`intakeAfterDelete`, `components/your-data/delete-menu.tsx`). Tests: `tests/privacy-inventory.spec.ts` (only
+  `dotami-cockpit-folds` may be read or written, a key only removed must be a listed retired one, with planted
+  reads and writes the scan catches), `tests/prerelease-honesty.spec.ts` (no read or write of a retired key, the
+  removal unread, Delete on the memory, each with a planted control), `tests/first-words.spec.ts`, and the
+  browser tests `e2e/window-storage.spec.ts` (the typed way end to end with a statement the server didn't keep,
+  old keys planted, a reload mid-intake), `e2e/front-door.spec.ts`, the failed statement in
+  `e2e/journey.spec.ts`, and a last test in `e2e/your-data.spec.ts` that reaches Delete only by the app's own
+  links, so the window's memory comes through: after Delete, questions 1 and 4 are asked again while 2 and 3
+  stay answered. The clutter check now reaches Pick a future by its link, as a person does
+  (`e2e/clutter-budget.spec.ts`): a fresh load of `/futures` has no place any more, so its eight rows failed;
+  no budget changed. Replaced, not weakened: the tests of the window-storage filter that no longer exists
+  (a stricter check finds no read or write at all), and the `typed · not saved` tag's test (the tag and its
+  field are gone).
+- **A change on the map is no longer lost without a word when you leave the cockpit** (a review of PR #210,
+  2026-10-24). Leaving the cockpit by one of its own links within the autosave's short pause cancelled the save,
+  and a save that had failed was forgotten once you left: coming back by *Open cockpit* drew your change under
+  *"Edits save automatically."* with no save on its way (by *Open in cockpit*, the data file's older copy), and
+  the next reload lost it. With the journey held only in the window's memory since the same day, nothing else
+  held it. Now leaving sends the waiting save at once, and each change no save has kept yet is held with the
+  journey (`unsavedEdits`, `components/shared/journey-provider.tsx`) until one does: opened again in the same
+  window, either way, the idea is drawn as you left it and saved again, and the save line says *"Saved · …"* or
+  *"Save unavailable — …"* (`components/cockpit/cockpit-page.tsx`;
+  [docs/ui-spec/cockpit/02-left-rail.md](docs/ui-spec/cockpit/02-left-rail.md)). Delete of your ideas drops
+  those copies too. Tests: two in `e2e/cockpit-told.spec.ts` (a change, then *Your futures* at once, reaches the
+  data file; a failed save, away and back by *Open cockpit* and by *Open in cockpit*, says it failed each time,
+  then *Save now* keeps it).
+- **The lines that say where an answer isn't kept name every way of losing it, and none says the tab keeps it.**
+  Under Your destination's questions 2 and 3: *"Kept with each future you pick, and nowhere else: a reload, a new
+  window or the desktop app's Go menu asks it again, a future picked or not."* (it said *"Kept with the future you
+  pick. Until then only this page holds it: …"*, as if a pick ended the asking, and left out the Go menu, which
+  opens its pages afresh). Words kept with no database: *"Not kept: no database reachable. A reload, a new window
+  or the desktop app's Go menu asks it again."* The cockpit's failed save, in its receipt and on the save line:
+  *"Only this window holds your answer: a reload or the desktop app's Go menu loses it."* (it said the tab kept
+  it). An income not proposed: the server's own words when it sends some (no database, its 503: *"No database
+  reachable — nothing was changed."*), *"Not kept: the server didn't answer. The amount is still in the box, and
+  Keep it tries again."* when it doesn't answer, else *"Not kept. The amount is still in the box, and Keep it
+  tries again."*, where the words receipt of question 1 was shown; question 1 likewise says *"Not kept: the
+  server didn't answer. …"* with no answer and *"Not kept. Your words are still in the box, and Keep my words
+  tries again."* for a refusal with no words of its own, no longer "no database reachable" where nobody had seen
+  that (`lib/front-door/receipts.ts` `wordsNotKept`, `incomeNotKeptLine`; `lib/front-door/words.ts`,
+  `lib/cockpit/words.ts`; [docs/ui-spec/start/01-questions.md](docs/ui-spec/start/01-questions.md)). Tests:
+  `tests/prerelease-honesty.spec.ts` (each line names its ways, the Go menu tied to `desktop/main.mjs`'s
+  `loadURL`; no "tab" and no time, with the old lines as planted controls), `tests/front-door.spec.ts`, and in
+  `e2e/front-door.spec.ts` the answers out to Mara's example and back, a reload and a new window asking 2 and 3
+  again, the income with its proposal cut off or answered by a crash's page, and question 1's words the same two ways.
+- **The map no longer says *done* and *now* for things you never told DotAmi.** On every idea the map's own
+  lists put *Employee/Apprentice baseline* first and *Sole Prop activation* next, and their chips read *done*
+  and *now*, as if that were where the person was. They now read *starting point* and *first stage*; *done*,
+  *doing* and *not for me* appear only where you marked a step, and the legend says so (*Stage chip = where it
+  sits on the map; doing, done or not for me only when you mark it*). *Next on your road* and the Steps gauge
+  start at the baseline until you mark it done (`lib/scenarios/graph.ts`, `lib/cockpit/view.ts`). On *Your
+  futures*, an idea saved without a kind of venture (a future picked on *Pick a future*) says *type not said*
+  instead of *Service*, in lower case as written: the card's line sets each word in capitals, which had drawn
+  it *Type Not Said* (`lib/db/ventures.ts`, `lib/ventures/words.ts`, `components/ventures/ventures-page.tsx`
+  `VentureFacts`; drawn in `tests/prerelease-honesty.spec.ts` and read as drawn in `e2e/front-door.spec.ts`).
+- **The readout API no longer says you completed the baseline** (the maintainer's decision 3 of 2026-10-24).
+  `GET /api/readout` gave each stage the map's list name as `status` (*complete* for *Employee/Apprentice
+  baseline* and *active* for *Sole Prop activation*, on every idea, from nothing you said), and `scenario.state`
+  held the same lists as `completedNodeIds` and `activeNodeIds`. All three are gone. Each node's `chip` says
+  where the stage sits on the map, and its values changed with the map's: `now` is `first-stage`, `done` is
+  `starting-point`. The new `yourStatus` is your own mark on the step (`doing`, `done`, `not-for-me`), or null
+  where you gave none, the same mark the map draws (`lib/readout/nodes.ts`). A program that reads `status`, or
+  posts the readout's `scenario` to `/api/playbook` (which still needs the two lists), has to change; nothing in
+  DotAmi does either. Tests: `tests/prerelease-honesty.spec.ts` (no `status` key and no lists, with the old shape
+  as a planted control the same check catches), `e2e/app.spec.ts` and `e2e/cockpit.spec.ts` (after *Done* on
+  Sole Prop activation the readout gives `yourStatus: "done"` there and null on the baseline); on the old route
+  both browser tests failed.
+- **Time words the no-times check missed.** The apprentice road's last column *First years on your own* is now
+  *Running your own shop*; the legend's *check first — confirm, time-boxed, or one fork away* now says *has an
+  end date*, and so do the two rows that said it of an item, written in their components where no check read
+  them: a step panel's item (*Time-boxed · in use before 2027*) and the intake preview's (*Time-boxed — in use
+  before 2027*), now both *has an end date · in use before 2027*, from the words file (`cockpitWords.map.lever`).
+  The CCA Class 50 citation's note in the Export panel says *the first-year factor with its end date*, not *the
+  time-boxed first-year factor*. The ride-share Lens line no longer paraphrases GI-196 as "with 30 days to
+  apply" but points to its own words under the card's sources, and no longer ends "That date is worth taking to
+  your accountant". A GnuCash book being read no longer says "A big one can take a little while.", and a read
+  DotAmi stops says it stopped "before the read finished", not "after a minute". The check
+  (`tests/helpers/time-words.ts`) now catches "first years", "the early months", "time-boxed" and the like (not
+  "opening hours"), and reads every catalog's Lens lines, every words file under `lib/`, every string a catalog
+  writes for "time-boxed", and the text each component writes itself, with the pieces it lets through listed
+  and why (`tests/fixtures/ideas/known-gaps.ts` `COMPONENT_TIME_WORDS`: words the patterns misread, *What
+  DotAmi knows about you*'s retention lines, and Anthropic's period, paraphrased until DotAmi holds its exact
+  words). Corporations Canada's fee lines ("It will cost $200 and will take 1 day.") were drawn in bare
+  quotation marks on the Incorporating step's ways to incorporate and on *Your plan*; they are now inside the
+  official-quote component that draws every tool check's quotes, after *Words found on the page:*
+  (`components/shared/page-quotes.tsx`). No amount changed.
+- **The front door.** Its three example chips are in the words file (`frontDoorWords.examplePrompts`), and the
+  second now reads *I'm already running a business — show me the write-off rules for it* instead of *optimize my
+  write-offs*, which read as a promise about your taxes. *Your futures* and *Open cockpit* show only once an idea
+  is saved; with nothing saved both opened empty pages (`lib/front-door/saved-idea.ts`). With no idea saved,
+  *Your expenses →* shows while the Expenses page has a record to list, such as the records Delete keeps when it
+  takes the ideas, or an agent's proposals waiting, which otherwise had no way in from the front door
+  (`hasListedExpenses`, counted by the Expenses page's own rule, `lib/expenses/store.ts` `LISTED_EXPENSE`); the
+  header still holds three links at most. In a browser copy, Back and Forward show the links as first drawn
+  (docs/ui-spec/landing/03-escape-hatches.md). Tests: `tests/prerelease-honesty.spec.ts`, and in
+  `e2e/your-data.spec.ts` the front door before and after Delete takes the ideas.
+- **Changing your place on a saved idea changes that idea** (S2.5.33, bug 33a; the maintainer's calls of
+  2026-10-22 and 2026-10-23). *Change* on *You told us your place is …* in the cockpit's *What you've told
+  DotAmi* opened the intake, whose save is always a new idea: the person ended with two ideas, the first still in
+  the old province. It now opens the cockpit's one-question box, asking *Which province or territory are you
+  in?* in Your destination's own words, with the thirteen provinces and territories in a drop-down, and saves the
+  answer with this idea. The rules and tax cards, the fees, the step sources and the map follow at once, and the
+  receipt says what changed ("Because you told us your place is Ontario, …"). A road written for Alberta stays
+  drawn, saying *Map drawn: … · written for AB; this idea is in ON* (call 35). Once the place isn't Alberta, the
+  area and region picked in Alberta are shown nowhere (About this job, Your plan), though the idea keeps them for
+  a later history of places (a-call-9); About this job is read again after the save. The idea count stays 1
+  (`e2e/place-change.spec.ts`: on the old code the box never opened, the Change went to the intake;
+  `tests/places-and-programs.spec.ts`: on the old code a moved idea's plan still said *Your area: Calgary*). The
+  other answers the intake asks (the kind of venture, work situation, kinds of work, sales, hire-first) still
+  open the intake; see the pull request's questions.
+- **Every road shows a step's sources for your own place** (the maintainer's call a-call-12). On road 0 in
+  Alberta, *Hire first employee* listed Ontario's and British Columbia's employment-standards pages as its
+  sources: a road written for particular provinces showed every source. Every road now shows the federal pages
+  and the person's own province's, with the existing line *"N sources for other provinces aren't shown."*, in the
+  step panel, Your plan, the Export and Pick a future's source counts (`lib/engines/roads/v2026/index.ts`
+  `citationsForPlace`). *Hire first employee* now cites Alberta's own *Employment standards* page, checked by a
+  tool on 2026-10-23 and labelled so until a person reads it (it is on the reading list in
+  docs/engines/citations.md). The province swap's `PLACE_GAPS` list is empty: the test passes with no known gap.
+  The same goes for what rests on a page (review of the pull request): on a road written for Alberta opened from
+  another province, such as an Alberta idea moved to Ontario, the cockpit and Your plan still listed Alberta's
+  name-registry pages, the WCB-Alberta *done when* line and the Alberta name fee. Now a step's *done when* lines,
+  cost lines and official links resting on another province's page are left out too, and counted in the same
+  line (`roadForPlace` and `stepSourcesForPlace` in `lib/engines/roads/v2026/index.ts`). In a road's own province
+  nothing changes. Each step's name and one-line summary stay as the road wrote them. The pull request's second
+  review (2026-10-24) found the change of place could still lose or misstate the person's own answers. A tick on a
+  *done when* line left out for the idea's new place was deleted the next time any tick on that step was saved
+  there (the step panel sends the lines it draws, and the storage replaced the list), or by *Take back* on the
+  step's ticks. It is now kept whatever list a save sends (`ticksToSave` in `lib/futures/types.ts`, used by
+  `lib/futures/step-progress.ts`), and the cockpit sends it too, so a tick made while a change of place is still
+  being saved can't lose one; moving back shows it again (`tests/places-and-programs.spec.ts` and
+  `e2e/place-change.spec.ts`: on the old code the WCB-Alberta tick was gone after a tick in Ontario; with the
+  place's save held back, it is gone after that tick when the cockpit sends only the lines it draws). Road 1's
+  skill items, all resting on Alberta's pages (*Alberta Student Number* listed four tradesecrets.alberta.ca pages
+  in Ontario), are left out of a step's list for another province, their pages counted in the same line, and a
+  listed item's sources are drawn for the place too (`skillItemsForPlace`); a skill selected on the map that the
+  new place leaves out no longer dims the whole map (`linkedSkill`). A section left empty by the place says so
+  (*This step's “done when” lines rest on other provinces' pages, so none is shown for your place.*), in the step
+  panel, the Skills list, the Skills gauge and Your plan, where it said none is written yet (road 1 from Ontario:
+  13 of its 17 steps). The change of place's receipt said *you ticked 1 of 3 “done when” lines …* and *you took
+  back your number for …*, neither of which the person did; it now names only the place, and with road 1's skill
+  items left out for another province it says neither that a mark was taken back nor that a step lost one
+  (`lib/roads/receipts.ts`). On road 1 it still said *the skills now read 0 have, 0 learning, 0 not yet, 0 not
+  marked* on the way out, as if the marks were gone, and *4 steps now have every skill they list marked have* on
+  the way back; it now says *this road's skills rest on other provinces' pages, so none is listed for your place*,
+  as the Skills gauge does, and counts no step whose skills only came back into view. An agreed number on a cost line left out for the place dropped out of the money,
+  *What you've told DotAmi* and Your plan without a word; it is now listed in both as kept with this idea and not
+  counted for the place, with **Take back** and no **Change** (the maintainer's decision of 2026-10-24, option B).
+  The Start-up money gauge, Your plan's money sums and *Compare the two endings* still said *your numbers: not
+  given yet* beside that row; they now say *your numbers: none counted for your place*, with *1 of your numbers
+  kept, not counted for your place* (`tests/places-and-programs.spec.ts`: *not given yet* on the old code).
+  Pick a future's card for an Alberta road, seen from another province, counts what that person will be shown
+  inside (call 34; road 1 from Ontario: 17 lines to price, no official fee and no skill listed, where it said 30,
+  9 and 3; `tests/three-steps.spec.ts`). The cockpit rail's prep tools no longer link Alberta's business-name page
+  (*Provincial business name registration*) for an idea in another province, which they did before this pull
+  request too (`templateIdsForPlace`; `e2e/place-change.spec.ts`: four links after a move to Ontario on the old
+  code, three now).
 - **Your answer to "Are you buying equipment, a vehicle or tools?" on a future picked on Pick a future is
   kept** (the maintainer's "Yes, fix both", 2026-10-20). Pick a future saves equipment as not said, since it
   never asks it. Answering in the cockpit's one-question box showed the answer for a moment, but left
@@ -448,6 +714,29 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   your records from day one* step holds. The line on screen doesn't change: it already said "generally", and
   its read of 2026-10-08 outranks a tool check, so it still says "(Read on 2026-10-08. Who read it wasn't
   recorded.)". Test: `tests/reading-list-corrections.spec.ts` §§ 2 and 5.
+- **"What's closest to your work?" lists whole-word matches first** (the maintainer's call a-call-11,
+  2026-10-23). Inside each group of jobs, the jobs with a government title that has, word for word, as many of
+  your words as the group counts now come first, under a heading that says so in the group's count (*One of their
+  titles has all your words exactly*; in the at-least-one group, *One of their titles has at least one of your
+  words exactly*), and the rest come after, under the heading that says the opposite (*None of their titles has
+  all your words exactly*; *None of their titles has any of your words exactly, only words that start like
+  them*). Each heading is true of every job under it and of none under the other, and *and n more of its titles*
+  counts only the titles like the one named; each part in the government's code order and showing its first 50, and the closest group opens with both parts. Nothing is scored or picked: the part is a
+  plain fact about the match. Typing "I build custom kitchen cabinets" now lists Cabinetmakers on row 10 without
+  a click (before, it was 64th of 85 in one group and not listed); "bookkeeping for small businesses" lists
+  Accounting technicians and bookkeepers on row 2 (was 13), "wedding photography" Photographers on row 3 (was
+  11). On the 220 test ideas that name a job: 152 find it in the open group (was 150), 181 anywhere listed (was
+  172), and none that was listed drops out (`lib/engines/oasis/v2026/title-search.ts`,
+  `components/front-door/job-search.tsx`; `tests/job-title-search.spec.ts` holds the new floors and every idea
+  listed before, with a planted control). The cockpit's **Pick a job** runs the same search.
+- **Two ended programs are off** (the maintainer's call a-call-1, before release 0.5.0). The *Alberta Investor
+  Tax Credit* (its page answers page not found) and the *Canada-Alberta Job Grant* (its page now opens the
+  Canada-Alberta Productivity Grant) are gone from the programs catalog and from every screen. The Job Grant
+  showed on road 0's map panels as a near-miss saying it "requires incorporation (CCPC)", which its page never
+  said; each panel's *Elsewhere on your map* count is one lower. The reason and the day each page was read are
+  kept (`RETIRED_GRANT_PROGRAMS`, docs/engines/grants.md *Retired programs*). The Productivity Grant is in the
+  catalog under its own id, `grant-capg` (*Added*), saying only its page's quoted words; no read of its amounts is
+  recorded yet.
 - **About this job in place for a job with no road, your region's Change, and the batch 4 calls** (tasks 28c and
   28h, the maintainer's calls of 2026-10-22). On Pick a future and at the end of the typed way, a job with no road
   written for it now shows *About this job*'s four rows right inside step 3, opened by "Here is what the government
@@ -472,6 +761,16 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   entries are gone, so the words-file scan and the browser sweep now fail if either comes back.
 
 ### Documented
+- **The screen specs say what the pre-release fixes changed** (2026-10-24). Each control the fixes above
+  changed has its spec changed with it: where the journey is held and what loses it (docs/ui-spec/start/,
+  landing/, intake/, futures/_index.md, cockpit/09-step-panel.md, plan/_index.md), the map's chips and the
+  readout's ids (cockpit/03-canvas.md, 08-overlays.md), *Next on your road* and the Steps gauge starting at the
+  map's starting point (cockpit/11-next-on-your-road.md, 07-goal-bar.md), an official page's words after
+  *Words found on the page:* (cockpit/07-node-detail.md, plan/_index.md, shared/citation-links.md), the front
+  door's links and the ideas card (landing/_index.md, ventures/_index.md); and the design docs that described
+  them (docs/architecture/future-cockpit.md, overview.md, settings-and-edge-cases.md,
+  figures-privacy-review.md, docs/engines/roads.md and cfe.md). `tests/prerelease-honesty.spec.ts` § 6 reads
+  them for the words files' own strings and a few fixed phrases, with the old start spec as a planted control.
 - **Official wage ranges are allowed in the design docs; outlook ratings aren't** (the maintainer's call K5,
   answered "B" on 2026-10-16, written down 2026-10-20). A government's own published wage range for a job may
   appear, labelled with its area level (economic region, province-wide figure or small-area estimate), its

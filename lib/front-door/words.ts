@@ -37,7 +37,19 @@ export const frontDoorWords = {
       go: "Show me Mara's example →",
     },
   },
-  nav: { futures: "Your futures →", cockpit: "Open cockpit →", settings: "Settings" },
+  // `expenses` only while no idea is saved and the Expenses page has a record to list (2026-10-24): once an
+  // idea is saved, Your futures leads there.
+  nav: { futures: "Your futures →", cockpit: "Open cockpit →", expenses: "Your expenses →", settings: "Settings" },
+  /**
+   * The idea door's three chips (docs/ui-spec/landing/02-example-chips.md): each only fills the box with an
+   * example phrasing. Here since 2026-10-23 (they were written in components/discovery/landing-page.tsx); the
+   * second said "optimize my write-offs" until then, which reads as a promise about the person's taxes.
+   */
+  examplePrompts: [
+    "I want to monetize a hobby",
+    "I'm already running a business — show me the write-off rules for it",
+    "I don't know what to start yet — show me what's available",
+  ],
 } as const;
 
 /** What a future includes, for the receipt to question 2. */
@@ -66,12 +78,33 @@ export const destinationWords = {
   answeredPlace: (name: string) => name,
   answeredAmount: (cents: number) => `${formatMoney(cents)} a year, before tax`,
   skipped: "Skipped",
+  // Under the receipts of questions 2 and 3 (2026-10-23): nothing about the person sits in window storage, so these
+  // two are held in the window's memory (lib/journey/held-journey.ts) and kept, in the data file, only with each
+  // future picked. /start never reads them back from there (lib/front-door/kept.ts), so a page loaded afresh asks
+  // them again even after a pick. It names every such way: the desktop app's Go menu is one (desktop/main.mjs opens
+  // its pages with loadURL); moving between DotAmi's pages, the example included, isn't. "Kept with the future you
+  // pick. Until then …" until 2026-10-24, which read as if a pick ended the asking.
+  keptWithEachFuture:
+    "Kept with each future you pick, and nowhere else: a reload, a new window or the desktop app's Go menu asks it again, a future picked or not.",
   receipts: {
     // The goal bar shows the destination only on an idea with no first sentence of its own, which is what
     // Pick a future saves; an idea described on the front door shows its own (components/cockpit/goal-bar.tsx).
     destinationKept: (day: string) =>
       `Kept word for word, dated ${day}. It goes at the top of each future you pick on Pick a future; an idea you describe in your own sentence shows that sentence instead.`,
-    destinationTabOnly: "Not kept: no database reachable. It stays in this tab only.",
+    // The words, with no database: shown back from the window's memory, which any fresh load empties (the id is
+    // the old name, from when the tab's storage held them). Only after a 503, the server's own "no database".
+    destinationTabOnly: "Not kept: no database reachable. A reload, a new window or the desktop app's Go menu asks it again.",
+    // The same, when the server didn't answer at all (it stopped, or the request was cut off): the database was never
+    // asked, so no cause is named but that one (a review of 2026-10-24; the line above was shown here until then).
+    destinationNoAnswer: "Not kept: the server didn't answer. A reload, a new window or the desktop app's Go menu asks it again.",
+    // A refusal that came with no words of its own (a crash's page): nothing is held, the question stays open, and
+    // no cause is named (the line above "no database reachable" was shown here until a review of 2026-10-24).
+    destinationNotKept: "Not kept. Your words are still in the box, and Keep my words tries again.",
+    // The yearly income not proposed: nothing is held, only the box keeps the amount (2026-10-24; the words receipt
+    // above was shown here until then). A server that answers 503 says "no database" in its own words, shown in place
+    // of these; until a review of the same day the first said "no database reachable" though nothing said so.
+    incomeNotKept: "Not kept. The amount is still in the box, and Keep it tries again.",
+    incomeNoAnswer: "Not kept: the server didn't answer. The amount is still in the box, and Keep it tries again.",
     destinationDontKnow: "Nothing kept. You can say it later; nothing here waits on it.",
     // "I don't know yet" deletes nothing: statements are never edited away one by one.
     destinationStillKept: (day: string) =>
@@ -122,10 +155,12 @@ export const pickWords = {
     `The federal steps only. ${province}'s own steps aren't written yet; a step shows ${/^[AEIOU]/.test(province) ? "an" : "a"} ${province} page only where a federal step cites one.`,
   showAlberta: (n: number) => (n === 1 ? "Show the 1 future written for Alberta" : `Show the ${n} futures written for Alberta`),
   hideAlberta: "Hide the futures written for Alberta",
-  counts: (steps: number, skills: number, fees: number, lines: number) =>
+  /** The road's legal requirements are named apart from its skills, and only when it lists any (2026-10-24). */
+  counts: (steps: number, skills: number, requirements: number, fees: number, lines: number) =>
     [
       plural(steps, "step", "steps"),
       plural(skills, "skill listed", "skills listed"),
+      ...(requirements > 0 ? [plural(requirements, "legal requirement", "legal requirements")] : []),
       plural(fees, "official fee found", "official fees found"),
       plural(lines, "cost line you'd price", "cost lines you'd price"),
     ].join(" · "),
@@ -135,6 +170,9 @@ export const pickWords = {
     unrecorded: (n: number) => `${n} read, who read ${n === 1 ? "it" : "them"} wasn't recorded`,
     model: (n: number) => `${n} read by an AI model only, not read by a person yet`,
     tool: (n: number) => `${n} checked by a tool only, not read by a person yet`,
+    /** Under the sources line when a tool checked any (docs/engines/citations.md, option B of 2026-10-11). */
+    toolMeans:
+      "Checked by a tool means a program opened the official page and found the quoted words on it; no person has read the whole page yet.",
   },
   nameIt: "Name it (optional)",
   nameHint: "Left empty, it is named after the future you pick.",
@@ -232,6 +270,26 @@ export const jobStepWords = {
   groupList: "Jobs found only through DotAmi's word list, not by a government title",
   groupCount: (heading: string, n: number) => `${heading}, ${n}`,
   groupOrder: "In the government's code order, not ranked.",
+  // Whole words first (the maintainer's call a-call-11, 2026-10-23): a group's two labelled parts, the order line
+  // said in place of groupOrder when a group holds both, and the cap's line under a part. As settled in the #206
+  // review, each part's heading states its rule in the group's own count (your word; all your words; all but one;
+  // at least one), never a job's own, which the screen doesn't show, so it is true of every job under it and of
+  // none under the other (lib/engines/oasis/v2026/title-search.ts, rule 5). The order line states no rule of its
+  // own: the two headings under it do.
+  partExact: {
+    one: "One of their titles has your word exactly",
+    all: "One of their titles has all your words exactly",
+    "all-but-one": "One of their titles has all but one of your words exactly",
+    some: "One of their titles has at least one of your words exactly",
+  },
+  partWordStart: {
+    one: "None of their titles has your word exactly, only a word that starts like it",
+    all: "None of their titles has all your words exactly",
+    "all-but-one": "None of their titles has all but one of your words exactly",
+    some: "None of their titles has any of your words exactly, only words that start like them",
+  },
+  partsOrder: "In two parts, each in the government's code order. Not ranked.",
+  cappedPart: (shown: number, total: number) => `Showing the first ${shown} of ${total} in this part, in code order. Add a word to narrow it.`,
   showGroup: (n: number) => `Show the ${n} jobs whose example titles have all but one of your words`,
   showGroupSome: (n: number) => `Show the ${n} jobs whose example titles have at least one of your words`,
   showGroupList: (n: number) => `Show the ${n} jobs found only through DotAmi's word list`,
@@ -317,6 +375,23 @@ export const whereStepWords = {
 /** The intake's Screen B button, which opens the three steps on the intake page (2026-10-22, the maintainer's call 1). */
 export const intakeStepsWords = {
   next: "Next: the work closest to yours →",
+} as const;
+
+/**
+ * The typed way's one numbering, from its first screen to its last (lib/front-door/typed-way.ts): the intake's
+ * three screens and then Pick a future's three steps, which on Pick a future itself count "1 of 3" on their own.
+ * Until the screen review of 2026-10-23 Ground it said "3 of 3" and the next screen "1 of 3".
+ */
+export const typedWayWords = {
+  count: (n: number, total: number, name: string) => `${n} of ${total} · ${name}`,
+  names: {
+    about: "About you",
+    confirm: "Confirm",
+    ground: "Ground it",
+    work: "Your work",
+    where: "Where you are",
+    pick: "Pick a future",
+  },
 } as const;
 
 export const incomePromptWords = {

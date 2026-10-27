@@ -120,7 +120,7 @@ test("door 3 opens Mara's example: the banner, her words, the road, the gauges; 
   await expect(goalBar(page).getByRole("button", { name: /^Start-up money/ })).toContainText("$14,993.62 Mara's numbers (1 line)");
   await expect(goalBar(page).getByRole("button", { name: /^Mara's date/ })).toContainText("Mara's");
   await expect(told(page)).toContainText("things Mara told DotAmi");
-  await expect(page.getByRole("region", { name: "What Mara did" })).toContainText("Mara's skill marks");
+  await expect(page.getByRole("region", { name: "What Mara did" })).toContainText(cockpitWords.example.story.parts.marks("Mara"));
   await expect(goalBar(page).getByRole("button", { name: /^Start-up money/ })).toContainText("29 not priced yet");
   await expect(goalBar(page).getByRole("button", { name: /^Skills/ })).toContainText("Mara's pick of job: 4 have · 2 learning · 1 not yet");
   await expect(stage(page, "Open your own shop")).toBeVisible();
@@ -131,7 +131,10 @@ test("door 3 opens Mara's example: the banner, her words, the road, the gauges; 
   await expect(whatIf(page)).not.toContainText("$610,300");
   await expect(page.getByRole("region", { name: "What Mara did" })).not.toContainText("what-if");
   // Her story: each answer and what it changed, worked out by road evaluation.
-  await expect(page.getByRole("region", { name: "What Mara did" })).toContainText("Because you marked 9 skills, 4 steps now have every skill they list marked have.");
+  // Her two marks on the road's legal requirements are named, never counted as skills (the review of #209's merge).
+  await expect(page.getByRole("region", { name: "What Mara did" })).toContainText(
+    "Because you told us you have “Alberta Student Number”, you told us you have “An apprenticeship education agreement with a sponsor” and you marked 7 skills, 4 steps now have every legal requirement they list marked have.",
+  );
 
   // A step: its status buttons are disabled, and say why.
   await stage(page, "Open your own shop").click();
@@ -218,7 +221,7 @@ test("every other control in the ui-spec's table is drawn disabled, and none of 
 
   // The Skills list: every skill mark, Add a skill (even with a skill typed), and the pick of job.
   await goalBar(page).getByRole("button", { name: /^Skills/ }).click();
-  const skills = page.getByRole("region", { name: "Skills on this road" });
+  const skills = page.getByRole("region", { name: "Skills and legal requirements" });
   await allDisabled(skills.getByRole("button", { name: /^(Have|Learning|Not yet)$/ }), "skills: marks");
   await skills.getByRole("textbox", { name: "A skill in your own words" }).fill("Finishing");
   await allDisabled(skills.getByRole("button", { name: /^Add as / }), "skills: Add a skill");

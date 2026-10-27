@@ -12,9 +12,10 @@ import { CitationLinks } from "@/components/shared/citation-links";
 import { Pill } from "@/components/ui";
 import { itemsForStep } from "@/lib/brain/node-items";
 import type { EvaluationResult } from "@/lib/brain/types";
+import { emptySectionLine, stepRequirementsNone } from "@/lib/cockpit/view";
 import { cockpitWords as words } from "@/lib/cockpit/words";
 import { cfeCatalogV2026 } from "@/lib/engines/cfe/v2026";
-import { citationsForPlace, type Road, type RoadStep, type SkillItem } from "@/lib/engines/roads/v2026";
+import { stepSourcesForPlace, type Road, type RoadStep, type SkillItem } from "@/lib/engines/roads/v2026";
 import type { EngineCitation } from "@/lib/engines/shared/types";
 import type { CostLineAmountFrom } from "@/lib/figures/types";
 import { formatMoney } from "@/lib/format/money-and-months";
@@ -92,9 +93,10 @@ export function StepPanel(props: StepPanelProps) {
   const items = itemsForStep(rules.unlocks, step);
   const node = cfeCatalogV2026.nodes.find((n) => n.id === step.id);
   const sections = <StepSections {...props} />;
-  // On a road written for all of Canada, the step's sources for the idea's own place, and a line saying how
-  // many other provinces' pages were left out (task 28d); on any other road, every source.
-  const sources = citationsForPlace(props.road, step.citations, province);
+  // The step's sources for the idea's own place, and a line saying how many other provinces' pages were left
+  // out (task 28d; on every road since the maintainer's call a-call-12, 2026-10-23), counting the pages the
+  // road drawn for this place left out of the step's done-when lines, cost lines and links (`roadForPlace`).
+  const sources = stepSourcesForPlace(props.road, step, province);
   const sourcesNote = sources.leftOut > 0 ? words.panel.sourcesOtherProvinces(sources.leftOut) : null;
 
   return (
@@ -250,7 +252,8 @@ function StepSections({
   onOpenJobList,
 }: StepPanelProps) {
   const [quoting, setQuoting] = useState<string | null>(null);
-  // Each save sends the step's whole list of ticks, built from what was last read back. A second tick
+  // Each save sends the step's whole list of ticks on the lines drawn here, built from what was last read back (a
+  // tick on a line this place leaves out is kept: lib/futures/types.ts `ticksToSave`). A second tick
   // before that read-back would send a list without the first, so the boxes wait until it lands.
   // While they wait they show the list just sent, so a click ticks the box at once; once the save is
   // read back (or refused, with the reason shown above) they show what is kept again, so a refused
@@ -276,6 +279,25 @@ function StepSections({
   // What the boxes show: the list on its way for this step, else what is kept.
   const shown = pending?.stepId === step.id ? new Set(pending.ids) : ticked;
   const itemById = new Map(skillItems.map((item) => [item.id, item]));
+  // The step's needs in its own order, split by kind: legal requirements, then listed skills.
+  const needed = step.needs.flatMap((id) => {
+    const item = itemById.get(id);
+    return item ? [item] : [];
+  });
+  const requirements = needed.filter((item) => item.kind === "legal-requirement");
+  const listedSkills = needed.filter((item) => item.kind !== "legal-requirement");
+  const requirementsLeftOut = requirements.length === 0 ? stepRequirementsNone(step, skillItems) : null;
+  const needRow = (item: SkillItem) => (
+    <SkillRow
+      key={item.id}
+      item={item}
+      mark={marks.get(item.id) ?? null}
+      selected={selectedSkillId === item.id}
+      canSave={canSave}
+      onMark={(mark) => onMark(item.id, mark)}
+      onSelect={() => onSelectSkill(selectedSkillId === item.id ? null : item.id)}
+    />
+  );
 
   return (
     <div className="mt-5 space-y-5">
@@ -344,7 +366,7 @@ function StepSections({
       <div>
         <h3 className={heading}>{words.panel.doneWhen}</h3>
         {step.doneWhen.length === 0 ? (
-          <p className="text-body text-stone">{words.panel.doneWhenNone}</p>
+          <p className="text-body text-stone">{emptySectionLine(step, "doneWhen")}</p>
         ) : (
           <>
             <p className="mb-1.5 font-mono text-small text-stone">{words.panel.doneWhenTicked(evaluation.doneWhen.ticked, evaluation.doneWhen.total)}</p>
@@ -378,28 +400,27 @@ function StepSections({
         )}
       </div>
 
+      {/* What the step needs that isn't a skill (an ID number, an agreement): its legal requirements, under a
+          heading of their own above the skills (the screen review of 2026-10-23 found "Alberta Student Number"
+          listed as a skill). Drawn only on a step that has one, or whose every one the idea's place left out,
+          which it then says (`stepRequirementsNone`: road 1's Alberta items, seen from Ontario). */}
+      {requirements.length > 0 || requirementsLeftOut ? (
+        <div>
+          <h3 className={heading}>{words.panel.whatItNeeds}</h3>
+          {requirementsLeftOut ? (
+            <p className="text-body text-stone">{requirementsLeftOut}</p>
+          ) : (
+            <ul className="space-y-2">{requirements.map(needRow)}</ul>
+          )}
+        </div>
+      ) : null}
+
       <div>
         <h3 className={heading}>{words.panel.skills}</h3>
-        {step.needs.length === 0 ? (
-          <p className="text-body text-stone">{words.panel.skillsNone}</p>
+        {listedSkills.length === 0 ? (
+          <p className="text-body text-stone">{emptySectionLine(step, "skills", skillItems)}</p>
         ) : (
-          <ul className="space-y-2">
-            {step.needs.map((id) => {
-              const item = itemById.get(id);
-              if (!item) return null;
-              return (
-                <SkillRow
-                  key={id}
-                  item={item}
-                  mark={marks.get(id) ?? null}
-                  selected={selectedSkillId === id}
-                  canSave={canSave}
-                  onMark={(mark) => onMark(id, mark)}
-                  onSelect={() => onSelectSkill(selectedSkillId === id ? null : id)}
-                />
-              );
-            })}
-          </ul>
+          <ul className="space-y-2">{listedSkills.map(needRow)}</ul>
         )}
         {/* The government's list for the person's pick of job belongs to the job, not to a step (no
             official source ties one of its skills to a step), so the panel only counts it and opens it. */}
@@ -416,7 +437,7 @@ function StepSections({
       <div>
         <h3 className={heading}>{words.panel.costs}</h3>
         {evaluation.costs.length === 0 ? (
-          <p className="text-body text-stone">{words.panel.costsNone}</p>
+          <p className="text-body text-stone">{emptySectionLine(step, "costs")}</p>
         ) : (
           <>
             {evaluation.money === "left-out" ? <p className="mb-1.5 text-body text-stone">{words.panel.costsLeftOut}</p> : null}
@@ -538,9 +559,12 @@ export function SkillRow({
         {mark === "have" && item.kind === "legal-requirement" ? <span className="font-mono text-label text-sage">{words.panel.youHold}</span> : null}
       </div>
       <MarkButtons mark={mark} canSave={canSave} onMark={onMark} />
-      {/* The item's own sources, mark or no mark: a legal requirement is never shown without its law. */}
+      {/* The item's own sources, mark or no mark: a legal requirement is never shown without its law; drawn for the
+          idea's place (`skillItemsForPlace`), and one resting only on another province's pages isn't listed there
+          (`roadForPlace`). */}
       <div className="mt-1.5">
         <CitationLinks citations={item.citations} compact />
+        {item.sourcesLeftOutForPlace ? <p className="mt-1 text-small text-stone-dim">{words.panel.sourcesOtherProvinces(item.sourcesLeftOutForPlace)}</p> : null}
       </div>
       {mark === "not-yet" && item.howToGetIt ? (
         <div className="mt-1.5 text-body text-stone">

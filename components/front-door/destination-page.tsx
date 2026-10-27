@@ -26,11 +26,13 @@ import {
 } from "@/lib/front-door/questions";
 import {
   destinationReceipt,
+  incomeNotKeptLine,
   incomeReceipt,
   lookingForReceipt,
   placeName,
   placeReceipt,
   provinceOfPlace,
+  wordsNotKept,
   type StillAgreed,
 } from "@/lib/front-door/receipts";
 import { destinationWords as words } from "@/lib/front-door/words";
@@ -50,9 +52,11 @@ const listedFor = (draft: DestinationDraft) => listedRoads(roadsV2026, draft.pla
  * every receipt from lib/front-door/receipts.ts, worked out from the answer and the catalogs.
  *
  * Question 1 is kept at once as the person's destination (a dated, word-for-word statement); question 4 is
- * proposed and counts only once agreed in the prompt. Questions 2 and 3 wait in the tab until a future is
- * picked (/futures), which keeps them on the idea. What the data file already holds for 1 and 4 (`kept`,
- * read on the server when the page is drawn) counts as answered, so a returning person isn't asked again.
+ * proposed and counts only once agreed in the prompt. Questions 2 and 3 wait in the window's memory
+ * (lib/journey/held-journey.ts; never in window storage), and each future picked (/futures) keeps them on its
+ * idea; nothing reads them back from there, so a page loaded afresh asks them again. What the data file already
+ * holds for 1 and 4 (`kept`, read on the server when the page is drawn) counts as answered, so a returning
+ * person isn't asked again.
  */
 export function DestinationPage({ kept }: { kept: KeptOnRecord }) {
   const { intake, setIntake, hydrated } = useJourney();
@@ -111,7 +115,8 @@ export function DestinationPage({ kept }: { kept: KeptOnRecord }) {
         <div data-region="questions" className="mx-auto w-full max-w-2xl space-y-6 px-4 py-10 sm:px-8">
           {/* The page's name for a screen reader; the nav above already says it on screen. */}
           <h1 className="sr-only">{words.pageHeading}</h1>
-          {/* The tab's answers are read after the first paint; asking before then could ask one already answered. */}
+          {/* The answers held in the window's memory are read after the first paint; asking before then could ask
+              one already answered. */}
           {hydrated
             ? DESTINATION_QUESTIONS.map((question) =>
                 asked === question.id ? (
@@ -297,14 +302,17 @@ function OwnWords({
         onAnswer({
           destination: { kept: "saved", text: body.statement.text, saidAt: body.statement.saidAt },
         });
-      } else if (res.status === 503) {
-        // No database: the words stay in this tab, and the receipt says so.
-        onAnswer({ destination: { kept: "tab-only", text: typed, saidAt: today } });
       } else {
-        setError(body?.error ?? words.receipts.destinationTabOnly);
+        // No database (a 503): only the window's memory holds the words, and the receipt says so. Any other
+        // refusal keeps the question open, in the server's words or a line that names no cause it doesn't know.
+        const outcome = wordsNotKept({ status: res.status, body }, typed, today);
+        if ("held" in outcome) onAnswer({ destination: outcome.held });
+        else setError(outcome.error);
       }
     } catch {
-      onAnswer({ destination: { kept: "tab-only", text: typed, saidAt: today } });
+      // No answer at all: held the same way, and the receipt says only that the server didn't answer.
+      const outcome = wordsNotKept(null, typed, today);
+      if ("held" in outcome) onAnswer({ destination: outcome.held });
     } finally {
       setBusy(false);
     }
@@ -439,9 +447,10 @@ function IncomeAmount({
       } | null;
       const proposed = body?.figures?.[0];
       if (res.ok && proposed) setProposal({ id: proposed.id, amountCents: proposed.amountCents });
-      else setProblem(body?.error ?? words.receipts.destinationTabOnly);
+      // Nothing was proposed, so nothing is held: only the box keeps the amount, and the line says so.
+      else setProblem(incomeNotKeptLine({ status: res.status, body }));
     } catch {
-      setProblem(words.receipts.destinationTabOnly);
+      setProblem(incomeNotKeptLine(null));
     } finally {
       setBusy(false);
     }
@@ -575,6 +584,11 @@ function AnsweredQuestion({
       <p role="status" className="text-body text-sage">
         {receipt}
       </p>
+      {/* Questions 2 and 3 are kept with each future picked and nowhere else; the window's memory holds them
+          (lib/journey/held-journey.ts), so a page loaded afresh asks them again, and the person is told so. */}
+      {question.id === "looking-for" || question.id === "place" ? (
+        <p className="text-body text-stone">{words.keptWithEachFuture}</p>
+      ) : null}
     </section>
   );
 }

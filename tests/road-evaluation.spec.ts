@@ -355,6 +355,9 @@ describe("the four gauges are counts and sums", () => {
       learning: 1,
       notYet: 1,
       notMarked: 2,
+      // The same five split by kind: the trade ticket is the one legal requirement (2026-10-23).
+      listedSkills: { listed: 4, have: 1, learning: 1, notYet: 0, notMarked: 2 },
+      legalRequirements: { listed: 1, have: 0, learning: 0, notYet: 1, notMarked: 0 },
       addedByYou: { have: 1, learning: 0, notYet: 0 },
       // No job picked: the government's list for one is counted apart (tests/cockpit-skills.spec.ts).
       yourPickOfJob: null,
@@ -372,7 +375,8 @@ describe("the four gauges are counts and sums", () => {
       yourNumberLines: 0,
       notPricedLines: 1,
       leftOutLines: 0,
-      waitingOnForks: [{ forkId: "fork-eval-ending", label: "Ending (test only)", lines: 5 }],
+      notCountedForPlaceLines: 0,
+      waitingOnForks: [{ forkId: "fork-eval-ending", label: "Ending (test only)", lines: 5, officialFeesCents: 6_000, officialFeeLines: 1 }],
       savingsCents: null,
       differenceCents: null,
     });
@@ -406,6 +410,7 @@ describe("the four gauges are counts and sums", () => {
       yourNumberLines: 2,
       notPricedLines: 3,
       leftOutLines: 0,
+      notCountedForPlaceLines: 0,
       waitingOnForks: [],
       savingsCents: 1_200_000,
       differenceCents: 1_200_000 - (186_000 + 540_000),
@@ -549,7 +554,8 @@ describe("receipts: one plain line per change, from the two runs", () => {
     const because = "Because you told us you have “Trade math (test only)” and you told us you have “Read drawings (test only)”";
     expect(roadReceipt(before, after)).toEqual([
       `${because}, 1 step now has every skill it lists marked have.`,
-      `${because}, the skills now read 2 have, 0 learning, 0 not yet, 3 not marked.`,
+      // The road's four listed skills: its legal requirement (the trade ticket) is counted apart, never as a skill.
+      `${because}, the skills now read 2 have, 0 learning, 0 not yet, 2 not marked.`,
     ]);
     // The step still has its two "done when" lines and its money to go: the line is about skills only.
     expect(stepOf(after, "step-eval-train")).toMatchObject({ doneWhen: { ticked: 0, total: 2 }, needs: { listed: 2, have: 2 } });
@@ -558,7 +564,7 @@ describe("receipts: one plain line per change, from the two runs", () => {
   it("three or more answers of one kind are counted", () => {
     const after = evaluateRoad(
       input({
-        skillMarks: ["skill-eval-math", "skill-eval-drawings", "skill-eval-ticket"].map((id) => ({
+        skillMarks: ["skill-eval-math", "skill-eval-drawings", "skill-eval-quoting"].map((id) => ({
           skillItemId: id,
           ownLabel: null,
           mark: "have" as const,
@@ -571,12 +577,12 @@ describe("receipts: one plain line per change, from the two runs", () => {
   it("taking an answer back says so", () => {
     const before = evaluateRoad(input({ skillMarks: [{ skillItemId: "skill-eval-math", ownLabel: null, mark: "have" }] }));
     expect(roadReceipt(before, evaluateRoad(input()))).toEqual([
-      "Because you took back your mark on “Trade math (test only)”, the skills now read 0 have, 0 learning, 0 not yet, 5 not marked.",
+      "Because you took back your mark on “Trade math (test only)”, the skills now read 0 have, 0 learning, 0 not yet, 4 not marked.",
     ]);
   });
 
   it("taking back three or more is counted as taken back, never as marked", () => {
-    const marks = ["skill-eval-math", "skill-eval-drawings", "skill-eval-ticket"].map((id) => ({
+    const marks = ["skill-eval-math", "skill-eval-drawings", "skill-eval-quoting"].map((id) => ({
       skillItemId: id,
       ownLabel: null,
       mark: "have" as const,
@@ -584,7 +590,7 @@ describe("receipts: one plain line per change, from the two runs", () => {
     const lines = roadReceipt(evaluateRoad(input({ skillMarks: marks })), evaluateRoad(input()));
     expect(lines).toEqual([
       "Because you took back 3 skill marks, 2 steps no longer have every skill they list marked have.",
-      "Because you took back 3 skill marks, the skills now read 0 have, 0 learning, 0 not yet, 5 not marked.",
+      "Because you took back 3 skill marks, the skills now read 0 have, 0 learning, 0 not yet, 4 not marked.",
     ]);
   });
 
@@ -598,6 +604,19 @@ describe("receipts: one plain line per change, from the two runs", () => {
     expect(roadReceipt(before, after)[0]).toMatch(
       /^Because you marked 3 skills, you took back your mark on “Read drawings \(test only\)” and you took back your mark on “Trade ticket \(test only\)”, /,
     );
+  });
+
+  it("a legal requirement is counted and named as one, never as a skill (the review of #209's merge, 2026-10-26)", () => {
+    const have = (id: string) => ({ skillItemId: id, ownLabel: null, mark: "have" as const });
+    const lines = roadReceipt(evaluateRoad(input()), evaluateRoad(input({ skillMarks: ["skill-eval-math", "skill-eval-drawings", "skill-eval-ticket"].map(have) })));
+    const because =
+      "Because you told us you have “Trade math (test only)”, you told us you have “Read drawings (test only)” and you told us you have “Trade ticket (test only)”";
+    expect(lines).toEqual([
+      `${because}, 1 step now has every skill it lists marked have.`,
+      `${because}, 1 step now has every legal requirement it lists marked have.`,
+      `${because}, the skills now read 2 have, 0 learning, 0 not yet, 2 not marked.`,
+      `${because}, the legal requirements now read 1 have, 0 learning, 0 not yet, 0 not marked.`,
+    ]);
   });
 
   it("picking an ending: steps by their new state, and the money that moved", () => {

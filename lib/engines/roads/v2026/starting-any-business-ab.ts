@@ -858,7 +858,6 @@ export const roadZeroParts: Parameters<typeof roadFromCfe>[0] = {
     ],
     "stage-2a-voluntary-gst-registration": ["grant-sred", "writeoff-cca-class-50", "compliance-gst-small-supplier"],
     "stage-2b-mandatory-gst-registration": [
-      "grant-cajg",
       "compliance-gst-small-supplier",
       // Registration from the first paid ride, for ride-share and taxi driving (2026-10-11).
       "compliance-gst-taxi-ride-sharing",

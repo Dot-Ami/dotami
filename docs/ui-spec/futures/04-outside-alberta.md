@@ -173,10 +173,27 @@ Every string in the words block was run through `VERDICT_WORDS`, `findVerdicts` 
 - **Sources filtered when drawn**, not in the catalog: the road keeps each step's sources as road 0 has them;
   the step panel and *Your plan* draw the federal ones and the idea's own province's (`citationsForPlace`) and
   say *<n> sources for other provinces aren't shown.* On map stages the heading keeps its own words, *Sources for
-  this stage · n*. **Export** does the same since 2026-10-22 (review of 28d): the cockpit sends the drawn road
-  with the request (`app/api/playbook/route.ts`, a road nobody wrote is refused), and each section of the
-  export lists the same sources with the same line under them (`lib/playbook/build-skeleton.ts`). On road 0
-  and road 1 every source is kept, as the step panel shows them.
+  this stage · n*. **Export** does the same since 2026-10-22 (review of 28d); since 2026-10-23 it is built in the
+  page from what *Your plan* shows (`lib/playbook/road-export.ts`; until then the cockpit sent the drawn road to
+  `app/api/playbook/route.ts` and `lib/playbook/build-skeleton.ts` built it), and each step lists the same sources,
+  for the idea's own place, with the same line under them. Since
+  2026-10-23 (the maintainer's call a-call-12) road 0 and road 1 draw them the same way, for the idea's own place:
+  until then every source was kept there, so a person in Alberta saw Ontario's and British Columbia's
+  employment-standards pages under *Hire first employee*, which now cites Alberta's own. The same day (review of
+  the pull request) a road opened from another province also leaves out each step's *done when* lines, cost lines
+  and official links resting on another province's page, by the federal road's rule, for any place
+  (`roadForPlace`, applied in `cockpitInput` and the cockpit's drawn road), and the step's line counts those
+  pages too (`stepSourcesForPlace`). The storage checks ticks and quotes against the whole road and keeps a tick
+  on a line left out for the idea's place whatever list a save sends (`ticksToSave` in `lib/futures/types.ts`,
+  second review, 2026-10-24), and the cockpit sends it too, by the place on screen, so ticking another line, or
+  *Take back*, from Ontario never removes it, and moving back shows it again. The same review left out a skill
+  item none of whose sources is federal or the place's own (road 1's three Alberta items, seen from another
+  province), its pages counted in the step's line, and drew each listed item's sources for the place
+  (`skillItemsForPlace`); a section left empty by the place says so, where it said none is written yet (*This
+  step's “done when” lines rest on other provinces' pages, so none is shown for your place.*; road 1 from Ontario
+  shows it on 13 of its 17 steps). A number the person agreed on a cost line left out for the place stays named
+  in *What you've told DotAmi* and on Your plan, kept and counted in no sum ([../cockpit/12-told-list.md](../cockpit/12-told-list.md)). Steps are not removed: an Alberta idea moved to Ontario keeps *Register your business
+  name, if you use one*, with its summary as written, no *done when* lines and the count.
 - **Pick a future:** step 3 of the three steps (`components/front-door/job-and-road-steps.tsx` `RoadStep`, on
   Pick a future and at the end of the intake): the federal card under *Written for all of Canada*, then the
   Alberta futures folded under *Written for Alberta*, after the no-road block or the skipped lines; the federal
@@ -216,7 +233,11 @@ Every string in the words block was run through `VERDICT_WORDS`, `findVerdicts` 
   bikes in Ottawa, road 1).
 - **The card's sources line** counts only the sources the person will be shown inside (the maintainer's call 34 of
   2026-10-22): each step's own sources through `citationsForPlace`, the step panel's filter (`futureCards` with the
-  person's province). On road 0 and road 1 every source shows, so their cards count as before.
+  person's province). Since the second review of #207 (2026-10-24) every card counts the road as the cockpit
+  draws it for the person's place (`roadForPlace`, `skillItemsForPlace`): an Alberta road's card, seen from
+  Ontario, counts no *done when* line, cost line, fee or skill item resting on Alberta's pages, nor their sources
+  (road 1: 17 lines to price, no official fee, no skill listed and 18 sources, where it said 30 lines and 9 fees;
+  road 0: 9 lines to price, where it said 11).
 - **About this job** outside Alberta (its province-wide wage row, Tradesecrets left out) is task 25h's.
 - **Clutter** (`e2e/budgets.ts`, two new rows by the written way, `ADDED_SCREENS`; measured with Chromium on
   Windows, phone, tablet, laptop): *Pick a future* in Ontario (`futures-outside-alberta`) 6, 6, 6 regions and

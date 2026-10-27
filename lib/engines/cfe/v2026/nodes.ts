@@ -469,6 +469,23 @@ export const cfeNodesV2026 = [
         lastVerified: LAST_VERIFIED,
         note: "BC employment standards reference for employers and workers.",
       },
+      {
+        // The maintainer's call a-call-12 (2026-10-23): Alberta's own page, since every road now shows a person
+        // only the federal pages and their own province's. A tool found these words on it; no person has read it
+        // yet (it waits on the maintainer's reading list, docs/engines/citations.md).
+        title: "Employment standards",
+        authority: "provincial",
+        jurisdiction: "AB",
+        url: "https://www.alberta.ca/employment-standards",
+        toolCheck: {
+          checkedOn: "2026-10-23",
+          quotes: [
+            "Employment standards set out the rights and obligations of employers and employees in Alberta.",
+            "This includes the minimum standards that employers must provide to employees.",
+          ],
+        },
+        note: "Alberta employment standards reference for employers and employees.",
+      },
     ],
     financialImpact: {
       summary:

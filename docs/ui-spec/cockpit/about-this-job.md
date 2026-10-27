@@ -165,7 +165,11 @@ inside its own quote marks.)
   with the method from `Data_Source_E` (*Labour Force Survey*, *Employment Insurance data*, *small-area
   estimate*, *Census*), because two `PR` rows can differ by survey (research 25s: Hairstylists and barbers under
   Edmonton is `EI 2023-24 PR NOC5`, under Alberta `LFS 2023-24 PR NOC5`).
-- *Hourly · low $18.00 · median $23.00 · high $30.00* (or *Yearly* where `Annual_Wage_Flag` is 1).
+- *Hourly · low $18.00 · median $23.00 · high $30.00* (or *Yearly* where `Annual_Wage_Flag` is 1). Since
+  2026-10-23 (pre-release fix; review 30f, gap 15), where two or three published levels are the same amount the
+  line says so beside them: *Hourly · low $17.60 · median $17.60 · high $22.00 · low and median the same, as
+  published* (Ontario bakers), so the repeat reads as the file's own figures (`lib/about-job/text.ts`
+  `wageFiguresLine`; `tests/prerelease-numbers.spec.ts`).
 - *Reference period 2023-2024 · Employment Insurance data* (per row, as the file gives it).
 - *Low is in most cases the 10th percentile and high the 90th, as Job Bank's method page says.*
 - The fixed line: *What workers in this job group were paid. Not what a shop earns, and not what you would

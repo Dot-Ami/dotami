@@ -6,8 +6,32 @@ the step panel, the lists behind the gauges, `told-list.tsx`, `compare-endings.t
 lines: `lib/roads/` `roadReceipt`, through `lib/cockpit/told.ts` `answerReceipt`)
 Type: status line (display)
 
-Last updated: 2026-10-12 (built; after review the same day: receipts wait for the map's save, focus in the
+Last updated: 2026-10-26 (a legal requirement is never called a skill); 2026-10-24 (a failed save's receipt says only this window holds the answer, and what loses it); 2026-10-12 (built; after review the same day: receipts wait for the map's save, focus in the
 left list, *This visit*; docs/architecture/future-cockpit.md § 2, Cockpit screen as built, part 2)
+
+> **Changed 2026-10-24 — a change of place.** Its receipt names only the place: a tick count, a quote or a mark
+> that came into or out of view because the road is drawn for the new place is neither said nor taken back
+> (`drawnForPlace` on road evaluation's answers, `lib/roads/receipts.ts`), as a mark on the job's list is when the
+> pick of job changes; and a step that lists no skill after the move, or listed none before it, is not counted as
+> no longer having, or now having, every skill marked have. A move that leaves every listed skill out says so as the
+> Skills gauge does, *…, this road's skills rest on other provinces' pages, so none is listed for your place.*, where
+> it read *the skills now read 0 have, 0 learning, 0 not yet, 0 not marked* (third review of #207). Until then a
+> move from Alberta to Ontario said *you ticked 1 of 3 “done when” lines on “Hire first employee”, you took back
+> your ticks on … and you took back your number for …* (second review of #207).
+
+> **Changed 2026-10-26 — legal requirements apart from skills (the review of #209's merge).** A receipt counts the
+> road's listed skills and its legal requirements (an ID number, an agreement, a certificate) apart, as the Skills
+> gauge does, and never calls a legal requirement a skill: *the skills now read …* counts the listed skills only and
+> *the legal requirements now read 1 have, 0 learning, 0 not yet, 2 not marked* the legal requirements; *n steps now
+> have every legal requirement they list marked have* (and *no longer have …*) sits beside the skills' line of the
+> same shape; three or more marks on legal requirements read *you marked 3 legal requirements* / *you took back your
+> marks on 3 legal requirements*, apart from *you marked 3 skills*. A move that leaves every legal requirement out
+> says so as the gauge's line for them does: *…, this road's legal requirements rest on other provinces' pages, so
+> none is listed for your place.* (road 1 from Ontario, whose three items are all legal requirements), and the
+> skills' line *…, this road's skills rest on other provinces' pages, …* only when listed skills went to none. Until
+> then road 1 from Ontario said its *skills* rest on other provinces' pages, and a mark on the Alberta Student
+> Number read *the skills now read 1 have, …* and *3 steps now have every skill they list marked have*
+> (`lib/roads/receipts.ts`, `lib/roads/words.ts` `changed`; `StepEvaluation.needsByKind`).
 
 ## What it is
 
@@ -20,9 +44,11 @@ left list, *This visit*; docs/architecture/future-cockpit.md § 2, Cockpit scree
 - The idea's own answers, kept with the map (the structure, a map pick, buying equipment, *I'd
   incorporate at*, a what-if kept, a take back of one of them), wait for the map's save: in the left list
   the receipt says *Saving your answer…* until the save answers, then the lines, worked out from the idea
-  the save read back; if the save fails, *Not saved yet: the save didn't go through. Your answer stays in
-  this tab, and Save now tries again.* Elsewhere the receipt shows once the save has answered, and the
-  save line says while it is on its way or failed.
+  the save read back; if the save fails, *Not saved yet: the save didn't go through. Only this window holds
+  your answer: a reload or the desktop app's Go menu loses it. Save now tries again.* (until 2026-10-24 *Your
+  answer stays in this tab*: the answer is in the journey held in the window's memory,
+  `lib/journey/held-journey.ts`, never its storage). Elsewhere the receipt shows once the save has answered,
+  and the save line says while it is on its way or failed.
 - **This visit** (until 2026-10-12 *Since last time*): a line under the map, above *Next on your road*:
   the newest receipt line of this visit, with **n more this visit** for the rest (up to five, newest
   first) and **Show fewer**. Empty (not shown) until the first answer of the visit.

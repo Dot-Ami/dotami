@@ -45,6 +45,96 @@ export const SHOWN_WORDS_GAPS: readonly ShownWordsGap[] = [
   // Phase 2", so neither says a span of time any more.
 ];
 
+/** A piece of text a component writes itself in which the no-times check finds a time. */
+export interface ComponentTimeWords {
+  /** The component, repo-relative. */
+  file: string;
+  /** The text exactly as tests/helpers/own-words.ts reports it: `${…}` for a template's holes, entities as written. */
+  text: string;
+  /**
+   * "not a time": words the patterns misread. "retention": how long something is kept, which DotAmi's own
+   * privacy disclosures may say (the maintainer's decision 2 of 2026-10-24). "known gap": a time in DotAmi's
+   * own words still on screen, with a docs/task-list.md line.
+   */
+  kind: "not a time" | "retention" | "known gap";
+  why: string;
+}
+
+/**
+ * The same ratchet for the text every component under components/ and app/ writes itself
+ * (tests/prerelease-honesty.spec.ts, since the review of #210 on 2026-10-24, when two item rows were found
+ * writing "Time-boxed" where no words check read them): the spec fails on a piece with a time not listed here,
+ * and on a listed one it no longer finds.
+ */
+export const COMPONENT_TIME_WORDS: readonly ComponentTimeWords[] = [
+  {
+    file: "components/settings/settings-page.tsx",
+    text: "creates it (README, Quick start).",
+    kind: "not a time",
+    why: "The README's section name; the fastest pattern reads Quick.",
+  },
+  {
+    file: "components/ventures/figures-panel.tsx",
+    text: "The tax year this total is for. The CRA line it goes on can change from one year's form to the next.",
+    kind: "not a time",
+    why: "A tax year's form; \"one year\" reads as a duration in words.",
+  },
+  {
+    file: "components/ventures/file-drop.tsx",
+    text: "${…} ${…} under a month with an amount DotAmi can't read: ${…}",
+    kind: "not a time",
+    why: "The calendar month a figure is filed under; \"under a month\" reads as a wait.",
+  },
+  {
+    file: "components/ventures/file-drop.tsx",
+    text: "${…} ${…} under a month holding ${…}: ${…}",
+    kind: "not a time",
+    why: "The calendar month a figure is filed under.",
+  },
+  {
+    file: "components/ventures/file-drop.tsx",
+    text: "${…} empty ${…} under a month: ${…}",
+    kind: "not a time",
+    why: "The calendar month a figure is filed under.",
+  },
+  {
+    file: "components/ventures/file-drop.tsx",
+    text: "${…} ${…} in a month that isn't over yet",
+    kind: "not a time",
+    why: "A calendar month not ended yet; \"in a month\" reads as a wait.",
+  },
+  {
+    file: "components/ventures/file-drop.tsx",
+    text: "Every row leaves out the file&apos;s own totals rows. Pick one row to take only its figures, such as the file&apos;s Total row.",
+    kind: "not a time",
+    why: "A choice of rows; the takes-about pattern reads \"take only\".",
+  },
+  {
+    file: "components/your-data/your-data-page.tsx",
+    text: "These live in the window, not in the data file, so this page can&apos;t see what is in them right now. This is what DotAmi puts there and how long it stays.",
+    kind: "retention",
+    why: "How long DotAmi keeps what it puts in the window: a disclosure the privacy page owes the person.",
+  },
+  {
+    file: "components/your-data/your-data-page.tsx",
+    text: "How long ·",
+    kind: "retention",
+    why: "The same, as each window key's row label.",
+  },
+  {
+    file: "components/your-data/your-data-page.tsx",
+    text: "How long Anthropic keeps it:",
+    kind: "retention",
+    why: "The label before the link to Anthropic's own page on what it keeps of what the intake's parser sends.",
+  },
+  {
+    file: "components/your-data/your-data-page.tsx",
+    text: "(read 2026-10-06; it says API inputs and outputs are deleted within 30 days, with exceptions).",
+    kind: "known gap",
+    why: "Anthropic's period in DotAmi's paraphrase, not quoted: DotAmi holds no copy of that page's exact words, so it can't be quoted under a label yet (the maintainer's decision 2 of 2026-10-24; docs/task-list.md).",
+  },
+];
+
 /**
  * Invariants that may never be listed as a known gap (the maintainer's call 32 of 2026-10-22, "Yes, fail the tests
  * above 0"): an idea drawn on a road that isn't the one written for it, or the one the person picked, with nothing

@@ -80,6 +80,22 @@ export const cockpitWords = {
       notMarked: (n: number, listed: number) => `${n} not marked, out of ${listed} listed`,
       invite: "Mark them to see what each step still needs",
       noneListed: "No skills are listed on this road yet",
+      /**
+       * The road's legal requirements (an ID number, an agreement, a certificate), counted apart from its skills
+       * (the screen review of 2026-10-23: road 1's three read as "3 listed" skills). Only the marks that have a
+       * count are named.
+       */
+      requirements: (listed: number, have: number, learning: number, notYet: number, notMarked: number) =>
+        `${count(listed, "legal requirement", "legal requirements")}, apart from skills: ${[
+          ...(have > 0 ? [`${have} have`] : []),
+          ...(learning > 0 ? [`${learning} learning`] : []),
+          ...(notYet > 0 ? [`${notYet} not yet`] : []),
+          ...(notMarked > 0 ? [`${notMarked} not marked`] : []),
+        ].join(" · ")}`,
+      /** The road lists skills, but the road drawn for the idea's place left every one out (lib/cockpit/view.ts `roadSkillsNone`). */
+      noneListedForPlace: "This road's skills rest on other provinces' pages",
+      /** The same for its legal requirements, a line of their own (`roadRequirementsNone`; road 1's, seen from Ontario). */
+      requirementsNoneForPlace: "This road's legal requirements rest on other provinces' pages",
       own: (have: number, learning: number, notYet: number) => `your own skills: ${have} have · ${learning} learning · ${notYet} not yet`,
       addOwn: "Add skills of your own in the list",
       /** The government's list for the person's pick of job, counted apart from the road's. */
@@ -93,11 +109,23 @@ export const cockpitWords = {
       fees: (cents: number, lines: number) => `${formatMoney(cents)} official fees (${count(lines, "line", "lines")})`,
       yours: (cents: number, lines: number) => `${formatMoney(cents)} your numbers (${count(lines, "line", "lines")})`,
       yoursNone: "your numbers: not given yet",
+      /**
+       * Every number the person agreed is on a line the road drawn for the idea's place leaves out (another province's
+       * page): given, kept and named in the told list, counted in no sum (lib/cockpit/view.ts `gaugeView`).
+       */
+      yoursNoneForPlace: "your numbers: none counted for your place",
+      notCountedForPlace: (n: number) => `${n} of your numbers kept, not counted for your place`,
       noLines: "No cost lines on this road yet",
       onlyIf: (n: number) => `${count(n, "official fee applies", "official fees apply")} only sometimes, not added up`,
       notPriced: (n: number) => `${n} not priced yet`,
       leftOut: (n: number) => `${n} left out: not on your path`,
-      waiting: (n: number, fork: string) => `${n} ${n === 1 ? "waits" : "wait"} on a pick at ${quoted(fork)}`,
+      // The official fees among the waiting lines are named with their sum (pre-release fix, 2026-10-23): none is
+      // added to the total above. Where both endings carry the same waiting fees (the apprentice road today), the
+      // total plus them is what Compare shows for an ending; where the endings carry different fees it adds both
+      // sides' fees, more than any one ending reaches (a review of 2026-10-24).
+      waiting: (n: number, fork: string, feeCents = 0, feeLines = 0) =>
+        `${n} ${n === 1 ? "waits" : "wait"} on a pick at ${quoted(fork)}` +
+        (feeLines > 0 ? `, ${count(feeLines, "official fee", "official fees")} among them (${formatMoney(feeCents)})` : ""),
       savings: (cents: number) => `savings ${formatMoney(cents)}`,
       noSavings: "savings: not given yet",
       difference: (cents: number) => `savings minus both: ${formatMoney(cents)}`,
@@ -120,7 +148,9 @@ export const cockpitWords = {
     skills: "Skills",
     money: "Money",
     rules: "Rules & tax",
-    skillsCount: (n: number) => `${n} listed`,
+    /** The Skills switch: the road's skills, and its legal requirements apart from them when it has any. */
+    skillsCount: (skills: number, requirements: number) =>
+      requirements === 0 ? `${skills} listed` : `${skills} listed · ${count(requirements, "legal requirement", "legal requirements")}`,
     moneyCount: (n: number) => count(n, "cost line", "cost lines"),
     rulesCount: (n: number) => count(n, "card", "cards"),
     needs: (listed: number, have: number) => `needs ${listed} · you have ${have}`,
@@ -154,8 +184,15 @@ export const cockpitWords = {
     doneWhen: "Done when",
     doneWhenTicked: (ticked: number, total: number) => `${ticked} of ${total} ticked`,
     doneWhenNone: "No “done when” lines are written for this step yet.",
+    // A section the road drawn for the idea's place left empty says why (lib/cockpit/view.ts `emptySectionLine`).
+    doneWhenNoneForPlace: "This step's “done when” lines rest on other provinces' pages, so none is shown for your place.",
+    /** The step's legal requirements (an ID number, an agreement), above its skills (2026-10-23). */
+    whatItNeeds: "What it needs",
     skills: "Skills it needs",
     skillsNone: "No skills are listed for this step yet.",
+    skillsNoneForPlace: "The skills this step lists rest on other provinces' pages, so none is shown for your place.",
+    // Under What it needs, drawn for a step whose every legal requirement the place left out (`stepRequirementsNone`).
+    requirementsNoneForPlace: "The legal requirements this step lists rest on other provinces' pages, so none is shown for your place.",
     skillKind: { "legal-requirement": "legal requirement", "listed-skill": "listed skill" },
     marks: { have: "Have", learning: "Learning", "not-yet": "Not yet" },
     dontKnow: "I don't know",
@@ -164,6 +201,7 @@ export const cockpitWords = {
     showSteps: (label: string) => `Show the steps that list ${quoted(label)}`,
     costs: "Costs",
     costsNone: "No cost lines are written for this step yet.",
+    costsNoneForPlace: "This step's cost lines rest on other provinces' pages, so none is shown for your place.",
     costKind: {
       "official-fee": "official fee · source and day read",
       "your-quote": "your quote · agreed",
@@ -181,7 +219,7 @@ export const cockpitWords = {
     costsWaiting: (fork: string) => `Not counted yet: it waits on a pick at ${quoted(fork)}.`,
     notSaved: "This idea is not saved yet, so nothing here can be kept.",
     sources: (n: number) => `Sources for this step · ${n}`,
-    /** Under a step's sources on a road written for all of Canada: other provinces' pages it didn't draw (task 28d). */
+    /** Under a step's sources: other provinces' pages it didn't draw (task 28d; on every road since a-call-12, 2026-10-23). */
     sourcesOtherProvinces: (n: number) =>
       n === 1 ? "1 source for other provinces isn't shown." : `${n} sources for other provinces aren't shown.`,
     officialLinks: "Official pages you open yourself",
@@ -205,10 +243,18 @@ export const cockpitWords = {
 
   lists: {
     close: "Close",
-    skillsTitle: "Skills on this road",
-    /** Above the items the road's own steps list, so the job's list below never reads as the road's. */
-    roadTitle: "On this road's steps",
+    /** Since 2026-10-23 the list names legal requirements too, under a heading of their own, never as skills. */
+    skillsTitle: "Skills and legal requirements",
+    /** Above the legal requirements the road's own steps list (an ID number, an agreement, a certificate). */
+    requirementsTitle: "Legal requirements on this road's steps",
+    /** Above the skills the road's own steps list, so the job's list below never reads as the road's. */
+    roadTitle: "Skills on this road's steps",
+    /** Your plan's one list of everything the road's steps list, each row tagged with its kind. */
+    roadItemsTitle: "On this road's steps",
     skillsNone: "No skills are listed on this road yet. Your own skills are below.",
+    skillsNoneForPlace: "The skills this road lists rest on other provinces' pages, so none is shown for your place. Your own skills are below.",
+    /** Under requirementsTitle when the place left every legal requirement out (`roadRequirementsNone`). */
+    requirementsNoneForPlace: "The legal requirements this road lists rest on other provinces' pages, so none is shown for your place.",
     ownTitle: "Your own skills",
     ownTag: "added by you",
     ownNone: "None added yet.",
@@ -236,6 +282,12 @@ export const cockpitWords = {
       // in a job (Cabinetmakers, 72311.00: "Self-employed" under Workplaces/employers). Only what DotAmi
       // can say about itself.
       aboutTheList: "This is the government's list for the job you picked. DotAmi doesn't say which skills a business needs.",
+      /**
+       * The job's list folds under one button, below the road's own items (the screen review of 2026-10-23: its
+       * 44 rows swamped the road's 3).
+       */
+      showList: (n: number) => `Show the ${n} on this job's list`,
+      hideList: "Fold this job's list",
       /** The licence's own attribution line, word for word (lib/engines/oasis/v2026/licence.ts). */
       attribution: OASIS_ATTRIBUTION,
       licence: "The licence",
@@ -347,7 +399,12 @@ export const cockpitWords = {
       unlocks: "your numbers in Start-up money",
     },
     skills: {
-      question: (n: number) => `Your marks on ${count(n, "skill", "skills")} not marked`,
+      // Skills and legal requirements named apart, each only when one is waiting (2026-10-23).
+      question: (skills: number, requirements: number) =>
+        `Your marks on ${[
+          ...(skills > 0 ? [count(skills, "skill", "skills")] : []),
+          ...(requirements > 0 ? [count(requirements, "legal requirement", "legal requirements")] : []),
+        ].join(" and ")} not marked`,
       unlocks: "needs · you have on each step that lists them",
     },
     ending: {
@@ -416,7 +473,13 @@ export const cockpitWords = {
     nothingAfter: (what: string) => `Saved: ${what}. Nothing on the road changed.`,
     /** The idea's own answers wait for the map's save before their receipt is worked out. */
     saving: "Saving your answer…",
-    notSaved: "Not saved yet: the save didn't go through. Your answer stays in this tab, and Save now tries again.",
+    /**
+     * The answer is in the journey held in the window's memory (lib/journey/held-journey.ts), never its storage:
+     * a fresh load empties it, the desktop app's Go menu among them (it opens its pages with loadURL). A new window
+     * opens the idea as the data file holds it. "Your answer stays in this tab" until 2026-10-24.
+     */
+    notSaved:
+      "Not saved yet: the save didn't go through. Only this window holds your answer: a reload or the desktop app's Go menu loses it. Save now tries again.",
     /**
      * This visit's newest receipt lines (2026-10-12, after review: named for what they hold; "Since last
      * time" is kept for the return visit's list, which isn't built).
@@ -472,6 +535,8 @@ export const cockpitWords = {
     money: (cents: number, lines: number) => `${formatMoney(cents)} (${count(lines, "line", "lines")})`,
     feesNone: "none",
     yoursNone: "not given yet",
+    /** As the Start-up money gauge says it: the person's numbers are all on lines the idea's place leaves out. */
+    yoursNoneForPlace: "none counted for your place",
     lines: (n: number) => count(n, "line", "lines"),
     onlyIf: (n: number) => (n === 0 ? "none" : `${count(n, "line", "lines")}, not added up`),
     cards: (apply: number, checkFirst: number) => `${apply} apply · ${checkFirst} check first`,
@@ -517,6 +582,8 @@ export const cockpitWords = {
       dateLabel: (person: string) => `${person}'s date`,
       numbers: (person: string, cents: number, lines: number) => `${formatMoney(cents)} ${person}'s numbers (${count(lines, "line", "lines")})`,
       numbersNone: (person: string) => `${person}'s numbers: not given yet`,
+      numbersNoneForPlace: (person: string) => `${person}'s numbers: none counted for ${person}'s place`,
+      notCountedForPlace: (person: string, n: number) => `${n} of ${person}'s numbers kept, not counted for ${person}'s place`,
       ownSkills: (person: string, have: number, learning: number, notYet: number) =>
         `${person}'s own skills: ${have} have · ${learning} learning · ${notYet} not yet`,
       job: (person: string, have: number, learning: number, notYet: number, listed: number) =>
@@ -529,7 +596,9 @@ export const cockpitWords = {
       note: "Each line is worked out by the rules: the road without the answer, compared with the road with it.",
       // By the person's name, not a pronoun: an example is any entry of lib/examples/, not Mara alone.
       parts: {
-        marks: (person: string) => `${person}'s skill marks`,
+        // Her marks on skills and on legal requirements alike, so neither is called the other ("Mara's skill marks"
+        // until the review of #209's merge, 2026-10-26).
+        marks: (person: string) => `${person}'s marks`,
         costs: (person: string) => `${person}'s start-up cost, from listed prices`,
         savings: (person: string) => `${person}'s savings`,
         "this-is-mine": (person: string) => `${person}'s pick: This is mine`,
@@ -604,6 +673,8 @@ export const cockpitWords = {
    */
   plan: {
     title: "Your plan",
+    /** The contents list of the plan's steps, at the top of Each step, each a link to its step (2026-10-23). */
+    contents: "The steps in this plan",
     made: (day: string) => `Made on ${day} from what DotAmi keeps for this idea on this computer.`,
     /** The Export panel's way here, and what it says for an idea not saved yet. */
     open: "Open your plan to read or print",
@@ -666,6 +737,33 @@ export const cockpitWords = {
   },
 
   /**
+   * Export's markdown (lib/playbook/road-export.ts; pre-release fix of 2026-10-23): the road on screen, step by
+   * step, in the plan's own words (`plan` above) with these few headings of its own.
+   */
+  exportDoc: {
+    heading: (idea: string) => `${idea} — venture playbook`,
+    title: (idea: string) => `${idea} — DotAmi playbook`,
+    lead: "Planning information from the DotAmi catalog and the road on screen, not tax or legal advice.",
+    profile: "Venture profile",
+    officialLinks: "Official links",
+    costs: "Cost lines",
+    noAmount: "no amount yet",
+    source: "Source",
+    citations: "Citations",
+    wordsFound: "Words found on the page",
+    note: "Note",
+    /** A road 0 step that is a stage of the tax map keeps the tax map's own fields under it. */
+    catalog: "From the tax map's catalog",
+    trigger: "Trigger",
+    description: "Description",
+    taxImpact: "Tax impact",
+    lensTax: "Lens — tax",
+    lensLegal: "Lens — legal",
+    financialSummary: "Financial impact (summary)",
+    projectionNotes: "Notes from the catalog",
+  },
+
+  /**
    * The left rail's own fields: the venture block, its structure and prep-tool sections, the save line and
    * its buttons, and the compass line at its foot (the rail as it stood since 2026-09-14, S2.5.4h; its
    * sentences moved here from the component on 2026-10-17, S2.5.30e, so the words tests read them).
@@ -685,10 +783,23 @@ export const cockpitWords = {
     prepToolsNote: "Orientation links for your accountant or lawyer — DotAmi does not generate legal documents.",
     openReference: "Open reference ↗",
     /** The structure ladder (lib/engines/structure/): where the idea's structure sits on it. */
+    // In plain words since the screen review of 2026-10-23 ("Holding company (Holdco) … Estate freeze" on the
+    // apprentice road), and drawn only on the tax and structure roads (lib/engines/roads/v2026
+    // `drawsTheStructureLadder`). Each rung is named, never ranked. Since the review of #209's merge (2026-10-26) a
+    // rung is its plain name only: the one-line definitions under them were tax and legal claims in DotAmi's own
+    // words with no citation behind them ("A corporation, owned and controlled in Canada." for a CCPC was wrong).
     ladder: {
-      title: "Structure ladder",
-      note: "Entity progression — Canada, the first jurisdiction mapped. Prep orientation, not filing advice.",
-      noRung: "No rung marked — set your structure above and the ladder places you.",
+      title: "Ways a business can be set up",
+      note: "From a business in your own name to companies that own companies, in Canada. Something to take to your accountant, not tax or legal advice.",
+      noRung: "None is marked: once you say how the business is set up, it shows here.",
+      /** Each rung of the catalog's ladder (lib/engines/structure/v2026/ladder.ts), by its id: its plain name. */
+      rungs: {
+        "structure-sole-prop": "In your own name",
+        "structure-sole-prop-gst": "In your own name, registered for GST/HST",
+        "structure-ccpc": "A company of its own",
+        "structure-holdco": "A company that owns companies",
+        "structure-family-trust": "A family trust",
+      } as Record<string, string>,
       current: "Current",
       passed: "Passed",
       ahead: "Ahead",
@@ -699,7 +810,8 @@ export const cockpitWords = {
       saving: "Saving…",
       unsaved: "Unsaved changes…",
       savedAt: (when: string) => `Saved · ${when}`,
-      unavailable: "Save unavailable — kept in this tab. Save now retries.",
+      // Where the unsaved edits are, as receipts.notSaved says it ("kept in this tab" until 2026-10-24).
+      unavailable: "Save unavailable — only this window holds it; a reload or the desktop app's Go menu loses it. Save now retries.",
       automatic: "Edits save automatically.",
     },
     editProfile: "Edit venture profile",
@@ -743,12 +855,14 @@ export const cockpitWords = {
    */
   map: {
     /** The chip's words (lib/scenarios/graph.ts `stageChipFor` decides which; issue #5, 2026-10-11). */
+    // Where the stage sits on the map, never the person's status (2026-10-23): "first stage" and "starting
+    // point" were "now" and "done" until then, said of every idea whatever the person had told DotAmi.
     chips: {
-      now: "now",
+      "first-stage": "first stage",
       "your-pick": "your pick",
       default: "default",
       "open-choice": "open choice",
-      done: "done",
+      "starting-point": "starting point",
       ahead: "ahead",
       "not-on-your-path": "not on your path",
     },
@@ -764,6 +878,12 @@ export const cockpitWords = {
     /** A lever card: its state in a word, the one dated fact it carries, and its accessible name. */
     lever: {
       applies: "applies",
+      /**
+       * An item that has an end date (`UnlockItem.expires`), on its open row in node detail and on the intake's
+       * preview, before `inUseBefore`: the legend's own words (`legend.checkFirst`). "Time-boxed" until 2026-10-24,
+       * a time word of DotAmi's own written in the two components, where no words check read it.
+       */
+      endDate: "has an end date",
       /** The one dated fact the evaluator carries for an item: in use before the year it expires. */
       inUseBefore: (year: string) => `in use before ${year}`,
       name: (typeChip: string, title: string, state: string, fork: boolean, partial: boolean, fact: string | null) =>
@@ -774,8 +894,9 @@ export const cockpitWords = {
     defaultNotPicked: "· default, not your pick yet",
     legend: {
       arrows: "Hover a card: arrows show where it leads — solid next, dashed further on",
-      chip: "Stage chip = where it sits on your path",
-      checkFirst: "check first — confirm, time-boxed, or one fork away",
+      chip: "Stage chip = where it sits on the map; doing, done or not for me only when you mark it",
+      // "time-boxed" until 2026-10-23: a time word of DotAmi's own. The items it means carry a date they end.
+      checkFirst: "check first — confirm, has an end date, or one fork away",
       leftBar: "left bar = what your answers support",
       federalOnly: "federal rules only for this province",
     },
