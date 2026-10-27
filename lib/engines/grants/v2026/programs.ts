@@ -48,7 +48,8 @@ export const grantProgramsV2026 = [
       // page that day (./sred-official-words.ts), and the maintainer read each page in full on 2026-10-25: the read wins
       // on screen ("Read by a person"), and the tool checks stay.
       {
-        title: "SR&ED tax incentives: the credit's rates",
+        // The page's own title (./sred-official-words.ts, SRED_PAGES.whatAre).
+        title: "What are SR&ED tax incentives",
         authority: "CRA",
         jurisdiction: "CA",
         url: SRED_PAGES.whatAre,

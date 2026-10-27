@@ -43,6 +43,7 @@ const CRA = "https://www.canada.ca/en/revenue-agency/services";
 const PAGE = {
   sredProgram: `${CRA}/scientific-research-experimental-development-tax-incentive-program.html`,
   sredWhatAre: `${CRA}/scientific-research-experimental-development-tax-incentive-program/what-are-sred-tax-incentives.html`,
+  sredGlossary: `${CRA}/scientific-research-experimental-development-tax-incentive-program/glossary.html`,
   relationships: `${CRA}/tax/businesses/topics/corporations/business-tax-credits/how-relationships-affect-small-business-deduction-sred-investment-tax-credits.html`,
   whatsNew: `${CRA}/tax/businesses/topics/corporations/whats-new-corporations.html`,
   act127: "https://laws-lois.justice.gc.ca/eng/acts/I-3.3/section-127.html",
@@ -66,6 +67,13 @@ const SOME_REFUNDABLE = "Some businesses may also earn a refundable ITC.";
 // The CRA's How certain relationships affect the small business deduction and SR&ED investment tax credits:
 const CCPC_ENHANCED =
   "Some CCPCs may earn an ITC at an enhanced rate of 35% on qualified SR&ED expenditures up to their expenditure limit for the year.";
+// The CRA's SR&ED glossary, its entry "Enhanced SR&ED investment tax credit rate (35%)": the line the maintainer asked
+// for on stage-4, found by scripts/check-quotes.mjs on 2026-10-27 (not a reading-list find).
+const GLOSSARY_ENHANCED =
+  "Some Canadian-controlled private corporations (CCPCs) that meet certain requirements may earn investment tax credits at the enhanced rate of 35%";
+// The CRA's Business-use-of-home expenses page, on the business part: found by scripts/check-quotes.mjs on 2026-10-27.
+const HOME_OFFICE_BUSINESS_PART =
+  "To calculate the part you can deduct, use a reasonable basis, such as the area of the workspace divided by the total area of your home.";
 // The CRA's What's new for corporations, and Income Tax Act s.127(10.2). Only the formula is recorded as found on
 // the Act's page ("formula found"), so its lead-in sentence is not kept.
 const LIMIT_SIX_MILLION =
@@ -111,6 +119,10 @@ const NEVER_KEPT = [
   "The furniture store charges 13% HST on the sale because the place of supply is Ontario.",
   "The electronics store charges GST of 5% and the PST that applies in Manitoba of 7%.",
   "$3 million (being the expenditure limit applicable in that year)",
+  // The SR&ED glossary's 35% entry: its split of the rate by year, and its next sentence's threshold, older than the
+  // $6 million the CRA's other pages give (the stage quotes the entry only up to "35%").
+  "before 2014",
+  "maximum threshold of $3 million",
   "This page includes proposed, announced, or enacted corporation income tax changes.",
   "[Income Tax Act",
   "[Income Tax Regulations",
@@ -336,12 +348,20 @@ describe("3. SR&ED: the credit's rates in the CRA's words", () => {
   });
 
   it("both SR&ED map stages quote the CRA for their 35%, from a page each cites", () => {
-    for (const id of ["stage-3b-incorporation-liability-sred", "stage-4-sred-deepening"]) {
+    // Incorporation for liability/SR&ED quotes the relationships page; SR&ED deepening, since 2026-10-27, the SR&ED
+    // glossary's own entry, the line the maintainer asked for (its citation keeps the relationships page too).
+    const quotes = {
+      "stage-3b-incorporation-liability-sred": { quote: CCPC_ENHANCED, page: PAGE.relationships },
+      "stage-4-sred-deepening": { quote: GLOSSARY_ENHANCED, page: PAGE.sredGlossary },
+    } as const;
+    for (const [id, { quote, page }] of Object.entries(quotes)) {
       const estimate = node(id).financialImpact.estimates.find((e) => e.value === "35%");
       expect(estimate, id).toBeDefined();
-      expect(quoted(estimate!.basis), id).toEqual([CCPC_ENHANCED]);
-      expect(rawQuotes(citationOf(`cfe ${id}`, PAGE.relationships)), id).toContain(CCPC_ENHANCED);
+      expect(quoted(estimate!.basis), id).toEqual([quote]);
+      expect(rawQuotes(citationOf(`cfe ${id}`, page)), id).toContain(quote);
     }
+    // One run found the glossary's new line with the two it held, so the citation's check is that day's.
+    expect(citationOf("cfe stage-4-sred-deepening", PAGE.sredGlossary).toolCheck?.checkedOn).toBe("2026-10-27");
   });
 
   it("the CRA's What are SR&ED tax incentives page says the maintainer read it, and keeps the list's tool check", () => {
@@ -349,6 +369,8 @@ describe("3. SR&ED: the credit's rates in the CRA's words", () => {
     const c = citationOf("grants grant-sred", PAGE.sredWhatAre);
     expect(howChecked(c)).toEqual({ kind: "person", on: MAINTAINER_READ_DAY });
     expect(c.toolCheck?.checkedOn).toBe(LIST_DAY);
+    // The page's own title (its main heading), found by scripts/check-quotes.mjs on 2026-10-27.
+    expect(c.title).toBe("What are SR&ED tax incentives");
     // The program's own page keeps the check it had (2026-10-13), and has the maintainer's read too.
     const program = citationOf("grants grant-sred", PAGE.sredProgram);
     expect(program.toolCheck?.checkedOn).toBe("2026-10-13");
@@ -490,8 +512,13 @@ describe("6. The risk reads say only what their sources say", () => {
     expect(text).not.toMatch(/floor.?area|exclusive|measured|calculation|typical/i);
     // Outside the quotes, only the page's name and the words that join its conditions (s.18(12)'s "or"), exactly.
     expect(ownWordsFlat(entry.why)).toBe("The CRA's page on business-use-of-home expenses: if , or if .");
-    expect(ownWordsFlat(entry.mitigation)).toBe("The same page, on the amount: it .");
+    // The page's sentence ends with its own full stop, inside the quote.
+    expect(ownWordsFlat(entry.mitigation)).toBe("The same page, on the amount: it . On the business part:");
+    // The page's sentence on working out the business part (once on citations.md § Blocked), quoted whole: "such as" keeps floor area
+    // one reasonable basis among others, in the CRA's words.
+    expect(quoted(entry.mitigation)).toContain(HOME_OFFICE_BUSINESS_PART);
     const page = citationOf("risk risk-home-office-percentage", PAGE.homeOffice);
+    expect(page.toolCheck?.checkedOn).toBe("2026-10-27");
     const runs = quoted(text);
     expect(runs.length).toBeGreaterThan(0);
     for (const run of runs) expect(inQuotes(run, rawQuotes(page)), run).toBe(true);
@@ -560,6 +587,8 @@ describe("6. The risk reads say only what their sources say", () => {
     expect(ownWordsFlat(entry.why)).toBe("");
     expect(ownWordsFlat(entry.mitigation)).toBe("ISED's words, from its page on loans under this program.");
     const page = citationOf("risk risk-self-declared-valuation", PAGE.isedLoans);
+    // The page's own title (its main heading), found by scripts/check-quotes.mjs on 2026-10-27; the check stays the list's.
+    expect(page.title).toBe("Helping small businesses get loans");
     expect(page.toolCheck?.checkedOn).toBe(LIST_DAY);
     expect(rawQuotes(page)).toContain(ISED_SECURITY);
     for (const q of rawQuotes(page)) expect(ISED_LOANS_FOUND, q).toContain(q);

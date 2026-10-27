@@ -1083,11 +1083,14 @@ roadmap's build order.
       CCPC's enhanced 35% is (the card said "refundable" on the maintainer's read alone until 2026-10-24)
     - [ ] SR&ED's $6 million: the tax years it applies from, and the sentence of s.127(10.2) that leads into
       its formula
-    - [ ] *SR&ED deepening*'s 35% from the SR&ED glossary, as the maintainer asked (it quotes the CRA's
-      relationships page until then)
-    - [ ] Home office: the CRA page's sentence on working out the business part (floor area as one basis)
-    - [ ] The titles the CRA's SR&ED rates page and ISED's loans page give themselves (each citation describes
-      its page)
+    - [x] *SR&ED deepening*'s 35% from the SR&ED glossary, as the maintainer asked: quoted since 2026-10-27,
+      when `node scripts/check-quotes.mjs` found the glossary's entry on the enhanced rate with its two older quotes
+      (the stage keeps the relationships page for its tax impact)
+    - [x] Home office: the CRA page's sentence on working out the business part (floor area as one basis):
+      quoted in the box since 2026-10-27, found with the page's four older quotes that day
+    - [x] The titles the CRA's SR&ED rates page and ISED's loans page give themselves: *What are SR&ED tax
+      incentives* and *Helping small businesses get loans*, each found on its page on 2026-10-27, are the
+      citations' titles
     - [ ] The Productivity Grant's other conditions for employers, whether a sole proprietor counts, what
       training counts, who else funds it, and the page's labels before its 25% and 75% lines
   - [ ] Open questions for the maintainer, on the same cards but not entries he checked (citations.md,
