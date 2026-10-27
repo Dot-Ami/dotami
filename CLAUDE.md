@@ -52,7 +52,7 @@ says where it is going.
   `lib/front-door/receipts.ts`; drawn on the server, which reads the newest destination and agreed income
   so they count as answered, `lib/front-door/kept.ts`) → `/futures` (*Pick a future*: the roads in
   `LISTED_ROAD_IDS` (`lib/front-door/futures.ts`; road 0 and, since the maintainer's yes of 2026-10-13, the
-  first written future, whose card says in amber that no person has read its sources, design § 13), in the order added, as counts; a pick saves an idea on
+  first written future, whose card says in amber how many of its sources no person has read (the 8 on the three CRA pages the maintainer read on 2026-10-25 say so in grey), design § 13), in the order added, as counts; a pick saves an idea on
   that road and opens the cockpit); *I already have an idea*, the
   free-text box; *Show me an example first* → `/example/mara` (since 2026-10-13: Mara, an invented person on
   the first written future, her answers as data in `lib/examples/mara.ts`, drawn read-only by the cockpit

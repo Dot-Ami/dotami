@@ -7,7 +7,7 @@
  *   region is shown (Your plan, About this job), though the columns stay kept for a later history (a-call-9).
  * - a-call-12: every road draws a step's sources for the person's own place (federal pages and their own
  *   province's), with the line counting the rest; Hire first employee cites Alberta's own employment-standards
- *   page, checked by a tool and waiting for a person's read.
+ *   page, checked by a tool (and, since 2026-10-27, carrying the maintainer's read of it in full on 2026-10-25).
  * - a-call-1: the Alberta Investor Tax Credit and the Canada-Alberta Job Grant are off the programs catalog and
  *   every road, each kept in the retired list with the official reason and the day it was read.
  * - The pull request's second review (2026-10-24): a tick on a line the new place leaves out is never lost; skill

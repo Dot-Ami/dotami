@@ -142,4 +142,6 @@ Mandatory GST registration's *For you on this stage*: its `structures` left out 
 proprietorship, so `evaluateGrant`'s near-miss fork read it as needing incorporation, which its page
 never said. The Canada-Alberta Productivity Grant came on under its own id, `grant-capg`, on
 2026-10-24 (the maintainer's call a-call-1, "ADD it"), saying only the four quotes a tool found on its
-page; no read of its amounts is on record yet (*The Canada-Alberta Productivity Grant*, above).
+page (*The Canada-Alberta Productivity Grant*, above). The maintainer read that page in full on
+2026-10-25, so its source says *Read by a person on 2026-10-25* ([citations.md](citations.md), § The
+maintainer's reads of 2026-10-25).

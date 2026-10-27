@@ -68,7 +68,9 @@ in v0 of the brain; merging the two systems is its own reviewed change.
    **Quoted words are tool-checked** (option B, [citations.md](citations.md)): since 2026-10-12 the
    page behind every official-words box and every way's line carries a `toolCheck` whose quotes are
    the words relied on, found on the live page by `scripts/check-quotes.mjs`, never a read date
-   that would claim a person read it.
+   that would claim a person read it. Since 2026-10-27 the CRA's GST/HST page behind the boxes also
+   carries a person's read, the maintainer's of 2026-10-25, which wins on screen; its tool check
+   stays ([citations.md](citations.md), § The maintainer's reads of 2026-10-25).
    **A quote in a node's own text is held by one of its own sources** (2026-10-24, the maintainer's
    reading list): where an estimate's value or basis, or a projection note, gives a page's words, they
    sit in curly quotation marks and are among the `toolCheck` quotes of a citation of that same node,

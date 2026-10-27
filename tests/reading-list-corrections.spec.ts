@@ -541,7 +541,8 @@ describe("6. The risk reads say only what their sources say", () => {
     const entry = risk("risk-immediate-expensing-timing");
     expect(entry.why).toBe("The 100% first-year treatment depends on acquisition and available-for-use dates.");
     expect(entry.mitigation).toBe("Confirm eligibility and the available-for-use date with an accountant before filing.");
-    // The guide's sentence ends on a colon before a list DotAmi doesn't hold, so it is a tool check only (section 2).
+    // The guide's sentence ends on a colon before a list DotAmi doesn't hold, so it is kept only in the citation's tool
+    // check, never quoted on screen (section 2).
     expect(quoted(`${entry.why} ${entry.mitigation}`)).toEqual([]);
   });
 

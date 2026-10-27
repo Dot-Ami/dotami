@@ -116,9 +116,10 @@ export const grantProgramsV2026 = [
         structure: "ccpc",
         rate: 0.35,
         // No `refundable` since 2026-10-24: the card said "35% (refundable)" and its fork "35% refundable treatment",
-        // which rested only on the maintainer's read (his answer of 2026-10-24: his reads aren't recorded yet). None of
-        // the card's quotes says the enhanced rate is refundable, so the card leaves it unsaid until a held quote or
-        // his recorded read does (docs/engines/citations.md, § Blocked).
+        // which rested only on the maintainer's read (his answer of 2026-10-24: his reads weren't recorded then). None
+        // of the card's quotes says the enhanced rate is refundable, so the card leaves it unsaid until a held quote
+        // does, or he records what he found: his reads of 2026-10-25 record that he read these pages in full, not
+        // that (docs/engines/citations.md, § Blocked).
         // Until 2026-10-24 the note said "confirm the current limit with an advisor" and gave no limit. The limit is
         // $6 million in the consolidated Act's s.127(10.2) (the reading list found the formula), for tax years
         // beginning on or after 2024-12-16. No held quote carries that date, so it is on no screen and in no field, only
@@ -393,8 +394,9 @@ export interface RetiredGrantProgram {
  * Programs taken off (the maintainer's call a-call-1, 2026-10-23: "take both off" before release 0.5.0). Their ids
  * are never reused for another program. Nothing here reaches a screen; docs/engines/grants.md keeps the same list.
  * The Canada-Alberta Productivity Grant, whose page the Job Grant's address now opens, is in the catalog above under its
- * own id, `grant-capg` (2026-10-24, the same call: "ADD it"), saying only the quotes a tool found on its page; no read
- * of its amounts is on record yet.
+ * own id, `grant-capg` (2026-10-24, the same call: "ADD it"), saying only the quotes a tool found on its page. The
+ * maintainer read that page in full on 2026-10-25, so its source says "Read by a person on 2026-10-25"
+ * (docs/engines/citations.md, § The maintainer's reads of 2026-10-25).
  */
 export const RETIRED_GRANT_PROGRAMS: readonly RetiredGrantProgram[] = [
   {

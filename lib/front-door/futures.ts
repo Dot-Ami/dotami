@@ -24,10 +24,11 @@ import { pickWords } from "./words";
 /**
  * The roads *Pick a future* lists, and every count on *Your destination* is of. Road 0, the first written
  * future, and (since 2026-10-21, task 28d) the federal steps for any business in Canada. The first written
- * future's sources are all tool checks: no person has read them yet. The maintainer decided on 2026-10-13 that
- * such a road may be listed (future-cockpit.md § 13, "Listing a road nobody has read"), because its card says
- * so in amber (`sourcesLine` below, counted through lib/engines/shared/citation-check.ts). Listing another
- * road is adding its id here.
+ * future's sources are all tool checks, and until 2026-10-27 no person's read of any was recorded. The
+ * maintainer decided on 2026-10-13 that such a road may be listed (future-cockpit.md § 13, "Listing a road
+ * nobody has read"), because its card says in amber how many of its sources no person has read (`sourcesLine`
+ * below, counted through lib/engines/shared/citation-check.ts); the 8 on the three CRA pages he read in full on
+ * 2026-10-25 say so in grey. Listing another road is adding its id here.
  */
 export const LISTED_ROAD_IDS: readonly string[] = [generalRoadV2026.id, roadApprenticeToOwnShopAB.id, FEDERAL_ROAD_ID];
 

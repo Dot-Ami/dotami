@@ -313,8 +313,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   no screen draws today: the card's panel shows its tax line and sources). It now says the amounts Income
   Tax Regulations s.7307 prescribe, each for 30 days: $350 of interest for a car acquired after 2023 ($300 for one
   acquired after 2000 and before 2024), and $1,100 plus sales tax for a lease entered into after 2024, with s.7307 as a new source whose words a
-  tool found on the consolidated Regulations' page on 2026-10-23 (not read by a person yet), listed with its
-  words in the card's panel.
+  tool found on the consolidated Regulations' page on 2026-10-23 (not read by a person then), listed with its
+  words in the card's panel; since the maintainer's read of the page in full on 2026-10-25 it says "Read by a
+  person on 2026-10-25", and a read wins on screen, so those words are no longer listed under it (see *Changed*).
 - **The Canada Small Business Financing Program says what ISED's page says** (items `grant-csbfp/equipment-limit`
   and `grant-csbfp/365-days`). "Up to $500K specifically for equipment" became ISED's own words, quoted: up to
   $1,000,000 in term loans for any one borrower, of which no more than $500,000 for leasehold improvements and
@@ -325,7 +326,8 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   The card's tax line, shown as its payoff, and the entry's eligibility text keep only ISED's words: what they said
   in DotAmi's own words ("may make financing available without revenue history", "Loan interest and fees may be
   deductible; the loan itself is not income", "under the revenue ceiling") no citation held. ISED's loans page is
-  a new source, checked by a tool on 2026-10-23 (not read by a person yet).
+  a new source, checked by a tool on 2026-10-23 (not read by a person then); since the maintainer's read of the
+  page in full on 2026-10-25 it says "Read by a person on 2026-10-25" (see *Changed*).
 - **About this job says "as published" beside two wage levels that are the same** (gap 15). Ontario bakers'
   *low $17.60 · median $17.60* looked like a mistake; the line now ends *· low and median the same, as published*.
 - **A place said in French is read as a place, the way one said in English is** (the maintainer's call a-call-14,
@@ -474,8 +476,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   and the person's own province's, with the existing line *"N sources for other provinces aren't shown."*, in the
   step panel, Your plan, the Export and Pick a future's source counts (`lib/engines/roads/v2026/index.ts`
   `citationsForPlace`). *Hire first employee* now cites Alberta's own *Employment standards* page, checked by a
-  tool on 2026-10-23 and labelled so until a person reads it (it is on the reading list in
-  docs/engines/citations.md). The province swap's `PLACE_GAPS` list is empty: the test passes with no known gap.
+  tool on 2026-10-23 and labelled so until a person read it; since the maintainer's read of the page in full on
+  2026-10-25 it says "Read by a person on 2026-10-25" (see *Changed*). The province swap's `PLACE_GAPS` list
+  is empty: the test passes with no known gap.
   The same goes for what rests on a page (review of the pull request): on a road written for Alberta opened from
   another province, such as an Alberta idea moved to Ontario, the cockpit and Your plan still listed Alberta's
   name-registry pages, the WCB-Alberta *done when* line and the Alberta name fee. Now a step's *done when* lines,
@@ -574,16 +577,18 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   increased from the previously announced $4.5 million to $6 million.” The tax years the $6 million applies from
   are in no held quote, so no screen says them. Nor does either side say "refundable" in DotAmi's own words any
   more: the corporation's card said "this may be worth 35% (refundable)" and the fork "35% refundable treatment",
-  on the maintainer's read alone, which isn't recorded yet, and none of the card's quotes says it; they now say
+  on the maintainer's word alone, which no record held, and none of the card's quotes says it; they now say
   "35%" and "35% treatment". The entry's eligibility, which no card draws, says the enhanced
   rate is for some CCPCs, up to their expenditure limit, where it said "subject to taxable income and capital
   limits". The card gains four sources, each a tool check of 2026-10-23 holding the words the reading list's
-  matcher found there that day, so each says "Checked by a tool" in amber (a networked `node
+  matcher found there that day, so each said "Checked by a tool" in amber (a networked `node
   scripts/check-quotes.mjs` run should find them again): the CRA's page on the credit's rates, its *How certain
   relationships affect the small business deduction and SR&ED investment tax credits*, *What's new for
-  corporations*, and Income Tax Act s.127(10.2), its formula only. Tests: `tests/reading-list-corrections.spec.ts`
-  §§ 2 and 3, `tests/brain-evaluate.spec.ts` (the golden scenario's sole proprietor card said "non-refundable",
-  and its fork "refundable", which that test pinned until then; it now pins the CRA's words).
+  corporations*, and Income Tax Act s.127(10.2), its formula only. Since the maintainer's read of each page in
+  full on 2026-10-25, each says "Read by a person on 2026-10-25" (see *Changed*). Tests:
+  `tests/reading-list-corrections.spec.ts` §§ 2 and 3, `tests/brain-evaluate.spec.ts` (the golden scenario's sole
+  proprietor card said "non-refundable", and its fork "refundable", which that test pinned until then; it now pins
+  the CRA's words).
 - **The Alberta sales tax card says only what the CRA's table lists for Alberta** (the maintainer's reading list
   of 2026-10-23). *Alberta — no provincial sales tax* said "If operating only in Alberta, GST (not HST) applies —
   simplifying provincial sales tax compliance": "simplifying" is a judgement no cited page makes, and the CRA's
@@ -623,8 +628,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   regard to those provisions read as a whole”." and "The same section: “while not preventing taxpayers from
   obtaining tax benefits contemplated by Parliament”.", listed with nothing of DotAmi's between them: four of
   the five phrases docs/glossary.md's GAAR entry holds from `node scripts/check-quotes.mjs` on 2026-10-12. Both
-  cards now list s.245 among their sources ("Read on 2026-07-02. Who read it wasn't recorded."), because a risk
-  box draws no sources of its own. Two things on the same cards are unchanged, as they aren't entries the
+  cards now list s.245 among their sources ("Read on 2026-07-02. Who read it wasn't recorded."; since the
+  maintainer's read of the page in full on 2026-10-25 it says "Read by a person on 2026-10-25", see *Changed*),
+  because a risk box draws no sources of its own. Two things on the same cards are unchanged, as they aren't entries the
   reading list checked: the fork label above the box, "… needs a real business purpose first", and the box's
   "Professional required" heading. Both are open questions for the maintainer
   ([docs/engines/citations.md](docs/engines/citations.md), § Outside the list). Test:
@@ -653,7 +659,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
     services, sales of capital property” “and goodwill from the sale of a business.”, pointing to Mandatory
     GST registration for the tests in full. The stage now cites the CRA's *When to register for and start
     charging the GST/HST* (Sources for this stage · 3), with the tool check of 2026-10-12 road 0 and the
-    GST/HST stages already hold for those words, so it says "Checked by a tool" in amber.
+    GST/HST stages already hold for those words, so it said "Checked by a tool" in amber; since the
+    maintainer's read of the page in full on 2026-10-25 it says "Read by a person on 2026-10-25" (see
+    *Changed*).
   - *Incorporating*'s business-limit box said "$500,000" on "CRA T2 guide business limit for qualifying
     CCPC active business income.", which read as automatic. It now says "Up to $500,000", on the guide's
     words: corporations that were CCPCs “throughout the tax year may be able to claim the small business
@@ -675,12 +683,13 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
   The words new to a stage were found on their pages on 2026-10-23 by the reading list's matcher, kept as a
   tool check of that day on the stage the list checked (a networked `node scripts/check-quotes.mjs` run
-  should find them again); the stages' other sources keep their read of 2026-05-01, which still shows. Road
-  0's line on what counts toward the tests and Sole Prop activation's note now read one copy of the CRA's
-  words (`gst-official-words.ts`). Tests: `tests/reading-list-corrections.spec.ts` §§ 2–4 and 7,
-  `tests/engine-integrity.spec.ts` (a stage's dollar figure must come from a page that stage cites),
-  `tests/brain-incorporation.spec.ts`, `e2e/app.spec.ts` (Sole Prop activation's three sources, the new one
-  in amber).
+  should find them again); the stages' other sources kept their read of 2026-05-01, which still showed then.
+  Since the maintainer's reads of 2026-10-25 every source of these five stages, old and new, says "Read by a
+  person on 2026-10-25" (see *Changed*). Road 0's line on what counts toward the tests and Sole Prop
+  activation's note now read one copy of the CRA's words (`gst-official-words.ts`). Tests:
+  `tests/reading-list-corrections.spec.ts` §§ 2–4 and 7, `tests/engine-integrity.spec.ts` (a stage's dollar
+  figure must come from a page that stage cites), `tests/brain-incorporation.spec.ts`, `e2e/app.spec.ts` (Sole
+  Prop activation's three sources: the new one in amber until 2026-10-27, each read by a person since).
 
 ### Changed
 - **31 source pages now say "Read by a person on 2026-10-25"** (the maintainer's reads). On 2026-10-25 the
@@ -729,8 +738,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   reading list found on the live page on 2026-10-23 with the repo's matcher (a networked `node
   scripts/check-quotes.mjs` run should find them again). They are the same two sentences every road's *Keep
   your records from day one* step holds. The line on screen doesn't change: it already said "generally", and
-  its read of 2026-10-08 outranks a tool check, so it still says "(Read on 2026-10-08. Who read it wasn't
-  recorded.)". Test: `tests/reading-list-corrections.spec.ts` §§ 2 and 5.
+  its read of 2026-10-08 outranks a tool check, so it still said "(Read on 2026-10-08. Who read it wasn't
+  recorded.)"; since the maintainer's read of the page in full on 2026-10-25 it says "(Read by a person on
+  2026-10-25)" (see *Changed*). Test: `tests/reading-list-corrections.spec.ts` §§ 2 and 5.
 - **"What's closest to your work?" lists whole-word matches first** (the maintainer's call a-call-11,
   2026-10-23). Inside each group of jobs, the jobs with a government title that has, word for word, as many of
   your words as the group counts now come first, under a heading that says so in the group's count (*One of their
@@ -752,8 +762,8 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   showed on road 0's map panels as a near-miss saying it "requires incorporation (CCPC)", which its page never
   said; each panel's *Elsewhere on your map* count is one lower. The reason and the day each page was read are
   kept (`RETIRED_GRANT_PROGRAMS`, docs/engines/grants.md *Retired programs*). The Productivity Grant is in the
-  catalog under its own id, `grant-capg` (*Added*), saying only its page's quoted words; no read of its amounts is
-  recorded yet.
+  catalog under its own id, `grant-capg` (*Added*), saying only its page's quoted words; the maintainer read that
+  page in full on 2026-10-25, so its source says "Read by a person on 2026-10-25" (see *Changed*).
 - **About this job in place for a job with no road, your region's Change, and the batch 4 calls** (tasks 28c and
   28h, the maintainer's calls of 2026-10-22). On Pick a future and at the end of the typed way, a job with no road
   written for it now shows *About this job*'s four rows right inside step 3, opened by "Here is what the government

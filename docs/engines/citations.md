@@ -264,9 +264,10 @@ says *Read by a person on 2026-10-25*, in grey. A read on record before it (date
 none recording who read it) is replaced, and the citation's comment says when it was; a tool
 check it had stays in the catalog (the readout API returns it), and the read wins on screen (rule 3), so
 the words a tool found are no longer listed under these sources. The roads build their citations from page
-objects, so there the read is the page's `read`, which every citation of that page copies; the apprentice
-road's own date is worked out from its sources, as road 0's is, and is 2026-10-25 now. Nothing else
-changed: no title, address, note, quote or tool check.
+objects, so there the read is the page's `read`, which every citation of that page copies. Each road's own
+date is worked out from its sources, so all three moved: road 0's and the federal road's from 2026-05-01,
+and the apprentice road's from empty, to 2026-10-25. Nothing else changed: no title, address, note,
+quote or tool check.
 [`tests/maintainer-reads.spec.ts`](../../tests/maintainer-reads.spec.ts) holds every citation of the 31
 pages at that read, and no other citation at that day, reading the pages from
 [`tests/fixtures/maintainer-reads-2026-10-25.ts`](../../tests/fixtures/maintainer-reads-2026-10-25.ts),

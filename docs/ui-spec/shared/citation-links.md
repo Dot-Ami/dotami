@@ -1,6 +1,8 @@
 # A source's line: how it was checked
 
-Last updated: 2026-10-24 (the Delete menu's record-keeping line: its citation also keeps a tool check,
+Last updated: 2026-10-27 (the maintainer's reads of 2026-10-25: every source of the 31 pages he read in
+full says "Read by a person on 2026-10-25", the Delete menu's record-keeping line among them, § Today;
+2026-10-24: the Delete menu's record-keeping line: its citation also keeps a tool check,
 which its read outranks, so the line doesn't change; § Today: the reading list's new sources say "Checked
 by a tool"; 2026-10-23: the words a tool check found are drawn by one component, `PageQuotes`, also on
 the ways to incorporate and *Your plan*; 2026-10-12: § Today: the honest map's six pages now
@@ -74,7 +76,8 @@ The words come from one function, `howCheckedWords`; no screen writes them itsel
   `(read 2026-10-08)`, in grey; a model's read, or a tool check with no read, there would be amber,
   like the card. It doesn't list a tool check's words. Since 2026-10-24 that citation also keeps a
   tool check of 2026-10-23 (the CRA's "Generally, …" sentence on the six years and the one after it);
-  the read outranks it, so the line still says the read, in grey.
+  the read outranks it, so the line still says the read, in grey. Since 2026-10-27 that read is the
+  maintainer's, of the page in full on 2026-10-25, so the line ends `(Read by a person on 2026-10-25)`.
 - **Your ideas, Add a figure, Tax year** ([../ventures/_index.md](../ventures/_index.md)): `Line 8299
   on the CRA's 2025 T2125 ("Gross business or professional income"). Read by a person on 2026-10-10.`
   A year's form always has a person's read (`tests/engine-integrity.spec.ts`), because this sentence
@@ -100,8 +103,8 @@ None. Read from the catalogs only.
 ## Today
 
 Every citation in the catalogs was read or checked by a tool. The T2125 lines' sources say "Read by
-a person on 2026-10-10" (the maintainer checked them, as their notes record). Six pages say "Checked
-by a tool on 2026-10-12: it found on the page the exact words this entry relies on. Not read by a
+a person on 2026-10-10" (the maintainer checked them, as their notes record). From 2026-10-12 six
+pages said "Checked by a tool on 2026-10-12: it found on the page the exact words this entry relies on. Not read by a
 person yet.", in amber (a source line lists the words found under it; each way to incorporate
 quotes them on its own line after *Words found on the page:*, `components/node-detail-panel.tsx`): the CRA's "When to register for and start
 charging the GST/HST" (the compliance entry, both GST/HST stages and the sole proprietor + GST/HST
@@ -110,16 +113,17 @@ two ways to incorporate: Corporations Canada's "Services, fees and processing ti
 federal corporation in a province or territory", and Alberta's "Incorporate an Alberta
 corporation", "Find a business registry" and "Annual returns for corporations, cooperatives and
 organizations" (docs/engines/citations.md, § Tool checks in the catalogs). The pages that moved after
-that say "Checked by a tool" too (§ When a cited page moves there). Since 2026-10-24 (the maintainer's
-reading list of 2026-10-23) so do the sources it added: the SR&ED card's four new pages, the
+that said "Checked by a tool" too (§ When a cited page moves there). Since 2026-10-24 (the maintainer's
+reading list of 2026-10-23) so did the sources it added: the SR&ED card's four new pages, the
 Canada-Alberta Productivity Grant's page and *SR&ED deepening*'s third source ("Checked by a tool on
 2026-10-23"), and *Sole Prop activation*'s third ("on 2026-10-12", the check its words already had;
 § The reading list's tool checks there). Since 2026-10-27 every source of the 31 pages the maintainer read
 in full on 2026-10-25 says "Read by a person on 2026-10-25", in grey, with no words found listed under it
 (the read wins on screen; § The maintainer's reads of 2026-10-25 there): the CRA's "When to register for
 and start charging the GST/HST", the SR&ED card's pages, the Productivity Grant's page and *Sole Prop
-activation*'s third among them. The five pages behind the two ways to incorporate still say "Checked by
-a tool". A source with a read and no record of who did it says
+activation*'s third among them, and the moved pages he read (the SR&ED, home office, motor vehicle and T2
+guide pages). The five pages behind the two ways to incorporate still say "Checked by a tool", as do the
+moved pages he didn't read. A source with a read and no record of who did it says
 "Read on <date>. Who read it wasn't recorded." No citation is read by an AI model any more.
 `e2e/app.spec.ts` ("every source says how it was checked") checks a stage's sources, the playbook
 export and the readout in the browser.

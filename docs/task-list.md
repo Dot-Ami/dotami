@@ -132,7 +132,8 @@ placed in phase 3.
     keep records and what counts, what the CRA says happens without them, how they must be kept (paper
     or electronic, with backups), and where and for how long (generally six years from the end of the
     last tax year they relate to, and two of the other periods the CRA lists); four cited *done when* lines, every source a tool check that day, no
-    read claimed. On today's Alberta road it is a fourth *before you open* step, on the path for every
+    read claimed then (since 2026-10-27 the where-and-how-long page's step and line carry the maintainer's read of
+    2026-10-25). On today's Alberta road it is a fourth *before you open* step, on the path for every
     idea; on the apprentice road it is first in *Open the doors*, after *Open your own shop*, so it is on
     the path once the person picks their own shop ([engines/roads.md](engines/roads.md))
     - [ ] Still open on it: a person's read of two of the three CRA pages (the maintainer read *Where to
@@ -212,7 +213,8 @@ placed in phase 3.
     Alberta's current trade pages, every *done when* line cited to its step's official page, official
     fees, cost-line names, legal requirements (in the catalog 2026-10-12, every source a tool check,
     `lib/engines/roads/v2026/apprentice-to-own-shop-ab.ts`; listed on *Pick a future* since 2026-10-13, the
-    maintainer's yes to listing a road no person has read, its card saying so in amber)
+    maintainer's yes to listing a road no person has read, its card saying so in amber; since 2026-10-27 it
+    also counts, in grey, the 8 sources on the three CRA pages he read in full on 2026-10-25)
     - [x] Its exam, Red Seal and registry blanks looked up again on official pages (2026-10-15): the Red
       Seal application is $150 on Tradesecrets' *Apply Online* page, a fee that applies only sometimes;
       every other blank's label says why it has no amount
@@ -554,7 +556,8 @@ placed in phase 3.
     (`lib/playbook/road-export.ts`); Compare and the Rules & tax switch count the cards one way; the money gauge
     names the official fees waiting on a fork, so it adds up to Compare; the vehicle caps are Income Tax
     Regulations s.7307's $350 / $300 and $1,100, and the Small Business Financing Program says ISED's own words
-    with no 365-day line (both sources checked by a tool, on the reading list); About this job says "as
+    with no 365-day line (both sources checked by a tool, on the reading list, then read in full by the maintainer
+    on 2026-10-25); About this job says "as
     published" beside two equal wage levels (`tests/prerelease-numbers.spec.ts`)
   - [x] 28d: outside Alberta, the federal steps that apply everywhere, plus "Written for Alberta" with the
     person's own province named; Alberta-only steps and pages left out (full B.C. and Ontario roads come

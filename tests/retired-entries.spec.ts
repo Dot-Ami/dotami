@@ -191,8 +191,10 @@ describe("3. A retired id is never used again", () => {
   });
 
   it("each retired entry says why without claiming that a person read its page", () => {
-    // The maintainer's reads are not on record yet (his answer of 2026-10-24): readOn is the day the reading list's
-    // tool opened the page, as it is for the grants catalog's retired programs.
+    // readOn is the day the reading list's tool opened the page, as it is for the grants catalog's retired programs.
+    // No retirement rests on a person's read: none of the maintainer's reads was on record when these were made (his
+    // answer of 2026-10-24), and his reads of 2026-10-25, recorded since, are on the catalogs' live citations (the CRA
+    // page the retired hobby read cited among them), never on a retired entry.
     for (const r of retired()) {
       expect(r.readOn, r.id).toMatch(/^\d{4}-\d{2}-\d{2}$/);
       expect(r.readOn <= TODAY, r.id).toBe(true);

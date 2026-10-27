@@ -1,7 +1,10 @@
 # Cockpit canvas — the map as tier columns
 
-Last updated: 2026-10-24 (the maintainer's reading list: Incorporating's business limit reads "Up to
-$500,000" in the T2 guide's words, and four other stages quote their pages, § Incorporating; the readout
+Last updated: 2026-10-27 (the maintainer's reads of 2026-10-25: every source of the four stages that
+quote their pages, SR&ED deepening's third among them, says *Read by a person on 2026-10-25*, § Four
+more stages quote their pages; 2026-10-24: the maintainer's reading list: Incorporating's business
+limit reads "Up to $500,000" in the T2 guide's words, and four other stages quote their pages,
+§ Incorporating; the readout
 API gives each stage's chip and the person's own mark, `yourStatus`, and no longer the map's `status` or
 its worked-out lists; the accessible names' example says *first stage*; 2026-10-14: road 0's Tier 1 gains
 a fifth card, *Keep your records from day one*, and the
@@ -176,14 +179,17 @@ page's words in quotation marks, and the page is among the stage's own sources (
 - **Incorporation for liability/SR&ED** and **SR&ED deepening**: each 35% box quotes the CRA, “Some CCPCs may
   earn an ITC at an enhanced rate of 35% on qualified SR&ED expenditures up to their expenditure limit for
   the year.”, from its page on how relationships affect the SBD and SR&ED credits. SR&ED deepening gains
-  that page as a third source (amber: a tool check of 2026-10-23), and its tax impact says the enhanced
-  rate is for some CCPCs, up to their expenditure limit for the year (it said "subject to taxable income
-  limits", which no held quote says).
+  that page as a third source (amber: a tool check of 2026-10-23, until the maintainer's read of the page
+  in full on 2026-10-25: it says *Read by a person on 2026-10-25* now), and its tax impact says the
+  enhanced rate is for some CCPCs, up to their expenditure limit for the year (it said "subject to taxable
+  income limits", which no held quote says).
 
-Each stage's other sources say how they were checked as before ("Read on 2026-05-01. Who read it wasn't
-recorded."): a read wins on screen over the tool checks of 2026-10-23 these pages now also carry.
-No source says a person read it yet; the maintainer's saved reads come in a later change. Retained earnings planning
-(Tier 4) lights only when the person set their structure to a corporation.
+Each stage's other sources said how they were checked as before ("Read on 2026-05-01. Who read it wasn't
+recorded.", or on SR&ED deepening "Checked by a tool on 2026-10-13" in amber) until the maintainer's reads
+of 2026-10-25 were recorded (2026-10-27). He read every page these four stages cite in full, so each of
+their sources now says *Read by a person on 2026-10-25*, in grey: a read wins on screen over the tool
+checks these pages also carry (docs/engines/citations.md, § The maintainer's reads of 2026-10-25).
+Retained earnings planning (Tier 4) lights only when the person set their structure to a corporation.
 
 **Liability / SR&ED (Tier 3)** lights from the idea's activity tags (Software / SaaS, Manufacturing,
 AI / ML / R&D), not from a need the person stated, and since 2026-10-11 its card says so under the

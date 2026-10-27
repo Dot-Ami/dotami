@@ -304,7 +304,7 @@ describe("Pick a future: every written future, in the order added, as counts", (
 
   it("lists road 0 and the first written future: the maintainer said yes on 2026-10-13 (design § 13)", () => {
     // The first written future's sources are all tool checks; the maintainer decided on 2026-10-13 that it
-    // may be listed, with its card saying so in amber (the test below).
+    // may be listed, with its card saying in amber how many of them no person has read (the test below).
     expect(LISTED_ROAD_IDS).toEqual([generalRoadV2026.id, roadApprenticeToOwnShopAB.id, roadFederalStepsCA.id]);
     expect(listedRoads(roadsV2026, "AB").map((r) => r.id)).toEqual([generalRoadV2026.id, roadApprenticeToOwnShopAB.id]);
     // In the catalog's order, whatever order the list names them in.

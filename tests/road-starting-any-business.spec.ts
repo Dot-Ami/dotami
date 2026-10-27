@@ -243,7 +243,7 @@ describe("road 0's legal requirements come from the compliance catalog, where it
   });
 });
 
-describe("every new source is a tool check made on 2026-10-12 (the records step's on 2026-10-14), and none claims a read", () => {
+describe("every new source is a tool check made on 2026-10-12 (the records step's on 2026-10-14), and only the maintainer's reads claim a read", () => {
   const all = newCitations();
 
   it("each has quotes of three words or more, found by the tool that day, on an https page", () => {
@@ -277,12 +277,13 @@ describe("every new source is a tool check made on 2026-10-12 (the records step'
     }
     expect(all.filter(({ citation }) => hisPages.has(citation.url)).length).toBeGreaterThan(0);
     expect(all.filter(({ citation }) => !hisPages.has(citation.url)).length).toBeGreaterThan(0);
-    // A tool check is not a read: the road's date stays the newest read among the map stages' sources.
-    // Some stage sources are tool checks too (the CRA's small-supplier page, since #145), so they have no
-    // read date and are skipped here; sort() would otherwise put their undefined last.
+    // A tool check is not a read: the road's date is the newest read among its sources, which is the map stages'
+    // newest (the maintainer's of 2026-10-25 since 2026-10-27). A stage source with a tool check only (the CRA's
+    // line 10100 page, since its old page moved on 2026-10-13) has no read date and is skipped here; sort() would
+    // otherwise put its undefined last. The CRA's small-supplier page was one from #145 until his read was recorded.
     const newestStageRead = cfeNodesV2026
-      // Read as the shared citation type: a stage whose sources are all tool checks (since 2026-10-13,
-      // when its pages moved) has no lastVerified field in its own inferred type.
+      // Read as the shared citation type: a source with a tool check only has no lastVerified field in its
+      // own inferred type.
       .flatMap((n) => n.citations.map((c: EngineCitation) => c.lastVerified))
       .filter((d): d is string => d !== undefined)
       .sort()

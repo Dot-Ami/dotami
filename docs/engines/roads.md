@@ -27,11 +27,13 @@ they must be kept, electronic records and backups included; where, and for how l
 from the end of the last tax year they relate to, with the CRA's note that records kept outside Canada and
 opened from Canada don't count as kept in Canada, and two of the other periods the CRA lists, indefinitely
 for records about long-term property and six years from the filing date for a late return), each a tool
-check made that day, no read claimed. The summary says it is the CRA speaking, since the CRA's page covers
-only the laws it administers. It has no cost line (keeping records has no official fee) and one official
-link, the CRA's *Keeping records* page. How road evaluation colours it is the road's own arrows, not a
-rule: no rule reads a sale, an expense or any other answer for it. Each road places it where that road's
-business begins (the CRA's pages say records are kept by persons carrying on a business). On road 0 it is in the first
+check made that day, no read claimed then (since 2026-10-27 the where-and-how-long line, and the step's own
+citation of that page, carry the maintainer's read of 2026-10-25, [citations.md](citations.md)). The
+summary says it is the CRA speaking, since the CRA's page covers only the laws it administers. It has no
+cost line (keeping records has no official fee) and one official link, the CRA's *Keeping records* page.
+How road evaluation colours it is the road's own arrows, not a rule: no rule reads a sale, an expense or
+any other answer for it. Each road places it where that road's business begins (the CRA's pages say
+records are kept by persons carrying on a business). On road 0 it is in the first
 column with the other *before you open* steps, leading to *Sole Prop activation* (records cover what a
 business spends as well as what it takes in, and spending can start before the first sale); nothing
 leads to it, so it is on the path for every idea, whatever its structure or work situation, until the

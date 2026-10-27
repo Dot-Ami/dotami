@@ -20,8 +20,9 @@ import { input } from "./helpers/road-to-evaluate";
 /**
  * The first written future (decision 1 of 2026-10-11): "From apprentice to your own shop (Alberta)".
  * Its content was written and fact-checked from Alberta's, the CRA's and WCB-Alberta's pages; in the
- * catalog every source is a tool check (option B, docs/engines/citations.md), so these tests hold it
- * to exactly that: found words, never a read nobody did.
+ * catalog every source has a tool check (option B, docs/engines/citations.md), and only the three CRA pages
+ * the maintainer read in full on 2026-10-25 carry a read, so these tests hold it to exactly that: found
+ * words, and no read but his.
  */
 const road = roadApprenticeToOwnShopAB;
 const step = (id: string): RoadStep => {
@@ -130,7 +131,7 @@ describe("the fork after Certified has two sides", () => {
   });
 });
 
-describe("every source is a tool check with its quotes, and none claims a read", () => {
+describe("every source is a tool check with its quotes, and only the maintainer's reads claim a read", () => {
   const all = citationsOf(road);
 
   it("every step, done-when line, fee and sourced cost line has one", () => {
