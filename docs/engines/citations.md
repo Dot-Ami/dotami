@@ -1,7 +1,9 @@
 # How a source was checked: read, or checked by a tool
 
-Last updated: 2026-10-24 (the reading list's tool checks of 2026-10-23, § The reading list's tool
-checks, and the corrections they back, with what is still blocked, § The reading list's corrections;
+Last updated: 2026-10-27 (main with #207 and #208 merged into the reading list's corrections: the two
+checks that waited on them are plain checks, § The reading list's corrections; 2026-10-24: the reading
+list's tool checks of 2026-10-23, § The reading list's tool checks, and the corrections they back, with
+what is still blocked, § The reading list's corrections;
 2026-10-13: pages that moved, § When a cited page moves; 2026-10-12: the first tool
 checks in the catalogs: the honest map's six pages, § Tool checks in the catalogs; 2026-10-11: the
 maintainer's decision; same day, after review: a card says "Read by a person" only when the catalog
@@ -235,7 +237,7 @@ and are listed under § The reading list's tool checks, not here.
 |---|---|---|---|
 | 2026-10-23 | Alberta, *Employment standards* (https://www.alberta.ca/employment-standards) | map stage *Hire first employee* (road 0 in Alberta; Alberta's page on the federal road) | that it is the page an Alberta employer reads for the employment standards the stage names (minimum wage, overtime, holidays, leaves, vacations, termination) |
 | 2026-10-23 | Income Tax Regulations s.7307 (https://laws-lois.justice.gc.ca/eng/regulations/C.R.C.,_c._945/section-7307.html) | write-off *Motor vehicle expenses* (`writeoff-vehicle`) | the amounts now in the entry's eligibility text (which no screen draws yet), each for 30 days: $350 loan interest for a car acquired after 2023, $300 for one acquired after 2000 and before 2024 (s.7307(2), for s.67.2 of the Act), and $1,100 plus sales tax for a lease entered into after 2024 (s.7307(3), for s.67.3); they replace the Act's own $250 and $600 |
-| 2026-10-23 | ISED, *Helping small businesses get loans* (https://ised-isde.canada.ca/site/canada-small-business-financing-program/en/canada-small-business-financing-program/find-loan-your-small-business/helping-small-businesses-get-loans) | program *Canada Small Business Financing Program* (`grant-csbfp`) | the amounts now quoted in the entry (its description and estimated value, which no screen reads yet): up to $1,000,000 in term loans for any one borrower, of which no more than $500,000 for leasehold improvements and equipment; that security is taken on the assets financed |
+| 2026-10-23 | ISED, *Helping small businesses get loans* (https://ised-isde.canada.ca/site/canada-small-business-financing-program/en/canada-small-business-financing-program/find-loan-your-small-business/helping-small-businesses-get-loans) | program *Canada Small Business Financing Program* (`grant-csbfp`); the loan program's risk read cites it too, with the reading list's own check (§ The reading list's tool checks) | the amounts now quoted in the entry (its description and estimated value, which no screen reads yet): up to $1,000,000 in term loans for any one borrower, of which no more than $500,000 for leasehold improvements and equipment; that security is taken on the assets financed |
 
 ## When a cited page moves
 
@@ -294,7 +296,7 @@ to the citations he read.
 | CRA, *Where to keep your records, for how long and how to request the permission to destroy them early* | the Delete menu's records line (`cra-business-records-retention`, [`lib/engines/compliance/v2026/record-keeping.ts`](../../lib/engines/compliance/v2026/record-keeping.ts)) | that records are generally kept six years from the end of the last tax year they relate to, and for a different period in some situations: the two sentences every road's *Keep your records from day one* step holds from its own check of 2026-10-14, which keeps that date. The list found all ten quotes held for this page that day. The citation's read of 2026-10-08 still wins on screen (rule 3). |
 | Alberta, *Canada-Alberta Productivity Grant* (https://www.alberta.ca/canada-alberta-productivity-grant) | program *Canada-Alberta Productivity Grant* (`grant-capg`, added 2026-10-24), named by map stage *Hire first employee* on road 0 | the 25% and the other 75% of eligible training costs (who contributes which isn't in the quotes), at most $5,000 per employed trainee and $100,000 per employer per fiscal year, and “be operational in Alberta for at least one year”. Fetched from the Canada-Alberta Job Grant's old address, which redirects there. |
 | CRA, Guide T4002, chapter 4 (https://www.canada.ca/en/revenue-agency/services/forms-publications/publications/t4002/t4002-6.html) | risk read *Enhanced first-year deduction timing* (`risk-immediate-expensing-timing`, [`lib/engines/risk/v2026/triggers.ts`](../../lib/engines/risk/v2026/triggers.ts)) | the guide's sentence on the dates for Class 44, 46 or 50 property under proposed changes. It ends on a colon before the factors, which aren't held, so no screen quotes it. The Class 50 write-off's citation of the same chapter keeps its read of 2026-07-02 and no tool check. |
-| ISED, the program's loans page (https://ised-isde.canada.ca/site/canada-small-business-financing-program/en/canada-small-business-financing-program/find-loan-your-small-business/helping-small-businesses-get-loans) | the loan program's risk read (`risk-self-declared-valuation`) | that for real property and equipment, security must be taken on the assets financed. The read cited ISED's program hub until 2026-10-24. The page's own title isn't held, so the citation's title describes it. |
+| ISED, the program's loans page (https://ised-isde.canada.ca/site/canada-small-business-financing-program/en/canada-small-business-financing-program/find-loan-your-small-business/helping-small-businesses-get-loans) | the loan program's risk read (`risk-self-declared-valuation`) | that for real property and equipment, security must be taken on the assets financed. The read cited ISED's program hub until 2026-10-24. The page's own title isn't held, so the citation's title describes it. The program's own card (`grant-csbfp`) cites the page too, with #208's tool check of the same day (§ Waiting for the maintainer's read), so the page the box quotes is listed under the card. |
 
 Two more risk reads quote pages whose words were already held, so they keep those checks' dates
 rather than the list's: the home office read quotes the CRA's *Business-use-of-home expenses* in the
@@ -333,16 +335,18 @@ what changed. 23 of them are below. The other seven belong to other changes: the
 Grant and the Alberta Investor Tax Credit (`grant-cajg`, `grant-abti`, three items) and Alberta's
 employment-standards page on *Hire first employee* (one item) to #207; the loan program's equipment
 limit and its 365-day line (`grant-csbfp`, two items) and the vehicle's interest and lease caps
-(`writeoff-vehicle`, one item) to #208. The 365-day line stays out (his answer 5).
+(`writeoff-vehicle`, one item) to #208, both merged before this change. The 365-day line stays out (his
+answer 5).
 
-**Merge order: #207, then #208, then this change.** Two of its rows lean on theirs. The Job Grant's
-address now opens the Productivity Grant's page, so until #207 takes `grant-cajg` off, an Alberta idea
-in the Job Grant's kinds of work shows two cards for one program. And the loan program's risk box
-quotes ISED's loans page, which a risk box doesn't draw; until #208 adds that page to `grant-csbfp`,
-the card lists only ISED's hub. Each gap has an `it.fails` check naming the change that closes it
-(`tests/productivity-grant.spec.ts`, `tests/reading-list-corrections.spec.ts` § 6): it turns red once
-both changes are in, and becomes a plain check then. The panels fixture is redrawn last, after the
-rebase.
+**Merged after #207 and #208** (main merged in on 2026-10-27). Two of its rows lean on theirs. The Job
+Grant's address opens the Productivity Grant's page, so while `grant-cajg` was in the catalog an
+Alberta idea in the Job Grant's kinds of work would have shown two cards for one program; #207 took it
+off. And the loan program's risk box quotes ISED's loans page, which a risk box doesn't draw; #208 added
+that page to `grant-csbfp`, so it is under the card. Each was an `it.fails` check until the merge, and
+each turned red then and is a plain check now (`tests/productivity-grant.spec.ts`, which also holds
+`grant-cajg` in #207's `RETIRED_GRANT_PROGRAMS` and `grant-capg` out of it;
+`tests/reading-list-corrections.spec.ts` § 6). Road 0's 11 panels in the panels fixture were redrawn
+from the merged code at that merge (`tests/cost-panels-unchanged.spec.ts`).
 
 Three rules from his answers hold for every row:
 

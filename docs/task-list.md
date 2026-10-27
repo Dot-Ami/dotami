@@ -1018,10 +1018,10 @@ roadmap's build order.
     (`compliance-food-premises-on`, `risk-hobby-reclassification`); the Canada-Alberta Productivity Grant
     added as `grant-capg` ([docs/engines/citations.md](engines/citations.md), § The reading list's corrections;
     `tests/reading-list-corrections.spec.ts`, `tests/retired-entries.spec.ts`, `tests/productivity-grant.spec.ts`)
-  - [ ] Merged after #207 and #208 (citations.md, § The reading list's corrections, merge order): until #207
-    the Job Grant's card opens the Productivity Grant's page too, and until #208 the loan program's card
-    doesn't list the loans page its risk box quotes. Each has an `it.fails` check that turns red once both
-    are in, to become a plain check; the panels fixture is redrawn after the rebase
+  - [x] Merged after #207 and #208 (main merged in on 2026-10-27; citations.md, § The reading list's
+    corrections): #207 took the Job Grant's card off, so one card opens the Productivity Grant's page, and
+    #208 put the loans page the loan program's risk box quotes under its card. The two `it.fails` checks
+    turned red at the merge and are plain checks now; road 0's 11 panels were redrawn from the merged code
   - [ ] His reads of that list: he sends the list with his saved reads, then only the citations he checked get
     `lastVerified` and `readBy: "person"` (his answers of 2026-10-24); no source says "Read by a person" for
     them until then

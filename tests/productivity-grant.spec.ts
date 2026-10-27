@@ -7,8 +7,9 @@
  * except the planted controls beside the ones that could pass on nothing, and "no idea outside Alberta", which holds
  * before as after.
  *
- * Once #207 is in, this file also checks the id against RETIRED_GRANT_PROGRAMS (the Job Grant's `grant-cajg` stays
- * retired, and no retired id is in the catalog).
+ * Since main with #207 was merged in (2026-10-27), this file also checks the id against #207's
+ * RETIRED_GRANT_PROGRAMS: the Job Grant's `grant-cajg` stays retired, `grant-capg` is not a retired id, and no
+ * retired id is in the catalog.
  */
 import { readFileSync } from "node:fs";
 import path from "node:path";
@@ -17,7 +18,7 @@ import { describe, expect, it } from "vitest";
 
 import { evaluateProfile, type EvaluationProfile } from "@/lib/brain";
 import { itemsForStep } from "@/lib/brain/node-items";
-import { grantProgramsV2026 } from "@/lib/engines/grants/v2026/programs";
+import { grantProgramsV2026, RETIRED_GRANT_PROGRAMS } from "@/lib/engines/grants/v2026/programs";
 import type { GrantProgram } from "@/lib/engines/grants/v2026/types";
 import { generalRoadV2026, roadApprenticeToOwnShopAB, roadFederalStepsCA, skillItemsV2026 } from "@/lib/engines/roads/v2026";
 import { citationCheckProblems, howChecked, howCheckedWords, toolCheckQuotes } from "@/lib/engines/shared/citation-check";
@@ -169,13 +170,29 @@ describe("who is shown it (lib/brain/evaluate.ts evaluateGrant)", () => {
     for (const province of ["ON", "BC", "MB", null] as const) expect(card(profile({ province })), String(province)).toBeUndefined();
   });
 
-  // Until #207 is in: the Job Grant is still in the catalog and its address opens this program's page, so an Alberta
-  // idea in its kinds of work gets two cards for one program. #207 retires grant-cajg; once both are in, this check
-  // passes, `it.fails` turns red, and it becomes a plain `it`, with the RETIRED_GRANT_PROGRAMS checks the header names. #207
-  // merges first (docs/engines/citations.md, § The reading list's corrections, merge order).
-  it.fails("the Canada-Alberta Job Grant is off the catalog, so no second card opens this page (#207 retires it)", () => {
+  // The Job Grant's address opens this program's page, so while it was in the catalog an Alberta idea in its kinds of
+  // work got two cards for one program. #207 retired grant-cajg; until main with #207 was merged in (2026-10-27) this
+  // was an `it.fails`.
+  it("the Canada-Alberta Job Grant is off the catalog, so no second card opens this page (#207 retired it)", () => {
     expect(grantProgramsV2026.map((p) => p.id)).not.toContain("grant-cajg");
-    expect(card(profile({ activityTags: ["Trades"], structure: "sole-prop-gst" }), "grant-cajg")).toBeUndefined();
+    const trades = profile({ activityTags: ["Trades"], structure: "sole-prop-gst" });
+    expect(card(trades, "grant-cajg")).toBeUndefined();
+    // One card for the program: no other card the idea is shown cites its page or the Job Grant's old address.
+    const opening = evaluateProfile(trades, { today: TODAY }).unlocks.filter((u) =>
+      u.citations.some((c) => c.url === PAGE || c.url === OLD_JOB_GRANT_PAGE),
+    );
+    expect(opening.map((u) => u.id)).toEqual([ID]);
+  });
+
+  it("the Job Grant stays in the retired list, under the old address; the Productivity Grant's id is not a retired one", () => {
+    const retired = RETIRED_GRANT_PROGRAMS.find((p) => p.id === "grant-cajg");
+    expect(retired).toMatchObject({ url: OLD_JOB_GRANT_PAGE });
+    expect(retired!.why).toContain(PAGE);
+    expect(RETIRED_GRANT_PROGRAMS.map((p) => p.id)).not.toContain(ID);
+    const live = new Set(grantProgramsV2026.map((p) => p.id as string));
+    for (const { id } of RETIRED_GRANT_PROGRAMS) expect(live.has(id), id).toBe(false);
+    // No program in the catalog cites the Job Grant's old address.
+    for (const p of grantProgramsV2026) expect(p.citations.map((c) => c.url), p.id).not.toContain(OLD_JOB_GRANT_PAGE);
   });
 });
 

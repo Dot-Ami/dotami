@@ -194,8 +194,8 @@ export const riskEntriesV2026 = [
     // a valuation from the price of equipment to be bought "is circular and can read as collateral misrepresentation to
     // a lender", DotAmi's own, and that the financed equipment is the collateral "at the lesser of purchase price or
     // appraised value", which is a different rule from this one and on no page DotAmi cites. The box names the page it
-    // quotes because it draws no sources: until the program card cites the loans page too (#208), it lists only
-    // ISED's program hub.
+    // quotes because it draws no sources; the program card lists the loans page among its own (#208, merged in on
+    // 2026-10-27), so it is one click away under the card.
     why: "“For real property and equipment, security must be taken on the assets financed.”",
     mitigation: "ISED's words, from its page on loans under this program.",
     citations: [

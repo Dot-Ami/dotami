@@ -551,12 +551,15 @@ describe("6. The risk reads say only what their sources say", () => {
     expect(quoted(`${csbfp.risk!.why} ${csbfp.risk!.mitigation}`)).toContain(ISED_SECURITY);
   });
 
-  // Until #208 is in: the loan program's card lists ISED's hub only, so the loans page its box quotes isn't one click
-  // away under the card (a risk box draws no sources of its own). #208 adds that page to grant-csbfp; once both are
-  // in, this check passes, `it.fails` turns red, and it becomes a plain `it`. #208 merges first (docs/engines/
-  // citations.md, § The reading list's corrections, merge order).
-  it.fails("the loan program's card cites the loans page its risk box quotes (#208 adds it)", () => {
-    citationOf("grants grant-csbfp", PAGE.isedLoans);
+  // A risk box draws no sources of its own, so the page it quotes has to be under the card. #208 added ISED's loans
+  // page to grant-csbfp with its own tool check of the same day; until main with #208 was merged in (2026-10-27) this
+  // was an `it.fails`, and the card listed ISED's hub only.
+  it("the loan program's card cites the loans page its risk box quotes, holding the quoted rule (#208 added it)", () => {
+    const page = citationOf("grants grant-csbfp", PAGE.isedLoans);
+    expect(page.toolCheck?.checkedOn).toBe(LIST_DAY);
+    expect(rawQuotes(page)).toContain(ISED_SECURITY);
+    // On the card: the page is among the card's own sources, one click away under the box.
+    expect(card(idea(), "grant-csbfp").citations.map((c) => c.url)).toContain(PAGE.isedLoans);
   });
 });
 

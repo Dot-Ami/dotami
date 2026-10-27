@@ -1,7 +1,8 @@
 # Risk Calculator — Spec
 
-Last updated: 2026-10-24 (the maintainer's reading list of 2026-10-23: four reads corrected to what their pages
-say and one retired, § What the reads quote and § Retired risk reads) · Status: **not built** · Build order: #3 (after rules engine)
+Last updated: 2026-10-27 (ISED's loans page is under the loan program's card, from #208, merged in; 2026-10-24:
+the maintainer's reading list of 2026-10-23: four reads corrected to what their pages say and one retired, § What
+the reads quote and § Retired risk reads) · Status: **not built** · Build order: #3 (after rules engine)
 
 ## Job
 
@@ -118,8 +119,9 @@ by him yet (his saved reads come in a later change).
 
 A risk box draws no sources of its own: the card it shows on lists only the card's own citations. So
 a page a read quotes is cited under that card too: the home office page under the home office
-write-off, s.245 under the Holding company and Family trust cards. ISED's loans page is under the
-loan program's card once #208 adds it there; until then the box names the page it quotes.
+write-off, s.245 under the Holding company and Family trust cards, and ISED's loans page under the
+loan program's card (#208's source, merged in on 2026-10-27; until then the card listed ISED's hub only).
+The box also names the page it quotes.
 
 ## Retired risk reads
 

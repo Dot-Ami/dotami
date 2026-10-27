@@ -637,10 +637,10 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   “For real property and equipment, security must be taken on the assets financed.” and "ISED's words, from its
   page on loans under this program." Its citation is now that page, whose sentence the reading list's matcher
   found on 2026-10-23 (a networked `node scripts/check-quotes.mjs` run should find it again), in place of the
-  program's hub. The card's own sources list the hub only, until #208 adds the loans page there. The box keeps
-  its "Professional required" heading, which ISED's quoted rule doesn't state: an open question for the
-  maintainer (docs/engines/citations.md, § Outside the list). Tests: `tests/reading-list-corrections.spec.ts`
-  § 6, `tests/retired-entries.spec.ts` § 2.
+  program's hub. The card's own sources list that page too (#208's source, merged in), so the page the box quotes
+  is one click away under the card. The box keeps its "Professional required" heading, which ISED's quoted rule
+  doesn't state: an open question for the maintainer (docs/engines/citations.md, § Outside the list). Tests:
+  `tests/reading-list-corrections.spec.ts` § 6, `tests/retired-entries.spec.ts` § 2.
 - **Five map stages give their pages' own words where they said a number or a deadline in DotAmi's**
   (the maintainer's reading list of 2026-10-23; each step panel's *More about this stage*, on road 0, the
   federal road, the playbook export and the readout).
