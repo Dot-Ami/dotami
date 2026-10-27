@@ -1,6 +1,6 @@
 # Task list — what's being built, and what you can pick up
 
-Last updated: 2026-10-20. Every story planned for DotAmi, with its tasks. The plan behind it is
+Last updated: 2026-10-27. Every story planned for DotAmi, with its tasks. The plan behind it is
 [architecture/use-cases.md](architecture/use-cases.md) (who it's for, the decisions, the build
 order); the settings and edge cases each story must test are in
 [architecture/settings-and-edge-cases.md](architecture/settings-and-edge-cases.md) — the codes in
@@ -20,7 +20,8 @@ content and the project itself run alongside everything. **Changed 2026-10-11:**
 cockpit (§ 14) is now first, because the maintainer named it the top priority on 2026-10-10; it
 takes in the planning pieces of § 10 ([10b] progress, [10c] tasks) and starts § 11's roadmaps as
 data. Its design: [architecture/future-cockpit.md](architecture/future-cockpit.md). **Changed
-2026-10-20:** phase 2 of the plan for any idea (§ 14 below, [14l]–[14o]) is next.
+2026-10-20:** phase 2 of the plan for any idea (§ 14 below, [14l]–[14o]) is next. **Changed
+2026-10-27:** phase 2 ends with 32b and release 0.5.0; phase 3, in the maintainer's order, is [14p].
 
 ---
 
@@ -665,9 +666,35 @@ placed in phase 3.
     the save's $1,000,000,000 cap is refused in the box and the what-if (the review of #198)
   - [x] A small release of phase 1's work (the calm first view, the six text sizes, *Look closer*, the
     harness's fixes) before phase 2 changes the data file: 0.4.1 (#188), published 2026-10-20
+  - [x] The pre-release fixes of the screen review (30f) and the reading list, merged on the maintainer's word
+    2026-10-25 to 27, in his order: #207, #206, #208, #210, #209, each brought up to date with main by a
+    merge first; what each merge found and fixed is in its pull request, and how a cloud session did it is
+    [verification/cloud-sessions.md](verification/cloud-sessions.md)
+  - [ ] #211, the reading list's corrections with the maintainer's 31 reads of 2026-10-25: waits for a
+    networked `node scripts/check-quotes.mjs` run in a normal session ([11b]), then his merge word
   - [ ] Release 0.5.0: no silent fallbacks, every Alberta test idea ending on a road written for it or an
     honest "not written yet", the maintainer's walk done (32b), a Quality line in the changelog, the privacy
     log's section for the new version; publishing is the maintainer's click
+- ⬜ **[14p] Phase 3, honesty first.** The maintainer's order (d-call-1), after release 0.5.0:
+  - [ ] Cards in official words: DotAmi's own tax and legal wording on cards becomes the pages' own words or
+    nothing. Planned 2026-10-24, his 15 calls of 2026-10-25:
+    [architecture/cards-in-official-words.md](architecture/cards-in-official-words.md). Builds after #211
+  - [ ] Rules for each kind of work (sector rules): BizPaL first, with a person running its searches; the
+    first 12 (ride-share GST, Alberta low-risk home food, the AHS food permit, a federal food licence, child
+    care over 6, AMVIC, AGLC, RCMP, drones, a Calgary home business, personal services, platform GST)
+  - [ ] Freshness: each source's next release date, a weekly check, a health state per source, and effective
+    dates, status and previous value for fees and rules (with 31b and 31c above)
+  - [ ] Accuracy tests
+  - [ ] The data kit: business counts by town, the census's self-employed, labelled averages beside a
+    calculator (the Phase 3 lines under [14i])
+  - [ ] The hairstylist road, the second road
+  - [ ] Also on the list: next steps backed by reality on every card, only from official pages (his note of
+    2026-10-25); changing your place later with one Change box for every answer (S2.5.33); everything you can
+    apply for and write off (S2.5.38); public information on other businesses (S2.5.39); DotAmi as a local
+    MCP server, read-only and off by default (S2.5.40)
+  - [ ] Two questions his reads of 2026-10-25 left open: what the CRA's rate table shows for Ontario and
+    Alberta (citations.md § Blocked, 1 and 2), and whether the s.67.3 citation's title or its address changes
+    (the title names four sections, the page holds one)
 
 ## 7 — The desktop app (one download, everything on your computer)
 
@@ -1220,9 +1247,9 @@ roadmap's build order.
     docs/ui-spec/start/_index.md say but the words on screen, naming the Go menu only (the maintainer's words
     of 2026-10-24), don't: the same message would fix both, or the words could name it; in a browser copy, Back and Forward show the front door's links as first drawn
     (docs/ui-spec/landing/03-escape-hatches.md); the line under the receipts of questions 2 and 3 sits outside
-    the receipt's `role="status"`, so a screen reader doesn't hear it with the receipt; and CLAUDE.md's Data
-    paragraph still says of the front-door sentence that "the tab marks it done" (since 2026-10-24 the journey
-    held in the window's memory does), for the maintainer to reword
+    the receipt's `role="status"`, so a screen reader doesn't hear it with the receipt (CLAUDE.md's Data
+    paragraph, which said of the front-door sentence that "the tab marks it done", says the journey held in
+    the window's memory does since 2026-10-27)
   - [ ] For the maintainer's later call (the decision of 2026-10-24 kept it for now): the intake's *Other…*
     employment box. Its words are held in the window's memory only, kept with no idea (the idea keeps `other`)
     and read by nothing since its list of earlier descriptions went with `dotami-employment-suggestions`: keep
