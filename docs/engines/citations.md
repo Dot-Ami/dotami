@@ -96,8 +96,11 @@ catalog at run time.
    The tool check stays in the catalog (the readout API returns it).
 4. A tool check is recorded only after `node scripts/check-quotes.mjs --url … --quote …` reported
    every one of its quotes as found on the live page. The builder copies the date the script printed.
-   The script never writes a file itself. Run with no arguments, it checks every recorded tool check
-   again, which shows when a page has changed under a citation. One exception, closed on 2026-10-26:
+   The script never writes a file itself. Run with no arguments, it checks every tool check in the
+   catalogs again (`lib/engines/all-citations.ts`), which shows when a page has changed under a citation.
+   One check outside the catalogs, Anthropic's retention words on *What DotAmi knows about you*
+   (`lib/privacy/anthropic-retention-official-words.ts`, 2026-10-27), is re-checked by running the script
+   with `--url` and its quotes. One exception, closed on 2026-10-26:
    the tool checks dated 2026-10-23 (§ The reading list's tool checks) were recorded from the
    maintainer's reading list's matcher, the same whole-word, one-block match as the script, run that
    day where the script couldn't be. A networked `node scripts/check-quotes.mjs` run with no arguments
@@ -130,7 +133,8 @@ most of the catalog. Under a tool check, the card and the playbook export list t
 ("Words found on the page: “…”"), so a reader can see what was checked.
 
 They appear wherever a citation's date showed before: the source list under each item and stage
-on the map (and in the intake's preview), the line under "Delete" on *What DotAmi knows about you*,
+on the map (and in the intake's preview), the line under "Delete" on *What DotAmi knows about you* (and,
+since 2026-10-27, the intake's row there, for Anthropic's own retention page),
 the Tax year hint in *Add a figure*, the playbook export, and the readout API (`howChecked` on each
 citation). The per-screen detail is in
 [docs/ui-spec/shared/citation-links.md](../ui-spec/shared/citation-links.md).

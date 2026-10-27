@@ -441,8 +441,8 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   "opening hours"), and reads every catalog's Lens lines, every words file under `lib/`, every string a catalog
   writes for "time-boxed", and the text each component writes itself, with the pieces it lets through listed
   and why (`tests/fixtures/ideas/known-gaps.ts` `COMPONENT_TIME_WORDS`: words the patterns misread, *What
-  DotAmi knows about you*'s retention lines, and Anthropic's period, paraphrased until DotAmi holds its exact
-  words). Corporations Canada's fee lines ("It will cost $200 and will take 1 day.") were drawn in bare
+  DotAmi knows about you*'s retention lines, and, until 2026-10-27, Anthropic's period in DotAmi's paraphrase
+  (now quoted, below under Changed)). Corporations Canada's fee lines ("It will cost $200 and will take 1 day.") were drawn in bare
   quotation marks on the Incorporating step's ways to incorporate and on *Your plan*; they are now inside the
   official-quote component that draws every tool check's quotes, after *Words found on the page:*
   (`components/shared/page-quotes.tsx`). No amount changed.
@@ -694,6 +694,13 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   Prop activation's three sources: the new one in amber until 2026-10-27, each read by a person since).
 
 ### Changed
+- ***What DotAmi knows about you* quotes Anthropic's own words on how long it keeps what the intake sends**
+  (the maintainer's decision 2 of 2026-10-24: a provider's period word for word, under a label). While a model
+  key is set, the intake's row said Anthropic's page "says API inputs and outputs are deleted within 30 days,
+  with exceptions", DotAmi's paraphrase of a read on 2026-10-06. It now shows the page's own lines for API users,
+  the period and its four exceptions, after *Words found on the page:*, with "Checked by a tool on 2026-10-27"
+  (`node scripts/check-quotes.mjs` found them that day; `lib/privacy/anthropic-retention-official-words.ts`). What
+  DotAmi sends, and when, is unchanged, so the privacy log has no new line.
 - **31 source pages now say "Read by a person on 2026-10-25"** (the maintainer's reads). On 2026-10-25 the
   maintainer read 31 of the pages DotAmi cites in full, and ticked each one on his reading list; on 2026-10-24 he
   had decided that his reads made with an AI model's help count as a person's, for the pages he checked himself.

@@ -78,6 +78,10 @@ The words come from one function, `howCheckedWords`; no screen writes them itsel
   tool check of 2026-10-23 (the CRA's "Generally, …" sentence on the six years and the one after it);
   the read outranks it, so the line still said that read, in grey. Since 2026-10-27 that read is the
   maintainer's, of the page in full on 2026-10-25, so the line ends `(Read by a person on 2026-10-25)`.
+- **What DotAmi knows about you, What leaves this computer** ([../your-data/_index.md](../your-data/_index.md)):
+  since 2026-10-27, while a model key is set, the intake's row says how Anthropic's own retention page was
+  checked (`Checked by a tool on 2026-10-27: …`, in amber) and lists the words found, after *Words found on
+  the page:*, through `PageQuotes`.
 - **Your ideas, Add a figure, Tax year** ([../ventures/_index.md](../ventures/_index.md)): `Line 8299
   on the CRA's 2025 T2125 ("Gross business or professional income"). Read by a person on 2026-10-10.`
   A year's form always has a person's read (`tests/engine-integrity.spec.ts`), because this sentence
