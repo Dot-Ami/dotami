@@ -670,8 +670,9 @@ placed in phase 3.
     2026-10-25 to 27, in his order: #207, #206, #208, #210, #209, each brought up to date with main by a
     merge first; what each merge found and fixed is in its pull request, and how a cloud session did it is
     [verification/cloud-sessions.md](verification/cloud-sessions.md)
-  - [ ] #211, the reading list's corrections with the maintainer's 31 reads of 2026-10-25: waits for a
-    networked `node scripts/check-quotes.mjs` run in a normal session ([11b]), then his merge word
+  - [ ] #211, the reading list's corrections with the maintainer's 31 reads of 2026-10-25: the networked
+    `node scripts/check-quotes.mjs` run it waited for found every quote on 2026-10-26 ([11b]); waits for his
+    merge word
   - [ ] Release 0.5.0: no silent fallbacks, every Alberta test idea ending on a road written for it or an
     honest "not written yet", the maintainer's walk done (32b), a Quality line in the changelog, the privacy
     log's section for the new version; publishing is the maintainer's click
@@ -1064,9 +1065,10 @@ roadmap's build order.
     Every citation of those pages, 136 as `lib/engines/all-citations.ts` lists them, has `lastVerified`
     2026-10-25 and `readBy: "person"`, and no other citation has that day ([docs/engines/citations.md](engines/citations.md),
     § The maintainer's reads of 2026-10-25; `tests/maintainer-reads.spec.ts`)
-  - [ ] A networked `node scripts/check-quotes.mjs` run (no arguments) finds again every quote the reading
+  - [x] A networked `node scripts/check-quotes.mjs` run (no arguments) finds again every quote the reading
     list's matcher found on 2026-10-23, before the reading list's corrections merge, not later with his
-    reads (rule 4 of citations.md and its exception)
+    reads (rule 4 of citations.md and its exception): found on 2026-10-26 in a normal session, all 49 quotes
+    on the 25 citations of that day, and all 779 quotes on DotAmi's 337 tool-checked citations
   - [ ] Blocked until an official page's own words are found and checked (citations.md, § The reading list's
     corrections, *Blocked*):
     - [ ] Alberta has no PST and GST is 5% (`compliance-ab-no-pst`): the CRA's table isn't in its page's HTML;

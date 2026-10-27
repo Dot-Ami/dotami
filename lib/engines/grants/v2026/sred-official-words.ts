@@ -5,10 +5,10 @@
  * card (./programs.ts) quotes them from here, and so can the map's two SR&ED stages, so two copies can't drift.
  *
  * The reading list's tool found them with the repo's matcher, the same whole-word, one-block match as
- * scripts/check-quotes.mjs, so each citation that relies on them records a tool check of that day. Before merge, a
- * networked `node scripts/check-quotes.mjs --url … --quote …` run should find each again (docs/engines/citations.md,
- * rule 4); change one only after it does. The maintainer read each of these pages in full on 2026-10-25, so their
- * citations carry his read too, which wins on screen (§ The maintainer's reads of 2026-10-25).
+ * scripts/check-quotes.mjs, so each citation that relies on them records a tool check of that day. A networked
+ * `node scripts/check-quotes.mjs` run found each again on 2026-10-26, before merge (docs/engines/citations.md, rule 4);
+ * change one only after `--url … --quote …` finds the new words. The maintainer read each of these pages in full on
+ * 2026-10-25, so their citations carry his read too, which wins on screen (§ The maintainer's reads of 2026-10-25).
  */
 
 /** The day the reading list's tool found every quote below on its page. */

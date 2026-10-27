@@ -349,7 +349,7 @@ export const grantProgramsV2026 = [
         // address, which redirects here, and its tool (the repo's matcher, the same whole-word, one-block match as
         // scripts/check-quotes.mjs) found these four quotes on it. The maintainer read the page in full on 2026-10-25,
         // so its card says "Read by a person" (the read wins on screen); the tool check stays. A networked
-        // `node scripts/check-quotes.mjs` run should find them again before merge (docs/engines/citations.md, rule 4).
+        // `node scripts/check-quotes.mjs` run found them again on 2026-10-26, before merge (docs/engines/citations.md, rule 4).
         url: "https://www.alberta.ca/canada-alberta-productivity-grant",
         lastVerified: MAINTAINER_READ_ON,
         readBy: "person",

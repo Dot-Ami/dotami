@@ -88,7 +88,7 @@ read names the tool check that found it, while Sources keeps rule 3 (a read wins
    specs; the retirements and deletions; then the docs, the CHANGELOG and CLAUDE.md's two sentences.
 
 Before step 4, a networked `node scripts/check-quotes.mjs` run must have confirmed every quote dated
-2026-10-23 (#211's merge condition already requires it).
+2026-10-23 (#211's merge condition): one did on 2026-10-26.
 
 The full design of 2026-10-24 (shapes, screen by screen, the test list and every pin to update) was worked
 out in the planning session; the build session redoes the sweep on the code as it is and follows this page.

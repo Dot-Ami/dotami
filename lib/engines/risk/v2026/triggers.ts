@@ -128,7 +128,7 @@ export const riskEntriesV2026 = [
         readBy: "person",
         // The guide's sentence on the dates, which the reading list's tool found on the live page on 2026-10-23 with
         // the repo's matcher (the same whole-word, one-block match as scripts/check-quotes.mjs); a networked
-        // `node scripts/check-quotes.mjs` run should find it again (docs/engines/citations.md, rule 4). It ends on a
+        // `node scripts/check-quotes.mjs` run found it again on 2026-10-26 (docs/engines/citations.md, rule 4). It ends on a
         // colon before the factors, which DotAmi doesn't hold, so the box doesn't quote it. Only this citation keeps
         // it: the Class 50 write-off's citation of the same chapter keeps the check it had.
         toolCheck: {
@@ -212,7 +212,7 @@ export const riskEntriesV2026 = [
         // Until 2026-10-24 the read cited ISED's program hub (…/canada-small-business-financing-program/en, read
         // 2026-07-02), which holds none of these words. The reading list's tool found this sentence on the loans page
         // on 2026-10-23 with the repo's matcher (the same whole-word, one-block match as scripts/check-quotes.mjs); a
-        // networked `node scripts/check-quotes.mjs` run should find it again (docs/engines/citations.md, rule 4). The
+        // networked `node scripts/check-quotes.mjs` run found it again on 2026-10-26 (docs/engines/citations.md, rule 4). The
         // maintainer read the page in full on 2026-10-25.
         url: "https://ised-isde.canada.ca/site/canada-small-business-financing-program/en/canada-small-business-financing-program/find-loan-your-small-business/helping-small-businesses-get-loans",
         lastVerified: MAINTAINER_READ_ON,

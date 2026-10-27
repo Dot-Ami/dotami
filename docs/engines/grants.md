@@ -65,7 +65,7 @@ never reused.
 - **How it was checked.** A tool check of 2026-10-23, then the maintainer's read of the page in
   full on 2026-10-25, which wins on screen: its card says *Read by a person on 2026-10-25* and no
   longer lists the four quotes, which the tool check keeps in the catalog. A networked
-  `node scripts/check-quotes.mjs` run should find them again before merge (rule 4 of
+  `node scripts/check-quotes.mjs` run found them again on 2026-10-26, before merge (rule 4 of
   [citations.md](citations.md)).
 - **Who sees it.** Every idea in Alberta, at every structure and kind of work, always *check
   first*. `activityTags: []`: a program whose page names no kind of work shows for every idea in its

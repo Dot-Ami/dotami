@@ -41,7 +41,7 @@ export const recordRetentionV2026: RecordRetentionEntry = {
       // maintainer's reading list found both on the live page on 2026-10-23 with the repo's matcher (the same
       // whole-word, one-block match as scripts/check-quotes.mjs), with every other quote held for this page. Every
       // road's Keep your records step holds the same two (lib/engines/roads/v2026/keep-records.ts, checked
-      // 2026-10-14). A networked `node scripts/check-quotes.mjs` run should find them again (docs/engines/citations.md,
+      // 2026-10-14). A networked `node scripts/check-quotes.mjs` run found them again on 2026-10-26 (docs/engines/citations.md,
       // rule 4).
       lastVerified: MAINTAINER_READ_ON,
       readBy: "person",

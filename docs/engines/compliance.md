@@ -163,7 +163,7 @@ lines below that rest on it are unchanged.
   without it give it now too.
 
 The quotes of 2026-10-23 were found by the list's matcher (the same whole-word, one-block match as
-`scripts/check-quotes.mjs`), so a networked run of the script must find them again before merge
+`scripts/check-quotes.mjs`); a networked run of the script found them again on 2026-10-26, before merge
 ([citations.md](citations.md), § The reading list's tool checks).
 
 ## Retired rules

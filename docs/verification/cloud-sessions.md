@@ -51,8 +51,9 @@ worked on DotAmi, what it can't do, and what it leaves for a normal session on t
 ## Left for a normal session (it needs the internet or Windows)
 
 1. `node scripts/check-quotes.mjs` with no arguments: re-checks every quote DotAmi holds (337 tool checks on
-   11 government and BizPaL sites as of 2026-10-27, none on the sites DotAmi never fetches). It must find
-   #211's quotes dated 2026-10-23 before #211 merges (citations.md rule 4 and its open exception).
+   11 government and BizPaL sites as of 2026-10-27, none on the sites DotAmi never fetches). Done in a normal
+   session on 2026-10-26: all 779 quotes found, #211's 49 quotes dated 2026-10-23 among them, so citations.md
+   rule 4's exception is closed.
 2. `npm run quality:report -- --live`: source health, the pages that answer "not found".
 3. The official words citations.md § *Blocked* still needs (Alberta's no-PST page, the SR&ED refund
    questions, the home office sentence, two pages' own titles, the Productivity Grant's other conditions).

@@ -97,12 +97,13 @@ catalog at run time.
 4. A tool check is recorded only after `node scripts/check-quotes.mjs --url … --quote …` reported
    every one of its quotes as found on the live page. The builder copies the date the script printed.
    The script never writes a file itself. Run with no arguments, it checks every recorded tool check
-   again, which shows when a page has changed under a citation. One open exception, waiting for the
-   maintainer's word (proposed 2026-10-24 by the session that built the change, not decided by him): the tool checks dated 2026-10-23 (§ The reading list's tool checks) were
-   recorded from his reading list's matcher, the same whole-word, one-block match as the script, run
-   that day where the script couldn't be. They are not confirmed by the script yet: a networked
-   `node scripts/check-quotes.mjs` run with no arguments must find each of them again before the
-   change that records them (the reading list's corrections) merges, not later with his reads.
+   again, which shows when a page has changed under a citation. One exception, closed on 2026-10-26:
+   the tool checks dated 2026-10-23 (§ The reading list's tool checks) were recorded from the
+   maintainer's reading list's matcher, the same whole-word, one-block match as the script, run that
+   day where the script couldn't be. A networked `node scripts/check-quotes.mjs` run with no arguments
+   found every one of them again on 2026-10-26 (25 citations, 49 quotes; all 779 quotes DotAmi holds
+   were found that day), before the change that records them (the reading list's corrections) merged.
+   Their `checkedOn` stays 2026-10-23, the day the words were first found.
 5. A person who reads a source sets `lastVerified` to that day and `readBy: "person"`; a tool check
    may stay. An AI model that reads one sets `readBy: "model"`. A read nobody can say who did leaves
    `readBy` out.
@@ -313,8 +314,8 @@ them (a map stage's sources count again under each road that draws the stage).
 What his reads don't settle, and stays open:
 
 - **The tool checks of 2026-10-23** (rule 4's exception): a read of a page says nothing about whether
-  `node scripts/check-quotes.mjs` finds the list's quotes on it, so the networked run still has to find each
-  of them before the reading list's corrections merge.
+  `node scripts/check-quotes.mjs` finds the list's quotes on it. That was settled apart from his reads: a
+  networked run found each of them on 2026-10-26, before the reading list's corrections merged.
 - **Two pages' questions his ticks don't answer.** The CRA's page on which GST/HST rate to charge was on the
   list for its table of rates (Ontario at 13% HST, Alberta at 5% GST with no provincial sales tax): the read is
   recorded, but what he found in the table isn't, so *Blocked* items 1 and 2 below stay as they are. And
@@ -362,10 +363,10 @@ On 2026-10-23 the maintainer's reading list fetched the pages behind its 30 *Nee
 (the same whole-word, one-block match as `scripts/check-quotes.mjs`), found on them words the
 corrections of 2026-10-24 rely on. Each is recorded as a tool check of that day on the entry the
 list checked, and on no other citation of the same page. They were found by the list's matcher, not
-by a run of the script, so before merge a networked `node scripts/check-quotes.mjs` run (no
-arguments) must find each again (rule 4). The maintainer read every one of these pages in full on
+by a run of the script; a networked `node scripts/check-quotes.mjs` run (no arguments) found each
+again on 2026-10-26, before merge (rule 4). The maintainer read every one of these pages in full on
 2026-10-25 (§ The maintainer's reads of 2026-10-25), so each of their citations carries his read now,
-which wins on screen, and keeps its tool check; his read doesn't stand in for that networked run.
+which wins on screen, and keeps its tool check; his read didn't stand in for that networked run.
 
 | Page | Where it is cited | What the quotes are |
 |---|---|---|
@@ -501,9 +502,10 @@ machine, before DotAmi says more than it does now. They are listed in [task-list
     summarises active legal entity status, good standing, WCB coverage for trainees and complying with
     provincial agreements, without quotes), whether a sole proprietor counts as an employer, what
     training counts, who else funds it, and the page's subject labels before the 25% and 75% lines.
-11. **Every tool check of 2026-10-23.** The list's matcher found these words, not a run of the
-    script, so a networked `node scripts/check-quotes.mjs` run (no arguments) must find each again
-    before this change merges (rule 4 and its exception).
+
+An eleventh item, every tool check of 2026-10-23 (found by the list's matcher, not a run of the
+script), was settled on 2026-10-26: a networked `node scripts/check-quotes.mjs` run with no arguments
+found each of them again (rule 4).
 
 ### Outside the list: open questions for the maintainer
 

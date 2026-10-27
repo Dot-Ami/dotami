@@ -23,7 +23,7 @@ const LAST_VERIFIED = "2026-05-01";
  * same whole-word, one-block match as scripts/check-quotes.mjs), found on them the words Incorporating and Hire
  * first employee now quote (the two SR&ED stages' 35% is SRED_QUOTES_FOUND_ON, the same day). Each is kept as a
  * tool check of that day on the stage the list checked, and on no other citation of the page (his answer of
- * 2026-10-24). A networked `node scripts/check-quotes.mjs` run should find each again before merge
+ * 2026-10-24). A networked `node scripts/check-quotes.mjs` run found each again on 2026-10-26, before merge
  * (docs/engines/citations.md, § The reading list's tool checks). Each of these pages was then read in full by the
  * maintainer on 2026-10-25, and the read wins on screen; the tool checks stay.
  */
