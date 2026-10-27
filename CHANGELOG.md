@@ -226,6 +226,45 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   only by its own name (84 of the 220 test ideas with a job); and "à Regina" in French names no province (fixed
   2026-10-23, below).
 ### Fixed
+- **Every page fits a phone, one step counter, and plainer screens** (the screen review of 2026-10-23, its
+  pre-release fixes "Phone and layout"). At 375 px: the cockpit's four gauges are stacked, each inside the window
+  (Start-up money and Your date were out of sight in a strip that scrolled sideways; two by two from 640 px, four
+  across from 1024 px); the idea's name has a line of its own in the header (it showed "In…"); the first visit's
+  tip sits after *Next on your road*, off the road. *Your futures* (415 px wide) and *Your expenses* (429 px, the
+  **Show** drop-down) fit: the nav and the Stage row wrap, and no drop-down is wider than its box. A new browser
+  test, `e2e/phone-width.spec.ts`, checks at 375 px that no page the review walked scrolls sideways, held to a
+  planted control (a 600 px element fails it). The typed way numbers its screens once, *1 of 6 · About you* to
+  *6 of 6 · Pick a future* (it said *3 of 3 · Ground it* and then *1 of 3 · Your work*; `lib/front-door/typed-way.ts`).
+  The step panel lists a legal requirement such as the Alberta Student Number under *What it needs*, not as a
+  skill, and so do the Skills gauge, its list and its switch over the map: on the apprentice road, whose three
+  items are all legal requirements, the gauge said *3 not marked, out of 3 listed* and the switch *Skills · 3
+  listed*; now *No skills are listed on this road yet* and *3 legal requirements, apart from skills: 3 not
+  marked*, the switch *Skills · 0 listed · 3 legal requirements*, and the list draws them under *Legal
+  requirements on this road's steps*, above *Skills on this road's steps* (it is titled *Skills and legal
+  requirements*), and so does a future's card on *Pick a future* (*0 skills listed · 3 legal requirements*, not *3
+  skills listed*). On a phone the overlay row's own label and Road's *always on* are left to screen readers, so
+  the longer switch keeps the row on two lines. The Skills list folds the job's own list (Cabinetmakers' 44) under one **Show the 44 on this job's list**
+  button below the road's own items. The Structure ladder is drawn only on the tax and structure roads, in plain
+  words (*Ways a business can be set up*: *In your own name* … *A family trust*). *Your plan* has *The steps in this
+  plan* at the top of its steps, each a link to its step. A future's card says in one sentence what "checked by a
+  tool only" means. Where the idea's place leaves a road's legal requirements out (the apprentice road's three
+  Alberta items, seen from Ontario), the step panel, the Skills list, the Skills gauge and *Your plan* say *The
+  legal requirements … rest on other provinces' pages*, not that its skills do. No money amount, rule or kept data
+  changed.
+- **The same fixes, checked again after main's changes came in** (2026-10-26). A legal requirement is never called a
+  skill anywhere now: a receipt counts and names legal requirements apart (*the legal requirements now read …*, *you
+  marked 3 legal requirements*, and from Ontario *this road's legal requirements rest on other provinces' pages*,
+  where it said *skills*), and *Your plan* and Export list a step's legal requirements under *What it needs* (the
+  Alberta Student Number was listed under *Skills it needs*). The Structure ladder shows each way a business can be
+  set up by its plain name only: the one-line definitions under them were tax and legal claims in DotAmi's own words,
+  with no source, and the one for a company was wrong. On a phone, a save that fails shows its line and **Save now**
+  in a bar of its own at the foot of the window (they were only in the rail, a closed sheet, so nothing on screen
+  could be pressed), and Tab inside an open sheet reaches it too. Mara's example heads her marks *Mara's marks*
+  (*Mara's skill marks* named her legal requirements skills). The phone check now also catches a box that scrolls sideways inside itself, and opens the
+  place box, the Export panel and *Your destination* with its answers given. *Your plan* says *In the order the road
+  shows them, not importance.* above its list of steps rather than under it, so on a tablet the list's first link is
+  out of the first view again (main's changes had brought it in, one control over the plan's limit). The browser
+  tests that read the old names of the Skills list and gauge read the words file instead.
 - **Export is the road on screen** (pre-release fix of 2026-10-23; review 30f, gap 22). Export printed the tax
   map's catalog stages for the idea's branch picks, whatever road was drawn: a cabinetmaker's export had 0 of
   the apprentice road's 17 steps, and a baker's on the federal road had none of its BizPaL, bank account or

@@ -106,6 +106,12 @@ and hands it to the page (`components/expenses/receipt-protection.tsx`); the key
   in a copy run from source, one the desktop app encrypted ("Open it in the desktop app"). A damaged or
   swapped encrypted file is "changed on this computer", as before.
 
+## Phone width (2026-10-23)
+
+At 375 px the page fits the window: the **Show** drop-down, as wide as its longest idea name, made the page
+429 px wide (the screen review); no drop-down is wider than its box now (`app/globals.css`), a long choice cut
+on screen and whole in the open list. `e2e/phone-width.spec.ts` checks it.
+
 ## What it deliberately does not do
 
 - No bank or card number field.

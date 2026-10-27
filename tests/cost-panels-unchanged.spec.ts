@@ -48,7 +48,15 @@
  * Columbia panel, the federal way's), Corporations Canada's "It will cost $200 and will take 1 day." among them.
  * Each line's quotes are now inside the official-quote component, after "Words found on the page:", in “ ” marks
  * and joined by " · " (components/shared/page-quotes.tsx), so a page's processing time is never a line of
- * DotAmi's own. No other word changes. The only cards allowed to change are the ones
+ * DotAmi's own. No other word changes. Redrawn on 2026-10-23 for six panels whose step needs a legal requirement
+ * (road 0's Mandatory GST registration and five of the apprentice road's), when legal requirements moved from
+ * "Skills it needs" to a "What it needs" heading of their own (the screen review's pre-release fixes): each was
+ * checked to differ from the recording only between its first of those two headings and its Costs heading, then
+ * redrawn; no other panel changed. At the merge of that pull request with main (2026-10-25) every panel was drawn
+ * again from the merged code: 33 of 34 are main's or the pull request's recording byte for byte, and the one both
+ * had redrawn, road 0's Mandatory GST registration, differs from main's only in its What it needs and Skills it
+ * needs headings and from the pull request's only in the Canada-Alberta Job Grant card's absence. The only cards
+ * allowed to change are the ones
  * that gained road 0's named start-up cost lines (docs/architecture/future-cockpit.md § 6, "The official
  * fees catalog and start-up cost lines as built"); with those seven lines taken out, they match too.
  */

@@ -343,8 +343,10 @@ describe("the steps as drawn", () => {
       for (const place of ["AB", "ON", "BC", "YT"]) {
         const drawn = roadForPlace(road, place).steps;
         const costs = drawn.flatMap((step) => step.costs);
+        // Skills and legal requirements are counted apart since the pre-release fixes (2026-10-23); together they are
+        // every item the road drawn for the place lists.
         expect(
-          [card(road, place).linesToPrice, card(road, place).officialFees, card(road, place).skillsListed],
+          [card(road, place).linesToPrice, card(road, place).officialFees, card(road, place).skillsListed + card(road, place).requirementsListed],
           `${road.id} in ${place}`,
         ).toEqual([
           costs.filter((c) => c.kind === "named").length,
@@ -353,10 +355,10 @@ describe("the steps as drawn", () => {
         ]);
       }
     }
-    // Road 1 from Ontario: 17 lines to price, no official fee and no skill listed, where it said 30, 9 and 3, and the
-    // sources of what is drawn there only.
+    // Road 1 from Ontario: 17 lines to price, no official fee and no skill or legal requirement listed, where it said
+    // 30, 9 and 3, and the sources of what is drawn there only.
     const road1 = card(roadApprenticeToOwnShopAB, "ON");
-    expect([road1.linesToPrice, road1.officialFees, road1.skillsListed, total(road1.sources)]).toEqual([17, 0, 0, 18]);
+    expect([road1.linesToPrice, road1.officialFees, road1.skillsListed, road1.requirementsListed, total(road1.sources)]).toEqual([17, 0, 0, 0, 18]);
     // Road 0 from Ontario: 9 lines to price, where it said 11 (the Alberta name registry's two).
     expect(card(generalRoadV2026, "ON").linesToPrice).toBe(9);
     // Control: in Alberta road 1 counts as written.

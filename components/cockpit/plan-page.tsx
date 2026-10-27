@@ -1,5 +1,5 @@
 import Link from "next/link";
-import type { ReactNode } from "react";
+import { Fragment, type ReactNode } from "react";
 
 import { PrintButton } from "@/components/cockpit/print-button";
 import { PageQuotes } from "@/components/shared/page-quotes";
@@ -61,7 +61,8 @@ function Section({ id, index, children }: { id: SectionId; index: number; childr
 
 function Step({ step }: { step: PlanStep }) {
   return (
-    <article className="rounded-sm border border-ink/15 p-4 print:break-inside-avoid print:border-black/30">
+    // The contents list at the top of Each step links here; scroll-mt keeps the step's name clear of the window's edge.
+    <article id={`plan-step-${step.id}`} className="scroll-mt-4 rounded-sm border border-ink/15 p-4 print:break-inside-avoid print:border-black/30">
       <h4 className="font-serif text-title font-bold">{step.label}</h4>
       <p className="text-body">{step.summary}</p>
       <p className="mt-2 text-body">
@@ -85,18 +86,27 @@ function Step({ step }: { step: PlanStep }) {
         </ul>
       ) : null}
 
-      {step.skills.length > 0 ? (
-        <>
-          <p className="mt-3 text-body font-semibold">{words.panel.skills}</p>
-          <ul className="mt-1 list-disc pl-5 text-body">
-            {step.skills.map((skill) => (
-              <li key={skill.label}>
-                {skill.label}: {skill.mark}
-              </li>
-            ))}
-          </ul>
-        </>
-      ) : null}
+      {/* Its legal requirements, then its skills, under the step panel's own headings, each only when it lists one:
+          a legal requirement (the Alberta Student Number) is never listed as a skill. */}
+      {(
+        [
+          [words.panel.whatItNeeds, step.requirements],
+          [words.panel.skills, step.skills],
+        ] as const
+      ).map(([title, items]) =>
+        items.length > 0 ? (
+          <Fragment key={title}>
+            <p className="mt-3 text-body font-semibold">{title}</p>
+            <ul className="mt-1 list-disc pl-5 text-body">
+              {items.map((item) => (
+                <li key={item.label}>
+                  {item.label}: {item.mark}
+                </li>
+              ))}
+            </ul>
+          </Fragment>
+        ) : null,
+      )}
 
       {step.costCount ? <p className="mt-3 text-body">{step.costCount}</p> : null}
 
@@ -176,7 +186,10 @@ export function PlanPage({ view, backHref }: { view: PlanView; backHref: string 
             ))}
           </ul>
           <h3 className="mt-4 font-semibold">{words.plan.gauges}</h3>
-          <dl className="mt-1 grid gap-2 sm:grid-cols-2">
+          {/* Two by two from 1024 px and on paper; one under another below that (2026-10-23), so on a tablet the
+              contents list under Each step starts below the first window, which may hold only the bar's two
+              controls (e2e/budgets.ts). */}
+          <dl className="mt-1 grid gap-2 lg:grid-cols-2 print:grid-cols-2">
             {view.road.gauges.map((gauge) => (
               <div key={gauge.label} className="rounded-sm border border-ink/15 p-3 print:break-inside-avoid print:border-black/30">
                 <dt className="font-mono text-small uppercase tracking-[0.1em] text-ink/70 print:text-black">{gauge.label}</dt>
@@ -192,7 +205,27 @@ export function PlanPage({ view, backHref }: { view: PlanView; backHref: string 
         </Section>
 
         <Section id="steps" index={2}>
+          {/* The order line first, for the contents list and the steps alike. Under the list it left the list's
+              first link inside a tablet's first window once main's changes came in (768x1024: three controls, over
+              the plan's budget of two; the review of #209's merge, 2026-10-26). */}
           <p className="mb-3 text-body italic">{view.steps.order}</p>
+          {/* The contents list of the plan's steps, each a link to its step (the screen review of 2026-10-23: the
+              plan was 42,553 px tall on a phone). At the top of the steps rather than of the plan: the plan's first
+              window may hold two controls (e2e/budgets.ts), and a link per step there would be far more. */}
+          <nav aria-label={words.plan.contents} className="mb-4 print:hidden">
+            <p className="font-semibold">{words.plan.contents}</p>
+            <ol className="mt-1 list-decimal space-y-0.5 pl-5">
+              {view.steps.columns
+                .flatMap((column) => column.steps)
+                .map((step) => (
+                  <li key={step.id}>
+                    <a href={`#plan-step-${step.id}`} className="text-spruce underline underline-offset-2">
+                      {step.label}
+                    </a>
+                  </li>
+                ))}
+            </ol>
+          </nav>
           <div className="grid gap-5">
             {view.steps.columns.map((column) => (
               <div key={column.label}>
@@ -209,7 +242,7 @@ export function PlanPage({ view, backHref }: { view: PlanView; backHref: string 
         </Section>
 
         <Section id="skills" index={3}>
-          <h3 className="font-semibold">{words.lists.roadTitle}</h3>
+          <h3 className="font-semibold">{words.lists.roadItemsTitle}</h3>
           {view.skills.roadNone ? <p>{view.skills.roadNone}</p> : null}
           <ul className="mt-1 list-disc pl-5">
             {view.skills.road.map((skill) => (

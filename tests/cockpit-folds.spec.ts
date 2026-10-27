@@ -387,7 +387,7 @@ describe("the what-if bar folds, with This visit, to one line (2026-10-13)", () 
 });
 
 describe("every overlay switch is drawn, on or off (a review of the calm first view, 2026-10-17)", () => {
-  const counts = { skillsListed: 3, costLines: 4, rulesCards: 2 };
+  const counts = { skillsListed: 3, requirementsListed: 0, costLines: 4, rulesCards: 2 };
   const draw = (overlays: { skills: boolean; money: boolean; rules: boolean }) =>
     renderToStaticMarkup(createElement(OverlaySwitches, { overlays, counts, onToggle: () => {} }));
 
@@ -417,7 +417,7 @@ describe("every overlay switch is drawn, on or off (a review of the calm first v
     const html = renderToStaticMarkup(
       createElement(OverlaySwitches, {
         overlays: { skills: true, money: false, rules: true },
-        counts: { skillsListed: 3, costLines: 4, rulesCards: 0 },
+        counts: { skillsListed: 3, requirementsListed: 0, costLines: 4, rulesCards: 0 },
         onToggle: () => {},
       }),
     );

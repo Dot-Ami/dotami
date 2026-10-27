@@ -5,7 +5,7 @@ idea, on the server), `components/cockpit/plan-page.tsx` (draws it), `components
 (the one control that runs in the browser) · Content: `lib/cockpit/plan.ts` `buildPlan` (pure) · Words:
 `lib/cockpit/words.ts` `plan` · Reads: `lib/futures/read-plan.ts`
 
-Last updated: 2026-10-24 (an idea not saved yet is held in the window's memory, never its storage); 2026-10-23 (a
+Last updated: 2026-10-26 (a step's legal requirements under *What it needs*, apart from its skills); 2026-10-24 (an idea not saved yet is held in the window's memory, never its storage); 2026-10-23 (a
 source's quoted words after *Words found on the page:*); 2026-10-13 (first written, before the code; issue #41; design: docs/architecture/future-cockpit.md
 § 1 row 9 and § 2, *Your plan as built*). Same day, after review: the app's footer hidden on paper on the
 plan only, the not-advice line on the first page too, *In your words* and *Skills and requirements, with
@@ -49,14 +49,25 @@ splits across two pages, and every link is printed as its address (each link's t
    yours yet"* or *"No side picked yet."* (the Compare panel's words). A road with no fork says so.
    Then the four gauges as the goal bar shows them, label, value and lines, counts and sums only (no
    invitation lines: there is nothing to click on paper).
-4. **Each step** — *"In the order the road shows them, not importance."* One block per column (its
+4. **Each step** — at its top *"In the order the road shows them, not importance."*, then (since 2026-10-23;
+   on screen only, not printed) *The steps in this plan*, a numbered list of every step's name in the road's
+   order, each a link to its step's block below (the plan was 42,553 px tall on a phone). Here rather than at
+   the very top of the plan: the plan's first window may hold two controls (`e2e/budgets.ts`), and a link per
+   step there would be far more. The order line comes first since 2026-10-26 (under the list, it left the list's
+   first link inside a tablet's first window once main's changes came in: three controls at 768x1024, over the
+   budget of two; the review of #209's merge). One block per column (its
    label and summary), one entry per step of the road, every step, on the path or not (nothing is left
    out because of its state): the step's name and one line; *Your status: doing / done / not for me*
    or *Your status: not set*; its state in the map's words (*applies as answered*, *check first*, *not
    on your path*) with road evaluation's reason sentence; *Done when (x of y ticked)* with each line
    marked *ticked* or *not ticked* and its source (a step whose *done when* lines all rest on other provinces'
    pages says *This step's “done when” lines rest on other provinces' pages, so none is shown for your place.*,
-   since 2026-10-24, as the step panel does); the skills it needs, each with the person's mark;
+   since 2026-10-24, as the step panel does); under *What it needs*, its legal requirements (an ID number, an
+   agreement, a certificate), and under *Skills it needs*, its listed skills, each with the person's mark and each
+   heading only when the step lists one of its kind, as the step panel splits them (since 2026-10-26, the review of
+   #209's merge: until then every item was listed under *Skills it needs*, so road 1's *Register as a Cabinetmaker
+   apprentice* listed the Alberta Student Number as a skill; Export, made from the same plan, prints the same two
+   headings in place of its *Skills and requirements on this step*);
    how many cost lines it has (the lines themselves are under *Start-up money*, by step); official pages; and its sources, each with how it was checked
    (`lib/engines/shared/citation-check.ts` `howCheckedWords`) and the quotes a tool found: *Words found on the
    page:* on a line of its own, then each quote in quotation marks and italics on a line of its own
@@ -64,7 +75,9 @@ splits across two pages, and every link is printed as its address (each link's t
 5. **Skills and requirements, with your marks** — names only. *On this road's steps*: every skill item the road lists, marked or not, once,
    with *legal requirement* / *listed skill* and the person's mark (*have*, *learning*, *not yet*, or
    *not marked*); with none listed because the place left them out, *This road's skills rest on other
-   provinces' pages* (since 2026-10-24). *Your own skills*: each with its mark and day. *Your pick of job*: the job's name and
+   provinces' pages* (since 2026-10-24), and where they were legal requirements (road 1's three Alberta items,
+   seen from Ontario), *No skills are listed on this road yet · This road's legal requirements rest on other
+   provinces' pages*, as the Skills gauge says it (2026-10-25: a legal requirement is never called a skill). *Your own skills*: each with its mark and day. *Your pick of job*: the job's name and
    code and the day picked, the items the person marked (names only, never the government's ratings),
    *"n not marked, of m on the government's list"*, and the licence's attribution line word for word.
    No job picked: *"No job picked for the government's skills list."*

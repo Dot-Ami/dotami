@@ -43,7 +43,16 @@ function focusIsDrawn(): boolean {
   return active instanceof HTMLElement && active !== document.body && active.isConnected && active.getClientRects().length > 0;
 }
 
-export function useSheet(open: boolean, sheet: RefObject<HTMLElement | null>, onClose: () => void): void {
+/**
+ * `also`, when given, is a box drawn outside the sheet that belongs with it while it is open (the failed-save bar
+ * on a phone, which sits over the panel's sheet): Tab and Shift+Tab go round the sheet's controls and then its.
+ */
+export function useSheet(
+  open: boolean,
+  sheet: RefObject<HTMLElement | null>,
+  onClose: () => void,
+  also?: RefObject<HTMLElement | null>,
+): void {
   // What had focus before the sheet opened. Kept across a sheet folding and opening again, so it still
   // points at the card or button the person started from.
   const opener = useRef<HTMLElement | null>(null);
@@ -79,25 +88,39 @@ export function useSheet(open: boolean, sheet: RefObject<HTMLElement | null>, on
 
     const onKey = (event: KeyboardEvent) => {
       const target = event.target as Node | null;
+      const extra = also?.current ?? null;
+      const within = (node: Node | null) => node !== null && (root.contains(node) || (extra?.contains(node) ?? false));
       // A dialog drawn over the sheet (the agree prompt) has its own keys.
-      const inSheet = target !== null && root.contains(target);
+      const inSheet = within(target);
       if (event.key === "Escape" && inSheet) {
         event.preventDefault();
         close.current();
         return;
       }
       if (event.key !== "Tab" || !(inSheet || target === document.body)) return;
-      const controls = drawnControls(root);
+      // The sheet's own controls, then the ones in `also`: the ring Tab goes round.
+      const inner = drawnControls(root);
+      const outer = extra ? drawnControls(extra) : [];
+      const controls = [...inner, ...outer];
       if (controls.length === 0) return;
       const first = controls[0]!;
       const last = controls[controls.length - 1]!;
       const now = document.activeElement;
-      if (event.shiftKey && (now === first || !root.contains(now))) {
+      // The step between the two boxes is taken here too: in the page's order they aren't next to each other.
+      const lastInner = inner[inner.length - 1];
+      const firstOuter = outer[0];
+      if (event.shiftKey && (now === first || !within(now))) {
         event.preventDefault();
         last.focus();
-      } else if (!event.shiftKey && (now === last || !root.contains(now))) {
+      } else if (!event.shiftKey && (now === last || !within(now))) {
         event.preventDefault();
         first.focus();
+      } else if (!event.shiftKey && lastInner && firstOuter && now === lastInner) {
+        event.preventDefault();
+        firstOuter.focus();
+      } else if (event.shiftKey && lastInner && firstOuter && now === firstOuter) {
+        event.preventDefault();
+        lastInner.focus();
       }
     };
     document.addEventListener("keydown", onKey);
@@ -109,5 +132,5 @@ export function useSheet(open: boolean, sheet: RefObject<HTMLElement | null>, on
       const back = opener.current;
       if (!focusIsDrawn() && back && back.isConnected && back.getClientRects().length > 0) back.focus();
     };
-  }, [open, sheet]);
+  }, [open, sheet, also]);
 }

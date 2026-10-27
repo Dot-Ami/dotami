@@ -1185,6 +1185,15 @@ roadmap's build order.
     memory because its save failed is dropped, without a word, if the person then starts a new idea from the
     front door's *Map it* (or opens another idea and then a new one); and the intake's failed first save leaves
     an idea never saved in the window's memory, which the front door's *Open cockpit* would then draw as if kept
+  - [x] Pre-release fixes, "Phone and layout" (the review of 2026-10-23), fixed in the pull request "every page
+    fits a phone, one step counter, and plainer screens": the cockpit at 375 px (gauges stacked, the idea's
+    name on its own line, the tip off the road); *Your futures* and *Your expenses* fit 375 px, with
+    `e2e/phone-width.spec.ts` over every page the review walked; one step counter on the typed way; legal
+    requirements under *What it needs*; the job's list folded under **Show the 44**; the Structure ladder only
+    on the tax and structure roads, in plain words; *Your plan*'s contents list; one sentence on "checked by a
+    tool only" (its server-down message on *Your destination* gave way, at the merge with main, to #210's
+    `wordsNotKept` and `incomeNotKeptLine`, which say the same). Still open from the review: the intake's tax
+    words for newcomers (not in this pull request).
 - ✅ **[13i] The landing page and intake were dead in production builds** — fixed in #64.
 
 ## 15 — Real examples: how real people started (later)

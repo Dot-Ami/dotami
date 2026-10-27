@@ -27,7 +27,7 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { aboutJobForFuture } from "@/lib/about-job/view";
 import { buildPlan } from "@/lib/cockpit/plan";
 import { answerReceipt, compareEndings, toldRows } from "@/lib/cockpit/told";
-import { cockpitInput, emptySectionLine, gaugeView, linkedSkill, roadSkillsNone } from "@/lib/cockpit/view";
+import { cockpitInput, emptySectionLine, gaugeView, linkedSkill, roadRequirementsNone, roadSkillsNone, stepRequirementsNone } from "@/lib/cockpit/view";
 import { cockpitWords } from "@/lib/cockpit/words";
 import { createDatabaseClient } from "@/lib/db/client";
 import { ensureVentureFromScenario } from "@/lib/db/ensure-venture-from-scenario";
@@ -61,7 +61,7 @@ import { demoScenarios } from "../prisma/seed-data";
 import { fileUrl, migratedFile } from "./helpers/migrated-db";
 import { findTimeWords } from "./helpers/time-words";
 import { findVerdicts } from "./helpers/verdict-words";
-import { inventedIdea, TODAY } from "./helpers/road-to-evaluate";
+import { input as evaluationInput, inventedIdea, TODAY } from "./helpers/road-to-evaluate";
 
 const BARBERS = "63210.02";
 const NOW = new Date("2026-10-23T12:00:00Z");
@@ -393,9 +393,18 @@ describe("second review of #207: a section the place left empty says why, never 
     // Road 0's Register your business name from Ontario: six done-when lines and two cost lines, all Alberta's.
     expect(emptySectionLine(registerName("ON"), "doneWhen")).toBe(p.doneWhenNoneForPlace);
     expect(emptySectionLine(registerName("ON"), "costs")).toBe(p.costsNoneForPlace);
-    // Road 1's Register as a Cabinetmaker apprentice from Ontario: its one item, Alberta Student Number.
+    // Road 1's Register as a Cabinetmaker apprentice from Ontario: its one item, Alberta Student Number, a legal
+    // requirement, so What it needs says it (a legal requirement is never called a skill; merged with the pre-release
+    // fixes, 2026-10-25) and Skills it needs says none is written.
     const apprentice = road1("ON").steps.find((s) => s.id === "step-shop-register-apprentice")!;
-    expect(emptySectionLine(apprentice, "skills")).toBe(p.skillsNoneForPlace);
+    expect(stepRequirementsNone(apprentice)).toBe(p.requirementsNoneForPlace);
+    expect(emptySectionLine(apprentice, "skills")).toBe(p.skillsNone);
+    // Planted: the same item written as a listed skill is said under Skills it needs, and What it needs says nothing.
+    const asSkill = skillItemsV2026.map((item) => (item.id === "skill-ab-alberta-student-number" ? { ...item, kind: "listed-skill" as const } : item));
+    expect(emptySectionLine(apprentice, "skills", asSkill)).toBe(p.skillsNoneForPlace);
+    expect(stepRequirementsNone(apprentice, asSkill)).toBeNull();
+    // Control: in Alberta nothing is left out.
+    expect(stepRequirementsNone(road1("AB").steps.find((s) => s.id === "step-shop-register-apprentice")!)).toBeNull();
   });
 
   it("control: a step with nothing written, or nothing left out, keeps the line saying none is written yet", () => {
@@ -408,14 +417,39 @@ describe("second review of #207: a section the place left empty says why, never 
   });
 
   it("the Skills list and the Skills gauge say a road's skills rest on other provinces' pages when the place left them all out", () => {
-    const forPlace = { list: cockpitWords.lists.skillsNoneForPlace, gauge: cockpitWords.gauges.skills.noneListedForPlace };
-    expect(roadSkillsNone(road1("ON"))).toEqual(forPlace);
-    // Control: a road listing nothing at all says none is listed yet.
-    expect(roadSkillsNone({ steps: [] })).toEqual({ list: cockpitWords.lists.skillsNone, gauge: cockpitWords.gauges.skills.noneListed });
+    const none = { list: cockpitWords.lists.skillsNone, gauge: cockpitWords.gauges.skills.noneListed };
+    // Road 1's three items, left out from Ontario, are legal requirements: said as legal requirements, the skills'
+    // line saying none is listed (merged with the pre-release fixes, 2026-10-25).
+    expect(roadRequirementsNone(road1("ON"))).toEqual({
+      list: cockpitWords.lists.requirementsNoneForPlace,
+      gauge: cockpitWords.gauges.skills.requirementsNoneForPlace,
+    });
+    expect(roadSkillsNone(road1("ON"))).toEqual(none);
+    const onRoad1 = evaluateRoad(evaluationInput({ road: road1("ON"), roadChosen: true, skillItems: [...skillItemsV2026] }));
+    const gauge = gaugeView(onRoad1, road1("ON"), inventedIdea());
+    expect(gauge.skills.value).toBe(cockpitWords.gauges.skills.noneListed);
+    expect(gauge.skills.lines).toContain(cockpitWords.gauges.skills.requirementsNoneForPlace);
+    // Planted: the same items written as listed skills are said as skills.
+    const asSkills = skillItemsV2026.map((item) => ({ ...item, kind: "listed-skill" as const }));
+    expect(roadSkillsNone(road1("ON"), asSkills)).toEqual({ list: cockpitWords.lists.skillsNoneForPlace, gauge: cockpitWords.gauges.skills.noneListedForPlace });
+    expect(roadRequirementsNone(road1("ON"), asSkills)).toBeNull();
+    // Control: a road listing nothing at all says none is listed yet, and leaves no legal requirement out.
+    expect(roadSkillsNone({ steps: [] })).toEqual(none);
+    expect(roadRequirementsNone({ steps: [] })).toBeNull();
+    expect(roadRequirementsNone(road1("AB"))).toBeNull();
   });
 
   it("the new lines name no time and no verdict", () => {
-    const lines = [p.doneWhenNoneForPlace, p.skillsNoneForPlace, p.costsNoneForPlace, cockpitWords.lists.skillsNoneForPlace, cockpitWords.gauges.skills.noneListedForPlace];
+    const lines = [
+      p.doneWhenNoneForPlace,
+      p.skillsNoneForPlace,
+      p.requirementsNoneForPlace,
+      p.costsNoneForPlace,
+      cockpitWords.lists.skillsNoneForPlace,
+      cockpitWords.lists.requirementsNoneForPlace,
+      cockpitWords.gauges.skills.noneListedForPlace,
+      cockpitWords.gauges.skills.requirementsNoneForPlace,
+    ];
     for (const line of lines) {
       expect(line).toEqual(expect.any(String));
       expect([...findTimeWords(line), ...findVerdicts(line)], line).toEqual([]);
@@ -497,34 +531,42 @@ describe("second review of #207: the receipt for a change of place names only th
     for (const [from, to] of [["AB", "ON"], ["ON", "AB"]] as const) {
       const lines = answerReceipt(ideaIn(from, marks), ideaIn(to, marks));
       expect(lines.length, `${from} to ${to}`).toBeGreaterThan(0);
-      for (const line of lines) expect(line).not.toMatch(/no longer ha(s|ve) every skill|took back your mark|you told us you have/);
+      for (const line of lines) expect(line).not.toMatch(/no longer ha(s|ve) every (skill|legal requirement)|took back your mark|you told us you have/);
     }
   });
 
   // The third review of #207: away from Alberta the receipt said "the skills now read 0 have, 0 learning, 0 not yet, 0
   // not marked", as if the marks were gone, while the Skills gauge says the skills rest on other provinces' pages; back
   // in Alberta it said "4 steps now have every skill they list marked have", though the person marked nothing.
+  // Road 1's three items are all legal requirements (an ID number, an agreement, a certificate): since the review of
+  // #209's merge (2026-10-26) the receipt names them as the Skills gauge does, never as skills.
   const road1Marks = (marked: string[]) => ({
     road: roadApprenticeToOwnShopAB,
     skillMarks: marked.map((skillItemId) => ({ skillItemId, ownLabel: null, mark: "have" as const })),
   });
   const bothMarked = road1Marks(["skill-ab-alberta-student-number", "skill-ab-apprenticeship-education-agreement"]);
 
-  it("on road 1, the skills' line says what the Skills gauge says, and no step is said to have every skill marked", () => {
+  it("on road 1, the legal requirements' line says what the Skills gauge says, and no step is said to have every one marked", () => {
     const away = answerReceipt(ideaIn("AB", bothMarked), ideaIn("ON", bothMarked));
-    expect(away).toContain(`Because you told us your place is Ontario, ${changed.skillsNoneForPlace}.`);
-    expect(away.join("\n")).not.toMatch(/the skills now read/);
+    expect(away).toContain(`Because you told us your place is Ontario, ${changed.requirementsNoneForPlace}.`);
+    // Road 1 lists no skills in either place: no skills line, and its legal requirements are never called skills.
+    expect(away).not.toContain(`Because you told us your place is Ontario, ${changed.skillsNoneForPlace}.`);
+    expect(away.join("\n")).not.toMatch(/the (skills|legal requirements) now read|\bskills?\b/);
     const back = answerReceipt(ideaIn("ON", bothMarked), ideaIn("AB", bothMarked));
-    expect(back.join("\n")).not.toMatch(/every skill (it|they) lists? marked have/);
+    expect(back.join("\n")).not.toMatch(/every (skill|legal requirement) (it|they) lists? marked have/);
     // Moving back lists the items again with the person's marks on them: the counts, as the gauge shows them.
-    expect(back).toContain("Because you told us your place is Alberta, the skills now read 2 have, 0 learning, 0 not yet, 1 not marked.");
+    expect(back).toContain("Because you told us your place is Alberta, the legal requirements now read 2 have, 0 learning, 0 not yet, 1 not marked.");
+    expect(back.join("\n")).not.toMatch(/\bskills?\b/);
   });
 
-  it("control: in Alberta, marking a skill still says which steps now have every skill they list marked have", () => {
+  it("control: in Alberta, marking a legal requirement still says which steps now have every one they list marked have", () => {
     const lines = answerReceipt(ideaIn("AB", road1Marks([])), ideaIn("AB", road1Marks(["skill-ab-alberta-student-number"])));
-    expect(lines.join("\n")).toMatch(/now have every skill they list marked have/);
-    expect(lines.join("\n")).toMatch(/the skills now read 1 have/);
-    expect([...findTimeWords(changed.skillsNoneForPlace), ...findVerdicts(changed.skillsNoneForPlace)]).toEqual([]);
+    expect(lines.join("\n")).toMatch(/3 steps now have every legal requirement they list marked have/);
+    expect(lines.join("\n")).toMatch(/the legal requirements now read 1 have/);
+    expect(lines.join("\n")).not.toMatch(/\bskills?\b/);
+    for (const line of [changed.skillsNoneForPlace, changed.requirementsNoneForPlace]) {
+      expect([...findTimeWords(line), ...findVerdicts(line)]).toEqual([]);
+    }
   });
 
   it("control: in one place, taking back only the quote still says so", () => {

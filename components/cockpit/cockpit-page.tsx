@@ -53,7 +53,7 @@ import type { CostLineAmountFrom, FigureView } from "@/lib/figures/types";
 import { useLocalToday } from "@/lib/figures/use-local-today";
 import type { CFENodeId } from "@/lib/engines/cfe/v2026";
 import { oasisListForJob } from "@/lib/engines/oasis/v2026";
-import { forksAreTheMapToggles, roadForPlace, roadsV2026, roadsWrittenForJob, skillItemsForPlace, skillItemsV2026 } from "@/lib/engines/roads/v2026";
+import { drawsTheStructureLadder, forksAreTheMapToggles, roadForPlace, roadsV2026, roadsWrittenForJob, skillItemsForPlace, skillItemsV2026 } from "@/lib/engines/roads/v2026";
 import { templateIdsForPlace } from "@/lib/engines/templates/v2026";
 import type { ExampleFuture } from "@/lib/examples";
 import { exampleStory } from "@/lib/examples/story";
@@ -245,6 +245,8 @@ export function CockpitPage({ initialScenario, pinned = false, example }: Cockpi
     dismissCoach();
   }, [dismissCoach]);
   const [railSheet, setRailSheet] = useState(false);
+  // Whether the Skills list opens with the job's list unfolded: only from a step's Open the list (2026-10-23).
+  const [jobListOpen, setJobListOpen] = useState(false);
   // The last refusal from a save of the person's answers, in the server's words, shown where they clicked.
   const [answerError, setAnswerError] = useState<string | null>(null);
   // Part 2: the last answer's receipt and where it was given; this visit's newest receipt lines; the
@@ -419,12 +421,38 @@ export function CockpitPage({ initialScenario, pinned = false, example }: Cockpi
   const panelRef = useRef<HTMLDivElement>(null);
   const railModal = isPhone && railSheet;
   const panelModal = isPhone && rightPanel !== null && !folds.panel;
+  // The failed-save bar (`saveBar`, below) sits over the panel's sheet, so the sheet's Tab ring reaches it too.
+  const saveBarRef = useRef<HTMLDivElement>(null);
   useSheet(railModal, railRef, () => setRailSheet(false));
-  useSheet(panelModal, panelRef, () => {
-    setSelectedNodeId(null);
-    setRightPanel(null);
-    setActiveGauge(null);
-  });
+  useSheet(
+    panelModal,
+    panelRef,
+    () => {
+      setSelectedNodeId(null);
+      setRightPanel(null);
+      setActiveGauge(null);
+    },
+    saveBarRef,
+  );
+
+  // Below 768 px the rail, which holds the save line and the only "Save now", is a closed sheet, and inert while the
+  // panel is open: a save that failed then said "Save now tries again." with nothing to press on screen (the review of
+  // #209's merge, 2026-10-26). So a failed save also draws a bar of its own on a phone, at the foot of the window,
+  // outside the rail and every inert wrapper and over the panel's sheet: not while the rail's own sheet is open, which
+  // shows the line itself, and never on the example, which keeps nothing. Its height is measured so the open panel's
+  // sheet ends above it rather than under it.
+  const saveBar = isPhone && !isExample && saveState === "error" && !railModal;
+  const [saveBarHeight, setSaveBarHeight] = useState(0);
+  useLayoutEffect(() => {
+    const el = saveBarRef.current;
+    if (!saveBar || !el) return;
+    const measure = () => setSaveBarHeight(el.getBoundingClientRect().height);
+    measure();
+    // The line wraps to more rows on a narrower phone.
+    const observer = new ResizeObserver(measure);
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [saveBar]);
 
   // Folding the rail hides what it holds, which scrolls it back to the top; it comes back where it was.
   const railScroll = useRef(0);
@@ -648,6 +676,8 @@ export function CockpitPage({ initialScenario, pinned = false, example }: Cockpi
   function handleGauge(gauge: GaugeId) {
     setAnswerError(null);
     setReceipt(null);
+    // The Skills gauge opens the list with the job's own list folded under its button (2026-10-23).
+    if (gauge === "skills") setJobListOpen(false);
     if (activeGauge === gauge) {
       setActiveGauge(null);
       if (gauge === "steps") setSelectedNodeId(null);
@@ -728,8 +758,12 @@ export function CockpitPage({ initialScenario, pinned = false, example }: Cockpi
     void saveAnswer(() => postJson(`/api/futures/${encodeURIComponent(ventureId)}/job`, { code }), "skills");
   }
 
-  /** From the step panel: the Skills list, where the job's list is (or the question, when none is picked). */
+  /**
+   * From the step panel: the Skills list, where the job's list is (or the question, when none is picked). The
+   * person asked for the job's list itself, so it opens unfolded (it folds under its button from the gauge).
+   */
   function openJobList() {
+    setJobListOpen(true);
     openList("skills");
   }
 
@@ -1040,11 +1074,13 @@ export function CockpitPage({ initialScenario, pinned = false, example }: Cockpi
           own mark, so the count sees what a person sees: a review of the calm first view found three blocks that
           had been counted as one with a neighbour. */}
       <div className="min-w-0 border-b border-rule bg-[#0f0e12]">
-      {/* Header — S2.5.4c: minmax(0, …) columns so nothing overlaps when the window is narrow. */}
+      {/* Header — S2.5.4c: minmax(0, …) columns so nothing overlaps when the window is narrow. Below 768 px
+          the idea's name has a line of its own under the back link and the buttons (the screen review of
+          2026-10-23: between them it got about 75 px of a 375 px phone and showed "In…"). */}
       <header
         data-region="header"
         inert={behindSheet}
-        className="grid h-[52px] grid-cols-[auto_minmax(0,1fr)_auto] border-b border-rule-soft md:grid-cols-[240px_minmax(0,1fr)_auto]"
+        className="grid grid-cols-[auto_minmax(0,1fr)] grid-rows-[52px_auto] border-b border-rule-soft md:h-[52px] md:grid-cols-[240px_minmax(0,1fr)_auto] md:grid-rows-none"
       >
         <div className="flex min-w-0 items-center gap-3 border-r border-rule px-3 md:gap-[18px] md:px-[22px]">
           {/* The example has no saved futures behind it: its way back is the front door it came from. Below
@@ -1065,9 +1101,10 @@ export function CockpitPage({ initialScenario, pinned = false, example }: Cockpi
           </span>
         </div>
 
-        <div className="flex min-w-0 items-center px-3 md:px-5">
+        {/* On a phone: the second row, the whole width, up to two lines; from 768 px: one line between the two. */}
+        <div className="flex min-w-0 items-center px-3 max-md:order-last max-md:col-span-2 max-md:border-t max-md:border-rule-soft max-md:py-1.5 md:px-5">
           <span
-            className="min-w-0 truncate font-serif text-lead font-bold tracking-tight text-paper"
+            className="min-w-0 font-serif text-lead font-bold tracking-tight text-paper max-md:line-clamp-2 md:truncate"
             title={scenario.profile.name}
           >
             {scenario.profile.name}
@@ -1272,7 +1309,8 @@ export function CockpitPage({ initialScenario, pinned = false, example }: Cockpi
               </div>
             </section>
 
-            <StructureLadderRail activeStepId={ladderStepId} />
+            {/* Only on the tax and structure roads (2026-10-23): on the apprentice road it was jargon that fit nothing. */}
+            {drawsTheStructureLadder(road) ? <StructureLadderRail activeStepId={ladderStepId} /> : null}
             {structureAssumed ? (
               <section className="border-t border-rule-soft pt-4">
                 <p className="font-mono text-small uppercase tracking-[0.14em] text-stone">{words.rail.prepTools}</p>
@@ -1372,10 +1410,6 @@ export function CockpitPage({ initialScenario, pinned = false, example }: Cockpi
                   }}
                 />
               </div>
-              {/* On a phone nothing above the road folds, so a line over it would push the road down (82 px, a
-                  review found, 2026-10-17); under it, it costs the road nothing. Hidden from 768 px, where the
-                  one above is drawn, so only one is ever on the page. */}
-              {showCoach ? <CoachLine onDismiss={putCoachAway} className="border-y md:hidden" /> : null}
               <WhatIfBar
                 whatIf={whatIf}
                 receipt={receiptAt("what-if")}
@@ -1394,6 +1428,11 @@ export function CockpitPage({ initialScenario, pinned = false, example }: Cockpi
                 // button is in Look closer (2026-10-20).
                 after={folds.whatIf && whatIf !== null ? <WhatIfOnNote whatIf={whatIf} /> : null}
               />
+              {/* On a phone nothing above the road folds, so a line over it would push the road down (82 px, a
+                  review found, 2026-10-17). Right under the road it sat on the card the road's own area cuts off
+                  at its edge, and read as covering the road (the screen review of 2026-10-23), so it comes after
+                  Next on your road. Hidden from 768 px, where the one above is drawn, so only one is on the page. */}
+              {showCoach ? <CoachLine onDismiss={putCoachAway} className="border-y md:hidden" /> : null}
             </div>
           ) : null}
         </div>
@@ -1409,6 +1448,8 @@ export function CockpitPage({ initialScenario, pinned = false, example }: Cockpi
             ref={panelRef}
             inert={railModal}
             {...(folds.panel ? { "data-cockpit-bottom-bar": "" } : {})}
+            // On a phone, room at the foot of the open sheet for the failed save's bar drawn over it (below).
+            style={panelModal && saveBar ? { paddingBottom: saveBarHeight } : undefined}
             className={`flex min-h-0 min-w-0 flex-col bg-ink3 ${
               folds.panel
                 ? "max-lg:fixed max-lg:inset-x-0 max-lg:bottom-0 max-lg:z-40 max-lg:border-t max-lg:border-rule"
@@ -1480,6 +1521,9 @@ export function CockpitPage({ initialScenario, pinned = false, example }: Cockpi
 
               {rightPanel === "skills" ? (
                 <SkillsListPanel
+                  // Drawn again when the way it was opened changes, so the job's list starts folded or open.
+                  key={jobListOpen ? "job-list-open" : "job-list-folded"}
+                  jobListOpen={jobListOpen}
                   road={road}
                   skillItems={skillItemsHere}
                   marks={kept?.skillMarks ?? []}
@@ -1601,6 +1645,24 @@ export function CockpitPage({ initialScenario, pinned = false, example }: Cockpi
         />
       ) : null}
     </div>
+    {/* A failed save on a phone (`saveBar`, above): the rail's own words and its "Save now", in a bar outside the
+        grid, the rail and every inert wrapper. Sticky at the foot of the window while the page scrolls (above the
+        folded panel's bar when there is one), so it never covers the page's last line; fixed while the panel's
+        sheet is open, whose foot is kept clear for it. Over the sheets (z-40), under a dialog (z-50). */}
+    {saveBar ? (
+      <div
+        ref={saveBarRef}
+        data-region="save-bar"
+        className={`z-[45] flex items-center gap-3 border-t border-rule bg-ink3 px-4 py-2.5 md:hidden ${
+          panelModal ? "fixed inset-x-0 bottom-0" : `sticky ${showRightSlot && folds.panel ? "bottom-[45px]" : "bottom-0"}`
+        }`}
+      >
+        <p className="min-w-0 flex-1 text-small text-maple">{words.rail.save.unavailable}</p>
+        <Pill variant="maple" size="small" className="shrink-0" onClick={() => handleSave()}>
+          {words.rail.save.now}
+        </Pill>
+      </div>
+    ) : null}
     </ExampleFrame>
     </ExampleNoteContext.Provider>
   );

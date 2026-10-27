@@ -80,8 +80,22 @@ export const cockpitWords = {
       notMarked: (n: number, listed: number) => `${n} not marked, out of ${listed} listed`,
       invite: "Mark them to see what each step still needs",
       noneListed: "No skills are listed on this road yet",
+      /**
+       * The road's legal requirements (an ID number, an agreement, a certificate), counted apart from its skills
+       * (the screen review of 2026-10-23: road 1's three read as "3 listed" skills). Only the marks that have a
+       * count are named.
+       */
+      requirements: (listed: number, have: number, learning: number, notYet: number, notMarked: number) =>
+        `${count(listed, "legal requirement", "legal requirements")}, apart from skills: ${[
+          ...(have > 0 ? [`${have} have`] : []),
+          ...(learning > 0 ? [`${learning} learning`] : []),
+          ...(notYet > 0 ? [`${notYet} not yet`] : []),
+          ...(notMarked > 0 ? [`${notMarked} not marked`] : []),
+        ].join(" · ")}`,
       /** The road lists skills, but the road drawn for the idea's place left every one out (lib/cockpit/view.ts `roadSkillsNone`). */
       noneListedForPlace: "This road's skills rest on other provinces' pages",
+      /** The same for its legal requirements, a line of their own (`roadRequirementsNone`; road 1's, seen from Ontario). */
+      requirementsNoneForPlace: "This road's legal requirements rest on other provinces' pages",
       own: (have: number, learning: number, notYet: number) => `your own skills: ${have} have · ${learning} learning · ${notYet} not yet`,
       addOwn: "Add skills of your own in the list",
       /** The government's list for the person's pick of job, counted apart from the road's. */
@@ -134,7 +148,9 @@ export const cockpitWords = {
     skills: "Skills",
     money: "Money",
     rules: "Rules & tax",
-    skillsCount: (n: number) => `${n} listed`,
+    /** The Skills switch: the road's skills, and its legal requirements apart from them when it has any. */
+    skillsCount: (skills: number, requirements: number) =>
+      requirements === 0 ? `${skills} listed` : `${skills} listed · ${count(requirements, "legal requirement", "legal requirements")}`,
     moneyCount: (n: number) => count(n, "cost line", "cost lines"),
     rulesCount: (n: number) => count(n, "card", "cards"),
     needs: (listed: number, have: number) => `needs ${listed} · you have ${have}`,
@@ -170,9 +186,13 @@ export const cockpitWords = {
     doneWhenNone: "No “done when” lines are written for this step yet.",
     // A section the road drawn for the idea's place left empty says why (lib/cockpit/view.ts `emptySectionLine`).
     doneWhenNoneForPlace: "This step's “done when” lines rest on other provinces' pages, so none is shown for your place.",
+    /** The step's legal requirements (an ID number, an agreement), above its skills (2026-10-23). */
+    whatItNeeds: "What it needs",
     skills: "Skills it needs",
     skillsNone: "No skills are listed for this step yet.",
     skillsNoneForPlace: "The skills this step lists rest on other provinces' pages, so none is shown for your place.",
+    // Under What it needs, drawn for a step whose every legal requirement the place left out (`stepRequirementsNone`).
+    requirementsNoneForPlace: "The legal requirements this step lists rest on other provinces' pages, so none is shown for your place.",
     skillKind: { "legal-requirement": "legal requirement", "listed-skill": "listed skill" },
     marks: { have: "Have", learning: "Learning", "not-yet": "Not yet" },
     dontKnow: "I don't know",
@@ -223,11 +243,18 @@ export const cockpitWords = {
 
   lists: {
     close: "Close",
-    skillsTitle: "Skills on this road",
-    /** Above the items the road's own steps list, so the job's list below never reads as the road's. */
-    roadTitle: "On this road's steps",
+    /** Since 2026-10-23 the list names legal requirements too, under a heading of their own, never as skills. */
+    skillsTitle: "Skills and legal requirements",
+    /** Above the legal requirements the road's own steps list (an ID number, an agreement, a certificate). */
+    requirementsTitle: "Legal requirements on this road's steps",
+    /** Above the skills the road's own steps list, so the job's list below never reads as the road's. */
+    roadTitle: "Skills on this road's steps",
+    /** Your plan's one list of everything the road's steps list, each row tagged with its kind. */
+    roadItemsTitle: "On this road's steps",
     skillsNone: "No skills are listed on this road yet. Your own skills are below.",
     skillsNoneForPlace: "The skills this road lists rest on other provinces' pages, so none is shown for your place. Your own skills are below.",
+    /** Under requirementsTitle when the place left every legal requirement out (`roadRequirementsNone`). */
+    requirementsNoneForPlace: "The legal requirements this road lists rest on other provinces' pages, so none is shown for your place.",
     ownTitle: "Your own skills",
     ownTag: "added by you",
     ownNone: "None added yet.",
@@ -255,6 +282,12 @@ export const cockpitWords = {
       // in a job (Cabinetmakers, 72311.00: "Self-employed" under Workplaces/employers). Only what DotAmi
       // can say about itself.
       aboutTheList: "This is the government's list for the job you picked. DotAmi doesn't say which skills a business needs.",
+      /**
+       * The job's list folds under one button, below the road's own items (the screen review of 2026-10-23: its
+       * 44 rows swamped the road's 3).
+       */
+      showList: (n: number) => `Show the ${n} on this job's list`,
+      hideList: "Fold this job's list",
       /** The licence's own attribution line, word for word (lib/engines/oasis/v2026/licence.ts). */
       attribution: OASIS_ATTRIBUTION,
       licence: "The licence",
@@ -366,7 +399,12 @@ export const cockpitWords = {
       unlocks: "your numbers in Start-up money",
     },
     skills: {
-      question: (n: number) => `Your marks on ${count(n, "skill", "skills")} not marked`,
+      // Skills and legal requirements named apart, each only when one is waiting (2026-10-23).
+      question: (skills: number, requirements: number) =>
+        `Your marks on ${[
+          ...(skills > 0 ? [count(skills, "skill", "skills")] : []),
+          ...(requirements > 0 ? [count(requirements, "legal requirement", "legal requirements")] : []),
+        ].join(" and ")} not marked`,
       unlocks: "needs · you have on each step that lists them",
     },
     ending: {
@@ -558,7 +596,9 @@ export const cockpitWords = {
       note: "Each line is worked out by the rules: the road without the answer, compared with the road with it.",
       // By the person's name, not a pronoun: an example is any entry of lib/examples/, not Mara alone.
       parts: {
-        marks: (person: string) => `${person}'s skill marks`,
+        // Her marks on skills and on legal requirements alike, so neither is called the other ("Mara's skill marks"
+        // until the review of #209's merge, 2026-10-26).
+        marks: (person: string) => `${person}'s marks`,
         costs: (person: string) => `${person}'s start-up cost, from listed prices`,
         savings: (person: string) => `${person}'s savings`,
         "this-is-mine": (person: string) => `${person}'s pick: This is mine`,
@@ -633,6 +673,8 @@ export const cockpitWords = {
    */
   plan: {
     title: "Your plan",
+    /** The contents list of the plan's steps, at the top of Each step, each a link to its step (2026-10-23). */
+    contents: "The steps in this plan",
     made: (day: string) => `Made on ${day} from what DotAmi keeps for this idea on this computer.`,
     /** The Export panel's way here, and what it says for an idea not saved yet. */
     open: "Open your plan to read or print",
@@ -703,7 +745,6 @@ export const cockpitWords = {
     title: (idea: string) => `${idea} — DotAmi playbook`,
     lead: "Planning information from the DotAmi catalog and the road on screen, not tax or legal advice.",
     profile: "Venture profile",
-    skills: "Skills and requirements on this step",
     officialLinks: "Official links",
     costs: "Cost lines",
     noAmount: "no amount yet",
@@ -742,10 +783,23 @@ export const cockpitWords = {
     prepToolsNote: "Orientation links for your accountant or lawyer — DotAmi does not generate legal documents.",
     openReference: "Open reference ↗",
     /** The structure ladder (lib/engines/structure/): where the idea's structure sits on it. */
+    // In plain words since the screen review of 2026-10-23 ("Holding company (Holdco) … Estate freeze" on the
+    // apprentice road), and drawn only on the tax and structure roads (lib/engines/roads/v2026
+    // `drawsTheStructureLadder`). Each rung is named, never ranked. Since the review of #209's merge (2026-10-26) a
+    // rung is its plain name only: the one-line definitions under them were tax and legal claims in DotAmi's own
+    // words with no citation behind them ("A corporation, owned and controlled in Canada." for a CCPC was wrong).
     ladder: {
-      title: "Structure ladder",
-      note: "Entity progression — Canada, the first jurisdiction mapped. Prep orientation, not filing advice.",
-      noRung: "No rung marked — set your structure above and the ladder places you.",
+      title: "Ways a business can be set up",
+      note: "From a business in your own name to companies that own companies, in Canada. Something to take to your accountant, not tax or legal advice.",
+      noRung: "None is marked: once you say how the business is set up, it shows here.",
+      /** Each rung of the catalog's ladder (lib/engines/structure/v2026/ladder.ts), by its id: its plain name. */
+      rungs: {
+        "structure-sole-prop": "In your own name",
+        "structure-sole-prop-gst": "In your own name, registered for GST/HST",
+        "structure-ccpc": "A company of its own",
+        "structure-holdco": "A company that owns companies",
+        "structure-family-trust": "A family trust",
+      } as Record<string, string>,
       current: "Current",
       passed: "Passed",
       ahead: "Ahead",

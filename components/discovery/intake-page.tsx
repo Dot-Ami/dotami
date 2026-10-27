@@ -16,6 +16,7 @@ import { roadsV2026, type Road } from "@/lib/engines/roads/v2026";
 import { listedRoads } from "@/lib/front-door/futures";
 import type { PlaceCode } from "@/lib/places/codes";
 import { back as stepBack, FIRST_STEP, type StepsState } from "@/lib/front-door/three-steps";
+import { typedWayCount } from "@/lib/front-door/typed-way";
 import { intakeStepsWords, pickWords } from "@/lib/front-door/words";
 import { INTAKE_GOAL_IDS, INTAKE_GOAL_LABELS, type IntakeDraft, type IntakeGoalId } from "@/lib/journey/types";
 import { STATEMENT_FULL_NOTE, STATEMENT_MAX_CHARS } from "@/lib/person/types";
@@ -43,13 +44,12 @@ import { useMemo, useState } from "react";
 
 type ScreenId = "about" | "confirm" | "ground" | "steps";
 
-const SCREEN_LABEL: Record<ScreenId, string> = {
-  about: "1 of 3 · About you",
-  confirm: "2 of 3 · Confirm",
-  ground: "3 of 3 · Ground it",
-  // Pick a future's three steps, on this page since 2026-10-22: each step says its own "n of 3".
-  steps: pickWords.navLabel,
-};
+/**
+ * The nav's line for each screen: the typed way's one numbering (lib/front-door/typed-way.ts), which Pick a
+ * future's three steps carry on in their own heading, so the nav names them only (2026-10-23: Ground it said
+ * "3 of 3" and the next screen "1 of 3").
+ */
+const screenLabel = (screen: ScreenId, startsAtAbout: boolean) => (screen === "steps" ? pickWords.navLabel : typedWayCount(screen, startsAtAbout));
 
 /**
  * The roads Pick a future lists for a person in `province`, which the steps at the end of the intake list too:
@@ -236,7 +236,7 @@ export function IntakePage({
         )}
         <WordMark />
         <p className="ml-auto font-mono text-small uppercase tracking-[0.14em] text-stone">
-          {SCREEN_LABEL[screen]}
+          {screenLabel(screen, firstScreen === "about")}
         </p>
       </nav>
 
@@ -253,6 +253,7 @@ export function IntakePage({
                 listed={listedFor(intake.province)}
                 roadJobs={roadJobs}
                 firstSentence={intake.manualEntry?.trim() ? intake.manualEntry : null}
+                stepCount={(step) => typedWayCount(step, firstScreen === "about")}
                 onLookInside={(road, answers) => lookInside(road, answers)}
               />
             ) : screen === "about" ? (

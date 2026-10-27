@@ -87,9 +87,14 @@ export function renderRoadExport(args: PlanArgs): string {
       }
       if (step.doneWhen.length > 0) body.push("");
 
-      if (step.skills.length > 0) {
-        body.push(`**${e.skills}**`, "");
-        for (const skill of step.skills) body.push(`- ${skill.label} (${skill.mark})`);
+      // Its legal requirements, then its skills, under the step panel's own headings, as Your plan draws them.
+      for (const [title, items] of [
+        [words.panel.whatItNeeds, step.requirements],
+        [words.panel.skills, step.skills],
+      ] as const) {
+        if (items.length === 0) continue;
+        body.push(`**${title}**`, "");
+        for (const item of items) body.push(`- ${item.label} (${item.mark})`);
         body.push("");
       }
 

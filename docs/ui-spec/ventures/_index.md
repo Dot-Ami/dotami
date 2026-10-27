@@ -80,6 +80,14 @@ venture becomes a card the first time "Save / resume" is pressed on its map.
 Link kinds: **Sister company · Overlaps with · Feeds into · Related to.** A link is stored once
 and shown on both cards.
 
+## Phone width (2026-10-23)
+
+At 375 px the page fits the window (the screen review found it 415 px wide: the nav's **Settings** link, each
+card's Stage row and **Open in cockpit →**, and the cross-reference drop-down ran past the edge). The nav wraps
+onto a second line, the Stage drop-down and **Open in cockpit →** wrap under each other where the card is
+narrower than both, and no drop-down is wider than its box (`app/globals.css`; a long idea name is cut on
+screen and whole in the open list). `e2e/phone-width.spec.ts` checks it.
+
 ## What it deliberately does not do
 
 - No ranking, no score, no "best idea" — the order is recency of touch.

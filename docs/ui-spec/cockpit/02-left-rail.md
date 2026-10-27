@@ -11,7 +11,7 @@
 Page: Cockpit (`/cockpit`) · Component: `components/cockpit/cockpit-page.tsx`
 Type: sidebar (mixed display + button group + links)
 
-Last updated: 2026-10-24 (the save line says only this window holds unsaved edits, and what loses them); 2026-10-11 ("In your words" also lists each idea's front-door sentence, tagged with its idea); 2026-10-07 ([8e] the figure reminder banner under the venture block); 2026-09-13 (S2.5.4a — archetype hidden for real ventures, "In your words" section added; rest is the 2026-07-05 workshop)
+Last updated: 2026-10-26 (on a phone a failed save also has a bar of its own with **Save now**); 2026-10-24 (the save line says only this window holds unsaved edits, and what loses them); 2026-10-11 ("In your words" also lists each idea's front-door sentence, tagged with its idea); 2026-10-07 ([8e] the figure reminder banner under the venture block); 2026-09-13 (S2.5.4a — archetype hidden for real ventures, "In your words" section added; rest is the 2026-07-05 workshop)
 
 > **Changed 2026-10-12 — part 2 of the cockpit screen.** The rail is a little wider (up to 280 px) and opens with *What you've told DotAmi* and *Not told yet*, with the one-question box ([12-told-list.md](./12-told-list.md)). Everything below is the rail as it was, now under them and unfolded. Changing the structure here gives a receipt at the top of the told list ([13-receipts.md](./13-receipts.md)).
 Workshop status: documented, sign-off pending
@@ -102,6 +102,17 @@ spot in the product — it carries 6+ unrelated concerns.
   automatically."* **"Save now"** skips the pause and is the retry. The intake already
   saved the venture on **Open my map**, so a cockpit reached from the intake is on disk
   before it renders. (H7 transactionality still open.)
+- **A failed save on a phone (below 768 px; the review of #209's merge, 2026-10-26).** The rail is a
+  sheet there, closed until **Venture details** opens it, and inert while the right-hand panel's sheet
+  is open, so its save line and **Save now** were out of reach while the receipt said *"… Save now tries
+  again."*. While a save has failed (the line reads *"Save unavailable — …"*), a bar at the foot of the
+  window shows the same line and a **Save now** that runs the same save (`data-region="save-bar"`,
+  `components/cockpit/cockpit-page.tsx`): outside the rail and every inert box, over the panel's sheet
+  (whose foot is kept clear for it) and above the folded panel's bar, under the agree prompt. It sticks
+  to the foot of the window as the page scrolls and sits above the page's last line, never over it. It is
+  not drawn while the rail's own sheet is open (the rail shows the line), from 768 px (the rail is a
+  column), or on the example, and it goes as soon as a save starts or keeps the edits. Words: the rail's
+  own, `rail.save.unavailable` and `rail.save.now`.
 - **Leaving with an edit not kept (a review of 2026-10-24).** Every edit is also held in the journey, in the
   window's memory, as not kept (`unsavedEdits`, `components/shared/journey-provider.tsx`) until a save keeps that
   very copy. Leaving the page within the pause by one of the app's own links (the rail's *Your futures*, *Edit

@@ -477,7 +477,8 @@ test.describe("phone width (issue #4)", () => {
 
   test("at 375x812 a first visit's coach line sits under the road, so the road starts where it does without it", async ({ page }) => {
     // A review (2026-10-17) measured the coach line 82 px tall above the road on a phone, where nothing above
-    // the road folds: the calm view put the road lower than before it. Under the road it costs the road nothing.
+    // the road folds: the calm view put the road lower than before it. Under the road it costs the road nothing;
+    // since 2026-10-23 it sits after Next on your road (e2e/phone-width.spec.ts holds that).
     const ventureId = await saveIdea(page, "Invented — phone coach test");
     await page.goto(`/cockpit?venture=${ventureId}`);
     await cockpitSettled(page);

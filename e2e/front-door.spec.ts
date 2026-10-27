@@ -129,7 +129,7 @@ test("door 1: four answers, each with its receipt and focus moving on, then the 
   const general = cards.first();
   await expect(general).toContainText("A business");
   await expect(general).toContainText("Written for Alberta");
-  await expect(general).toContainText(/\d+ steps · \d+ skills? listed · \d+ official fees? found · \d+ cost lines? you'd price/);
+  await expect(general).toContainText(/\d+ steps · \d+ skills? listed · (\d+ legal requirements? · )?\d+ official fees? found · \d+ cost lines? you'd price/);
   await expect(page.getByText("In the order they were written, not ranked. More futures are being written.")).toBeVisible();
 
   await general.getByRole("button", { name: `Look inside ${GENERAL}` }).click();

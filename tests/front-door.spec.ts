@@ -376,15 +376,18 @@ describe("Pick a future: every written future, in the order added, as counts", (
     }
   });
 
-  it("the counts are the catalog's own: steps, skills listed, official fees, lines to price", () => {
+  it("the counts are the catalog's own: steps, skills listed, legal requirements, official fees, lines to price", () => {
+    const legal = new Set(skillItemsV2026.filter((i) => i.kind === "legal-requirement").map((i) => i.id));
     for (const [i, road] of roadsV2026.entries()) {
       const costs = road.steps.flatMap((s) => s.costs);
+      const items = [...new Set(road.steps.flatMap((s) => s.needs))];
       expect(cards[i]).toMatchObject({
         label: road.label,
         kind: road.kind,
         writtenFor: road.provinces,
         steps: road.steps.length,
-        skillsListed: new Set(road.steps.flatMap((s) => s.needs)).size,
+        skillsListed: items.filter((id) => !legal.has(id)).length,
+        requirementsListed: items.filter((id) => legal.has(id)).length,
         officialFees: costs.filter((c) => c.kind === "official-fee").length,
         linesToPrice: costs.filter((c) => c.kind === "named").length,
       });

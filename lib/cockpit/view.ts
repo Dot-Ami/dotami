@@ -1,7 +1,7 @@
 import { itemsForStep } from "@/lib/brain/node-items";
 import type { ConfirmedFigure, UnlockItem } from "@/lib/brain/types";
 import type { JobList } from "@/lib/engines/oasis/v2026";
-import { forksAreTheMapToggles, roadForPlace, type Road, type RoadStep, type SkillItem } from "@/lib/engines/roads/v2026";
+import { forksAreTheMapToggles, roadForPlace, skillItemsV2026, type Road, type RoadStep, type SkillItem } from "@/lib/engines/roads/v2026";
 import { formatMoney } from "@/lib/format/money-and-months";
 import { BUSINESS_TOTAL_KINDS, COST_LINE_AMOUNT_FROM_LABELS, type FigureView } from "@/lib/figures/types";
 import type { PersonFigureView } from "@/lib/futures/person-figures";
@@ -121,25 +121,76 @@ export function linkedSkill(road: Pick<Road, "steps">, selected: string | null):
 }
 
 /**
+ * Of the items the road drawn for the idea's place left out of these steps (`leftOutForPlace`), how many are legal
+ * requirements and how many skills. The cockpit never calls a legal requirement (an ID number, an agreement, a
+ * certificate) a skill (the screen review of 2026-10-23), so each section says only of its own kind that it rests
+ * on other provinces' pages: road 1's three Alberta items, seen from Ontario, are all legal requirements. An id the
+ * list doesn't hold counts as a skill, as road evaluation counts it.
+ */
+function needsLeftOut(
+  steps: readonly Pick<RoadStep, "leftOutForPlace">[],
+  items: readonly Pick<SkillItem, "id" | "kind">[],
+): { skills: number; requirements: number } {
+  const legal = new Set(items.filter((item) => item.kind === "legal-requirement").map((item) => item.id));
+  const ids = steps.flatMap((step) => step.leftOutForPlace?.needs ?? []);
+  const requirements = ids.filter((id) => legal.has(id)).length;
+  return { skills: ids.length - requirements, requirements };
+}
+
+/**
  * The line a step's section shows with nothing drawn in it (second review of #207): that its lines rest on other
  * provinces' pages, when the road drawn for the idea's place left them all out (`leftOutForPlace`), else that none
- * is written yet. The step panel and Your plan ask here, so the two can't say different things.
+ * is written yet. For "skills", only the skills left out count (`needsLeftOut`); a legal requirement left out is
+ * said under What it needs (`stepRequirementsNone`). The step panel and Your plan ask here, so the two can't say
+ * different things.
  */
-export function emptySectionLine(step: Pick<RoadStep, "leftOutForPlace">, section: "doneWhen" | "skills" | "costs"): string {
+export function emptySectionLine(
+  step: Pick<RoadStep, "leftOutForPlace">,
+  section: "doneWhen" | "skills" | "costs",
+  items: readonly Pick<SkillItem, "id" | "kind">[] = skillItemsV2026,
+): string {
   const left = step.leftOutForPlace;
   if (section === "doneWhen") return left?.doneWhenIds.length ? words.panel.doneWhenNoneForPlace : words.panel.doneWhenNone;
-  if (section === "skills") return left?.needs.length ? words.panel.skillsNoneForPlace : words.panel.skillsNone;
+  if (section === "skills") return needsLeftOut([step], items).skills > 0 ? words.panel.skillsNoneForPlace : words.panel.skillsNone;
   return left?.costs.length ? words.panel.costsNoneForPlace : words.panel.costsNone;
 }
 
 /**
- * A road listing no skills: none written yet, or every one left out for the idea's place (`roadForPlace`). For the
- * Skills list (`list`), and the Skills gauge in the goal bar and on Your plan (`gauge`).
+ * The line under What it needs when the road drawn for the idea's place left every legal requirement of the step
+ * out, or null when it left none out (the heading is then drawn only for a step that lists one).
  */
-export function roadSkillsNone(road: Pick<Road, "steps">): { list: string; gauge: string } {
-  return road.steps.some((step) => step.leftOutForPlace?.needs.length)
+export function stepRequirementsNone(
+  step: Pick<RoadStep, "leftOutForPlace">,
+  items: readonly Pick<SkillItem, "id" | "kind">[] = skillItemsV2026,
+): string | null {
+  return needsLeftOut([step], items).requirements > 0 ? words.panel.requirementsNoneForPlace : null;
+}
+
+/**
+ * A road listing no skills: none written yet, or every one left out for the idea's place (`roadForPlace`; legal
+ * requirements left out are `roadRequirementsNone`'s). For the Skills list (`list`), and the Skills gauge in the
+ * goal bar and on Your plan (`gauge`).
+ */
+export function roadSkillsNone(
+  road: Pick<Road, "steps">,
+  items: readonly Pick<SkillItem, "id" | "kind">[] = skillItemsV2026,
+): { list: string; gauge: string } {
+  return needsLeftOut(road.steps, items).skills > 0
     ? { list: words.lists.skillsNoneForPlace, gauge: words.gauges.skills.noneListedForPlace }
     : { list: words.lists.skillsNone, gauge: words.gauges.skills.noneListed };
+}
+
+/**
+ * The road's legal requirements left out for the idea's place (`roadForPlace`), said under their own heading in the
+ * Skills list (`list`) and as a line of the Skills gauge and Your plan (`gauge`); null when none was left out.
+ */
+export function roadRequirementsNone(
+  road: Pick<Road, "steps">,
+  items: readonly Pick<SkillItem, "id" | "kind">[] = skillItemsV2026,
+): { list: string; gauge: string } | null {
+  return needsLeftOut(road.steps, items).requirements > 0
+    ? { list: words.lists.requirementsNoneForPlace, gauge: words.gauges.skills.requirementsNoneForPlace }
+    : null;
 }
 
 /**
@@ -239,16 +290,19 @@ export function rulesCardsOnMap(road: Road, evaluation: RoadEvaluation, scenario
 }
 
 /**
- * The counts on the overlay switches: skills listed and cost lines for the whole road, and the rules and
- * tax cards the map draws (`rulesCardsOnMap`).
+ * The counts on the overlay switches: skills and legal requirements listed, apart, and cost lines for the whole
+ * road, and the rules and tax cards the map draws (`rulesCardsOnMap`).
  */
 export function overlayCounts(
   road: Road,
   evaluation: RoadEvaluation,
   scenario: Scenario,
-): { skillsListed: number; costLines: number; rulesCards: number } {
+): { skillsListed: number; requirementsListed: number; costLines: number; rulesCards: number } {
   return {
-    skillsListed: evaluation.gauges.skills.listed,
+    // Skills and legal requirements apart (the screen review of 2026-10-23: road 1's three legal requirements
+    // read "Skills · 3 listed").
+    skillsListed: evaluation.gauges.skills.listedSkills.listed,
+    requirementsListed: evaluation.gauges.skills.legalRequirements.listed,
     costLines: road.steps.reduce((n, s) => n + s.costs.length, 0),
     rulesCards: rulesCardsOnMap(road, evaluation, scenario).length,
   };
@@ -292,12 +346,26 @@ export function gaugeView(evaluation: RoadEvaluation, road: Road, scenario: Scen
       ? [person ? words.example.theirs.job(person, job.have, job.learning, job.notYet, job.listed) : words.gauges.skills.job(job.have, job.learning, job.notYet, job.listed)]
       : []),
   ];
+  // The road's skills are the gauge's value; its legal requirements (an ID number, an agreement, a certificate)
+  // get a line of their own and are never counted as skills (the screen review of 2026-10-23).
+  const sk = s.listedSkills;
+  const req = s.legalRequirements;
+  const requirementsLine =
+    req.listed > 0 ? [words.gauges.skills.requirements(req.listed, req.have, req.learning, req.notYet, req.notMarked)] : [];
+  // With none listed for the idea's place, a line says the road's legal requirements rest on other provinces' pages
+  // (`roadRequirementsNone`), as the value says of its skills (`roadSkillsNone`).
+  const requirementsLeftOut = req.listed === 0 ? roadRequirementsNone(road) : null;
+  const requirementsForPlace = requirementsLeftOut ? [requirementsLeftOut.gauge] : [];
   const skills: GaugeLines =
-    s.listed === 0
-      ? { value: roadSkillsNone(road).gauge, lines: ownLine, invite: ownLine.length === 0 ? words.gauges.skills.addOwn : null }
+    sk.listed === 0
+      ? {
+          value: roadSkillsNone(road).gauge,
+          lines: [...requirementsLine, ...requirementsForPlace, ...ownLine],
+          invite: req.notMarked > 0 ? words.gauges.skills.invite : ownLine.length === 0 && req.listed === 0 ? words.gauges.skills.addOwn : null,
+        }
       : {
-          value: words.gauges.skills.value(s.have, s.learning, s.notYet),
-          lines: [words.gauges.skills.notMarked(s.notMarked, s.listed), ...ownLine],
+          value: words.gauges.skills.value(sk.have, sk.learning, sk.notYet),
+          lines: [words.gauges.skills.notMarked(sk.notMarked, sk.listed), ...requirementsLine, ...requirementsForPlace, ...ownLine],
           invite: s.notMarked > 0 ? words.gauges.skills.invite : null,
         };
 

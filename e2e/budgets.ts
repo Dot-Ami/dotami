@@ -301,6 +301,12 @@ export const FIRST_MEASURED: Partial<Record<AddedScreenId, Partial<Record<WidthI
  * - Step 3 for a job with no written road, with About this job's rows in place (task 28c): the rows push the cards'
  *   Look inside below a tablet's first window, so \`futures-road\` 6 to 3 and \`intake-road\` 5 to 2 controls there,
  *   as CI's Ubuntu run counts them (run 39896985007); phone and laptop already at those counts.
+ *
+ * 2026-10-23, the screen review's pre-release fixes ("Phone and layout"): on a phone the goal bar's four gauges are
+ * stacked inside the window instead of in a strip that scrolled sideways, so the road starts lower and fewer of its
+ * cards reach the first window. Lowered to what CI's Ubuntu run counts with it (run 39969349101, PR #209): the
+ * cockpit's phone controls on road 0 17 to 14, on road 1 14 to 11, on the federal road 17 to 14, and Mara's
+ * example 11 to 10; tablet and laptop unchanged.
  */
 export const BUDGETS: ClutterTable = {
   "front-door": { phone: m(4, 7, 6, 9.5), tablet: m(4, 11, 6, 9.5), laptop: m(4, 11, 6, 9.5) },
@@ -309,9 +315,9 @@ export const BUDGETS: ClutterTable = {
   intake: { phone: m(4, 5, 5, 9.5), tablet: m(4, 5, 5, 9.5), laptop: m(4, 5, 5, 9.5) },
   ventures: { phone: m(4, 10, 7, 9.5), tablet: m(4, 19, 7, 9.5), laptop: m(4, 14, 7, 9.5) },
   "your-data": { phone: m(9, 7, 7, 9.5), tablet: m(9, 7, 7, 9.5), laptop: m(9, 7, 7, 9.5) },
-  "example-mara": { phone: m(7, 11, 5, 9.5), tablet: m(8, 23, 5, 9.5), laptop: m(8, 21, 5, 9.5) },
-  "cockpit-road-0": { phone: m(7, 17, 4, 9.5), tablet: m(8, 29, 5, 9.5), laptop: m(8, 27, 5, 9.5) },
-  "cockpit-road-1": { phone: m(7, 14, 4, 9.5), tablet: m(8, 25, 5, 9.5), laptop: m(8, 23, 5, 9.5) },
+  "example-mara": { phone: m(7, 10, 5, 9.5), tablet: m(8, 23, 5, 9.5), laptop: m(8, 21, 5, 9.5) },
+  "cockpit-road-0": { phone: m(7, 14, 4, 9.5), tablet: m(8, 29, 5, 9.5), laptop: m(8, 27, 5, 9.5) },
+  "cockpit-road-1": { phone: m(7, 11, 4, 9.5), tablet: m(8, 25, 5, 9.5), laptop: m(8, 23, 5, 9.5) },
   plan: { phone: m(10, 2, 5, 10.5), tablet: m(10, 2, 5, 10.5), laptop: m(10, 2, 5, 10.5) },
   // Added screens start at their first row (FIRST_MEASURED) and can only go down from there.
   "cockpit-about-job": { phone: m(8, 2, 5, 9.5), tablet: m(9, 28, 5, 9.5), laptop: m(9, 23, 5, 9.5) },
@@ -327,7 +333,7 @@ export const BUDGETS: ClutterTable = {
   "intake-road-written": { phone: m(3, 3, 5, 10.5), tablet: m(3, 4, 5, 10.5), laptop: m(3, 3, 5, 10.5) },
   "intake-road": { phone: m(3, 2, 5, 10.5), tablet: m(3, 2, 5, 10.5), laptop: m(3, 2, 5, 10.5) },
   "futures-outside-alberta": { phone: m(6, 4, 6, 10.5), tablet: m(6, 6, 6, 10.5), laptop: m(6, 4, 6, 10.5) },
-  "cockpit-federal": { phone: m(7, 17, 4, 9.5), tablet: m(8, 29, 5, 9.5), laptop: m(8, 27, 5, 9.5) },
+  "cockpit-federal": { phone: m(7, 14, 4, 9.5), tablet: m(8, 29, 5, 9.5), laptop: m(8, 27, 5, 9.5) },
   "intake-road-skipped": { phone: m(3, 3, 5, 10.5), tablet: m(3, 6, 5, 10.5), laptop: m(3, 5, 5, 10.5) },
 };
 
