@@ -214,7 +214,9 @@ each choice that differs from the table above says why.
   never ranked: *"In the order they were written, not ranked. More futures are being written."* Which
   roads it lists is one list, `LISTED_ROAD_IDS` in `lib/front-door/futures.ts`: road 0 and, since the
   maintainer's yes of 2026-10-13 (§ 13, *Listing a road nobody has read*), the first written future,
-  whose sources are all tool checks and whose card says so in amber. Picking it opens the cockpit on its
+  whose sources are all tool checks and whose card says in amber how many of them no person has read
+  (since 2026-10-27 it also counts, in grey, the 8 on the three CRA pages the maintainer read in full on
+  2026-10-25: GST/HST, the payroll account, records). Picking it opens the cockpit on its
   own road (`e2e/front-door.spec.ts`). Each card shows its name; what it holds (*"A business"*, *"A career and a
   business"*); where it is written for, and, when that isn't the person's place, *"Written for Alberta.
   You said Yukon."*; counts only (steps · skills listed · official fees found · cost lines you'd price);
@@ -1346,9 +1348,13 @@ made while writing it, each for a reason:
   check over the whole catalog). How a screen draws the join is decided with the screens.
 - **Every source is a tool check.** Each citation was checked on 2026-10-12 with
   `node scripts/check-quotes.mjs --url … --quote …` (option B, [citations.md](../engines/citations.md));
-  only quotes the script found are recorded, and none is recorded as read. Because nothing in it has
-  been read yet, the road's own `lastVerified` is empty, and the checks now hold a road with no read
-  source to an empty date instead of letting it carry any date.
+  only quotes the script found are recorded, and none was recorded as read. Because nothing in it had
+  been read then, the road's own `lastVerified` was empty, and the checks hold a road with no read
+  source to an empty date instead of letting it carry any date. Since 2026-10-27, 8 of its sources, on
+  three CRA pages the maintainer read in full on 2026-10-25 (GST/HST, the payroll account, records),
+  carry his read and say *Read by a person on 2026-10-25*, and the road's own `lastVerified`, worked
+  out from its sources, is 2026-10-25 ([citations.md](../engines/citations.md), § The maintainer's
+  reads of 2026-10-25); every source keeps its tool check.
 - **A fee checked only by a tool quotes its amount.** An official fee whose citation has no read must
   have a quote with the amount as the page writes it (`$150`, `$150.00`, `$1,500`), so the typed
   number is one the tool found on the page. A $0 fee is exempt (pages say "no cost"). A fee with a
@@ -1419,9 +1425,14 @@ each for a reason:
   (`dw-start-inc-directors`) says a director may be liable for amounts the corporation failed to
   remit, since the owner of a one-person corporation is usually its director.
 - **Every source is a tool check made on 2026-10-12** (option B, [citations.md](../engines/citations.md)):
-  each quote was found word for word on its live page by `node scripts/check-quotes.mjs`, and none is
-  recorded as read. A tool check is not a read, so road 0's own `lastVerified` stays the newest read
-  among the map stages' sources (2026-05-01).
+  each quote was found word for word on its live page by `node scripts/check-quotes.mjs`, and none was
+  recorded as read then. A tool check is not a read, so road 0's own `lastVerified` is the newest read
+  among its sources: the map stages' 2026-05-01 until the maintainer's reads of 2026-10-25 were
+  recorded (2026-10-27), and 2026-10-25 since then, for road 0 and the federal road alike
+  ([citations.md](../engines/citations.md), § The maintainer's reads of 2026-10-25). The lines on the
+  pages he read (the CRA's sole proprietorship, GST/HST, corporation, payroll, relationships and records
+  pages, and Corporations Canada's federal incorporation) say *Read by a person on 2026-10-25* and keep
+  their tool checks.
 - **Four of the stages' own pages have moved.** The CRA's *Employees* page (under *Employee/Apprentice
   baseline*), the line 4600 page both of *Retained earnings planning*'s sources point at, and the two
   SR&ED pages under *SR&ED deepening* answer "page not found" today. Those steps' *done when* lines cite
@@ -1977,8 +1988,10 @@ figures only); it is budgeted here. With no model, phases 1 and 2 still work by 
 
 **Phase 4 — More futures, more places.** Ongoing: about 5 content days per future; B.C. and Ontario
 versions; contributor-written futures through a compiler (about a week, once) that refuses uncited
-steps. Before any food future, Ontario's food-premises citation is re-read (the compliance catalog
-points at a regulation that looks like the older one).
+steps. Before any food future in Ontario, a person reads the regulation in force: the compliance
+catalog's food-premises rule cited Ontario Regulation 562/90, which the maintainer's reading list of
+2026-10-23 found revoked, and the rule came off on 2026-10-24 (docs/engines/compliance.md, § Retired
+rules).
 
 ## 11. Built to change
 
@@ -2097,6 +2110,8 @@ The maintainer expects the layout, and so the back end, to change as this is bui
 - ~~**Listing a road nobody has read.**~~ Settled 2026-10-13: the maintainer said yes, *Pick a future*
   lists the first written future, its card saying in amber that its sources were checked by a tool and
   not read by a person yet (`LISTED_ROAD_IDS` in `lib/front-door/futures.ts`; § 1, The way in as built).
+  Since 2026-10-27 the card also counts, in grey, the sources the maintainer read in full on 2026-10-25
+  (three CRA pages on the road: GST/HST, payroll account, records; docs/engines/citations.md).
   The question as it was asked: the first written future's sources are all tool checks (option B):
   every quote was found on its live page, but no person is recorded as having read one. Whether *Pick a
   future* may list such a road (each card saying "Checked by a tool" in amber), or only once a person

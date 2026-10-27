@@ -181,9 +181,9 @@ choices in it:
   the menu says so, and lists what a card will do when a figure goes.
 - It lists what it cannot reach: the old copies in `backups/` (already counted on `/your-data`),
   and the person's own copy of a receipt outside DotAmi.
-- The warning cites the CRA's retention rule (section 4: six years from the end of the last tax
-  year a record relates to, longer in some cases), so deleting is the person's decision, not
-  DotAmi's to nudge.
+- The warning cites the CRA's retention rule (section 4: generally six years from the end of the
+  last tax year a record relates to, longer in some cases), so deleting is the person's decision,
+  not DotAmi's to nudge.
 
 Uninstalling the desktop app leaves the data folder, so receipts stay too (open question in the
 settings doc, Part 4 §6).

@@ -297,8 +297,8 @@ The maintainer said yes (2026-10-10) to two follow-ups to *Start a new key*
   decided on 2026-10-09 (above), the "start a new key" button on 2026-10-09 (expense-records.md § 10),
   and encrypting the database too on 2026-10-09, and how on 2026-10-10 (the next section).
 - Whether the Delete menu may mention age at all, or stay silent about it; DotAmi supplies the
-  information, the person decides. If it does, the CRA's wording is six years from the end of the
-  last tax year a record relates to; indefinitely for long-term property, the share registry and
+  information, the person decides. If it does, the CRA's wording is generally six years from the
+  end of the last tax year a record relates to; indefinitely for long-term property, the share registry and
   similar history; longer under an objection or appeal ([Where to keep your records](https://www.canada.ca/en/revenue-agency/services/tax/businesses/topics/keeping-records/where-keep-your-records-long-request-permission-destroy-them-early.html),
   page dated 2026-08-03, read 2026-10-07). A cut-off by a receipt's own age would be wrong, so
   "older than six years" must not be the rule.

@@ -8,7 +8,7 @@ profile-driven reasoning. It has three components, specified in this folder:
 | Component | File | One-line job | Status |
 |-----------|------|--------------|--------|
 | Strategy Rules Engine | [strategy-rules-engine.md](./strategy-rules-engine.md) | Deterministic evaluator: `(profile, catalogs) → unlocks + node states (green/yellow/gray)` | **Built** (v0, 2026-07-02): `lib/brain/` — predicate DSL, `evaluateProfile`, golden-tested |
-| Risk Calculator | [risk-calculator.md](./risk-calculator.md) | Audit-trigger + GAAR-exposure catalog; attaches an honest risk chip to every surfaced lever | **Built** (v0, 2026-07-02): `lib/engines/risk/v2026/` — 8 entries; **known gap: `riskCombinations` and structure-ladder GAAR flags not yet evaluated** (audit-2026-07-04 H2) |
+| Risk Calculator | [risk-calculator.md](./risk-calculator.md) | Audit-trigger + GAAR-exposure catalog; attaches an honest risk chip to every surfaced lever | **Built** (v0, 2026-07-02): `lib/engines/risk/v2026/` — 7 entries (on 2026-10-24, after the maintainer's reading list, one retired and four corrected to what their pages say: [risk-calculator.md](./risk-calculator.md) § What the reads quote); `riskCombinations` and the structure ladder's GAAR read are evaluated (`lib/brain/evaluate.ts` `attachRisk` and `evaluateStructureStep`, which closed the audit-2026-07-04 H2 gap) |
 | RAG pipeline | [rag-pipeline.md](./rag-pipeline.md) | Citation-grounded retrieval over ITA/CRA/provincial text — explains, never decides | **Not built** — needs stack promotion (pgvector, embeddings provider) |
 
 Intake live preview reads from the evaluator (hardcoded card builders deleted).
@@ -74,15 +74,17 @@ stands on its cited source). Key facts (verify `lastVerified` before relying):
 - **CSBFP** (Canada Small Business Financing Program): federal **loan guarantee** (not a
   grant), up to $500K for equipment, 74% of loans go to businesses <1yr old, **365-day
   retroactive window**, collateral = the equipment itself.
-- **SR&ED**: sole props 15% non-refundable ITC vs CCPCs 35% refundable — a structure-gated
-  rate split, prime rules-engine material.
+- **SR&ED**: sole props 15% vs CCPCs 35% — a structure-gated rate split, prime
+  rules-engine material. Since 2026-10-24 the cards quote the CRA's rates, and neither rate is
+  called refundable or non-refundable in DotAmi's own words: no held quote says which (the
+  maintainer's reading list of 2026-10-23; docs/engines/grants.md).
 - **Tax ladder gating**: Sole Prop → CCPC → Holdco → Trust; Holdco/Trust do NOT solve
   equipment affordability (they protect existing assets / handle succession) — the ladder
   says don't skip rungs for small purchases.
 
 **Canonical golden scenario** (must pass before the rules engine ships): AB sole prop,
 AI/R&D + software activity, capital equipment purchase (GPU/workstation) →
-SR&ED flagged (yellow, 15% non-refundable at sole-prop), Class 50 + Immediate Expensing
+SR&ED flagged (yellow, 15% at sole-prop, quoted from the CRA), Class 50 + Immediate Expensing
 active (yellow — 2027 deadline), IRAP gated on incorporation (gray→yellow fork), Alberta
 Innovates flagged, GST fork surfaced, CSBFP surfaced (financing). This is the previously
 hardcoded wireframe example, now generated.

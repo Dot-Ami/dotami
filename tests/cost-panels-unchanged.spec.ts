@@ -55,9 +55,38 @@
  * redrawn; no other panel changed. At the merge of that pull request with main (2026-10-25) every panel was drawn
  * again from the merged code: 33 of 34 are main's or the pull request's recording byte for byte, and the one both
  * had redrawn, road 0's Mandatory GST registration, differs from main's only in its What it needs and Skills it
- * needs headings and from the pull request's only in the Canada-Alberta Job Grant card's absence. The only cards
- * allowed to change are the ones
- * that gained road 0's named start-up cost lines (docs/architecture/future-cockpit.md § 6, "The official
+ * needs headings and from the pull request's only in the Canada-Alberta Job Grant card's absence. Redrawn on
+ * 2026-10-24 for road 0's 11 panels only, drawn from a main without the Job Grant's removal (the maintainer's reading
+ * list of 2026-10-23: tests/reading-list-corrections.spec.ts and tests/productivity-grant.spec.ts), with today's
+ * named text sizes. The keys, each under road-starting-any-business-ab/: stage-0-employee-apprentice-baseline,
+ * stage-1-sole-prop-activation, stage-2a-voluntary-gst-registration, stage-2b-mandatory-gst-registration,
+ * stage-3a-incorporation-80k-net and stage-3a-incorporation-80k-net/BC, stage-3b-incorporation-liability-sred,
+ * branch-hire-first-employee, branch-service-vs-productize, stage-4-retained-earnings-planning and
+ * stage-4-sred-deepening. Each gains the Canada-Alberta Productivity Grant's card (`grant-capg`, the maintainer's
+ * call a-call-1): under "For you on this stage" on Hire first employee (one higher), under "Elsewhere on your map"
+ * on the other ten (one higher each). Five also change their words: Sole Prop activation's note quotes what the CRA
+ * says a sole proprietor counts toward the $30,000 tests, and its sources gain the CRA's When to register for and
+ * start charging the GST/HST (2 → 3, checked by a tool); both Incorporating panels say "Up to $500,000" on the T2
+ * guide's two quotes; Incorporation for liability/SR&ED's and SR&ED deepening's 35% bases quote the CRA's
+ * relationships page, which SR&ED deepening gains as a third source (checked by a tool), and its tax impact names
+ * the expenditure limit, not taxable income limits; Hire first employee's payroll account timing is "before the
+ * first remittance due date", on the CRA's two sentences. No other entry changes; the apprentice road's panels and
+ * both money lists are unchanged. At the merge of main into that pull request (2026-10-27, after the Job Grant's
+ * removal above) the same 11 were drawn again from the merged code by this test's own path, and only they: the
+ * other 23 are main's recording byte for byte. Each of the 11 differs from main's recording only by the
+ * Productivity Grant's card, its count one higher, and the five word changes just listed; and from the pull
+ * request's only by main's changes above (no Job Grant card, its count one lower; Mandatory GST registration's What
+ * it needs heading; the Incorporating panels' quotes after "Words found on the page:"; Hire first employee's
+ * Alberta source and its "2 sources for other provinces aren't shown."). Redrawn on 2026-10-27 for 14 panels only,
+ * when the maintainer's reads of 2026-10-25 were recorded (tests/maintainer-reads.spec.ts): road 0's Employee/Apprentice
+ * baseline, Sole Prop activation, both GST/HST registrations, both Incorporating panels, Incorporation for
+ * liability/SR&ED, Hire first employee, SR&ED deepening, A separate bank account and Keep your records, and the
+ * apprentice road's Keep your records, GST/HST: the small-supplier test and Hiring your first worker. Each was checked to differ
+ * only in its sources' check lines, 53 in all: each "Checked by a tool on …" in amber, with the words found on the
+ * page under it (42), or "Read on <date>. Who read it wasn't recorded." (11), is now "Read by a person on
+ * 2026-10-25" after the source's authority and place, in grey. No other word, class or panel changed, and both
+ * money lists are unchanged. The only cards allowed to change are the
+ * ones that gained road 0's named start-up cost lines (docs/architecture/future-cockpit.md § 6, "The official
  * fees catalog and start-up cost lines as built"); with those seven lines taken out, they match too.
  */
 import { readFileSync } from "node:fs";

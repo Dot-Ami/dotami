@@ -3,7 +3,9 @@
 Page: `/futures` · Component: `components/front-door/pick-future-page.tsx` (cards:
 `lib/front-door/futures.ts`; words: `lib/front-door/words.ts`)
 
-Last updated: 2026-10-24 (the place and *business / career / both* are held in the window's memory, never in its
+Last updated: 2026-10-27 (the first written future's card counts 8 sources read by a person, the three CRA pages
+the maintainer read in full on 2026-10-25, and the rest checked by a tool only, in amber); 2026-10-24 (the place
+and *business / career / both* are held in the window's memory, never in its
 storage, and kept on the idea of each future picked, so a page loaded afresh says no place was answered, a future
 picked or not); 2026-10-13 (the first written future listed; design: docs/architecture/future-cockpit.md § 1, The way in as built)
 
@@ -93,10 +95,13 @@ from *Your destination*'s **Pick a future →**. Next: the cockpit on the new id
 - One card per future it lists (`LISTED_ROAD_IDS` in `lib/front-door/futures.ts`, in the catalog's
   order; `role="list"`). Today that is two: road 0, *Starting any business in Alberta*, and the first
   written future, *From apprentice to your own shop (Alberta)*. The first written future's sources are
-  all tool checks, so its card's sources line is one amber part, *"n checked by a tool only, not read
-  by a person yet"*; the maintainer decided on 2026-10-13 that it may be listed that way
-  (docs/architecture/future-cockpit.md § 13, *Listing a road nobody has read*). Its **Look inside**
-  opens the cockpit on its own road (`e2e/front-door.spec.ts`).
+  all tool checks, and the maintainer decided on 2026-10-13 that it may be listed that way
+  (docs/architecture/future-cockpit.md § 13, *Listing a road nobody has read*); until 2026-10-27 its
+  card's sources line was one amber part. He read three of its CRA pages in full on 2026-10-25 (GST/HST,
+  the payroll account, records; docs/engines/citations.md, § The maintainer's reads of 2026-10-25), so
+  the line is now *"8 read by a person · n checked by a tool only, not read by a person yet"*, the second
+  part amber (`tests/front-door.spec.ts`). Its **Look inside** opens the cockpit on its own road
+  (`e2e/front-door.spec.ts`).
 - **Not here yet?** under the cards.
 
 ## Controls

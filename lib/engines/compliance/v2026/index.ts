@@ -1,5 +1,5 @@
-export type { ComplianceRule, ComplianceRuleType } from "./types";
-export { complianceRulesV2026 } from "./rules";
+export type { ComplianceRule, ComplianceRuleType, RetiredComplianceRule } from "./types";
+export { complianceRulesV2026, RETIRED_COMPLIANCE_RULES } from "./rules";
 export type { ComplianceRuleId } from "./rules";
 
 import { complianceRulesV2026 } from "./rules";

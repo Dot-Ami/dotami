@@ -41,6 +41,7 @@ import { buildEvaluationProfileFromScenario } from "@/lib/scenarios/evaluation-p
 import { buildScenarioFromIntake } from "@/lib/scenarios/build-scenario-from-intake";
 import { cockpitInput } from "@/lib/cockpit/view";
 
+import { MAINTAINER_READ_PAGES } from "./fixtures/maintainer-reads-2026-10-25";
 import { VERDICT_WORDS as VERDICT } from "./helpers/verdict-words";
 
 /** Every string a words object can produce, filling each function with plain values. */
@@ -303,7 +304,7 @@ describe("Pick a future: every written future, in the order added, as counts", (
 
   it("lists road 0 and the first written future: the maintainer said yes on 2026-10-13 (design § 13)", () => {
     // The first written future's sources are all tool checks; the maintainer decided on 2026-10-13 that it
-    // may be listed, with its card saying so in amber (the test below).
+    // may be listed, with its card saying in amber how many of them no person has read (the test below).
     expect(LISTED_ROAD_IDS).toEqual([generalRoadV2026.id, roadApprenticeToOwnShopAB.id, roadFederalStepsCA.id]);
     expect(listedRoads(roadsV2026, "AB").map((r) => r.id)).toEqual([generalRoadV2026.id, roadApprenticeToOwnShopAB.id]);
     // In the catalog's order, whatever order the list names them in.
@@ -351,20 +352,26 @@ describe("Pick a future: every written future, in the order added, as counts", (
     }
   });
 
-  it("the first written future's card says its sources were checked by a tool, not read by a person, in amber", () => {
+  it("the first written future's card says how many sources a person read, and that the rest were checked by a tool, not read by a person, in amber", () => {
     const apprentice = futureCards(listedRoads(roadsV2026, "AB"), skillItemsV2026).find(
       (c) => c.roadId === roadApprenticeToOwnShopAB.id,
     )!;
     const parts = sourcesLine(apprentice.sources);
-    // One part only, the tool checks, marked check-first (amber on screen): no read of any kind to show.
+    // Until 2026-10-27 one part only, the tool checks. The maintainer read three of its CRA pages in full on 2026-10-25
+    // (tests/maintainer-reads.spec.ts): the GST/HST page under the small-supplier step and its three lines, the
+    // payroll account page under the hiring step and its payroll line, and the records page under the records step
+    // and its where-and-how-long line, 8 sources in grey. The rest, marked check-first (amber on screen), are tool
+    // checks; no read nobody recorded and no model's read.
     expect(parts).toEqual([
+      { text: "8 read by a person", checkFirst: false },
       { text: `${apprentice.sources.tool} checked by a tool only, not read by a person yet`, checkFirst: true },
     ]);
+    expect(apprentice.sources.tool).toBeGreaterThan(0);
     // The same claim lib/engines/shared/citation-check.ts makes for each of these sources.
     const oneSource = roadApprenticeToOwnShopAB.steps[0].citations[0];
     expect(howChecked(oneSource).kind).toBe("tool");
     expect(howCheckedWords(oneSource)).toMatch(/^Checked by a tool on .*Not read by a person yet\.$/);
-    expect(parts[0].text).toMatch(/checked by a tool.*not read by a person yet$/);
+    expect(parts[1].text).toMatch(/checked by a tool.*not read by a person yet$/);
   });
 
   it("the screens count only what Pick a future lists", () => {
@@ -396,9 +403,10 @@ describe("Pick a future: every written future, in the order added, as counts", (
 
   it("how the sources were checked: every citation on the road and its skill items, counted by kind", () => {
     const apprentice = cards.find((c) => c.roadId === roadApprenticeToOwnShopAB.id)!;
-    // Every source of the first written future is a tool check (docs/architecture/future-cockpit.md § 6).
+    // Every source of the first written future is a tool check (docs/architecture/future-cockpit.md § 6); those of the
+    // pages the maintainer read in full on 2026-10-25 carry his read too, which the card counts as a person's.
     expect(apprentice.sources.tool).toBeGreaterThan(0);
-    expect(apprentice.sources.person + apprentice.sources.unrecorded + apprentice.sources.model).toBe(0);
+    expect(apprentice.sources.unrecorded + apprentice.sources.model).toBe(0);
 
     // Counted independently here: the step's own sources, its done-when lines, its fee and name sources,
     // and the skill items it lists.
@@ -413,6 +421,12 @@ describe("Pick a future: every written future, in the order added, as counts", (
       ...skillItemsV2026.filter((item) => listed.has(item.id)).flatMap((item) => [...item.citations, ...(item.howToGetIt ? [item.howToGetIt.citation] : [])]),
     ];
     expect(apprentice.sources.tool).toBe(all.filter((c) => howChecked(c).kind === "tool").length);
+    const read = all.filter((c) => howChecked(c).kind === "person");
+    expect(apprentice.sources.person).toBe(read.length);
+    // A person's read only where the maintainer's reads of 2026-10-25 put one, and every source has a tool check.
+    const hisPages = new Set(MAINTAINER_READ_PAGES.map((p) => p.url));
+    expect(read.filter((c) => !hisPages.has(c.url)).map((c) => c.url)).toEqual([]);
+    expect(all.filter((c) => !c.toolCheck).map((c) => c.url)).toEqual([]);
   });
 
   it("the sources line says each kind it has, and only those", () => {

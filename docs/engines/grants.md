@@ -1,14 +1,15 @@
 # Grants Engine — Reasoning Conventions
 
-Catalog: `lib/engines/grants/v2026/programs.ts` (6 entries as of 2026-10-23) · Priority: **high**
+Catalog: `lib/engines/grants/v2026/programs.ts` (7 entries as of 2026-10-24) · Priority: **high**
 
 ## What it holds
 
-Federal/provincial programs (SR&ED, IRAP, Innovate BC, ON supports, Alberta Innovates, CSBFP)
-with eligibility prose, structure/province/activity arrays, citations, and `estimatedValue`
-strings. The rules engine reads them (`lib/brain/evaluate.ts` `evaluateGrant`); a road's step
-names the ones its panel lists (`engineHints`). Two programs came off on 2026-10-23 (see
-*Retired programs* below).
+Federal/provincial programs (SR&ED, IRAP, Innovate BC, ON supports, Alberta Innovates, CSBFP,
+the Canada-Alberta Productivity Grant) with eligibility prose, structure/province/activity arrays,
+citations, and `estimatedValue` strings. The rules engine reads them (`lib/brain/evaluate.ts`
+`evaluateGrant`); a road's step names the ones its panel lists (`engineHints`). Two programs came
+off on 2026-10-23 (see *Retired programs* below), and the Productivity Grant came on on 2026-10-24
+(see *The Canada-Alberta Productivity Grant*).
 
 ## How it should reason (target)
 
@@ -18,11 +19,69 @@ names the ones its panel lists (`engineHints`). Two programs came off on 2026-10
   CCPC (`structures: ["ccpc"]`): for a sole prop the correct output is not gray — it's
   *"incorporation would unlock IRAP"* (gray→yellow fork). This one behavior is most of the
   product's aggressive-picture promise. Same for SR&ED's rate split (below).
-- Rates that differ by structure are **data, not prose**: SR&ED = 15% non-refundable ITC
-  (sole prop) vs 35% refundable (CCPC). The current entry hides this in
-  `estimatedValue: "15–35%"`. The split is validated seed research and prime fork-surfacing
-  material ("incorporating changes your SR&ED position from 15% non-refundable to 35%
-  refundable").
+- Rates that differ by structure are **data, not prose** (`ratesByStructure`): SR&ED is 15% for
+  a sole proprietor, with or without the GST/HST, and 35% for a CCPC, and the card's fork says so
+  ("A CCPC may access 35% treatment instead of 15%."). **As built since 2026-10-24**
+  (the maintainer's reading list of 2026-10-23, items `grant-sred/*` and
+  `sred-expenditure-limit-6-million`): each rate's `note` quotes the CRA
+  ([`sred-official-words.ts`](../../lib/engines/grants/v2026/sred-official-words.ts)), and
+  `refundable` is set only where a held quote (or a recorded read) says it for that structure, which
+  no rate's does yet, so no card says "refundable" or "non-refundable" in DotAmi's own words. The
+  sole proprietor's said non-refundable until then; the reading list notes that an individual can
+  get part of the credit refunded, and no held quote says how much, so that card says neither and
+  quotes the CRA's “Your business may earn the credit at a basic rate of 15%.” and “Some businesses
+  may also earn a refundable ITC.” The CCPC's said refundable ("35% (refundable)", "35% refundable
+  treatment") on the maintainer's word alone, which no record held, and none of its quotes says
+  it, so it says neither too ([citations.md](citations.md), *Blocked*). The 35% is the CRA's “Some CCPCs may earn an ITC
+  at an enhanced rate of 35% on qualified SR&ED expenditures up to their expenditure limit for the
+  year.”, and the limit, $6 million, is on the card only inside the CRA's *What's new for
+  corporations* line (Income Tax Act s.127(10.2) holds the formula). The tax years it applies from
+  are in no held quote, so no screen or field says them ([citations.md](citations.md), *The reading
+  list's tool checks*). Until then the CCPC's note said "confirm the current limit with an advisor".
+  The four pages added for these quotes are tool checks of 2026-10-23. The maintainer read each of
+  them in full on 2026-10-25, with the program's own page ([citations.md](citations.md), § The
+  maintainer's reads of 2026-10-25), so their sources say *Read by a person on 2026-10-25*.
+
+## The Canada-Alberta Productivity Grant (`grant-capg`)
+
+Added 2026-10-24 on the maintainer's call a-call-1 ("ADD it", on his reading list of 2026-10-23).
+It is the program whose page the Canada-Alberta Job Grant's address now opens
+(https://www.alberta.ca/canada-alberta-productivity-grant); its id is its own, and `grant-cajg` is
+never reused.
+
+- **What it says.** Every amount and rule is a quote the citation holds, each found on the page by
+  the reading list's tool on 2026-10-23: “Must contribute 25% of the total eligible training costs
+  …”, “Contributes the other 75% of the cost to a maximum of $5,000 per employed trainee per fiscal
+  year”, “An employer is eligible for up to a maximum amount of $100,000 per fiscal year”, and “be
+  operational in Alberta for at least one year”. Outside the quotes DotAmi says only the compass's
+  "If" and the page's name: who contributes the 25% and who the 75% isn't in the words held, so no
+  line names it. The card's payoff (`lensAnnotations.tax`) shows the first three, in curly quote
+  marks. The one-year rule is a time, so it is on no card's line (it is in `eligibility`, which no
+  screen draws for a program). It showed only among the words found on the page, under the card's
+  source, as every tool check's quotes do, until the maintainer's read of the page was recorded
+  (2026-10-25): the read wins on screen and that list of words is no longer drawn, so no screen
+  shows the one-year rule now. The screens' no-times check (`e2e/idea-sweep.spec.ts`) lets a quoted
+  time through only while a tool check alone holds it.
+- **How it was checked.** A tool check of 2026-10-23, then the maintainer's read of the page in
+  full on 2026-10-25, which wins on screen: its card says *Read by a person on 2026-10-25* and no
+  longer lists the four quotes, which the tool check keeps in the catalog. A networked
+  `node scripts/check-quotes.mjs` run found them again on 2026-10-26, before merge (rule 4 of
+  [citations.md](citations.md)).
+- **Who sees it.** Every idea in Alberta, at every structure and kind of work, always *check
+  first*. `activityTags: []`: a program whose page names no kind of work shows for every idea in its
+  provinces, and its card's reason names only the place the person picked ("Shown because you
+  selected Alberta.", a provincial compliance rule's own line), never "your … activity match this
+  program", which no answer was checked against (`lib/brain/evaluate.ts` `evaluateGrant`). All
+  three structures are listed because no held word of the page limits it: a program open to a
+  corporation but not listing the sole proprietorship is drawn as a near-miss that "requires
+  incorporation (CCPC)", the Job Grant's mistake. No `ratesByStructure`: a rate there is written on
+  the card as "this may be worth N%", which only fits a tax credit. Road 0's *Hire first employee*
+  names it (`engineHints`), so the map draws it under that card for an idea that hires first; the
+  apprentice road draws no rules and tax cards.
+- **Not yet held** (needs the page's words): its other requirements for employers (the reading list
+  summarises active legal entity status, good standing, WCB coverage for trainees and complying
+  with provincial agreements, without quotes), whether a sole proprietor counts as an employer,
+  what training counts, and who else funds it (`authority` is "Alberta").
 
 ## Classification rule (flagged decision — see audit § Flags #5)
 
@@ -81,5 +140,8 @@ The Job Grant showed on road 0 as a *near-miss* ("Shown because your activity ma
 program requires incorporation (CCPC)"), on every map panel's *Elsewhere on your map* and on
 Mandatory GST registration's *For you on this stage*: its `structures` left out the plain sole
 proprietorship, so `evaluateGrant`'s near-miss fork read it as needing incorporation, which its page
-never said. The Canada-Alberta Productivity Grant is added only after the maintainer reads its
-amounts (not in this change).
+never said. The Canada-Alberta Productivity Grant came on under its own id, `grant-capg`, on
+2026-10-24 (the maintainer's call a-call-1, "ADD it"), saying only the four quotes a tool found on its
+page (*The Canada-Alberta Productivity Grant*, above). The maintainer read that page in full on
+2026-10-25, so its source says *Read by a person on 2026-10-25* ([citations.md](citations.md), § The
+maintainer's reads of 2026-10-25).

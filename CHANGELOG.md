@@ -31,6 +31,29 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   agree confirmed the figure), `tests/launch-secret.spec.ts`, and a desktop test in `e2e-desktop/desktop.spec.ts`.
 
 ### Added
+- **The Canada-Alberta Productivity Grant, for ideas in Alberta** (the maintainer's call a-call-1 on his reading
+  list of 2026-10-23: "ADD it"). The program whose page the Canada-Alberta Job Grant's old address now opens is in
+  the programs catalog under its own id, `grant-capg`; the Job Grant's id is never reused. Its card says only what
+  Alberta's page says, in quote marks: “Must contribute 25% of the total eligible training costs …”, “Contributes
+  the other 75% of the cost to a maximum of $5,000 per employed trainee per fiscal year” and “An employer is
+  eligible for up to a maximum amount of $100,000 per fiscal year” (who contributes which share isn't in the words
+  DotAmi holds, so no line names it). Outside the quotes it says only "If training employees is on the venture's
+  path" and the page's name. The page's “be operational in Alberta for at least one year” is a time, so it is not
+  on the card's line. The reading list's matcher found the four quotes on the page on 2026-10-23, kept as a tool
+  check (a networked `node scripts/check-quotes.mjs` run should find them again), and the maintainer read the page
+  in full on 2026-10-25, so the card's source says "Read by a person on 2026-10-25"; a read wins on screen, so the
+  words the tool found, the one-year rule among them, are not listed under it (see *Changed*). It shows for every idea in Alberta, at every structure and kind of work (the page's words DotAmi
+  holds name neither), as a grant to check first, never as needing incorporation, and its reason says only "Shown
+  because you selected Alberta." (a provincial program that lists no kind of work no longer says "your venture
+  activity match this program", `lib/brain/evaluate.ts` `evaluateGrant`). Road 0's *Hire first employee* names it,
+  so for an idea that hires first the map draws it under that card; road 0's other panels list it under
+  *Elsewhere on your map*. It is not on the apprentice road, which draws no rules and tax cards, and not outside
+  Alberta. What the page asks of employers beyond that, whether a sole proprietor counts, and who else funds it
+  aren't in the words DotAmi holds, so the card says none of them ([docs/engines/grants.md](docs/engines/grants.md)).
+  Tests: `tests/productivity-grant.spec.ts` (on the old code there was no such entry), `tests/road-map.spec.ts`
+  (the one card the map gained), `tests/cockpit-screen.spec.ts`; road 0's 11 panels in
+  `tests/fixtures/official-fees/panels-before.json` are redrawn for it, and for five map stages' corrections
+  (*Fixed*), and no other panel changes.
 - **About this job** ([14i], task 25h; [docs/ui-spec/cockpit/about-this-job.md](docs/ui-spec/cockpit/about-this-job.md)).
   Once you've picked the job closest to your work, the goal bar's *Look closer* menu has *About this job*, which
   opens in the right-hand panel (on a phone, a sheet over the road). Four rows, always in this order: the
@@ -290,8 +313,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   no screen draws today: the card's panel shows its tax line and sources). It now says the amounts Income
   Tax Regulations s.7307 prescribe, each for 30 days: $350 of interest for a car acquired after 2023 ($300 for one
   acquired after 2000 and before 2024), and $1,100 plus sales tax for a lease entered into after 2024, with s.7307 as a new source whose words a
-  tool found on the consolidated Regulations' page on 2026-10-23 (not read by a person yet), listed with its
-  words in the card's panel.
+  tool found on the consolidated Regulations' page on 2026-10-23 (not read by a person then), listed with its
+  words in the card's panel; since the maintainer's read of the page in full on 2026-10-25 it says "Read by a
+  person on 2026-10-25", and a read wins on screen, so those words are no longer listed under it (see *Changed*).
 - **The Canada Small Business Financing Program says what ISED's page says** (items `grant-csbfp/equipment-limit`
   and `grant-csbfp/365-days`). "Up to $500K specifically for equipment" became ISED's own words, quoted: up to
   $1,000,000 in term loans for any one borrower, of which no more than $500,000 for leasehold improvements and
@@ -302,7 +326,8 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   The card's tax line, shown as its payoff, and the entry's eligibility text keep only ISED's words: what they said
   in DotAmi's own words ("may make financing available without revenue history", "Loan interest and fees may be
   deductible; the loan itself is not income", "under the revenue ceiling") no citation held. ISED's loans page is
-  a new source, checked by a tool on 2026-10-23 (not read by a person yet).
+  a new source, checked by a tool on 2026-10-23 (not read by a person then); since the maintainer's read of the
+  page in full on 2026-10-25 it says "Read by a person on 2026-10-25" (see *Changed*).
 - **About this job says "as published" beside two wage levels that are the same** (gap 15). Ontario bakers'
   *low $17.60 · median $17.60* looked like a mistake; the line now ends *· low and median the same, as published*.
 - **A place said in French is read as a place, the way one said in English is** (the maintainer's call a-call-14,
@@ -451,8 +476,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   and the person's own province's, with the existing line *"N sources for other provinces aren't shown."*, in the
   step panel, Your plan, the Export and Pick a future's source counts (`lib/engines/roads/v2026/index.ts`
   `citationsForPlace`). *Hire first employee* now cites Alberta's own *Employment standards* page, checked by a
-  tool on 2026-10-23 and labelled so until a person reads it (it is on the reading list in
-  docs/engines/citations.md). The province swap's `PLACE_GAPS` list is empty: the test passes with no known gap.
+  tool on 2026-10-23 and labelled so until a person read it; since the maintainer's read of the page in full on
+  2026-10-25 it says "Read by a person on 2026-10-25" (see *Changed*). The province swap's `PLACE_GAPS` list
+  is empty: the test passes with no known gap.
   The same goes for what rests on a page (review of the pull request): on a road written for Alberta opened from
   another province, such as an Alberta idea moved to Ontario, the cockpit and Your plan still listed Alberta's
   name-registry pages, the WCB-Alberta *done when* line and the Alberta name fee. Now a step's *done when* lines,
@@ -538,8 +564,185 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   answer does; the app was not changed.
 - **The quality report counts step 3's own silent fallbacks on their way in** (tests and report only). A road
   written for the job listed after another on step 3 was counted among the ideas but on neither way in.
+- **The SR&ED card says what the CRA says about its rates** (the maintainer's reading list of 2026-10-23). For a
+  sole proprietor it said the credit "may be worth 15% (non-refundable)", with "Unincorporated claimants earn the
+  basic 15% non-refundable ITC." (with the GST/HST, "GST registration does not change the SR&ED rate —
+  incorporation does."). The reading list notes that an individual can get part of the credit refunded, and no
+  held quote says how much, so the card now says neither and quotes the CRA: “Your business may earn the credit at
+  a basic rate of 15%.” “Some businesses may also earn a refundable ITC.” The CCPC side, on a corporation's card
+  and in a sole proprietor's *Incorporating (CCPC) changes this*, said "up to the expenditure limit — confirm the
+  current limit with an advisor" and gave no limit. It now quotes the CRA's “Some CCPCs may earn an ITC at an
+  enhanced rate of 35% on qualified SR&ED expenditures up to their expenditure limit for the year.” and its *What's
+  new for corporations*: “The expenditure limit on which the SR&ED enhanced 35% tax credit can be earned is
+  increased from the previously announced $4.5 million to $6 million.” The tax years the $6 million applies from
+  are in no held quote, so no screen says them. Nor does either side say "refundable" in DotAmi's own words any
+  more: the corporation's card said "this may be worth 35% (refundable)" and the fork "35% refundable treatment",
+  on the maintainer's word alone, which no record held, and none of the card's quotes says it; they now say
+  "35%" and "35% treatment". The entry's eligibility, which no card draws, says the enhanced
+  rate is for some CCPCs, up to their expenditure limit, where it said "subject to taxable income and capital
+  limits". The card gains four sources, each a tool check of 2026-10-23 holding the words the reading list's
+  matcher found there that day, so each said "Checked by a tool" in amber (a networked `node
+  scripts/check-quotes.mjs` run should find them again): the CRA's page on the credit's rates, its *How certain
+  relationships affect the small business deduction and SR&ED investment tax credits*, *What's new for
+  corporations*, and Income Tax Act s.127(10.2), its formula only. Since the maintainer's read of each page in
+  full on 2026-10-25, each says "Read by a person on 2026-10-25" (see *Changed*). Tests:
+  `tests/reading-list-corrections.spec.ts` §§ 2 and 3, `tests/brain-evaluate.spec.ts` (the golden scenario's sole
+  proprietor card said "non-refundable", and its fork "refundable", which that test pinned until then; it now pins
+  the CRA's words).
+- **The Alberta sales tax card says only what the CRA's table lists for Alberta** (the maintainer's reading list
+  of 2026-10-23). *Alberta — no provincial sales tax* said "If operating only in Alberta, GST (not HST) applies —
+  simplifying provincial sales tax compliance": "simplifying" is a judgement no cited page makes, and the CRA's
+  table lists rates by province, not by where a business operates. It now says "The CRA's table of GST/HST rates
+  lists Alberta at 5% GST, with no provincial sales tax." That is still DotAmi's wording of the table's row, not
+  a quote, and the catalog says so beside it: the table isn't in the page's HTML, so no tool can find its row,
+  and the one 5% sentence a tool found there is a worked example about Manitoba, never recorded as the rate.
+  *Ontario HST (13%)* cites the same page and has no tool check for the same reason (its 13% sentence there is a
+  furniture store's sale). Test: `tests/reading-list-corrections.spec.ts` § 5.
+- **The home office card's caution says what the CRA's page says** (the maintainer's reading list of 2026-10-23).
+  Its box said "Workspace percentages well above typical floor-area math draw review; the exclusive-use test is
+  where claims fail" and "Base the claim on measured floor area, document exclusive business use, and keep the
+  calculation with your records", DotAmi's own words; as the maintainer noted, floor area is one reasonable basis,
+  not the only one, and using the space only for the business is asked only when it isn't the principal place of
+  business. It now quotes the CRA's *Business-use-of-home expenses*: “You can deduct expenses for the business use
+  of a workspace in your home” if “it is your principal place of business”, or if “you use the space only to earn
+  your business income, and you use it on a regular and ongoing basis to meet your clients, customers, or
+  patients”; and the same page, on the amount: it “cannot be more than your net income from the business before
+  you deduct these expenses”. The four are the quotes the home office write-off's citation of the page holds from its tool check of
+  2026-10-13, which the risk read's citation now holds too. Nothing on how to work out the business part: no held
+  quote gives the page's sentence on it. Test: `tests/reading-list-corrections.spec.ts` § 6.
+- **The 100% first-year deduction's box keeps only what the maintainer found matches the guide.** On the Class 50
+  card it said "… depends on acquisition and available-for-use dates; getting the year wrong misstates income and
+  unwinds on review" and "Confirm eligibility and the available-for-use date with an accountant before filing —
+  keep purchase and deployment records". The two clauses no source held came out; the rest stays. Its citation,
+  the CRA's Guide T4002 chapter 4, now also keeps the guide's sentence on the dates ("Under proposed changes, if
+  property included in Class 44, 46, or 50 is acquired and becomes available for use after April 15, 2024, the
+  following factors apply:"), found on the live page on 2026-10-23 by the reading list's matcher (a networked
+  `node scripts/check-quotes.mjs` run should find it again). It ends on a colon before the factors, which DotAmi
+  doesn't hold, so the box doesn't show it. Test: `tests/reading-list-corrections.spec.ts` §§ 2 and 6.
+- **The anti-avoidance box on the Holding company and Family trust cards is the Act's own words.** It said entering
+  those rungs early "reads as structure-for-tax's-sake — exactly what the General Anti-Avoidance Rule exists to
+  unwind" and "Cross them with professional advice tied to a genuine business purpose, documented at the time";
+  s.245 asks for neither (the maintainer's reading list). It now says "Income Tax Act s.245, in its own words: “This
+  section of the Act contains the general anti-avoidance rule”; “applies to deny the tax benefit of avoidance
+  transactions that result directly or indirectly either in a misuse of provisions of the Act”; “an abuse having
+  regard to those provisions read as a whole”." and "The same section: “while not preventing taxpayers from
+  obtaining tax benefits contemplated by Parliament”.", listed with nothing of DotAmi's between them: four of
+  the five phrases docs/glossary.md's GAAR entry holds from `node scripts/check-quotes.mjs` on 2026-10-12. Both
+  cards now list s.245 among their sources ("Read on 2026-07-02. Who read it wasn't recorded."; since the
+  maintainer's read of the page in full on 2026-10-25 it says "Read by a person on 2026-10-25", see *Changed*),
+  because a risk box draws no sources of its own. Two things on the same cards are unchanged, as they aren't entries the
+  reading list checked: the fork label above the box, "… needs a real business purpose first", and the box's
+  "Professional required" heading. Both are open questions for the maintainer
+  ([docs/engines/citations.md](docs/engines/citations.md), § Outside the list). Test:
+  `tests/reading-list-corrections.spec.ts` § 6.
+- **The loan program's box says only ISED's rule on security** (the maintainer's reading list, and his answer of
+  2026-10-24: keep the box). The *Canada Small Business Financing Program* card's "Professional required" box said
+  valuing a new company from equipment it means to buy and borrowing against it "is circular and can read as
+  collateral misrepresentation to a lender", and that the financed equipment is the collateral "at the lesser of
+  purchase price or appraised value": a different rule from ISED's, on no page DotAmi cites. It now says
+  “For real property and equipment, security must be taken on the assets financed.” and "ISED's words, from its
+  page on loans under this program." Its citation is now that page, whose sentence the reading list's matcher
+  found on 2026-10-23 (a networked `node scripts/check-quotes.mjs` run should find it again), in place of the
+  program's hub. The card's own sources list that page too (#208's source, merged in), so the page the box quotes
+  is one click away under the card. The box keeps its "Professional required" heading, which ISED's quoted rule
+  doesn't state: an open question for the maintainer (docs/engines/citations.md, § Outside the list). Tests:
+  `tests/reading-list-corrections.spec.ts` § 6, `tests/retired-entries.spec.ts` § 2.
+- **Five map stages give their pages' own words where they said a number or a deadline in DotAmi's**
+  (the maintainer's reading list of 2026-10-23; each step panel's *More about this stage*, on road 0, the
+  federal road, the playbook export and the readout).
+  - *Sole Prop activation* said "Track gross revenue against the CRA's two $30,000 small-supplier tests: a
+    single calendar quarter, and the previous four (or fewer) consecutive calendar quarters." The CRA counts
+    neither all of "gross revenue" nor only one business's, and the stage cited neither page that sets the
+    $30,000. The note now quotes the CRA: “If you are a sole proprietor, include the total amount of all
+    revenues (before expenses) from your worldwide taxable supplies from all your businesses and those of
+    your associates …”, and, on what is left out, “do not include revenues from supplies of financial
+    services, sales of capital property” “and goodwill from the sale of a business.”, pointing to Mandatory
+    GST registration for the tests in full. The stage now cites the CRA's *When to register for and start
+    charging the GST/HST* (Sources for this stage · 3), with the tool check of 2026-10-12 road 0 and the
+    GST/HST stages already hold for those words, so it said "Checked by a tool" in amber; since the
+    maintainer's read of the page in full on 2026-10-25 it says "Read by a person on 2026-10-25" (see
+    *Changed*).
+  - *Incorporating*'s business-limit box said "$500,000" on "CRA T2 guide business limit for qualifying
+    CCPC active business income.", which read as automatic. It now says "Up to $500,000", on the guide's
+    words: corporations that were CCPCs “throughout the tax year may be able to claim the small business
+    deduction”, and “The maximum allowable business limit for a corporation that is not associated with
+    any other corporation is $500,000.”
+  - *Hire first employee*'s payroll account timing said "Before first remittance due date", on "CRA
+    payroll registration guidance." It now says “before the first remittance due date”, on the CRA's two
+    sentences: “You have to register for a payroll account before the first remittance due date.” and
+    when that date is, “the 15th day of the month following the month in which you began withholding
+    deductions from your employee's pay, unless the CRA tells you to remit using a different frequency.”
+  - *Incorporation for liability/SR&ED* and *SR&ED deepening* each said 35% on a paraphrase. Both now quote
+    the CRA: “Some CCPCs may earn an ITC at an enhanced rate of 35% on qualified SR&ED expenditures up to
+    their expenditure limit for the year.” SR&ED deepening's sources, about preparing a claim and the
+    program's terms, held no 35%, so it gains that page as a third source; its tax impact said the enhanced
+    rates were "subject to taxable income limits", which no held quote says, and now says the enhanced rate
+    is for some CCPCs, up to their expenditure limit for the year. The maintainer asked for the SR&ED
+    glossary's line stating 35%; no tool has found one yet (his answer of 2026-10-24: quote this page, as
+    the other stage does).
+
+  The words new to a stage were found on their pages on 2026-10-23 by the reading list's matcher, kept as a
+  tool check of that day on the stage the list checked (a networked `node scripts/check-quotes.mjs` run
+  should find them again); the stages' other sources kept what they had then: a read of 2026-05-01, which
+  still showed, or a tool check in amber (SR&ED deepening's two moved pages, of 2026-10-13, and Hire first
+  employee's Alberta *Employment standards*, of 2026-10-23).
+  Since the maintainer's reads of 2026-10-25 every source of these five stages, old and new, says "Read by a
+  person on 2026-10-25" (see *Changed*). Road 0's line on what counts toward the tests and Sole Prop
+  activation's note now read one copy of the CRA's words (`gst-official-words.ts`). Tests:
+  `tests/reading-list-corrections.spec.ts` §§ 2–4 and 7, `tests/engine-integrity.spec.ts` (a stage's dollar
+  figure must come from a page that stage cites), `tests/brain-incorporation.spec.ts`, `e2e/app.spec.ts` (Sole
+  Prop activation's three sources: the new one in amber until 2026-10-27, each read by a person since).
 
 ### Changed
+- **31 source pages now say "Read by a person on 2026-10-25"** (the maintainer's reads). On 2026-10-25 the
+  maintainer read 31 of the pages DotAmi cites in full, and ticked each one on his reading list; on 2026-10-24 he
+  had decided that his reads made with an AI model's help count as a person's, for the pages he checked himself.
+  Every place DotAmi cites one of those pages (136 sources: the map's stages on the three roads, the program,
+  write-off, rule, structure and risk cards, the GST/HST registration requirement and the records line under
+  Delete) now says "Read by a person on 2026-10-25", in grey, where it said "Checked by a tool on …" in amber or
+  "Read on <date>. Who read it wasn't recorded." Among them are the CRA's pages on GST/HST registration, payroll,
+  sole proprietorships, corporations, keeping records and SR&ED, the T2 and T4002 guides, the Income Tax Act's
+  s.127, s.245 and s.67.3, Income Tax Regulations s.7307, the Canada-Alberta Productivity Grant's page, ISED's two
+  loan program pages, and the employment-standards pages of Alberta, British Columbia and Ontario. A read wins on
+  screen, so the words a tool found on those pages are no longer listed under them; the tool checks stay in the
+  catalogs and the readout. On *Pick a future*, the apprentice road's card now counts the sources a person read.
+  Nothing else changed: no title, address, quote or tool check. His reads don't replace the networked
+  `node scripts/check-quotes.mjs` run the tool checks of 2026-10-23 still wait for, and they don't record what he
+  found in the CRA's table of GST/HST rates, so the Alberta and Ontario sales-tax lines are unchanged
+  ([docs/engines/citations.md](docs/engines/citations.md), § The maintainer's reads of 2026-10-25). Test:
+  `tests/maintainer-reads.spec.ts`.
+- **Ontario food premises licensing is off the map** (the maintainer's reading list of 2026-10-23). The rule
+  cited Ontario Regulation 562/90 (Food Premises), which is revoked, and said food service and certain
+  hospitality ventures "require public health and municipal licensing in Ontario", more than that regulation
+  said. The regulation in force now hasn't been read, so nothing replaces the rule yet: an Ontario idea with
+  *Food service* or *Hospitality* no longer shows the card on its map, in the intake's preview, the readout or
+  the playbook. Its id, `compliance-food-premises-on`, is kept with the reason in `RETIRED_COMPLIANCE_RULES`
+  and never used again ([docs/engines/compliance.md](docs/engines/compliance.md), § Retired rules); an Ontario
+  food rule comes back only under a new id, citing the regulation in force and quoting what it requires.
+  Test: `tests/retired-entries.spec.ts` § 1.
+- **The repeated-losses caution is off the Hobby vs. business card** (the maintainer's reading list of
+  2026-10-23). Its box said "Year-after-year losses against employment income invite the
+  reasonable-expectation-of-profit question; reclassification limits expense claims retroactively" and "Run the
+  venture business-like: separate accounts, a revenue plan, and records that show profit intent — not just
+  deductions", and its one source, the CRA's *Setting up your business*, supports neither. DotAmi holds no quote
+  from a page that does, so nothing is left to say: the *Hobby vs. business income test* card still shows, with
+  no risk box, and its colour doesn't change. The id, `risk-hobby-reclassification`, is kept with the reason in
+  `RETIRED_RISK_ENTRIES` and never used again: a read on the same subject would come back under a new id
+  ([docs/brain/risk-calculator.md](docs/brain/risk-calculator.md), § Retired risk reads). The card's own
+  description and line, on a reasonable expectation of profit and business-like conduct, cite the same page and
+  are unchanged: the card isn't an entry the reading list checked, so it is an open question for the maintainer
+  ([docs/engines/citations.md](docs/engines/citations.md), § Outside the list). Test:
+  `tests/retired-entries.spec.ts` §§ 2 and 3.
+- **The Delete menu's records line keeps the CRA's own words on the six years.** Its citation, the CRA's *Where
+  to keep your records, for how long …*, now also holds "Generally, you must keep all required records and
+  supporting documents for a period of six years from the end of the last tax year they relate to." and "In
+  some situations, you must retain your records for a different period of time.", which the maintainer's
+  reading list found on the live page on 2026-10-23 with the repo's matcher (a networked `node
+  scripts/check-quotes.mjs` run should find them again). They are the same two sentences every road's *Keep
+  your records from day one* step holds. The line on screen doesn't change: it already said "generally", and
+  its read of 2026-10-08 outranks a tool check, so it still said "(Read on 2026-10-08. Who read it wasn't
+  recorded.)"; since the maintainer's read of the page in full on 2026-10-25 it says "(Read by a person on
+  2026-10-25)" (see *Changed*). Test: `tests/reading-list-corrections.spec.ts` §§ 2 and 5.
 - **"What's closest to your work?" lists whole-word matches first** (the maintainer's call a-call-11,
   2026-10-23). Inside each group of jobs, the jobs with a government title that has, word for word, as many of
   your words as the group counts now come first, under a heading that says so in the group's count (*One of their
@@ -560,8 +763,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   Canada-Alberta Productivity Grant) are gone from the programs catalog and from every screen. The Job Grant
   showed on road 0's map panels as a near-miss saying it "requires incorporation (CCPC)", which its page never
   said; each panel's *Elsewhere on your map* count is one lower. The reason and the day each page was read are
-  kept (`RETIRED_GRANT_PROGRAMS`, docs/engines/grants.md *Retired programs*). The Productivity Grant is added
-  only after the maintainer reads its amounts.
+  kept (`RETIRED_GRANT_PROGRAMS`, docs/engines/grants.md *Retired programs*). The Productivity Grant is in the
+  catalog under its own id, `grant-capg` (*Added*), saying only its page's quoted words; the maintainer read that
+  page in full on 2026-10-25, so its source says "Read by a person on 2026-10-25" (see *Changed*).
 - **About this job in place for a job with no road, your region's Change, and the batch 4 calls** (tasks 28c and
   28h, the maintainer's calls of 2026-10-22). On Pick a future and at the end of the typed way, a job with no road
   written for it now shows *About this job*'s four rows right inside step 3, opened by "Here is what the government
@@ -636,6 +840,12 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   research kit's sketch of *About this job* ([docs/architecture/research-kit.md](docs/architecture/research-kit.md)
   § 4.2) now follows the same picks (no business counts yet, general pages only, no job in any web address).
   Docs only: nothing DotAmi keeps, sends, ships or asks changes yet.
+- **The CRA's "generally" six years in every doc** (the maintainer's reading list of 2026-10-23). Where the
+  design docs gave the CRA's six years for keeping records without its "generally"
+  ([figures-privacy-review.md](docs/architecture/figures-privacy-review.md),
+  [expense-records.md](docs/architecture/expense-records.md) and two lines of
+  [other-ways-to-build.md](docs/architecture/other-ways-to-build.md)), they now give it; every screen already
+  did, and `tests/reading-list-corrections.spec.ts` fails if the code or those docs drop it again.
 
 ## [0.4.1] — 2026-10-20
 

@@ -118,13 +118,19 @@ test("door 1: four answers, each with its receipt and focus moving on, then the 
   // Road 0 and the first written future, in the order written (the maintainer's yes of 2026-10-13, design § 13).
   const cards = page.getByRole("list", { name: "Written futures" }).getByRole("listitem");
   await expect(cards.getByRole("heading", { level: 2 })).toHaveText([GENERAL, APPRENTICE]);
-  // The first written future's card says plainly, in amber, that no person has read its sources.
+  // The first written future's card says plainly, in amber, how many of its sources no person has read, and, since
+  // 2026-10-27, in grey, the 8 the maintainer read (three CRA pages he read in full on 2026-10-25).
   const apprentice = cards.nth(1);
   await expect(apprentice).toContainText("A career and a business");
-  const toolChecked = apprentice.getByText(/^\d+ checked by a tool only, not read by a person yet$/);
+  // Its sources line has two parts, the second after " · " (components/front-door/future-card.tsx).
+  const sourceParts = apprentice.getByText(/^Sources: /).locator("span");
+  await expect(sourceParts).toHaveText(["8 read by a person", /^\s*·\s*\d+ checked by a tool only, not read by a person yet$/]);
+  const toolChecked = sourceParts.nth(1);
   await expect(toolChecked).toBeVisible();
   await expect(toolChecked).toHaveClass(/text-amber/);
-  await expect(apprentice).not.toContainText(/\d+ read by a person/);
+  const readByAPerson = sourceParts.nth(0);
+  await expect(readByAPerson).toBeVisible();
+  await expect(readByAPerson).not.toHaveClass(/text-amber/);
   await expect(apprentice).not.toContainText("wasn't recorded");
   const general = cards.first();
   await expect(general).toContainText("A business");

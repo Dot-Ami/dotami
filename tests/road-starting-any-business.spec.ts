@@ -6,6 +6,8 @@ import { complianceCatalogV2026 } from "@/lib/engines/compliance/v2026";
 import { roadStartingAnyBusinessAB, skillItemsV2026, type RoadStep } from "@/lib/engines/roads/v2026";
 import type { EngineCitation } from "@/lib/engines/shared/types";
 
+import { MAINTAINER_READ_DAY, MAINTAINER_READ_PAGES } from "./fixtures/maintainer-reads-2026-10-25";
+
 /**
  * Road 0's content (docs/architecture/future-cockpit.md § 6, "Road 0's content as built"): about three
  * cited done-when lines on each of today's ten steps, and the three "before you open" steps the design
@@ -241,7 +243,7 @@ describe("road 0's legal requirements come from the compliance catalog, where it
   });
 });
 
-describe("every new source is a tool check made on 2026-10-12 (the records step's on 2026-10-14), and none claims a read", () => {
+describe("every new source is a tool check made on 2026-10-12 (the records step's on 2026-10-14), and only the maintainer's reads claim a read", () => {
   const all = newCitations();
 
   it("each has quotes of three words or more, found by the tool that day, on an https page", () => {
@@ -260,17 +262,28 @@ describe("every new source is a tool check made on 2026-10-12 (the records step'
     }
   });
 
-  it("none has a read date or a reader, so no card can say a person read these pages", () => {
+  it("only the pages the maintainer read in full have a read date and a reader, so no card says a person read the others", () => {
+    // Until 2026-10-27 none had a read date or a reader. The maintainer read some of these pages in full on 2026-10-25
+    // (tests/maintainer-reads.spec.ts): every citation of those has his read, and no other has any.
+    const hisPages = new Set(MAINTAINER_READ_PAGES.map((p) => p.url));
     for (const { where, citation } of all) {
-      expect(citation.lastVerified, where).toBeUndefined();
-      expect(citation.readBy, where).toBeUndefined();
+      if (hisPages.has(citation.url)) {
+        expect(citation.lastVerified, where).toBe(MAINTAINER_READ_DAY);
+        expect(citation.readBy, where).toBe("person");
+      } else {
+        expect(citation.lastVerified, where).toBeUndefined();
+        expect(citation.readBy, where).toBeUndefined();
+      }
     }
-    // A tool check is not a read: the road's date stays the newest read among the map stages' sources.
-    // Some stage sources are tool checks too (the CRA's small-supplier page, since #145), so they have no
-    // read date and are skipped here; sort() would otherwise put their undefined last.
+    expect(all.filter(({ citation }) => hisPages.has(citation.url)).length).toBeGreaterThan(0);
+    expect(all.filter(({ citation }) => !hisPages.has(citation.url)).length).toBeGreaterThan(0);
+    // A tool check is not a read: the road's date is the newest read among its sources, which is the map stages'
+    // newest (the maintainer's of 2026-10-25 since 2026-10-27). A stage source with a tool check only (the CRA's
+    // line 10100 page, since its old page moved on 2026-10-13) has no read date and is skipped here; sort() would
+    // otherwise put its undefined last. The CRA's small-supplier page was one from #145 until his read was recorded.
     const newestStageRead = cfeNodesV2026
-      // Read as the shared citation type: a stage whose sources are all tool checks (since 2026-10-13,
-      // when its pages moved) has no lastVerified field in its own inferred type.
+      // Read as the shared citation type: a source with a tool check only has no lastVerified field in its
+      // own inferred type.
       .flatMap((n) => n.citations.map((c: EngineCitation) => c.lastVerified))
       .filter((d): d is string => d !== undefined)
       .sort()

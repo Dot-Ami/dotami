@@ -458,10 +458,11 @@ describe("road 0, Starting any business in Alberta, is today's ten-step map, plu
   });
 
   it("its read date is the newest read date of any source in it", () => {
-    // A source checked only by a tool has no read date (the CRA's GST/HST page since 2026-10-12), and
-    // a tool check is not a read, so only read dates count.
+    // A source checked only by a tool has no read date (the CRA's GST/HST page from 2026-10-12 until the
+    // maintainer's read of 2026-10-25 was recorded; the CRA's line 10100 page now), and a tool check is not
+    // a read, so only read dates count.
     const newest = cfeNodesV2026
-      // As the shared citation type: a stage whose sources are all tool checks has no lastVerified field.
+      // As the shared citation type: a source with a tool check only has no lastVerified field.
       .flatMap((n) => n.citations.map((c: EngineCitation) => c.lastVerified))
       .filter((d): d is string => d !== undefined)
       .sort()

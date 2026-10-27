@@ -52,7 +52,7 @@ says where it is going.
   `lib/front-door/receipts.ts`; drawn on the server, which reads the newest destination and agreed income
   so they count as answered, `lib/front-door/kept.ts`) → `/futures` (*Pick a future*: the roads in
   `LISTED_ROAD_IDS` (`lib/front-door/futures.ts`; road 0 and, since the maintainer's yes of 2026-10-13, the
-  first written future, whose card says in amber that no person has read its sources, design § 13), in the order added, as counts; a pick saves an idea on
+  first written future, whose card says in amber how many of its sources no person has read (the 8 on the three CRA pages the maintainer read on 2026-10-25 say so in grey), design § 13), in the order added, as counts; a pick saves an idea on
   that road and opens the cockpit); *I already have an idea*, the
   free-text box; *Show me an example first* → `/example/mara` (since 2026-10-13: Mara, an invented person on
   the first written future, her answers as data in `lib/examples/mara.ts`, drawn read-only by the cockpit
@@ -125,7 +125,7 @@ says where it is going.
   restore) — `User` (single stub user, no
   auth) · `PersonStatement` (the person's words, dated; the sentence typed on the front door is one,
   linked to the idea it was typed for by `ventureId`, written once per sentence typed by the intake's
-  first save of an idea (the tab marks it done after, `lib/journey/first-save.ts`), kept, tied to no
+  first save of an idea (the journey held in the window's memory marks it done after, `lib/journey/first-save.ts`), kept, tied to no
   idea, when the idea is deleted; `kind: "destination"` marks the answer to "where do you want to be", the
   newest winning) · `Venture` (with `goals`, the intake's goal chips as they stood when
   the map opened, shown back and read by no rule; and, for the future cockpit, `roadId` (empty = today's
@@ -285,3 +285,7 @@ usage reports; never call `next` or `prisma` directly in a `package.json` script
   be, the cockpit's job, regions and overlays, the road data model and its storage, and the
   maintainer's six decisions of 2026-10-11): `docs/architecture/future-cockpit.md`. Read it before
   changing the front door, the intake, the cockpit, *Your ideas* or the CFE map.
+- Phase 3's first story, cards in the official pages' own words (the maintainer's calls of 2026-10-25):
+  `docs/architecture/cards-in-official-words.md`.
+- Working from a cloud session (what it can't run, the workarounds, what waits for a normal session):
+  `docs/verification/cloud-sessions.md`.

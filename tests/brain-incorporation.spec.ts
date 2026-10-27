@@ -75,7 +75,10 @@ describe("Incorporating — no amount DotAmi chose lights it", () => {
     expect(toggle.options.map((o) => o.label)).toEqual(["When you decide", "Liability / SR&ED"]);
   });
 
-  it("keeps only cited facts in its detail: the CRA corporation page and the T2 guide's $500,000 business limit", () => {
+  // The maintainer's reading list (2026-10-23): the $500,000 is a maximum, not automatic. Until 2026-10-24 the value
+  // was "$500,000" and the basis a paraphrase ("CRA T2 guide business limit for qualifying CCPC active business
+  // income."); both quotes are the T2 guide's, found on its page by the reading list's tool that day.
+  it("keeps only cited facts in its detail: the CRA corporation page and the T2 guide's business limit, at most $500,000, in its words", () => {
     const node = cfeCatalogV2026.nodes.find((n) => n.id === INCORPORATING)!;
     expect(node.citations.map((c) => c.url)).toEqual([
       "https://www.canada.ca/en/revenue-agency/services/tax/businesses/small-businesses-self-employed-income/setting-your-business/corporation.html",
@@ -84,8 +87,9 @@ describe("Incorporating — no amount DotAmi chose lights it", () => {
     expect(node.financialImpact.estimates).toEqual([
       {
         label: "Federal SBD business limit",
-        value: "$500,000",
-        basis: "CRA T2 guide business limit for qualifying CCPC active business income.",
+        value: "Up to $500,000",
+        basis:
+          "The CRA's T2 guide says corporations that were Canadian-controlled private corporations (CCPCs) “throughout the tax year may be able to claim the small business deduction”, and: “The maximum allowable business limit for a corporation that is not associated with any other corporation is $500,000.”",
       },
     ]);
   });

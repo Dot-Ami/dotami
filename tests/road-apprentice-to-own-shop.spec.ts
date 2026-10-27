@@ -14,13 +14,15 @@ import {
 import type { EngineCitation } from "@/lib/engines/shared/types";
 import { evaluateRoad, roadReceipt } from "@/lib/roads";
 
+import { MAINTAINER_READ_DAY, MAINTAINER_READ_PAGES } from "./fixtures/maintainer-reads-2026-10-25";
 import { input } from "./helpers/road-to-evaluate";
 
 /**
  * The first written future (decision 1 of 2026-10-11): "From apprentice to your own shop (Alberta)".
  * Its content was written and fact-checked from Alberta's, the CRA's and WCB-Alberta's pages; in the
- * catalog every source is a tool check (option B, docs/engines/citations.md), so these tests hold it
- * to exactly that: found words, never a read nobody did.
+ * catalog every source has a tool check (option B, docs/engines/citations.md), and only the three CRA pages
+ * the maintainer read in full on 2026-10-25 carry a read, so these tests hold it to exactly that: found
+ * words, and no read but his.
  */
 const road = roadApprenticeToOwnShopAB;
 const step = (id: string): RoadStep => {
@@ -129,7 +131,7 @@ describe("the fork after Certified has two sides", () => {
   });
 });
 
-describe("every source is a tool check with its quotes, and none claims a read", () => {
+describe("every source is a tool check with its quotes, and only the maintainer's reads claim a read", () => {
   const all = citationsOf(road);
 
   it("every step, done-when line, fee and sourced cost line has one", () => {
@@ -160,13 +162,26 @@ describe("every source is a tool check with its quotes, and none claims a read",
     }
   });
 
-  it("none records a read, so no card can say a person (or anyone) read these pages", () => {
+  it("only the pages the maintainer read in full record a read, so no card says anyone read the others", () => {
+    // Until 2026-10-27 none recorded a read, and the road carried no read date. The maintainer read three of its CRA
+    // pages in full on 2026-10-25 (tests/maintainer-reads.spec.ts): the GST/HST page (the small-supplier step and its
+    // three lines), the payroll account page (the hiring step and its payroll line) and the records page (the records
+    // step and its where-and-how-long line). No other citation records a read.
+    const hisPages = new Set(MAINTAINER_READ_PAGES.map((p) => p.url));
     for (const { where, citation } of all) {
-      expect(citation.lastVerified, where).toBeUndefined();
-      expect(citation.readBy, where).toBeUndefined();
+      if (hisPages.has(citation.url)) {
+        expect(citation.lastVerified, where).toBe(MAINTAINER_READ_DAY);
+        expect(citation.readBy, where).toBe("person");
+      } else {
+        expect(citation.lastVerified, where).toBeUndefined();
+        expect(citation.readBy, where).toBeUndefined();
+      }
     }
-    // With nothing read, the road carries no read date.
-    expect(road.lastVerified).toBe("");
+    const read = all.filter(({ citation }) => hisPages.has(citation.url));
+    expect(read).toHaveLength(8);
+    expect(new Set(read.map(({ citation }) => citation.url)).size).toBe(3);
+    // The road's own date is the newest read among its sources (lib/engines/roads/v2026/validate.ts): his.
+    expect(road.lastVerified).toBe(MAINTAINER_READ_DAY);
   });
 
   it("the skill items it needs are tool-checked the same way", () => {

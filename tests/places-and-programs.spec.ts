@@ -7,7 +7,7 @@
  *   region is shown (Your plan, About this job), though the columns stay kept for a later history (a-call-9).
  * - a-call-12: every road draws a step's sources for the person's own place (federal pages and their own
  *   province's), with the line counting the rest; Hire first employee cites Alberta's own employment-standards
- *   page, checked by a tool and waiting for a person's read.
+ *   page, checked by a tool (and, since 2026-10-27, carrying the maintainer's read of it in full on 2026-10-25).
  * - a-call-1: the Alberta Investor Tax Credit and the Canada-Alberta Job Grant are off the programs catalog and
  *   every road, each kept in the retired list with the official reason and the day it was read.
  * - The pull request's second review (2026-10-24): a tick on a line the new place leaves out is never lost; skill
@@ -373,12 +373,15 @@ describe("a-call-12: every road draws a step's sources for the person's own plac
     expect(linkedSkill(roadForPlace(roadApprenticeToOwnShopAB, "AB"), null)).toBeNull();
   });
 
-  it("Alberta's employment-standards page: checked by a tool, its words recorded, no read date (waiting for a person)", () => {
+  it("Alberta's employment-standards page: checked by a tool, its words recorded, then read by the maintainer on 2026-10-25", () => {
     const node = cfeCatalogV2026.nodes.find((n) => n.id === "branch-hire-first-employee")!;
     const alberta = (node.citations as readonly EngineCitation[]).filter((c) => c.jurisdiction === "AB");
     expect(alberta).toHaveLength(1);
     expect(alberta[0].url).toBe("https://www.alberta.ca/employment-standards");
-    expect(alberta[0].lastVerified).toBeUndefined();
+    // No read date until 2026-10-27, when the maintainer's read of the page in full on 2026-10-25 was recorded
+    // (tests/maintainer-reads.spec.ts); the tool check it had stays.
+    expect(alberta[0].lastVerified).toBe("2026-10-25");
+    expect(alberta[0].readBy).toBe("person");
     expect(alberta[0].toolCheck?.checkedOn).toBe("2026-10-23");
     expect(alberta[0].toolCheck?.quotes).toContain("Employment standards set out the rights and obligations of employers and employees in Alberta.");
   });

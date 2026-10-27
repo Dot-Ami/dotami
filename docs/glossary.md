@@ -1,6 +1,7 @@
 # Glossary: short forms and terms you meet in DotAmi
 
-Last updated: 2026-10-12.
+Last updated: 2026-10-27 (twelve of its pages are among those the maintainer read in full on 2026-10-25;
+*How each source was checked* says where that read is recorded); 2026-10-12.
 
 DotAmi's cards, roads and settings use the words the government pages use: GST/HST, T2125, CCPC,
 journeyperson and so on. This page says what each one means in a sentence or two, in plain words,
@@ -13,7 +14,10 @@ costs and unlocks, and an accountant or a lawyer can say what fits a person's ow
 [`scripts/check-quotes.mjs`](../scripts/check-quotes.mjs) fetched the live page and found the quoted
 words on it, word for word ([docs/engines/citations.md](engines/citations.md) explains the tool and
 the maintainer's decision of 2026-10-11 behind it). The quotes are listed under each entry so anyone
-can see what was checked. No person is recorded as having read these pages for this glossary. A tool
+can see what was checked. No person is recorded as having read these pages for this glossary; twelve
+of them are pages the maintainer read in full on 2026-10-25 for the cards that cite them, a read
+recorded on those cards' sources, not here ([docs/engines/citations.md](engines/citations.md), § The
+maintainer's reads of 2026-10-25). A tool
 check only shows the words are on the page; it doesn't read them for meaning. If a page has changed,
 running the same command again shows it.
 
@@ -86,7 +90,8 @@ A section of the federal Income Tax Act (section 245) that can take away a tax b
 an avoidance transaction, one where getting the tax benefit is one of the main purposes, when the
 transaction misuses one of the Act's rules or goes against what the rules, taken together, are for. It
 doesn't take away the tax benefits Parliament meant people to have. DotAmi's risk reads name it where
-it may apply (`lib/engines/risk/v2026/triggers.ts`).
+it may apply (`lib/engines/risk/v2026/triggers.ts`), and since 2026-10-24 quote four of the section's
+phrases below (`lib/engines/risk/v2026/gaar-official-words.ts`; change one there and here together).
 
 Source: [Income Tax Act, section 245](https://laws-lois.justice.gc.ca/eng/acts/I-3.3/section-245.html)
 (Justice Laws). Checked by a tool on 2026-10-12: "This section of the Act contains the general

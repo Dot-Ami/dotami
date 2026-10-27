@@ -27,7 +27,9 @@ Seed research (maintainers' notes, 2026-07-01) locked the gating logic:
   Holdco/Trust as green or yellow — gray with an honest "this rung protects assets you
   don't have yet".
 - **Early Holdco/Trust entry is GAAR-sensitive** — pairs with a `professional-required`,
-  `gaarExposure: true` Risk entry.
+  `gaarExposure: true` Risk entry. Since 2026-10-24 that read is Income Tax Act s.245's own words, and
+  both cards cite the section (`S245_CITATION`, `lib/engines/risk/v2026/gaar-official-words.ts`), because
+  a risk box draws no sources of its own.
 
 ## How it should reason (target)
 

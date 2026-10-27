@@ -1,6 +1,6 @@
 # Task list — what's being built, and what you can pick up
 
-Last updated: 2026-10-20. Every story planned for DotAmi, with its tasks. The plan behind it is
+Last updated: 2026-10-27. Every story planned for DotAmi, with its tasks. The plan behind it is
 [architecture/use-cases.md](architecture/use-cases.md) (who it's for, the decisions, the build
 order); the settings and edge cases each story must test are in
 [architecture/settings-and-edge-cases.md](architecture/settings-and-edge-cases.md) — the codes in
@@ -20,7 +20,8 @@ content and the project itself run alongside everything. **Changed 2026-10-11:**
 cockpit (§ 14) is now first, because the maintainer named it the top priority on 2026-10-10; it
 takes in the planning pieces of § 10 ([10b] progress, [10c] tasks) and starts § 11's roadmaps as
 data. Its design: [architecture/future-cockpit.md](architecture/future-cockpit.md). **Changed
-2026-10-20:** phase 2 of the plan for any idea (§ 14 below, [14l]–[14o]) is next.
+2026-10-20:** phase 2 of the plan for any idea (§ 14 below, [14l]–[14o]) is next. **Changed
+2026-10-27:** phase 2 ends with 32b and release 0.5.0; phase 3, in the maintainer's order, is [14p].
 
 ---
 
@@ -76,7 +77,9 @@ placed in phase 3.
     the CRA's exact two tests, with the uncited 70% "approaching the line" watch
     (`THRESHOLD_WATCH_RATIO`, docs/engines/cfe.md rule 2) gone with it. 2026-10-12: the six pages
     these quote carry a tool check instead of a read date (option B, docs/engines/citations.md § Tool
-    checks in the catalogs); none is read by a person yet
+    checks in the catalogs); none was read by a person then, and since 2026-10-27 the CRA's GST/HST page
+    among them says the maintainer read it in full on 2026-10-25 (citations.md, § The maintainer's reads
+    of 2026-10-25)
   - [x] Smaller follow-ups from the same fixes (#145, 2026-10-11): "Incorporation for liability/SR&ED"
     lights from an activity tag (Software / SaaS, Manufacturing, AI / ML / R&D) the intake's parser can
     mark from the sentence, and the card now says so, naming the tag; a stage card's chip says
@@ -111,7 +114,8 @@ placed in phase 3.
       own sources still point at a page that answers "page not found": *Retained earnings planning*,
       whose "Paying dividends" and "Salary or dividends" shared one old address and have no current CRA
       page found (a person's call). Since 2026-10-13 the other stages' moved sources link their new pages
-      with a tool check, `tests/moved-government-pages.spec.ts`; a person's read of each page
+      with a tool check, `tests/moved-government-pages.spec.ts`; a person's read of each page (those the
+      maintainer read in full on 2026-10-25 are recorded: citations.md, § The maintainer's reads of 2026-10-25)
   - [x] Official fees and named start-up cost lines (2026-10-12): every official fee written once, in
     one catalog (`lib/engines/fees/v2026/`, [engines/fees.md](engines/fees.md): its amount, what it is
     for, its place as a code such as `CA-AB`, and its source, each re-checked by the quote tool that
@@ -129,10 +133,12 @@ placed in phase 3.
     keep records and what counts, what the CRA says happens without them, how they must be kept (paper
     or electronic, with backups), and where and for how long (generally six years from the end of the
     last tax year they relate to, and two of the other periods the CRA lists); four cited *done when* lines, every source a tool check that day, no
-    read claimed. On today's Alberta road it is a fourth *before you open* step, on the path for every
+    read claimed then (since 2026-10-27 the where-and-how-long page's step and line carry the maintainer's read of
+    2026-10-25). On today's Alberta road it is a fourth *before you open* step, on the path for every
     idea; on the apprentice road it is first in *Open the doors*, after *Open your own shop*, so it is on
     the path once the person picks their own shop ([engines/roads.md](engines/roads.md))
-    - [ ] Still open on it: a person's read of the three CRA pages; whether the step panel should point
+    - [ ] Still open on it: a person's read of two of the three CRA pages (the maintainer read *Where to
+      keep your records…* in full on 2026-10-25, recorded 2026-10-27); whether the step panel should point
       to *Your expenses* as one place to keep expense records (information only, the maintainer's call)
   - [x] What you tell DotAmi is kept: your skill marks (once, for every future), your progress on each
     step, the future's road, ending, your date and the sales at which you'd incorporate, and three new
@@ -208,14 +214,16 @@ placed in phase 3.
     Alberta's current trade pages, every *done when* line cited to its step's official page, official
     fees, cost-line names, legal requirements (in the catalog 2026-10-12, every source a tool check,
     `lib/engines/roads/v2026/apprentice-to-own-shop-ab.ts`; listed on *Pick a future* since 2026-10-13, the
-    maintainer's yes to listing a road no person has read, its card saying so in amber)
+    maintainer's yes to listing a road no person has read, its card saying so in amber; since 2026-10-27 it
+    also counts, in grey, the 8 sources on the three CRA pages he read in full on 2026-10-25)
     - [x] Its exam, Red Seal and registry blanks looked up again on official pages (2026-10-15): the Red
       Seal application is $150 on Tradesecrets' *Apply Online* page, a fee that applies only sometimes;
       every other blank's label says why it has no amount
     - [ ] Still open on it: Alberta's registry fees (the Registry Agent Product Catalogue stops
       tools, so a person reads them); the Work Experience exam rewrite and panel interview (no page gives
       an amount); the apprentice wage percentages per period (they need a typed field); a person's read of
-      each page, which turns its "checked by a tool" into a read
+      each page, which turns its "checked by a tool" into a read (three CRA pages read in full by the
+      maintainer on 2026-10-25, recorded 2026-10-27: GST/HST, payroll account, records)
   - [x] The government's skills list (OaSIS) for the job you pick, tagged *your pick of job*; the job
     you pick is kept on the future (an occupation code and the day you picked it: one added column each)
     (2026-10-12: picked from the cockpit's Skills list, names only; today's road lists its GST/HST
@@ -549,7 +557,8 @@ placed in phase 3.
     (`lib/playbook/road-export.ts`); Compare and the Rules & tax switch count the cards one way; the money gauge
     names the official fees waiting on a fork, so it adds up to Compare; the vehicle caps are Income Tax
     Regulations s.7307's $350 / $300 and $1,100, and the Small Business Financing Program says ISED's own words
-    with no 365-day line (both sources checked by a tool, on the reading list); About this job says "as
+    with no 365-day line (both sources checked by a tool, on the reading list, then read in full by the maintainer
+    on 2026-10-25); About this job says "as
     published" beside two equal wage levels (`tests/prerelease-numbers.spec.ts`)
   - [x] 28d: outside Alberta, the federal steps that apply everywhere, plus "Written for Alberta" with the
     person's own province named; Alberta-only steps and pages left out (full B.C. and Ontario roads come
@@ -598,7 +607,8 @@ placed in phase 3.
       Columbia's employment-standards pages; every road now shows a step's sources for the person's own place
       (and, since the pull request's review, only the *done when* lines, cost lines and links resting on those
       pages, the rest counted in the same line: `roadForPlace`),
-      the step cites Alberta's own page (checked by a tool, waiting for a person's read), and `PLACE_GAPS` in
+      the step cites Alberta's own page (checked by a tool, then read in full by the maintainer on
+      2026-10-25), and `PLACE_GAPS` in
       `tests/fixtures/ideas/accuracy-gaps.ts` is empty
     - [x] 37b (moved here too): the corpus reworded (capitals, lower case, a typo, another order, emoji, no
       accents, the city swapped for its province, French; `tests/rewording.spec.ts`) keeps the province the
@@ -656,9 +666,36 @@ placed in phase 3.
     the save's $1,000,000,000 cap is refused in the box and the what-if (the review of #198)
   - [x] A small release of phase 1's work (the calm first view, the six text sizes, *Look closer*, the
     harness's fixes) before phase 2 changes the data file: 0.4.1 (#188), published 2026-10-20
+  - [x] The pre-release fixes of the screen review (30f) and the reading list, merged on the maintainer's word
+    2026-10-25 to 27, in his order: #207, #206, #208, #210, #209, each brought up to date with main by a
+    merge first; what each merge found and fixed is in its pull request, and how a cloud session did it is
+    [verification/cloud-sessions.md](verification/cloud-sessions.md)
+  - [ ] #211, the reading list's corrections with the maintainer's 31 reads of 2026-10-25: the networked
+    `node scripts/check-quotes.mjs` run it waited for found every quote on 2026-10-26 ([11b]); waits for his
+    merge word
   - [ ] Release 0.5.0: no silent fallbacks, every Alberta test idea ending on a road written for it or an
     honest "not written yet", the maintainer's walk done (32b), a Quality line in the changelog, the privacy
     log's section for the new version; publishing is the maintainer's click
+- ⬜ **[14p] Phase 3, honesty first.** The maintainer's order (d-call-1), after release 0.5.0:
+  - [ ] Cards in official words: DotAmi's own tax and legal wording on cards becomes the pages' own words or
+    nothing. Planned 2026-10-24, his 15 calls of 2026-10-25:
+    [architecture/cards-in-official-words.md](architecture/cards-in-official-words.md). Builds after #211
+  - [ ] Rules for each kind of work (sector rules): BizPaL first, with a person running its searches; the
+    first 12 (ride-share GST, Alberta low-risk home food, the AHS food permit, a federal food licence, child
+    care over 6, AMVIC, AGLC, RCMP, drones, a Calgary home business, personal services, platform GST)
+  - [ ] Freshness: each source's next release date, a weekly check, a health state per source, and effective
+    dates, status and previous value for fees and rules (with 31b and 31c above)
+  - [ ] Accuracy tests
+  - [ ] The data kit: business counts by town, the census's self-employed, labelled averages beside a
+    calculator (the Phase 3 lines under [14i])
+  - [ ] The hairstylist road, the second road
+  - [ ] Also on the list: next steps backed by reality on every card, only from official pages (his note of
+    2026-10-25); changing your place later with one Change box for every answer (S2.5.33); everything you can
+    apply for and write off (S2.5.38); public information on other businesses (S2.5.39); DotAmi as a local
+    MCP server, read-only and off by default (S2.5.40)
+  - [ ] Two questions his reads of 2026-10-25 left open: what the CRA's rate table shows for Ontario and
+    Alberta (citations.md § Blocked, 1 and 2), and whether the s.67.3 citation's title or its address changes
+    (the title names four sections, the page holds one)
 
 ## 7 — The desktop app (one download, everything on your computer)
 
@@ -1012,6 +1049,53 @@ roadmap's build order.
     ("Read by a person on …" only when a person is recorded as the reader, "Read on …" otherwise, or
     "Checked by a tool on …"); `node scripts/check-quotes.mjs` checks the quotes on the live page · [docs/engines/citations.md](engines/citations.md)
   - [ ] A model proposes the quotes for a source (not built)
+  - [x] The maintainer's reading list of 2026-10-23, its first 30 entries: 23 handled on 2026-10-24, each only
+    as far as a quote goes (21 corrected, retired or added; Ontario's HST and BC's PST left as they were, no
+    quote held), the other seven are #207's and #208's; two entries retired, ids kept
+    (`compliance-food-premises-on`, `risk-hobby-reclassification`); the Canada-Alberta Productivity Grant
+    added as `grant-capg` ([docs/engines/citations.md](engines/citations.md), § The reading list's corrections;
+    `tests/reading-list-corrections.spec.ts`, `tests/retired-entries.spec.ts`, `tests/productivity-grant.spec.ts`)
+  - [x] Merged after #207 and #208 (main merged in on 2026-10-27; citations.md, § The reading list's
+    corrections): #207 took the Job Grant's card off, so one card opens the Productivity Grant's page, and
+    #208 put the loans page the loan program's risk box quotes under its card. The two `it.fails` checks
+    turned red at the merge and are plain checks now; road 0's 11 panels were redrawn from the merged code
+  - [x] His reads (recorded 2026-10-27): he read 31 pages in full on 2026-10-25 and ticked each *I've read
+    it in full now* on his reading list, which named under each page every place it is cited (his decision of
+    2026-10-24: his reads made with an AI model's help count as a person's, for the pages he checked himself).
+    Every citation of those pages, 136 as `lib/engines/all-citations.ts` lists them, has `lastVerified`
+    2026-10-25 and `readBy: "person"`, and no other citation has that day ([docs/engines/citations.md](engines/citations.md),
+    § The maintainer's reads of 2026-10-25; `tests/maintainer-reads.spec.ts`)
+  - [x] A networked `node scripts/check-quotes.mjs` run (no arguments) finds again every quote the reading
+    list's matcher found on 2026-10-23, before the reading list's corrections merge, not later with his
+    reads (rule 4 of citations.md and its exception): found on 2026-10-26 in a normal session, all 49 quotes
+    on the 25 citations of that day, and all 779 quotes on DotAmi's 337 tool-checked citations
+  - [ ] Blocked until an official page's own words are found and checked (citations.md, § The reading list's
+    corrections, *Blocked*):
+    - [ ] Alberta has no PST and GST is 5% (`compliance-ab-no-pst`): the CRA's table isn't in its page's HTML;
+      Alberta's *About Tax and Revenue Administration* is an unchecked candidate for the first half. The
+      card's line is DotAmi's wording of the table's row until then. His read of the page is recorded
+      (2026-10-25), but not what he found in the table: his word settles whether the
+      table shows "no provincial sales tax" or only Alberta's 5% GST (then the line says only that)
+    - [ ] Ontario's 13% HST (`compliance-on-hst`): the same table
+    - [ ] Ontario food premises: the regulation in force, read and quoted, under a new id
+    - [ ] Repeated losses: a CRA, Act or folio page on business versus personal pursuits, with its words
+    - [ ] SR&ED refunded or not: whether, and how much of, a sole proprietor's 15% credit is, and whether a
+      CCPC's enhanced 35% is (the card said "refundable" on the maintainer's read alone until 2026-10-24)
+    - [ ] SR&ED's $6 million: the tax years it applies from, and the sentence of s.127(10.2) that leads into
+      its formula
+    - [ ] *SR&ED deepening*'s 35% from the SR&ED glossary, as the maintainer asked (it quotes the CRA's
+      relationships page until then)
+    - [ ] Home office: the CRA page's sentence on working out the business part (floor area as one basis)
+    - [ ] The titles the CRA's SR&ED rates page and ISED's loans page give themselves (each citation describes
+      its page)
+    - [ ] The Productivity Grant's other conditions for employers, whether a sole proprietor counts, what
+      training counts, who else funds it, and the page's labels before its 25% and 75% lines
+  - [ ] Open questions for the maintainer, on the same cards but not entries he checked (citations.md,
+    § Outside the list): the Holding company and Family trust fork label "… needs a real business
+    purpose first"; the "Professional required" heading over the anti-avoidance and loan program boxes
+    (`tests/engine-integrity.spec.ts` holds GAAR reads there); and the *Hobby vs. business income test*
+    card's profit-expectation and business-like lines, which cite the page the retired hobby read's
+    record says supports neither (he read that page in full on 2026-10-25; the card's words wait for his call)
 - ⬜ **[11c] Flag stale sources automatically** — with #37
   - [ ] Kept open on purpose (the maintainer, 2026-10-14), so a person decides later:
     - [x] *Alberta Investor Tax Credit* (`grant-abti`): taken off on 2026-10-23 (the maintainer's call
@@ -1019,10 +1103,12 @@ roadmap's build order.
     - [ ] *Retained earnings planning*'s "Paying dividends" and "Salary or dividends" (see [14a]): no
       current CRA page found; the T5 guide could back "Paying dividends". Left as they are for now.
     - [x] *Canada-Alberta Job Grant* (`grant-cajg`): taken off on 2026-10-23 (a-call-1); its page now
-      opens the Canada-Alberta Productivity Grant's. The Productivity Grant waits for the maintainer to read its
-      amounts.
-    - [ ] *Employment standards* (alberta.ca), on *Hire first employee* since 2026-10-23: checked by a tool, for
-      a person to read (docs/engines/citations.md, *Waiting for the maintainer's read*).
+      opens the Canada-Alberta Productivity Grant's. The Productivity Grant is in the catalog as `grant-capg`
+      since 2026-10-24, on the quotes a tool found on its page; he read the page in full on 2026-10-25, and
+      its source says so since 2026-10-27 ([11b]).
+    - [x] *Employment standards* (alberta.ca), on *Hire first employee* since 2026-10-23: checked by a tool,
+      then read in full by the maintainer on 2026-10-25, recorded 2026-10-27 (docs/engines/citations.md,
+      *The maintainer's reads of 2026-10-25*).
 - ⬜ **[11d] Two people per change** — the checker of a source is never its author.
 - ⬜ **[11e] Reviewed by an accountant** — a roadmap is *reviewed* only after a professional reads it.
 - ⬜ **[11f] Strategy roadmaps** · roadmap §6 · #47 — each cited, with its audit and anti-avoidance read:
@@ -1163,9 +1249,9 @@ roadmap's build order.
     docs/ui-spec/start/_index.md say but the words on screen, naming the Go menu only (the maintainer's words
     of 2026-10-24), don't: the same message would fix both, or the words could name it; in a browser copy, Back and Forward show the front door's links as first drawn
     (docs/ui-spec/landing/03-escape-hatches.md); the line under the receipts of questions 2 and 3 sits outside
-    the receipt's `role="status"`, so a screen reader doesn't hear it with the receipt; and CLAUDE.md's Data
-    paragraph still says of the front-door sentence that "the tab marks it done" (since 2026-10-24 the journey
-    held in the window's memory does), for the maintainer to reword
+    the receipt's `role="status"`, so a screen reader doesn't hear it with the receipt (CLAUDE.md's Data
+    paragraph, which said of the front-door sentence that "the tab marks it done", says the journey held in
+    the window's memory does since 2026-10-27)
   - [ ] For the maintainer's later call (the decision of 2026-10-24 kept it for now): the intake's *Other…*
     employment box. Its words are held in the window's memory only, kept with no idea (the idea keeps `other`)
     and read by nothing since its list of earlier descriptions went with `dotami-employment-suggestions`: keep

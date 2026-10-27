@@ -1,6 +1,7 @@
-import type { RiskCombination, RiskEntry } from "./types";
+import { MAINTAINER_READ_ON } from "@/lib/engines/shared/maintainer-reads";
 
-const LAST_VERIFIED = "2026-07-02";
+import { S245_CITATION, S245_QUOTES } from "./gaar-official-words";
+import type { RetiredRiskEntry, RiskCombination, RiskEntry } from "./types";
 
 /**
  * Audit-trigger catalog. Seed entries from the maintainers' validated research
@@ -11,28 +12,44 @@ const LAST_VERIFIED = "2026-07-02";
 export const riskEntriesV2026 = [
   {
     id: "risk-home-office-percentage",
-    label: "Home office percentage outliers",
+    // No screen shows a risk read's label. Until 2026-10-24 "Home office percentage outliers".
+    label: "Home office: the CRA's conditions and limit",
     severity: "caution",
     gaarExposure: false,
     appliesTo: ["writeoff-home-office"],
-    why: "Workspace percentages well above typical floor-area math draw review; the exclusive-use test is where claims fail.",
-    mitigation: "Base the claim on measured floor area, document exclusive business use, and keep the calculation with your records.",
+    // The CRA page's own words since 2026-10-24 (the maintainer's reading list of 2026-10-23, item
+    // risk-home-office-percentage): "Workspace percentages well above typical floor-area math draw review; the
+    // exclusive-use test is where claims fail" and "Base the claim on measured floor area, document exclusive business
+    // use, and keep the calculation with your records" were DotAmi's own. His note: floor area is one reasonable basis,
+    // not the only one, and using the space only for the business is asked only when it isn't the principal place of
+    // business. No held quote gives the page's sentence on how to work out the business part, so the box says nothing
+    // about it. The "or" between the two conditions is s.18(12)'s: the write-off card cites the section, and its
+    // eligibility text gives both conditions.
+    why: "The CRA's page on business-use-of-home expenses: “You can deduct expenses for the business use of a workspace in your home” if “it is your principal place of business”, or if “you use the space only to earn your business income, and you use it on a regular and ongoing basis to meet your clients, customers, or patients”.",
+    mitigation: "The same page, on the amount: it “cannot be more than your net income from the business before you deduct these expenses”.",
     citations: [
       {
         title: "Business-use-of-home expenses",
         authority: "CRA",
         jurisdiction: "CA",
         // Moved: the old address (…/report-business-income-expenses/business-expenses/business-use-home-expenses.html,
-        // read 2026-07-02) answered 404 on 2026-10-13; a tool found these words on the new page that day.
+        // read 2026-07-02) answered 404 on 2026-10-13; a tool found these words on the new page that day. The last two
+        // joined on 2026-10-24: the same day's check found them for the home office write-off's citation of this page
+        // (lib/engines/writeoffs/v2026/categories.ts), and the reading list found all four there again on 2026-10-23.
+        // The maintainer read the new page in full on 2026-10-25.
         url: "https://www.canada.ca/en/revenue-agency/services/tax/businesses/topics/sole-proprietorships-partnerships/report-business-income-expenses/completing-form-t2125/business-use-home-expenses.html",
+        lastVerified: MAINTAINER_READ_ON,
+        readBy: "person",
         toolCheck: {
           checkedOn: "2026-10-13",
           quotes: [
             "You can deduct expenses for the business use of a workspace in your home",
             "you use the space only to earn your business income, and you use it on a regular and ongoing basis to meet your clients, customers, or patients",
+            "it is your principal place of business",
+            "cannot be more than your net income from the business before you deduct these expenses",
           ],
         },
-        note: "CRA workspace-in-home requirements.",
+        note: "CRA workspace-in-home requirements: the two conditions, and the limit to the business's net income.",
       },
     ],
   },
@@ -95,15 +112,31 @@ export const riskEntriesV2026 = [
     severity: "professional-required",
     gaarExposure: false,
     appliesTo: ["writeoff-cca-class-50"],
-    why: "The 100% first-year treatment depends on acquisition and available-for-use dates; getting the year wrong misstates income and unwinds on review.",
-    mitigation: "Confirm eligibility and the available-for-use date with an accountant before filing — keep purchase and deployment records.",
+    // The maintainer's reading list of 2026-10-23 (item risk-immediate-expensing-timing) found the dates line and the
+    // accountant line match the guide. "Getting the year wrong misstates income and unwinds on review" and "keep
+    // purchase and deployment records" were DotAmi's own, held by no source, and came out on 2026-10-24.
+    why: "The 100% first-year treatment depends on acquisition and available-for-use dates.",
+    mitigation: "Confirm eligibility and the available-for-use date with an accountant before filing.",
     citations: [
       {
         title: "T4002 Chapter 4 — Capital cost allowance (immediate expensing measures)",
         authority: "CRA",
         jurisdiction: "CA",
         url: "https://www.canada.ca/en/revenue-agency/services/forms-publications/publications/t4002/t4002-6.html",
-        lastVerified: LAST_VERIFIED,
+        // Read on 2026-07-02 (who read it wasn't recorded); the maintainer read it in full on 2026-10-25.
+        lastVerified: MAINTAINER_READ_ON,
+        readBy: "person",
+        // The guide's sentence on the dates, which the reading list's tool found on the live page on 2026-10-23 with
+        // the repo's matcher (the same whole-word, one-block match as scripts/check-quotes.mjs); a networked
+        // `node scripts/check-quotes.mjs` run found it again on 2026-10-26 (docs/engines/citations.md, rule 4). It ends on a
+        // colon before the factors, which DotAmi doesn't hold, so the box doesn't quote it. Only this citation keeps
+        // it: the Class 50 write-off's citation of the same chapter keeps the check it had.
+        toolCheck: {
+          checkedOn: "2026-10-23",
+          quotes: [
+            "Under proposed changes, if property included in Class 44, 46, or 50 is acquired and becomes available for use after April 15, 2024, the following factors apply:",
+          ],
+        },
         note: "Date conditions for enhanced first-year CCA.",
       },
     ],
@@ -136,60 +169,59 @@ export const riskEntriesV2026 = [
       },
     ],
   },
-  {
-    id: "risk-hobby-reclassification",
-    label: "Repeated losses → hobby reclassification",
-    severity: "caution",
-    gaarExposure: false,
-    appliesTo: ["compliance-hobby-vs-business"],
-    why: "Year-after-year losses against employment income invite the reasonable-expectation-of-profit question; reclassification limits expense claims retroactively.",
-    mitigation: "Run the venture business-like: separate accounts, a revenue plan, and records that show profit intent — not just deductions.",
-    citations: [
-      {
-        title: "Setting up your business",
-        authority: "CRA",
-        jurisdiction: "CA",
-        url: "https://www.canada.ca/en/revenue-agency/services/tax/businesses/small-businesses-self-employed-income/setting-your-business.html",
-        lastVerified: LAST_VERIFIED,
-        note: "CRA business vs. personal activity framing.",
-      },
-    ],
-  },
+  // Repeated losses → hobby reclassification (risk-hobby-reclassification) came off on 2026-10-24: RETIRED_RISK_ENTRIES.
   {
     id: "risk-ladder-skipping",
     label: "Early Holdco/Trust structures (GAAR-sensitive)",
     severity: "professional-required",
     gaarExposure: true,
     appliesTo: ["structure-holdco", "structure-family-trust"],
-    why: "Entering Holdco or Trust rungs without retained profits or a succession need reads as structure-for-tax's-sake — exactly what the General Anti-Avoidance Rule exists to unwind.",
-    mitigation: "These rungs protect assets that already exist. Cross them with professional advice tied to a genuine business purpose, documented at the time.",
-    citations: [
-      {
-        title: "Income Tax Act s.245 — General Anti-Avoidance Rule",
-        authority: "federal",
-        jurisdiction: "CA",
-        url: "https://laws-lois.justice.gc.ca/eng/acts/I-3.3/section-245.html",
-        lastVerified: LAST_VERIFIED,
-        note: "GAAR statutory text.",
-      },
-    ],
+    // The section's own words since 2026-10-24 (the maintainer's reading list of 2026-10-23, item risk-ladder-skipping:
+    // s.245 asks for no professional advice or documentation). "Reads as structure-for-tax's-sake — exactly what the
+    // General Anti-Avoidance Rule exists to unwind" and "Cross them with professional advice tied to a genuine business
+    // purpose, documented at the time" were DotAmi's own. The quotes are listed, never joined by words of DotAmi's: the
+    // Act's words between them aren't held.
+    why: `Income Tax Act s.245, in its own words: “${S245_QUOTES.contains}”; “${S245_QUOTES.denies}”; “${S245_QUOTES.abuse}”.`,
+    mitigation: `The same section: “${S245_QUOTES.parliament}”.`,
+    // The same citation is listed under the Holding company and Family trust cards, where this box shows.
+    citations: [S245_CITATION],
   },
   {
     id: "risk-self-declared-valuation",
-    label: "Self-declared valuation as collateral",
+    // No screen shows a risk read's label. Until 2026-10-24 "Self-declared valuation as collateral"; the id stays (IDs
+    // are forever).
+    label: "CSBFP loans: security on the assets financed",
     severity: "professional-required",
     gaarExposure: false,
     appliesTo: ["grant-csbfp"],
-    why: "Valuing a new company from the price of equipment it intends to buy, then borrowing against that valuation, is circular and can read as collateral misrepresentation to a lender.",
-    mitigation: "Use CSBFP as designed — the financed equipment itself is the collateral, at the lesser of purchase price or appraised value.",
+    // ISED's rule on security, quoted, and nothing else, since 2026-10-24 (the maintainer's reading list of 2026-10-23,
+    // item risk-self-declared-valuation, and his answer of 2026-10-24: keep the read, saying only ISED's rule). It said
+    // a valuation from the price of equipment to be bought "is circular and can read as collateral misrepresentation to
+    // a lender", DotAmi's own, and that the financed equipment is the collateral "at the lesser of purchase price or
+    // appraised value", which is a different rule from this one and on no page DotAmi cites. The box names the page it
+    // quotes because it draws no sources; the program card lists the loans page among its own (#208, merged in on
+    // 2026-10-27), so it is one click away under the card.
+    why: "“For real property and equipment, security must be taken on the assets financed.”",
+    mitigation: "ISED's words, from its page on loans under this program.",
     citations: [
       {
-        title: "Canada Small Business Financing Program",
+        // The page's own title isn't held (only its address), so this one describes it.
+        title: "ISED: loans under the Canada Small Business Financing Program",
         authority: "federal",
         jurisdiction: "CA",
-        url: "https://ised-isde.canada.ca/site/canada-small-business-financing-program/en",
-        lastVerified: LAST_VERIFIED,
-        note: "Program collateral mechanics.",
+        // Until 2026-10-24 the read cited ISED's program hub (…/canada-small-business-financing-program/en, read
+        // 2026-07-02), which holds none of these words. The reading list's tool found this sentence on the loans page
+        // on 2026-10-23 with the repo's matcher (the same whole-word, one-block match as scripts/check-quotes.mjs); a
+        // networked `node scripts/check-quotes.mjs` run found it again on 2026-10-26 (docs/engines/citations.md, rule 4). The
+        // maintainer read the page in full on 2026-10-25.
+        url: "https://ised-isde.canada.ca/site/canada-small-business-financing-program/en/canada-small-business-financing-program/find-loan-your-small-business/helping-small-businesses-get-loans",
+        lastVerified: MAINTAINER_READ_ON,
+        readBy: "person",
+        toolCheck: {
+          checkedOn: "2026-10-23",
+          quotes: ["For real property and equipment, security must be taken on the assets financed."],
+        },
+        note: "ISED's page on the program's loans: security for real property and equipment.",
       },
     ],
   },
@@ -205,3 +237,19 @@ export const riskCombinationsV2026 = [
 ] satisfies RiskCombination[];
 
 export type RiskEntryId = (typeof riskEntriesV2026)[number]["id"];
+
+/**
+ * Reads taken off the catalog (docs/brain/risk-calculator.md, § Retired risk reads), in the shape the compliance
+ * catalog's RETIRED_COMPLIANCE_RULES and the grants catalog's retired programs (#207) have. Their ids are never used
+ * again, not even for a read on the same subject, which comes back under a new id (IDs are forever); nothing here
+ * reaches a screen, and tests/retired-entries.spec.ts holds this list to the catalog.
+ */
+export const RETIRED_RISK_ENTRIES: readonly RetiredRiskEntry[] = [
+  {
+    id: "risk-hobby-reclassification",
+    label: "Repeated losses → hobby reclassification",
+    url: "https://www.canada.ca/en/revenue-agency/services/tax/businesses/small-businesses-self-employed-income/setting-your-business.html",
+    readOn: "2026-10-23",
+    why: "On the maintainer's reading list of 2026-10-23 the read didn't match its source: its one page, the CRA's Setting up your business, doesn't support what it said about losses year after year, the reasonable-expectation-of-profit question, or running the venture \"business-like\" with \"records that show profit intent\", and DotAmi holds no quote from a page that does. Nothing sourced was left to say, so the Hobby vs. business card shows no risk box. A read on its subject comes back only under a new id, citing a page on business versus personal pursuits and quoting it.",
+  },
+];

@@ -622,7 +622,8 @@ describe("the lever cards belong to the road step (engineHints)", () => {
       "stage-3b-incorporation-liability-sred": ["grant-sred", "grant-irap", "writeoff-rd", "writeoff-cca-class-50"],
       "stage-4-sred-deepening": ["grant-sred", "grant-irap"],
       "stage-4-retained-earnings-planning": ["grant-on-innovation"],
-      "branch-hire-first-employee": ["writeoff-vehicle"],
+      // Plus the Canada-Alberta Productivity Grant, named here since 2026-10-24 (the maintainer's call a-call-1).
+      "branch-hire-first-employee": ["writeoff-vehicle", "grant-capg"],
     };
     const fromRoad = Object.fromEntries(
       generalRoadV2026.steps.flatMap((s) => ((s.engineHints ?? []).length > 0 ? [[s.id, s.engineHints]] : [])),
