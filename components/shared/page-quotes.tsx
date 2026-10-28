@@ -1,7 +1,8 @@
 import { PAGE_QUOTES_LEAD } from "@/lib/engines/shared/citation-check";
 
 /**
- * The official-quote component (2026-10-23): the words a tool check found on an official page (a citation's
+ * The official-quote component (2026-10-23): the words a tool check found on an official page (since 2026-10-27
+ * also on a provider's own page: Anthropic's, on how long it keeps what the intake sends) (a citation's
  * `toolCheck.quotes`, read through `toolCheckQuotes`, and the fee lines' quotes copied from them), always after
  * the label that says whose words they are (`PAGE_QUOTES_LEAD`), each in its own quotation marks, on the row
  * that cites the page. Those quotes are drawn here and nowhere else, so an official page's own durations ("It
