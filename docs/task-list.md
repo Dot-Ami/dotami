@@ -1086,7 +1086,10 @@ roadmap's build order.
       table shows "no provincial sales tax" or only Alberta's 5% GST (then the line says only that)
     - [ ] Ontario's 13% HST (`compliance-on-hst`): the same table
     - [ ] Ontario food premises: the regulation in force, read and quoted, under a new id
-    - [ ] Repeated losses: a CRA, Act or folio page on business versus personal pursuits, with its words
+    - [x] Repeated losses: a CRA, Act or folio page on business versus personal pursuits, with its words. Since
+      2026-10-27 (the maintainer's "yah, lets use it") a read is back on the Hobby vs. business card under a new id,
+      `risk-losses-source-of-income`, quoting three sentences of the CRA's Income Tax Audit Manual, chapter 27,
+      which `node scripts/check-quotes.mjs` found that day; the retired id stays retired, and the card is unchanged
     - [ ] SR&ED refunded or not: whether, and how much of, a sole proprietor's 15% credit is, and whether a
       CCPC's enhanced 35% is (the card said "refundable" on the maintainer's read alone until 2026-10-24)
     - [ ] SR&ED's $6 million: the tax years it applies from, and the sentence of s.127(10.2) that leads into
@@ -1106,7 +1109,8 @@ roadmap's build order.
     purpose first"; the "Professional required" heading over the anti-avoidance and loan program boxes
     (`tests/engine-integrity.spec.ts` holds GAAR reads there); and the *Hobby vs. business income test*
     card's profit-expectation and business-like lines, which cite the page the retired hobby read's
-    record says supports neither (he read that page in full on 2026-10-25; the card's words wait for his call)
+    record says supports neither (he read that page in full on 2026-10-25; the card's words, and whether the card
+    lists the audit manual's chapter 27, which its risk box quotes since 2026-10-27, wait for his call)
 - ⬜ **[11c] Flag stale sources automatically** — with #37
   - [ ] Kept open on purpose (the maintainer, 2026-10-14), so a person decides later:
     - [x] *Alberta Investor Tax Credit* (`grant-abti`): taken off on 2026-10-23 (the maintainer's call

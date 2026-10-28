@@ -248,6 +248,13 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   British Columbia's employment-standards pages as its sources; a misspelt word in the kind of work finds the job
   only by its own name (84 of the 220 test ideas with a job); and "à Regina" in French names no province (fixed
   2026-10-23, below).
+- **A repeated-losses caution is back on the Hobby vs. business card, in the CRA audit manual's own words**
+  (2026-10-27; the maintainer's "yah, lets use it"). Under a new id, `risk-losses-source-of-income` (the retired
+  `risk-hobby-reclassification` stays retired), its box quotes three sentences of the CRA's *Income Tax Audit
+  Manual*, chapter 27, joined only by "The CRA's Income Tax Audit Manual, chapter 27:" and "The same page:";
+  `node scripts/check-quotes.mjs` found all three on the live page that day, and nobody has read the page in full
+  yet, so its source says "Checked by a tool". The card's own words and sources are unchanged. Test:
+  `tests/repeated-losses-read.spec.ts`.
 ### Fixed
 - **Mara's example: its prices re-opened, and no promotion length in DotAmi's own words** (2026-10-27). The
   sellers' pages a review couldn't re-open were opened again: every Busy Bee Tools, Autodesk and QuickBooks

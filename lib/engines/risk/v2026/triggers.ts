@@ -175,6 +175,48 @@ export const riskEntriesV2026 = [
     ],
   },
   // Repeated losses → hobby reclassification (risk-hobby-reclassification) came off on 2026-10-24: RETIRED_RISK_ENTRIES.
+  // A read on its subject came back on 2026-10-27 under a new id, the entry below (IDs are forever).
+  {
+    id: "risk-losses-source-of-income",
+    // No screen shows a risk read's label. Neutral on purpose: it names the question the page answers, never an answer
+    // about the person's own activity.
+    label: "Losses and whether there is a source of income",
+    // The retired read's trigger (none: it applies whenever the card shows) and severity, unchanged; both are the
+    // maintainer's to change.
+    severity: "caution",
+    gaarExposure: false,
+    appliesTo: ["compliance-hobby-vs-business"],
+    // The CRA's Income Tax Audit Manual, chapter 27, in its own words and nothing else (the maintainer's "yah, lets
+    // use it" of 2026-10-27): the three sentences are quoted whole, in the page's order, and DotAmi's words between them
+    // are only the labels that say whose words follow. Left out on purpose: the auditors' own instructions (the
+    // two-stage approach and its first question), the list of factors to consider, the sentence on the reasonable
+    // expectation of profit test on its own, and every line with a time in it. The page also names the court decisions
+    // behind the first two sentences; the labels don't.
+    why: "The CRA's Income Tax Audit Manual, chapter 27: “An activity undertaken in the pursuit of profit, even with erroneous business decisions that cause it to never experience any actual profit, is still a source of income.” The same page: “Objective evidence showing an intention to create losses to offset taxable income may lead to the courts to conclude that no source of income exists.”",
+    mitigation:
+      "The same page: “If there is a personal element to the activity and the activity is undertaken in a sufficiently commercial manner, there is a source of income and income must be reported and losses may be claimed.”",
+    citations: [
+      {
+        // The page's own main heading (h1) and its chapter heading, joined; `node scripts/check-quotes.mjs` found both on
+        // the page on 2026-10-27. Its <title> is "ITAM Chapter 27 - Canada.ca".
+        title: "Income Tax Audit Manual, Chapter 27.0 Income",
+        authority: "CRA",
+        jurisdiction: "CA",
+        url: "https://www.canada.ca/en/revenue-agency/services/tax/technical-information/income-tax-audit-manual-domestic-compliance-programs-branch-dcpb-27.html",
+        // A tool check only: `node scripts/check-quotes.mjs` found all three quotes on the live page on 2026-10-27, and
+        // nobody has read the page in full, so its source says "Checked by a tool" in amber until a person does.
+        toolCheck: {
+          checkedOn: "2026-10-27",
+          quotes: [
+            "An activity undertaken in the pursuit of profit, even with erroneous business decisions that cause it to never experience any actual profit, is still a source of income.",
+            "Objective evidence showing an intention to create losses to offset taxable income may lead to the courts to conclude that no source of income exists.",
+            "If there is a personal element to the activity and the activity is undertaken in a sufficiently commercial manner, there is a source of income and income must be reported and losses may be claimed.",
+          ],
+        },
+        note: "The CRA's audit manual on income: the pursuit of profit, a personal element, and a sufficiently commercial manner.",
+      },
+    ],
+  },
   {
     id: "risk-ladder-skipping",
     label: "Early Holdco/Trust structures (GAAR-sensitive)",
@@ -251,11 +293,13 @@ export type RiskEntryId = (typeof riskEntriesV2026)[number]["id"];
  * reaches a screen, and tests/retired-entries.spec.ts holds this list to the catalog.
  */
 export const RETIRED_RISK_ENTRIES: readonly RetiredRiskEntry[] = [
+  // Came back on 2026-10-27 under a new id, risk-losses-source-of-income: a read on the same subject quoting the CRA's
+  // Income Tax Audit Manual, chapter 27 (above). This record stays, and its id is never used again.
   {
     id: "risk-hobby-reclassification",
     label: "Repeated losses → hobby reclassification",
     url: "https://www.canada.ca/en/revenue-agency/services/tax/businesses/small-businesses-self-employed-income/setting-your-business.html",
     readOn: "2026-10-23",
-    why: "On the maintainer's reading list of 2026-10-23 the read didn't match its source: its one page, the CRA's Setting up your business, doesn't support what it said about losses year after year, the reasonable-expectation-of-profit question, or running the venture \"business-like\" with \"records that show profit intent\", and DotAmi holds no quote from a page that does. Nothing sourced was left to say, so the Hobby vs. business card shows no risk box. A read on its subject comes back only under a new id, citing a page on business versus personal pursuits and quoting it.",
+    why: "On the maintainer's reading list of 2026-10-23 the read didn't match its source: its one page, the CRA's Setting up your business, doesn't support what it said about losses year after year, the reasonable-expectation-of-profit question, or running the venture \"business-like\" with \"records that show profit intent\", and DotAmi holds no quote from a page that does. Nothing sourced was left to say, so the Hobby vs. business card showed no risk box. A read on its subject comes back only under a new id, citing a page on business versus personal pursuits and quoting it.",
   },
 ];

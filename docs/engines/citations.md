@@ -1,6 +1,7 @@
 # How a source was checked: read, or checked by a tool
 
-Last updated: 2026-10-27 (the maintainer's reads of 2026-10-25: every citation of the 31 pages he read
+Last updated: 2026-10-27 (Repeated losses settled: a read back under a new id, quoting the CRA's Income Tax
+Audit Manual, chapter 27, § Blocked; the maintainer's reads of 2026-10-25: every citation of the 31 pages he read
 in full says "Read by a person on 2026-10-25", § The maintainer's reads of 2026-10-25; the same day, main
 with #207 and #208 merged into the reading list's corrections: the two
 checks that waited on them are plain checks, § The reading list's corrections; 2026-10-24: the reading
@@ -464,7 +465,7 @@ Three rules from his answers hold for every row:
 | The Delete menu's records line (`cra-business-records-retention`) | `cra-business-records-retention` | The line is unchanged (it already said "generally"); its citation also keeps the CRA's two sentences. Four design-doc lines that gave the six years without "generally" now give it. | Tool check of 2026-10-23; a read wins on screen (2026-10-08, the maintainer's of 2026-10-25 since then) |
 | Home office read (`risk-home-office-percentage`) | `risk-home-office-percentage` | DotAmi's own words on floor area and exclusive use are gone; the box quotes the CRA's two conditions and the limit to the business's net income, and since 2026-10-27 the page's sentence on working out the business part (a reasonable basis, "such as" the workspace's share of the home's area). | The quotes the home office write-off's citation of the page holds (tool check of 2026-10-13, of 2026-10-27 since the fifth joined) |
 | First-year deduction read (`risk-immediate-expensing-timing`) | `risk-immediate-expensing-timing` | "Getting the year wrong misstates income and unwinds on review" and "keep purchase and deployment records" are gone; the rest stays. | The guide's sentence on the dates, tool check of 2026-10-23, on no screen (it ends on a colon) |
-| Repeated-losses read (`risk-hobby-reclassification`) | `risk-hobby-reclassification` | Retired: its one page supports none of it ([risk-calculator.md](../brain/risk-calculator.md), § Retired risk reads). | No held quote from a page that does (*Blocked*) |
+| Repeated-losses read (`risk-hobby-reclassification`) | `risk-hobby-reclassification` | Retired: its one page supports none of it ([risk-calculator.md](../brain/risk-calculator.md), § Retired risk reads). Since 2026-10-27 a read on its subject is back under a new id, `risk-losses-source-of-income`, quoting the CRA's Income Tax Audit Manual, chapter 27. | No held quote from a page that does then (*Blocked* until 2026-10-27); since then the audit manual's three sentences, tool check of 2026-10-27 |
 | Anti-avoidance read (`risk-ladder-skipping`) | `risk-ladder-skipping` | DotAmi's advice ("professional advice tied to a genuine business purpose, documented at the time") is gone; the box lists s.245's own phrases, joined by nothing of DotAmi's, and the Holding company and Family trust cards list s.245 as a source. | Four of the five phrases docs/glossary.md's GAAR entry holds (tool check of 2026-10-12) |
 | Loan program read (`risk-self-declared-valuation`) | `risk-self-declared-valuation` | Kept (his answer 3), saying only ISED's rule on security; "the lesser of purchase price or appraised value" is gone. It cites ISED's loans page in place of the program's hub. | “For real property and equipment, security must be taken on the assets financed.”, tool check of 2026-10-23 |
 | *Sole Prop activation* (`stage-1-sole-prop-activation`) | `stage-1-sole-prop-activation/projection-30000` | "Track gross revenue against" the two tests is gone; the note quotes what the CRA says a sole proprietor counts and what is left out, and points to *Mandatory GST registration* for the tests. | A new source, *When to register for and start charging the GST/HST*, with the tool check of 2026-10-12 those words already had |
@@ -492,8 +493,7 @@ machine, before DotAmi says more than it does now. They are listed in [task-list
 2. **Ontario's 13% HST.** The same table.
 3. **Ontario food premises.** The regulation in force, read, and what it requires, quoted, under a new
    id.
-4. **Repeated losses.** A CRA, Act or folio page on business versus personal pursuits, with its words.
-5. **SR&ED, refunded or not.** Whether, and how much of, a sole proprietor's 15% credit is refunded,
+4. **SR&ED, refunded or not.** Whether, and how much of, a sole proprietor's 15% credit is refunded,
    and whether a CCPC's enhanced 35% is: no held quote says either (the CCPC's "refundable" rested on
    the maintainer's read alone), so neither card says it. Looked for on 2026-10-27, and the CRA's own
    pages say different things, each found by the script that day: the relationships page the card
@@ -503,19 +503,38 @@ machine, before DotAmi says more than it does now. They are listed in [task-list
    unclaimed balance of ITC earned in the current year for qualified SR&ED expenditures.” The policy
    page's CCPC lines run to several kinds of corporation and expenditure, so a part of them would read
    as the whole. Which page, if either, the card quotes is the maintainer's call.
-6. **SR&ED's $6 million.** The tax years it applies from (beginning on or after 2024-12-16) are in no
+5. **SR&ED's $6 million.** The tax years it applies from (beginning on or after 2024-12-16) are in no
    held quote, and only the formula of s.127(10.2) is held, not the sentence that leads into it. The
    same policy page says “For tax years that begin after December 15, 2024, the maximum expenditure
-   limit is $6 million per year.” (found 2026-10-27); it waits with item 5, since it would be that
+   limit is $6 million per year.” (found 2026-10-27); it waits with item 4, since it would be that
    page's first citation, and the card's date guard (no year of DotAmi's own) is the maintainer's
    NO TIMES call.
-7. **The Productivity Grant's other conditions:** its other requirements for employers (the list
+6. **The Productivity Grant's other conditions:** its other requirements for employers (the list
    summarises active legal entity status, good standing, WCB coverage for trainees and complying with
    provincial agreements, without quotes), whether a sole proprietor counts as an employer, what
    training counts, who else funds it, and the page's subject labels before the 25% and 75% lines.
 
-Three more were settled on 2026-10-27 (four changes, counting the two titles), each by
+Four more were settled on 2026-10-27 (five changes, counting the two titles), each by
 `node scripts/check-quotes.mjs` finding the words on the live page that day:
+
+- **Repeated losses** (item 4 of this list until then), on the maintainer's "yah, lets use it" of that day.
+  A read on the retired repeated-losses read's subject is back under a new id, `risk-losses-source-of-income`
+  ([`lib/engines/risk/v2026/triggers.ts`](../../lib/engines/risk/v2026/triggers.ts); the retired id stays
+  retired), on the same card with the retired read's severity (`caution`) and no trigger. It quotes the CRA's
+  *Income Tax Audit Manual*, chapter 27
+  (https://www.canada.ca/en/revenue-agency/services/tax/technical-information/income-tax-audit-manual-domestic-compliance-programs-branch-dcpb-27.html):
+  “An activity undertaken in the pursuit of profit, even with erroneous business decisions that cause it to never
+  experience any actual profit, is still a source of income.”, “Objective evidence showing an intention to create
+  losses to offset taxable income may lead to the courts to conclude that no source of income exists.” and, as the
+  mitigation, “If there is a personal element to the activity and the activity is undertaken in a sufficiently
+  commercial manner, there is a source of income and income must be reported and losses may be claimed.” DotAmi's
+  only words between them are the labels "The CRA's Income Tax Audit Manual, chapter 27:" and "The same page:". The
+  citation's title is the page's main heading and its chapter heading, *Income Tax Audit Manual, Chapter 27.0
+  Income*, both found by the script that day. Nobody has read the page in full, so it says "Checked by a tool" in
+  amber. Never quoted from it: the auditors' own instructions (the two-stage approach and its first question), the
+  list of factors to consider, the sentence on the reasonable expectation of profit test on its own, and any line
+  with a time in it. The Hobby vs. business card itself is unchanged (§ Outside the list, item 3).
+  [`tests/repeated-losses-read.spec.ts`](../../tests/repeated-losses-read.spec.ts) holds it.
 
 - **SR&ED deepening's 35% from the SR&ED glossary**, the line the maintainer asked for. The stage's
   35% quotes it (“Some Canadian-controlled private corporations (CCPCs) that meet certain requirements
@@ -557,7 +576,10 @@ the entries he checked); each waits for his call. They are listed in [task-list.
    CRA's *Setting up your business*: the page the retired hobby read's record says supports neither
    (`RETIRED_RISK_ENTRIES`). It is another citation of the same page. He read the page in full on
    2026-10-25, so its source says "Read by a person on 2026-10-25"; the card's words are unchanged, and
-   whether the page supports them is still his call.
+   whether the page supports them is still his call. Since 2026-10-27 the card's risk box quotes the CRA's
+   Income Tax Audit Manual, chapter 27 (`risk-losses-source-of-income`, § Blocked, settled that day), and
+   names that page; the card's own sources still list only *Setting up your business*, so whether chapter 27
+   is listed under the card too waits for the same call.
 
 ## How this relates to the other checks
 
