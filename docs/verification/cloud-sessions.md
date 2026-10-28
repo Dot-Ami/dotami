@@ -50,14 +50,22 @@ worked on DotAmi, what it can't do, and what it leaves for a normal session on t
 
 ## Left for a normal session (it needs the internet or Windows)
 
-1. `node scripts/check-quotes.mjs` with no arguments: re-checks every quote DotAmi holds (337 tool checks on
+1. `node scripts/check-quotes.mjs` with no arguments: re-checks every quote in the catalogs (337 tool checks on
    11 government and BizPaL sites as of 2026-10-27, none on the sites DotAmi never fetches). Done in a normal
    session on 2026-10-26: all 779 quotes found, #211's 49 quotes dated 2026-10-23 among them, so citations.md
    rule 4's exception is closed.
-2. `npm run quality:report -- --live`: source health, the pages that answer "not found".
-3. The official words citations.md § *Blocked* still needs (Alberta's no-PST page, the SR&ED refund
-   questions, the home office sentence, two pages' own titles, the Productivity Grant's other conditions).
+2. `npm run quality:report -- --live`: source health, the pages that answer "not found". Done on 2026-10-26:
+   words found on 337 of 337 tool-checked citations, no new page answering "not found" (the one address dead
+   since 2026-10-13 is still left for the maintainer, `tests/fixtures/still-dead-pages.ts`).
+3. The official words citations.md § *Blocked* needs. Looked for on 2026-10-27: the SR&ED glossary's 35%,
+   the home office sentence and both pages' own titles were found, and
+   [#215](https://github.com/Dot-Ami/dotami/pull/215) records them; for the rest, citations.md § *Blocked*
+   says what each still needs.
 4. The prices Mara's example rests on that the review couldn't re-open (Autodesk Fusion 403, Busy Bee Tools
    and Lee Valley 429, QuickBooks timed out), and the AI provider's retention period on *What DotAmi knows
-   about you*, to quote word for word (docs/task-list.md).
+   about you*, to quote word for word (docs/task-list.md). The prices were re-opened on 2026-10-27: all the
+   same, apart from Lee Valley's (a bot check, not bypassed). The retention period is quoted word for word in
+   [#214](https://github.com/Dot-Ami/dotami/pull/214).
 5. `npm run ci:quality` with the database tests, `npm run test:browser`, and on Windows `npm run test:desktop`.
+   Done on 2026-10-26 with #211's branch: every part passed but one unit test that fails on main too, only
+   on a Windows checkout's line endings (`tests/prerelease-honesty.spec.ts`; CI on Linux passes it).
