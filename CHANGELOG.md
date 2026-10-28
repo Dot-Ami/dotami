@@ -253,7 +253,10 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   `risk-hobby-reclassification` stays retired), its box quotes three sentences of the CRA's *Income Tax Audit
   Manual*, chapter 27, joined only by "The CRA's Income Tax Audit Manual, chapter 27:" and "The same page:";
   `node scripts/check-quotes.mjs` found all three on the live page that day, and nobody has read the page in full
-  yet, so its source says "Checked by a tool". The card's own words and sources are unchanged. Test:
+  yet, so its check is a tool's only. No screen shows chapter 27 or that check yet: a risk box draws no sources of
+  its own, and the card's sources still list only *Setting up your business*; whether chapter 27 goes under the card
+  is the maintainer's call ([docs/engines/citations.md](docs/engines/citations.md), § Outside the list, item 3), and
+  the test holds the gap as an `it.fails` check until then. The card's own words and sources are unchanged. Test:
   `tests/repeated-losses-read.spec.ts`.
 ### Fixed
 - **Mara's example: its prices re-opened, and no promotion length in DotAmi's own words** (2026-10-27). The
@@ -750,7 +753,8 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   venture business-like: separate accounts, a revenue plan, and records that show profit intent — not just
   deductions", and its one source, the CRA's *Setting up your business*, supports neither. DotAmi holds no quote
   from a page that does, so nothing is left to say: the *Hobby vs. business income test* card still shows, with
-  no risk box, and its colour doesn't change. The id, `risk-hobby-reclassification`, is kept with the reason in
+  no risk box (a read on its subject is back under a new id since 2026-10-27, Added above), and its colour doesn't
+  change. The id, `risk-hobby-reclassification`, is kept with the reason in
   `RETIRED_RISK_ENTRIES` and never used again: a read on the same subject would come back under a new id
   ([docs/brain/risk-calculator.md](docs/brain/risk-calculator.md), § Retired risk reads). The card's own
   description and line, on a reasonable expectation of profit and business-like conduct, cite the same page and

@@ -530,11 +530,13 @@ Four more were settled on 2026-10-27 (five changes, counting the two titles), ea
   commercial manner, there is a source of income and income must be reported and losses may be claimed.” DotAmi's
   only words between them are the labels "The CRA's Income Tax Audit Manual, chapter 27:" and "The same page:". The
   citation's title is the page's main heading and its chapter heading, *Income Tax Audit Manual, Chapter 27.0
-  Income*, both found by the script that day. Nobody has read the page in full, so it says "Checked by a tool" in
-  amber. Never quoted from it: the auditors' own instructions (the two-stage approach and its first question), the
-  list of factors to consider, the sentence on the reasonable expectation of profit test on its own, and any line
-  with a time in it. The Hobby vs. business card itself is unchanged (§ Outside the list, item 3).
-  [`tests/repeated-losses-read.spec.ts`](../../tests/repeated-losses-read.spec.ts) holds it.
+  Income*, both found by the script that day. Nobody has read the page in full, so its check is a tool's only. No
+  screen shows the page or that check yet: a risk box draws no sources of its own, and the card's sources list only
+  *Setting up your business* (§ Outside the list, item 3). Never quoted from it: the auditors' own instructions (the
+  two-stage approach and its first question), the list of factors to consider, the sentence on the reasonable
+  expectation of profit test on its own, and any line with a time in it. The Hobby vs. business card itself is
+  unchanged (§ Outside the list, item 3). [`tests/repeated-losses-read.spec.ts`](../../tests/repeated-losses-read.spec.ts)
+  holds it, and holds the missing source as an `it.fails` check until the maintainer's call.
 
 - **SR&ED deepening's 35% from the SR&ED glossary**, the line the maintainer asked for. The stage's
   35% quotes it (“Some Canadian-controlled private corporations (CCPCs) that meet certain requirements
@@ -579,7 +581,24 @@ the entries he checked); each waits for his call. They are listed in [task-list.
    whether the page supports them is still his call. Since 2026-10-27 the card's risk box quotes the CRA's
    Income Tax Audit Manual, chapter 27 (`risk-losses-source-of-income`, § Blocked, settled that day), and
    names that page; the card's own sources still list only *Setting up your business*, so whether chapter 27
-   is listed under the card too waits for the same call.
+   is listed under the card too waits for the same call. Until then no screen shows chapter 27 or its check:
+   the box's three quotes sit right above the card's one source, marked "Read by a person on 2026-10-25", and
+   the readout (what the Lens reads) gives the same; `tests/repeated-losses-read.spec.ts` holds that as an
+   `it.fails` check. (His call 6 of 2026-10-25, a risk box headed "DotAmi's risk catalog points to this page:"
+   with the page's words and source, would draw the box's own source once built; it isn't built yet.)
+   The audit manual page the box now quotes says the reasonable-expectation-of-profit test was rejected, and
+   that is the test the card's description names. Its words: in 27.2.0, “REOP alone is not a relevant means of
+   determining whether an activity constitutes a source of income” and, in its paragraphs on the Federal Court
+   of Appeal's Paletta and Chad decisions, “While the reasonable expectation of profit test was rejected”; the same page also quotes the Supreme Court that
+   “the taxpayer's so-called reasonable expectation of profit is a factor, among others”, and in 27.2.2 says
+   “Operating in a sufficiently commercial manner is synonymous with operating with a reasonable expectation
+   of profit or in a pursuit of profit.” (`node scripts/check-quotes.mjs` found all four on 2026-10-27; they are
+   context for this call, not quotes any entry holds.) So listing chapter 27 under the card would put it under
+   a description it words differently. His call 3 of 2026-10-25
+   ([cards-in-official-words.md](../architecture/cards-in-official-words.md), § The maintainer's calls) retires
+   this card in phase 3, story 1 ("their one source supports none of their words"). With this read on it,
+   whether the card still retires (and the read with it, or under another card) or the box keeps the card is
+   his call too; nothing here settles it.
 
 ## How this relates to the other checks
 

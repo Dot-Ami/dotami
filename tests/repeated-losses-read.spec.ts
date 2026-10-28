@@ -6,7 +6,13 @@
  * CRA's Income Tax Audit Manual, chapter 27, was found to have usable words, and the maintainer answered "yah, lets
  * use it". So the read comes back under a NEW id (IDs are forever), saying only what that page says, quoted, joined
  * only by labels that name the page. `node scripts/check-quotes.mjs` found all three quotes on the live page on
- * 2026-10-27, and nobody has read the page in full, so its source says "Checked by a tool" in amber.
+ * 2026-10-27, and nobody has read the page in full, so its check words are "Checked by a tool…".
+ *
+ * No screen shows chapter 27 or those check words yet. A risk box draws no sources of its own (attachRisk in
+ * lib/brain/evaluate.ts copies only the level, GAAR flag, why and mitigation), so the page a box quotes has to be under
+ * its card (tests/reading-list-corrections.spec.ts § 6), and the Hobby vs. business card lists only Setting up your
+ * business. Whether chapter 27 goes under the card is the maintainer's call (docs/engines/citations.md § Outside the
+ * list, item 3), so the gap is held as an `it.fails` check (§ 4), as #208's was until its page went under its card.
  *
  * Kept as they were: the retired read's trigger (none) and severity (`caution`), the one card it shows on, and that
  * card's own words and sources (whether its page supports them is a separate open question for the maintainer,
@@ -203,7 +209,8 @@ describe("3. Its source: chapter 27, checked by a tool, read by nobody yet", () 
     expect(read().citations).toHaveLength(1);
   });
 
-  it("claims no read, so it says “Checked by a tool” in amber", () => {
+  // Its check words, as a screen would draw them: no screen does yet (§ 4, the `it.fails` check).
+  it("claims no read, so its check words say “Checked by a tool” and mark it check-first (amber)", () => {
     const c = citation();
     expect(c.lastVerified).toBeUndefined();
     expect(c.readBy).toBeUndefined();
@@ -239,8 +246,35 @@ describe("4. On the card", () => {
       legal: "If selling to the public, consumer protection and licensing rules may still apply regardless of hobby status.",
     });
     expect(rule.citations.map((c) => c.url)).toEqual([SETTING_UP]);
-    // Its colour: a caution box never changes one (only a professional-required box turns green to yellow,
-    // lib/brain/evaluate.ts attachRisk), and the read above is caution.
+    // Its colour: green for each of the three ideas, as on main before this read (0e45a80e: the same ideas gave
+    // green with no box). A caution box never changes a colour; only a professional-required one turns green to
+    // yellow (lib/brain/evaluate.ts attachRisk).
+    for (const activityTags of [["Content / streaming"], ["Woodworking"], ["Creator / influencer"]]) {
+      expect(card(idea({ activityTags })).state, activityTags[0]).toBe("green");
+    }
+  });
+
+  // A risk box draws no sources of its own, so the page it quotes has to be under the card
+  // (tests/reading-list-corrections.spec.ts § 6). Today the card lists only Setting up your business, so a person sees
+  // the three quotes with no link to chapter 27, right above "Read by a person on 2026-10-25" for that other page.
+  // Listing chapter 27 under the card is the maintainer's call (docs/engines/citations.md § Outside the list, item 3),
+  // so this is an `it.fails` until he makes it, as #208's loans page was: it passes only while the gap is there, and
+  // fails the day the page goes under the card, to be turned into a plain `it`.
+  it.fails("the card cites chapter 27, the page its box quotes, with the check the script printed (not yet: his call)", () => {
+    const c = card();
+    expect(c.risk).toBeDefined();
+    const page = c.citations.find((x) => x.url === CHAPTER_27);
+    expect(page, "chapter 27 is among the card's own sources").toBeDefined();
+    expect(howCheckedWords(page!)).toBe(
+      `Checked by a tool on ${CHECKER_DAY}: it found on the page the exact words this entry relies on. Not read by a person yet.`,
+    );
+  });
+
+  it("what the card's sources show under the box today: Setting up your business only, read by a person", () => {
+    // A guard on the gap above, so it is recorded as it is and not only as what it isn't.
+    const c = card();
+    expect(c.citations.map((x) => x.url)).toEqual([SETTING_UP]);
+    expect(howCheckedWords(c.citations[0]!)).toMatch(/^Read by a person on 2026-10-25/);
   });
 });
 

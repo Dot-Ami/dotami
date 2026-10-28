@@ -1110,7 +1110,9 @@ roadmap's build order.
     (`tests/engine-integrity.spec.ts` holds GAAR reads there); and the *Hobby vs. business income test*
     card's profit-expectation and business-like lines, which cite the page the retired hobby read's
     record says supports neither (he read that page in full on 2026-10-25; the card's words, and whether the card
-    lists the audit manual's chapter 27, which its risk box quotes since 2026-10-27, wait for his call)
+    lists the audit manual's chapter 27, which its risk box quotes since 2026-10-27, wait for his call, as does
+    whether his call 3 of 2026-10-25 retiring the card, docs/architecture/cards-in-official-words.md, still holds
+    with that box on it)
 - ⬜ **[11c] Flag stale sources automatically** — with #37
   - [ ] Kept open on purpose (the maintainer, 2026-10-14), so a person decides later:
     - [x] *Alberta Investor Tax Credit* (`grant-abti`): taken off on 2026-10-23 (the maintainer's call

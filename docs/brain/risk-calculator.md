@@ -118,7 +118,8 @@ One more read came back on 2026-10-27, on the retired repeated-losses read's sub
 (`risk-losses-source-of-income`; the maintainer's "yah, lets use it" of that day). It says only what the CRA's Income
 Tax Audit Manual, chapter 27, says: three of its sentences, quoted whole, joined only by the labels "The CRA's Income
 Tax Audit Manual, chapter 27:" and "The same page:". Its label is neutral DotAmi wording, "Losses and whether there is
-a source of income", and no screen shows it. Nobody has read the page in full, so its source is checked by a tool only.
+a source of income", and no screen shows it (nor does the readout return it). Nobody has read the page in full, so its
+check is a tool's only, and no screen shows the page or that check yet (the exception below).
 
 | Read | What it says now | What came out | Its quotes and their check |
 | --- | --- | --- | --- |
@@ -127,7 +128,7 @@ a source of income", and no screen shows it. Nobody has read the page in full, s
 | `risk-ladder-skipping` | "Income Tax Act s.245, in its own words:" and three of the section's phrases, listed with nothing of DotAmi's between them; as the mitigation, "The same section:" and a fourth, “while not preventing taxpayers from obtaining tax benefits contemplated by Parliament” | "structure-for-tax's-sake", "exactly what the General Anti-Avoidance Rule exists to unwind", "Cross them with professional advice tied to a genuine business purpose, documented at the time" (s.245 asks for no advice or documentation) | four of the five quotes docs/glossary.md's GAAR entry holds, found by `scripts/check-quotes.mjs` on 2026-10-12, in one citation (`S245_CITATION`, `lib/engines/risk/v2026/gaar-official-words.ts`) shared with the Holding company and Family trust cards |
 | `risk-self-declared-valuation` | ISED's rule, quoted: “For real property and equipment, security must be taken on the assets financed.”, and that these are ISED's words from its page on loans under the program | "is circular and can read as collateral misrepresentation to a lender", "at the lesser of purchase price or appraised value" (a different rule from the security rule, on no page DotAmi cites) | ISED's loans page, a tool check of 2026-10-23; the read cited ISED's program hub until then |
 | `risk-hobby-reclassification` | retired (§ Retired risk reads) | all of it | none |
-| `risk-losses-source-of-income` (since 2026-10-27, on the Hobby vs. business card) | "The CRA's Income Tax Audit Manual, chapter 27:" “An activity undertaken in the pursuit of profit, even with erroneous business decisions that cause it to never experience any actual profit, is still a source of income.” "The same page:" “Objective evidence showing an intention to create losses to offset taxable income may lead to the courts to conclude that no source of income exists.”; as the mitigation, "The same page:" “If there is a personal element to the activity and the activity is undertaken in a sufficiently commercial manner, there is a source of income and income must be reported and losses may be claimed.” | nothing: a new read. Never quoted from the same page: the auditors' own instructions (the two-stage approach and its first question), the list of factors to consider, the sentence on the reasonable expectation of profit test on its own, and any line with a time in it | the three sentences, a tool check of 2026-10-27 (`node scripts/check-quotes.mjs` found all three on the live page that day), on this read only; no read by anyone yet, so it says "Checked by a tool" in amber |
+| `risk-losses-source-of-income` (since 2026-10-27, on the Hobby vs. business card) | "The CRA's Income Tax Audit Manual, chapter 27:" “An activity undertaken in the pursuit of profit, even with erroneous business decisions that cause it to never experience any actual profit, is still a source of income.” "The same page:" “Objective evidence showing an intention to create losses to offset taxable income may lead to the courts to conclude that no source of income exists.”; as the mitigation, "The same page:" “If there is a personal element to the activity and the activity is undertaken in a sufficiently commercial manner, there is a source of income and income must be reported and losses may be claimed.” | nothing: a new read. Never quoted from the same page: the auditors' own instructions (the two-stage approach and its first question), the list of factors to consider, the sentence on the reasonable expectation of profit test on its own, and any line with a time in it | the three sentences, a tool check of 2026-10-27 (`node scripts/check-quotes.mjs` found all three on the live page that day), on this read only; no read by anyone yet. No screen shows this page or its check: a box draws no sources, and the card lists only *Setting up your business* (below) |
 
 A risk box draws no sources of its own: the card it shows on lists only the card's own citations. So
 a page a read quotes is cited under that card too: the home office page under the home office
@@ -135,8 +136,11 @@ write-off, s.245 under the Holding company and Family trust cards, and ISED's lo
 loan program's card (#208's source, merged in on 2026-10-27; until then the card listed ISED's hub only).
 The box also names the page it quotes. One exception, for now: the audit manual's chapter 27 is not under
 the Hobby vs. business card, which this change leaves as it was (its own words are an open question for the
-maintainer, [citations.md](../engines/citations.md), § Outside the list, item 3). The box names the page;
-whether the card lists it is his call.
+maintainer, [citations.md](../engines/citations.md), § Outside the list, item 3). The box names the page in its
+labels, but nothing links to it: a person sees the three quotes right above the card's one source, *Setting up your
+business*, marked "Read by a person on 2026-10-25", and the readout (what the Lens reads) gives the same. Whether the
+card lists chapter 27 is his call; until he makes it, `tests/repeated-losses-read.spec.ts` holds the gap as an
+`it.fails` check, as #208's was.
 
 ## Retired risk reads
 

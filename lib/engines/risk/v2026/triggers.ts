@@ -178,8 +178,8 @@ export const riskEntriesV2026 = [
   // A read on its subject came back on 2026-10-27 under a new id, the entry below (IDs are forever).
   {
     id: "risk-losses-source-of-income",
-    // No screen shows a risk read's label. Neutral on purpose: it names the question the page answers, never an answer
-    // about the person's own activity.
+    // No screen shows a risk read's label, and the readout doesn't return it. Neutral on purpose: it names the question
+    // the page answers, never an answer about the person's own activity.
     label: "Losses and whether there is a source of income",
     // The retired read's trigger (none: it applies whenever the card shows) and severity, unchanged; both are the
     // maintainer's to change.
@@ -204,7 +204,11 @@ export const riskEntriesV2026 = [
         jurisdiction: "CA",
         url: "https://www.canada.ca/en/revenue-agency/services/tax/technical-information/income-tax-audit-manual-domestic-compliance-programs-branch-dcpb-27.html",
         // A tool check only: `node scripts/check-quotes.mjs` found all three quotes on the live page on 2026-10-27, and
-        // nobody has read the page in full, so its source says "Checked by a tool" in amber until a person does.
+        // nobody has read the page in full. No screen shows this page or its check yet: a risk read's own sources are
+        // drawn nowhere (attachRisk in lib/brain/evaluate.ts copies only the level, GAAR flag, why and mitigation), and
+        // the card's sources list only Setting up your business. Whether chapter 27 goes under the card is the
+        // maintainer's call (docs/engines/citations.md § Outside the list, item 3); tests/repeated-losses-read.spec.ts
+        // holds the gap as an `it.fails` check until then.
         toolCheck: {
           checkedOn: "2026-10-27",
           quotes: [
