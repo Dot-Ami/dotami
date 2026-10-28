@@ -12,6 +12,8 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 
 import type { PrismaClient } from "@prisma/client";
+import { createElement } from "react";
+import { renderToStaticMarkup } from "react-dom/server";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
 import {
@@ -23,10 +25,17 @@ import {
   plural,
   sizeWords,
 } from "@/components/your-data/format";
+import { SentRow } from "@/components/your-data/your-data-page";
 import { encryptReceipt, keyIdOf } from "@/desktop/receipt-crypto.mjs";
+import { citationCheckProblems, PAGE_QUOTES_LEAD } from "@/lib/engines/shared/citation-check";
 import { createDatabaseClient } from "@/lib/db/client";
 import { ensureVentureFromScenario } from "@/lib/db/ensure-venture-from-scenario";
 import type { ReceiptLock } from "@/lib/expenses/receipts/lock";
+import {
+  ANTHROPIC_RETENTION_CHECK,
+  ANTHROPIC_RETENTION_TOOL_CHECK,
+  ANTHROPIC_RETENTION_URL,
+} from "@/lib/privacy/anthropic-retention-official-words";
 import { TABLES } from "@/lib/privacy/inventory";
 import { localCalendarDay, readHoldings } from "@/lib/privacy/holdings";
 import { addTypedStatement } from "@/lib/person/statements";
@@ -295,6 +304,46 @@ describe("readHoldings on a seeded database", () => {
     const quietById = Object.fromEntries(quiet.sentElsewhere.map((s) => [s.entry.id, s.state]));
     expect(quietById["intake-sentence"]).toBe("inactive");
     expect(quietById["update-check"]).toBe("inactive");
+  });
+
+  // The maintainer's decision 2 of 2026-10-24: a provider's period is quoted word for word under a label, with
+  // the day read, never in DotAmi's words. The page draws Anthropic's own lines only while a key is set.
+  it("quotes Anthropic's own words on how long it keeps what is sent, after the label, and only while a key is set", async () => {
+    // The intake's row of "What leaves this computer", drawn from what readHoldings says of this copy.
+    const render = async (t: SettingsToday) => {
+      const facts = (await readHoldings(seeded.prisma, t)).sentElsewhere.find((s) => s.entry.id === "intake-sentence");
+      expect(facts).toBeDefined();
+      return renderToStaticMarkup(createElement(SentRow, { facts: facts! }));
+    };
+    // The words `node scripts/check-quotes.mjs` printed as found on 2026-10-27, typed here, so a changed quote fails.
+    const FOUND = [
+      "For Anthropic API users, we automatically delete inputs and outputs on our backend within 30 days of receipt or generation, except:",
+      "When you use a service with longer retention under your control (e.g. Files API)",
+      "When you and we have agreed otherwise (e.g. zero data retention agreement)",
+      "If we need to retain them for longer to enforce our Usage Policy (UP)",
+      "In compliance with the law",
+    ];
+    expect(ANTHROPIC_RETENTION_TOOL_CHECK).toEqual({ checkedOn: "2026-10-27", quotes: FOUND });
+    expect(citationCheckProblems(ANTHROPIC_RETENTION_CHECK, "2026-10-27")).toEqual([]);
+
+    const today = readSettingsToday({ DATABASE_URL: seeded.url, ANTHROPIC_API_KEY: "sk-placeholder-key" });
+    const html = await render(today);
+    const at = (text: string) => html.indexOf(text);
+    expect(at("How long Anthropic keeps it:")).toBeGreaterThan(-1);
+    expect(at(`href="${ANTHROPIC_RETENTION_URL}"`)).toBeGreaterThan(at("How long Anthropic keeps it:"));
+    // In amber, like every source no person has read.
+    expect(at('<span class="text-amber">Checked by a tool on 2026-10-27')).toBeGreaterThan(at(`href="${ANTHROPIC_RETENTION_URL}"`));
+    let before = at(PAGE_QUOTES_LEAD);
+    expect(before).toBeGreaterThan(at("Checked by a tool on 2026-10-27"));
+    for (const quote of FOUND) {
+      expect(at(`“${quote}”`), quote).toBeGreaterThan(before);
+      before = at(`“${quote}”`);
+    }
+    expect(html).not.toContain("deleted within 30 days, with exceptions");
+
+    const quiet = await render(seededToday);
+    expect(quiet).not.toContain("How long Anthropic keeps it:");
+    expect(quiet).not.toContain(ANTHROPIC_RETENTION_TOOL_CHECK.quotes[0]);
   });
 });
 

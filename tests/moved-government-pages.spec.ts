@@ -5,7 +5,8 @@
  * lib/engines/all-citations.ts) twice, with a normal browser's user-agent: 20 answered 404 both times.
  * For 19 of them the same government body has the content at a new address, and the words each entry
  * relies on were found there by `node scripts/check-quotes.mjs` that day, so 23 citations on them
- * now point at the new page and carry that tool check. Two citations are left as they are, for a
+ * now point at the new page and carry that tool check (three of them re-checked with one more quote on
+ * 2026-10-27: SR&ED deepening's glossary and both citations of the home office page). Two citations are left as they are, for a
  * person to decide (STILL_DEAD, tests/fixtures/still-dead-pages.ts): what each says may no longer be true, and no rule here rewrites
  * it.
  * (A third, the Alberta Investor Tax Credit page, left with its program on 2026-10-23, the maintainer's call a-call-1.)

@@ -127,12 +127,6 @@ export const COMPONENT_TIME_WORDS: readonly ComponentTimeWords[] = [
     kind: "retention",
     why: "The label before the link to Anthropic's own page on what it keeps of what the intake's parser sends.",
   },
-  {
-    file: "components/your-data/your-data-page.tsx",
-    text: "(read 2026-10-06; it says API inputs and outputs are deleted within 30 days, with exceptions).",
-    kind: "known gap",
-    why: "Anthropic's period in DotAmi's paraphrase, not quoted: DotAmi holds no copy of that page's exact words, so it can't be quoted under a label yet (the maintainer's decision 2 of 2026-10-24; docs/task-list.md).",
-  },
 ];
 
 /**

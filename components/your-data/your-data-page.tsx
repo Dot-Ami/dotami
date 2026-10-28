@@ -11,14 +11,13 @@ import { StartNewReceiptKey } from "@/components/expenses/start-new-key";
 import { receiptProtectionText } from "@/lib/expenses/receipts/protection";
 import { DELETE_MENU, NOT_CLEARED_BY_DELETE, SET_ASIDE_RECEIPTS_WARNING, type WindowStorageEntry } from "@/lib/privacy/inventory";
 import { SAFETY_COPIES_KEY, SET_ASIDE_RECEIPTS_KEY } from "@/lib/privacy/kept-links";
+import { ANTHROPIC_RETENTION_CHECK, ANTHROPIC_RETENTION_URL } from "@/lib/privacy/anthropic-retention-official-words";
+import { howCheckedWords, isCheckFirst, toolCheckQuotes } from "@/lib/engines/shared/citation-check";
+import { PageQuotes } from "@/components/shared/page-quotes";
 
 import { DeleteMenu } from "./delete-menu";
 import { FiguresBySource } from "./figures-by-source";
 import { plural, sizeWords } from "./format";
-
-/** Anthropic's own page on how long it keeps what is sent to its API — read 2026-10-06. */
-const ANTHROPIC_RETENTION_URL =
-  "https://privacy.claude.com/en/articles/7996866-how-long-do-you-store-my-organization-s-data";
 
 const SECTIONS = [
   { id: "figures", title: "Your figures, by source" },
@@ -424,7 +423,8 @@ const SENT_STATE_WORDS: Record<SentState, string> = {
   "on-your-action": "Only when you choose",
 };
 
-function SentRow({ facts }: { facts: SentFacts }) {
+/** One row of "What leaves this computer". Exported for its test (tests/privacy-holdings.spec.ts). */
+export function SentRow({ facts }: { facts: SentFacts }) {
   const { entry } = facts;
   return (
     <li className="rounded-lg border border-rule bg-ink2 px-4 py-3">
@@ -450,18 +450,26 @@ function SentRow({ facts }: { facts: SentFacts }) {
         <dd className="text-paper-dim">{entry.canTakeBack}</dd>
       </dl>
       {entry.id === "intake-sentence" && facts.state === "active" ? (
-        <p className="mt-2 text-body text-stone">
-          How long Anthropic keeps it:{" "}
-          <a
-            href={ANTHROPIC_RETENTION_URL}
-            target="_blank"
-            rel="noreferrer"
-            className="text-paper underline decoration-stone-dim underline-offset-2 hover:text-maple"
-          >
-            its own page on data retention
-          </a>{" "}
-          (read 2026-10-06; it says API inputs and outputs are deleted within 30 days, with exceptions).
-        </p>
+        // Anthropic's period in its own words, after the label that says whose they are (never DotAmi's paraphrase).
+        <div className="mt-2 text-body text-stone">
+          <p>
+            How long Anthropic keeps it:{" "}
+            <a
+              href={ANTHROPIC_RETENTION_URL}
+              target="_blank"
+              rel="noreferrer"
+              className="text-paper underline decoration-stone-dim underline-offset-2 hover:text-maple"
+            >
+              its own page on data retention
+            </a>
+            .{" "}
+            {/* In the same words and colour as every source: amber while no person has read the page. */}
+            <span className={isCheckFirst(ANTHROPIC_RETENTION_CHECK) ? "text-amber" : "text-stone"}>
+              {howCheckedWords(ANTHROPIC_RETENTION_CHECK)}
+            </span>
+          </p>
+          <PageQuotes quotes={toolCheckQuotes(ANTHROPIC_RETENTION_CHECK)} layout="lines" className="mt-1 space-y-0.5 text-paper-dim" />
+        </div>
       ) : null}
     </li>
   );

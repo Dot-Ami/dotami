@@ -22,31 +22,36 @@ export const riskEntriesV2026 = [
     // exclusive-use test is where claims fail" and "Base the claim on measured floor area, document exclusive business
     // use, and keep the calculation with your records" were DotAmi's own. His note: floor area is one reasonable basis,
     // not the only one, and using the space only for the business is asked only when it isn't the principal place of
-    // business. No held quote gives the page's sentence on how to work out the business part, so the box says nothing
-    // about it. The "or" between the two conditions is s.18(12)'s: the write-off card cites the section, and its
-    // eligibility text gives both conditions.
+    // business. Since 2026-10-27 the box quotes the page's own sentence on how to work out the business part (its
+    // "such as" keeps floor area one reasonable basis); until then no held quote gave it, and the box said nothing about
+    // it. The "or" between the two conditions is s.18(12)'s: the write-off card cites the section, and its eligibility
+    // text gives both conditions.
     why: "The CRA's page on business-use-of-home expenses: “You can deduct expenses for the business use of a workspace in your home” if “it is your principal place of business”, or if “you use the space only to earn your business income, and you use it on a regular and ongoing basis to meet your clients, customers, or patients”.",
-    mitigation: "The same page, on the amount: it “cannot be more than your net income from the business before you deduct these expenses”.",
+    mitigation:
+      "The same page, on the amount: it “cannot be more than your net income from the business before you deduct these expenses”. On the business part: “To calculate the part you can deduct, use a reasonable basis, such as the area of the workspace divided by the total area of your home.”",
     citations: [
       {
         title: "Business-use-of-home expenses",
         authority: "CRA",
         jurisdiction: "CA",
         // Moved: the old address (…/report-business-income-expenses/business-expenses/business-use-home-expenses.html,
-        // read 2026-07-02) answered 404 on 2026-10-13; a tool found these words on the new page that day. The last two
-        // joined on 2026-10-24: the same day's check found them for the home office write-off's citation of this page
+        // read 2026-07-02) answered 404 on 2026-10-13; a tool found these words on the new page that day. The third and
+        // fourth joined on 2026-10-24: the same day's check found them for the home office write-off's citation of this page
         // (lib/engines/writeoffs/v2026/categories.ts), and the reading list found all four there again on 2026-10-23.
-        // The maintainer read the new page in full on 2026-10-25.
+        // The maintainer read the new page in full on 2026-10-25. The fifth joined on 2026-10-27, the page's sentence
+        // on the business part: `node scripts/check-quotes.mjs` found it with the other four that day, so the check is
+        // that day's (the write-off's citation of the page holds the same five).
         url: "https://www.canada.ca/en/revenue-agency/services/tax/businesses/topics/sole-proprietorships-partnerships/report-business-income-expenses/completing-form-t2125/business-use-home-expenses.html",
         lastVerified: MAINTAINER_READ_ON,
         readBy: "person",
         toolCheck: {
-          checkedOn: "2026-10-13",
+          checkedOn: "2026-10-27",
           quotes: [
             "You can deduct expenses for the business use of a workspace in your home",
             "you use the space only to earn your business income, and you use it on a regular and ongoing basis to meet your clients, customers, or patients",
             "it is your principal place of business",
             "cannot be more than your net income from the business before you deduct these expenses",
+            "To calculate the part you can deduct, use a reasonable basis, such as the area of the workspace divided by the total area of your home.",
           ],
         },
         note: "CRA workspace-in-home requirements: the two conditions, and the limit to the business's net income.",
@@ -205,8 +210,9 @@ export const riskEntriesV2026 = [
     mitigation: "ISED's words, from its page on loans under this program.",
     citations: [
       {
-        // The page's own title isn't held (only its address), so this one describes it.
-        title: "ISED: loans under the Canada Small Business Financing Program",
+        // The page's own title, its main heading: `node scripts/check-quotes.mjs` found it on the page on 2026-10-27.
+        // Until then only its address was held, and this citation described the page.
+        title: "Helping small businesses get loans",
         authority: "federal",
         jurisdiction: "CA",
         // Until 2026-10-24 the read cited ISED's program hub (…/canada-small-business-financing-program/en, read

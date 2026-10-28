@@ -451,8 +451,8 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   "opening hours"), and reads every catalog's Lens lines, every words file under `lib/`, every string a catalog
   writes for "time-boxed", and the text each component writes itself, with the pieces it lets through listed
   and why (`tests/fixtures/ideas/known-gaps.ts` `COMPONENT_TIME_WORDS`: words the patterns misread, *What
-  DotAmi knows about you*'s retention lines, and Anthropic's period, paraphrased until DotAmi holds its exact
-  words). Corporations Canada's fee lines ("It will cost $200 and will take 1 day.") were drawn in bare
+  DotAmi knows about you*'s retention lines, and, until 2026-10-27, Anthropic's period in DotAmi's paraphrase
+  (now quoted, below under Changed)). Corporations Canada's fee lines ("It will cost $200 and will take 1 day.") were drawn in bare
   quotation marks on the Incorporating step's ways to incorporate and on *Your plan*; they are now inside the
   official-quote component that draws every tool check's quotes, after *Words found on the page:*
   (`components/shared/page-quotes.tsx`). No amount changed.
@@ -619,7 +619,7 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   patients”; and the same page, on the amount: it “cannot be more than your net income from the business before
   you deduct these expenses”. The four are the quotes the home office write-off's citation of the page holds from its tool check of
   2026-10-13, which the risk read's citation now holds too. Nothing on how to work out the business part: no held
-  quote gives the page's sentence on it. Test: `tests/reading-list-corrections.spec.ts` § 6.
+  quote gave the page's sentence on it until 2026-10-27 (see Changed). Test: `tests/reading-list-corrections.spec.ts` § 6.
 - **The 100% first-year deduction's box keeps only what the maintainer found matches the guide.** On the Class 50
   card it said "… depends on acquisition and available-for-use dates; getting the year wrong misstates income and
   unwinds on review" and "Confirm eligibility and the available-for-use date with an accountant before filing —
@@ -688,8 +688,8 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
     program's terms, held no 35%, so it gains that page as a third source; its tax impact said the enhanced
     rates were "subject to taxable income limits", which no held quote says, and now says the enhanced rate
     is for some CCPCs, up to their expenditure limit for the year. The maintainer asked for the SR&ED
-    glossary's line stating 35%; no tool has found one yet (his answer of 2026-10-24: quote this page, as
-    the other stage does).
+    glossary's line stating 35%; no tool had found one until 2026-10-27 (his answer of 2026-10-24: quote this
+    page, as the other stage does; SR&ED deepening quotes the glossary since then, see Changed).
 
   The words new to a stage were found on their pages on 2026-10-23 by the reading list's matcher, kept as a
   tool check of that day on the stage the list checked (a networked `node scripts/check-quotes.mjs` run
@@ -704,6 +704,13 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   Prop activation's three sources: the new one in amber until 2026-10-27, each read by a person since).
 
 ### Changed
+- ***What DotAmi knows about you* quotes Anthropic's own words on how long it keeps what the intake sends**
+  (the maintainer's decision 2 of 2026-10-24: a provider's period word for word, under a label). While a model
+  key is set, the intake's row said Anthropic's page "says API inputs and outputs are deleted within 30 days,
+  with exceptions", DotAmi's paraphrase of a read on 2026-10-06. It now shows the page's own lines for API users,
+  the period and its four exceptions, after *Words found on the page:*, with "Checked by a tool on 2026-10-27"
+  (`node scripts/check-quotes.mjs` found them that day; `lib/privacy/anthropic-retention-official-words.ts`). What
+  DotAmi sends, and when, is unchanged, so the privacy log has no new line.
 - **31 source pages now say "Read by a person on 2026-10-25"** (the maintainer's reads). On 2026-10-25 the
   maintainer read 31 of the pages DotAmi cites in full, and ticked each one on his reading list; on 2026-10-24 he
   had decided that his reads made with an AI model's help count as a person's, for the pages he checked himself.
@@ -798,6 +805,13 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   what do you want your work and life to look like?" and now asks "What do you want your work and life to
   look like? Use your own words." The no-times checks had listed both as known gaps for his call; both
   entries are gone, so the words-file scan and the browser sweep now fail if either comes back.
+- **Three of the reading list's blocked items, settled by the pages' own words** (2026-10-27;
+  `node scripts/check-quotes.mjs` found each on its live page that day). *SR&ED deepening*'s 35% quotes the
+  SR&ED glossary's own entry, the line the maintainer asked for, in place of the relationships page's line. The
+  home office box adds the CRA page's sentence on working out the business part (“use a reasonable basis, such
+  as the area of the workspace divided by the total area of your home”). Two citations take their pages' own
+  titles: *What are SR&ED tax incentives* and *Helping small businesses get loans*. The glossary's and the home
+  office page's tool checks are of that day, since one run found their older quotes with the new ones.
 
 ### Documented
 - **The screen specs say what the pre-release fixes changed** (2026-10-24). Each control the fixes above
