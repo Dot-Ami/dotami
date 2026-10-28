@@ -1257,11 +1257,21 @@ roadmap's build order.
     and read by nothing since its list of earlier descriptions went with `dotami-employment-suggestions`: keep
     the words with the idea (a new column, an inventory line, a privacy-log line), or remove the box and keep
     the *Other…* choice alone
-  - [ ] Anthropic's retention period on *What DotAmi knows about you* (`components/your-data/your-data-page.tsx`,
-    under *How long Anthropic keeps it:*) is DotAmi's paraphrase, "deleted within 30 days, with exceptions". The
-    maintainer's decision 2 of 2026-10-24: a provider's period is quoted word for word under a label, and DotAmi
-    holds no copy of that page's exact words yet. Read the page, keep its words with the day read, quote them
-    under the label, and take the entry out of `COMPONENT_TIME_WORDS` (`tests/fixtures/ideas/known-gaps.ts`)
+  - [x] Anthropic's retention period on *What DotAmi knows about you* (`components/your-data/your-data-page.tsx`,
+    under *How long Anthropic keeps it:*) was DotAmi's paraphrase, "deleted within 30 days, with exceptions". The
+    maintainer's decision 2 of 2026-10-24: a provider's period is quoted word for word under a label. Done on
+    2026-10-27: `node scripts/check-quotes.mjs` found the page's lines for API users (the period and its four
+    exceptions) that day; the row shows them after *Words found on the page:*, with "Checked by a tool on
+    2026-10-27" (`lib/privacy/anthropic-retention-official-words.ts`), and the entry is out of
+    `COMPONENT_TIME_WORDS`. Not in the no-arguments re-check: that reads the catalogs' government citations
+    only, so a change to Anthropic's page shows only when someone runs the script on it again
+  - [ ] For the maintainer's call: whether the same row also quotes two more of that page's sections, which
+    the checker found too on 2026-10-27 but whose reach to API inputs the page doesn't state: its longer period
+    for a chat flagged as violating the Usage Policy ("We retain inputs and outputs for up to 2 years and trust
+    and safety classification scores for up to 7 years if your chat is flagged …") and its line on Covered
+    Models ("Additionally, for Covered Models, we require limited data retention and review as a part of our
+    safety work."). The row quotes the exception "If we need to retain them for longer to enforce our Usage
+    Policy (UP)" without that period
   - [ ] For the maintainer's call, found by the review of #210: the *Replace income* goal card's payoff, "If
     this applies, paths with faster revenue and simpler compliance can rank higher." (`lib/brain/goal-effects.ts`,
     shown when the intake preview's row is opened), a time word and a ranking nothing does, like the other goal
