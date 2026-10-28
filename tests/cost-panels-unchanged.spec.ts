@@ -85,7 +85,12 @@
  * only in its sources' check lines, 53 in all: each "Checked by a tool on …" in amber, with the words found on the
  * page under it (42), or "Read on <date>. Who read it wasn't recorded." (11), is now "Read by a person on
  * 2026-10-25" after the source's authority and place, in grey. No other word, class or panel changed, and both
- * money lists are unchanged. The only cards allowed to change are the
+ * money lists are unchanged. Redrawn on 2026-10-27 for one panel only, road 0's SR&ED deepening, when its 35% basis
+ * moved to the SR&ED glossary's own entry (tests/reading-list-corrections.spec.ts): drawn from main (8b66afc) plus
+ * only that change and compared with the recording, 1 of 34 differs, and only in that line, "The CRA: “Some CCPCs
+ * may earn an ITC at an enhanced rate of 35% …”" becoming "The CRA's SR&ED glossary: “Some Canadian-controlled
+ * private corporations (CCPCs) that meet certain requirements may earn investment tax credits at the enhanced rate
+ * of 35%”". Its sources' lines are unchanged (the maintainer's read wins on screen). The only cards allowed to change are the
  * ones that gained road 0's named start-up cost lines (docs/architecture/future-cockpit.md § 6, "The official
  * fees catalog and start-up cost lines as built"); with those seven lines taken out, they match too.
  */

@@ -36,17 +36,20 @@ export const writeOffCategoriesV2026 = [
         jurisdiction: "CA",
         // The page moved: its old address (…/report-business-income-expenses/business-expenses/business-use-home-expenses.html,
         // read 2026-06-08) answered 404 on 2026-10-13. A tool found these words on the new page that day
-        // (option B, docs/engines/citations.md), and the maintainer read it in full on 2026-10-25.
+        // (option B, docs/engines/citations.md), and the maintainer read it in full on 2026-10-25. The fifth, the
+        // page's sentence on the business part, joined on 2026-10-27: `node scripts/check-quotes.mjs` found all five
+        // that day, so the check is that day's (the home office risk read quotes it).
         url: "https://www.canada.ca/en/revenue-agency/services/tax/businesses/topics/sole-proprietorships-partnerships/report-business-income-expenses/completing-form-t2125/business-use-home-expenses.html",
         lastVerified: MAINTAINER_READ_ON,
         readBy: "person",
         toolCheck: {
-          checkedOn: "2026-10-13",
+          checkedOn: "2026-10-27",
           quotes: [
             "You can deduct expenses for the business use of a workspace in your home",
             "it is your principal place of business",
             "you use the space only to earn your business income, and you use it on a regular and ongoing basis to meet your clients, customers, or patients",
             "cannot be more than your net income from the business before you deduct these expenses",
+            "To calculate the part you can deduct, use a reasonable basis, such as the area of the workspace divided by the total area of your home.",
           ],
         },
         note: "CRA home office expense guidance.",

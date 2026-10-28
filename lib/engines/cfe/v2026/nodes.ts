@@ -665,7 +665,7 @@ export const cfeNodesV2026 = [
       "Beyond initial incorporation for SR&ED access, mature ventures maintain contemporaneous project records, time tracking, and expenditure allocation. If R&D is core to the venture, this unlocks annual SR&ED claim workflows and potential IRAP stacking.",
     taxImpact:
       // Until 2026-10-24 "Enhanced rates for CCPCs subject to taxable income limits", which no held quote says; now
-      // the condition of the CRA's sentence this stage's 35% quotes (the maintainer's reading list).
+      // the condition of the relationships page's sentence (cited below; the stage's 35% quoted it until 2026-10-27).
       "Eligible SR&ED expenditures generate ITCs and deductions. The enhanced rate is for some CCPCs, up to their expenditure limit for the year. Provincial top-ups may apply in some jurisdictions.",
     lensAnnotations: {
       tax: "If experimentation is ongoing, annual SR&ED documentation may unlock recurring credits — with audit-ready records.",
@@ -701,24 +701,28 @@ export const cfeNodesV2026 = [
         // read 2026-05-01) answered 404 on 2026-10-13; a tool found these words on the new page that day:
         // its entry for the systematic investigation the stage's records track, and one of the kinds of
         // work the law's definition of SR&ED leaves out (routine work, kept apart from SR&ED). The maintainer read
-        // the new page in full on 2026-10-25.
-        url: "https://www.canada.ca/en/revenue-agency/services/scientific-research-experimental-development-tax-incentive-program/glossary.html",
+        // the new page in full on 2026-10-25. The third joined on 2026-10-27, its entry on the enhanced 35% rate (the
+        // line he asked for, which the stage's 35% quotes): `node scripts/check-quotes.mjs` found all three that day,
+        // so the check is that day's.
+        url: SRED_PAGES.glossary,
         lastVerified: MAINTAINER_READ_ON,
         readBy: "person",
         toolCheck: {
-          checkedOn: "2026-10-13",
+          checkedOn: "2026-10-27",
           quotes: [
             "The systematic investigation or search called for in the definition of SR&ED is an approach that includes defining a problem, advancing a hypothesis towards resolving that problem, planning and testing the hypothesis by experiment or analysis, and developing logical conclusions based on the results.",
             "quality control or routine testing of materials, devices, products or processes",
+            SRED_WORDS.glossaryEnhanced,
           ],
         },
         note: "CRA SR&ED terminology and eligibility concepts.",
       },
       {
         // Added 2026-10-24 for the stage's 35% (the maintainer's answer of that day: quote this page's line, as
-        // Incorporation for liability/SR&ED does). He asked for the glossary's line stating 35%, which no tool has
-        // found, so the stage quotes the sentence the reading list's matcher found here on 2026-10-23. The maintainer
-        // read the page in full on 2026-10-25.
+        // Incorporation for liability/SR&ED does). He asked for the glossary's line stating 35%, which no tool had
+        // found then; since 2026-10-27 the stage's 35% quotes that line (the glossary above), and this page stays for
+        // the stage's tax line, "up to their expenditure limit for the year". The maintainer read the page in full on
+        // 2026-10-25.
         title: "How certain relationships affect the small business deduction and SR&ED investment tax credits",
         authority: "CRA",
         jurisdiction: "CA",
@@ -741,8 +745,9 @@ export const cfeNodesV2026 = [
           label: "Enhanced ITC reference",
           value: "35%",
           // Until 2026-10-24 "CRA enhanced SR&ED ITC rate for qualifying CCPCs.", with no source of the stage stating
-          // 35%; now the CRA's sentence, from the relationships page cited above.
-          basis: `The CRA: “${SRED_WORDS.ccpcEnhanced}”`,
+          // 35%; then the relationships page's sentence; since 2026-10-27 the SR&ED glossary's own entry, the line the
+          // maintainer asked for (both pages are cited above).
+          basis: `The CRA's SR&ED glossary: “${SRED_WORDS.glossaryEnhanced}”`,
         },
       ],
     },
