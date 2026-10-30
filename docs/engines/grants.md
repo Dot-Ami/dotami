@@ -63,24 +63,55 @@ It is the program whose page the Canada-Alberta Job Grant's address now opens
 (https://www.alberta.ca/canada-alberta-productivity-grant); its id is its own, and `grant-cajg` is
 never reused.
 
-- **What it says.** Every amount and rule is a quote the citation holds, each found on the page by
-  the reading list's tool on 2026-10-23: “Must contribute 25% of the total eligible training costs
-  …”, “Contributes the other 75% of the cost to a maximum of $5,000 per employed trainee per fiscal
-  year”, “An employer is eligible for up to a maximum amount of $100,000 per fiscal year”, and “be
-  operational in Alberta for at least one year”. Outside the quotes DotAmi says only the compass's
-  "If" and the page's name: who contributes the 25% and who the 75% isn't in the words held, so no
-  line names it. The card's payoff (`lensAnnotations.tax`) shows the first three, in curly quote
-  marks. The one-year rule is a time, so it is on no card's line (it is in `eligibility`, which no
-  screen draws for a program). It showed only among the words found on the page, under the card's
+- **What it says.** Every amount and rule is a quote the citation holds. The card's payoff
+  (`lensAnnotations.tax`) quotes the page's funding table a row at a time, each line after its row's
+  own label cell: Employer: “Must contribute 25% of the total eligible training costs …”; Government
+  of Alberta: “Contributes the other 75% of the cost to a maximum of $5,000 per employed trainee per
+  fiscal year”; and “An employer is eligible for up to a maximum amount of $100,000 per fiscal
+  year”, which names its own subject. The labels are held since 2026-10-29, when
+  `node scripts/check-quotes.mjs` learned to read a table row as one piece, its cells joined by
+  " | " (the maintainer's answer of 2026-10-29, "Teach the checker to read a table row as one
+  piece"; [citations.md](citations.md), § The checker), and found "Employer | Must contribute 25% …"
+  and "Government of Alberta | Contributes the other 75% …" on the page. Until then no line named who
+  contributes which. `eligibility` (which no screen draws for a program) quotes some of the page's
+  lists, each after its own lead-in: the requirements for registered employers (“Registered
+  employers must also:”), what training counts (“Training must be directly related to the trainees’
+  current or future job and fall within at least one of the following skills categories:”,
+  “Training must also:”) and some of the costs (“The Canada–Alberta Productivity Grant is available
+  for direct training costs only, including:”), then the page's next two sentences, “Small and
+  medium-sized organizations may be eligible for travel costs related to training” and “Employee
+  wages and general business assets are not eligible”; the legal line quotes the employer's 25% and
+  the employer requirements. These are not all the page says (*Still open*, below). Outside the
+  quotes DotAmi writes only labels and separators: the page's name, the compass's "If", the table's
+  row labels, and "…" where something is left out: before “Registered employers must also:”, which
+  follows the page's unheld list of eligible employer types, and inside a list where an item is a
+  time or is too short to check (the costs list's first item, "examination fees", is two words, under
+  the checker's three). Until the review of #223 the costs passage left out the travel-costs
+  sentence with no "…", so it read as complete.
+- **No times.** Three of the page's items are times: “be operational in Alberta for at least one
+  year”, “have an active legal entity status throughout the grant term” and “be completed within 52
+  weeks”. Each is held in the source's tool check only, on no line of the entry, and a "…" marks its
+  place in its list (the no-times check, `tests/helpers/time-words.ts`, doesn't see "throughout the
+  grant term", so `tests/productivity-grant.spec.ts` names all three). Until 2026-10-29 the one-year
+  rule was also in `eligibility`. It showed among the words found on the page, under the card's
   source, as every tool check's quotes do, until the maintainer's read of the page was recorded
   (2026-10-25): the read wins on screen and that list of words is no longer drawn, so no screen
   shows the one-year rule now. The screens' no-times check (`e2e/idea-sweep.spec.ts`) lets a quoted
   time through only while a tool check alone holds it.
-- **How it was checked.** A tool check of 2026-10-23, then the maintainer's read of the page in
-  full on 2026-10-25, which wins on screen: its card says *Read by a person on 2026-10-25* and no
-  longer lists the four quotes, which the tool check keeps in the catalog. A networked
-  `node scripts/check-quotes.mjs` run found them again on 2026-10-26, before merge (rule 4 of
-  [citations.md](citations.md)).
+- **How it was checked.** One tool check, of 2026-10-29. For the sentences found on the page on
+  2026-10-27 the maintainer's answer of 2026-10-29 was "One new check that holds the old and new
+  sentences", dated by its run: one `node scripts/check-quotes.mjs --url … --quote …` run found all 27
+  quotes (the four of 2026-10-23, the two rows, the 2026-10-27 sentences and the travel-costs
+  sentence), and its date replaced 2026-10-23. (A first run that day held 26; the review of #223
+  added the travel-costs sentence, so a second run held all 27, and the check is that run's.) Before it: a tool check of 2026-10-23 (the reading list's matcher, found again by a
+  networked run on 2026-10-26, rule 4 of [citations.md](citations.md)). The maintainer's read of the
+  page in full on 2026-10-25 stays and wins on screen: the card says *Read by a person on
+  2026-10-25* and lists none of the quotes, which the tool check keeps in the catalog.
+- **Who funds it.** `authority` is "Alberta / federal" (the catalog's pattern, as "CRA / federal"),
+  on the page's sentence “The program is delivered by Alberta and funded by the Government of Canada
+  through the Canada–Alberta Workforce Development Agreement.”, quoted in the catalog's comment and
+  held by the tool check. No screen shows the field, and no line reconciles that sentence with the
+  table's "Government of Alberta" row.
 - **Who sees it.** Every idea in Alberta, at every structure and kind of work, always *check
   first*. `activityTags: []`: a program whose page names no kind of work shows for every idea in its
   provinces, and its card's reason names only the place the person picked ("Shown because you
@@ -92,10 +123,17 @@ never reused.
   the card as "this may be worth N%", which only fits a tax credit. Road 0's *Hire first employee*
   names it (`engineHints`), so the map draws it under that card for an idea that hires first; the
   apprentice road draws no rules and tax cards.
-- **Not yet held** (needs the page's words): its other requirements for employers (the reading list
-  summarises active legal entity status, good standing, WCB coverage for trainees and complying
-  with provincial agreements, without quotes), whether a sole proprietor counts as an employer,
-  what training counts, and who else funds it (`authority` is "Alberta").
+- **Still open.** Whether a sole proprietor counts as an employer: the page never says "sole
+  proprietor" (the checker's matcher found none of "sole proprietor", "sole proprietorship" or "sole
+  proprietors" on it on 2026-10-27), so no line says either way, and `structures` stays open at
+  every structure. And the CAPG applicant guidelines the page points to for full details
+  (open.alberta.ca) are unread: their page refused one plain fetch on 2026-10-27, which was not
+  retried. Three of the page's own lists aren't held, and no line quotes them: the eligible employer
+  types ("Employers must be one of the following eligible types:" …, in plain quote marks because
+  no check holds it), which “Registered employers must also:” follows; the ineligible employers; and
+  the ineligible training. They come close to
+  the sole-proprietor question, which stays the maintainer's. Until 2026-10-29 the employer
+  requirements, what training counts, who else funds it and the table's row labels were open too.
 
 ## Classification rule (flagged decision — see audit § Flags #5)
 
