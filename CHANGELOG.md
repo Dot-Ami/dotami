@@ -259,6 +259,12 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   *Annual* and *Monthly* (were "1-year term" and "1-month term"), alis rates "the job market" (was "the 3-year
   job market") and ISED's not profitable is "in the data year". A test holds every word of DotAmi's own in the
   sources to no duration, past one billing phrase used exactly as often as today (`tests/example-sources.spec.ts`).
+- **Mara's example: a person has now seen Lee Valley's clamp price** (2026-10-29). The tool re-check of
+  2026-10-27 met a bot check on Lee Valley's page and was not bypassed, so the price rested on the two checks of
+  2026-10-14. The maintainer opened the page in his own browser on 2026-10-29 and saw $85 and the item line
+  “Item 17F7340, Bessey 40" K Body REVO Clamp”; the clamp's note in *Where these numbers come from* now says so.
+  Its words and its day seen (2026-10-14) are unchanged, and so is every number and average. Test:
+  `tests/example-sources.spec.ts`.
 - **Every page fits a phone, one step counter, and plainer screens** (the screen review of 2026-10-23, its
   pre-release fixes "Phone and layout"). At 375 px: the cockpit's four gauges are stacked, each inside the window
   (Start-up money and Your date were out of sight in a strip that scrolled sideways; two by two from 640 px, four
@@ -702,12 +708,6 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   `tests/reading-list-corrections.spec.ts` §§ 2–4 and 7, `tests/engine-integrity.spec.ts` (a stage's dollar
   figure must come from a page that stage cites), `tests/brain-incorporation.spec.ts`, `e2e/app.spec.ts` (Sole
   Prop activation's three sources: the new one in amber until 2026-10-27, each read by a person since).
-- **Mara's example: a person has now seen Lee Valley's clamp price** (2026-10-29). The tool re-check of
-  2026-10-27 met a bot check on Lee Valley's page and was not bypassed, so the price rested on the two checks of
-  2026-10-14. The maintainer opened the page in his own browser on 2026-10-29 and saw $85 and the item line
-  "Item 17F7340, Bessey 40" K Body REVO Clamp"; the clamp's note in *Where these numbers come from* now says so.
-  Its words and its day seen (2026-10-14) are unchanged, and so is every number and average. Test:
-  `tests/example-sources.spec.ts`.
 
 ### Changed
 - ***What DotAmi knows about you* quotes Anthropic's own words on how long it keeps what the intake sends**

@@ -1,6 +1,7 @@
 # Working in a cloud session
 
-Last updated: 2026-10-29 (item 4 of the list below: the maintainer saw Lee Valley's clamp price himself); 2026-10-27, after the cloud session of 2026-10-25 to 27 (it merged #207, #206, #208, #210 and
+Last updated: 2026-10-29 (item 4 of the list below: the maintainer saw Lee Valley's clamp price himself);
+2026-10-27, after the cloud session of 2026-10-25 to 27 (it merged #207, #206, #208, #210 and
 #209 on the maintainer's word, and brought #211 up to date with his reads). How a claude.ai cloud session
 worked on DotAmi, what it can't do, and what it leaves for a normal session on the maintainer's computer.
 
@@ -65,8 +66,8 @@ worked on DotAmi, what it can't do, and what it leaves for a normal session on t
    and Lee Valley 429, QuickBooks timed out), and the AI provider's retention period on *What DotAmi knows
    about you*, to quote word for word (docs/task-list.md). The prices were re-opened on 2026-10-27: all the
    same, apart from Lee Valley's (a bot check, not bypassed); the maintainer opened that page in his own
-   browser on 2026-10-29 and saw $85, the same price, and the clamp's note says so. The retention period is quoted word for word in
-   [#214](https://github.com/Dot-Ami/dotami/pull/214).
+   browser on 2026-10-29 and saw $85, the same price, and the clamp's note says so. The retention period is
+   quoted word for word in [#214](https://github.com/Dot-Ami/dotami/pull/214).
 5. `npm run ci:quality` with the database tests, `npm run test:browser`, and on Windows `npm run test:desktop`.
    Done on 2026-10-26 with #211's branch: every part passed but one unit test that fails on main too, only
    on a Windows checkout's line endings (`tests/prerelease-honesty.spec.ts`; CI on Linux passes it).

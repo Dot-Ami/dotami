@@ -10,11 +10,12 @@ import type { ExampleSources, ListedPrice, SoftwarePlan, Statistic, ToolPriced }
  * Autodesk and QuickBooks price was the same as on 2026-10-14. Autodesk draws its prices with a script, so a
  * browser showed them ("CA$940 /YEAR (OR CA$120 /MONTH)" on the personal-use page) where a plain fetch saw
  * no amount. Lee Valley's page showed a bot check that was not bypassed, so that day its clamp price still
- * rested on the two checks of 2026-10-14. On 2026-10-29 the maintainer opened that page in his own browser and
- * wrote down the price, "85", and the item line, "Item 17F7340, Bessey 40" K Body REVO Clamp": a person's look
- * at the same $85.00, recorded in the entry's note (an entry has no field for a person's check, and its seen
- * day stays the day of the two checks). Each entry still shows the words and the day it was first seen; the
- * two pages that were looked at again, Busy Bee's planer (now in stock) and Lee Valley's clamp, say so in their notes.
+ * rested on the two checks of 2026-10-14. On 2026-10-29 the maintainer opened that page in his own browser
+ * and wrote down the price, "85", and the item line, “Item 17F7340, Bessey 40" K Body REVO Clamp”: a
+ * person's look at the same $85.00, recorded in the entry's note (an entry has no field for a person's
+ * check, and its seen day stays the day of the two checks). Each entry still shows the words and the day it
+ * was first seen; the one page whose words had changed around the same price, Busy Bee's planer (now in
+ * stock), says both days in its note, and Lee Valley's clamp's note says that a person looked on 2026-10-29.
  *
  * These are not legal citations. lib/engines/shared/'s citation types name only government sources and back
  * a rule the engine reasons with; these are sellers' listed prices, software makers' plans and published

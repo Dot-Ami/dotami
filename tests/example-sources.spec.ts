@@ -111,7 +111,7 @@ describe("the tools: what the trade's official descriptions name, priced by Cana
   });
 
   // The maintainer opened Lee Valley's page in his own browser on 2026-10-29 (the re-check of 2026-10-27 met a bot
-  // check, which was not bypassed) and wrote: price "85"; item "Item 17F7340, Bessey 40" K Body REVO Clamp". The
+  // check, which was not bypassed) and wrote: price "85"; item “Item 17F7340, Bessey 40" K Body REVO Clamp”. The
   // price entry has no field for a person's check, so the record is its note, and nothing else about it moves.
   it("Lee Valley's clamp keeps its words, day and price of 2026-10-14, and its note records that the maintainer saw $85 himself on 2026-10-29", () => {
     const clamp = src.tools.find((t) => t.id === "bar-clamp")!;
