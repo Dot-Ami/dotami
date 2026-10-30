@@ -14,7 +14,7 @@ import path from "node:path";
 import type { PrismaClient } from "@prisma/client";
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 
 import {
   STATUS_WORDS,
@@ -324,10 +324,11 @@ describe("readHoldings on a seeded database", () => {
       "If we need to retain them for longer to enforce our Usage Policy (UP)",
       "In compliance with the law",
     ];
-    // The page's two other sections, word for word, added on the maintainer's answer of 2026-10-29.
+    // The page's two other sections, word for word, added on the maintainer's answer of 2026-10-29, in the order
+    // the page has them (its Covered Models line first, then the longer period for a flagged chat).
     const ALSO_SAYS = [
-      "We retain inputs and outputs for up to 2 years and trust and safety classification scores for up to 7 years if your chat is flagged by our automated trust and safety systems as violating our Usage Policy.",
       "Additionally, for Covered Models, we require limited data retention and review as a part of our safety work.",
+      "We retain inputs and outputs for up to 2 years and trust and safety classification scores for up to 7 years if your chat is flagged by our automated trust and safety systems as violating our Usage Policy.",
     ];
     // One tool check, of one run of the script over all seven.
     expect(ANTHROPIC_RETENTION_TOOL_CHECK).toEqual({ checkedOn: "2026-10-29", quotes: [...FOUND, ...ALSO_SAYS] });
@@ -369,6 +370,38 @@ describe("readHoldings on a seeded database", () => {
     expect(quiet).not.toContain("How long Anthropic keeps it:");
     expect(quiet).not.toContain(alsoLabel);
     for (const quote of [...FOUND, ...ALSO_SAYS]) expect(quiet).not.toContain(quote);
+  });
+
+  // A read wins on screen over a tool check (docs/engines/citations.md, rule 3): once a person's read of Anthropic's
+  // page is recorded in ANTHROPIC_RETENTION_CHECK, the row says "Read by a person on …" and lists no quote under
+  // either label, as the row did on main, where the quotes came from toolCheckQuotes(…) of the shown check.
+  it("draws neither label and no quote once a person's read of Anthropic's page is recorded", async () => {
+    const WORDS = "@/lib/privacy/anthropic-retention-official-words";
+    const today = readSettingsToday({ DATABASE_URL: seeded.url, ANTHROPIC_API_KEY: "sk-placeholder-key" });
+    const facts = (await readHoldings(seeded.prisma, today)).sentElsewhere.find((s) => s.entry.id === "intake-sentence");
+    expect(facts).toBeDefined();
+
+    vi.resetModules();
+    vi.doMock(WORDS, async (importOriginal) => {
+      const real = await importOriginal<typeof import("@/lib/privacy/anthropic-retention-official-words")>();
+      // The same tool check, with a person's read beside it.
+      return { ...real, ANTHROPIC_RETENTION_CHECK: { ...real.ANTHROPIC_RETENTION_CHECK, lastVerified: "2026-10-29", readBy: "person" as const } };
+    });
+    try {
+      const { SentRow: SentRowWithRead } = await import("@/components/your-data/your-data-page");
+      const html = renderToStaticMarkup(createElement(SentRowWithRead, { facts: facts! }));
+      expect(html).toContain("Read by a person on 2026-10-29");
+      expect(html).not.toContain("Checked by a tool");
+      expect(html).not.toContain(PAGE_QUOTES_LEAD);
+      expect(html).not.toContain("also says:");
+      expect(html).not.toContain("“");
+      // Its link and its heading are still there: only the words a tool found are gone.
+      expect(html).toContain(`href="${ANTHROPIC_RETENTION_URL}"`);
+      for (const quote of ANTHROPIC_RETENTION_TOOL_CHECK.quotes) expect(html, quote).not.toContain(quote);
+    } finally {
+      vi.doUnmock(WORDS);
+      vi.resetModules();
+    }
   });
 });
 

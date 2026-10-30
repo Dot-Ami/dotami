@@ -132,8 +132,9 @@ jump links, then five sections in this order:
    for this copy; says whether it is happening here, links Anthropic's own retention page when it
    is and quotes that page's lines for API users after *Words found on the page:* (five lines: the
    period and its four exceptions), then two more of the page's lines after *Anthropic's page also says:*
-   (its longer period for a chat flagged as violating the Usage Policy, and its line on Covered Models;
-   the page doesn't say whether they reach what an API user sends, and DotAmi doesn't say either), with
+   (its line on Covered Models, then its longer period for a chat flagged as violating the Usage Policy,
+   the page's own order; the page doesn't say whether they reach what an API user sends, and DotAmi doesn't
+   say either), with
    how and on what day the seven were checked (one tool check, in amber), and says that DotAmi can't take
    it back), the desktop update check (GitHub sees the computer's
    address, the version and the updater's install ID, the same on every check; DotAmi can't take back

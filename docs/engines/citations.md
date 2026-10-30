@@ -99,8 +99,8 @@ catalog at run time.
    The script never writes a file itself. Run with no arguments, it checks every tool check in the
    catalogs again (`lib/engines/all-citations.ts`), which shows when a page has changed under a citation.
    One check outside the catalogs, Anthropic's retention words on *What DotAmi knows about you*
-   (`lib/privacy/anthropic-retention-official-words.ts`, 2026-10-27; seven quotes, one check, since 2026-10-29),
-   is re-checked by running the script with `--url` and all its quotes at once. One exception, closed on 2026-10-26:
+   (`lib/privacy/anthropic-retention-official-words.ts`, first recorded 2026-10-27; since 2026-10-29 one check of
+   all seven quotes, dated 2026-10-29), is re-checked by running the script with `--url` and all its quotes at once. One exception, closed on 2026-10-26:
    the tool checks dated 2026-10-23 (§ The reading list's tool checks) were recorded from the
    maintainer's reading list's matcher, the same whole-word, one-block match as the script, run that
    day where the script couldn't be. A networked `node scripts/check-quotes.mjs` run with no arguments

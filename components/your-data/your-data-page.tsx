@@ -12,12 +12,11 @@ import { receiptProtectionText } from "@/lib/expenses/receipts/protection";
 import { DELETE_MENU, NOT_CLEARED_BY_DELETE, SET_ASIDE_RECEIPTS_WARNING, type WindowStorageEntry } from "@/lib/privacy/inventory";
 import { SAFETY_COPIES_KEY, SET_ASIDE_RECEIPTS_KEY } from "@/lib/privacy/kept-links";
 import {
-  ANTHROPIC_RETENTION_ALSO_SAYS_QUOTES,
-  ANTHROPIC_RETENTION_API_QUOTES,
+  anthropicRetentionQuotesToDraw,
   ANTHROPIC_RETENTION_CHECK,
   ANTHROPIC_RETENTION_URL,
 } from "@/lib/privacy/anthropic-retention-official-words";
-import { howCheckedWords, isCheckFirst } from "@/lib/engines/shared/citation-check";
+import { howCheckedWords, isCheckFirst, toolCheckQuotes } from "@/lib/engines/shared/citation-check";
 import { PageQuotes } from "@/components/shared/page-quotes";
 
 import { DeleteMenu } from "./delete-menu";
@@ -431,6 +430,9 @@ const SENT_STATE_WORDS: Record<SentState, string> = {
 /** One row of "What leaves this computer". Exported for its test (tests/privacy-holdings.spec.ts). */
 export function SentRow({ facts }: { facts: SentFacts }) {
   const { entry } = facts;
+  // The quotes follow the check the row shows: once a person's read of Anthropic's page is recorded, that read
+  // outranks the tool check, the row says so, and no quote is listed (toolCheckQuotes is empty), under either label.
+  const retention = anthropicRetentionQuotesToDraw(toolCheckQuotes(ANTHROPIC_RETENTION_CHECK));
   return (
     <li className="rounded-lg border border-rule bg-ink2 px-4 py-3">
       <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
@@ -473,10 +475,10 @@ export function SentRow({ facts }: { facts: SentFacts }) {
               {howCheckedWords(ANTHROPIC_RETENTION_CHECK)}
             </span>
           </p>
-          <PageQuotes quotes={ANTHROPIC_RETENTION_API_QUOTES} layout="lines" className="mt-1 space-y-0.5 text-paper-dim" />
+          <PageQuotes quotes={retention.forApiUsers} layout="lines" className="mt-1 space-y-0.5 text-paper-dim" />
           {/* The page's two other sections, after the five and under a label of their own (the maintainer, 2026-10-29). */}
           <PageQuotes
-            quotes={ANTHROPIC_RETENTION_ALSO_SAYS_QUOTES}
+            quotes={retention.alsoSays}
             lead="Anthropic's page also says:"
             layout="lines"
             className="mt-1 space-y-0.5 text-paper-dim"
