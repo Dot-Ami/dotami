@@ -6,6 +6,11 @@
  *
  * The pages come from tests/fixtures/maintainer-reads-2026-10-25.ts, copied from his list, never from a catalog, so
  * a change to a catalog's address can't move the test with it.
+ *
+ * One of them, the CRA's GST/HST rate page, has a later answer of his about part of it: on 2026-10-28 he copied two
+ * rows of its table, Ontario's "13%" and Alberta's "5%" (tests/fixtures/rate-table-rows-2026-10-28.ts). That is not
+ * a read of the page in full, so its citations keep this read (rule 5: an answer about part of a page goes in the
+ * comments and a fixture, and `lastVerified` stays the last full read); the last check below holds them there.
  */
 import { describe, expect, it } from "vitest";
 
@@ -13,6 +18,7 @@ import { allCatalogCitations, type ListedCitation } from "@/lib/engines/all-cita
 import { howCheckedWords, isCheckFirst } from "@/lib/engines/shared/citation-check";
 
 import { MAINTAINER_READ_DAY, MAINTAINER_READ_PAGES } from "./fixtures/maintainer-reads-2026-10-25";
+import { RATE_TABLE_ROWS } from "./fixtures/rate-table-rows-2026-10-28";
 
 const all = allCatalogCitations();
 const readUrls = new Set(MAINTAINER_READ_PAGES.map((page) => page.url));
@@ -80,5 +86,20 @@ describe("the maintainer's reads of 2026-10-25", () => {
     expect(readProblems(hisRead)).toEqual([]);
     expect(howCheckedWords(hisRead)).toBe("Read by a person on 2026-10-25");
     expect(hisRead.toolCheck?.checkedOn).toBe("2026-10-23");
+  });
+
+  it("his answer about two rows of the rate page's table (2026-10-28) is not a read: both its citations keep the read of 2026-10-25", () => {
+    // He copied two rows; he didn't read the page in full again, and `lastVerified` is the last read in full.
+    expect(readUrls.has(RATE_TABLE_ROWS.url)).toBe(true);
+    const cited = all.filter(({ citation }) => citation.url === RATE_TABLE_ROWS.url);
+    expect(cited.map(({ where }) => where).sort()).toEqual(["compliance compliance-ab-no-pst", "compliance compliance-on-hst"]);
+    for (const { where, citation } of cited) {
+      expect(readProblems(citation), where).toEqual([]);
+      expect(howCheckedWords(citation), where).toBe("Read by a person on 2026-10-25");
+    }
+    // Neither the day he answered nor the UTC day his reading page stamped is a read date anywhere in the catalogs.
+    for (const day of [RATE_TABLE_ROWS.answeredOn, RATE_TABLE_ROWS.savedAtUtc.slice(0, 10)]) {
+      expect(all.filter(({ citation }) => citation.lastVerified === day).map(({ where }) => where), day).toEqual([]);
+    }
   });
 });

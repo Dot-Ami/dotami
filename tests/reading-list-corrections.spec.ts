@@ -530,7 +530,9 @@ describe("5. Sales tax and records", () => {
 
   it("the Alberta card says only what the CRA's table lists for Alberta, never what it makes simpler", () => {
     // Still DotAmi's own wording of the table's row: the table isn't in the page's words, so no tool can quote it.
-    const line = "The CRA's table of GST/HST rates lists Alberta at 5% GST, with no provincial sales tax.";
+    // Since 2026-10-29 it says only the row's 5%, the maintainer's answer about the row on 2026-10-28 ("5%"); "no
+    // provincial sales tax" is no longer in the line (tests/rate-table-read.spec.ts).
+    const line = "The CRA's table of GST/HST rates lists Alberta at 5%.";
     const rule = complianceRulesV2026.find((r) => r.id === "compliance-ab-no-pst")!;
     expect(rule.lensAnnotations.tax).toBe(line);
     const c = card(idea({ activityTags: [] }), "compliance-ab-no-pst");

@@ -58,8 +58,16 @@ interface EngineCitation {
   };
   verification?: …;                 // unchanged: the statute-store check (confirmed/supported/partial)
   corpus?: …;                       // unchanged: pointers for "Show the words"
+  pageHolds?: string;               // since 2026-10-29: one plain line under the title, what the page holds
 }
 ```
+
+`pageHolds` is DotAmi's own words, not the page's, so it is always a sentence from
+[`lib/engines/shared/words.ts`](../../lib/engines/shared/words.ts), drawn under the title by
+`components/shared/citation-links.tsx` only when set. It is not a check: it changes nothing about how the source was
+read or checked. One source has one so far, the Motor vehicle expenses write-off's s.67.3
+([`tests/source-page-holds.spec.ts`](../../tests/source-page-holds.spec.ts)); whether every source gets one is the
+maintainer's open question ([task-list.md](../task-list.md) [14p], "A line under every source's title").
 
 The type (`CitationCheck` in [`lib/engines/shared/types.ts`](../../lib/engines/shared/types.ts))
 makes "at least one" a compile error, and
@@ -116,7 +124,10 @@ catalog at run time.
    list's corrections, *Blocked*, the Productivity Grant's other conditions).
 5. A person who reads a source sets `lastVerified` to that day and `readBy: "person"`; a tool check
    may stay. An AI model that reads one sets `readBy: "model"`. A read nobody can say who did leaves
-   `readBy` out.
+   `readBy` out. A person's answer about part of a page (two rows of a table, say) is not a read in full: it
+   goes in the citation's comments and a test fixture, with the day and the person's own words, and
+   `lastVerified` stays the day of the last read in full (since 2026-10-29, the CRA's rate table, § Blocked,
+   items 1 and 2).
 6. Every tax-line year's form (the first citation of each year, the one the Tax year hint dates) has
    `readBy: "person"`: those screens say DotAmi "has read" the form and show its line numbers.
 7. Nothing else changes: a citation still names the official source, `note` still says what is
@@ -292,8 +303,9 @@ its row leaves this list.
 | Added | Page | Where it is cited | What to read for |
 |---|---|---|---|
 | 2026-10-29 | CRA, [*SR&ED Investment Tax Credit Policy*](https://www.canada.ca/en/revenue-agency/services/scientific-research-experimental-development-tax-incentive-program/investment-tax-credit-policy.html) | program *SR&ED tax incentives* (`grant-sred`), the sole proprietor's note (§ The reading list's corrections, *Blocked*, item 4) | the 40% refundable ITC for an individual (other than a trust), the amount the card quotes |
+| 2026-10-29 | Alberta, [*About Tax and Revenue Administration*](https://www.alberta.ca/about-tra) | *Alberta — no provincial sales tax* (`compliance-ab-no-pst`), its second source | “Alberta has no sales tax.” and the page's next sales-tax block, on sales taxes other provinces may charge (“If your business sells products, delivers sold goods, or provides services in other provinces, …”), which `node scripts/check-quotes.mjs` found on the page in one run that day (§ Blocked, item 1) |
 
-Only that row waits now. The three pages listed here until 2026-10-27 (Alberta's *Employment standards* on *Hire
+Two wait now, the rows above. The three pages listed here until 2026-10-27 (Alberta's *Employment standards* on *Hire
 first employee*, Income Tax Regulations s.7307 under *Motor vehicle expenses*, and ISED's *Helping small
 businesses get loans* under the Canada Small Business Financing Program), and the pages the reading list's
 corrections added with a tool check only (the Canada-Alberta Productivity Grant's page and the SR&ED
@@ -341,7 +353,7 @@ copied from his list.
 | 12 | [Employment standards](https://www.alberta.ca/employment-standards) | 3 |
 | 13 | [Business-use-of-home expenses](https://www.canada.ca/en/revenue-agency/services/tax/businesses/topics/sole-proprietorships-partnerships/report-business-income-expenses/completing-form-t2125/business-use-home-expenses.html) | 2 |
 | 14 | [Business income](https://www.canada.ca/en/revenue-agency/services/tax/businesses/small-businesses-self-employed-income/setting-your-business.html) | 1 |
-| 15 | [Income Tax Act s.18(1)(a), s.67, s.67.2, s.67.3 — purpose test, reasonableness, interest and lease caps](https://laws-lois.justice.gc.ca/eng/acts/I-3.3/section-67.3.html) | 1 |
+| 15 | [Income Tax Act s.18(1)(a), s.67, s.67.2, s.67.3 — purpose test, reasonableness, interest and lease caps](https://laws-lois.justice.gc.ca/eng/acts/I-3.3/section-67.3.html) (titled "Income Tax Act s.67.3 — Limitation re cost of leasing passenger vehicle" since 2026-10-29) | 1 |
 | 16 | [Income Tax Act s.245 — General Anti-Avoidance Rule](https://laws-lois.justice.gc.ca/eng/acts/I-3.3/section-245.html) | 3 |
 | 17 | [Canada Small Business Financing Program](https://ised-isde.canada.ca/site/canada-small-business-financing-program/en) | 1 |
 | 18 | [When to register for and start charging the GST/HST](https://www.canada.ca/en/revenue-agency/services/tax/businesses/topics/gst-hst-businesses/when-register-charge.html) | 24 |
@@ -372,6 +384,16 @@ What his reads don't settle, and stays open:
   recorded, but what he found in the table isn't, so *Blocked* items 1 and 2 below stay as they are. And
   s.67.3 of the Act was on it with a question, whether the citation's title (which also names s.18(1)(a),
   s.67 and s.67.2, not on that page) or its address should change: the citation is unchanged until he says.
+  **Both answered on 2026-10-28** (Alberta time), on his reading page, which saved the answers at 2026-10-29 02:20
+  UTC. The table: he copied Ontario's row, "13%", and Alberta's row, "5%". That is an answer about part of the page,
+  not a read of it in full, so its two citations keep his read of 2026-10-25 and say *Read by a person on
+  2026-10-25*; the answer is in their comments and
+  [`tests/fixtures/rate-table-rows-2026-10-28.ts`](../../tests/fixtures/rate-table-rows-2026-10-28.ts) (rule 5;
+  *Blocked* items 1 and 2). And s.67.3: his pick A, the title names only what the page holds, the section's own
+  heading, *Income Tax Act s.67.3 — Limitation re cost of leasing passenger vehicle* (found on the page by
+  `node scripts/check-quotes.mjs` on 2026-10-29), with a line under it saying in plain English what the page holds
+  (`pageHolds`, § The shape). Its address, its read and its `corpus` list (all four provisions, for "Show the
+  words") are unchanged.
 
 ## When a cited page moves
 
@@ -460,7 +482,9 @@ One page the list opened gets no tool check: the CRA's page on which GST/HST rat
 *Ontario HST (13%)* and *Alberta — no provincial sales tax*. Its table of rates isn't in the page's
 HTML, so no tool can find one of its rows, and the two sentences the list found there with a rate
 are worked examples (an Ontario furniture store's sale, a Manitoba electronics store's), which are
-never recorded as the rate (docs/engines/compliance.md, § From the maintainer's reading list).
+never recorded as the rate (docs/engines/compliance.md, § From the maintainer's reading list). The two rows
+rest on the maintainer's answer about them since 2026-10-29 (he copied them on 2026-10-28; § The reading list's
+corrections, *Blocked*, items 1 and 2). The page's citations keep his read in full of 2026-10-25 (rule 5).
 
 The $6 million applies to tax years beginning on or after 2024-12-16. No held quote carries that
 date, so it is kept here and in a comment on the CCPC rate only: no screen says it, and no field holds
@@ -504,8 +528,8 @@ Three rules from his answers hold for every row:
 | Entry | Reading-list item(s) | What changed | The evidence |
 |---|---|---|---|
 | *SR&ED tax incentives* (`grant-sred`) | `grant-sred/estimatedValue`, `grant-sred/rate-unincorporated`, `grant-sred/rate-ccpc`, `sred-expenditure-limit-6-million` | A sole proprietor's card no longer calls the 15% credit non-refundable; it quotes the basic rate and that some businesses may also earn a refundable credit. The CCPC's note quotes the enhanced 35% up to the expenditure limit, and the $6 million limit, where it said "confirm the current limit with an advisor"; its card and the fork no longer call the 35% "refundable", a word no quote holds (*Blocked*). The range "15–35%" (on no screen) is unchanged. Since 2026-10-29 (his answer: the newer page) the sole proprietor's note also quotes the *SR&ED Investment Tax Credit Policy*'s 40% line for an individual (other than a trust). | Four new sources, tool checks of 2026-10-23: the CRA's rates page, its relationships page, *What's new for corporations*, and s.127(10.2)'s formula ([grants.md](grants.md)); since 2026-10-29 a further source, that policy page, tool check of 2026-10-29, not read by a person yet |
-| *Ontario HST (13%)* (`compliance-on-hst`) | `compliance-on-hst` | Unchanged. | None held: the rate table isn't in the page's HTML, and the one 13% sentence found is a worked example (*Blocked*) |
-| *Alberta — no provincial sales tax* (`compliance-ab-no-pst`) | `compliance-ab-no-pst` | "… simplifying provincial sales tax compliance" is gone. The line says "The CRA's table of GST/HST rates lists Alberta at 5% GST, with no provincial sales tax.", which is still DotAmi's wording of a table row, and the catalog says so beside it. | None held, for the same reason (*Blocked*) |
+| *Ontario HST (13%)* (`compliance-on-hst`) | `compliance-on-hst` | Unchanged. | None held: the rate table isn't in the page's HTML, and the one 13% sentence found is a worked example (*Blocked*; since 2026-10-29 the maintainer's answer about the row, "13%", given 2026-10-28) |
+| *Alberta — no provincial sales tax* (`compliance-ab-no-pst`) | `compliance-ab-no-pst` | "… simplifying provincial sales tax compliance" is gone. The line says "The CRA's table of GST/HST rates lists Alberta at 5% GST, with no provincial sales tax.", which is still DotAmi's wording of a table row, and the catalog says so beside it. Since 2026-10-29 it says only "… lists Alberta at 5%." | None held, for the same reason (*Blocked*; since 2026-10-29 the maintainer's answer about the row, "5%", given 2026-10-28, and Alberta's own page, tool check of 2026-10-29) |
 | *BC Provincial Sales Tax (PST)* (`compliance-bc-pst`) | `compliance-bc-pst` | Unchanged. | No quote is held from its page |
 | *Ontario food premises licensing* (`compliance-food-premises-on`) | `compliance-food-premises-on` | Retired: it cited a revoked regulation and said more than it ([compliance.md](compliance.md), § Retired rules). | A retirement claims nothing: the reading list notes the cited regulation is revoked, and the one in force hasn't been read (*Blocked*) |
 | The Delete menu's records line (`cra-business-records-retention`) | `cra-business-records-retention` | The line is unchanged (it already said "generally"); its citation also keeps the CRA's two sentences. Four design-doc lines that gave the six years without "generally" now give it. | Tool check of 2026-10-23; a read wins on screen (2026-10-08, the maintainer's of 2026-10-25 since then) |
@@ -527,16 +551,25 @@ Each needs an official page's own words, found by `node scripts/check-quotes.mjs
 machine, before DotAmi says more than it does now. They are listed in [task-list.md](../task-list.md)
 [11b] too. A settled item keeps its number, so references to it still hold.
 
-1. **Alberta, no PST and GST at 5%.** A page whose HTML says it. Alberta's *About Tax and Revenue
-   Administration* ("Alberta has no sales tax.", [S17] in
-   [other-ways-to-build.md](../architecture/other-ways-to-build.md)) is a candidate no tool has checked,
-   and it says nothing of the 5%. Or the maintainer's ruling on how a row of a table is recorded.
-   The card's line credits the CRA's table with "no provincial sales tax", on the maintainer's read
-   alone: no tool can see the table, and a rate table may show only Alberta's 5% GST (British
-   Columbia, which has a PST, would show the same). His read of the page is recorded (2026-10-25), but
-   what he found in the table isn't: his word on the Alberta row settles it; if the table shows only the
-   5%, the line says only that.
-2. **Ontario's 13% HST.** The same table.
+1. **Alberta, no PST and GST at 5%.** Settled on 2026-10-29. On 2026-10-28 the maintainer copied the table's
+   Alberta row, "5%", so the card's line and description say only that: "The CRA's table of GST/HST rates lists
+   Alberta at 5%." (until then "… at 5% GST, with no provincial sales tax."). His answer is about two rows, not a
+   read of the page in full, so the page's citations keep his read of 2026-10-25 (rule 5). That Alberta has no
+   sales tax is Alberta's own words now: its *About Tax and Revenue Administration* ([S17] in
+   [other-ways-to-build.md](../architecture/other-ways-to-build.md)) is the card's second source, with one tool
+   check of 2026-10-29 holding “Alberta has no sales tax.” and the page's next sales-tax block, “If your business
+   sells products, delivers sold goods, or provides services in other provinces, you may be liable for sales
+   taxes charged by those provinces on those goods or services, and on any equipment you bring into those
+   provinces for use in your business.”, so both show under that source after "Words found on the page:", in
+   amber until a person reads the page. It says nothing of the 5%. One line of DotAmi's own still says it: the
+   card's name, *Alberta — no provincial sales tax*. Phase 3's call 13 gives the card its page's own name, "GST/HST
+   rates", only until Alberta's own page is checked or read; this tool check meets that condition, so the name is
+   the maintainer's call (PR #224, question 2: keep it, take Alberta's own words, or "GST/HST rates").
+   [`tests/rate-table-read.spec.ts`](../../tests/rate-table-read.spec.ts) holds the name as a named, dated
+   exception until he answers.
+2. **Ontario's 13% HST.** Settled on 2026-10-29: on 2026-10-28 the maintainer copied the same table's Ontario
+   row, "13%". The card's words are unchanged; its 13% rests on his answer, recorded beside its source, which
+   keeps his read of 2026-10-25.
 3. **Ontario food premises.** The regulation in force, read, and what it requires, quoted, under a new
    id.
 4. **SR&ED, refunded or not.** Two questions: whether, and how much of, a sole proprietor's 15% credit
