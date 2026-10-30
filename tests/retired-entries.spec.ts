@@ -7,7 +7,9 @@
  * - Ontario food premises licensing (`compliance-food-premises-on`): the regulation it cited, O. Reg. 562/90, is
  *   revoked, and the regulation in force hasn't been read, so nothing replaces it yet.
  * - Repeated losses → hobby reclassification (`risk-hobby-reclassification`): its one source, the CRA's Setting up
- *   your business, doesn't support its words, and DotAmi holds no quote from a page that does.
+ *   your business, doesn't support its words, and DotAmi held no quote from a page that does. Since 2026-10-27 a read
+ *   on its subject is back under a new id, `risk-losses-source-of-income`, quoting the CRA's Income Tax Audit Manual,
+ *   chapter 27 (tests/repeated-losses-read.spec.ts).
  *
  * The loan program's read (`risk-self-declared-valuation`) stays, saying only ISED's rule on security
  * (tests/reading-list-corrections.spec.ts). Each check fails on the code before the change unless its comment says
@@ -56,6 +58,8 @@ const SHIPPED_RISK_IDS = [
   "risk-hobby-reclassification",
   "risk-ladder-skipping",
   "risk-self-declared-valuation",
+  // Since 2026-10-27: a read on the retired hobby read's subject, back under a new id (tests/repeated-losses-read.spec.ts).
+  "risk-losses-source-of-income",
 ];
 
 const repo = path.resolve(__dirname, "..");
@@ -143,10 +147,15 @@ describe("2. The repeated-losses read came off the risk catalog; the loan progra
     expect(riskEntriesV2026.map((e) => e.id)).not.toContain("risk-hobby-reclassification");
   });
 
-  it("the Hobby vs. business card still shows, with no risk box", () => {
+  it("the Hobby vs. business card still shows, and its risk box is the new read's, never the retired one's", () => {
+    // From 2026-10-24 to 2026-10-27 the card had no risk box. Since 2026-10-27 a read on the same subject is back under
+    // a new id, quoting the CRA's Income Tax Audit Manual, chapter 27 (tests/repeated-losses-read.spec.ts).
     const hobby = unlocks(idea({ activityTags: ["Content / streaming"] })).find((u) => u.id === "compliance-hobby-vs-business");
     expect(hobby).toBeDefined();
-    expect(hobby!.risk).toBeUndefined();
+    const back = riskEntriesV2026.find((e) => e.id === "risk-losses-source-of-income");
+    expect(back, "the read that came back").toBeDefined();
+    expect(hobby!.risk?.why).toBe(back!.why);
+    expect(hobby!.risk?.why).not.toMatch(/reclassification|reasonable-expectation-of-profit/i);
   });
 
   it("the loan program's read is not retired: its card still carries a risk box", () => {
