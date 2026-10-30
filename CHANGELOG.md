@@ -29,6 +29,31 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   [figures-privacy-review.md](docs/architecture/figures-privacy-review.md), [desktop-app.md](docs/architecture/desktop-app.md), part 5, The server).
   Tests: `e2e/launch-secret.spec.ts` (on the old code the plain call got 200 and the ideas, and the forged
   agree confirmed the figure), `tests/launch-secret.spec.ts`, and a desktop test in `e2e-desktop/desktop.spec.ts`.
+- **The desktop app moves to Electron 44.9.1** (from 44.8.0; Dependabot alert 61, rated high, and
+  Dependabot's #219, whose lockfile this replaces). Some of eMudhra's intermediate certificates were
+  compromised; 44.9.1 refuses certificates issued through them, in Chromium's networking and in Node's
+  `tls`, `https` and `fetch`
+  ([GHSA-jr5w-w6x2-84p9](https://github.com/electron/electron/security/advisories/GHSA-jr5w-w6x2-84p9),
+  CVE-2026-115570, read 2026-10-30). **Where the gap was, for DotAmi: the update check.** It runs in the
+  desktop app's main process through electron-updater, which uses Electron's own network module, that is
+  Chromium's networking (`loadUpdater` in `desktop/main.mjs`;
+  `node_modules/electron-updater/out/electronHttpExecutor.js`, 6.8.9). On 44.8.0, someone holding a
+  certificate issued through those intermediates and able to intercept the person's network could pose as
+  GitHub to it and offer a fake update. The download's SHA-512 check wouldn't catch that, because the hash
+  comes from the same place, and no code signature is checked (code signing is deferred,
+  [desktop-app.md](docs/architecture/desktop-app.md), What protects an update); installing would still take
+  the person's click on "Restart and update". The desktop app's server never calls the model: the app takes
+  `ANTHROPIC_API_KEY` out of its environment (`serverEnv` in `desktop/main.mjs`). A copy run from source runs
+  on plain Node, which this doesn't change. **Copies already installed (0.4.1 and earlier, on Electron 44.8.0
+  or older) get the fix with the next release**, which they download through the old check. The other
+  changes since 44.8.0, by Electron's
+  [44.9.0](https://github.com/electron/electron/releases/tag/v44.9.0) and
+  [44.9.1](https://github.com/electron/electron/releases/tag/v44.9.1) notes (read 2026-10-30), don't reach
+  DotAmi: the macOS app shims are for Macs; the fix for windows opened from links is for windows DotAmi
+  never opens (`setWindowOpenHandler` in `desktop/main.mjs` denies every one and hands the link to the
+  person's own browser); and DotAmi doesn't use `setCertificateVerifyProc`. For developers: Dependabot's
+  rewrite of `package-lock.json` dropped `"gypfile": false` from the database package's entry, so
+  `tests/database-package.spec.ts` failed on #219; `node scripts/keep-gypfile.mjs` put it back.
 
 ### Added
 - **The Canada-Alberta Productivity Grant, for ideas in Alberta** (the maintainer's call a-call-1 on his reading
@@ -248,6 +273,22 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   British Columbia's employment-standards pages as its sources; a misspelt word in the kind of work finds the job
   only by its own name (84 of the 220 test ideas with a job); and "à Regina" in French names no province (fixed
   2026-10-23, below).
+- **A repeated-losses caution is back on the Hobby vs. business card, in the CRA audit manual's own words**
+  (2026-10-27; the maintainer's "yah, lets use it"; his answers of 2026-10-29). Under a new id,
+  `risk-losses-source-of-income` (the retired `risk-hobby-reclassification` stays retired), its box quotes four
+  sentences of the CRA's *Income Tax Audit Manual*, chapter 27, joined only by "The CRA's Income Tax Audit Manual,
+  chapter 27:" and "The same page:". The fourth, after the sentence on a personal element, is the page's passage from
+  *Martin v The Queen*: “It is only where the personal element so overshadows any element of commerciality as to
+  substantially displace it that one may conclude that the activity is merely a hobby and is not a business at all.”
+  `node scripts/check-quotes.mjs` found all four on the live page in one run on 2026-10-29, and nobody has read the
+  page in full yet, so its check is a tool's only, of that day. A risk box draws no sources of its own, so the same
+  citation is listed under the card too: the card's sources are the CRA's *Setting up your business* ("Read by a
+  person on 2026-10-25") and chapter 27 ("Checked by a tool on 2026-10-29"). The box keeps the card: the maintainer's
+  call of 2026-10-25 that retired it has his answer of 2026-10-29 recorded beside it
+  ([docs/architecture/cards-in-official-words.md](docs/architecture/cards-in-official-words.md), § The maintainer's
+  calls). The card's own description and Lens lines are unchanged, still his open question
+  ([docs/engines/citations.md](docs/engines/citations.md), § Outside the list, item 3). Test:
+  `tests/repeated-losses-read.spec.ts`.
 ### Fixed
 - **Mara's example: its prices re-opened, and no promotion length in DotAmi's own words** (2026-10-27). The
   sellers' pages a review couldn't re-open were opened again: every Busy Bee Tools, Autodesk and QuickBooks
@@ -750,7 +791,8 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   venture business-like: separate accounts, a revenue plan, and records that show profit intent — not just
   deductions", and its one source, the CRA's *Setting up your business*, supports neither. DotAmi holds no quote
   from a page that does, so nothing is left to say: the *Hobby vs. business income test* card still shows, with
-  no risk box, and its colour doesn't change. The id, `risk-hobby-reclassification`, is kept with the reason in
+  no risk box (a read on its subject is back under a new id since 2026-10-27, Added above), and its colour doesn't
+  change. The id, `risk-hobby-reclassification`, is kept with the reason in
   `RETIRED_RISK_ENTRIES` and never used again: a read on the same subject would come back under a new id
   ([docs/brain/risk-calculator.md](docs/brain/risk-calculator.md), § Retired risk reads). The card's own
   description and line, on a reasonable expectation of profit and business-like conduct, cite the same page and
