@@ -307,7 +307,8 @@ describe("readHoldings on a seeded database", () => {
   });
 
   // The maintainer's decision 2 of 2026-10-24: a provider's period is quoted word for word under a label, with
-  // the day read, never in DotAmi's words. The page draws Anthropic's own lines only while a key is set.
+  // the day read, never in DotAmi's words. The page draws Anthropic's own lines only while a key is set. His answer
+  // of 2026-10-29 ("Add both lines") put the page's two other sections after the five, under a label of their own.
   it("quotes Anthropic's own words on how long it keeps what is sent, after the label, and only while a key is set", async () => {
     // The intake's row of "What leaves this computer", drawn from what readHoldings says of this copy.
     const render = async (t: SettingsToday) => {
@@ -315,7 +316,7 @@ describe("readHoldings on a seeded database", () => {
       expect(facts).toBeDefined();
       return renderToStaticMarkup(createElement(SentRow, { facts: facts! }));
     };
-    // The words `node scripts/check-quotes.mjs` printed as found on 2026-10-27, typed here, so a changed quote fails.
+    // The words `node scripts/check-quotes.mjs` printed as found on 2026-10-29, typed here, so a changed quote fails.
     const FOUND = [
       "For Anthropic API users, we automatically delete inputs and outputs on our backend within 30 days of receipt or generation, except:",
       "When you use a service with longer retention under your control (e.g. Files API)",
@@ -323,27 +324,51 @@ describe("readHoldings on a seeded database", () => {
       "If we need to retain them for longer to enforce our Usage Policy (UP)",
       "In compliance with the law",
     ];
-    expect(ANTHROPIC_RETENTION_TOOL_CHECK).toEqual({ checkedOn: "2026-10-27", quotes: FOUND });
-    expect(citationCheckProblems(ANTHROPIC_RETENTION_CHECK, "2026-10-27")).toEqual([]);
+    // The page's two other sections, word for word, added on the maintainer's answer of 2026-10-29.
+    const ALSO_SAYS = [
+      "We retain inputs and outputs for up to 2 years and trust and safety classification scores for up to 7 years if your chat is flagged by our automated trust and safety systems as violating our Usage Policy.",
+      "Additionally, for Covered Models, we require limited data retention and review as a part of our safety work.",
+    ];
+    // One tool check, of one run of the script over all seven.
+    expect(ANTHROPIC_RETENTION_TOOL_CHECK).toEqual({ checkedOn: "2026-10-29", quotes: [...FOUND, ...ALSO_SAYS] });
+    expect(citationCheckProblems(ANTHROPIC_RETENTION_CHECK, "2026-10-29")).toEqual([]);
 
     const today = readSettingsToday({ DATABASE_URL: seeded.url, ANTHROPIC_API_KEY: "sk-placeholder-key" });
     const html = await render(today);
     const at = (text: string) => html.indexOf(text);
+    // React writes an apostrophe as &#x27;, so the label is looked for the way the markup holds it.
+    const ALSO_LABEL = "Anthropic's page also says:";
+    const alsoLabel = ALSO_LABEL.replace("'", "&#x27;");
     expect(at("How long Anthropic keeps it:")).toBeGreaterThan(-1);
     expect(at(`href="${ANTHROPIC_RETENTION_URL}"`)).toBeGreaterThan(at("How long Anthropic keeps it:"));
-    // In amber, like every source no person has read.
-    expect(at('<span class="text-amber">Checked by a tool on 2026-10-27')).toBeGreaterThan(at(`href="${ANTHROPIC_RETENTION_URL}"`));
+    // In amber, like every source no person has read, and with the day the script printed.
+    expect(at('<span class="text-amber">Checked by a tool on 2026-10-29')).toBeGreaterThan(at(`href="${ANTHROPIC_RETENTION_URL}"`));
+    expect(html).not.toContain("2026-10-27");
+    // The five stay where they were, each after "Words found on the page:" and in order.
     let before = at(PAGE_QUOTES_LEAD);
-    expect(before).toBeGreaterThan(at("Checked by a tool on 2026-10-27"));
+    expect(before).toBeGreaterThan(at("Checked by a tool on 2026-10-29"));
     for (const quote of FOUND) {
       expect(at(`“${quote}”`), quote).toBeGreaterThan(before);
       before = at(`“${quote}”`);
     }
+    // The two new lines come after the five, under their own label, in the order the page gives them.
+    expect(at(alsoLabel), ALSO_LABEL).toBeGreaterThan(before);
+    before = at(alsoLabel);
+    for (const quote of ALSO_SAYS) {
+      expect(at(`“${quote}”`), quote).toBeGreaterThan(before);
+      before = at(`“${quote}”`);
+    }
+    // Each label is drawn once: the new one doesn't replace "Words found on the page:", and the five don't move under it.
+    expect(html.split(PAGE_QUOTES_LEAD).length - 1).toBe(1);
+    expect(html.split(alsoLabel).length - 1).toBe(1);
+    // Seven quotes on the row and no more: nothing of DotAmi's own paraphrases them.
+    expect(html.split("“").length - 1).toBe(FOUND.length + ALSO_SAYS.length);
     expect(html).not.toContain("deleted within 30 days, with exceptions");
 
     const quiet = await render(seededToday);
     expect(quiet).not.toContain("How long Anthropic keeps it:");
-    expect(quiet).not.toContain(ANTHROPIC_RETENTION_TOOL_CHECK.quotes[0]);
+    expect(quiet).not.toContain(alsoLabel);
+    for (const quote of [...FOUND, ...ALSO_SAYS]) expect(quiet).not.toContain(quote);
   });
 });
 

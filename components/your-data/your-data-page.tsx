@@ -11,8 +11,13 @@ import { StartNewReceiptKey } from "@/components/expenses/start-new-key";
 import { receiptProtectionText } from "@/lib/expenses/receipts/protection";
 import { DELETE_MENU, NOT_CLEARED_BY_DELETE, SET_ASIDE_RECEIPTS_WARNING, type WindowStorageEntry } from "@/lib/privacy/inventory";
 import { SAFETY_COPIES_KEY, SET_ASIDE_RECEIPTS_KEY } from "@/lib/privacy/kept-links";
-import { ANTHROPIC_RETENTION_CHECK, ANTHROPIC_RETENTION_URL } from "@/lib/privacy/anthropic-retention-official-words";
-import { howCheckedWords, isCheckFirst, toolCheckQuotes } from "@/lib/engines/shared/citation-check";
+import {
+  ANTHROPIC_RETENTION_ALSO_SAYS_QUOTES,
+  ANTHROPIC_RETENTION_API_QUOTES,
+  ANTHROPIC_RETENTION_CHECK,
+  ANTHROPIC_RETENTION_URL,
+} from "@/lib/privacy/anthropic-retention-official-words";
+import { howCheckedWords, isCheckFirst } from "@/lib/engines/shared/citation-check";
 import { PageQuotes } from "@/components/shared/page-quotes";
 
 import { DeleteMenu } from "./delete-menu";
@@ -468,7 +473,14 @@ export function SentRow({ facts }: { facts: SentFacts }) {
               {howCheckedWords(ANTHROPIC_RETENTION_CHECK)}
             </span>
           </p>
-          <PageQuotes quotes={toolCheckQuotes(ANTHROPIC_RETENTION_CHECK)} layout="lines" className="mt-1 space-y-0.5 text-paper-dim" />
+          <PageQuotes quotes={ANTHROPIC_RETENTION_API_QUOTES} layout="lines" className="mt-1 space-y-0.5 text-paper-dim" />
+          {/* The page's two other sections, after the five and under a label of their own (the maintainer, 2026-10-29). */}
+          <PageQuotes
+            quotes={ANTHROPIC_RETENTION_ALSO_SAYS_QUOTES}
+            lead="Anthropic's page also says:"
+            layout="lines"
+            className="mt-1 space-y-0.5 text-paper-dim"
+          />
         </div>
       ) : null}
     </li>
