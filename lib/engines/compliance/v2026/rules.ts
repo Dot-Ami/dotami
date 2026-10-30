@@ -1,3 +1,4 @@
+import { CRA_ITAM_27_CITATION } from "@/lib/engines/risk/v2026/audit-manual-official-words";
 import { MAINTAINER_READ_ON } from "@/lib/engines/shared/maintainer-reads";
 
 import { CRA_SMALL_SUPPLIER_TESTS, CRA_WHEN_TO_REGISTER_TOOL_CHECK, CRA_WHEN_TO_REGISTER_URL } from "./gst-official-words";
@@ -201,6 +202,11 @@ export const complianceRulesV2026 = [
         readBy: "person",
         note: "CRA business vs. personal activity framing.",
       },
+      // The page the card's risk box quotes (`risk-losses-source-of-income`), the same citation that read holds: a box
+      // draws no sources of its own, so its page is listed here (the maintainer's "yes" on PR #217's question 1,
+      // 2026-10-29). The card's own words above are unchanged; whether a page supports them is still his call
+      // (docs/engines/citations.md § Outside the list, item 3).
+      CRA_ITAM_27_CITATION,
     ],
     provinces: ["AB", "BC", "ON", "CA"],
     industryTags: ["Content / streaming", "Woodworking", "Creator / influencer"],

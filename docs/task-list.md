@@ -678,9 +678,10 @@ placed in phase 3.
     2026-10-25 to 27, in his order: #207, #206, #208, #210, #209, each brought up to date with main by a
     merge first; what each merge found and fixed is in its pull request, and how a cloud session did it is
     [verification/cloud-sessions.md](verification/cloud-sessions.md)
-  - [ ] #211, the reading list's corrections with the maintainer's 31 reads of 2026-10-25: the networked
-    `node scripts/check-quotes.mjs` run it waited for found every quote on 2026-10-26 ([11b]); waits for his
-    merge word
+  - [x] #211, the reading list's corrections with the maintainer's 31 reads of 2026-10-25: the networked
+    `node scripts/check-quotes.mjs` run it waited for found every quote on 2026-10-26 ([11b]); merged on his
+    word 2026-10-27, then its follow-ups the same day: #214 (Anthropic's retention words quoted on *What
+    DotAmi knows about you*), #215 (three of [11b]'s blocked items settled) and #216 (Mara's prices re-checked)
   - [ ] Release 0.5.0: no silent fallbacks, every Alberta test idea ending on a road written for it or an
     honest "not written yet", the maintainer's walk done (32b), a Quality line in the changelog, the privacy
     log's section for the new version; publishing is the maintainer's click
@@ -711,6 +712,21 @@ placed in phase 3.
     the page holds (the line above). The two questions were what the CRA's rate table shows for Ontario and
     Alberta (citations.md § Blocked, 1 and 2), and whether the s.67.3 citation's title or its address changes
     (the title names four sections, the page holds one)
+- ⬜ **[14q] Rules meet your facts, research first (S2.5.41).** How DotAmi could join a rule's conditions,
+  exceptions and definitions to a person's own answers and documents, say what is missing and why, and bring
+  lawful options into view (deductions, credits, exemptions, elections, structures), measured against known
+  answers. Research before any plan; the maintainer picks the starting scope and approves the plan. Opened
+  2026-10-27 at his request.
+  - [ ] Check every factual claim in the first research reply against its own source
+  - [ ] What DotAmi already does, layer by layer, and where its rules (never a verdict, never derive a fact about
+    the person, every number cited) meet this feature
+  - [ ] Surveys: existing software and services, open-source projects, research papers, and their licences
+  - [ ] How others handle unknown facts, conflicting rules, finding options and explaining a result
+  - [ ] Canadian sources, and how the law, CRA guidance, court decisions and professional opinion stay apart
+  - [ ] Compare starting scopes (for example tradespeople's and apprentices' employment deductions; the write-offs
+    DotAmi already lists); the maintainer picks
+  - [ ] A test set with known answers, reviewed, with paired tests and a held-out part (extends Accuracy tests)
+  - [ ] Failure kinds and release checks, then a staged plan for the maintainer's approval
 
 ## 7 — The desktop app (one download, everything on your computer)
 
@@ -1097,7 +1113,12 @@ roadmap's build order.
     - [x] Ontario's 13% HST (`compliance-on-hst`): the same table. Settled on 2026-10-29: he copied the row on
       2026-10-28, "13%"
     - [ ] Ontario food premises: the regulation in force, read and quoted, under a new id
-    - [ ] Repeated losses: a CRA, Act or folio page on business versus personal pursuits, with its words
+    - [x] Repeated losses: a CRA, Act or folio page on business versus personal pursuits, with its words. Since
+      2026-10-27 (the maintainer's "yah, lets use it") a read is back on the Hobby vs. business card under a new id,
+      `risk-losses-source-of-income`, quoting the CRA's Income Tax Audit Manual, chapter 27; the retired id stays
+      retired. Since 2026-10-29 (his answers on PR #217) it quotes four sentences, the page's passage from *Martin v
+      The Queen* among them, which `node scripts/check-quotes.mjs` found in one run that day, and the same citation
+      is listed under the card; the card's own words are unchanged
     - [ ] SR&ED refunded or not: whether, and how much of, a sole proprietor's 15% credit is, and whether a
       CCPC's enhanced 35% is (the card said "refundable" on the maintainer's read alone until 2026-10-24)
     - [ ] SR&ED's $6 million: the tax years it applies from, and the sentence of s.127(10.2) that leads into
@@ -1117,7 +1138,10 @@ roadmap's build order.
     purpose first"; the "Professional required" heading over the anti-avoidance and loan program boxes
     (`tests/engine-integrity.spec.ts` holds GAAR reads there); and the *Hobby vs. business income test*
     card's profit-expectation and business-like lines, which cite the page the retired hobby read's
-    record says supports neither (he read that page in full on 2026-10-25; the card's words wait for his call)
+    record says supports neither (he read that page in full on 2026-10-25; the card's words wait for his call).
+    Settled on 2026-10-29 by his answers on PR #217: the card lists the audit manual's chapter 27, which its risk
+    box quotes, and the box keeps the card ("The box keeps the card"; recorded beside his call 3 of 2026-10-25 in
+    docs/architecture/cards-in-official-words.md, which had retired it)
 - ⬜ **[11c] Flag stale sources automatically** — with #37
   - [ ] Kept open on purpose (the maintainer, 2026-10-14), so a person decides later:
     - [x] *Alberta Investor Tax Credit* (`grant-abti`): taken off on 2026-10-23 (the maintainer's call
@@ -1287,13 +1311,15 @@ roadmap's build order.
     2026-10-27" (`lib/privacy/anthropic-retention-official-words.ts`), and the entry is out of
     `COMPONENT_TIME_WORDS`. Not in the no-arguments re-check: that reads the catalogs' government citations
     only, so a change to Anthropic's page shows only when someone runs the script on it again
-  - [ ] For the maintainer's call: whether the same row also quotes two more of that page's sections, which
+  - [x] For the maintainer's call: whether the same row also quotes two more of that page's sections, which
     the checker found too on 2026-10-27 but whose reach to API inputs the page doesn't state: its longer period
     for a chat flagged as violating the Usage Policy ("We retain inputs and outputs for up to 2 years and trust
     and safety classification scores for up to 7 years if your chat is flagged …") and its line on Covered
     Models ("Additionally, for Covered Models, we require limited data retention and review as a part of our
     safety work."). The row quotes the exception "If we need to retain them for longer to enforce our Usage
-    Policy (UP)" without that period
+    Policy (UP)" without that period. Done on 2026-10-29 in #220: his answer was "Add both lines". The row now
+    draws both after the five, under *Anthropic's page also says:*, in the page's own order (Covered Models
+    first), and the seven quotes are one check dated 2026-10-29
   - [ ] For the maintainer's call, found by the review of #210: the *Replace income* goal card's payoff, "If
     this applies, paths with faster revenue and simpler compliance can rank higher." (`lib/brain/goal-effects.ts`,
     shown when the intake preview's row is opened), a time word and a ranking nothing does, like the other goal

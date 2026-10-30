@@ -1,6 +1,10 @@
 # How a source was checked: read, or checked by a tool
 
-Last updated: 2026-10-27 (the maintainer's reads of 2026-10-25: every citation of the 31 pages he read
+Last updated: 2026-10-29 (Anthropic's retention check holds seven quotes, § Rules 4; the maintainer's answers on PR
+#217: chapter 27 is listed under the Hobby vs. business card, the box keeps the card, and the read quotes the page's
+passage from Martin v The Queen too, four quotes with a tool check of 2026-10-29, § Blocked and § Outside the list,
+item 3); 2026-10-27 (Repeated losses settled: a read back under a new id, quoting the CRA's Income Tax Audit Manual,
+chapter 27, § Blocked; the maintainer's reads of 2026-10-25: every citation of the 31 pages he read
 in full says "Read by a person on 2026-10-25", § The maintainer's reads of 2026-10-25; the same day, main
 with #207 and #208 merged into the reading list's corrections: the two
 checks that waited on them are plain checks, § The reading list's corrections; 2026-10-24: the reading
@@ -107,8 +111,8 @@ catalog at run time.
    The script never writes a file itself. Run with no arguments, it checks every tool check in the
    catalogs again (`lib/engines/all-citations.ts`), which shows when a page has changed under a citation.
    One check outside the catalogs, Anthropic's retention words on *What DotAmi knows about you*
-   (`lib/privacy/anthropic-retention-official-words.ts`, 2026-10-27), is re-checked by running the script
-   with `--url` and its quotes. One exception, closed on 2026-10-26:
+   (`lib/privacy/anthropic-retention-official-words.ts`, first recorded 2026-10-27; since 2026-10-29 one check of
+   all seven quotes, dated 2026-10-29), is re-checked by running the script with `--url` and all its quotes at once. One exception, closed on 2026-10-26:
    the tool checks dated 2026-10-23 (§ The reading list's tool checks) were recorded from the
    maintainer's reading list's matcher, the same whole-word, one-block match as the script, run that
    day where the script couldn't be. A networked `node scripts/check-quotes.mjs` run with no arguments
@@ -488,7 +492,7 @@ Three rules from his answers hold for every row:
 | The Delete menu's records line (`cra-business-records-retention`) | `cra-business-records-retention` | The line is unchanged (it already said "generally"); its citation also keeps the CRA's two sentences. Four design-doc lines that gave the six years without "generally" now give it. | Tool check of 2026-10-23; a read wins on screen (2026-10-08, the maintainer's of 2026-10-25 since then) |
 | Home office read (`risk-home-office-percentage`) | `risk-home-office-percentage` | DotAmi's own words on floor area and exclusive use are gone; the box quotes the CRA's two conditions and the limit to the business's net income, and since 2026-10-27 the page's sentence on working out the business part (a reasonable basis, "such as" the workspace's share of the home's area). | The quotes the home office write-off's citation of the page holds (tool check of 2026-10-13, of 2026-10-27 since the fifth joined) |
 | First-year deduction read (`risk-immediate-expensing-timing`) | `risk-immediate-expensing-timing` | "Getting the year wrong misstates income and unwinds on review" and "keep purchase and deployment records" are gone; the rest stays. | The guide's sentence on the dates, tool check of 2026-10-23, on no screen (it ends on a colon) |
-| Repeated-losses read (`risk-hobby-reclassification`) | `risk-hobby-reclassification` | Retired: its one page supports none of it ([risk-calculator.md](../brain/risk-calculator.md), § Retired risk reads). | No held quote from a page that does (*Blocked*) |
+| Repeated-losses read (`risk-hobby-reclassification`) | `risk-hobby-reclassification` | Retired: its one page supports none of it ([risk-calculator.md](../brain/risk-calculator.md), § Retired risk reads). Since 2026-10-27 a read on its subject is back under a new id, `risk-losses-source-of-income`, quoting the CRA's Income Tax Audit Manual, chapter 27. | No held quote from a page that does then (*Blocked* until 2026-10-27); since then the audit manual's sentences, four since 2026-10-29, tool check of 2026-10-29 (one citation, also under the Hobby vs. business card) |
 | Anti-avoidance read (`risk-ladder-skipping`) | `risk-ladder-skipping` | DotAmi's advice ("professional advice tied to a genuine business purpose, documented at the time") is gone; the box lists s.245's own phrases, joined by nothing of DotAmi's, and the Holding company and Family trust cards list s.245 as a source. | Four of the five phrases docs/glossary.md's GAAR entry holds (tool check of 2026-10-12) |
 | Loan program read (`risk-self-declared-valuation`) | `risk-self-declared-valuation` | Kept (his answer 3), saying only ISED's rule on security; "the lesser of purchase price or appraised value" is gone. It cites ISED's loans page in place of the program's hub. | “For real property and equipment, security must be taken on the assets financed.”, tool check of 2026-10-23 |
 | *Sole Prop activation* (`stage-1-sole-prop-activation`) | `stage-1-sole-prop-activation/projection-30000` | "Track gross revenue against" the two tests is gone; the note quotes what the CRA says a sole proprietor counts and what is left out, and points to *Mandatory GST registration* for the tests. | A new source, *When to register for and start charging the GST/HST*, with the tool check of 2026-10-12 those words already had |
@@ -525,8 +529,7 @@ machine, before DotAmi says more than it does now. They are listed in [task-list
    keeps his read of 2026-10-25.
 3. **Ontario food premises.** The regulation in force, read, and what it requires, quoted, under a new
    id.
-4. **Repeated losses.** A CRA, Act or folio page on business versus personal pursuits, with its words.
-5. **SR&ED, refunded or not.** Whether, and how much of, a sole proprietor's 15% credit is refunded,
+4. **SR&ED, refunded or not.** Whether, and how much of, a sole proprietor's 15% credit is refunded,
    and whether a CCPC's enhanced 35% is: no held quote says either (the CCPC's "refundable" rested on
    the maintainer's read alone), so neither card says it. Looked for on 2026-10-27, and the CRA's own
    pages say different things, each found by the script that day: the relationships page the card
@@ -536,19 +539,47 @@ machine, before DotAmi says more than it does now. They are listed in [task-list
    unclaimed balance of ITC earned in the current year for qualified SR&ED expenditures.” The policy
    page's CCPC lines run to several kinds of corporation and expenditure, so a part of them would read
    as the whole. Which page, if either, the card quotes is the maintainer's call.
-6. **SR&ED's $6 million.** The tax years it applies from (beginning on or after 2024-12-16) are in no
+5. **SR&ED's $6 million.** The tax years it applies from (beginning on or after 2024-12-16) are in no
    held quote, and only the formula of s.127(10.2) is held, not the sentence that leads into it. The
    same policy page says “For tax years that begin after December 15, 2024, the maximum expenditure
-   limit is $6 million per year.” (found 2026-10-27); it waits with item 5, since it would be that
+   limit is $6 million per year.” (found 2026-10-27); it waits with item 4, since it would be that
    page's first citation, and the card's date guard (no year of DotAmi's own) is the maintainer's
    NO TIMES call.
-7. **The Productivity Grant's other conditions:** its other requirements for employers (the list
+6. **The Productivity Grant's other conditions:** its other requirements for employers (the list
    summarises active legal entity status, good standing, WCB coverage for trainees and complying with
    provincial agreements, without quotes), whether a sole proprietor counts as an employer, what
    training counts, who else funds it, and the page's subject labels before the 25% and 75% lines.
 
-Three more were settled on 2026-10-27 (four changes, counting the two titles), each by
+Four more were settled on 2026-10-27 (five changes, counting the two titles), each by
 `node scripts/check-quotes.mjs` finding the words on the live page that day:
+
+- **Repeated losses** (item 4 of this list until then), on the maintainer's "yah, lets use it" of that day.
+  A read on the retired repeated-losses read's subject is back under a new id, `risk-losses-source-of-income`
+  ([`lib/engines/risk/v2026/triggers.ts`](../../lib/engines/risk/v2026/triggers.ts); the retired id stays
+  retired), on the same card with the retired read's severity (`caution`) and no trigger. It quotes the CRA's
+  *Income Tax Audit Manual*, chapter 27
+  (https://www.canada.ca/en/revenue-agency/services/tax/technical-information/income-tax-audit-manual-domestic-compliance-programs-branch-dcpb-27.html):
+  “An activity undertaken in the pursuit of profit, even with erroneous business decisions that cause it to never
+  experience any actual profit, is still a source of income.”, “Objective evidence showing an intention to create
+  losses to offset taxable income may lead to the courts to conclude that no source of income exists.” and, as the
+  mitigation, “If there is a personal element to the activity and the activity is undertaken in a sufficiently
+  commercial manner, there is a source of income and income must be reported and losses may be claimed.” Since
+  2026-10-29 (the maintainer's "add-martin" on PR #217's question 3) the mitigation also quotes, after that sentence,
+  the last sentence of the indented paragraph the page quotes from *Martin v The Queen*: “It is only where the
+  personal element so overshadows any element of commerciality as to substantially displace it that one may
+  conclude that the activity is merely a hobby and is not a business at all.” The page names the case in the
+  paragraph just before that one (“Judge Bowman states in Martin v The Queen, 2003 TCC 155 at paragraph 18”), not in
+  the passage's own paragraph, so its label is "The same page:" too. DotAmi's only words between the quotes are the
+  labels "The CRA's Income Tax Audit Manual, chapter 27:" and "The same page:"; "hobby" is only inside the page's
+  quote. The citation's title is the page's main heading and its chapter heading, *Income Tax Audit Manual, Chapter
+  27.0 Income*, both found by the script on 2026-10-27. The script found all four quotes in one run on 2026-10-29,
+  so that is the tool check's date; nobody has read the page in full, so its check is a tool's only. Since
+  2026-10-29 the same citation (`CRA_ITAM_27_CITATION`) is listed under the Hobby vs. business card, where the box
+  shows (his "yes" on question 1), so the box's page is one click away under it. Never quoted from it: the auditors'
+  own instructions (the two-stage approach and its first question), the list of factors to consider, the sentence
+  on the reasonable expectation of profit test on its own, and any line with a time in it. The card's own words are
+  unchanged (§ Outside the list, item 3).
+  [`tests/repeated-losses-read.spec.ts`](../../tests/repeated-losses-read.spec.ts) holds it.
 
 - **SR&ED deepening's 35% from the SR&ED glossary**, the line the maintainer asked for. The stage's
   35% quotes it (“Some Canadian-controlled private corporations (CCPCs) that meet certain requirements
@@ -590,7 +621,32 @@ the entries he checked); each waits for his call. They are listed in [task-list.
    CRA's *Setting up your business*: the page the retired hobby read's record says supports neither
    (`RETIRED_RISK_ENTRIES`). It is another citation of the same page. He read the page in full on
    2026-10-25, so its source says "Read by a person on 2026-10-25"; the card's words are unchanged, and
-   whether the page supports them is still his call.
+   whether the page supports them is still his call. Since 2026-10-27 the card's risk box quotes the CRA's
+   Income Tax Audit Manual, chapter 27 (`risk-losses-source-of-income`, § Blocked, settled that day), and
+   names that page. Two of his answers of 2026-10-29 (on PR #217) settle the rest of what that read raised:
+   - **Chapter 27 is listed under the card** (his "yes" on question 1), as one citation the read and the card
+     share (`CRA_ITAM_27_CITATION`, `lib/engines/risk/v2026/audit-manual-official-words.ts`, the way s.245's is
+     shared). So the box's four quotes sit right above the card's two sources: *Setting up your business*,
+     "Read by a person on 2026-10-25", and chapter 27, "Checked by a tool on 2026-10-29", with the words the tool
+     found under it; the readout (what the Lens reads) gives the same. Until then nothing on screen linked to
+     chapter 27, and `tests/repeated-losses-read.spec.ts` held that gap as an `it.fails` check; it is a plain
+     check now. (His call 6 of 2026-10-25, a risk box headed "DotAmi's risk catalog points to this page:" with
+     the page's words and source, would draw the box's own source once built; it isn't built yet.)
+   - **The box keeps the card** (his "keep-card" on question 2: "The box keeps the card"). His call 3 of
+     2026-10-25 ([cards-in-official-words.md](../architecture/cards-in-official-words.md), § The maintainer's
+     calls) had retired this card in phase 3, story 1 ("their one source supports none of their words"); his
+     answer of 2026-10-29 is recorded beside it, and the call's own words stay as he wrote them.
+
+   What still waits is the card's own description and Lens lines. The audit manual page the box quotes says the
+   reasonable-expectation-of-profit test was rejected, and that is the test the card's description names. Its
+   words: in 27.2.0, “REOP alone is not a relevant means of determining whether an activity constitutes a source
+   of income” and, in its paragraphs on the Federal Court of Appeal's Paletta and Chad decisions, “While the
+   reasonable expectation of profit test was rejected”; the same page also quotes the Supreme Court that “the
+   taxpayer's so-called reasonable expectation of profit is a factor, among others”, and in 27.2.2 says
+   “Operating in a sufficiently commercial manner is synonymous with operating with a reasonable expectation
+   of profit or in a pursuit of profit.” (`node scripts/check-quotes.mjs` found all four on 2026-10-27; they are
+   context for this question, not quotes any entry holds.) So chapter 27 is now listed under a description it
+   words differently; whether those words change is part of this open question.
 
 ## How this relates to the other checks
 
