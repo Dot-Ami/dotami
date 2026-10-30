@@ -29,6 +29,22 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   [figures-privacy-review.md](docs/architecture/figures-privacy-review.md), [desktop-app.md](docs/architecture/desktop-app.md), part 5, The server).
   Tests: `e2e/launch-secret.spec.ts` (on the old code the plain call got 200 and the ideas, and the forged
   agree confirmed the figure), `tests/launch-secret.spec.ts`, and a desktop test in `e2e-desktop/desktop.spec.ts`.
+- **The desktop app moves to Electron 44.9.1** (from 44.8.0; Dependabot alert 61, rated high, and
+  Dependabot's #219, whose lockfile this replaces). Some certificates issued through eMudhra's intermediate
+  certificates were compromised; 44.9.1 refuses them in both Chromium's networking and Node's `tls`,
+  `https` and `fetch`. On older versions, someone holding such a certificate and able to intercept the
+  network could pose as a secure server to the app
+  ([GHSA-jr5w-w6x2-84p9](https://github.com/electron/electron/security/advisories/GHSA-jr5w-w6x2-84p9),
+  read 2026-10-30). DotAmi's server runs inside Electron (`utilityProcess.fork` in `desktop/main.mjs`),
+  so the update check and, when a model key is set up, the intake parser's call to the model both get
+  the block. The other changes since 44.8.0, by Electron's
+  [44.9.0](https://github.com/electron/electron/releases/tag/v44.9.0) and
+  [44.9.1](https://github.com/electron/electron/releases/tag/v44.9.1) notes (read 2026-10-30), don't reach
+  DotAmi: the macOS app shims are for Macs; the fix for windows opened from links is for windows DotAmi
+  never opens (`setWindowOpenHandler` in `desktop/main.mjs` denies every one and hands the link to the
+  person's own browser); and DotAmi doesn't use `setCertificateVerifyProc`. For developers: Dependabot's
+  rewrite of `package-lock.json` dropped `"gypfile": false` from the database package's entry, so
+  `tests/database-package.spec.ts` failed on #219; `node scripts/keep-gypfile.mjs` put it back.
 
 ### Added
 - **The Canada-Alberta Productivity Grant, for ideas in Alberta** (the maintainer's call a-call-1 on his reading
