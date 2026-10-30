@@ -338,7 +338,7 @@ describe("readHoldings on a seeded database", () => {
     const at = (text: string) => html.indexOf(text);
     // React writes an apostrophe as &#x27;, so the label is looked for the way the markup holds it.
     const ALSO_LABEL = "Anthropic's page also says:";
-    const alsoLabel = ALSO_LABEL.replace("'", "&#x27;");
+    const alsoLabel = ALSO_LABEL.replace(/'/g, "&#x27;");
     expect(at("How long Anthropic keeps it:")).toBeGreaterThan(-1);
     expect(at(`href="${ANTHROPIC_RETENTION_URL}"`)).toBeGreaterThan(at("How long Anthropic keeps it:"));
     // In amber, like every source no person has read, and with the day the script printed.
