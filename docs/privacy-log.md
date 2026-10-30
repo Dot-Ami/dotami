@@ -181,7 +181,7 @@ person is asked).
   `setCertificateVerifyProc`. What Electron's browser engine writes to the data folder or requests on its
   own is still *not checked*.
 - **Electron 44.9.3 and electron-updater 6.8.11 in the desktop app, up from 44.9.1 and 6.8.9
-  (2026-10-30, Dependabot's #212).** Electron 44.9.3 adds fixes Electron copied from ANGLE, Chromium, PDFium,
+  (2026-10-30, #229; Dependabot's #212).** Electron 44.9.3 adds fixes Electron copied from ANGLE, Chromium, PDFium,
   Skia and V8, on the same Chromium 152.0.7977.167 and Node 24.22.0 as 44.9.1. Nothing about what DotAmi
   keeps, sends or asks changes by the [44.9.2](https://github.com/electron/electron/releases/tag/v44.9.2)
   and [44.9.3](https://github.com/electron/electron/releases/tag/v44.9.3) notes (read 2026-10-30): 44.9.2's
@@ -194,7 +194,7 @@ person is asked).
   removes a stale saved block map and refuses a saved update whose file name is missing or is a folder path.
   One new progress line, kept in the log as written, names the old version's `.blockmap` address on GitHub.
   What Electron's browser engine writes to the data folder or requests on its own is still *not checked*.
-- **`@anthropic-ai/sdk` 0.137.0, up from 0.135.0 (2026-10-30, Dependabot's #212).** A request to Anthropic
+- **`@anthropic-ai/sdk` 0.137.0, up from 0.135.0 (2026-10-30, #229; Dependabot's #212).** A request to Anthropic
   is built the same way: the library's code that builds and sends one is 0.135.0's (its client gains only a
   user-profiles section), and the
   [0.136.0](https://github.com/anthropics/anthropic-sdk-typescript/releases/tag/sdk-v0.136.0) and
@@ -203,7 +203,7 @@ person is asked).
   are read (DotAmi's one call doesn't stream) and hide one more header from the library's own logs. DotAmi's
   one call ([`app/api/intent/parse/route.ts`](../app/api/intent/parse/route.ts)) runs only in a copy run from
   source with `ANTHROPIC_API_KEY`; the desktop app never calls the model.
-- **The installer, built with electron-builder 26.18.0, up from 26.15.3 (2026-10-30, Dependabot's #212).**
+- **The installer, built with electron-builder 26.18.0, up from 26.15.3 (2026-10-30, #229; Dependabot's #212).**
   Since 26.16.0, its step that closes a DotAmi still running starts PowerShell with `-NoProfile
   -NonInteractive`, so the person's own PowerShell profile no longer runs inside the installer; 26.15.6 makes
   sure the main program and its native files are installed. Nothing about what DotAmi keeps, sends or asks
