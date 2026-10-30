@@ -1,5 +1,6 @@
 import { MAINTAINER_READ_ON } from "@/lib/engines/shared/maintainer-reads";
 
+import { CRA_ITAM_27_CITATION, CRA_ITAM_27_QUOTES } from "./audit-manual-official-words";
 import { S245_CITATION, S245_QUOTES } from "./gaar-official-words";
 import type { RetiredRiskEntry, RiskCombination, RiskEntry } from "./types";
 
@@ -175,6 +176,31 @@ export const riskEntriesV2026 = [
     ],
   },
   // Repeated losses → hobby reclassification (risk-hobby-reclassification) came off on 2026-10-24: RETIRED_RISK_ENTRIES.
+  // A read on its subject came back on 2026-10-27 under a new id, the entry below (IDs are forever).
+  {
+    id: "risk-losses-source-of-income",
+    // No screen shows a risk read's label, and the readout doesn't return it. Neutral on purpose: it names the question
+    // the page answers, never an answer about the person's own activity.
+    label: "Losses and whether there is a source of income",
+    // The retired read's trigger (none: it applies whenever the card shows) and severity, unchanged; both are the
+    // maintainer's to change.
+    severity: "caution",
+    gaarExposure: false,
+    appliesTo: ["compliance-hobby-vs-business"],
+    // The CRA's Income Tax Audit Manual, chapter 27, in its own words and nothing else (the maintainer's "yah, lets
+    // use it" of 2026-10-27): four sentences quoted whole, in the page's order, and DotAmi's words between them are only
+    // the labels that say whose words follow (./audit-manual-official-words.ts says which sentences, and what is left
+    // out on purpose). The fourth, the passage the page quotes from Martin v The Queen, came on 2026-10-29 (his
+    // "add-martin"), after the personal-element sentence; its label is "The same page:", because the page names the case
+    // in the paragraph before the passage, not in its own. The page also names the court decisions behind the first two
+    // sentences; the labels don't.
+    why: `The CRA's Income Tax Audit Manual, chapter 27: “${CRA_ITAM_27_QUOTES.pursuitOfProfit}” The same page: “${CRA_ITAM_27_QUOTES.intentionToCreateLosses}”`,
+    mitigation: `The same page: “${CRA_ITAM_27_QUOTES.personalElement}” The same page: “${CRA_ITAM_27_QUOTES.martin}”`,
+    // A tool check only, of 2026-10-29. Since that day the same citation is listed under the Hobby vs. business card
+    // (the maintainer's "yes" on PR #217's question 1), where the box shows: a risk read's own sources are drawn nowhere
+    // (attachRisk in lib/brain/evaluate.ts copies only the level, GAAR flag, why and mitigation).
+    citations: [CRA_ITAM_27_CITATION],
+  },
   {
     id: "risk-ladder-skipping",
     label: "Early Holdco/Trust structures (GAAR-sensitive)",
@@ -251,11 +277,13 @@ export type RiskEntryId = (typeof riskEntriesV2026)[number]["id"];
  * reaches a screen, and tests/retired-entries.spec.ts holds this list to the catalog.
  */
 export const RETIRED_RISK_ENTRIES: readonly RetiredRiskEntry[] = [
+  // Came back on 2026-10-27 under a new id, risk-losses-source-of-income: a read on the same subject quoting the CRA's
+  // Income Tax Audit Manual, chapter 27 (above). This record stays, and its id is never used again.
   {
     id: "risk-hobby-reclassification",
     label: "Repeated losses → hobby reclassification",
     url: "https://www.canada.ca/en/revenue-agency/services/tax/businesses/small-businesses-self-employed-income/setting-your-business.html",
     readOn: "2026-10-23",
-    why: "On the maintainer's reading list of 2026-10-23 the read didn't match its source: its one page, the CRA's Setting up your business, doesn't support what it said about losses year after year, the reasonable-expectation-of-profit question, or running the venture \"business-like\" with \"records that show profit intent\", and DotAmi holds no quote from a page that does. Nothing sourced was left to say, so the Hobby vs. business card shows no risk box. A read on its subject comes back only under a new id, citing a page on business versus personal pursuits and quoting it.",
+    why: "On the maintainer's reading list of 2026-10-23 the read didn't match its source: its one page, the CRA's Setting up your business, doesn't support what it said about losses year after year, the reasonable-expectation-of-profit question, or running the venture \"business-like\" with \"records that show profit intent\", and DotAmi holds no quote from a page that does. Nothing sourced was left to say, so the Hobby vs. business card showed no risk box. A read on its subject comes back only under a new id, citing a page on business versus personal pursuits and quoting it.",
   },
 ];
