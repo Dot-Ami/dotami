@@ -167,19 +167,26 @@ person is asked).
 
 ### Packages that ship
 
-- **Electron 44.9.3 and electron-updater 6.8.11 in the desktop app, up from 44.8.0 and 6.8.9
-  (2026-10-30; Dependabot alerts 61 and 62, and Dependabot's #212).** Electron 44.9.1 and later refuse
-  certificates issued through eMudhra's compromised intermediate certificates, in Chromium's networking and
-  in Node's `tls`, `https` and `fetch`
+- **Electron 44.9.1 in the desktop app, up from 44.8.0 (2026-10-30, #226; Dependabot alert 61).** It
+  refuses certificates issued through eMudhra's compromised intermediate certificates, in Chromium's
+  networking and in Node's `tls`, `https` and `fetch`
   ([GHSA-jr5w-w6x2-84p9](https://github.com/electron/electron/security/advisories/GHSA-jr5w-w6x2-84p9),
-  CVE-2026-115570, read 2026-10-30). That makes the update check's connection to GitHub stricter. 44.9.3 adds
-  fixes Electron copied from ANGLE, Chromium, PDFium, Skia and V8, on the same Chromium 152.0.7977.167 and
-  Node 24.22.0. Nothing about what DotAmi keeps, sends or asks changes by the notes for
-  [44.9.0](https://github.com/electron/electron/releases/tag/v44.9.0) to
-  [44.9.3](https://github.com/electron/electron/releases/tag/v44.9.3) (read 2026-10-30): they don't mention
-  `safeStorage`, which wraps the data file's and the receipts' keys; the fix for windows opened from links is
-  for windows DotAmi never opens (`setWindowOpenHandler` in [`desktop/main.mjs`](../desktop/main.mjs)
-  denies them all); and DotAmi doesn't use `setCertificateVerifyProc`. The update checker, by its 6.8.10 and
+  CVE-2026-115570, read 2026-10-30). That makes the update check's connection to GitHub stricter (it goes
+  through Electron's own network module; see the changelog), and changes nothing about what DotAmi keeps,
+  sends or asks: the [44.9.0](https://github.com/electron/electron/releases/tag/v44.9.0) and
+  [44.9.1](https://github.com/electron/electron/releases/tag/v44.9.1) notes (read 2026-10-30) don't mention
+  `safeStorage`, which wraps the data file's and the receipts' keys; the fix for windows opened from links
+  is for windows DotAmi never opens (`setWindowOpenHandler` in
+  [`desktop/main.mjs`](../desktop/main.mjs) denies them all); and DotAmi doesn't use
+  `setCertificateVerifyProc`. What Electron's browser engine writes to the data folder or requests on its
+  own is still *not checked*.
+- **Electron 44.9.3 and electron-updater 6.8.11 in the desktop app, up from 44.9.1 and 6.8.9
+  (2026-10-30, Dependabot's #212).** Electron 44.9.3 adds fixes Electron copied from ANGLE, Chromium, PDFium,
+  Skia and V8, on the same Chromium 152.0.7977.167 and Node 24.22.0 as 44.9.1. Nothing about what DotAmi
+  keeps, sends or asks changes by the [44.9.2](https://github.com/electron/electron/releases/tag/v44.9.2)
+  and [44.9.3](https://github.com/electron/electron/releases/tag/v44.9.3) notes (read 2026-10-30): 44.9.2's
+  list nothing, and 44.9.3's one line doesn't mention `safeStorage`, which wraps the data file's and the
+  receipts' keys. The update checker, by its 6.8.10 and
   6.8.11 notes and its code compared with 6.8.9's (read 2026-10-30): its requests go to the same GitHub
   release with the same headers, and the install ID still goes with the check and not the download
   (`AppUpdater.js:386-387` and `:488-500`, the same lines as in 6.8.9). A download of only the installer's

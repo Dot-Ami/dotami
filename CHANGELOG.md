@@ -29,22 +29,40 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   [figures-privacy-review.md](docs/architecture/figures-privacy-review.md), [desktop-app.md](docs/architecture/desktop-app.md), part 5, The server).
   Tests: `e2e/launch-secret.spec.ts` (on the old code the plain call got 200 and the ideas, and the forged
   agree confirmed the figure), `tests/launch-secret.spec.ts`, and a desktop test in `e2e-desktop/desktop.spec.ts`.
-- **The desktop app moves to Electron 44.9.3 and electron-updater 6.8.11, the Anthropic library to
-  0.137.0, and the installer is built with electron-builder 26.18.0** (from 44.8.0, 6.8.9, 0.135.0 and
-  26.15.3; Dependabot's #212, whose lockfile this replaces). **It closes Dependabot alerts 61 and 62**, both
-  rated high: Electron below 44.9.1
+- **The desktop app moves to Electron 44.9.1** (from 44.8.0; Dependabot alert 61, rated high, and
+  Dependabot's #219, whose lockfile this replaces). Some of eMudhra's intermediate certificates were
+  compromised; 44.9.1 refuses certificates issued through them, in Chromium's networking and in Node's
+  `tls`, `https` and `fetch`
   ([GHSA-jr5w-w6x2-84p9](https://github.com/electron/electron/security/advisories/GHSA-jr5w-w6x2-84p9),
-  CVE-2026-115570) and undici 6.29.0, a development package `node-gyp` uses. It also moves fast-uri, a
-  development package, to 3.1.9 (`npm audit`: moderate). **Electron:** 44.9.1 refuses certificates issued
-  through eMudhra's compromised intermediate certificates. For DotAmi that guards the update check, which
-  reaches GitHub through Electron's own network module (`loadUpdater` in `desktop/main.mjs`); copies
-  already installed get it with the next release. 44.9.3 adds fixes Electron copied from ANGLE, Chromium,
-  PDFium, Skia and V8, on the same Chromium (152.0.7977.167) and Node (24.22.0) as 44.8.0. The other changes
-  since 44.8.0 don't reach DotAmi: the macOS app shims are for Macs; the fix for windows opened from links is
-  for windows DotAmi never opens (`setWindowOpenHandler` in `desktop/main.mjs` denies every one); and
-  DotAmi doesn't use `setCertificateVerifyProc` (release notes for
-  [44.9.0](https://github.com/electron/electron/releases/tag/v44.9.0) to
-  [44.9.3](https://github.com/electron/electron/releases/tag/v44.9.3), read 2026-10-30). **The update
+  CVE-2026-115570, read 2026-10-30). **Where the gap was, for DotAmi: the update check.** It runs in the
+  desktop app's main process through electron-updater, which uses Electron's own network module, that is
+  Chromium's networking (`loadUpdater` in `desktop/main.mjs`;
+  `node_modules/electron-updater/out/electronHttpExecutor.js`, 6.8.9). On 44.8.0, someone holding a
+  certificate issued through those intermediates and able to intercept the person's network could pose as
+  GitHub to it and offer a fake update. The download's SHA-512 check wouldn't catch that, because the hash
+  comes from the same place, and no code signature is checked (code signing is deferred,
+  [desktop-app.md](docs/architecture/desktop-app.md), What protects an update); installing would still take
+  the person's click on "Restart and update". The desktop app's server never calls the model: the app takes
+  `ANTHROPIC_API_KEY` out of its environment (`serverEnv` in `desktop/main.mjs`). A copy run from source runs
+  on plain Node, which this doesn't change. **Copies already installed (0.4.1 and earlier, on Electron 44.8.0
+  or older) get the fix with the next release**, which they download through the old check. The other
+  changes since 44.8.0, by Electron's
+  [44.9.0](https://github.com/electron/electron/releases/tag/v44.9.0) and
+  [44.9.1](https://github.com/electron/electron/releases/tag/v44.9.1) notes (read 2026-10-30), don't reach
+  DotAmi: the macOS app shims are for Macs; the fix for windows opened from links is for windows DotAmi
+  never opens (`setWindowOpenHandler` in `desktop/main.mjs` denies every one and hands the link to the
+  person's own browser); and DotAmi doesn't use `setCertificateVerifyProc`. For developers: Dependabot's
+  rewrite of `package-lock.json` dropped `"gypfile": false` from the database package's entry, so
+  `tests/database-package.spec.ts` failed on #219; `node scripts/keep-gypfile.mjs` put it back.
+- **The desktop app moves to Electron 44.9.3 and electron-updater 6.8.11, the Anthropic library to
+  0.137.0, and the installer is built with electron-builder 26.18.0** (from 44.9.1, 6.8.9, 0.135.0 and
+  26.15.3; Dependabot's #212, whose lockfile this replaces). Along the way npm moves two development packages
+  to their patched versions, closing Dependabot alerts 62, 72, 74 and 76 (undici 6.29.0, which `node-gyp`
+  uses; three rated high) and 63 to 66 (fast-uri 3.1.8, which electron-builder uses, through ajv, to check its
+  settings; rated medium and low). **Electron:** 44.9.3 adds fixes Electron copied from ANGLE, Chromium, PDFium, Skia and V8,
+  on the same Chromium (152.0.7977.167) and Node (24.22.0) as 44.9.1; the
+  [44.9.2](https://github.com/electron/electron/releases/tag/v44.9.2) notes list nothing
+  ([44.9.3](https://github.com/electron/electron/releases/tag/v44.9.3), read 2026-10-30). **The update
   checker:** an update that downloads only the changed parts of the new installer (from the release's
   `.blockmap`) now works in cases where 6.8.9 gave up and downloaded the whole file; a stale saved block
   map is removed so it can't spoil the next one; and a saved update whose file name is missing or is a
