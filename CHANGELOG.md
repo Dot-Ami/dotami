@@ -31,6 +31,19 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   agree confirmed the figure), `tests/launch-secret.spec.ts`, and a desktop test in `e2e-desktop/desktop.spec.ts`.
 
 ### Added
+- **The quote checker reads a table row as one piece, and the Productivity Grant's card names who pays which share**
+  (the maintainer's answers of 2026-10-29: "Teach the checker to read a table row as one piece" and "One new check
+  that holds the old and new sentences"). `scripts/check-quotes.mjs` also reads each table row as one piece, its
+  cells joined by " | ", so a quote can hold a row's label with the line beside it ("Employer | Must contribute 25%
+  …"), never two rows; every cell is still found alone, and a run over every recorded quote found the same ones on
+  the old and the new code. The card's line now reads Employer: “Must contribute 25% …”; Government of Alberta:
+  “Contributes the other 75% …”, the labels being the page's own table cells. The entry also quotes the page's
+  requirements for registered employers and what training and costs count (no screen draws those yet), and its
+  authority is "Alberta / federal", on the page's sentence on who delivers and funds it. The page's three time items
+  stay in the source's tool check only. One run found all 26 quotes on 2026-10-29, so the source's one tool check is
+  of that day; the maintainer's read of 2026-10-25 still wins on screen. Whether a sole proprietor counts is still
+  open (the page never says). It can't help a table a page's script draws, such as the CRA's GST/HST rates
+  (`tests/check-quotes.spec.ts`, `tests/productivity-grant.spec.ts`; docs/engines/citations.md § The checker).
 - **The Canada-Alberta Productivity Grant, for ideas in Alberta** (the maintainer's call a-call-1 on his reading
   list of 2026-10-23: "ADD it"). The program whose page the Canada-Alberta Job Grant's old address now opens is in
   the programs catalog under its own id, `grant-capg`; the Job Grant's id is never reused. Its card says only what

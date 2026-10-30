@@ -112,6 +112,7 @@ describe("what counts as the same words", () => {
 
   it("a quote can't be stitched together from separate cells, list items or paragraphs", () => {
     const found = (body: string, quote: string) => findQuotes(pageToText(body), [quote])[0].found;
+    // Two cells of one row join only through the row's own joiner, " | " (next describe), never as one run of words.
     expect(found("<table><tr><td>$30,000</td><td>or less</td></tr></table>", "$30,000 or less")).toBe(false);
     expect(found("<ul><li>You must register</li><li>within 29 days</li></ul>", "You must register within 29 days")).toBe(false);
     expect(found("<p>You must register</p><p>within 29 days</p>", "You must register within 29 days")).toBe(false);
@@ -129,6 +130,79 @@ describe("what counts as the same words", () => {
     // aria-hidden hides an element from screen readers, not from the eye, and type="hidden" is a form field.
     expect(found('<p aria-hidden="true">register within thirty days</p>', "register within thirty days")).toBe(true);
     expect(found('<input type="hidden" value="x"><p>register within thirty days</p>', "register within thirty days")).toBe(true);
+  });
+});
+
+// The maintainer's answer of 2026-10-29 on his reading page (item 5, the Canada-Alberta Productivity Grant): "Teach
+// the checker to read a table row as one piece". Each table row also yields one piece of its own, its cells in order
+// joined by " | ", so a quote can hold a row's label cell with the line beside it ("Employer | Must contribute 25%
+// …"). Every cell still is a block of its own, so every quote found before is found the same way. The invented
+// table below has the shape of that page's funding table: a label cell, then a cell holding a list.
+describe("reading a table row as one piece (cells joined by \" | \")", () => {
+  const TABLE =
+    "<table><tbody>" +
+    "<tr>\n  <th><strong>Contributor</strong></th>\n  <th><strong>Training costs covered</strong></th>\n</tr>" +
+    "<tr><td>Employer</td><td><ul><li>Must contribute 25% of the invented costs.</li></ul></td></tr>" +
+    "<tr><td>Government of Alberta</td><td><ul><li>Contributes the other 75% of the invented cost.</li><li>An employer is eligible for up to $100,000 in this example.</li></ul></td></tr>" +
+    "</tbody></table>";
+  const found = (body: string, quote: string) => findQuotes(pageToText(body), [quote])[0].found;
+
+  it("a whole row is found: its cells in order, joined by \" | \", header cells too", () => {
+    expect(found(TABLE, "Employer | Must contribute 25% of the invented costs.")).toBe(true);
+    expect(found(TABLE, "Contributor | Training costs covered")).toBe(true);
+    // A cell holding a list reaches across the cell's edge only to its nearest item: the label and the first line.
+    expect(found(TABLE, "Government of Alberta | Contributes the other 75% of the invented cost.")).toBe(true);
+  });
+
+  it("a quote spanning two rows is not found", () => {
+    expect(found(TABLE, "Employer | Must contribute 25% of the invented costs. | Government of Alberta")).toBe(false);
+    expect(found(TABLE, "Must contribute 25% of the invented costs. Government of Alberta")).toBe(false);
+    expect(found(TABLE, "Training costs covered | Employer | Must contribute 25%")).toBe(false);
+  });
+
+  it("a cell alone is still found, as before", () => {
+    expect(found(TABLE, "Must contribute 25% of the invented costs.")).toBe(true);
+    expect(found(TABLE, "Contributes the other 75% of the invented cost.")).toBe(true);
+    expect(found(TABLE, "An employer is eligible for up to $100,000 in this example.")).toBe(true);
+    expect(found(TABLE, "Government of Alberta")).toBe(true);
+  });
+
+  it("planted control: a wrong label in front of a line is not found", () => {
+    expect(found(TABLE, "Government of Alberta | Must contribute 25% of the invented costs.")).toBe(false);
+    expect(found(TABLE, "Employer | Contributes the other 75% of the invented cost.")).toBe(false);
+    // Without the joiner, or with another one, the label and its line are still two pieces.
+    expect(found(TABLE, "Employer Must contribute 25% of the invented costs.")).toBe(false);
+    expect(found(TABLE, "Employer: Must contribute 25% of the invented costs.")).toBe(false);
+  });
+
+  it("inside a cell, two list items are still two pieces, in the row too", () => {
+    expect(found(TABLE, "Contributes the other 75% of the invented cost. An employer is eligible")).toBe(false);
+    expect(found(TABLE, "Contributes the other 75% of the invented cost. | An employer is eligible")).toBe(false);
+    // The label cell sits beside the list's first item only: it is never joined to the second.
+    expect(found(TABLE, "Government of Alberta | An employer is eligible for up to $100,000 in this example.")).toBe(false);
+  });
+
+  it("a row the page hides is never read, and a row that holds another table gives no piece of its own", () => {
+    expect(found("<table><tr hidden><td>Secret label here</td><td>secret line here</td></tr></table>", "Secret label here | secret line here")).toBe(false);
+    const nested = "<table><tr><td>Outer label cell</td><td><table><tr><td>Inner label cell</td><td>inner line cell</td></tr></table></td></tr></table>";
+    expect(found(nested, "Inner label cell | inner line cell")).toBe(true);
+    expect(found(nested, "Outer label cell | Inner label cell")).toBe(false);
+  });
+
+  it("a page's own vertical bar inside one block is found as before", () => {
+    expect(found("<ul><li>Red Seal Application | $150</li></ul>", "Red Seal Application | $150")).toBe(true);
+  });
+
+  it("the script reports a row quote like any other: found, with the date to record, or NOT FOUND", async () => {
+    const row = "Employer | Must contribute 25% of the invented costs.";
+    const ok = await run(["--url", URL_A, "--quote", row, "--quote", "Must contribute 25% of the invented costs."], { [URL_A]: html(TABLE) });
+    expect(ok.code).toBe(0);
+    expect(ok.out).toContain(`found      ${JSON.stringify(row)}`);
+    expect(ok.out).toContain('All 2 quotes were found. To record: toolCheck: { checkedOn: "2026-10-11", quotes: [');
+    const wrong = "Government of Alberta | Must contribute 25% of the invented costs.";
+    const bad = await run(["--url", URL_A, "--quote", row, "--quote", wrong], { [URL_A]: html(TABLE) });
+    expect(bad.code).toBe(1);
+    expect(bad.out).toContain(`NOT FOUND  ${JSON.stringify(wrong)}`);
   });
 });
 
