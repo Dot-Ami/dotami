@@ -1,6 +1,7 @@
 # A source's line: how it was checked
 
-Last updated: 2026-10-27 (the maintainer's reads of 2026-10-25: every source of the 31 pages he read in
+Last updated: 2026-10-29 (`PageQuotes` can be given a label of its own, `lead`, in place of `PAGE_QUOTES_LEAD`: What
+DotAmi knows about you draws two more of Anthropic's lines under *Anthropic's page also says:*); 2026-10-27 (the maintainer's reads of 2026-10-25: every source of the 31 pages he read in
 full says "Read by a person on 2026-10-25", the Delete menu's record-keeping line among them, § Today;
 2026-10-24: the Delete menu's record-keeping line: its citation also keeps a tool check,
 which its read outranks, so the line doesn't change; § Today: the reading list's new sources say "Checked
@@ -57,6 +58,9 @@ the catalog records that one did.
   `PAGE_QUOTES_LEAD`, drawn only by `PageQuotes`, the one component that draws the words a tool check found
   on an official page (since 2026-10-23). An official page's own durations, such as "It will cost $200 and
   will take 1 day.", may stand only there, never as a line of DotAmi's own (`tests/prerelease-honesty.spec.ts`).
+  A second set of quotes from the same page may be given a label of its own, `PageQuotes`'s `lead`, which
+  stands in place of `PAGE_QUOTES_LEAD` and never beside it (since 2026-10-29, one place: *Anthropic's page
+  also says:*, below).
 
 The words come from one function, `howCheckedWords`; no screen writes them itself, and
 `tests/citation-check.spec.ts` fails on any file in `app/`, `components/` or `lib/` other than
@@ -80,8 +84,9 @@ The words come from one function, `howCheckedWords`; no screen writes them itsel
   maintainer's, of the page in full on 2026-10-25, so the line ends `(Read by a person on 2026-10-25)`.
 - **What DotAmi knows about you, What leaves this computer** ([../your-data/_index.md](../your-data/_index.md)):
   since 2026-10-27, while a model key is set, the intake's row says how Anthropic's own retention page was
-  checked (`Checked by a tool on 2026-10-27: …`, in amber) and lists the words found, after *Words found on
-  the page:*, through `PageQuotes`.
+  checked (`Checked by a tool on 2026-10-29: …`, in amber) and lists the words found, five after *Words found
+  on the page:* and, since 2026-10-29, two more after *Anthropic's page also says:*, both through `PageQuotes`
+  (one tool check holds all seven).
 - **Your ideas, Add a figure, Tax year** ([../ventures/_index.md](../ventures/_index.md)): `Line 8299
   on the CRA's 2025 T2125 ("Gross business or professional income"). Read by a person on 2026-10-10.`
   A year's form always has a person's read (`tests/engine-integrity.spec.ts`), because this sentence

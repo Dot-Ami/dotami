@@ -1,9 +1,10 @@
 # How a source was checked: read, or checked by a tool
 
-Last updated: 2026-10-29 (the maintainer's answers on PR #217: chapter 27 is listed under the Hobby vs. business
-card, the box keeps the card, and the read quotes the page's passage from Martin v The Queen too, four quotes with a
-tool check of 2026-10-29, § Blocked and § Outside the list, item 3); 2026-10-27 (Repeated losses settled: a read back
-under a new id, quoting the CRA's Income Tax Audit Manual, chapter 27, § Blocked; the maintainer's reads of 2026-10-25: every citation of the 31 pages he read
+Last updated: 2026-10-29 (Anthropic's retention check holds seven quotes, § Rules 4; the maintainer's answers on PR
+#217: chapter 27 is listed under the Hobby vs. business card, the box keeps the card, and the read quotes the page's
+passage from Martin v The Queen too, four quotes with a tool check of 2026-10-29, § Blocked and § Outside the list,
+item 3); 2026-10-27 (Repeated losses settled: a read back under a new id, quoting the CRA's Income Tax Audit Manual,
+chapter 27, § Blocked; the maintainer's reads of 2026-10-25: every citation of the 31 pages he read
 in full says "Read by a person on 2026-10-25", § The maintainer's reads of 2026-10-25; the same day, main
 with #207 and #208 merged into the reading list's corrections: the two
 checks that waited on them are plain checks, § The reading list's corrections; 2026-10-24: the reading
@@ -102,8 +103,8 @@ catalog at run time.
    The script never writes a file itself. Run with no arguments, it checks every tool check in the
    catalogs again (`lib/engines/all-citations.ts`), which shows when a page has changed under a citation.
    One check outside the catalogs, Anthropic's retention words on *What DotAmi knows about you*
-   (`lib/privacy/anthropic-retention-official-words.ts`, 2026-10-27), is re-checked by running the script
-   with `--url` and its quotes. One exception, closed on 2026-10-26:
+   (`lib/privacy/anthropic-retention-official-words.ts`, first recorded 2026-10-27; since 2026-10-29 one check of
+   all seven quotes, dated 2026-10-29), is re-checked by running the script with `--url` and all its quotes at once. One exception, closed on 2026-10-26:
    the tool checks dated 2026-10-23 (§ The reading list's tool checks) were recorded from the
    maintainer's reading list's matcher, the same whole-word, one-block match as the script, run that
    day where the script couldn't be. A networked `node scripts/check-quotes.mjs` run with no arguments

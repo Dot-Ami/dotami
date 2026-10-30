@@ -1,6 +1,6 @@
 # What DotAmi knows about you (`/your-data`) — page overview
 
-Last updated: 2026-10-27 (the intake's row quotes Anthropic's own lines for API users after *Words found on the page:*); 2026-10-24 (the window's storage holds only how the cockpit was left; the three keys that held the
+Last updated: 2026-10-29 (the intake's row also quotes two more of Anthropic's lines, after the five, under *Anthropic's page also says:*); 2026-10-27 (the intake's row quotes Anthropic's own lines for API users after *Words found on the page:*); 2026-10-24 (the window's storage holds only how the cockpit was left; the three keys that held the
 person's words go, and Delete reaches the journey held in the window's memory); 2026-10-17 (the "Businesses you're watching" card, the first with an "About other people" line, and its Delete box; 2026-10-10: [8i] — the four rows for turning locking off, and the data file key's row says when DotAmi deletes it; Bring these receipts back in the receipts folder's row; Delete's safety-copies box also clears the receipt folders set aside in the backups folder, with a warning; after Start a new key the desktop app restarts by itself; 2026-10-09: [8i] — how the receipt files are kept, and the key's file; Start a new key while the key can't be opened; 2026-10-08: [8h] — the "Books / file" kind; [8d] — the Delete menu, and its safety-copies box and unfinished-wipe note; deleting ideas keeps their expense records, "not attached yet", and the menu says how many before you confirm; first slice read-only 2026-10-06; a card for expense records, [8i])
 
 **Route:** `/your-data` · **Page:** `app/(journey)/your-data/page.tsx` (server-rendered on every
@@ -130,8 +130,13 @@ jump links, then five sections in this order:
    row says the ID is in the log too.
 4. **What leaves this computer** — the intake sentence (to Anthropic only when a model key is set
    for this copy; says whether it is happening here, links Anthropic's own retention page when it
-   is and quotes that page's lines for API users after *Words found on the page:*, with how and on
-   what day they were checked, and says that DotAmi can't take it back), the desktop update check (GitHub sees the computer's
+   is and quotes that page's lines for API users after *Words found on the page:* (five lines: the
+   period and its four exceptions), then two more of the page's lines after *Anthropic's page also says:*
+   (its line on Covered Models, then its longer period for a chat flagged as violating the Usage Policy,
+   the page's own order; the page doesn't say whether they reach what an API user sends, and DotAmi doesn't
+   say either), with
+   how and on what day the seven were checked (one tool check, in amber), and says that DotAmi can't take
+   it back), the desktop update check (GitHub sees the computer's
    address, the version and the updater's install ID, the same on every check; DotAmi can't take back
    what GitHub received, and deleting the ID's file makes the next check send a new one), and files the person saves themselves (DotAmi doesn't know where
    they are). Each says when, what, and whether it can be taken back.
