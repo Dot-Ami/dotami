@@ -678,9 +678,10 @@ placed in phase 3.
     2026-10-25 to 27, in his order: #207, #206, #208, #210, #209, each brought up to date with main by a
     merge first; what each merge found and fixed is in its pull request, and how a cloud session did it is
     [verification/cloud-sessions.md](verification/cloud-sessions.md)
-  - [ ] #211, the reading list's corrections with the maintainer's 31 reads of 2026-10-25: the networked
-    `node scripts/check-quotes.mjs` run it waited for found every quote on 2026-10-26 ([11b]); waits for his
-    merge word
+  - [x] #211, the reading list's corrections with the maintainer's 31 reads of 2026-10-25: the networked
+    `node scripts/check-quotes.mjs` run it waited for found every quote on 2026-10-26 ([11b]); merged on his
+    word 2026-10-27, then its follow-ups the same day: #214 (Anthropic's retention words quoted on *What
+    DotAmi knows about you*), #215 (three of [11b]'s blocked items settled) and #216 (Mara's prices re-checked)
   - [ ] Release 0.5.0: no silent fallbacks, every Alberta test idea ending on a road written for it or an
     honest "not written yet", the maintainer's walk done (32b), a Quality line in the changelog, the privacy
     log's section for the new version; publishing is the maintainer's click
@@ -704,6 +705,21 @@ placed in phase 3.
   - [ ] Two questions his reads of 2026-10-25 left open: what the CRA's rate table shows for Ontario and
     Alberta (citations.md § Blocked, 1 and 2), and whether the s.67.3 citation's title or its address changes
     (the title names four sections, the page holds one)
+- ⬜ **[14q] Rules meet your facts, research first (S2.5.41).** How DotAmi could join a rule's conditions,
+  exceptions and definitions to a person's own answers and documents, say what is missing and why, and bring
+  lawful options into view (deductions, credits, exemptions, elections, structures), measured against known
+  answers. Research before any plan; the maintainer picks the starting scope and approves the plan. Opened
+  2026-10-27 at his request.
+  - [ ] Check every factual claim in the first research reply against its own source
+  - [ ] What DotAmi already does, layer by layer, and where its rules (never a verdict, never derive a fact about
+    the person, every number cited) meet this feature
+  - [ ] Surveys: existing software and services, open-source projects, research papers, and their licences
+  - [ ] How others handle unknown facts, conflicting rules, finding options and explaining a result
+  - [ ] Canadian sources, and how the law, CRA guidance, court decisions and professional opinion stay apart
+  - [ ] Compare starting scopes (for example tradespeople's and apprentices' employment deductions; the write-offs
+    DotAmi already lists); the maintainer picks
+  - [ ] A test set with known answers, reviewed, with paired tests and a held-out part (extends Accuracy tests)
+  - [ ] Failure kinds and release checks, then a staged plan for the maintainer's approval
 
 ## 7 — The desktop app (one download, everything on your computer)
 
