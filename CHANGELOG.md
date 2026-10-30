@@ -867,6 +867,13 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   as the area of the workspace divided by the total area of your home”). Two citations take their pages' own
   titles: *What are SR&ED tax incentives* and *Helping small businesses get loans*. The glossary's and the home
   office page's tool checks are of that day, since one run found their older quotes with the new ones.
+- **A sole proprietor's SR&ED card quotes the CRA's newer page on refunds** (2026-10-29; the maintainer's answer, "it
+  should always be the newer page because it's more up-to-date"). After the rates page's two lines it adds *The CRA's
+  SR&ED Investment Tax Credit Policy:* “Generally, for an individual (other than a trust), the refundable ITC is 40% of
+  the unclaimed balance of ITC earned in the current year for qualified SR&ED expenditures.” That page (dated
+  2026-10-07) is the card's sixth source, "Checked by a tool on 2026-10-29" in amber, since nobody has read it yet;
+  the older relationships page's "non-refundable" 15% is quoted nowhere, and the corporation's card, and the fork on
+  a sole proprietor's card that copies its note, are unchanged.
 
 ### Documented
 - **The screen specs say what the pre-release fixes changed** (2026-10-24). Each control the fixes above

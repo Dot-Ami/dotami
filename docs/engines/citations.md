@@ -249,8 +249,9 @@ its row leaves this list.
 
 | Added | Page | Where it is cited | What to read for |
 |---|---|---|---|
+| 2026-10-29 | CRA, [*SR&ED Investment Tax Credit Policy*](https://www.canada.ca/en/revenue-agency/services/scientific-research-experimental-development-tax-incentive-program/investment-tax-credit-policy.html) | program *SR&ED tax incentives* (`grant-sred`), the sole proprietor's note (§ The reading list's corrections, *Blocked*, item 4) | the 40% refundable ITC for an individual (other than a trust), the amount the card quotes |
 
-None waits now. The three pages listed here until 2026-10-27 (Alberta's *Employment standards* on *Hire
+Only that row waits now. The three pages listed here until 2026-10-27 (Alberta's *Employment standards* on *Hire
 first employee*, Income Tax Regulations s.7307 under *Motor vehicle expenses*, and ISED's *Helping small
 businesses get loans* under the Canada Small Business Financing Program), and the pages the reading list's
 corrections added with a tool check only (the Canada-Alberta Productivity Grant's page and the SR&ED
@@ -460,7 +461,7 @@ Three rules from his answers hold for every row:
 
 | Entry | Reading-list item(s) | What changed | The evidence |
 |---|---|---|---|
-| *SR&ED tax incentives* (`grant-sred`) | `grant-sred/estimatedValue`, `grant-sred/rate-unincorporated`, `grant-sred/rate-ccpc`, `sred-expenditure-limit-6-million` | A sole proprietor's card no longer calls the 15% credit non-refundable; it quotes the basic rate and that some businesses may also earn a refundable credit. The CCPC's note quotes the enhanced 35% up to the expenditure limit, and the $6 million limit, where it said "confirm the current limit with an advisor"; its card and the fork no longer call the 35% "refundable", a word no quote holds (*Blocked*). The range "15–35%" (on no screen) is unchanged. | Four new sources, tool checks of 2026-10-23: the CRA's rates page, its relationships page, *What's new for corporations*, and s.127(10.2)'s formula ([grants.md](grants.md)) |
+| *SR&ED tax incentives* (`grant-sred`) | `grant-sred/estimatedValue`, `grant-sred/rate-unincorporated`, `grant-sred/rate-ccpc`, `sred-expenditure-limit-6-million` | A sole proprietor's card no longer calls the 15% credit non-refundable; it quotes the basic rate and that some businesses may also earn a refundable credit. The CCPC's note quotes the enhanced 35% up to the expenditure limit, and the $6 million limit, where it said "confirm the current limit with an advisor"; its card and the fork no longer call the 35% "refundable", a word no quote holds (*Blocked*). The range "15–35%" (on no screen) is unchanged. Since 2026-10-29 (his answer: the newer page) the sole proprietor's note also quotes the *SR&ED Investment Tax Credit Policy*'s 40% line for an individual (other than a trust). | Four new sources, tool checks of 2026-10-23: the CRA's rates page, its relationships page, *What's new for corporations*, and s.127(10.2)'s formula ([grants.md](grants.md)); since 2026-10-29 a further source, that policy page, tool check of 2026-10-29, not read by a person yet |
 | *Ontario HST (13%)* (`compliance-on-hst`) | `compliance-on-hst` | Unchanged. | None held: the rate table isn't in the page's HTML, and the one 13% sentence found is a worked example (*Blocked*) |
 | *Alberta — no provincial sales tax* (`compliance-ab-no-pst`) | `compliance-ab-no-pst` | "… simplifying provincial sales tax compliance" is gone. The line says "The CRA's table of GST/HST rates lists Alberta at 5% GST, with no provincial sales tax.", which is still DotAmi's wording of a table row, and the catalog says so beside it. | None held, for the same reason (*Blocked*) |
 | *BC Provincial Sales Tax (PST)* (`compliance-bc-pst`) | `compliance-bc-pst` | Unchanged. | No quote is held from its page |
@@ -482,7 +483,7 @@ Three rules from his answers hold for every row:
 
 Each needs an official page's own words, found by `node scripts/check-quotes.mjs` on a networked
 machine, before DotAmi says more than it does now. They are listed in [task-list.md](../task-list.md)
-[11b] too.
+[11b] too. A settled item keeps its number, so references to it still hold.
 
 1. **Alberta, no PST and GST at 5%.** A page whose HTML says it. Alberta's *About Tax and Revenue
    Administration* ("Alberta has no sales tax.", [S17] in
@@ -496,22 +497,41 @@ machine, before DotAmi says more than it does now. They are listed in [task-list
 2. **Ontario's 13% HST.** The same table.
 3. **Ontario food premises.** The regulation in force, read, and what it requires, quoted, under a new
    id.
-4. **SR&ED, refunded or not.** Whether, and how much of, a sole proprietor's 15% credit is refunded,
-   and whether a CCPC's enhanced 35% is: no held quote says either (the CCPC's "refundable" rested on
-   the maintainer's read alone), so neither card says it. Looked for on 2026-10-27, and the CRA's own
-   pages say different things, each found by the script that day: the relationships page the card
-   already cites (its page date 2025-07-21), “Corporations and unincorporated businesses may earn a
-   non-refundable ITC at the rate of 15%.”; the CRA's *SR&ED Investment Tax Credit Policy* (2026-10-07,
-   not cited yet), “Generally, for an individual (other than a trust), the refundable ITC is 40% of the
-   unclaimed balance of ITC earned in the current year for qualified SR&ED expenditures.” The policy
-   page's CCPC lines run to several kinds of corporation and expenditure, so a part of them would read
-   as the whole. Which page, if either, the card quotes is the maintainer's call.
+4. **SR&ED, refunded or not.** Two questions: whether, and how much of, a sole proprietor's 15% credit
+   is refunded, and whether a CCPC's enhanced 35% is. The maintainer answered the first on 2026-10-29
+   (his reading page, item 2: what the sole proprietor's card should show).
+   - **A sole proprietor's 15%: settled.** The CRA's own pages say different things, each found by the
+     script on 2026-10-27: the relationships page the card already cites (its page date 2025-07-21),
+     “Corporations and unincorporated businesses may earn a non-refundable ITC at the rate of 15%.”; the
+     CRA's *SR&ED Investment Tax Credit Policy* (its page date 2026-10-07), “Generally, for an individual
+     (other than a trust), the refundable ITC is 40% of the unclaimed balance of ITC earned in the
+     current year for qualified SR&ED expenditures.” His answer: the sole proprietor's card quotes the
+     newer page's line, “it should always be the newer page because it's more up-to-date.” So the note
+     on both sole proprietor rates (with or without the GST/HST) quotes it after the rates page's two
+     lines, under the label *The CRA's SR&ED Investment Tax Credit Policy:*, and that page is
+     `grant-sred`'s sixth source, titled with its own main heading: a tool check of 2026-10-29
+     (`node scripts/check-quotes.mjs` found the heading and the line that day; the check holds the line
+     only) with no read, so it says "Checked by a tool" in amber (§ Waiting for the maintainer's read).
+     The older page's "non-refundable" line is quoted nowhere. `refundable` stays unset on every rate: a
+     bare "(refundable)" after the 15% would say more than the CRA's “Generally … 40% of the unclaimed
+     balance”. [`tests/reading-list-corrections.spec.ts`](../../tests/reading-list-corrections.spec.ts)
+     § 3 holds it.
+   - **A CCPC's enhanced 35%: still blocked, the maintainer's call.** No card says whether it is
+     refunded: the CCPC's note, and the fork on a sole proprietor's card that copies it, are unchanged.
+     The options: the policy page's section 4.1 list for CCPCs, quoted whole and in order, never a part
+     of it (its lines run to several kinds of corporation and expenditure, so a part would read as the
+     whole, beside the individual's 40%; some of its lines were found only offline, so a networked
+     `node scripts/check-quotes.mjs` run comes first); the relationships page's “Some CCPCs may also earn
+     a refundable ITC.” (found by the script on 2026-10-27; the older page, and it names neither the 35%
+     nor an amount); or leave it unsaid, as now.
 5. **SR&ED's $6 million.** The tax years it applies from (beginning on or after 2024-12-16) are in no
    held quote, and only the formula of s.127(10.2) is held, not the sentence that leads into it. The
    same policy page says “For tax years that begin after December 15, 2024, the maximum expenditure
-   limit is $6 million per year.” (found 2026-10-27); it waits with item 4, since it would be that
-   page's first citation, and the card's date guard (no year of DotAmi's own) is the maintainer's
-   NO TIMES call.
+   limit is $6 million per year.” (found 2026-10-27). Since 2026-10-29 the policy page is cited (item
+   4), so holding this line needs only a new `node scripts/check-quotes.mjs` check of it and the
+   maintainer's NO TIMES call on the card's date guard (no year of DotAmi's own). Held on that
+   citation, the line would also show under the card's source among the words found on the page,
+   until a person reads the page.
 6. **The Productivity Grant's other conditions:** its other requirements for employers (the list
    summarises active legal entity status, good standing, WCB coverage for trainees and complying with
    provincial agreements, without quotes), whether a sole proprietor counts as an employer, what
