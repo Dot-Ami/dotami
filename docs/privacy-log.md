@@ -165,6 +165,22 @@ person is asked).
   Giving the estimate takes the third year off that list; Keep on the what-if takes the first year off it;
   taking either back sets it to 0 and puts it back. Nothing new leaves the computer.
 
+### Packages that ship
+
+- **Electron 44.9.1 in the desktop app, up from 44.8.0 (2026-10-30, #226; Dependabot alert 61).** It
+  refuses certificates issued through eMudhra's compromised intermediate certificates, in Chromium's
+  networking and in Node's `tls`, `https` and `fetch`
+  ([GHSA-jr5w-w6x2-84p9](https://github.com/electron/electron/security/advisories/GHSA-jr5w-w6x2-84p9),
+  CVE-2026-115570, read 2026-10-30). That makes the update check's connection to GitHub stricter (it goes
+  through Electron's own network module; see the changelog), and changes nothing about what DotAmi keeps,
+  sends or asks: the [44.9.0](https://github.com/electron/electron/releases/tag/v44.9.0) and
+  [44.9.1](https://github.com/electron/electron/releases/tag/v44.9.1) notes (read 2026-10-30) don't mention
+  `safeStorage`, which wraps the data file's and the receipts' keys; the fix for windows opened from links
+  is for windows DotAmi never opens (`setWindowOpenHandler` in
+  [`desktop/main.mjs`](../desktop/main.mjs) denies them all); and DotAmi doesn't use
+  `setCertificateVerifyProc`. What Electron's browser engine writes to the data folder or requests on its
+  own is still *not checked*.
+
 ### New powers or permissions
 
 - **Fewer, not more: the desktop app's server answers only DotAmi's own window (2026-10-23).** Until now,
