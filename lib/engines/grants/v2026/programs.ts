@@ -1,12 +1,23 @@
 import { MAINTAINER_READ_ON } from "@/lib/engines/shared/maintainer-reads";
 
-import { SRED_PAGES, SRED_QUOTES_FOUND_ON, SRED_WORDS } from "./sred-official-words";
+import {
+  SRED_PAGES,
+  SRED_POLICY_FOUND_ON,
+  SRED_POLICY_TITLE,
+  SRED_QUOTES_FOUND_ON,
+  SRED_WORDS,
+} from "./sred-official-words";
 import type { GrantProgram } from "./types";
 
 const LAST_VERIFIED = "2026-06-08";
 
-/** The CRA's two lines a sole proprietor's SR&ED card quotes, with or without the GST/HST (2026-10-24). */
-const SOLE_PROP_SRED_NOTE = `The CRA: “${SRED_WORDS.basicRate}” “${SRED_WORDS.someRefundable}”`;
+/**
+ * The CRA's lines a sole proprietor's SR&ED card quotes, with or without the GST/HST: its rates page's two (2026-10-24),
+ * then, since the maintainer's answer of 2026-10-29, the SR&ED Investment Tax Credit Policy's line on an individual's
+ * refundable ITC. Two CRA pages disagree on whether that credit is refunded, and his answer is the newer page: "it
+ * should always be the newer page because it's more up-to-date". DotAmi's own words here are only whose words they are.
+ */
+const SOLE_PROP_SRED_NOTE = `The CRA: “${SRED_WORDS.basicRate}” “${SRED_WORDS.someRefundable}” The CRA's ${SRED_POLICY_TITLE}: “${SRED_WORDS.individualRefundable}”`;
 
 export const grantProgramsV2026 = [
   {
@@ -91,6 +102,18 @@ export const grantProgramsV2026 = [
         toolCheck: { checkedOn: SRED_QUOTES_FOUND_ON, quotes: [SRED_WORDS.actFormula] },
         note: "The formula for a CCPC's expenditure limit for a taxation year, from $6 million (the consolidated Act).",
       },
+      // Added on the maintainer's answer of 2026-10-29 for the line a sole proprietor's card quotes.
+      // `node scripts/check-quotes.mjs` found the page's main heading and that line on the live page that day; the
+      // heading is the title, not words the card relies on, so the tool check holds the line only. Nobody has read the
+      // page in full, so no lastVerified or readBy: its source says "Checked by a tool" in amber.
+      {
+        title: SRED_POLICY_TITLE,
+        authority: "CRA",
+        jurisdiction: "CA",
+        url: SRED_PAGES.itcPolicy,
+        toolCheck: { checkedOn: SRED_POLICY_FOUND_ON, quotes: [SRED_WORDS.individualRefundable] },
+        note: "The CRA's SR&ED investment tax credit policy: its rates, and which claimants can earn a refundable ITC.",
+      },
     ],
     provinces: ["AB", "BC", "ON", "CA"],
     structures: ["sole-prop", "sole-prop-gst", "ccpc"],
@@ -103,7 +126,10 @@ export const grantProgramsV2026 = [
         rate: 0.15,
         // No `refundable`: until 2026-10-24 this said "non-refundable" ("Unincorporated claimants earn the basic 15%
         // non-refundable ITC."). The maintainer's reading list notes an individual can get part of the credit
-        // refunded; no held quote says that or how much, so the card says neither and quotes the CRA's two lines.
+        // refunded; no held quote said that or how much, so the card said neither and quoted the CRA's two lines.
+        // Since 2026-10-29 the note also quotes the policy page's 40% line (his answer: the newer page). `refundable`
+        // stays unset: lib/brain/evaluate.ts would print a bare "(refundable)" after the 15%, more than the CRA's
+        // "Generally … 40% of the unclaimed balance" says.
         note: SOLE_PROP_SRED_NOTE,
       },
       {
@@ -126,6 +152,10 @@ export const grantProgramsV2026 = [
         // beginning on or after 2024-12-16. No held quote carries that date, so it is on no screen and in no field, only
         // here and in docs/engines/citations.md (the rule: no number or date without a held quote); the card gives the amount only
         // inside the CRA's quote.
+        // Unchanged by the maintainer's answer of 2026-10-29: the SR&ED Investment Tax Credit Policy cited above has
+        // lines on a CCPC's refundable ITC, but they run to several kinds of corporation and expenditure, so a part would
+        // read as the whole, and lib/brain/evaluate.ts copies this note into the sole proprietor's fork, beside the
+        // individual's 40%. So none of them is quoted here.
         note: `The CRA: “${SRED_WORDS.ccpcEnhanced}” The CRA's What's new for corporations: “${SRED_WORDS.limitSixMillion}”`,
       },
     ],

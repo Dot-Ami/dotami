@@ -245,8 +245,9 @@ its row leaves this list.
 
 | Added | Page | Where it is cited | What to read for |
 |---|---|---|---|
+| 2026-10-29 | CRA, [*SR&ED Investment Tax Credit Policy*](https://www.canada.ca/en/revenue-agency/services/scientific-research-experimental-development-tax-incentive-program/investment-tax-credit-policy.html) | program *SR&ED tax incentives* (`grant-sred`), the sole proprietor's note (§ The reading list's corrections, *Blocked*, item 5) | the 40% refundable ITC for an individual (other than a trust), the amount the card quotes |
 
-None waits now. The three pages listed here until 2026-10-27 (Alberta's *Employment standards* on *Hire
+Only that row waits now. The three pages listed here until 2026-10-27 (Alberta's *Employment standards* on *Hire
 first employee*, Income Tax Regulations s.7307 under *Motor vehicle expenses*, and ISED's *Helping small
 businesses get loans* under the Canada Small Business Financing Program), and the pages the reading list's
 corrections added with a tool check only (the Canada-Alberta Productivity Grant's page and the SR&ED
@@ -493,16 +494,25 @@ machine, before DotAmi says more than it does now. They are listed in [task-list
 3. **Ontario food premises.** The regulation in force, read, and what it requires, quoted, under a new
    id.
 4. **Repeated losses.** A CRA, Act or folio page on business versus personal pursuits, with its words.
-5. **SR&ED, refunded or not.** Whether, and how much of, a sole proprietor's 15% credit is refunded,
-   and whether a CCPC's enhanced 35% is: no held quote says either (the CCPC's "refundable" rested on
-   the maintainer's read alone), so neither card says it. Looked for on 2026-10-27, and the CRA's own
-   pages say different things, each found by the script that day: the relationships page the card
-   already cites (its page date 2025-07-21), “Corporations and unincorporated businesses may earn a
-   non-refundable ITC at the rate of 15%.”; the CRA's *SR&ED Investment Tax Credit Policy* (2026-10-07,
-   not cited yet), “Generally, for an individual (other than a trust), the refundable ITC is 40% of the
-   unclaimed balance of ITC earned in the current year for qualified SR&ED expenditures.” The policy
-   page's CCPC lines run to several kinds of corporation and expenditure, so a part of them would read
-   as the whole. Which page, if either, the card quotes is the maintainer's call.
+5. **SR&ED, refunded or not.** Settled on 2026-10-29 by the maintainer's answer (his reading page, item
+   2). The CRA's own pages say different things, each found by the script on 2026-10-27: the
+   relationships page the card already cites (its page date 2025-07-21), “Corporations and
+   unincorporated businesses may earn a non-refundable ITC at the rate of 15%.”; the CRA's *SR&ED
+   Investment Tax Credit Policy* (its page date 2026-10-07), “Generally, for an individual (other than a
+   trust), the refundable ITC is 40% of the unclaimed balance of ITC earned in the current year for
+   qualified SR&ED expenditures.” His answer: the sole proprietor's card quotes the newer page's line,
+   “it should always be the newer page because it's more up-to-date.” So the note on both sole
+   proprietor rates (with or without the GST/HST) quotes it after the rates page's two lines, under the
+   label *The CRA's SR&ED Investment Tax Credit Policy:*, and that page is `grant-sred`'s sixth source,
+   titled with its own main heading: a tool check of 2026-10-29 (`node scripts/check-quotes.mjs` found the
+   heading and the line that day; the check holds the line only) with no read, so it says "Checked by a
+   tool" in amber (§ Waiting for the maintainer's read). The older page's "non-refundable" line is quoted
+   nowhere. `refundable` stays unset on every rate: a bare "(refundable)" after the 15% would say more
+   than the CRA's “Generally … 40% of the unclaimed balance”. The CCPC's note, and the sole proprietor's
+   fork that copies it, are unchanged: the policy page's CCPC lines run to several kinds of corporation
+   and expenditure, so a part of them would read as the whole, beside the individual's 40%. So no card
+   says whether a CCPC's enhanced 35% is refunded.
+   [`tests/reading-list-corrections.spec.ts`](../../tests/reading-list-corrections.spec.ts) § 3 holds it.
 6. **SR&ED's $6 million.** The tax years it applies from (beginning on or after 2024-12-16) are in no
    held quote, and only the formula of s.127(10.2) is held, not the sentence that leads into it. The
    same policy page says “For tax years that begin after December 15, 2024, the maximum expenditure

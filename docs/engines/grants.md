@@ -28,9 +28,18 @@ off on 2026-10-23 (see *Retired programs* below), and the Productivity Grant cam
   `refundable` is set only where a held quote (or a recorded read) says it for that structure, which
   no rate's does yet, so no card says "refundable" or "non-refundable" in DotAmi's own words. The
   sole proprietor's said non-refundable until then; the reading list notes that an individual can
-  get part of the credit refunded, and no held quote says how much, so that card says neither and
-  quotes the CRA's “Your business may earn the credit at a basic rate of 15%.” and “Some businesses
-  may also earn a refundable ITC.” The CCPC's said refundable ("35% (refundable)", "35% refundable
+  get part of the credit refunded, and no held quote said how much, so that card said neither and
+  quoted the CRA's “Your business may earn the credit at a basic rate of 15%.” and “Some businesses
+  may also earn a refundable ITC.” Since 2026-10-29 (the maintainer's answer on two CRA pages that
+  disagree: “it should always be the newer page because it's more up-to-date”) it also quotes the
+  CRA's *SR&ED Investment Tax Credit Policy*: “Generally, for an individual (other than a trust), the
+  refundable ITC is 40% of the unclaimed balance of ITC earned in the current year for qualified
+  SR&ED expenditures.” Its `refundable` stays unset even so: a bare "(refundable)" after the 15%
+  would drop the CRA's “Generally” and what the 40% is of. The older page, the CRA's *How certain
+  relationships affect the small business deduction and SR&ED investment tax credits* (already a
+  source of the card), says unincorporated businesses' credit is non-refundable; no card quotes
+  that line ([citations.md](citations.md), *Blocked*, item 5).
+  The CCPC's said refundable ("35% (refundable)", "35% refundable
   treatment") on the maintainer's word alone, which no record held, and none of its quotes says
   it, so it says neither too ([citations.md](citations.md), *Blocked*). The 35% is the CRA's “Some CCPCs may earn an ITC
   at an enhanced rate of 35% on qualified SR&ED expenditures up to their expenditure limit for the
@@ -40,7 +49,10 @@ off on 2026-10-23 (see *Retired programs* below), and the Productivity Grant cam
   list's tool checks*). Until then the CCPC's note said "confirm the current limit with an advisor".
   The four pages added for these quotes are tool checks of 2026-10-23. The maintainer read each of
   them in full on 2026-10-25, with the program's own page ([citations.md](citations.md), § The
-  maintainer's reads of 2026-10-25), so their sources say *Read by a person on 2026-10-25*.
+  maintainer's reads of 2026-10-25), so their sources say *Read by a person on 2026-10-25*. The
+  policy page, the card's sixth source, is a tool check of 2026-10-29 that no person has read yet, so its source
+  says *Checked by a tool on 2026-10-29* in amber. The CCPC's note quotes none of its lines: they run
+  to several kinds of corporation and expenditure, and the sole proprietor's fork copies that note.
 
 ## The Canada-Alberta Productivity Grant (`grant-capg`)
 
