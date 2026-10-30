@@ -53,6 +53,8 @@ off on 2026-10-23 (see *Retired programs* below), and the Productivity Grant cam
   policy page, the card's sixth source, is a tool check of 2026-10-29 that no person has read yet, so its source
   says *Checked by a tool on 2026-10-29* in amber. The CCPC's note quotes none of its lines: they run
   to several kinds of corporation and expenditure, and the sole proprietor's fork copies that note.
+  Whether the CCPC's card says its 35% is refunded is still the maintainer's call (his answer of
+  2026-10-29 was about the sole proprietor's card; [citations.md](citations.md), *Blocked*, item 5).
 
 ## The Canada-Alberta Productivity Grant (`grant-capg`)
 

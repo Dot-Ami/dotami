@@ -402,9 +402,10 @@ describe("3. SR&ED: the credit's rates in the CRA's words", () => {
     const fork = card(idea(), "grant-sred").fork;
     expect(fork).toBeDefined();
     expect(fork!.note).not.toMatch(/advisor/i);
-    // Unchanged by the maintainer's answer of 2026-10-29: the fork copies the CCPC's note (lib/brain/evaluate.ts), and
-    // the policy page's CCPC lines run to several kinds of corporation, so none is quoted here; a part would read as
-    // the whole, beside the individual's 40% on the same card.
+    // Unchanged by the maintainer's answer of 2026-10-29, which was about the sole proprietor's card only: the fork
+    // copies the CCPC's note (lib/brain/evaluate.ts), and the policy page's CCPC lines run to several kinds of
+    // corporation, so none is quoted here; a part would read as the whole, beside the individual's 40% on the same
+    // card. Whether the CCPC's card quotes one is still his call (docs/engines/citations.md, § Blocked, item 5).
     expect(quoted(fork!.note)).toEqual([CCPC_ENHANCED, LIMIT_SIX_MILLION]);
   });
 

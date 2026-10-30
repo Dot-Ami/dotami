@@ -152,10 +152,12 @@ export const grantProgramsV2026 = [
         // beginning on or after 2024-12-16. No held quote carries that date, so it is on no screen and in no field, only
         // here and in docs/engines/citations.md (the rule: no number or date without a held quote); the card gives the amount only
         // inside the CRA's quote.
-        // Unchanged by the maintainer's answer of 2026-10-29: the SR&ED Investment Tax Credit Policy cited above has
-        // lines on a CCPC's refundable ITC, but they run to several kinds of corporation and expenditure, so a part would
-        // read as the whole, and lib/brain/evaluate.ts copies this note into the sole proprietor's fork, beside the
-        // individual's 40%. So none of them is quoted here.
+        // Unchanged by the maintainer's answer of 2026-10-29, which was about the sole proprietor's card only. The SR&ED
+        // Investment Tax Credit Policy cited above has lines on a CCPC's refundable ITC, but they run to several kinds of
+        // corporation and expenditure, so a part would read as the whole, and lib/brain/evaluate.ts copies this note into
+        // the sole proprietor's fork, beside the individual's 40%. So none of them is quoted here: whether one is (that
+        // list whole, the relationships page's older line, or nothing) is still his call (docs/engines/citations.md,
+        // § Blocked, item 5, its CCPC part).
         note: `The CRA: “${SRED_WORDS.ccpcEnhanced}” The CRA's What's new for corporations: “${SRED_WORDS.limitSixMillion}”`,
       },
     ],
