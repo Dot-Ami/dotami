@@ -29,20 +29,6 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   [figures-privacy-review.md](docs/architecture/figures-privacy-review.md), [desktop-app.md](docs/architecture/desktop-app.md), part 5, The server).
   Tests: `e2e/launch-secret.spec.ts` (on the old code the plain call got 200 and the ideas, and the forged
   agree confirmed the figure), `tests/launch-secret.spec.ts`, and a desktop test in `e2e-desktop/desktop.spec.ts`.
-- **undici, a library for web requests that only developer tools use, moves to its patched versions**
-  (6.29.0 to 6.29.1 and 7.30.0 to 7.30.1; Dependabot alert 62, rated high, and Dependabot's #225, whose
-  lockfile this replaces). The [6.29.1](https://github.com/nodejs/undici/releases/tag/v6.29.1) and
-  [7.30.1](https://github.com/nodejs/undici/releases/tag/v7.30.1) notes (read 2026-10-30) fix ways a
-  malicious server could crash the program using undici or make it run out of memory, and a way custom
-  certificate checks were silently dropped (the alert's is
-  [GHSA-xjj6-f33q-929c](https://github.com/nodejs/undici/security/advisories/GHSA-xjj6-f33q-929c); `npm audit`
-  rates the 7.30.0 copy high too). **Neither copy ships in DotAmi:** 7.30.1 is used by `@electron/get`, which
-  downloads Electron when the packages install, and 6.29.1 by `node-gyp`, which electron-builder's native
-  rebuild step brings; all are development packages. Nothing in DotAmi imports undici (the privacy scan in
-  `tests/helpers/source-scan.ts` would flag it), so nothing about what DotAmi keeps, sends, ships or asks
-  changes. For developers: Dependabot's rewrite of `package-lock.json` dropped `"gypfile": false` from the
-  database package's entry, so `tests/database-package.spec.ts` failed on #225; `node scripts/keep-gypfile.mjs`
-  put it back.
 - **The desktop app moves to Electron 44.9.1** (from 44.8.0; Dependabot alert 61, rated high, and
   Dependabot's #219, whose lockfile this replaces). Some of eMudhra's intermediate certificates were
   compromised; 44.9.1 refuses certificates issued through them, in Chromium's networking and in Node's
@@ -68,6 +54,20 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   person's own browser); and DotAmi doesn't use `setCertificateVerifyProc`. For developers: Dependabot's
   rewrite of `package-lock.json` dropped `"gypfile": false` from the database package's entry, so
   `tests/database-package.spec.ts` failed on #219; `node scripts/keep-gypfile.mjs` put it back.
+- **undici, a library for web requests that only developer tools use, moves to its patched versions**
+  (6.29.0 to 6.29.1 and 7.30.0 to 7.30.1; Dependabot's #225, whose lockfile this replaces). It closes
+  Dependabot alerts 62, 72, 74 and 76 (the 6.29.0 copy) and 70, 73, 75, 77 and 78 (the 7.30.0 copy); seven
+  are rated high, two medium. The [6.29.1](https://github.com/nodejs/undici/releases/tag/v6.29.1) and
+  [7.30.1](https://github.com/nodejs/undici/releases/tag/v7.30.1) notes (read 2026-10-30) fix ways a
+  malicious server could crash the program using undici or make it run out of memory, a way custom
+  certificate checks were silently dropped, and, in 7.30.1, a way a cached answer could be stored under the
+  wrong address. **Neither copy ships in DotAmi:** 7.30.1 is used by `@electron/get`, which
+  downloads Electron when the packages install, and 6.29.1 by `node-gyp`, which electron-builder's native
+  rebuild step brings; all are development packages. Nothing in DotAmi imports undici (the privacy scan in
+  `tests/helpers/source-scan.ts` would flag it), so nothing about what DotAmi keeps, sends, ships or asks
+  changes. For developers: Dependabot's rewrite of `package-lock.json` dropped `"gypfile": false` from the
+  database package's entry, so `tests/database-package.spec.ts` failed on #225; `node scripts/keep-gypfile.mjs`
+  put it back.
 
 ### Added
 - **The Canada-Alberta Productivity Grant, for ideas in Alberta** (the maintainer's call a-call-1 on his reading
