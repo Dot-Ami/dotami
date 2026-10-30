@@ -165,6 +165,45 @@ person is asked).
   Giving the estimate takes the third year off that list; Keep on the what-if takes the first year off it;
   taking either back sets it to 0 and puts it back. Nothing new leaves the computer.
 
+### Packages that ship
+
+- **Electron 44.9.3 and electron-updater 6.8.11 in the desktop app, up from 44.8.0 and 6.8.9
+  (2026-10-30; Dependabot alerts 61 and 62, and Dependabot's #212).** Electron 44.9.1 and later refuse
+  certificates issued through eMudhra's compromised intermediate certificates, in Chromium's networking and
+  in Node's `tls`, `https` and `fetch`
+  ([GHSA-jr5w-w6x2-84p9](https://github.com/electron/electron/security/advisories/GHSA-jr5w-w6x2-84p9),
+  CVE-2026-115570, read 2026-10-30). That makes the update check's connection to GitHub stricter. 44.9.3 adds
+  fixes Electron copied from ANGLE, Chromium, PDFium, Skia and V8, on the same Chromium 152.0.7977.167 and
+  Node 24.22.0. Nothing about what DotAmi keeps, sends or asks changes by the notes for
+  [44.9.0](https://github.com/electron/electron/releases/tag/v44.9.0) to
+  [44.9.3](https://github.com/electron/electron/releases/tag/v44.9.3) (read 2026-10-30): they don't mention
+  `safeStorage`, which wraps the data file's and the receipts' keys; the fix for windows opened from links is
+  for windows DotAmi never opens (`setWindowOpenHandler` in [`desktop/main.mjs`](../desktop/main.mjs)
+  denies them all); and DotAmi doesn't use `setCertificateVerifyProc`. The update checker, by its 6.8.10 and
+  6.8.11 notes and its code compared with 6.8.9's (read 2026-10-30): its requests go to the same GitHub
+  release with the same headers, and the install ID still goes with the check and not the download
+  (`AppUpdater.js:386-387` and `:488-500`, the same lines as in 6.8.9). A download of only the installer's
+  changed parts can now finish where 6.8.9 fell back to the whole file. In its own download folder it now
+  removes a stale saved block map and refuses a saved update whose file name is missing or is a folder path.
+  One new progress line, kept in the log as written, names the old version's `.blockmap` address on GitHub.
+  What Electron's browser engine writes to the data folder or requests on its own is still *not checked*.
+- **`@anthropic-ai/sdk` 0.137.0, up from 0.135.0 (2026-10-30, Dependabot's #212).** A request to Anthropic
+  is built the same way: the library's code that builds and sends one is 0.135.0's (its client gains only a
+  user-profiles section), and the
+  [0.136.0](https://github.com/anthropics/anthropic-sdk-typescript/releases/tag/sdk-v0.136.0) and
+  [0.137.0](https://github.com/anthropics/anthropic-sdk-typescript/releases/tag/sdk-v0.137.0) notes (read
+  2026-10-30) add administration and user-profile endpoints DotAmi doesn't call, change how streamed answers
+  are read (DotAmi's one call doesn't stream) and hide one more header from the library's own logs. DotAmi's
+  one call ([`app/api/intent/parse/route.ts`](../app/api/intent/parse/route.ts)) runs only in a copy run from
+  source with `ANTHROPIC_API_KEY`; the desktop app never calls the model.
+- **The installer, built with electron-builder 26.18.0, up from 26.15.3 (2026-10-30, Dependabot's #212).**
+  Since 26.16.0, its step that closes a DotAmi still running starts PowerShell with `-NoProfile
+  -NonInteractive`, so the person's own PowerShell profile no longer runs inside the installer; 26.15.6 makes
+  sure the main program and its native files are installed. Nothing about what DotAmi keeps, sends or asks
+  changes by the notes for 26.15.4 to 26.18.0 (read 2026-10-30): the other changes are for macOS, Linux,
+  other kinds of installer, or options DotAmi doesn't set. Running an installer built with 26.18.0 is *not
+  checked*: CI builds the app folder, not the installer.
+
 ### New powers or permissions
 
 - **Fewer, not more: the desktop app's server answers only DotAmi's own window (2026-10-23).** Until now,

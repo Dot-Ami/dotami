@@ -29,6 +29,46 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   [figures-privacy-review.md](docs/architecture/figures-privacy-review.md), [desktop-app.md](docs/architecture/desktop-app.md), part 5, The server).
   Tests: `e2e/launch-secret.spec.ts` (on the old code the plain call got 200 and the ideas, and the forged
   agree confirmed the figure), `tests/launch-secret.spec.ts`, and a desktop test in `e2e-desktop/desktop.spec.ts`.
+- **The desktop app moves to Electron 44.9.3 and electron-updater 6.8.11, the Anthropic library to
+  0.137.0, and the installer is built with electron-builder 26.18.0** (from 44.8.0, 6.8.9, 0.135.0 and
+  26.15.3; Dependabot's #212, whose lockfile this replaces). **It closes Dependabot alerts 61 and 62**, both
+  rated high: Electron below 44.9.1
+  ([GHSA-jr5w-w6x2-84p9](https://github.com/electron/electron/security/advisories/GHSA-jr5w-w6x2-84p9),
+  CVE-2026-115570) and undici 6.29.0, a development package `node-gyp` uses. It also moves fast-uri, a
+  development package, to 3.1.9 (`npm audit`: moderate). **Electron:** 44.9.1 refuses certificates issued
+  through eMudhra's compromised intermediate certificates. For DotAmi that guards the update check, which
+  reaches GitHub through Electron's own network module (`loadUpdater` in `desktop/main.mjs`); copies
+  already installed get it with the next release. 44.9.3 adds fixes Electron copied from ANGLE, Chromium,
+  PDFium, Skia and V8, on the same Chromium (152.0.7977.167) and Node (24.22.0) as 44.8.0. The other changes
+  since 44.8.0 don't reach DotAmi: the macOS app shims are for Macs; the fix for windows opened from links is
+  for windows DotAmi never opens (`setWindowOpenHandler` in `desktop/main.mjs` denies every one); and
+  DotAmi doesn't use `setCertificateVerifyProc` (release notes for
+  [44.9.0](https://github.com/electron/electron/releases/tag/v44.9.0) to
+  [44.9.3](https://github.com/electron/electron/releases/tag/v44.9.3), read 2026-10-30). **The update
+  checker:** an update that downloads only the changed parts of the new installer (from the release's
+  `.blockmap`) now works in cases where 6.8.9 gave up and downloaded the whole file; a stale saved block
+  map is removed so it can't spoil the next one; and a saved update whose file name is missing or is a
+  folder path is refused
+  ([6.8.10](https://github.com/electron-userland/electron-builder/releases/tag/electron-updater%406.8.10),
+  [6.8.11](https://github.com/electron-userland/electron-builder/releases/tag/electron-updater%406.8.11),
+  read 2026-10-30). Its requests still go only to the GitHub release, with the same headers. One new
+  progress line, kept in the log as written, names the old version's `.blockmap` address on GitHub when
+  none is saved. **The Anthropic library**
+  ([0.136.0](https://github.com/anthropics/anthropic-sdk-typescript/releases/tag/sdk-v0.136.0),
+  [0.137.0](https://github.com/anthropics/anthropic-sdk-typescript/releases/tag/sdk-v0.137.0), read
+  2026-10-30) adds administration and user-profile endpoints DotAmi doesn't call, changes how streamed
+  answers are read (DotAmi's one call, `messages.create` in `app/api/intent/parse/route.ts`, doesn't stream)
+  and hides one more header from its own logs; a request is built the same way. The desktop app never calls
+  the model. **The installer:** since 26.16.0, its step that closes a DotAmi still running starts PowerShell
+  with `-NoProfile -NonInteractive`, so the person's own PowerShell profile doesn't run, and 26.15.6 makes
+  sure it installs the main program and its native files. The other changes are for macOS, Linux, other
+  kinds of installer, or options DotAmi doesn't set (`differentialPackage: "store-asar"`, `useZip`). The
+  Windows update steps in [desktop-app.md](docs/architecture/desktop-app.md) were re-read in the new
+  versions: the same, except one moved line number. For developers: Dependabot's rewrite of
+  `package-lock.json` dropped `"gypfile": false` from the database package's entry, so
+  `tests/database-package.spec.ts` failed on #212; `node scripts/keep-gypfile.mjs` put it back.
+  `@noble/hashes` goes back to 1.8.0 because app-builder-lib 26.16.0 pins it to version 1; it makes the
+  `.blockmap` when the installer is built, and doesn't ship.
 
 ### Added
 - **The Canada-Alberta Productivity Grant, for ideas in Alberta** (the maintainer's call a-call-1 on his reading

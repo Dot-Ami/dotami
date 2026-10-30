@@ -301,7 +301,7 @@ check reveals: GitHub sees the computer's internet address, which version it run
 updater's install ID (below).
 
 **The install ID** (electron-updater's own, not DotAmi's; read 2026-10-14 in the locked 6.8.9, found
-in the review of #169). The first time the updater checks, it makes a random ID (a UUID from 4096
+in the review of #169; every line cited here is the same in 6.8.11, re-read 2026-10-30). The first time the updater checks, it makes a random ID (a UUID from 4096
 random bytes) and keeps it in a file of its own, `.updaterId`, in the data folder (electron's
 `userData`, which `desktop/main.mjs` makes the data folder): `getOrCreateStagingUserId`,
 `node_modules/electron-updater/out/AppUpdater.js:501-526`. It sends that same ID with every request
@@ -365,9 +365,10 @@ inside the page would need a bridge from the app into its pages, which they don'
 
 ### Updating on Windows: what runs when
 
-Read 2026-10-08 in the versions this checkout locks (electron-updater 6.8.9, electron-builder's
-`app-builder-lib` 26.15.3), for the one-click installer DotAmi builds (`desktop/package.mjs`:
-`oneClick: true`, per user):
+Read 2026-10-08 in electron-updater 6.8.9 and electron-builder's `app-builder-lib` 26.15.3, and
+re-read 2026-10-30 in 6.8.11 and 26.18.0, the versions this checkout locks now (the line numbers
+below are theirs; only `NsisTarget.js`'s moved), for the one-click installer DotAmi builds
+(`desktop/package.mjs`: `oneClick: true`, per user):
 
 1. **The click.** *Restart and update* calls `autoUpdater.quitAndInstall()` with no arguments
    (`desktop/update-notice.mjs:99`). That means not silent, and "run the app afterwards" taken from
@@ -381,14 +382,15 @@ Read 2026-10-08 in the versions this checkout locks (electron-updater 6.8.9, ele
    (`node_modules/app-builder-lib/templates/nsis/installSection.nsh:33`) looks for any process
    started from the install folder; after an update it waits 0.3 s, then 1 s more if one is still
    there, then ends it — with PowerShell's `Stop-Process`, which ends a process outright (no chance
-   to tidy up), or, without PowerShell, `taskkill`, which asks first and forces after another
+   to tidy up; since 26.16.0 PowerShell starts with `-NoProfile -NonInteractive`, so the person's own
+   PowerShell profile doesn't run), or, without PowerShell, `taskkill`, which asks first and forces after another
    second (`include/allowOnlyOneInstallerInstance.nsh:105-160`, `:81-103`). The old version's
    uninstaller, which the installer runs and waits for next, does the same check at its own start
    (`uninstaller.nsh:2`, run from `include/installUtil.nsh:224`).
 4. **Files, shortcuts, then the app.** It installs the new files and shortcuts, then — last —
    starts DotAmi once, through its Start-menu shortcut, with `--updated`
    (`installSection.nsh:66-75`, `:91-97`; `common.nsh:123-131`; `RUN_AFTER_FINISH` is on because
-   DotAmi doesn't set `runAfterFinish: false`, `out/targets/nsis/NsisTarget.js:408`), and exits. It
+   DotAmi doesn't set `runAfterFinish: false`, `out/targets/nsis/NsisTarget.js:518`), and exits. It
    doesn't wait for the app or touch it afterwards.
 
 **Does that explain the start of 2026-10-08,** killed right after its safety copy? Not by itself.
