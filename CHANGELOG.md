@@ -54,6 +54,45 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   person's own browser); and DotAmi doesn't use `setCertificateVerifyProc`. For developers: Dependabot's
   rewrite of `package-lock.json` dropped `"gypfile": false` from the database package's entry, so
   `tests/database-package.spec.ts` failed on #219; `node scripts/keep-gypfile.mjs` put it back.
+- **The desktop app moves to Electron 44.9.3 and electron-updater 6.8.11, the Anthropic library to
+  0.137.0, and the installer is built with electron-builder 26.18.0** (from 44.9.1, 6.8.9, 0.135.0 and
+  26.15.3; Dependabot's #212, whose lockfile this replaces). Along the way npm moves two development packages
+  to their patched versions: undici 6.29.0, which `node-gyp` uses (Dependabot alerts 62, 72, 74 and 76, three
+  rated high; #228 makes the same change), and fast-uri 3.1.8, which electron-builder uses, through ajv, to
+  check its settings (alerts 63 to 66, rated medium and low). **Electron:** 44.9.3 adds fixes Electron copied
+  from ANGLE, Chromium, PDFium, Skia and V8, on the same Chromium (152.0.7977.167) and Node (24.22.0) as
+  44.9.1; the
+  [44.9.2](https://github.com/electron/electron/releases/tag/v44.9.2) notes list nothing
+  ([44.9.3](https://github.com/electron/electron/releases/tag/v44.9.3), read 2026-10-30). **The update
+  checker:** an update that downloads only the changed parts of the new installer (from the release's
+  `.blockmap`) now works in cases where 6.8.9 gave up and downloaded the whole file; a stale saved block
+  map is removed so it can't spoil the next one; and a saved update whose file name is missing or is a
+  folder path is refused
+  ([6.8.10](https://github.com/electron-userland/electron-builder/releases/tag/electron-updater%406.8.10),
+  [6.8.11](https://github.com/electron-userland/electron-builder/releases/tag/electron-updater%406.8.11),
+  read 2026-10-30). Its requests still go only to DotAmi's GitHub releases, with the same headers: the new
+  release, and, when no block map is saved, the old version's `.blockmap` from the release before. 6.8.9
+  fetched that too; now that a stale one is deleted, the fetch can happen where 6.8.9 read its saved copy.
+  One new progress line, kept in the log as written, names that `.blockmap`'s address on GitHub. **The
+  Anthropic library**
+  ([0.136.0](https://github.com/anthropics/anthropic-sdk-typescript/releases/tag/sdk-v0.136.0),
+  [0.137.0](https://github.com/anthropics/anthropic-sdk-typescript/releases/tag/sdk-v0.137.0), read
+  2026-10-30) adds administration and user-profile endpoints DotAmi doesn't call, changes how streamed
+  answers are read (DotAmi's one call, `messages.create` in `app/api/intent/parse/route.ts`, doesn't stream)
+  and hides one more header from its own logs; a request is built the same way. The desktop app never calls
+  the model. **The installer:** since 26.16.0, its step that closes a DotAmi still running starts PowerShell
+  with `-NoProfile -NonInteractive`, so the person's own PowerShell profile doesn't run, and 26.15.6 makes
+  sure it installs the main program and its native files. The other changes are for macOS, Linux, other
+  kinds of installer, options DotAmi doesn't set (`differentialPackage: "store-asar"`, `useZip`), or the
+  build itself (signing log lines, path checks, the native-rebuild tool, which DotAmi switches off); the
+  installer's own templates differ from 26.15.3's only by those PowerShell flags. The Windows update steps
+  in [desktop-app.md](docs/architecture/desktop-app.md) were re-read in the new versions: the same, except
+  one moved line number. The code comments that cite electron-updater 6.8.9 by line now say the lines are
+  the same in 6.8.11 (`desktop/log.mjs`, `lib/privacy/inventory.ts`, `tests/error-logging.spec.ts`). For developers: Dependabot's rewrite of
+  `package-lock.json` dropped `"gypfile": false` from the database package's entry, so
+  `tests/database-package.spec.ts` failed on #212; `node scripts/keep-gypfile.mjs` put it back.
+  `@noble/hashes` goes back to 1.8.0 because app-builder-lib 26.16.0 pins it to version 1; it makes the
+  `.blockmap` when the installer is built, and doesn't ship.
 
 ### Added
 - **The Canada-Alberta Productivity Grant, for ideas in Alberta** (the maintainer's call a-call-1 on his reading
