@@ -1138,8 +1138,17 @@ roadmap's build order.
     - [x] The titles the CRA's SR&ED rates page and ISED's loans page give themselves: *What are SR&ED tax
       incentives* and *Helping small businesses get loans*, each found on its page on 2026-10-27, are the
       citations' titles
-    - [ ] The Productivity Grant's other conditions for employers, whether a sole proprietor counts, what
-      training counts, who else funds it, and the page's labels before its 25% and 75% lines
+    - [x] The Productivity Grant: the page's labels before its 25% and 75% lines, and the sentences found on
+      2026-10-27 (its requirements for registered employers, what training and costs count, who else funds
+      it), held since 2026-10-29 by the maintainer's two answers ("Teach the checker to read a table row as
+      one piece"; "One new check that holds the old and new sentences"): `node scripts/check-quotes.mjs`
+      reads a table row as one piece, its cells joined by " | ", and one run found the card's 27 quotes that
+      day ([docs/engines/citations.md](engines/citations.md), § The checker and *Blocked*;
+      `tests/check-quotes.spec.ts`, `tests/productivity-grant.spec.ts`)
+    - [ ] The Productivity Grant, still open: whether a sole proprietor counts as an employer (the page never
+      says "sole proprietor"); its applicant guidelines, unread (open.alberta.ca refused a plain fetch); and
+      three of the page's lists, not held: the eligible employer types, the ineligible employers and the
+      ineligible training
   - [ ] Open questions for the maintainer, on the same cards but not entries he checked (citations.md,
     § Outside the list): the Holding company and Family trust fork label "… needs a real business
     purpose first"; the "Professional required" heading over the anti-avoidance and loan program boxes
