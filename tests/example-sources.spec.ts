@@ -110,6 +110,30 @@ describe("the tools: what the trade's official descriptions name, priced by Cana
     }
   });
 
+  // The maintainer opened Lee Valley's page in his own browser on 2026-10-29 (the re-check of 2026-10-27 met a bot
+  // check, which was not bypassed) and wrote: price "85"; item “Item 17F7340, Bessey 40" K Body REVO Clamp”. The
+  // price entry has no field for a person's check, so the record is its note, and nothing else about it moves.
+  it("Lee Valley's clamp keeps its words, day and price of 2026-10-14, and its note records that the maintainer saw $85 himself on 2026-10-29", () => {
+    const clamp = src.tools.find((t) => t.id === "bar-clamp")!;
+    const lee = clamp.prices.find((p) => p.seller === "Lee Valley")!;
+    expect(lee).toBeDefined();
+    // Nothing the 2026-10-14 check recorded changes, and no number moves.
+    expect(lee.seenOn).toBe("2026-10-14");
+    expect(lee.priceCents).toBe(8500);
+    expect(lee.quote).toBe('LENGTH: 12" 18" 24" 31" 40" 50" 60" 82" 98" $85.00');
+    expect(priceSummary(clamp.prices.map((p) => p.priceCents))).toEqual({ count: 4, meanCents: 8496, medianCents: 8495, lowCents: 8495, highCents: 8500 });
+    // The note says who saw it, on what day, where, what they saw, and why a person's look was wanted.
+    const note = lee.caution ?? "";
+    for (const part of ["maintainer", "own browser", "2026-10-29", "$85", 'Item 17F7340, Bessey 40" K Body REVO Clamp', "2026-10-27", "bot check", "not bypassed"]) {
+      expect(note, part).toContain(part);
+    }
+    // It is on the panel, under the price, with no other seller's note changed to say it.
+    expect(panelText()).toContain(note);
+    expect(clamp.prices.filter((p) => p.caution?.includes("2026-10-29")).map((p) => p.seller)).toEqual(["Lee Valley"]);
+    // The panel still says the prices were seen on 2026-10-14: this is one price seen again, not a re-seeing of them all.
+    expect(src.seenOn).toBe("2026-10-14");
+  });
+
   it("each tool's average is the function's result over its own listed prices", () => {
     for (const t of src.tools) expect(priceSummary(t.prices.map((p) => p.priceCents)), t.id).toEqual(byHand(t.prices.map((p) => p.priceCents)));
   });
