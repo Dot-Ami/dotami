@@ -1,4 +1,4 @@
-import { MAINTAINER_READ_ON } from "@/lib/engines/shared/maintainer-reads";
+import { MAINTAINER_RATE_TABLE_READ_ON, MAINTAINER_READ_ON } from "@/lib/engines/shared/maintainer-reads";
 
 import { CRA_SMALL_SUPPLIER_TESTS, CRA_WHEN_TO_REGISTER_TOOL_CHECK, CRA_WHEN_TO_REGISTER_URL } from "./gst-official-words";
 import {
@@ -107,8 +107,10 @@ export const complianceRulesV2026 = [
         url: "https://www.canada.ca/en/revenue-agency/services/tax/businesses/topics/gst-hst-businesses/charge-collect-which-rate.html",
         // No tool check (the maintainer's reading list, 2026-10-23): the page's table of rates isn't in its HTML, and
         // the one 13% sentence a tool found there is a worked example (a furniture store's sale), not the rate.
-        // Read on 2026-06-08 (who read it wasn't recorded); the maintainer read it in full on 2026-10-25.
-        lastVerified: MAINTAINER_READ_ON,
+        // Read on 2026-06-08 (who read it wasn't recorded); the maintainer read it in full on 2026-10-25, and read its
+        // table again on 2026-10-29 for this row. On his reading page that day he wrote what Ontario's row shows: "13%".
+        // The card's 13% rests on that read (docs/engines/citations.md, § Blocked, item 2).
+        lastVerified: MAINTAINER_RATE_TABLE_READ_ON,
         readBy: "person",
         note: "CRA HST rate guidance for participating provinces.",
       },
@@ -119,17 +121,20 @@ export const complianceRulesV2026 = [
     id: "compliance-ab-no-pst",
     label: "Alberta — no provincial sales tax",
     ruleType: "pst-hst",
-    description:
-      "Alberta has no PST. GST applies at 5% on taxable supplies once registered.",
+    // Until 2026-10-29 "Alberta has no PST. GST applies at 5% on taxable supplies once registered.": the row the
+    // maintainer read shows only the 5% (below), so the description says only that, like the line. Drawn on no screen.
+    description: "The CRA's table of GST/HST rates lists Alberta at 5%.",
     lensAnnotations: {
       // The card's line. Until 2026-10-24 it said "If operating only in Alberta, GST (not HST) applies — simplifying
       // provincial sales tax compliance": "simplifying" is a judgement no cited page makes, and the CRA's table lists
-      // rates by province, not by where a business operates (the maintainer's reading list, 2026-10-23). It now says
-      // only what the table lists for Alberta, and it is still DotAmi's wording of the table's row, not a quote: the
-      // table isn't in the page's HTML, so no tool can find the row, and the one 5% sentence a tool found there is a
-      // worked example about Manitoba. A quote takes its place once an official page that says it in its own words
-      // is found and checked (docs/engines/compliance.md, § From the maintainer's reading list).
-      tax: "The CRA's table of GST/HST rates lists Alberta at 5% GST, with no provincial sales tax.",
+      // rates by province, not by where a business operates (the maintainer's reading list, 2026-10-23). It says only
+      // what the table lists for Alberta, and it is still DotAmi's wording of the table's row, not a quote: the table
+      // isn't in the page's HTML, so no tool can find the row, and the one 5% sentence a tool found there is a worked
+      // example about Manitoba. Until 2026-10-29 it went on "… at 5% GST, with no provincial sales tax.": the
+      // maintainer read the row that day and wrote that it shows "5%", so the line says only that (docs/engines/
+      // citations.md, § Blocked, item 1: "if the table shows only the 5%, the line says only that"). That Alberta has
+      // no sales tax is now Alberta's own words, under the card's second source, never DotAmi's.
+      tax: "The CRA's table of GST/HST rates lists Alberta at 5%.",
       legal: "Federal GST rules still apply for registration and remittance.",
     },
     citations: [
@@ -139,10 +144,23 @@ export const complianceRulesV2026 = [
         jurisdiction: "AB",
         url: "https://www.canada.ca/en/revenue-agency/services/tax/businesses/topics/gst-hst-businesses/charge-collect-which-rate.html",
         // No tool check, for the reason above: the table's Alberta row isn't in the page's words. Read on 2026-06-08
-        // (who read it wasn't recorded); the maintainer read it in full on 2026-10-25.
-        lastVerified: MAINTAINER_READ_ON,
+        // (who read it wasn't recorded); the maintainer read it in full on 2026-10-25, and read its table again on
+        // 2026-10-29 for this row. On his reading page that day he wrote what Alberta's row shows: "5%".
+        lastVerified: MAINTAINER_RATE_TABLE_READ_ON,
         readBy: "person",
         note: "CRA GST rate for non-HST provinces.",
+      },
+      {
+        // Added 2026-10-29: Alberta's own page, the candidate docs/architecture/other-ways-to-build.md [S17] names.
+        // scripts/check-quotes.mjs found the sentence on the live page that day (under its "Sales tax links"), so it
+        // shows under this source after "Words found on the page:", as Alberta's words. No person has read the page in
+        // full, so it says "Checked by a tool" in amber until one does. It says nothing of the 5%.
+        title: "About Tax and Revenue Administration",
+        authority: "provincial",
+        jurisdiction: "AB",
+        url: "https://www.alberta.ca/about-tra",
+        toolCheck: { checkedOn: "2026-10-29", quotes: ["Alberta has no sales tax."] },
+        note: "Alberta Tax and Revenue Administration's own page; scripts/check-quotes.mjs found \"Alberta has no sales tax.\" on it on 2026-10-29.",
       },
     ],
     provinces: ["AB"],

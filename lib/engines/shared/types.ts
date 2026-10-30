@@ -78,6 +78,13 @@ export type EngineCitation = {
   verification?: CitationVerification;
   /** S2.5.4i: one pointer per provision the title names; absent on CRA/provincial pages. */
   corpus?: CorpusPointer[];
+  /**
+   * One plain-English line saying what the page holds, drawn under the title (components/shared/citation-links.tsx)
+   * so a reader knows what to look for on it (the maintainer's note of 2026-10-29). DotAmi's own words, so it is
+   * always a sentence from a words file (lib/engines/shared/words.ts `sourceWords.pageHolds`), never typed here; set
+   * only where that file has one, today the s.67.3 source of the Motor vehicle expenses write-off.
+   */
+  pageHolds?: string;
 } & CitationCheck;
 
 /**

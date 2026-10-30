@@ -1,4 +1,5 @@
 import { MAINTAINER_READ_ON } from "@/lib/engines/shared/maintainer-reads";
+import { sourceWords } from "@/lib/engines/shared/words";
 
 import type { WriteOffCategory } from "./types";
 
@@ -75,7 +76,15 @@ export const writeOffCategoriesV2026 = [
     },
     citations: [
       {
-        title: "Income Tax Act s.18(1)(a), s.67, s.67.2, s.67.3 — purpose test, reasonableness, interest and lease caps",
+        // The title names only what the page holds: s.67.3, under the section's own heading, which
+        // scripts/check-quotes.mjs found on the page on 2026-10-29 (s.67's and s.67.2's headings are on their own
+        // pages, not this one). The maintainer's pick A on his reading page of 2026-10-29; until then it was "Income Tax
+        // Act s.18(1)(a), s.67, s.67.2, s.67.3 — purpose test, reasonableness, interest and lease caps". The corpus
+        // list keeps all four provisions, which "Show the words" reads from DotAmi's own statute store.
+        title: "Income Tax Act s.67.3 — Limitation re cost of leasing passenger vehicle",
+        // His note the same day: "there should be a subtitle explaining what the page holds in plain english so the
+        // user (if they read it) knows what to looks for while reading." DotAmi's own words, from the words file.
+        pageHolds: sourceWords.pageHolds.ita67_3,
         corpus: [
           { source: "ita", label: "18", sub: "(1)(a)" },
           { source: "ita", label: "67" },

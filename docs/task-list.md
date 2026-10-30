@@ -701,7 +701,11 @@ placed in phase 3.
     2026-10-25); changing your place later with one Change box for every answer (S2.5.33); everything you can
     apply for and write off (S2.5.38); public information on other businesses (S2.5.39); DotAmi as a local
     MCP server, read-only and off by default (S2.5.40)
-  - [ ] Two questions his reads of 2026-10-25 left open: what the CRA's rate table shows for Ontario and
+  - [x] Two questions his reads of 2026-10-25 left open, both answered on his reading page on 2026-10-29: the
+    table's rows say Ontario "13%" and Alberta "5%" (Alberta's line now says only the 5%), and for s.67.3 his
+    pick A, the title names only the section the page holds, with a plain-English line under it saying what the
+    page holds (whether every source gets one is his question, S2.5.41). The questions: what the CRA's rate table
+    shows for Ontario and
     Alberta (citations.md § Blocked, 1 and 2), and whether the s.67.3 citation's title or its address changes
     (the title names four sections, the page holds one)
 
@@ -1079,12 +1083,14 @@ roadmap's build order.
     on the 25 citations of that day, and all 779 quotes on DotAmi's 337 tool-checked citations
   - [ ] Blocked until an official page's own words are found and checked (citations.md, § The reading list's
     corrections, *Blocked*):
-    - [ ] Alberta has no PST and GST is 5% (`compliance-ab-no-pst`): the CRA's table isn't in its page's HTML;
+    - [x] Alberta has no PST and GST is 5% (`compliance-ab-no-pst`): the CRA's table isn't in its page's HTML;
       Alberta's *About Tax and Revenue Administration* is an unchecked candidate for the first half. The
       card's line is DotAmi's wording of the table's row until then. His read of the page is recorded
       (2026-10-25), but not what he found in the table: his word settles whether the
-      table shows "no provincial sales tax" or only Alberta's 5% GST (then the line says only that)
-    - [ ] Ontario's 13% HST (`compliance-on-hst`): the same table
+      table shows "no provincial sales tax" or only Alberta's 5% GST (then the line says only that).
+      Settled on 2026-10-29: he read the row, "5%", so the line and description say only "… lists Alberta at 5%.";
+      Alberta's page, checked by a tool that day (“Alberta has no sales tax.”), is the card's second source
+    - [x] Ontario's 13% HST (`compliance-on-hst`): the same table. Settled on 2026-10-29: he read the row, "13%"
     - [ ] Ontario food premises: the regulation in force, read and quoted, under a new id
     - [ ] Repeated losses: a CRA, Act or folio page on business versus personal pursuits, with its words
     - [ ] SR&ED refunded or not: whether, and how much of, a sole proprietor's 15% credit is, and whether a

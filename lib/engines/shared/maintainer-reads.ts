@@ -20,3 +20,12 @@ export interface PageRead {
 
 /** The maintainer's read of 2026-10-25, as a page object carries it. */
 export const MAINTAINER_READ: Readonly<PageRead> = { lastVerified: MAINTAINER_READ_ON, readBy: "person" };
+
+/**
+ * The maintainer's later read of one of those pages: the CRA's GST/HST rate page (charge-collect-which-rate.html),
+ * whose table of rates is drawn by a script, so no tool can see its rows (docs/engines/citations.md, § Blocked, items 1
+ * and 2). On his reading page on 2026-10-29 he wrote what the table shows for the two rows DotAmi relies on: Ontario's
+ * "13%" and Alberta's "5%". A person's later read replaces the earlier one (rule 5), so both citations of that page
+ * carry this day; tests/maintainer-reads.spec.ts holds them there, and every other page of his at 2026-10-25.
+ */
+export const MAINTAINER_RATE_TABLE_READ_ON = "2026-10-29";

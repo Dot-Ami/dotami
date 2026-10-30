@@ -704,6 +704,19 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   Prop activation's three sources: the new one in amber until 2026-10-27, each read by a person since).
 
 ### Changed
+- **The CRA's GST/HST rate table, on the maintainer's read of its rows; and the vehicle write-off's s.67.3 source
+  names only what its page holds** (his answers of 2026-10-29). The table is drawn by a script, so no tool can see
+  it; he read it and wrote Ontario's row "13%" and Alberta's row "5%", so the page's source says "Read by a person on
+  2026-10-29" under both cards. *Alberta — no provincial sales tax* now says only the row's 5%, "The CRA's table of
+  GST/HST rates lists Alberta at 5%." (it went on "… 5% GST, with no provincial sales tax."), and lists Alberta's own
+  *About Tax and Revenue Administration* as a second source, "Checked by a tool on 2026-10-29", with “Alberta has no
+  sales tax.” after *Words found on the page:*. *Ontario HST (13%)* is unchanged. Under *Motor vehicle expenses*, the
+  source titled "Income Tax Act s.18(1)(a), s.67, s.67.2, s.67.3 — purpose test, reasonableness, interest and lease
+  caps" is "Income Tax Act s.67.3 — Limitation re cost of leasing passenger vehicle" (the section's own heading, his
+  pick A), with a new plain line under it: "Only section 67.3 is on this page: the limit on how much of a passenger
+  vehicle's lease charges can be deducted, and the formulas that set it." (from `lib/engines/shared/words.ts`; its
+  four "Show the words" buttons are unchanged). Tests: `tests/rate-table-read.spec.ts`,
+  `tests/source-page-holds.spec.ts`, `tests/maintainer-reads.spec.ts`.
 - ***What DotAmi knows about you* quotes Anthropic's own words on how long it keeps what the intake sends**
   (the maintainer's decision 2 of 2026-10-24: a provider's period word for word, under a label). While a model
   key is set, the intake's row said Anthropic's page "says API inputs and outputs are deleted within 30 days,

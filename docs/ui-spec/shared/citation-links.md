@@ -1,6 +1,9 @@
 # A source's line: how it was checked
 
-Last updated: 2026-10-27 (the maintainer's reads of 2026-10-25: every source of the 31 pages he read in
+Last updated: 2026-10-29 (a line under a source's title saying what its page holds, § What it is, set on the
+Motor vehicle expenses write-off's s.67.3 only; the CRA's rate page says "Read by a person on 2026-10-29", his read
+of its table, and the Alberta sales-tax card's new source "Checked by a tool on 2026-10-29", § Today);
+2026-10-27 (the maintainer's reads of 2026-10-25: every source of the 31 pages he read in
 full says "Read by a person on 2026-10-25", the Delete menu's record-keeping line among them, § Today;
 2026-10-24: the Delete menu's record-keeping line: its citation also keeps a tool check,
 which its read outranks, so the line doesn't change; § Today: the reading list's new sources say "Checked
@@ -23,6 +26,24 @@ Type: link list
 Every citation is a link to its official page (title ↗), with its authority, its place, how it
 was checked, and the statute-check chip where one exists. "Show the words"
 ([show-the-words.md](./show-the-words.md)) sits under it on statute citations.
+
+**What the page holds** (since 2026-10-29, the maintainer's note on the s.67.3 source: "there should be a subtitle
+explaining what the page holds in plain english so the user (if they read it) knows what to looks for while
+reading."). A citation with `pageHolds` has one more line, right under its title and above its authority line, in
+small grey type (`text-small`, `text-stone`), inside the same link: one plain-English sentence of DotAmi's own
+saying what the page holds. It comes from [`lib/engines/shared/words.ts`](../../../lib/engines/shared/words.ts),
+never from the component, and a citation without one draws nothing there. Today only the Motor vehicle expenses
+write-off's first source has one:
+
+- Title: `Income Tax Act s.67.3 — Limitation re cost of leasing passenger vehicle ↗` (the section's own heading;
+  until 2026-10-29 `Income Tax Act s.18(1)(a), s.67, s.67.2, s.67.3 — purpose test, reasonableness, interest and
+  lease caps`, which named three provisions the page doesn't hold)
+- Line: `Only section 67.3 is on this page: the limit on how much of a passenger vehicle's lease charges can be
+  deducted, and the formulas that set it.`
+
+Its four "Show the words" buttons (ITA 18(1)(a), 67, 67.2, 67.3) are unchanged: they read the law store, not the
+page. The line adds no control, no region and no new text size, and the source shows only after a click (the
+clutter limit measures every screen with nothing clicked, `e2e/clutter-budget.spec.ts`).
 
 ## What it does
 
@@ -127,7 +148,10 @@ in full on 2026-10-25 says "Read by a person on 2026-10-25", in grey, with no wo
 and start charging the GST/HST", the SR&ED card's pages, the Productivity Grant's page and *Sole Prop
 activation*'s third among them, and the moved pages he read (the SR&ED, home office, motor vehicle and T2
 guide pages). The five pages behind the two ways to incorporate still say "Checked by a tool", as do the
-moved pages he didn't read. A source with a read and no record of who did it says
+moved pages he didn't read. Since 2026-10-29 the CRA's GST/HST rate page, under *Ontario HST (13%)* and *Alberta — no
+provincial sales tax*, says "Read by a person on 2026-10-29", his later read of its table's rows, and the Alberta
+card's second source, Alberta's *About Tax and Revenue Administration*, says "Checked by a tool on 2026-10-29", in
+amber, with “Alberta has no sales tax.” after *Words found on the page:*. A source with a read and no record of who did it says
 "Read on <date>. Who read it wasn't recorded." No citation is read by an AI model any more.
 `e2e/app.spec.ts` ("every source says how it was checked") checks a stage's sources, the playbook
 export and the readout in the browser.

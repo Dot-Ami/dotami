@@ -54,8 +54,16 @@ interface EngineCitation {
   };
   verification?: …;                 // unchanged: the statute-store check (confirmed/supported/partial)
   corpus?: …;                       // unchanged: pointers for "Show the words"
+  pageHolds?: string;               // since 2026-10-29: one plain line under the title, what the page holds
 }
 ```
+
+`pageHolds` is DotAmi's own words, not the page's, so it is always a sentence from
+[`lib/engines/shared/words.ts`](../../lib/engines/shared/words.ts), drawn under the title by
+`components/shared/citation-links.tsx` only when set. It is not a check: it changes nothing about how the source was
+read or checked. One source has one so far, the Motor vehicle expenses write-off's s.67.3
+([`tests/source-page-holds.spec.ts`](../../tests/source-page-holds.spec.ts)); whether every source gets one is the
+maintainer's question (story S2.5.41).
 
 The type (`CitationCheck` in [`lib/engines/shared/types.ts`](../../lib/engines/shared/types.ts))
 makes "at least one" a compile error, and
@@ -245,8 +253,9 @@ its row leaves this list.
 
 | Added | Page | Where it is cited | What to read for |
 |---|---|---|---|
+| 2026-10-29 | Alberta, [*About Tax and Revenue Administration*](https://www.alberta.ca/about-tra) | *Alberta — no provincial sales tax* (`compliance-ab-no-pst`), its second source | “Alberta has no sales tax.”, which `node scripts/check-quotes.mjs` found on the page that day (§ Blocked, item 1) |
 
-None waits now. The three pages listed here until 2026-10-27 (Alberta's *Employment standards* on *Hire
+One waits now, the row above. The three pages listed here until 2026-10-27 (Alberta's *Employment standards* on *Hire
 first employee*, Income Tax Regulations s.7307 under *Motor vehicle expenses*, and ISED's *Helping small
 businesses get loans* under the Canada Small Business Financing Program), and the pages the reading list's
 corrections added with a tool check only (the Canada-Alberta Productivity Grant's page and the SR&ED
@@ -325,6 +334,14 @@ What his reads don't settle, and stays open:
   recorded, but what he found in the table isn't, so *Blocked* items 1 and 2 below stay as they are. And
   s.67.3 of the Act was on it with a question, whether the citation's title (which also names s.18(1)(a),
   s.67 and s.67.2, not on that page) or its address should change: the citation is unchanged until he says.
+  **Both answered on 2026-10-29**, on his reading page. The table: Ontario's row "13%", Alberta's row "5%"; that is
+  a later read of the page by a person, so its two citations say *Read by a person on 2026-10-29* now (rule 5), the
+  one page of the 31 whose citations no longer carry the read of 2026-10-25 (`MAINTAINER_RATE_TABLE_READ_ON`;
+  *Blocked* items 1 and 2). And s.67.3: his pick A, the title names only what the page holds, the section's own
+  heading, *Income Tax Act s.67.3 — Limitation re cost of leasing passenger vehicle* (found on the page by
+  `node scripts/check-quotes.mjs` on 2026-10-29), with a line under it saying in plain English what the page holds
+  (`pageHolds`, § The shape). Its address, its read and its `corpus` list (all four provisions, for "Show the
+  words") are unchanged.
 
 ## When a cited page moves
 
@@ -413,7 +430,9 @@ One page the list opened gets no tool check: the CRA's page on which GST/HST rat
 *Ontario HST (13%)* and *Alberta — no provincial sales tax*. Its table of rates isn't in the page's
 HTML, so no tool can find one of its rows, and the two sentences the list found there with a rate
 are worked examples (an Ontario furniture store's sale, a Manitoba electronics store's), which are
-never recorded as the rate (docs/engines/compliance.md, § From the maintainer's reading list).
+never recorded as the rate (docs/engines/compliance.md, § From the maintainer's reading list). The two rows
+rest on the maintainer's read of them since 2026-10-29 (§ The reading list's corrections, *Blocked*, items 1
+and 2).
 
 The $6 million applies to tax years beginning on or after 2024-12-16. No held quote carries that
 date, so it is kept here and in a comment on the CCPC rate only: no screen says it, and no field holds
@@ -457,8 +476,8 @@ Three rules from his answers hold for every row:
 | Entry | Reading-list item(s) | What changed | The evidence |
 |---|---|---|---|
 | *SR&ED tax incentives* (`grant-sred`) | `grant-sred/estimatedValue`, `grant-sred/rate-unincorporated`, `grant-sred/rate-ccpc`, `sred-expenditure-limit-6-million` | A sole proprietor's card no longer calls the 15% credit non-refundable; it quotes the basic rate and that some businesses may also earn a refundable credit. The CCPC's note quotes the enhanced 35% up to the expenditure limit, and the $6 million limit, where it said "confirm the current limit with an advisor"; its card and the fork no longer call the 35% "refundable", a word no quote holds (*Blocked*). The range "15–35%" (on no screen) is unchanged. | Four new sources, tool checks of 2026-10-23: the CRA's rates page, its relationships page, *What's new for corporations*, and s.127(10.2)'s formula ([grants.md](grants.md)) |
-| *Ontario HST (13%)* (`compliance-on-hst`) | `compliance-on-hst` | Unchanged. | None held: the rate table isn't in the page's HTML, and the one 13% sentence found is a worked example (*Blocked*) |
-| *Alberta — no provincial sales tax* (`compliance-ab-no-pst`) | `compliance-ab-no-pst` | "… simplifying provincial sales tax compliance" is gone. The line says "The CRA's table of GST/HST rates lists Alberta at 5% GST, with no provincial sales tax.", which is still DotAmi's wording of a table row, and the catalog says so beside it. | None held, for the same reason (*Blocked*) |
+| *Ontario HST (13%)* (`compliance-on-hst`) | `compliance-on-hst` | Unchanged. | None held: the rate table isn't in the page's HTML, and the one 13% sentence found is a worked example (*Blocked*; since 2026-10-29 the maintainer's read of the row, "13%") |
+| *Alberta — no provincial sales tax* (`compliance-ab-no-pst`) | `compliance-ab-no-pst` | "… simplifying provincial sales tax compliance" is gone. The line says "The CRA's table of GST/HST rates lists Alberta at 5% GST, with no provincial sales tax.", which is still DotAmi's wording of a table row, and the catalog says so beside it. Since 2026-10-29 it says only "… lists Alberta at 5%." | None held, for the same reason (*Blocked*; since 2026-10-29 the maintainer's read of the row, "5%", and Alberta's own page, tool check of 2026-10-29) |
 | *BC Provincial Sales Tax (PST)* (`compliance-bc-pst`) | `compliance-bc-pst` | Unchanged. | No quote is held from its page |
 | *Ontario food premises licensing* (`compliance-food-premises-on`) | `compliance-food-premises-on` | Retired: it cited a revoked regulation and said more than it ([compliance.md](compliance.md), § Retired rules). | A retirement claims nothing: the reading list notes the cited regulation is revoked, and the one in force hasn't been read (*Blocked*) |
 | The Delete menu's records line (`cra-business-records-retention`) | `cra-business-records-retention` | The line is unchanged (it already said "generally"); its citation also keeps the CRA's two sentences. Four design-doc lines that gave the six years without "generally" now give it. | Tool check of 2026-10-23; a read wins on screen (2026-10-08, the maintainer's of 2026-10-25 since then) |
@@ -480,16 +499,17 @@ Each needs an official page's own words, found by `node scripts/check-quotes.mjs
 machine, before DotAmi says more than it does now. They are listed in [task-list.md](../task-list.md)
 [11b] too.
 
-1. **Alberta, no PST and GST at 5%.** A page whose HTML says it. Alberta's *About Tax and Revenue
-   Administration* ("Alberta has no sales tax.", [S17] in
-   [other-ways-to-build.md](../architecture/other-ways-to-build.md)) is a candidate no tool has checked,
-   and it says nothing of the 5%. Or the maintainer's ruling on how a row of a table is recorded.
-   The card's line credits the CRA's table with "no provincial sales tax", on the maintainer's read
-   alone: no tool can see the table, and a rate table may show only Alberta's 5% GST (British
-   Columbia, which has a PST, would show the same). His read of the page is recorded (2026-10-25), but
-   what he found in the table isn't: his word on the Alberta row settles it; if the table shows only the
-   5%, the line says only that.
-2. **Ontario's 13% HST.** The same table.
+1. **Alberta, no PST and GST at 5%.** Settled on 2026-10-29. The maintainer read the table's Alberta row and
+   wrote "5%", so the card's line and description say only that: "The CRA's table of GST/HST rates lists
+   Alberta at 5%." (until then "… at 5% GST, with no provincial sales tax."). That Alberta has no sales tax is
+   Alberta's own words now, never DotAmi's: its *About Tax and Revenue Administration* ([S17] in
+   [other-ways-to-build.md](../architecture/other-ways-to-build.md)) is the card's second source, with a tool
+   check of 2026-10-29 holding “Alberta has no sales tax.”, so the sentence shows under that source after
+   "Words found on the page:", in amber until a person reads the page. It says nothing of the 5%. The card's
+   name, *Alberta — no provincial sales tax*, is unchanged (phase 3's call 13 gives it its page's own name).
+   [`tests/rate-table-read.spec.ts`](../../tests/rate-table-read.spec.ts).
+2. **Ontario's 13% HST.** Settled on 2026-10-29: the maintainer read the same table's Ontario row and wrote
+   "13%". The card's words are unchanged; its 13% rests on his read, which its source says.
 3. **Ontario food premises.** The regulation in force, read, and what it requires, quoted, under a new
    id.
 4. **Repeated losses.** A CRA, Act or folio page on business versus personal pursuits, with its words.
