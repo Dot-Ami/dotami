@@ -249,14 +249,20 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   only by its own name (84 of the 220 test ideas with a job); and "à Regina" in French names no province (fixed
   2026-10-23, below).
 - **A repeated-losses caution is back on the Hobby vs. business card, in the CRA audit manual's own words**
-  (2026-10-27; the maintainer's "yah, lets use it"). Under a new id, `risk-losses-source-of-income` (the retired
-  `risk-hobby-reclassification` stays retired), its box quotes three sentences of the CRA's *Income Tax Audit
-  Manual*, chapter 27, joined only by "The CRA's Income Tax Audit Manual, chapter 27:" and "The same page:";
-  `node scripts/check-quotes.mjs` found all three on the live page that day, and nobody has read the page in full
-  yet, so its check is a tool's only. No screen shows chapter 27 or that check yet: a risk box draws no sources of
-  its own, and the card's sources still list only *Setting up your business*; whether chapter 27 goes under the card
-  is the maintainer's call ([docs/engines/citations.md](docs/engines/citations.md), § Outside the list, item 3), and
-  the test holds the gap as an `it.fails` check until then. The card's own words and sources are unchanged. Test:
+  (2026-10-27; the maintainer's "yah, lets use it"; his answers of 2026-10-29). Under a new id,
+  `risk-losses-source-of-income` (the retired `risk-hobby-reclassification` stays retired), its box quotes four
+  sentences of the CRA's *Income Tax Audit Manual*, chapter 27, joined only by "The CRA's Income Tax Audit Manual,
+  chapter 27:" and "The same page:". The fourth, after the sentence on a personal element, is the page's passage from
+  *Martin v The Queen*: “It is only where the personal element so overshadows any element of commerciality as to
+  substantially displace it that one may conclude that the activity is merely a hobby and is not a business at all.”
+  `node scripts/check-quotes.mjs` found all four on the live page in one run on 2026-10-29, and nobody has read the
+  page in full yet, so its check is a tool's only, of that day. A risk box draws no sources of its own, so the same
+  citation is listed under the card too: the card's sources are the CRA's *Setting up your business* ("Read by a
+  person on 2026-10-25") and chapter 27 ("Checked by a tool on 2026-10-29"). The box keeps the card: the maintainer's
+  call of 2026-10-25 that retired it has his answer of 2026-10-29 recorded beside it
+  ([docs/architecture/cards-in-official-words.md](docs/architecture/cards-in-official-words.md), § The maintainer's
+  calls). The card's own description and Lens lines are unchanged, still his open question
+  ([docs/engines/citations.md](docs/engines/citations.md), § Outside the list, item 3). Test:
   `tests/repeated-losses-read.spec.ts`.
 ### Fixed
 - **Mara's example: its prices re-opened, and no promotion length in DotAmi's own words** (2026-10-27). The

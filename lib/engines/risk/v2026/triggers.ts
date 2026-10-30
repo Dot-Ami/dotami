@@ -1,5 +1,6 @@
 import { MAINTAINER_READ_ON } from "@/lib/engines/shared/maintainer-reads";
 
+import { CRA_ITAM_27_CITATION, CRA_ITAM_27_QUOTES } from "./audit-manual-official-words";
 import { S245_CITATION, S245_QUOTES } from "./gaar-official-words";
 import type { RetiredRiskEntry, RiskCombination, RiskEntry } from "./types";
 
@@ -187,39 +188,18 @@ export const riskEntriesV2026 = [
     gaarExposure: false,
     appliesTo: ["compliance-hobby-vs-business"],
     // The CRA's Income Tax Audit Manual, chapter 27, in its own words and nothing else (the maintainer's "yah, lets
-    // use it" of 2026-10-27): the three sentences are quoted whole, in the page's order, and DotAmi's words between them
-    // are only the labels that say whose words follow. Left out on purpose: the auditors' own instructions (the
-    // two-stage approach and its first question), the list of factors to consider, the sentence on the reasonable
-    // expectation of profit test on its own, and every line with a time in it. The page also names the court decisions
-    // behind the first two sentences; the labels don't.
-    why: "The CRA's Income Tax Audit Manual, chapter 27: “An activity undertaken in the pursuit of profit, even with erroneous business decisions that cause it to never experience any actual profit, is still a source of income.” The same page: “Objective evidence showing an intention to create losses to offset taxable income may lead to the courts to conclude that no source of income exists.”",
-    mitigation:
-      "The same page: “If there is a personal element to the activity and the activity is undertaken in a sufficiently commercial manner, there is a source of income and income must be reported and losses may be claimed.”",
-    citations: [
-      {
-        // The page's own main heading (h1) and its chapter heading, joined; `node scripts/check-quotes.mjs` found both on
-        // the page on 2026-10-27. Its <title> is "ITAM Chapter 27 - Canada.ca".
-        title: "Income Tax Audit Manual, Chapter 27.0 Income",
-        authority: "CRA",
-        jurisdiction: "CA",
-        url: "https://www.canada.ca/en/revenue-agency/services/tax/technical-information/income-tax-audit-manual-domestic-compliance-programs-branch-dcpb-27.html",
-        // A tool check only: `node scripts/check-quotes.mjs` found all three quotes on the live page on 2026-10-27, and
-        // nobody has read the page in full. No screen shows this page or its check yet: a risk read's own sources are
-        // drawn nowhere (attachRisk in lib/brain/evaluate.ts copies only the level, GAAR flag, why and mitigation), and
-        // the card's sources list only Setting up your business. Whether chapter 27 goes under the card is the
-        // maintainer's call (docs/engines/citations.md § Outside the list, item 3); tests/repeated-losses-read.spec.ts
-        // holds the gap as an `it.fails` check until then.
-        toolCheck: {
-          checkedOn: "2026-10-27",
-          quotes: [
-            "An activity undertaken in the pursuit of profit, even with erroneous business decisions that cause it to never experience any actual profit, is still a source of income.",
-            "Objective evidence showing an intention to create losses to offset taxable income may lead to the courts to conclude that no source of income exists.",
-            "If there is a personal element to the activity and the activity is undertaken in a sufficiently commercial manner, there is a source of income and income must be reported and losses may be claimed.",
-          ],
-        },
-        note: "The CRA's audit manual on income: the pursuit of profit, a personal element, and a sufficiently commercial manner.",
-      },
-    ],
+    // use it" of 2026-10-27): four sentences quoted whole, in the page's order, and DotAmi's words between them are only
+    // the labels that say whose words follow (./audit-manual-official-words.ts says which sentences, and what is left
+    // out on purpose). The fourth, the passage the page quotes from Martin v The Queen, came on 2026-10-29 (his
+    // "add-martin"), after the personal-element sentence; its label is "The same page:", because the page names the case
+    // in the paragraph before the passage, not in its own. The page also names the court decisions behind the first two
+    // sentences; the labels don't.
+    why: `The CRA's Income Tax Audit Manual, chapter 27: “${CRA_ITAM_27_QUOTES.pursuitOfProfit}” The same page: “${CRA_ITAM_27_QUOTES.intentionToCreateLosses}”`,
+    mitigation: `The same page: “${CRA_ITAM_27_QUOTES.personalElement}” The same page: “${CRA_ITAM_27_QUOTES.martin}”`,
+    // A tool check only, of 2026-10-29. Since that day the same citation is listed under the Hobby vs. business card
+    // (the maintainer's "yes" on PR #217's question 1), where the box shows: a risk read's own sources are drawn nowhere
+    // (attachRisk in lib/brain/evaluate.ts copies only the level, GAAR flag, why and mitigation).
+    citations: [CRA_ITAM_27_CITATION],
   },
   {
     id: "risk-ladder-skipping",

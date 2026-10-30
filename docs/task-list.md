@@ -1088,8 +1088,10 @@ roadmap's build order.
     - [ ] Ontario food premises: the regulation in force, read and quoted, under a new id
     - [x] Repeated losses: a CRA, Act or folio page on business versus personal pursuits, with its words. Since
       2026-10-27 (the maintainer's "yah, lets use it") a read is back on the Hobby vs. business card under a new id,
-      `risk-losses-source-of-income`, quoting three sentences of the CRA's Income Tax Audit Manual, chapter 27,
-      which `node scripts/check-quotes.mjs` found that day; the retired id stays retired, and the card is unchanged
+      `risk-losses-source-of-income`, quoting the CRA's Income Tax Audit Manual, chapter 27; the retired id stays
+      retired. Since 2026-10-29 (his answers on PR #217) it quotes four sentences, the page's passage from *Martin v
+      The Queen* among them, which `node scripts/check-quotes.mjs` found in one run that day, and the same citation
+      is listed under the card; the card's own words are unchanged
     - [ ] SR&ED refunded or not: whether, and how much of, a sole proprietor's 15% credit is, and whether a
       CCPC's enhanced 35% is (the card said "refundable" on the maintainer's read alone until 2026-10-24)
     - [ ] SR&ED's $6 million: the tax years it applies from, and the sentence of s.127(10.2) that leads into
@@ -1109,10 +1111,10 @@ roadmap's build order.
     purpose first"; the "Professional required" heading over the anti-avoidance and loan program boxes
     (`tests/engine-integrity.spec.ts` holds GAAR reads there); and the *Hobby vs. business income test*
     card's profit-expectation and business-like lines, which cite the page the retired hobby read's
-    record says supports neither (he read that page in full on 2026-10-25; the card's words, and whether the card
-    lists the audit manual's chapter 27, which its risk box quotes since 2026-10-27, wait for his call, as does
-    whether his call 3 of 2026-10-25 retiring the card, docs/architecture/cards-in-official-words.md, still holds
-    with that box on it)
+    record says supports neither (he read that page in full on 2026-10-25; the card's words wait for his call).
+    Settled on 2026-10-29 by his answers on PR #217: the card lists the audit manual's chapter 27, which its risk
+    box quotes, and the box keeps the card ("The box keeps the card"; recorded beside his call 3 of 2026-10-25 in
+    docs/architecture/cards-in-official-words.md, which had retired it)
 - ⬜ **[11c] Flag stale sources automatically** — with #37
   - [ ] Kept open on purpose (the maintainer, 2026-10-14), so a person decides later:
     - [x] *Alberta Investor Tax Credit* (`grant-abti`): taken off on 2026-10-23 (the maintainer's call
