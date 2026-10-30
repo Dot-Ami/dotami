@@ -19,21 +19,29 @@ import { PAGE_QUOTES_LEAD } from "@/lib/engines/shared/citation-check";
  * `inline` runs the quotes on after the label, separated by a dot, in a span the caller styles (`block` for a
  * line of its own); `lines` gives the label and each quote a line of its own, the quotes in italics (Your plan,
  * made for printing).
+ *
+ * `lead` (since 2026-10-29) gives a second set of quotes from the same page a label of its own, in place of
+ * `PAGE_QUOTES_LEAD`, never beside it: What DotAmi knows about you draws Anthropic's two further sections after
+ * the five under "Anthropic's page also says:". The caller holds that label's words, as it holds its other labels;
+ * the quotes are still drawn here and only here.
  */
 export function PageQuotes({
   quotes,
   layout = "inline",
   className = "",
+  lead = PAGE_QUOTES_LEAD,
 }: {
   quotes: readonly string[];
   layout?: "inline" | "lines";
   className?: string;
+  /** The label before the quotes; the usual one unless a second set from the same page needs its own. */
+  lead?: string;
 }) {
   if (quotes.length === 0) return null;
   if (layout === "lines") {
     return (
       <div className={className || undefined}>
-        <p>{PAGE_QUOTES_LEAD}</p>
+        <p>{lead}</p>
         {quotes.map((quote, i) => (
           <p key={`${i}-${quote}`} className="italic">
             “{quote}”
@@ -44,7 +52,7 @@ export function PageQuotes({
   }
   return (
     <span className={className || undefined}>
-      {PAGE_QUOTES_LEAD}{" "}
+      {lead}{" "}
       {quotes.map((quote, i) => (
         <span key={`${i}-${quote}`} className="text-paper-dim">
           {i > 0 ? " · " : ""}“{quote}”
