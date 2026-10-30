@@ -10,6 +10,10 @@
  * changed the first check below and the two that said a page had no read. Entries taken off:
  * tests/retired-entries.spec.ts; the program added: tests/productivity-grant.spec.ts.
  *
+ * Since the maintainer's answer of 2026-10-29 (his reading page, item 2: "it should always be the newer page because
+ * it's more up-to-date"), a sole proprietor's SR&ED card also quotes the CRA's SR&ED Investment Tax Credit Policy, the
+ * newer of the two CRA pages that disagree on refunds, with a tool check of that day and no read (§ 3).
+ *
  * Addresses and quotes are written out here, not imported, so a change to a catalog's constant can't move the test
  * with it. Each check fails on the code before the corrections unless its comment says it is a guard.
  */
@@ -25,7 +29,7 @@ import { complianceRulesV2026, recordRetentionV2026 } from "@/lib/engines/compli
 import { grantProgramsV2026 } from "@/lib/engines/grants/v2026/programs";
 import type { GrantProgram } from "@/lib/engines/grants/v2026/types";
 import { riskEntriesV2026 } from "@/lib/engines/risk/v2026";
-import { howChecked } from "@/lib/engines/shared/citation-check";
+import { howChecked, isCheckFirst } from "@/lib/engines/shared/citation-check";
 
 import { MAINTAINER_READ_DAY, MAINTAINER_READ_PAGES } from "./fixtures/maintainer-reads-2026-10-25";
 import { findTimeWords } from "./helpers/time-words";
@@ -44,6 +48,7 @@ const PAGE = {
   sredProgram: `${CRA}/scientific-research-experimental-development-tax-incentive-program.html`,
   sredWhatAre: `${CRA}/scientific-research-experimental-development-tax-incentive-program/what-are-sred-tax-incentives.html`,
   sredGlossary: `${CRA}/scientific-research-experimental-development-tax-incentive-program/glossary.html`,
+  sredItcPolicy: `${CRA}/scientific-research-experimental-development-tax-incentive-program/investment-tax-credit-policy.html`,
   relationships: `${CRA}/tax/businesses/topics/corporations/business-tax-credits/how-relationships-affect-small-business-deduction-sred-investment-tax-credits.html`,
   whatsNew: `${CRA}/tax/businesses/topics/corporations/whats-new-corporations.html`,
   act127: "https://laws-lois.justice.gc.ca/eng/acts/I-3.3/section-127.html",
@@ -67,6 +72,15 @@ const SOME_REFUNDABLE = "Some businesses may also earn a refundable ITC.";
 // The CRA's How certain relationships affect the small business deduction and SR&ED investment tax credits:
 const CCPC_ENHANCED =
   "Some CCPCs may earn an ITC at an enhanced rate of 35% on qualified SR&ED expenditures up to their expenditure limit for the year.";
+// The same page's line on unincorporated businesses (its page date 2025-07-21). The maintainer's answer of 2026-10-29
+// picked the newer page (below) where the two disagree, so this line is quoted nowhere.
+const OLDER_NON_REFUNDABLE = "Corporations and unincorporated businesses may earn a non-refundable ITC at the rate of 15%.";
+// The CRA's SR&ED Investment Tax Credit Policy (its page date 2026-10-07): the line a sole proprietor's card quotes
+// since the maintainer's answer of 2026-10-29, found by scripts/check-quotes.mjs on the live page that day.
+const POLICY_INDIVIDUAL_40 =
+  "Generally, for an individual (other than a trust), the refundable ITC is 40% of the unclaimed balance of ITC earned in the current year for qualified SR&ED expenditures.";
+/** The day scripts/check-quotes.mjs found the policy page's title and its 40% line on it. */
+const POLICY_DAY = "2026-10-29";
 // The CRA's SR&ED glossary, its entry "Enhanced SR&ED investment tax credit rate (35%)": the line the maintainer asked
 // for on stage-4, found by scripts/check-quotes.mjs on 2026-10-27 (not a reading-list find).
 const GLOSSARY_ENHANCED =
@@ -124,6 +138,9 @@ const NEVER_KEPT = [
   "before 2014",
   "maximum threshold of $3 million",
   "This page includes proposed, announced, or enacted corporation income tax changes.",
+  // The relationships page's "non-refundable" 15% for unincorporated businesses: the older of the two CRA pages that
+  // disagree, so never held (the maintainer's answer of 2026-10-29: "it should always be the newer page").
+  OLDER_NON_REFUNDABLE,
   "[Income Tax Act",
   "[Income Tax Regulations",
 ];
@@ -282,28 +299,87 @@ describe("2. The words the reading list's tool found on 2026-10-23", () => {
 });
 
 describe("3. SR&ED: the credit's rates in the CRA's words", () => {
-  it("a sole proprietor's card never calls the 15% non-refundable, and quotes the CRA's basic rate and its refundable line", () => {
+  it("a sole proprietor's card never calls the 15% non-refundable, and quotes the CRA's basic rate, its refundable line and the policy page's 40% line", () => {
     for (const structure of ["sole-prop", "sole-prop-gst"] as const) {
       const c = card(idea({ structure }), "grant-sred");
       expect(c.payoff, structure).not.toMatch(/non-refundable/i);
       expect(c.payoff, structure).toContain("this may be worth 15%.");
-      expect(quoted(c.payoff), structure).toEqual([BASIC_RATE, SOME_REFUNDABLE]);
-      // The catalog leaves refundability unsaid for an individual: no held quote says how much is refunded.
+      // The maintainer's answer of 2026-10-29 (his reading page, item 2): the card quotes the newer page's line, "it
+      // should always be the newer page because it's more up-to-date". Until then the card quoted only
+      // [BASIC_RATE, SOME_REFUNDABLE].
+      expect(quoted(c.payoff), structure).toEqual([BASIC_RATE, SOME_REFUNDABLE, POLICY_INDIVIDUAL_40]);
+      // Outside the quotes, only whose words they are (his answer of 2026-10-29): DotAmi never says in its own words
+      // that a sole proprietor is "an individual (other than a trust)"; the CRA's line says who it is about.
+      const note = sred().ratesByStructure!.find((r) => r.structure === structure)!.note ?? "";
+      expect(ownWordsFlat(note), structure).toBe("The CRA: The CRA's SR&ED Investment Tax Credit Policy:");
+      expect(ownWords(c.payoff), structure).not.toMatch(/individual|trust|40%/i);
+      // The catalog still leaves refundability unsaid in DotAmi's words: `refundable` set would print a bare
+      // "(refundable)" after the 15% (lib/brain/evaluate.ts), more than the CRA's "Generally … 40% of the unclaimed
+      // balance" says.
       expect(sred().ratesByStructure!.find((r) => r.structure === structure)!.refundable, structure).toBeUndefined();
     }
   });
 
-  it("every quote on the SR&ED card is held by one of its own sources, checked on 2026-10-23", () => {
+  it("every quote on the SR&ED card is held by one of its own sources: checked on 2026-10-23, or the policy page's line on 2026-10-29", () => {
+    // Until the maintainer's answer of 2026-10-29 every quote was held by a check of 2026-10-23. The policy page's 40%
+    // line joined that day, held only by that page's own tool check, of the day scripts/check-quotes.mjs found it.
+    const policy = sred().citations.filter((c) => c.url === PAGE.sredItcPolicy && c.toolCheck?.checkedOn === POLICY_DAY);
+    expect(policy, "grant-sred cites the SR&ED Investment Tax Credit Policy, checked on 2026-10-29").toHaveLength(1);
     const held = sred()
       .citations.filter((c) => c.toolCheck?.checkedOn === LIST_DAY)
       .flatMap((c) => c.toolCheck!.quotes);
+    const heldByPolicy = policy.flatMap((c) => c.toolCheck!.quotes);
     for (const rate of sred().ratesByStructure!) {
       const runs = quoted(rate.note ?? "");
       expect(runs.length, `${rate.structure}: ${rate.note}`).toBeGreaterThan(0);
-      for (const run of runs) expect(inQuotes(run, held), `${rate.structure}: “${run}”`).toBe(true);
+      for (const run of runs) expect(inQuotes(run, [...held, ...heldByPolicy]), `${rate.structure}: “${run}”`).toBe(true);
     }
+    expect(heldByPolicy).toEqual([POLICY_INDIVIDUAL_40]);
     // Planted control: the note before the correction quoted nothing.
     expect(quoted("Unincorporated claimants earn the basic 15% non-refundable ITC.")).toEqual([]);
+  });
+
+  it("the CRA's SR&ED Investment Tax Credit Policy is under the card, checked by a tool on 2026-10-29 and read by no one yet", () => {
+    // Added on the maintainer's answer of 2026-10-29. Titled with the page's own main heading, which
+    // scripts/check-quotes.mjs found with the 40% line that day; the title isn't words the card relies on, so the tool
+    // check holds only the line the card quotes. Nobody has read the page in full, so it shows amber.
+    const c = citationOf("grants grant-sred", PAGE.sredItcPolicy);
+    expect(c.title).toBe("SR&ED Investment Tax Credit Policy");
+    const inCatalog = sred().citations.find((x) => x.url === PAGE.sredItcPolicy);
+    expect(inCatalog?.authority).toBe("CRA");
+    expect(inCatalog?.jurisdiction).toBe("CA");
+    expect(c.toolCheck).toEqual({ checkedOn: POLICY_DAY, quotes: [POLICY_INDIVIDUAL_40] });
+    expect(c.lastVerified).toBeUndefined();
+    expect(c.readBy).toBeUndefined();
+    expect(howChecked(c)).toEqual({ kind: "tool", on: POLICY_DAY, quotes: [POLICY_INDIVIDUAL_40] });
+    expect(isCheckFirst(c)).toBe(true);
+    // One click away under the card it backs, at every structure the card shows for.
+    for (const structure of ["sole-prop", "sole-prop-gst", "ccpc"] as const) {
+      expect(card(idea({ structure }), "grant-sred").citations.map((x) => x.url), structure).toContain(PAGE.sredItcPolicy);
+    }
+  });
+
+  it("the older CRA page's “non-refundable” 15% is on no SR&ED card or fork", () => {
+    // A guard (the maintainer's answer of 2026-10-29: the newer page where the two disagree). It held on the code
+    // before too: since 2026-10-24 no card quotes that line.
+    for (const structure of ["sole-prop", "sole-prop-gst", "ccpc"] as const) {
+      const c = card(idea({ structure }), "grant-sred");
+      expect(`${c.payoff} ${c.fork?.note ?? ""}`, structure).not.toContain(OLDER_NON_REFUNDABLE);
+    }
+  });
+
+  it("the 40% line's “in the current year” is the CRA's words under its label, and no time check flags the card", () => {
+    // A guard (NO TIMES): the repo's time-word check finds nothing in the sole proprietor's card, quotes included, and
+    // nothing in DotAmi's own words around them. Its "in the year" lines (the policy page's CCPC lines) are not quoted.
+    for (const structure of ["sole-prop", "sole-prop-gst", "ccpc"] as const) {
+      const c = card(idea({ structure }), "grant-sred");
+      for (const text of [c.payoff, c.fork?.note ?? ""]) {
+        expect(findTimeWords(text), `${structure}: ${text}`).toEqual([]);
+        expect(findTimeWords(ownWords(text)), `${structure}: ${text}`).toEqual([]);
+      }
+    }
+    // Planted control: the check does catch a year as a wait, so its silence above is an answer.
+    expect(findTimeWords("the ITC earned in the year at the enhanced ITC rate")).not.toEqual([]);
   });
 
   it("the enhanced rate is for some CCPCs up to their limit, the limit is $6 million in the CRA's and the Act's words, and no line sends the person to an advisor", () => {
@@ -326,6 +402,10 @@ describe("3. SR&ED: the credit's rates in the CRA's words", () => {
     const fork = card(idea(), "grant-sred").fork;
     expect(fork).toBeDefined();
     expect(fork!.note).not.toMatch(/advisor/i);
+    // Unchanged by the maintainer's answer of 2026-10-29, which was about the sole proprietor's card only: the fork
+    // copies the CCPC's note (lib/brain/evaluate.ts), and the policy page's CCPC lines run to several kinds of
+    // corporation, so none is quoted here; a part would read as the whole, beside the individual's 40% on the same
+    // card. Whether the CCPC's card quotes one is still his call (docs/engines/citations.md, § Blocked, item 4).
     expect(quoted(fork!.note)).toEqual([CCPC_ENHANCED, LIMIT_SIX_MILLION]);
   });
 
