@@ -38,10 +38,17 @@ off on 2026-10-23 (see *Retired programs* below), and the Productivity Grant cam
   would drop the CRA's “Generally” and what the 40% is of. The older page, the CRA's *How certain
   relationships affect the small business deduction and SR&ED investment tax credits* (already a
   source of the card), says unincorporated businesses' credit is non-refundable; no card quotes
-  that line ([citations.md](citations.md), *Blocked*, item 4).
+  that line ([citations.md](citations.md), *Blocked*, item 4; § Rules, rule 8: the newer page wins).
   The CCPC's said refundable ("35% (refundable)", "35% refundable
-  treatment") on the maintainer's word alone, which no record held, and none of its quotes says
-  it, so it says neither too ([citations.md](citations.md), *Blocked*). The 35% is the CRA's “Some CCPCs may earn an ITC
+  treatment") on the maintainer's word alone, which no record held, and none of its quotes said
+  it, so it said neither until 2026-10-30. Since his answer of that day (his reading page, item 8)
+  the CCPC's note also quotes the policy page's section 4.1 list for corporations, whole and in
+  order, under *The CRA's SR&ED Investment Tax Credit Policy:*: its lead-in and items 1 to 4, 13
+  lines, which say for each kind of corporation and expenditure what share of the credit is
+  refundable. Its `refundable` stays unset: the list says it, in the CRA's words, and a bare
+  "refundable" after the 35% would say more than the list's lines say. The sole proprietor's fork copies the
+  CCPC's note (`lib/brain/evaluate.ts`), so it shows the list too, beside the individual's 40%: why
+  the list is never cut ([citations.md](citations.md), *Blocked*, item 4). The 35% is the CRA's “Some CCPCs may earn an ITC
   at an enhanced rate of 35% on qualified SR&ED expenditures up to their expenditure limit for the
   year.”, and the limit, $6 million, is on the card only inside the CRA's *What's new for
   corporations* line (Income Tax Act s.127(10.2) holds the formula). The tax years it applies from
@@ -50,11 +57,12 @@ off on 2026-10-23 (see *Retired programs* below), and the Productivity Grant cam
   The four pages added for these quotes are tool checks of 2026-10-23. The maintainer read each of
   them in full on 2026-10-25, with the program's own page ([citations.md](citations.md), § The
   maintainer's reads of 2026-10-25), so their sources say *Read by a person on 2026-10-25*. The
-  policy page, the card's sixth source, is a tool check of 2026-10-29 that no person has read yet, so its source
-  says *Checked by a tool on 2026-10-29* in amber. The CCPC's note quotes none of its lines: they run
-  to several kinds of corporation and expenditure, and the sole proprietor's fork copies that note.
-  Whether the CCPC's card says its 35% is refunded is still the maintainer's call (his answer of
-  2026-10-29 was about the sole proprietor's card; [citations.md](citations.md), *Blocked*, item 4).
+  policy page, the card's sixth source, has one tool check that no person has read yet, so its source
+  says *Checked by a tool on 2026-10-30* in amber: one run of `node scripts/check-quotes.mjs` found its
+  heading, the individual's 40% line and the 13 lines of the list for corporations that day (until
+  then a check of 2026-10-29 holding the 40% line alone). The list's own "in the year" and its one
+  date, in its line on ECPCs, are the CRA's words inside its quote marks; DotAmi's words around them
+  hold no time or date.
 
 ## The Canada-Alberta Productivity Grant (`grant-capg`)
 
@@ -64,7 +72,8 @@ It is the program whose page the Canada-Alberta Job Grant's address now opens
 never reused.
 
 - **What it says.** Every amount and rule is a quote the citation holds. The card's payoff
-  (`lensAnnotations.tax`) quotes the page's funding table a row at a time, each line after its row's
+  (`lensAnnotations.tax`) quotes, since 2026-10-30, the page's sentence on who delivers and funds it
+  (*Who funds it*, below), then the page's funding table a row at a time, each line after its row's
   own label cell: Employer: “Must contribute 25% of the total eligible training costs …”; Government
   of Alberta: “Contributes the other 75% of the cost to a maximum of $5,000 per employed trainee per
   fiscal year”; and “An employer is eligible for up to a maximum amount of $100,000 per fiscal
@@ -110,8 +119,13 @@ never reused.
 - **Who funds it.** `authority` is "Alberta / federal" (the catalog's pattern, as "CRA / federal"),
   on the page's sentence “The program is delivered by Alberta and funded by the Government of Canada
   through the Canada–Alberta Workforce Development Agreement.”, quoted in the catalog's comment and
-  held by the tool check. No screen shows the field, and no line reconciles that sentence with the
-  table's "Government of Alberta" row.
+  held by the tool check. No screen shows the field. Since the maintainer's answer of 2026-10-30
+  (his reading page, item 8) the card's payoff, and the entry's description, quote that sentence
+  whole, first after "Alberta's page on this program:", as on the page (its Overview comes before
+  the funding table): whole, because it says who delivers the program, not only who funds it. The
+  check of 2026-10-29 already held it, so nothing new was recorded; a run of the script with all 27
+  quotes on 2026-10-30 found every one again. No line reconciles the sentence with the table's
+  "Government of Alberta" row in DotAmi's own words.
 - **Who sees it.** Every idea in Alberta, at every structure and kind of work, always *check
   first*. `activityTags: []`: a program whose page names no kind of work shows for every idea in its
   provinces, and its card's reason names only the place the person picked ("Shown because you

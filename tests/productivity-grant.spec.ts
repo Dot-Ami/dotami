@@ -19,6 +19,12 @@
  * on 2026-10-27 (its other requirements for employers, what training counts, who funds it): "One new check that holds
  * the old and new sentences", dated by its run. Every check below that names a label, a 2026-10-27 sentence or the
  * check of 2026-10-29 failed on the catalog before that change.
+ *
+ * Since the maintainer's answer of 2026-10-30 (his reading page, item 8): the card's line also quotes the page's
+ * Overview sentence on who delivers and funds the program, whole, under the page's label, before the funding table's
+ * rows (it says who delivers it, not only who funds it, so a part of it would say less than the page). The check of
+ * 2026-10-29 already held it, so the check is unchanged; a run of scripts/check-quotes.mjs on 2026-10-30 found all 27
+ * quotes again.
  */
 import { readFileSync } from "node:fs";
 import path from "node:path";
@@ -293,8 +299,28 @@ describe("the Canada-Alberta Productivity Grant in the programs catalog", () => 
     const entry = source.slice(source.indexOf('id: "grant-capg"'));
     const beforeAuthority = entry.slice(0, entry.indexOf('authority: "Alberta / federal"')).replace(/\r?\n\s*\/\/ ?/g, " ");
     expect(beforeAuthority).toContain(FUNDED_BY);
-    // No line reconciles it with the table's "Government of Alberta" row in DotAmi's own words (none says it at all).
-    for (const line of linesOf(capg()!)) expect(line).not.toContain("Government of Canada");
+    // "Government of Canada" is only ever inside the page's sentence, quoted on the card's line and the description
+    // (since 2026-10-30): no line reconciles it with the table's "Government of Alberta" row in DotAmi's own words.
+    const p = capg()!;
+    for (const line of linesOf(p)) expect(own(line), line).not.toContain("Government of Canada");
+    expect(linesOf(p).filter((line) => line.includes("Government of Canada"))).toEqual([p.description, p.lensAnnotations.tax]);
+  });
+
+  it("the card quotes the page's Overview sentence on who delivers and funds it, whole, under the page's label, before the table's rows", () => {
+    // The maintainer's answer of 2026-10-30 (his reading page, item 8). Whole: it says who delivers the program, not
+    // only who funds it, and a part would say less than the page. In the page's order: the Overview, then the funding
+    // table. Its full stop stands after the quote mark, as the card's other sentences' do.
+    const p = capg()!;
+    const sentence = FUNDED_BY.replace(/\.$/, "");
+    expect(p.lensAnnotations.tax).toContain(`Alberta's page on this program: “${sentence}”. Employer: “Must contribute 25%`);
+    expect(p.description).toContain(`In the words of Alberta's page on this program: “${sentence}”. Employer: “Must contribute 25%`);
+    expect(quotesIn(p.lensAnnotations.tax)).toContain(sentence);
+    // On screen: the card's line is the payoff, for every Alberta idea.
+    expect(card(profile({}))!.payoff).toContain(`“${sentence}”`);
+    // Held by the source's one tool check, of 2026-10-29 (the sentence was among its 27 quotes already).
+    expect(capg()!.citations[0]!.toolCheck).toEqual({ checkedOn: CHECKED_ON, quotes: HELD });
+    // Planted control: a part of the sentence, its funding half alone, is not the whole.
+    expect(quotesIn(`Alberta's page on this program: “funded by the Government of Canada”.`)).not.toContain(sentence);
   });
 });
 

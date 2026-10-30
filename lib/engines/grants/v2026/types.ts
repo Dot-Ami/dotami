@@ -13,7 +13,8 @@ export interface StructureRate {
    * Whether the credit at this rate is refunded, set only where a quote the program's citations hold (or a recorded
    * read of the page) says so for this structure. Left out, the card says neither (2026-10-24: a sole proprietor's
    * SR&ED credit was called "non-refundable", which the maintainer's reading list of 2026-10-23 notes isn't so, and
-   * the CCPC's "refundable" rested on his read alone; no held quote says either). No rate sets it today.
+   * the CCPC's "refundable" rested on his read alone; no held quote said either then, and since 2026-10-29 and
+   * 2026-10-30 only the CRA's quoted lines say it). No rate sets it today.
    */
   refundable?: boolean;
   /** Shown after the rate on the card: the page's own words, quoted, with who said them. */

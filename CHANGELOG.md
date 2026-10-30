@@ -904,6 +904,32 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   2026-10-07) is the card's sixth source, "Checked by a tool on 2026-10-29" in amber, since nobody has read it yet;
   the older relationships page's "non-refundable" 15% is quoted nowhere, and the corporation's card, and the fork on
   a sole proprietor's card that copies its note, are unchanged.
+- **A corporation's SR&ED card quotes the CRA's list for corporations whole, the Productivity Grant's card says who
+  delivers and funds it, the Martin passage's label names the case, and the newer page wins as a rule** (2026-10-30;
+  the maintainer's answers on his reading page, item 8).
+  - *SR&ED, a corporation's 35%.* After its two lines, the CCPC's card now quotes the CRA's *SR&ED Investment Tax
+    Credit Policy*, section 4.1, its list for corporations whole and in order (the lead-in and items 1 to 4, 13
+    lines), under *The CRA's SR&ED Investment Tax Credit Policy:*. The list says, for each kind of corporation and
+    expenditure, what share of the credit is refundable; DotAmi still says "refundable" only inside the CRA's quote
+    marks. A sole proprietor's card shows the same list in its *Incorporating (CCPC) changes this* note, beside the
+    individual's 40%, so it is never cut; a "…" after item 4 marks the list's two other items (an individual, a
+    trust). The list's own "in the year" and its date for ECPCs are the CRA's words, inside the quote marks; whether
+    that date may stand on the card (the maintainer's NO TIMES call) was asked of him on 2026-10-30. The page's
+    paragraph after the list, on large corporations' non-refundable credit, is not quoted. One run of `node scripts/check-quotes.mjs` found the 13 lines and the 40% line on the live page on
+    2026-10-30, so the page's one tool check is of that day; nobody has read the page yet, so it stays amber.
+  - *The Productivity Grant.* The card's line now starts with Alberta's own sentence: “The program is delivered by
+    Alberta and funded by the Government of Canada through the Canada–Alberta Workforce Development Agreement”,
+    quoted whole, before the funding table's rows. The page's check already held it.
+  - *Repeated losses.* The label before the passage from *Martin v The Queen* is now "The same page, quoting Martin v
+    The Queen:" (was "The same page:"). The quote is unchanged.
+  - *The newer page wins.* [docs/engines/citations.md](docs/engines/citations.md) § Rules, rule 8: where two official
+    pages disagree, the card quotes the newer page, by its own date; the older stays listed among the sources, and
+    its line that disagrees is quoted on no card (its other lines stay quoted; whether the whole older page should
+    go was asked of the maintainer on 2026-10-30). Telling which page applies to which case, the maintainer's
+    "library" idea, is research first and isn't built.
+
+  Tests: `tests/reading-list-corrections.spec.ts` § 3, `tests/productivity-grant.spec.ts`,
+  `tests/repeated-losses-read.spec.ts` (each failed on the code before).
 
 ### Documented
 - **The screen specs say what the pre-release fixes changed** (2026-10-24). Each control the fixes above

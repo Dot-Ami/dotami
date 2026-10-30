@@ -76,7 +76,8 @@ stands on its cited source). Key facts (verify `lastVerified` before relying):
   retroactive window**, collateral = the equipment itself.
 - **SR&ED**: sole props 15% vs CCPCs 35% — a structure-gated rate split, prime
   rules-engine material. Since 2026-10-24 the cards quote the CRA's rates, and neither rate is
-  called refundable or non-refundable in DotAmi's own words: no held quote says which (the
+  called refundable or non-refundable in DotAmi's own words: no held quote said which then, and
+  since 2026-10-29 only the CRA's quoted lines do (the
   maintainer's reading list of 2026-10-23; docs/engines/grants.md).
 - **Tax ladder gating**: Sole Prop → CCPC → Holdco → Trust; Holdco/Trust do NOT solve
   equipment affordability (they protect existing assets / handle succession) — the ladder
