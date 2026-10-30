@@ -9,9 +9,13 @@ import type { ExampleSources, ListedPrice, SoftwarePlan, Statistic, ToolPriced }
  * A review couldn't re-open four sellers' pages; on 2026-10-27 they were opened again. Every Busy Bee Tools,
  * Autodesk and QuickBooks price was the same as on 2026-10-14. Autodesk draws its prices with a script, so a
  * browser showed them ("CA$940 /YEAR (OR CA$120 /MONTH)" on the personal-use page) where a plain fetch saw
- * no amount. Lee Valley's page showed a bot check that was not bypassed, so its clamp price still rests on
- * the two checks of 2026-10-14. Each entry still shows the words and the day it was first seen; the one page
- * whose words had changed around the same price, Busy Bee's planer (now in stock), says both days in its note.
+ * no amount. Lee Valley's page showed a bot check that was not bypassed, so that day its clamp price still
+ * rested on the two checks of 2026-10-14. On 2026-10-29 the maintainer opened that page in his own browser
+ * and wrote down the price, "85", and the item line, “Item 17F7340, Bessey 40" K Body REVO Clamp”: a
+ * person's look at the same $85.00, recorded in the entry's note (an entry has no field for a person's
+ * check, and its seen day stays the day of the two checks). Each entry still shows the words and the day it
+ * was first seen; the one page whose words had changed around the same price, Busy Bee's planer (now in
+ * stock), says both days in its note, and Lee Valley's clamp's note says that a person looked on 2026-10-29.
  *
  * These are not legal citations. lib/engines/shared/'s citation types name only government sources and back
  * a rule the engine reasons with; these are sellers' listed prices, software makers' plans and published
@@ -184,7 +188,7 @@ const tools: ToolPriced[] = [
       p("KMS Tools", "https://www.kmstools.com/bessey-3-3-4-40-inch-k-body-revolution-parallel-bar-clamp.html", "Bessey KRE3540 3-3/4\" x 40\" K Body REVOlution Parallel Bar Clamp, at MAP", 8495, "Model Number: KRE3540 MAP $84.95"),
       p("Busy Bee Tools", "https://www.busybeetools.com/products/clamp-k-body-revo-40in-1700-lbs", "Bessey KRE3540 40\" K Body REVO bar clamp", 8495, "BESSEY 40\" K BODY REVO BAR CLAMP In Stock Online $84.95"),
       p("Federated Tool Supply", "https://federatedtool.com/bessey-kre3540-clamp-woodworking-parallel-clamp-k-body-revolution-40-in-x-3-75-in-1700-lb/", "Bessey KRE3540 K Body REVOlution parallel clamp, 40 in.", 8495, "Write a Review $84.95 Weight: 7.65 LBS"),
-      p("Lee Valley", "https://www.leevalley.com/en-ca/shop/tools/hand-tools/clamps/bar/110648-bessey-k-body-revo-clamps-model-kre?item=17F7340", "Bessey K Body REVO Clamp (Model KRE), 40\" length, item 17F7340; the price shows once the 40\" length is picked, which this link does. Stock shown as 'Online: Limited'", 8500, "LENGTH: 12\" 18\" 24\" 31\" 40\" 50\" 60\" 82\" 98\" $85.00"),
+      p("Lee Valley", "https://www.leevalley.com/en-ca/shop/tools/hand-tools/clamps/bar/110648-bessey-k-body-revo-clamps-model-kre?item=17F7340", "Bessey K Body REVO Clamp (Model KRE), 40\" length, item 17F7340; the price shows once the 40\" length is picked, which this link does. Stock shown as 'Online: Limited'", 8500, "LENGTH: 12\" 18\" 24\" 31\" 40\" 50\" 60\" 82\" 98\" $85.00", "A person saw this price too: DotAmi's maintainer opened this page in their own browser on 2026-10-29 and saw $85, with the item line “Item 17F7340, Bessey 40\" K Body REVO Clamp”. A tool's check on 2026-10-27 met a bot check, which was not bypassed."),
     ],
   },
   {

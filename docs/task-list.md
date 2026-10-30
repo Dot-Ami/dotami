@@ -256,8 +256,9 @@ placed in phase 3.
       429, QuickBooks timed out): every Busy Bee Tools, Autodesk and QuickBooks price is the same as on
       2026-10-14. Fusion's personal-use page does show "CA$940 /YEAR (OR CA$120 /MONTH)", once a browser draws
       it (a plain fetch sees no amount: Autodesk fills its prices in with a script). Lee Valley's page showed
-      a bot check that was not bypassed, so its clamp price still rests on the two checks of 2026-10-14. The
-      Busy Bee planer's page now says it is in stock online, at the same clearance price; its note says both
+      a bot check that was not bypassed, so its clamp price still rests on the two checks of 2026-10-14; on
+      2026-10-29 the maintainer opened it in his own browser and saw $85, the same price, and its note says so.
+      The Busy Bee planer's page now says it is in stock online, at the same clearance price; its note says both
       days. The software notes' promotion lengths ("for 6 months", "for 3 months", "for a year") are out of
       DotAmi's own words (the QuickBooks and FreshBooks quotes keep them, as the pages wrote them), and so are
       three more time words: Fusion's plans are *Annual* and *Monthly* (they were "1-year term" and "1-month
@@ -1306,13 +1307,15 @@ roadmap's build order.
     2026-10-27" (`lib/privacy/anthropic-retention-official-words.ts`), and the entry is out of
     `COMPONENT_TIME_WORDS`. Not in the no-arguments re-check: that reads the catalogs' government citations
     only, so a change to Anthropic's page shows only when someone runs the script on it again
-  - [ ] For the maintainer's call: whether the same row also quotes two more of that page's sections, which
+  - [x] For the maintainer's call: whether the same row also quotes two more of that page's sections, which
     the checker found too on 2026-10-27 but whose reach to API inputs the page doesn't state: its longer period
     for a chat flagged as violating the Usage Policy ("We retain inputs and outputs for up to 2 years and trust
     and safety classification scores for up to 7 years if your chat is flagged …") and its line on Covered
     Models ("Additionally, for Covered Models, we require limited data retention and review as a part of our
     safety work."). The row quotes the exception "If we need to retain them for longer to enforce our Usage
-    Policy (UP)" without that period
+    Policy (UP)" without that period. Done on 2026-10-29 in #220: his answer was "Add both lines". The row now
+    draws both after the five, under *Anthropic's page also says:*, in the page's own order (Covered Models
+    first), and the seven quotes are one check dated 2026-10-29
   - [ ] For the maintainer's call, found by the review of #210: the *Replace income* goal card's payoff, "If
     this applies, paths with faster revenue and simpler compliance can rank higher." (`lib/brain/goal-effects.ts`,
     shown when the intake preview's row is opened), a time word and a ranking nothing does, like the other goal

@@ -703,6 +703,22 @@ describe("3. Time words in DotAmi's own words", () => {
     expect(renderToStaticMarkup(createElement(PageQuotes, { quotes: [] }))).toBe("");
   });
 
+  // Since 2026-10-29 the component can be given a label of its own, for a second set of quotes from the same page
+  // (What DotAmi knows about you: "Anthropic's page also says:"). The label stands in for PAGE_QUOTES_LEAD; it
+  // doesn't add to it, and the quotes still come only after it.
+  it("the official-quote component draws a label of its own in place of the usual one, quotes after it", () => {
+    const quotes = ["It will cost $200 and will take 1 day.", "Add $100 for express service in 4 hours."];
+    for (const layout of ["inline", "lines"] as const) {
+      const html = renderToStaticMarkup(createElement(PageQuotes, { quotes, layout, lead: "The page also says:" }));
+      const lead = html.indexOf("The page also says:");
+      expect(lead).toBeGreaterThan(-1);
+      expect(html).not.toContain(PAGE_QUOTES_LEAD);
+      for (const q of quotes) expect(html.indexOf(`“${q}”`), q).toBeGreaterThan(lead);
+    }
+    // No quotes, no label, whichever label it is given.
+    expect(renderToStaticMarkup(createElement(PageQuotes, { quotes: [], lead: "The page also says:" }))).toBe("");
+  });
+
   it("no other component maps over a tool check's quotes itself", () => {
     expect(quotesDrawnOutsideTheComponent(sourceFiles(["components", "app"]))).toEqual([]);
   });
