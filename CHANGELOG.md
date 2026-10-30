@@ -702,6 +702,12 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   `tests/reading-list-corrections.spec.ts` §§ 2–4 and 7, `tests/engine-integrity.spec.ts` (a stage's dollar
   figure must come from a page that stage cites), `tests/brain-incorporation.spec.ts`, `e2e/app.spec.ts` (Sole
   Prop activation's three sources: the new one in amber until 2026-10-27, each read by a person since).
+- **Mara's example: a person has now seen Lee Valley's clamp price** (2026-10-29). The tool re-check of
+  2026-10-27 met a bot check on Lee Valley's page and was not bypassed, so the price rested on the two checks of
+  2026-10-14. The maintainer opened the page in his own browser on 2026-10-29 and saw $85 and the item line
+  "Item 17F7340, Bessey 40" K Body REVO Clamp"; the clamp's note in *Where these numbers come from* now says so.
+  Its words and its day seen (2026-10-14) are unchanged, and so is every number and average. Test:
+  `tests/example-sources.spec.ts`.
 
 ### Changed
 - ***What DotAmi knows about you* quotes Anthropic's own words on how long it keeps what the intake sends**
