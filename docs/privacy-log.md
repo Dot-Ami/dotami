@@ -167,12 +167,13 @@ person is asked).
 
 ### Packages that ship
 
-- **Electron 44.9.1 in the desktop app, up from 44.8.0 (2026-10-30, Dependabot alert 61).** It refuses
-  certificates issued through eMudhra's compromised intermediate certificates, in Chromium's networking and
-  in Node's `tls`, `https` and `fetch`
+- **Electron 44.9.1 in the desktop app, up from 44.8.0 (2026-10-30, #226; Dependabot alert 61).** It
+  refuses certificates issued through eMudhra's compromised intermediate certificates, in Chromium's
+  networking and in Node's `tls`, `https` and `fetch`
   ([GHSA-jr5w-w6x2-84p9](https://github.com/electron/electron/security/advisories/GHSA-jr5w-w6x2-84p9),
-  read 2026-10-30). That makes the app's secure connections stricter, and changes nothing about what DotAmi
-  keeps, sends or asks: the [44.9.0](https://github.com/electron/electron/releases/tag/v44.9.0) and
+  CVE-2026-115570, read 2026-10-30). That makes the update check's connection to GitHub stricter (it goes
+  through Electron's own network module; see the changelog), and changes nothing about what DotAmi keeps,
+  sends or asks: the [44.9.0](https://github.com/electron/electron/releases/tag/v44.9.0) and
   [44.9.1](https://github.com/electron/electron/releases/tag/v44.9.1) notes (read 2026-10-30) don't mention
   `safeStorage`, which wraps the data file's and the receipts' keys; the fix for windows opened from links
   is for windows DotAmi never opens (`setWindowOpenHandler` in

@@ -30,14 +30,23 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   Tests: `e2e/launch-secret.spec.ts` (on the old code the plain call got 200 and the ideas, and the forged
   agree confirmed the figure), `tests/launch-secret.spec.ts`, and a desktop test in `e2e-desktop/desktop.spec.ts`.
 - **The desktop app moves to Electron 44.9.1** (from 44.8.0; Dependabot alert 61, rated high, and
-  Dependabot's #219, whose lockfile this replaces). Some certificates issued through eMudhra's intermediate
-  certificates were compromised; 44.9.1 refuses them in both Chromium's networking and Node's `tls`,
-  `https` and `fetch`. On older versions, someone holding such a certificate and able to intercept the
-  network could pose as a secure server to the app
+  Dependabot's #219, whose lockfile this replaces). Some of eMudhra's intermediate certificates were
+  compromised; 44.9.1 refuses certificates issued through them, in Chromium's networking and in Node's
+  `tls`, `https` and `fetch`
   ([GHSA-jr5w-w6x2-84p9](https://github.com/electron/electron/security/advisories/GHSA-jr5w-w6x2-84p9),
-  read 2026-10-30). DotAmi's server runs inside Electron (`utilityProcess.fork` in `desktop/main.mjs`),
-  so the update check and, when a model key is set up, the intake parser's call to the model both get
-  the block. The other changes since 44.8.0, by Electron's
+  CVE-2026-115570, read 2026-10-30). **Where the gap was, for DotAmi: the update check.** It runs in the
+  desktop app's main process through electron-updater, which uses Electron's own network module, that is
+  Chromium's networking (`loadUpdater` in `desktop/main.mjs`;
+  `node_modules/electron-updater/out/electronHttpExecutor.js`, 6.8.9). On 44.8.0, someone holding a
+  certificate issued through those intermediates and able to intercept the person's network could pose as
+  GitHub to it and offer a fake update. The download's SHA-512 check wouldn't catch that, because the hash
+  comes from the same place, and no code signature is checked (code signing is deferred,
+  [desktop-app.md](docs/architecture/desktop-app.md), What protects an update); installing would still take
+  the person's click on "Restart and update". The desktop app's server never calls the model: the app takes
+  `ANTHROPIC_API_KEY` out of its environment (`serverEnv` in `desktop/main.mjs`). A copy run from source runs
+  on plain Node, which this doesn't change. **Copies already installed (0.4.1 and earlier, on Electron 44.8.0
+  or older) get the fix with the next release**, which they download through the old check. The other
+  changes since 44.8.0, by Electron's
   [44.9.0](https://github.com/electron/electron/releases/tag/v44.9.0) and
   [44.9.1](https://github.com/electron/electron/releases/tag/v44.9.1) notes (read 2026-10-30), don't reach
   DotAmi: the macOS app shims are for Macs; the fix for windows opened from links is for windows DotAmi
