@@ -314,6 +314,12 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   *Annual* and *Monthly* (were "1-year term" and "1-month term"), alis rates "the job market" (was "the 3-year
   job market") and ISED's not profitable is "in the data year". A test holds every word of DotAmi's own in the
   sources to no duration, past one billing phrase used exactly as often as today (`tests/example-sources.spec.ts`).
+- **Mara's example: a person has now seen Lee Valley's clamp price** (2026-10-29). The tool re-check of
+  2026-10-27 met a bot check on Lee Valley's page and was not bypassed, so the price rested on the two checks of
+  2026-10-14. The maintainer opened the page in his own browser on 2026-10-29 and saw $85 and the item line
+  “Item 17F7340, Bessey 40" K Body REVO Clamp”; the clamp's note in *Where these numbers come from* now says so.
+  Its words and its day seen (2026-10-14) are unchanged, and so is every number and average. Test:
+  `tests/example-sources.spec.ts`.
 - **Every page fits a phone, one step counter, and plainer screens** (the screen review of 2026-10-23, its
   pre-release fixes "Phone and layout"). At 375 px: the cockpit's four gauges are stacked, each inside the window
   (Start-up money and Your date were out of sight in a strip that scrolled sideways; two by two from 640 px, four
@@ -764,8 +770,15 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   key is set, the intake's row said Anthropic's page "says API inputs and outputs are deleted within 30 days,
   with exceptions", DotAmi's paraphrase of a read on 2026-10-06. It now shows the page's own lines for API users,
   the period and its four exceptions, after *Words found on the page:*, with "Checked by a tool on 2026-10-27"
-  (`node scripts/check-quotes.mjs` found them that day; `lib/privacy/anthropic-retention-official-words.ts`). What
+  (since 2026-10-29, see the next entry; `node scripts/check-quotes.mjs` found them on 2026-10-27;
+  `lib/privacy/anthropic-retention-official-words.ts`). What
   DotAmi sends, and when, is unchanged, so the privacy log has no new line.
+- ***What DotAmi knows about you* quotes two more of Anthropic's lines, under "Anthropic's page also says:"**
+  (the maintainer's answer of 2026-10-29, "Add both lines"). After the five lines for API users, the intake's row
+  now shows the page's line on Covered Models and its longer period for a chat flagged as violating the Usage
+  Policy, word for word and in the page's own order; the page doesn't say whether they reach what an API user
+  sends, and DotAmi doesn't say either. One run of `node scripts/check-quotes.mjs` found all seven that day, so the row now says "Checked by a
+  tool on 2026-10-29". What DotAmi sends, and when, is unchanged, so the privacy log has no new line.
 - **31 source pages now say "Read by a person on 2026-10-25"** (the maintainer's reads). On 2026-10-25 the
   maintainer read 31 of the pages DotAmi cites in full, and ticked each one on his reading list; on 2026-10-24 he
   had decided that his reads made with an AI model's help count as a person's, for the pages he checked himself.
@@ -868,6 +881,13 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   as the area of the workspace divided by the total area of your home”). Two citations take their pages' own
   titles: *What are SR&ED tax incentives* and *Helping small businesses get loans*. The glossary's and the home
   office page's tool checks are of that day, since one run found their older quotes with the new ones.
+- **A sole proprietor's SR&ED card quotes the CRA's newer page on refunds** (2026-10-29; the maintainer's answer, "it
+  should always be the newer page because it's more up-to-date"). After the rates page's two lines it adds *The CRA's
+  SR&ED Investment Tax Credit Policy:* “Generally, for an individual (other than a trust), the refundable ITC is 40% of
+  the unclaimed balance of ITC earned in the current year for qualified SR&ED expenditures.” That page (dated
+  2026-10-07) is the card's sixth source, "Checked by a tool on 2026-10-29" in amber, since nobody has read it yet;
+  the older relationships page's "non-refundable" 15% is quoted nowhere, and the corporation's card, and the fork on
+  a sole proprietor's card that copies its note, are unchanged.
 
 ### Documented
 - **The screen specs say what the pre-release fixes changed** (2026-10-24). Each control the fixes above

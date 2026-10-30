@@ -89,7 +89,7 @@ export interface ListedPrice {
   /** The words seen on the page around the price, word for word. */
   quote: string;
   seenOn: string;
-  /** What the second check found worth saying about this price, if anything. */
+  /** What the second check, or a later look at the page, found worth saying about this price, if anything. */
   caution?: string;
 }
 
