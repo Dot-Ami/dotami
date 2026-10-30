@@ -189,6 +189,45 @@ describe("reading a table row as one piece (cells joined by \" | \")", () => {
     expect(found(nested, "Outer label cell | Inner label cell")).toBe(false);
   });
 
+  it("a row hidden by an inline display:none is never read either", () => {
+    expect(found('<table><tr style="display:none"><td>Secret label here</td><td>secret line here</td></tr></table>', "Secret label here | secret line here")).toBe(false);
+  });
+
+  it("where a page leaves out </tr> and </td>, a row still ends at the next row", () => {
+    const unclosed = "<table><tr><td>first label cell<td>first line cell<tr><td>second label cell<td>second line cell</table>";
+    expect(found(unclosed, "first label cell | first line cell")).toBe(true);
+    expect(found(unclosed, "second label cell | second line cell")).toBe(true);
+    expect(found(unclosed, "first line cell | second label cell")).toBe(false);
+  });
+
+  it("two tables side by side never join: a row ends where its table does", () => {
+    const two = "<table><tr><td>left label cell</td><td>left line cell</td></tr></table><table><tr><td>right label cell</td><td>right line cell</td></tr></table>";
+    expect(found(two, "left label cell | left line cell")).toBe(true);
+    expect(found(two, "left line cell | right label cell")).toBe(false);
+  });
+
+  it("a cell spanning two columns is one cell, joined once", () => {
+    const wide = '<table><tr><td colspan="2">wide label cell</td><td>line cell here</td></tr></table>';
+    expect(found(wide, "wide label cell | line cell here")).toBe(true);
+    expect(found(wide, "wide label cell | | line cell here")).toBe(false);
+  });
+
+  it("the blind spot, pinned: a cell spanning two rows is joined to its first row only", () => {
+    const tall = '<table><tr><td rowspan="2">shared label cell</td><td>first line cell</td></tr><tr><td>second line cell</td></tr></table>';
+    expect(found(tall, "shared label cell | first line cell")).toBe(true);
+    expect(found(tall, "shared label cell | second line cell")).toBe(false);
+  });
+
+  // A custom element whose name starts like a row's or a cell's tag (<tr-note>, <td-tip>) is neither: it must not end
+  // the row or start a new cell. (A custom element's text is a block of its own, as every tag not listed inline is.)
+  it("a custom element named <tr-…> or <td-…> doesn't end a row or split a cell", () => {
+    const note = "<table><tr><td>label cell one <tr-note>see the note</tr-note></td><td>line cell here</td></tr></table>";
+    expect(found(note, "see the note | line cell here")).toBe(true);
+    const tip = "<table><tr><td>label cell two <td-tip>the tip text</td-tip></td><td>line cell there</td></tr></table>";
+    expect(found(tip, "label cell two | the tip text")).toBe(false);
+    expect(found(tip, "the tip text | line cell there")).toBe(true);
+  });
+
   it("a page's own vertical bar inside one block is found as before", () => {
     expect(found("<ul><li>Red Seal Application | $150</li></ul>", "Red Seal Application | $150")).toBe(true);
   });

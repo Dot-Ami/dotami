@@ -59,16 +59,21 @@ never reused.
   " | " (the maintainer's answer of 2026-10-29, "Teach the checker to read a table row as one
   piece"; [citations.md](citations.md), § The checker), and found "Employer | Must contribute 25% …"
   and "Government of Alberta | Contributes the other 75% …" on the page. Until then no line named who
-  contributes which. `eligibility` (which no screen draws for a program) quotes the page's
-  requirements for registered employers, what training counts and which costs, each list after its
-  own lead-in (“Registered employers must also:”, “Training must be directly related to the
-  trainees’ current or future job and fall within at least one of the following skills
-  categories:”, “Training must also:”, “The Canada–Alberta Productivity Grant is available for direct
-  training costs only, including:”), and “Employee wages and general business assets are not
-  eligible”; the legal line quotes the employer's 25% and the employer requirements. Outside the
+  contributes which. `eligibility` (which no screen draws for a program) quotes some of the page's
+  lists, each after its own lead-in: the requirements for registered employers (“Registered
+  employers must also:”), what training counts (“Training must be directly related to the trainees’
+  current or future job and fall within at least one of the following skills categories:”,
+  “Training must also:”) and some of the costs (“The Canada–Alberta Productivity Grant is available
+  for direct training costs only, including:”), then the page's next two sentences, “Small and
+  medium-sized organizations may be eligible for travel costs related to training” and “Employee
+  wages and general business assets are not eligible”; the legal line quotes the employer's 25% and
+  the employer requirements. These are not all the page says (*Still open*, below). Outside the
   quotes DotAmi writes only labels and separators: the page's name, the compass's "If", the table's
-  row labels, and "…" where an item is left out (the costs list's "examination fees" is two words,
-  under the checker's three).
+  row labels, and "…" where something is left out: before “Registered employers must also:”, which
+  follows the page's unheld list of eligible employer types, and inside a list where an item is a
+  time or is too short to check (the costs list's first item, "examination fees", is two words, under
+  the checker's three). Until the review of #223 the costs passage left out the travel-costs
+  sentence with no "…", so it read as complete.
 - **No times.** Three of the page's items are times: “be operational in Alberta for at least one
   year”, “have an active legal entity status throughout the grant term” and “be completed within 52
   weeks”. Each is held in the source's tool check only, on no line of the entry, and a "…" marks its
@@ -81,9 +86,10 @@ never reused.
   time through only while a tool check alone holds it.
 - **How it was checked.** One tool check, of 2026-10-29. For the sentences found on the page on
   2026-10-27 the maintainer's answer of 2026-10-29 was "One new check that holds the old and new
-  sentences", dated by its run: one `node scripts/check-quotes.mjs --url … --quote …` run found all 26
-  quotes (the four of 2026-10-23, the two rows, and the 2026-10-27 sentences), and its date replaced
-  2026-10-23. Before it: a tool check of 2026-10-23 (the reading list's matcher, found again by a
+  sentences", dated by its run: one `node scripts/check-quotes.mjs --url … --quote …` run found all 27
+  quotes (the four of 2026-10-23, the two rows, the 2026-10-27 sentences and the travel-costs
+  sentence), and its date replaced 2026-10-23. (A first run that day held 26; the review of #223
+  added the travel-costs sentence, so a second run held all 27, and the check is that run's.) Before it: a tool check of 2026-10-23 (the reading list's matcher, found again by a
   networked run on 2026-10-26, rule 4 of [citations.md](citations.md)). The maintainer's read of the
   page in full on 2026-10-25 stays and wins on screen: the card says *Read by a person on
   2026-10-25* and lists none of the quotes, which the tool check keeps in the catalog.
@@ -108,8 +114,12 @@ never reused.
   proprietors" on it on 2026-10-27), so no line says either way, and `structures` stays open at
   every structure. And the CAPG applicant guidelines the page points to for full details
   (open.alberta.ca) are unread: their page refused one plain fetch on 2026-10-27, which was not
-  retried. Until 2026-10-29 the employer requirements, what training counts, who else funds it and
-  the table's row labels were open too.
+  retried. Three of the page's own lists aren't held, and no line quotes them: the eligible employer
+  types ("Employers must be one of the following eligible types:" …, in plain quote marks because
+  no check holds it), which “Registered employers must also:” follows; the ineligible employers; and
+  the ineligible training. They come close to
+  the sole-proprietor question, which stays the maintainer's. Until 2026-10-29 the employer
+  requirements, what training counts, who else funds it and the table's row labels were open too.
 
 ## Classification rule (flagged decision — see audit § Flags #5)
 

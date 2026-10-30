@@ -187,11 +187,17 @@ the funding table's row is found as
 `Employer | Must contribute 25% of the total eligible training costs … they intend to hire.` Every cell
 stays a block of its own as well, so a cell alone is found as before, and every quote found before
 this change is found the same way: on 2026-10-29 the no-argument run on the old code found all 784
-recorded quotes, and on the new code all 806, the same 784 and the Productivity Grant's 22 new ones.
+recorded quotes, and on the new code all 807, the same 784 and the Productivity Grant's 23 new ones.
 What the joiner can and can't do:
 
 - It stands only for the edge between two cells of one row. Rows never join: no quote runs from one
-  row into the next, even where the page leaves out a closing `</tr>`.
+  row into the next, even where the page leaves out a closing `</tr>` or `</td>`, and no row runs
+  into another table beside it.
+- A cell spanning columns (`colspan`) is one cell, joined once. **A blind spot:** a cell spanning
+  rows (`rowspan`) sits in the HTML of its first row only, so it is joined to that row and not to
+  the rows below it; a label that spans rows can't be quoted with any row but its first.
+- Only real row and cell tags count: a custom element whose name starts the same way (`<tr-note>`,
+  `<td-tip>`) never ends a row or splits a cell.
 - Inside a cell, a list item, a paragraph or a line break still ends a piece. So across an edge a
   quote reaches only the nearest item on each side: the label cell and the first line of a list
   beside it, never its second line (`Government of Alberta | Contributes the other 75% …` is found;
@@ -417,7 +423,7 @@ which wins on screen, and keeps its tool check; his read didn't stand in for tha
 | CRA, *What's new for corporations* | `grant-sred` (the CCPC rate) | the expenditure limit for the enhanced 35% raised to $6 million (never the page's line that it lists proposed, announced or enacted changes) |
 | Income Tax Act s.127(10.2) | `grant-sred` | the expenditure limit's formula, from $6 million. The list recorded "formula found" for this page, so the sentence that leads into it is not kept. |
 | CRA, *Where to keep your records, for how long and how to request the permission to destroy them early* | the Delete menu's records line (`cra-business-records-retention`, [`lib/engines/compliance/v2026/record-keeping.ts`](../../lib/engines/compliance/v2026/record-keeping.ts)) | that records are generally kept six years from the end of the last tax year they relate to, and for a different period in some situations: the two sentences every road's *Keep your records from day one* step holds from its own check of 2026-10-14, which keeps that date. The list found all ten quotes held for this page that day. The citation's read wins on screen (rule 3; 2026-10-08, the maintainer's of 2026-10-25 since then). |
-| Alberta, *Canada-Alberta Productivity Grant* (https://www.alberta.ca/canada-alberta-productivity-grant) | program *Canada-Alberta Productivity Grant* (`grant-capg`, added 2026-10-24), named by map stage *Hire first employee* on road 0 | the 25% and the other 75% of eligible training costs (who contributes which isn't in the quotes), at most $5,000 per employed trainee and $100,000 per employer per fiscal year, and “be operational in Alberta for at least one year”. Fetched from the Canada-Alberta Job Grant's old address, which redirects there. Since 2026-10-29 the citation's one check is of that day: one run of the script found these four with the funding table's two rows and the page's sentences found on 2026-10-27 (*Blocked*, the Productivity Grant's other conditions). |
+| Alberta, *Canada-Alberta Productivity Grant* (https://www.alberta.ca/canada-alberta-productivity-grant) | program *Canada-Alberta Productivity Grant* (`grant-capg`, added 2026-10-24), named by map stage *Hire first employee* on road 0 | the 25% and the other 75% of eligible training costs (who contributes which is held since 2026-10-29 by the funding table's two rows), at most $5,000 per employed trainee and $100,000 per employer per fiscal year, and “be operational in Alberta for at least one year”. Fetched from the Canada-Alberta Job Grant's old address, which redirects there. Since 2026-10-29 the citation's one check is of that day: one run of the script found these four with the funding table's two rows and the page's sentences found on 2026-10-27 (*Blocked*, the Productivity Grant's other conditions). |
 | CRA, Guide T4002, chapter 4 (https://www.canada.ca/en/revenue-agency/services/forms-publications/publications/t4002/t4002-6.html) | risk read *Enhanced first-year deduction timing* (`risk-immediate-expensing-timing`, [`lib/engines/risk/v2026/triggers.ts`](../../lib/engines/risk/v2026/triggers.ts)) | the guide's sentence on the dates for Class 44, 46 or 50 property under proposed changes. It ends on a colon before the factors, which aren't held, so no screen quotes it. The Class 50 write-off's citation of the same chapter keeps no tool check (its read of 2026-07-02 is the maintainer's of 2026-10-25 since then). |
 | ISED, the program's loans page (https://ised-isde.canada.ca/site/canada-small-business-financing-program/en/canada-small-business-financing-program/find-loan-your-small-business/helping-small-businesses-get-loans) | the loan program's risk read (`risk-self-declared-valuation`) | that for real property and equipment, security must be taken on the assets financed. The read cited ISED's program hub until 2026-10-24. The citation's title is the page's own, *Helping small businesses get loans*, since `node scripts/check-quotes.mjs` found it on the page on 2026-10-27; until then it described the page. The program's own card (`grant-csbfp`) cites the page too, with #208's tool check of the same day (listed under § Waiting for the maintainer's read until his read of 2026-10-25), so the page the box quotes is listed under the card. |
 
@@ -545,8 +551,9 @@ machine, before DotAmi says more than it does now. They are listed in [task-list
    limit is $6 million per year.” (found 2026-10-27); it waits with item 5, since it would be that
    page's first citation, and the card's date guard (no year of DotAmi's own) is the maintainer's
    NO TIMES call.
-7. **The Productivity Grant's other conditions.** Settled on 2026-10-29 by the maintainer's two
-   answers of that day (his reading page, item 5; "Yes, build them"), except two things below.
+7. **The Productivity Grant's other conditions.** Partly settled on 2026-10-29 by the maintainer's
+   two answers of that day (his reading page, item 5; "Yes, build them"): the table's labels and the
+   sentences found on 2026-10-27 are held, and what stays open is below.
    - *The labels before the 25% and 75% lines* ("Teach the checker to read a table row as one
      piece"): the checker reads a table row as one piece (§ The checker), and found the funding
      table's rows "Employer | Must contribute 25% …" and "Government of Alberta | Contributes the other
@@ -554,16 +561,21 @@ machine, before DotAmi says more than it does now. They are listed in [task-list
      “Contributes the other 75% …”, the labels being the page's own cells.
    - *The sentences found on the page on 2026-10-27* ("One new check that holds the old and new
      sentences", dated by its run): its requirements for registered employers, what training and costs
-     count, and who delivers and funds it. One run of `node scripts/check-quotes.mjs --url … --quote …`
-     found all 26 quotes (the four of 2026-10-23, the two rows, these sentences) on 2026-10-29, and the
+     count, and who delivers and funds it, with the page's travel-costs sentence after its costs list
+     (added after the review of #223). One run of `node scripts/check-quotes.mjs --url … --quote …`
+     found all 27 quotes (the four of 2026-10-23, the two rows, these sentences) on 2026-10-29, and the
      citation holds that one check, dated 2026-10-29 ([grants.md](grants.md)). The three items that are
      times (the one-year rule, “have an active legal entity status throughout the grant term” and “be
      completed within 52 weeks”) are in the check only, on no line; `authority` is "Alberta / federal",
      on the page's sentence quoted in the catalog's comment. His read of 2026-10-25 stays and wins on
      screen.
    - *Still open:* whether a sole proprietor counts as an employer (the page never says "sole
-     proprietor", so no line says either way), and the CAPG applicant guidelines the page points to for
-     full details, unread (open.alberta.ca refused one plain fetch on 2026-10-27, not retried).
+     proprietor", so no line says either way); the CAPG applicant guidelines the page points to for
+     full details, unread (open.alberta.ca refused one plain fetch on 2026-10-27, not retried); and three
+     of the page's own lists, not held and quoted by no line: the eligible employer types ("Employers
+     must be one of the following eligible types:" …, which “Registered employers must also:” follows,
+     so a "…" stands before that lead-in), the ineligible employers and the ineligible training. They
+     come close to the sole-proprietor question, which stays his.
 
 Three more were settled on 2026-10-27 (four changes, counting the two titles), each by
 `node scripts/check-quotes.mjs` finding the words on the live page that day:

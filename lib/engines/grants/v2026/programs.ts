@@ -339,17 +339,22 @@ export const grantProgramsV2026 = [
     // the tool check only and a "…" marks its place: “be operational in Alberta for at least one year” and “have an
     // active legal entity status throughout the grant term” (the employer list's first two), and “be completed within
     // 52 weeks” (the training list's second). Until 2026-10-29 the one-year rule was here. The costs list's first item,
-    // "examination fees", is two words, under the checker's three, so a "…" marks it too.
+    // "examination fees", is two words, under the checker's three, so a "…" marks it too. A "…" also stands before
+    // “Registered employers must also:”, which follows the page's list of eligible employer types ("Employers must be
+    // one of the following eligible types:" …, in plain quote marks here: not held): that list isn't held, nor are its lists of ineligible employers and
+    // ineligible training, since they come close to whether a sole proprietor counts, the maintainer's call. The
+    // travel-costs sentence between the costs list and its NOTE is quoted in its place (the review of #223).
     eligibility:
-      "Alberta's page on this program: “Registered employers must also:” … “be in good standing”; “carry Workers Compensation Benefits coverage for trainees”; “comply with provincial agreements”. “Training must be directly related to the trainees’ current or future job and fall within at least one of the following skills categories:” “Business Process and Operations Management: Improving processes, systems, operations, and resource management”; “Technical: Specialized skills that enhance efficiency, quality, and problem solving”; “Digital and Technological: Skills to use, manage, and integrate digital tools and technologies”. “Training must also:” “be relevant to the trainee’s job”; … “include interaction with a qualified instructor”; “be instructional and structured”; “take place in Alberta, except under exceptional circumstances”. “The Canada–Alberta Productivity Grant is available for direct training costs only, including:” … “tuition or course fees charged by the training provider”; “textbooks or software”. “Employee wages and general business assets are not eligible”.",
+      "Alberta's page on this program: … “Registered employers must also:” … “be in good standing”; “carry Workers Compensation Benefits coverage for trainees”; “comply with provincial agreements”. “Training must be directly related to the trainees’ current or future job and fall within at least one of the following skills categories:” “Business Process and Operations Management: Improving processes, systems, operations, and resource management”; “Technical: Specialized skills that enhance efficiency, quality, and problem solving”; “Digital and Technological: Skills to use, manage, and integrate digital tools and technologies”. “Training must also:” “be relevant to the trainee’s job”; … “include interaction with a qualified instructor”; “be instructional and structured”; “take place in Alberta, except under exceptional circumstances”. “The Canada–Alberta Productivity Grant is available for direct training costs only, including:” … “tuition or course fees charged by the training provider”; “textbooks or software”. “Small and medium-sized organizations may be eligible for travel costs related to training”. “Employee wages and general business assets are not eligible”.",
     lensAnnotations: {
       // Shown on screen as the card's payoff (lib/brain/evaluate.ts evaluateGrant). Outside the quotes: the compass's
       // "If", the page's name and the table's own row labels only, never what the program may do. Until 2026-10-29 the
       // labels weren't held, so neither line named who contributes which.
       tax: "If training employees is on the venture's path, Alberta's page on this program: Employer: “Must contribute 25% of the total eligible training costs for existing employees or individuals (includes unemployed individuals) they intend to hire”; Government of Alberta: “Contributes the other 75% of the cost to a maximum of $5,000 per employed trainee per fiscal year”; “An employer is eligible for up to a maximum amount of $100,000 per fiscal year”.",
-      // The employer's share and the page's requirements for registered employers, the two times among them left out.
+      // The employer's share and the page's requirements for registered employers, the two times among them left out,
+      // and a "…" for the unheld list of eligible employer types the lead-in follows (see eligibility).
       legal:
-        "Alberta's page on this program: Employer: “Must contribute 25% of the total eligible training costs for existing employees or individuals (includes unemployed individuals) they intend to hire”; “Registered employers must also:” … “be in good standing”; “carry Workers Compensation Benefits coverage for trainees”; “comply with provincial agreements”.",
+        "Alberta's page on this program: Employer: “Must contribute 25% of the total eligible training costs for existing employees or individuals (includes unemployed individuals) they intend to hire”; … “Registered employers must also:” … “be in good standing”; “carry Workers Compensation Benefits coverage for trainees”; “comply with provincial agreements”.",
     },
     citations: [
       {
@@ -364,9 +369,11 @@ export const grantProgramsV2026 = [
         // `node scripts/check-quotes.mjs` run found them again on 2026-10-26, before merge (docs/engines/citations.md, rule 4).
         // Since 2026-10-29 this is one check of that day (the maintainer's answer of 2026-10-29 for the sentences found
         // on 2026-10-27: "One new check that holds the old and new sentences", dated by its run): one
-        // `node scripts/check-quotes.mjs --url … --quote …` run found all 26 quotes, the four above, the funding table's
+        // `node scripts/check-quotes.mjs --url … --quote …` run found all 27 quotes, the four above, the funding table's
         // two rows (a row's cells joined by " | ", the checker's row reading of the same day), and the page's
-        // requirements for registered employers, what training and costs count, and who delivers and funds it.
+        // requirements for registered employers, what training and costs count, and who delivers and funds it. (A first
+        // run that day held 26; the review of #223 added the travel-costs sentence, so a second run held all 27, and
+        // this check is that run's.)
         url: "https://www.alberta.ca/canada-alberta-productivity-grant",
         lastVerified: MAINTAINER_READ_ON,
         readBy: "person",
@@ -397,6 +404,7 @@ export const grantProgramsV2026 = [
             "The Canada–Alberta Productivity Grant is available for direct training costs only, including:",
             "tuition or course fees charged by the training provider",
             "textbooks or software",
+            "Small and medium-sized organizations may be eligible for travel costs related to training.",
             "Employee wages and general business assets are not eligible.",
             "The program is delivered by Alberta and funded by the Government of Canada through the Canada–Alberta Workforce Development Agreement.",
           ],

@@ -125,26 +125,30 @@ function tagsToText(html) {
 // before.
 const CELL_JOINER = " | ";
 
+// The tag names below end at a space, "/" or ">", not at a word boundary (\b), which a hyphen also is: a custom
+// element such as <tr-note> or <td-tip> is neither a row nor a cell, so it never ends a row or splits a cell.
 // Where a row stops: the next row, its own end, or the start or end of a table or one of a table's sections. A row
 // never runs on into the next one, even where the page leaves out a closing </tr>.
-const ROW_STOP = /<\/?(?:tr|table|thead|tbody|tfoot)\b[^>]*>/gi;
+const ROW_STOP = /<\/?(?:tr|table|thead|tbody|tfoot)(?=[\s/>])[^>]*>/gi;
 
 /**
  * Each table row's cells, in order, joined by CELL_JOINER: one more piece of the page for every row with two cells
  * or more. Every cell stays a block of its own in the page's text as well, so this adds pieces and changes none. A
  * row that holds another table gives no piece of its own (the inner table's rows give theirs). Read from the HTML
- * after the hidden parts are gone, so a row or cell the page hides is never in it.
+ * after the hidden parts are gone, so a row or cell the page hides is never in it. A cell spanning columns
+ * (colspan) is one cell, joined once; a cell spanning rows (rowspan) sits in its first row's HTML only, so it is
+ * joined to that row and not to the rows below it.
  */
 function tableRowPieces(html) {
   const pieces = [];
-  const opening = /<tr\b[^>]*>/gi;
+  const opening = /<tr(?=[\s/>])[^>]*>/gi;
   for (let m = opening.exec(html); m; m = opening.exec(html)) {
     ROW_STOP.lastIndex = opening.lastIndex;
     const stop = ROW_STOP.exec(html);
-    if (stop && /^<table\b/i.test(stop[0])) continue;
+    if (stop && /^<table(?=[\s/>])/i.test(stop[0])) continue;
     const row = html.slice(opening.lastIndex, stop ? stop.index : html.length);
     // The text before the first cell is the space between <tr> and it, never a cell.
-    const cells = row.split(/<t[dh]\b[^>]*>/i).slice(1);
+    const cells = row.split(/<t[dh](?=[\s/>])[^>]*>/i).slice(1);
     if (cells.length < 2) continue;
     // A cell's own blocks stay apart; only the BLOCKs at its two edges (its <ul>, <li>, </td>…) give way to the joiner.
     const piece = cells.map((cell) => tagsToText(cell).replace(/^[\s\u001e]+|[\s\u001e]+$/g, "")).join(CELL_JOINER);

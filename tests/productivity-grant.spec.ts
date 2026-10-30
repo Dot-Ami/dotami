@@ -63,7 +63,8 @@ const FUNDED_BY =
 /**
  * Every quote the citation holds since 2026-10-29: the four of 2026-10-23, the two rows, and the sentences found on
  * 2026-10-27, in the order of the one run that found them all (`node scripts/check-quotes.mjs --url PAGE` with these
- * 26 quotes; "All 26 quotes were found", checkedOn "2026-10-29").
+ * 27 quotes; "All 27 quotes were found", checkedOn "2026-10-29"). The first run that day held 26; the review of #223
+ * found the costs list silently dropped the page's travel-costs sentence, so one more run held all 27.
  */
 const HELD = [
   ...HELD_2026_10_23,
@@ -86,6 +87,7 @@ const HELD = [
   "The Canada–Alberta Productivity Grant is available for direct training costs only, including:",
   "tuition or course fees charged by the training provider",
   "textbooks or software",
+  "Small and medium-sized organizations may be eligible for travel costs related to training.",
   "Employee wages and general business assets are not eligible.",
   FUNDED_BY,
 ];
@@ -182,7 +184,9 @@ describe("the Canada-Alberta Productivity Grant in the programs catalog", () => 
     expect(own("Up to 2/3 of training costs").match(AMOUNTS)).toEqual(["2/3"]);
   });
 
-  it("every line states nothing but the page's held words, and no time even inside its quotes", () => {
+  // "No time word the no-times check sees": the quotes hold "per fiscal year", the page's own words, which
+  // tests/helpers/time-words.ts doesn't flag (a rate, not a wait).
+  it("every line states nothing but the page's held words, and no time word the no-times check sees, even inside its quotes", () => {
     for (const line of linesOf(capg()!)) {
       expect(quotesIn(line).length, line).toBeGreaterThan(0);
       expect(own(line), line).not.toMatch(/\b(may|can|will|must|should|qualif\w*|eligib\w*|guarantee\w*|deductible|you\w*)\b/i);
@@ -195,7 +199,7 @@ describe("the Canada-Alberta Productivity Grant in the programs catalog", () => 
   it("DotAmi's own words are labels and separators only: the page's name, the compass's \"If\", the table's row labels", () => {
     for (const line of linesOf(capg()!)) expect(afterLabels(line), line).toBe("");
     // The legal line, in full, without its quotes.
-    expect(own(capg()!.lensAnnotations.legal).replace(/\s+/g, " ").trim()).toBe("Alberta's page on this program: Employer: ; … ; ; .");
+    expect(own(capg()!.lensAnnotations.legal).replace(/\s+/g, " ").trim()).toBe("Alberta's page on this program: Employer: ; … … ; ; .");
     // Planted control: the line as it read before 2026-10-24, a subject in DotAmi's own words, is caught.
     expect(afterLabels("Alberta's page on this program, on the employer's own share: “Must contribute 25%”.")).not.toBe("");
   });
@@ -225,10 +229,13 @@ describe("the Canada-Alberta Productivity Grant in the programs catalog", () => 
     expect(rowHeld(held, "Employer", "Contributes the other 75% of the cost")).toBe(false);
   });
 
-  it("the employer requirements and what training counts: the page's lists, each after its own lead-in, a time item's place marked …", () => {
+  it("the employer requirements and what training counts: the page's lists, each after its own lead-in, a left-out item's place marked …", () => {
     const p = capg()!;
+    // “Registered employers must also:” follows the page's list of eligible employer types ("Employers must be one of
+    // the following eligible types:" …), which isn't held: it comes close to whether a sole proprietor counts, the
+    // maintainer's call. So a "…" stands before the lead-in too (the review of #223).
     const requirements =
-      "“Registered employers must also:” … “be in good standing”; “carry Workers Compensation Benefits coverage for trainees”; “comply with provincial agreements”";
+      "… “Registered employers must also:” … “be in good standing”; “carry Workers Compensation Benefits coverage for trainees”; “comply with provincial agreements”";
     expect(p.eligibility).toContain(requirements);
     expect(p.lensAnnotations.legal).toContain(requirements);
     expect(p.eligibility).toContain(
@@ -238,9 +245,10 @@ describe("the Canada-Alberta Productivity Grant in the programs catalog", () => 
       "“Training must also:” “be relevant to the trainee’s job”; … “include interaction with a qualified instructor”; “be instructional and structured”; “take place in Alberta, except under exceptional circumstances”.",
     );
     // "examination fees", the list's first item, is two words: under the checker's three, so it can't be held and a "…"
-    // marks it.
+    // marks it. The page's sentence between the list and its NOTE, on travel costs, is quoted in its place (it was
+    // silently left out until the review of #223).
     expect(p.eligibility).toContain(
-      "“The Canada–Alberta Productivity Grant is available for direct training costs only, including:” … “tuition or course fees charged by the training provider”; “textbooks or software”. “Employee wages and general business assets are not eligible”.",
+      "“The Canada–Alberta Productivity Grant is available for direct training costs only, including:” … “tuition or course fees charged by the training provider”; “textbooks or software”. “Small and medium-sized organizations may be eligible for travel costs related to training”. “Employee wages and general business assets are not eligible”.",
     );
   });
 

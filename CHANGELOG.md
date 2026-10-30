@@ -38,9 +38,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   …"), never two rows; every cell is still found alone, and a run over every recorded quote found the same ones on
   the old and the new code. The card's line now reads Employer: “Must contribute 25% …”; Government of Alberta:
   “Contributes the other 75% …”, the labels being the page's own table cells. The entry also quotes the page's
-  requirements for registered employers and what training and costs count (no screen draws those yet), and its
-  authority is "Alberta / federal", on the page's sentence on who delivers and funds it. The page's three time items
-  stay in the source's tool check only. One run found all 26 quotes on 2026-10-29, so the source's one tool check is
+  requirements for registered employers and some of what training and costs count (no screen draws those yet), and
+  its authority is "Alberta / federal", on the page's sentence on who delivers and funds it. The page's three time
+  items stay in the source's tool check only. One run found all 27 quotes on 2026-10-29, so the source's one tool check is
   of that day; the maintainer's read of 2026-10-25 still wins on screen. Whether a sole proprietor counts is still
   open (the page never says). It can't help a table a page's script draws, such as the CRA's GST/HST rates
   (`tests/check-quotes.spec.ts`, `tests/productivity-grant.spec.ts`; docs/engines/citations.md § The checker).
@@ -50,7 +50,7 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   Alberta's page says, in quote marks: “Must contribute 25% of the total eligible training costs …”, “Contributes
   the other 75% of the cost to a maximum of $5,000 per employed trainee per fiscal year” and “An employer is
   eligible for up to a maximum amount of $100,000 per fiscal year” (who contributes which share isn't in the words
-  DotAmi holds, so no line names it). Outside the quotes it says only "If training employees is on the venture's
+  DotAmi holds, so no line names it; until 2026-10-29, see the entry above). Outside the quotes it says only "If training employees is on the venture's
   path" and the page's name. The page's “be operational in Alberta for at least one year” is a time, so it is not
   on the card's line. The reading list's matcher found the four quotes on the page on 2026-10-23, kept as a tool
   check (a networked `node scripts/check-quotes.mjs` run should find them again), and the maintainer read the page
@@ -61,8 +61,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   activity match this program", `lib/brain/evaluate.ts` `evaluateGrant`). Road 0's *Hire first employee* names it,
   so for an idea that hires first the map draws it under that card; road 0's other panels list it under
   *Elsewhere on your map*. It is not on the apprentice road, which draws no rules and tax cards, and not outside
-  Alberta. What the page asks of employers beyond that, whether a sole proprietor counts, and who else funds it
-  aren't in the words DotAmi holds, so the card says none of them ([docs/engines/grants.md](docs/engines/grants.md)).
+  Alberta. What the page asks of employers beyond that (until 2026-10-29; see the entry above), whether a sole
+  proprietor counts, and who else funds it (until 2026-10-29; see the entry above) aren't in the words DotAmi holds,
+  so the card says none of them ([docs/engines/grants.md](docs/engines/grants.md)).
   Tests: `tests/productivity-grant.spec.ts` (on the old code there was no such entry), `tests/road-map.spec.ts`
   (the one card the map gained), `tests/cockpit-screen.spec.ts`; road 0's 11 panels in
   `tests/fixtures/official-fees/panels-before.json` are redrawn for it, and for five map stages' corrections
