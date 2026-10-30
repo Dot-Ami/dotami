@@ -1,6 +1,6 @@
 # Task list — what's being built, and what you can pick up
 
-Last updated: 2026-10-27. Every story planned for DotAmi, with its tasks. The plan behind it is
+Last updated: 2026-10-29. Every story planned for DotAmi, with its tasks. The plan behind it is
 [architecture/use-cases.md](architecture/use-cases.md) (who it's for, the decisions, the build
 order); the settings and edge cases each story must test are in
 [architecture/settings-and-edge-cases.md](architecture/settings-and-edge-cases.md) — the codes in
@@ -701,11 +701,14 @@ placed in phase 3.
     2026-10-25); changing your place later with one Change box for every answer (S2.5.33); everything you can
     apply for and write off (S2.5.38); public information on other businesses (S2.5.39); DotAmi as a local
     MCP server, read-only and off by default (S2.5.40)
-  - [x] Two questions his reads of 2026-10-25 left open, both answered on his reading page on 2026-10-29: the
-    table's rows say Ontario "13%" and Alberta "5%" (Alberta's line now says only the 5%), and for s.67.3 his
-    pick A, the title names only the section the page holds, with a plain-English line under it saying what the
-    page holds (whether every source gets one is his question, S2.5.41). The questions: what the CRA's rate table
-    shows for Ontario and
+  - [ ] A line under every source's title saying what its page holds? The maintainer's question, asked on
+    PR #224: since 2026-10-29 only the s.67.3 source has one (`pageHolds`, citations.md § The shape, its words in
+    `lib/engines/shared/words.ts`); each new one would be written from its page, read in full
+  - [x] Two questions his reads of 2026-10-25 left open. Both were answered on his reading page on 2026-10-28
+    (Alberta time). He copied the table's rows, Ontario "13%" and Alberta "5%", and Alberta's line now says only
+    the 5%; his answer isn't a read of the page in full, so its sources keep his read of 2026-10-25. For s.67.3 he
+    picked A: the title names only the section the page holds, with a plain-English line under it saying what
+    the page holds (the line above). The two questions were what the CRA's rate table shows for Ontario and
     Alberta (citations.md § Blocked, 1 and 2), and whether the s.67.3 citation's title or its address changes
     (the title names four sections, the page holds one)
 
@@ -1088,9 +1091,11 @@ roadmap's build order.
       card's line is DotAmi's wording of the table's row until then. His read of the page is recorded
       (2026-10-25), but not what he found in the table: his word settles whether the
       table shows "no provincial sales tax" or only Alberta's 5% GST (then the line says only that).
-      Settled on 2026-10-29: he read the row, "5%", so the line and description say only "… lists Alberta at 5%.";
-      Alberta's page, checked by a tool that day (“Alberta has no sales tax.”), is the card's second source
-    - [x] Ontario's 13% HST (`compliance-on-hst`): the same table. Settled on 2026-10-29: he read the row, "13%"
+      Settled on 2026-10-29: he copied the row on 2026-10-28, "5%", so the line and description say only "… lists
+      Alberta at 5%."; Alberta's page, checked by a tool on 2026-10-29 (“Alberta has no sales tax.” and its block
+      on other provinces' sales taxes), is the card's second source; the card's name is PR #224's question 2
+    - [x] Ontario's 13% HST (`compliance-on-hst`): the same table. Settled on 2026-10-29: he copied the row on
+      2026-10-28, "13%"
     - [ ] Ontario food premises: the regulation in force, read and quoted, under a new id
     - [ ] Repeated losses: a CRA, Act or folio page on business versus personal pursuits, with its words
     - [ ] SR&ED refunded or not: whether, and how much of, a sole proprietor's 15% credit is, and whether a

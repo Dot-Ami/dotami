@@ -68,7 +68,7 @@ export function CitationLinks({ citations, compact = false }: { citations: Engin
               {c.verification ? <StatusChip status={c.verification.status} className="shrink-0" /> : null}
             </span>
             {/* What the page holds, in plain English, so a reader knows what to look for on it (the maintainer's
-                note of 2026-10-29). Only a source that has one: the line comes from a words file
+                note of 2026-10-28). Only a source that has one: the line comes from a words file
                 (lib/engines/shared/words.ts), never from this component. */}
             {c.pageHolds ? <span className="mt-0.5 block text-small leading-4 text-stone">{c.pageHolds}</span> : null}
             {/* How it was checked (decided 2026-10-11, docs/engines/citations.md). A person's read,

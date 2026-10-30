@@ -136,8 +136,8 @@ His reading list of 2026-10-23 checked five entries here, and his answers of 202
 changed. None of their sources was marked as read by him then; since 2026-10-27 the sources of the four
 still here say he read them in full on 2026-10-25 ([citations.md](citations.md), § The maintainer's reads
 of 2026-10-25). His read of the rate page's table is recorded, but what he found there isn't, so the two
-lines below that rest on it are unchanged. Since 2026-10-29 it is: he read the table's two rows again and wrote
-Ontario's "13%" and Alberta's "5%" (§ His read of the rate table, below).
+lines below that rest on it are unchanged. Since 2026-10-29 it is: on 2026-10-28 he copied the table's two rows,
+Ontario's "13%" and Alberta's "5%" (§ His answer about the rate table's rows, below).
 
 - **Ontario HST (13%)** and **Alberta — no provincial sales tax** cite the CRA's page on which GST/HST
   rate to charge. Its table of rates isn't in the page's HTML, so no tool can find one of its rows, and
@@ -145,14 +145,14 @@ Ontario's "13%" and Alberta's "5%" (§ His read of the rate table, below).
   sale, a Manitoba electronics store's), never the rate. Neither citation has a tool check, and neither
   may record those sentences. The Alberta card's line said "If operating only in Alberta, GST
   (not HST) applies — simplifying provincial sales tax compliance": "simplifying" is a judgement no
-  cited page makes, and the table lists rates by province, not by where a business operates. It now
-  says only what the table lists for Alberta, "The CRA's table of GST/HST rates lists Alberta at 5% GST,
-  with no provincial sales tax." That is still DotAmi's wording of a table row, not a quote, and the
-  catalog says so beside it: a quote takes its place once an official page that says it in its own
+  cited page makes, and the table lists rates by province, not by where a business operates. Until
+  2026-10-29 it said only what the table lists for Alberta, "The CRA's table of GST/HST rates lists Alberta at 5% GST,
+  with no provincial sales tax." That was still DotAmi's wording of a table row, not a quote, and the
+  catalog said so beside it: a quote takes its place once an official page that says it in its own
   words is found and checked. Alberta's *About Tax and Revenue Administration* ("Alberta has no sales
-  tax.", [S17] in [other-ways-to-build.md](../architecture/other-ways-to-build.md)) is a candidate no
-  tool has checked yet, and it says nothing of the 5%. (Both settled on 2026-10-29: § His read of the rate
-  table, below.)
+  tax.", [S17] in [other-ways-to-build.md](../architecture/other-ways-to-build.md)) was a candidate no
+  tool had checked, and it says nothing of the 5%. (Both settled on 2026-10-29: § His answer about the rate
+  table's rows, below.)
 - **BC Provincial Sales Tax (PST)**: unchanged.
 - **Ontario food premises licensing** came off: § Retired rules.
 - **The Delete menu's records line** (`record-keeping.ts`, not a map rule) keeps a read, which
@@ -168,26 +168,35 @@ The quotes of 2026-10-23 were found by the list's matcher (the same whole-word, 
 `scripts/check-quotes.mjs`); a networked run of the script found them again on 2026-10-26, before merge
 ([citations.md](citations.md), § The reading list's tool checks).
 
-### His read of the rate table (2026-10-29)
+### His answer about the rate table's rows (2026-10-28)
 
-On his reading page on 2026-10-29 the maintainer wrote what the CRA's table shows for the two rows DotAmi relies
-on: Ontario's row "13%", Alberta's row "5%". It is a later read of the page by a person, so both citations of the
-page say *Read by a person on 2026-10-29* (`MAINTAINER_RATE_TABLE_READ_ON`,
-[`lib/engines/shared/maintainer-reads.ts`](../../lib/engines/shared/maintainer-reads.ts)); the page still carries no
-tool check, since no tool can see the table.
+On his reading page on 2026-10-28 (Alberta time; the page saved it at 2026-10-29 02:20 UTC) the maintainer copied
+what the CRA's table shows for the two rows DotAmi relies on: Ontario's row "13%", Alberta's row "5%". It is an
+answer about part of the page, not a read of it in full, so both citations of the page keep his read of
+2026-10-25 and say *Read by a person on 2026-10-25*; the answer is in their comments and
+[`tests/fixtures/rate-table-rows-2026-10-28.ts`](../../tests/fixtures/rate-table-rows-2026-10-28.ts)
+([citations.md](citations.md), rule 5). The page still carries no tool check, since no tool can see the table.
 
-- **Ontario HST (13%)**: unchanged; the 13% rests on his read of the row.
+- **Ontario HST (13%)**: unchanged; the 13% rests on his answer about the row.
 - **Alberta — no provincial sales tax**: the row shows only 5%, so the line and the description say only that,
   "The CRA's table of GST/HST rates lists Alberta at 5%." (the line went on "… 5% GST, with no provincial sales
-  tax." until then, and the description said "Alberta has no PST. GST applies at 5% on taxable supplies once
+  tax." until 2026-10-29, and the description said "Alberta has no PST. GST applies at 5% on taxable supplies once
   registered."). Alberta's own *About Tax and Revenue Administration* (https://www.alberta.ca/about-tra) is the
-  card's second source: `node scripts/check-quotes.mjs` found “Alberta has no sales tax.” on it on 2026-10-29, so
-  the sentence shows under that source, after "Words found on the page:", as Alberta's words, and the source says
-  "Checked by a tool on 2026-10-29" in amber until a person reads the page. The card's name is unchanged; in
-  phase 3 it takes its page's own name ([cards-in-official-words.md](../architecture/cards-in-official-words.md),
-  call 13).
+  card's second source: `node scripts/check-quotes.mjs` found two of its sentences in one run on 2026-10-29,
+  “Alberta has no sales tax.” and, from its next sales-tax block, “If your business sells products, delivers sold
+  goods, or provides services in other provinces, you may be liable for sales taxes charged by those provinces on
+  those goods or services, and on any equipment you bring into those provinces for use in your business.” Both
+  show under that source, after "Words found on the page:", as Alberta's words, and the source says "Checked by a
+  tool on 2026-10-29" in amber until a person reads the page.
+- **The Alberta card's name**, *Alberta — no provincial sales tax*, is unchanged, and it is the one line of
+  DotAmi's own that still says there is no provincial sales tax. Phase 3's call 13
+  ([cards-in-official-words.md](../architecture/cards-in-official-words.md)) gives the card its page's own name,
+  "GST/HST rates", only "until Alberta's own page ("Alberta has no sales tax.") is checked or read". This tool
+  check meets that condition, so what the name becomes is the maintainer's call (PR #224, question 2): keep it,
+  now that Alberta's own sentence is under the card; take Alberta's own words as the name; or "GST/HST rates".
 
-[`tests/rate-table-read.spec.ts`](../../tests/rate-table-read.spec.ts) holds both.
+[`tests/rate-table-read.spec.ts`](../../tests/rate-table-read.spec.ts) holds all three, the name as a named, dated
+exception until he answers.
 
 ## Retired rules
 

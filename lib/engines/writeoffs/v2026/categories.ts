@@ -78,7 +78,7 @@ export const writeOffCategoriesV2026 = [
       {
         // The title names only what the page holds: s.67.3, under the section's own heading, which
         // scripts/check-quotes.mjs found on the page on 2026-10-29 (s.67's and s.67.2's headings are on their own
-        // pages, not this one). The maintainer's pick A on his reading page of 2026-10-29; until then it was "Income Tax
+        // pages, not this one). The maintainer's pick A on his reading page, 2026-10-28. Until 2026-10-29 it was "Income Tax
         // Act s.18(1)(a), s.67, s.67.2, s.67.3 — purpose test, reasonableness, interest and lease caps". The corpus
         // list keeps all four provisions, which "Show the words" reads from DotAmi's own statute store.
         title: "Income Tax Act s.67.3 — Limitation re cost of leasing passenger vehicle",

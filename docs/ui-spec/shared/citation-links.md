@@ -1,8 +1,8 @@
 # A source's line: how it was checked
 
 Last updated: 2026-10-29 (a line under a source's title saying what its page holds, § What it is, set on the
-Motor vehicle expenses write-off's s.67.3 only; the CRA's rate page says "Read by a person on 2026-10-29", his read
-of its table, and the Alberta sales-tax card's new source "Checked by a tool on 2026-10-29", § Today);
+Motor vehicle expenses write-off's s.67.3 only, and in the readout; the Alberta sales-tax card's new source "Checked
+by a tool on 2026-10-29", § Today; the CRA's rate page keeps "Read by a person on 2026-10-25");
 2026-10-27 (the maintainer's reads of 2026-10-25: every source of the 31 pages he read in
 full says "Read by a person on 2026-10-25", the Delete menu's record-keeping line among them, § Today;
 2026-10-24: the Delete menu's record-keeping line: its citation also keeps a tool check,
@@ -27,7 +27,7 @@ Every citation is a link to its official page (title ↗), with its authority, i
 was checked, and the statute-check chip where one exists. "Show the words"
 ([show-the-words.md](./show-the-words.md)) sits under it on statute citations.
 
-**What the page holds** (since 2026-10-29, the maintainer's note on the s.67.3 source: "there should be a subtitle
+**What the page holds** (since 2026-10-29; the maintainer's note of 2026-10-28 on the s.67.3 source: "there should be a subtitle
 explaining what the page holds in plain english so the user (if they read it) knows what to looks for while
 reading."). A citation with `pageHolds` has one more line, right under its title and above its authority line, in
 small grey type (`text-small`, `text-stone`), inside the same link: one plain-English sentence of DotAmi's own
@@ -118,8 +118,9 @@ The words come from one function, `howCheckedWords`; no screen writes them itsel
   the words a tool found follow under `Words found on the page:`, one quote a line, in italics (`PageQuotes`
   `layout="lines"`, since 2026-10-23).
 - **The readout API** (`GET /api/readout`): each citation under `evaluation.unlocks[].citations`
-  keeps its fields (`lastVerified`, `readBy` and `toolCheck` when it has them) and gains
-  `howChecked`, the same words.
+  keeps its fields (`lastVerified`, `readBy` and `toolCheck` when it has them; since 2026-10-29 also
+  `pageHolds`, the line saying what its page holds, on the one source that has it, and no such key on any other)
+  and gains `howChecked`, the same words (`tests/readout-route.spec.ts`).
 
 ## State touched
 
@@ -148,10 +149,11 @@ in full on 2026-10-25 says "Read by a person on 2026-10-25", in grey, with no wo
 and start charging the GST/HST", the SR&ED card's pages, the Productivity Grant's page and *Sole Prop
 activation*'s third among them, and the moved pages he read (the SR&ED, home office, motor vehicle and T2
 guide pages). The five pages behind the two ways to incorporate still say "Checked by a tool", as do the
-moved pages he didn't read. Since 2026-10-29 the CRA's GST/HST rate page, under *Ontario HST (13%)* and *Alberta — no
-provincial sales tax*, says "Read by a person on 2026-10-29", his later read of its table's rows, and the Alberta
-card's second source, Alberta's *About Tax and Revenue Administration*, says "Checked by a tool on 2026-10-29", in
-amber, with “Alberta has no sales tax.” after *Words found on the page:*. A source with a read and no record of who did it says
+moved pages he didn't read. The CRA's GST/HST rate page, under *Ontario HST (13%)* and *Alberta — no provincial sales
+tax*, keeps "Read by a person on 2026-10-25": his answer about two of its table's rows (2026-10-28) isn't a read of
+the page in full (citations.md, rule 5). Since 2026-10-29 the Alberta card's second source, Alberta's *About Tax and
+Revenue Administration*, says "Checked by a tool on 2026-10-29", in amber, with two of the page's sentences after
+*Words found on the page:*, “Alberta has no sales tax.” and its block on sales taxes other provinces may charge. A source with a read and no record of who did it says
 "Read on <date>. Who read it wasn't recorded." No citation is read by an AI model any more.
 `e2e/app.spec.ts` ("every source says how it was checked") checks a stage's sources, the playbook
 export and the readout in the browser.

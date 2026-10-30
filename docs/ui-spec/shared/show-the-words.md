@@ -1,6 +1,7 @@
 # "Show the words" — a provision's text on every statute citation
 
-Last updated: 2026-10-12 (the words keep the Act's paragraph breaks, #9); 2026-10-11 (the
+Last updated: 2026-10-29 (a citation's title may name fewer provisions than its buttons, § What it does);
+2026-10-12 (the words keep the Act's paragraph breaks, #9); 2026-10-11 (the
 citation above the button says how it was checked; 2026-09-16:
 S2.5.4i — built and verified in the pane)
 
@@ -24,6 +25,9 @@ the Act, not a check of the citation.
 Every citation whose title names a section of the Income Tax Act or the Income Tax
 Regulations carries one or more `corpus` pointers (`{ source, label, sub? }`). Each pointer
 renders a small maple button under the citation link — *"Show the words · ITA 20(1)(a)"*.
+The pointers are the provisions the entry relies on, and the title may name fewer: since 2026-10-29 the Motor
+vehicle expenses write-off's s.67.3 source is titled for its page's one section, and keeps its four buttons
+(ITA 18(1)(a), 67, 67.2, 67.3), which read the law store, not that page ([citation-links.md](./citation-links.md)).
 
 On click the app calls `/api/law/provision`, which runs the law store's `lookup.py` (local
 grant via `LAW_STORE_PATH`) and shows:

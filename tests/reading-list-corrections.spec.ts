@@ -28,7 +28,6 @@ import { riskEntriesV2026 } from "@/lib/engines/risk/v2026";
 import { howChecked } from "@/lib/engines/shared/citation-check";
 
 import { MAINTAINER_READ_DAY, MAINTAINER_READ_PAGES } from "./fixtures/maintainer-reads-2026-10-25";
-import { RATE_TABLE_READ } from "./fixtures/maintainer-reads-2026-10-29";
 import { findTimeWords } from "./helpers/time-words";
 
 const TODAY = "2026-10-24";
@@ -232,16 +231,13 @@ const card = (p: EvaluationProfile, id: string) => {
 describe("1. The only reads since the reading list's day are the maintainer's", () => {
   // Until 2026-10-27 no citation claimed a read made on the reading list's day or after. His reads came with the
   // reading list he sent back: 31 pages read in full on 2026-10-25, recorded with readBy "person" on every citation of
-  // those pages (tests/maintainer-reads.spec.ts), and on no other. One of them he read again on 2026-10-29, for its
-  // table's Ontario and Alberta rows (the CRA's rate page, tests/fixtures/maintainer-reads-2026-10-29.ts): its two
-  // citations carry that later read of his instead.
-  it("every citation that claims a read made on the reading list's day or after is the maintainer's, of a page he read", () => {
+  // those pages (tests/maintainer-reads.spec.ts), and on no other.
+  it("every citation that claims a read made on the reading list's day or after is the maintainer's of 2026-10-25, of a page he read", () => {
     const hisPages = new Set(MAINTAINER_READ_PAGES.map((p) => p.url));
-    const hisDay = (url: string) => (url === RATE_TABLE_READ.url ? RATE_TABLE_READ.day : MAINTAINER_READ_DAY);
     const claims = all.filter(({ citation }) => citation.lastVerified !== undefined && citation.lastVerified >= LIST_DAY);
     expect(claims.length).toBeGreaterThan(0);
     const other = claims.filter(
-      ({ citation }) => citation.lastVerified !== hisDay(citation.url) || citation.readBy !== "person" || !hisPages.has(citation.url),
+      ({ citation }) => citation.lastVerified !== MAINTAINER_READ_DAY || citation.readBy !== "person" || !hisPages.has(citation.url),
     );
     expect(other.map(({ where, citation }) => `${where}: ${citation.url} (${citation.lastVerified}, ${citation.readBy ?? "no reader"})`)).toEqual([]);
   });
@@ -454,8 +450,8 @@ describe("5. Sales tax and records", () => {
 
   it("the Alberta card says only what the CRA's table lists for Alberta, never what it makes simpler", () => {
     // Still DotAmi's own wording of the table's row: the table isn't in the page's words, so no tool can quote it.
-    // Since 2026-10-29 it says only the row's 5%, the maintainer's read of the row ("5%"); "no provincial sales tax"
-    // is no longer in DotAmi's words (tests/rate-table-read.spec.ts).
+    // Since 2026-10-29 it says only the row's 5%, the maintainer's answer about the row on 2026-10-28 ("5%"); "no
+    // provincial sales tax" is no longer in the line (tests/rate-table-read.spec.ts).
     const line = "The CRA's table of GST/HST rates lists Alberta at 5%.";
     const rule = complianceRulesV2026.find((r) => r.id === "compliance-ab-no-pst")!;
     expect(rule.lensAnnotations.tax).toBe(line);

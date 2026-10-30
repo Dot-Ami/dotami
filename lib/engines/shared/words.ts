@@ -8,9 +8,9 @@
 export const sourceWords = {
   /**
    * The line under a source's title saying what its page holds (`EngineCitation.pageHolds`), so a person who opens
-   * the page knows what to look for on it (the maintainer's note of 2026-10-29, on the s.67.3 source). Each line is
+   * the page knows what to look for on it (the maintainer's note of 2026-10-28, on the s.67.3 source). Each line is
    * written from the page itself, read in full, in the page's own terms. Only one source has one so far; whether
-   * every source gets one is his question (story S2.5.41).
+   * every source gets one is his open question (docs/task-list.md [14p], "A line under every source's title").
    */
   pageHolds: {
     /**

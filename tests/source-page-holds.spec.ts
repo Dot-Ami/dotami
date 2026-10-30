@@ -1,8 +1,9 @@
 /**
- * The Motor vehicle expenses write-off's s.67.3 source, on the maintainer's answer of 2026-10-29 on his reading page
- * (item 1, `s673` "A"): its title names only what its page holds, s.67.3, under the section's own heading, and a line
- * under the title says in plain English what the page holds. His note: "there should be a subtitle explaining what
- * the page holds in plain english so the user (if they read it) knows what to looks for while reading."
+ * The Motor vehicle expenses write-off's s.67.3 source, on the maintainer's answer of 2026-10-28 (Alberta time; his
+ * reading page saved it 2026-10-29 02:20 UTC) on his reading page (item 1, `s673` "A"): its title names only what its
+ * page holds, s.67.3, under the section's own heading, and a line under the title says in plain English what the page
+ * holds. His note: "there should be a subtitle explaining what the page holds in plain english so the user (if they
+ * read it) knows what to looks for while reading."
  *
  * - The page, https://laws-lois.justice.gc.ca/eng/acts/I-3.3/section-67.3.html, holds s.67.3 alone; its heading is
  *   "Limitation re cost of leasing passenger vehicle", which `node scripts/check-quotes.mjs` found on it on
@@ -12,8 +13,9 @@
  *   from that page.
  * - The line (`pageHolds`, an optional field of a citation) is DotAmi's own words, so it lives in a words file
  *   (lib/engines/shared/words.ts) and is held to the words files' rules: no verdict, no time, nothing about the
- *   person, no number that isn't on the page. It is set on this source only; whether every source gets one is the
- *   maintainer's question (story S2.5.41).
+ *   person, no number that isn't on the page. Every line in the words file is held to them, not only this one. It is
+ *   set on this source only; whether every source gets one is the maintainer's open question (docs/task-list.md
+ *   [14p], "A line under every source's title").
  * - components/shared/citation-links.tsx draws it as one line under the title, only when it is set.
  */
 import { createElement } from "react";
@@ -95,16 +97,27 @@ describe("the line under its title says what the page holds", () => {
     expect(LINE).toContain("passenger vehicle");
   });
 
-  it("gives no verdict, no time, nothing about the person, and no number that isn't on the page", () => {
-    expect(LINE).not.toMatch(VERDICT_WORDS);
-    expect(findVerdicts(LINE)).toEqual([]);
-    expect(findTimeWords(LINE)).toEqual([]);
-    expect(LINE).not.toMatch(/\b(you|your|you're|yours)\b/i);
-    // The one number is the section's own, which the page and the title hold.
-    expect(LINE.match(/\d[\d.,]*\d|\d/g)).toEqual(["67.3"]);
+  it("no line in the words file gives a verdict, a time, anything about the person, or a number that isn't on its page", () => {
+    // Every `pageHolds` line, not only this one. Each line's numbers are listed here with the page they come from, so
+    // a new line can't add one unseen: the list must name every line, and a line may hold only its own page's numbers.
+    const NUMBERS_ON_THE_PAGE: Record<string, readonly string[]> = {
+      ita67_3: ["67.3"], // the section's own number, which the page and the title hold
+    };
+    const lines = Object.entries(sourceWords.pageHolds);
+    expect(lines.length).toBeGreaterThan(0);
+    expect(Object.keys(NUMBERS_ON_THE_PAGE).sort()).toEqual(lines.map(([key]) => key).sort());
+    for (const [key, line] of lines) {
+      expect(line, key).not.toMatch(VERDICT_WORDS);
+      expect(findVerdicts(line), key).toEqual([]);
+      expect(findTimeWords(line), key).toEqual([]);
+      expect(line, key).not.toMatch(/\b(you|your|you're|yours)\b/i);
+      expect(line, key).not.toMatch(/\n/);
+      expect(line.match(/\d[\d.,]*\d|\d/g) ?? [], key).toEqual(NUMBERS_ON_THE_PAGE[key]);
+    }
     // Planted controls: each check catches what it is for.
     expect("You should keep a logbook for each day.").toMatch(VERDICT_WORDS);
     expect(findTimeWords("A limit for each 30 days of the lease.")).not.toEqual([]);
+    expect("Your lease is capped.").toMatch(/\b(you|your|you're|yours)\b/i);
     expect("Up to $1,100 for 67.3".match(/\d[\d.,]*\d|\d/g)).toEqual(["1,100", "67.3"]);
   });
 });
