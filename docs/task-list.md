@@ -678,9 +678,10 @@ placed in phase 3.
     2026-10-25 to 27, in his order: #207, #206, #208, #210, #209, each brought up to date with main by a
     merge first; what each merge found and fixed is in its pull request, and how a cloud session did it is
     [verification/cloud-sessions.md](verification/cloud-sessions.md)
-  - [ ] #211, the reading list's corrections with the maintainer's 31 reads of 2026-10-25: the networked
-    `node scripts/check-quotes.mjs` run it waited for found every quote on 2026-10-26 ([11b]); waits for his
-    merge word
+  - [x] #211, the reading list's corrections with the maintainer's 31 reads of 2026-10-25: the networked
+    `node scripts/check-quotes.mjs` run it waited for found every quote on 2026-10-26 ([11b]); merged on his
+    word 2026-10-27, then its follow-ups the same day: #214 (Anthropic's retention words quoted on *What
+    DotAmi knows about you*), #215 (three of [11b]'s blocked items settled) and #216 (Mara's prices re-checked)
   - [ ] Release 0.5.0: no silent fallbacks, every Alberta test idea ending on a road written for it or an
     honest "not written yet", the maintainer's walk done (32b), a Quality line in the changelog, the privacy
     log's section for the new version; publishing is the maintainer's click
@@ -704,6 +705,21 @@ placed in phase 3.
   - [ ] Two questions his reads of 2026-10-25 left open: what the CRA's rate table shows for Ontario and
     Alberta (citations.md § Blocked, 1 and 2), and whether the s.67.3 citation's title or its address changes
     (the title names four sections, the page holds one)
+- ⬜ **[14q] Rules meet your facts, research first (S2.5.41).** How DotAmi could join a rule's conditions,
+  exceptions and definitions to a person's own answers and documents, say what is missing and why, and bring
+  lawful options into view (deductions, credits, exemptions, elections, structures), measured against known
+  answers. Research before any plan; the maintainer picks the starting scope and approves the plan. Opened
+  2026-10-27 at his request.
+  - [ ] Check every factual claim in the first research reply against its own source
+  - [ ] What DotAmi already does, layer by layer, and where its rules (never a verdict, never derive a fact about
+    the person, every number cited) meet this feature
+  - [ ] Surveys: existing software and services, open-source projects, research papers, and their licences
+  - [ ] How others handle unknown facts, conflicting rules, finding options and explaining a result
+  - [ ] Canadian sources, and how the law, CRA guidance, court decisions and professional opinion stay apart
+  - [ ] Compare starting scopes (for example tradespeople's and apprentices' employment deductions; the write-offs
+    DotAmi already lists); the maintainer picks
+  - [ ] A test set with known answers, reviewed, with paired tests and a held-out part (extends Accuracy tests)
+  - [ ] Failure kinds and release checks, then a staged plan for the maintainer's approval
 
 ## 7 — The desktop app (one download, everything on your computer)
 
@@ -1086,7 +1102,12 @@ roadmap's build order.
       table shows "no provincial sales tax" or only Alberta's 5% GST (then the line says only that)
     - [ ] Ontario's 13% HST (`compliance-on-hst`): the same table
     - [ ] Ontario food premises: the regulation in force, read and quoted, under a new id
-    - [ ] Repeated losses: a CRA, Act or folio page on business versus personal pursuits, with its words
+    - [x] Repeated losses: a CRA, Act or folio page on business versus personal pursuits, with its words. Since
+      2026-10-27 (the maintainer's "yah, lets use it") a read is back on the Hobby vs. business card under a new id,
+      `risk-losses-source-of-income`, quoting the CRA's Income Tax Audit Manual, chapter 27; the retired id stays
+      retired. Since 2026-10-29 (his answers on PR #217) it quotes four sentences, the page's passage from *Martin v
+      The Queen* among them, which `node scripts/check-quotes.mjs` found in one run that day, and the same citation
+      is listed under the card; the card's own words are unchanged
     - [x] SR&ED refunded or not, a sole proprietor's 15%: whether, and how much of, it is refunded. Settled on
       2026-10-29 by his answer, the newer of the two CRA pages that disagree ("it should always be the newer
       page because it's more up-to-date"): a sole proprietor's card quotes the CRA's *SR&ED Investment Tax
@@ -1112,7 +1133,10 @@ roadmap's build order.
     purpose first"; the "Professional required" heading over the anti-avoidance and loan program boxes
     (`tests/engine-integrity.spec.ts` holds GAAR reads there); and the *Hobby vs. business income test*
     card's profit-expectation and business-like lines, which cite the page the retired hobby read's
-    record says supports neither (he read that page in full on 2026-10-25; the card's words wait for his call)
+    record says supports neither (he read that page in full on 2026-10-25; the card's words wait for his call).
+    Settled on 2026-10-29 by his answers on PR #217: the card lists the audit manual's chapter 27, which its risk
+    box quotes, and the box keeps the card ("The box keeps the card"; recorded beside his call 3 of 2026-10-25 in
+    docs/architecture/cards-in-official-words.md, which had retired it)
 - ⬜ **[11c] Flag stale sources automatically** — with #37
   - [ ] Kept open on purpose (the maintainer, 2026-10-14), so a person decides later:
     - [x] *Alberta Investor Tax Credit* (`grant-abti`): taken off on 2026-10-23 (the maintainer's call

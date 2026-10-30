@@ -38,7 +38,7 @@ off on 2026-10-23 (see *Retired programs* below), and the Productivity Grant cam
   would drop the CRA's “Generally” and what the 40% is of. The older page, the CRA's *How certain
   relationships affect the small business deduction and SR&ED investment tax credits* (already a
   source of the card), says unincorporated businesses' credit is non-refundable; no card quotes
-  that line ([citations.md](citations.md), *Blocked*, item 5).
+  that line ([citations.md](citations.md), *Blocked*, item 4).
   The CCPC's said refundable ("35% (refundable)", "35% refundable
   treatment") on the maintainer's word alone, which no record held, and none of its quotes says
   it, so it says neither too ([citations.md](citations.md), *Blocked*). The 35% is the CRA's “Some CCPCs may earn an ITC
@@ -54,7 +54,7 @@ off on 2026-10-23 (see *Retired programs* below), and the Productivity Grant cam
   says *Checked by a tool on 2026-10-29* in amber. The CCPC's note quotes none of its lines: they run
   to several kinds of corporation and expenditure, and the sole proprietor's fork copies that note.
   Whether the CCPC's card says its 35% is refunded is still the maintainer's call (his answer of
-  2026-10-29 was about the sole proprietor's card; [citations.md](citations.md), *Blocked*, item 5).
+  2026-10-29 was about the sole proprietor's card; [citations.md](citations.md), *Blocked*, item 4).
 
 ## The Canada-Alberta Productivity Grant (`grant-capg`)
 

@@ -145,7 +145,7 @@ export const grantProgramsV2026 = [
         // No `refundable` since 2026-10-24: the card said "35% (refundable)" and its fork "35% refundable treatment",
         // which rested only on the maintainer's read (his answer of 2026-10-24: his reads weren't recorded then). None
         // of the card's quotes says the enhanced rate is refundable, so the card leaves it unsaid until a held quote
-        // does (docs/engines/citations.md, § Blocked, item 5). His reads of 2026-10-25 record only that he read these
+        // does (docs/engines/citations.md, § Blocked, item 4). His reads of 2026-10-25 record only that he read these
         // pages in full, not what he found on refunds.
         // Until 2026-10-24 the note said "confirm the current limit with an advisor" and gave no limit. The limit is
         // $6 million in the consolidated Act's s.127(10.2) (the reading list found the formula), for tax years
@@ -157,7 +157,7 @@ export const grantProgramsV2026 = [
         // corporation and expenditure, so a part would read as the whole, and lib/brain/evaluate.ts copies this note into
         // the sole proprietor's fork, beside the individual's 40%. So none of them is quoted here: whether one is (that
         // list whole, the relationships page's older line, or nothing) is still his call (docs/engines/citations.md,
-        // § Blocked, item 5, its CCPC part).
+        // § Blocked, item 4, its CCPC part).
         note: `The CRA: “${SRED_WORDS.ccpcEnhanced}” The CRA's What's new for corporations: “${SRED_WORDS.limitSixMillion}”`,
       },
     ],

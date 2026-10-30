@@ -55,7 +55,7 @@ Reading List* (`answers`). All as recommended except where marked.
 |---|---|---|
 | 1 | "Tax impact" and "Legal note" labels | They go everywhere. Quotes sit under "Words found on the page:" with their source and check. |
 | 2 | "If X, this may unlock Y" lines | None in any catalog. Two fixed words-file phrasings stay: a fork side named by the rung's own name ("As a Canadian-controlled private corporation (CCPC):"), and the rules' reason naming the answers. |
-| 3 | A card left with nothing of its own | Stays, saying it has no line of its own, with its sources. The hobby card and the shareholder-agreement template retire (their one source supports none of their words). |
+| 3 | A card left with nothing of its own | Stays, saying it has no line of its own, with its sources. The hobby card and the shareholder-agreement template retire (their one source supports none of their words). 2026-10-29: the maintainer kept the Hobby vs. business card, with the repeated-losses read on it (his answer on PR #217's question 2). His words: "The box keeps the card". Its sources are now the CRA's *Setting up your business* and the audit manual's chapter 27, which the box quotes; its own description and Lens lines are still an open question ([citations.md](../engines/citations.md), § Outside the list, item 3). The shareholder-agreement template's retirement is unchanged. |
 | 4 | The 111 undrawn lines | Deleted. |
 | 5 | The 20 lines waiting on a read | **Not as recommended:** they stay drawn, marked as waiting, until their page is read and a quote is held (a ratchet: the list only shrinks). |
 | 6 | Risk-box heading | "DotAmi's risk catalog points to this page:", then the page's words and source. The GAAR name only on a run from s.245. |
