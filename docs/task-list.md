@@ -1,6 +1,6 @@
 # Task list — what's being built, and what you can pick up
 
-Last updated: 2026-10-29. Every story planned for DotAmi, with its tasks. The plan behind it is
+Last updated: 2026-10-30. Every story planned for DotAmi, with its tasks. The plan behind it is
 [architecture/use-cases.md](architecture/use-cases.md) (who it's for, the decisions, the build
 order); the settings and edge cases each story must test are in
 [architecture/settings-and-edge-cases.md](architecture/settings-and-edge-cases.md) — the codes in
@@ -1119,15 +1119,24 @@ roadmap's build order.
       `risk-losses-source-of-income`, quoting the CRA's Income Tax Audit Manual, chapter 27; the retired id stays
       retired. Since 2026-10-29 (his answers on PR #217) it quotes four sentences, the page's passage from *Martin v
       The Queen* among them, which `node scripts/check-quotes.mjs` found in one run that day, and the same citation
-      is listed under the card; the card's own words are unchanged
+      is listed under the card; the card's own words are unchanged. Since 2026-10-30 (his reading page, item 8)
+      the label before the Martin passage names the case: "The same page, quoting Martin v The Queen:"
     - [x] SR&ED refunded or not, a sole proprietor's 15%: whether, and how much of, it is refunded. Settled on
       2026-10-29 by his answer, the newer of the two CRA pages that disagree ("it should always be the newer
       page because it's more up-to-date"): a sole proprietor's card quotes the CRA's *SR&ED Investment Tax
-      Credit Policy* on an individual's 40% refundable ITC, a tool check of 2026-10-29 no person has read yet
-    - [ ] SR&ED refunded or not, a CCPC's enhanced 35% (the card said "refundable" on the maintainer's read alone
-      until 2026-10-24): his call between the policy page's CCPC list quoted whole (a networked check first),
-      the relationships page's “Some CCPCs may also earn a refundable ITC.” (the older page), or leaving it
-      unsaid, as now; the CCPC's note and the fork are unchanged until then
+      Credit Policy* on an individual's 40% refundable ITC, a tool check no person has read yet (of 2026-10-30
+      since the CCPC's list joined it)
+    - [x] SR&ED refunded or not, a CCPC's enhanced 35% (the card said "refundable" on the maintainer's read alone
+      until 2026-10-24). Settled on 2026-10-30 by his answer (his reading page, item 8): the CCPC's note, and
+      the fork on a sole proprietor's card that copies it, quote the policy page's section 4.1 list for
+      corporations, its 13 lines whole and in order, found by `node scripts/check-quotes.mjs` with the 40% line
+      in one run that day; the page's one tool check holds them. The block after the list, on large
+      corporations' non-refundable ITC, is not quoted; it is his to add
+    - [x] The newer page wins, as a rule (his answer of 2026-10-30): where two official pages disagree, the card
+      quotes the newer one and the older stays listed, not quoted ([docs/engines/citations.md](engines/citations.md),
+      § Rules, rule 8)
+    - [ ] Which page applies to which case: his "library that can tell the difference between the old and new
+      pages", research first, with [14q] (S2.5.41) and the planned work on how fresh a source is; not built
     - [ ] SR&ED's $6 million: the tax years it applies from, and the sentence of s.127(10.2) that leads into
       its formula
     - [x] *SR&ED deepening*'s 35% from the SR&ED glossary, as the maintainer asked: quoted since 2026-10-27,
@@ -1144,7 +1153,8 @@ roadmap's build order.
       one piece"; "One new check that holds the old and new sentences"): `node scripts/check-quotes.mjs`
       reads a table row as one piece, its cells joined by " | ", and one run found the card's 27 quotes that
       day ([docs/engines/citations.md](engines/citations.md), § The checker and *Blocked*;
-      `tests/check-quotes.spec.ts`, `tests/productivity-grant.spec.ts`)
+      `tests/check-quotes.spec.ts`, `tests/productivity-grant.spec.ts`). Since 2026-10-30 (his reading page,
+      item 8) the card's line also quotes the page's sentence on who delivers and funds it, whole
     - [ ] The Productivity Grant, still open: whether a sole proprietor counts as an employer (the page never
       says "sole proprietor"); its applicant guidelines, unread (open.alberta.ca refused a plain fetch); and
       three of the page's lists, not held: the eligible employer types, the ineligible employers and the

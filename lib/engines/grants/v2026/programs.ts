@@ -2,6 +2,7 @@ import { MAINTAINER_READ_ON } from "@/lib/engines/shared/maintainer-reads";
 
 import {
   SRED_PAGES,
+  SRED_POLICY_CCPC_LIST,
   SRED_POLICY_FOUND_ON,
   SRED_POLICY_TITLE,
   SRED_QUOTES_FOUND_ON,
@@ -18,6 +19,19 @@ const LAST_VERIFIED = "2026-06-08";
  * should always be the newer page because it's more up-to-date". DotAmi's own words here are only whose words they are.
  */
 const SOLE_PROP_SRED_NOTE = `The CRA: “${SRED_WORDS.basicRate}” “${SRED_WORDS.someRefundable}” The CRA's ${SRED_POLICY_TITLE}: “${SRED_WORDS.individualRefundable}”`;
+
+/**
+ * The CRA's lines a CCPC's SR&ED card quotes: the relationships page's enhanced 35% and What's new's $6 million
+ * (2026-10-24), then, since the maintainer's answer of 2026-10-30, the SR&ED Investment Tax Credit Policy's section 4.1
+ * list for corporations, every line in the page's order, under the page's title as the sole proprietor's line is. The
+ * policy page is the newer of the CRA's pages on refunds (docs/engines/citations.md, rule 8); the relationships page's
+ * older "Some CCPCs may also earn a refundable ITC." is not quoted. lib/brain/evaluate.ts copies this note into a sole
+ * proprietor's fork too, beside the individual's 40%, which is why the list is never cut: a part would read as the
+ * whole. A "…" after item 4 marks the page's two other items (an individual, quoted on the sole proprietor's own line,
+ * and a trust), as the Productivity Grant's card marks a list item it leaves out. DotAmi's own words here are only whose
+ * words they are.
+ */
+const CCPC_SRED_NOTE = `The CRA: “${SRED_WORDS.ccpcEnhanced}” The CRA's What's new for corporations: “${SRED_WORDS.limitSixMillion}” The CRA's ${SRED_POLICY_TITLE}: ${SRED_POLICY_CCPC_LIST.map((line) => `“${line}”`).join(" ")} …`;
 
 export const grantProgramsV2026 = [
   {
@@ -102,16 +116,18 @@ export const grantProgramsV2026 = [
         toolCheck: { checkedOn: SRED_QUOTES_FOUND_ON, quotes: [SRED_WORDS.actFormula] },
         note: "The formula for a CCPC's expenditure limit for a taxation year, from $6 million (the consolidated Act).",
       },
-      // Added on the maintainer's answer of 2026-10-29 for the line a sole proprietor's card quotes.
-      // `node scripts/check-quotes.mjs` found the page's main heading and that line on the live page that day; the
-      // heading is the title, not words the card relies on, so the tool check holds the line only. Nobody has read the
-      // page in full, so no lastVerified or readBy: its source says "Checked by a tool" in amber.
+      // Added on the maintainer's answer of 2026-10-29 for the line a sole proprietor's card quotes, and since his
+      // answer of 2026-10-30 for the CCPC's note too. One `node scripts/check-quotes.mjs` run on 2026-10-30 found the
+      // page's main heading, its list for corporations and the individual's line on the live page; the heading is the
+      // title, not words a card relies on, so the one tool check holds the lines only, in the page's order (until then a
+      // check of 2026-10-29 holding the individual's line alone). Nobody has read the page in full, so no lastVerified
+      // or readBy: its source says "Checked by a tool" in amber.
       {
         title: SRED_POLICY_TITLE,
         authority: "CRA",
         jurisdiction: "CA",
         url: SRED_PAGES.itcPolicy,
-        toolCheck: { checkedOn: SRED_POLICY_FOUND_ON, quotes: [SRED_WORDS.individualRefundable] },
+        toolCheck: { checkedOn: SRED_POLICY_FOUND_ON, quotes: [...SRED_POLICY_CCPC_LIST, SRED_WORDS.individualRefundable] },
         note: "The CRA's SR&ED investment tax credit policy: its rates, and which claimants can earn a refundable ITC.",
       },
     ],
@@ -143,22 +159,21 @@ export const grantProgramsV2026 = [
         structure: "ccpc",
         rate: 0.35,
         // No `refundable` since 2026-10-24: the card said "35% (refundable)" and its fork "35% refundable treatment",
-        // which rested only on the maintainer's read (his answer of 2026-10-24: his reads weren't recorded then). None
-        // of the card's quotes says the enhanced rate is refundable, so the card leaves it unsaid until a held quote
-        // does (docs/engines/citations.md, § Blocked, item 4). His reads of 2026-10-25 record only that he read these
-        // pages in full, not what he found on refunds.
+        // which rested only on the maintainer's read (his answer of 2026-10-24: his reads weren't recorded then). His
+        // reads of 2026-10-25 record only that he read these pages in full, not what he found on refunds. Since his
+        // answer of 2026-10-30 the note quotes the SR&ED Investment Tax Credit Policy's list for corporations whole,
+        // which says, for each kind of corporation and expenditure, how much of the credit is refundable
+        // (docs/engines/citations.md, § Blocked, item 4, its CCPC part, settled that day). `refundable` stays unset all
+        // the same: lib/brain/evaluate.ts would print a bare "refundable" after the 35%, more than the list's lines say.
         // Until 2026-10-24 the note said "confirm the current limit with an advisor" and gave no limit. The limit is
         // $6 million in the consolidated Act's s.127(10.2) (the reading list found the formula), for tax years
         // beginning on or after 2024-12-16. No held quote carries that date, so it is on no screen and in no field, only
         // here and in docs/engines/citations.md (the rule: no number or date without a held quote); the card gives the amount only
-        // inside the CRA's quote.
-        // Unchanged by the maintainer's answer of 2026-10-29, which was about the sole proprietor's card only. The SR&ED
-        // Investment Tax Credit Policy cited above has lines on a CCPC's refundable ITC, but they run to several kinds of
-        // corporation and expenditure, so a part would read as the whole, and lib/brain/evaluate.ts copies this note into
-        // the sole proprietor's fork, beside the individual's 40%. So none of them is quoted here: whether one is (that
-        // list whole, the relationships page's older line, or nothing) is still his call (docs/engines/citations.md,
-        // § Blocked, item 4, its CCPC part).
-        note: `The CRA: “${SRED_WORDS.ccpcEnhanced}” The CRA's What's new for corporations: “${SRED_WORDS.limitSixMillion}”`,
+        // inside the CRA's quote. (The list's line on ECPCs carries the same day in the CRA's own words, inside its quote
+        // marks; that line is about ECPCs, not the limit.)
+        // The note is copied into a sole proprietor's fork (lib/brain/evaluate.ts), so there it stands beside the
+        // individual's 40%: CCPC_SRED_NOTE says why the list is quoted whole.
+        note: CCPC_SRED_NOTE,
       },
     ],
   },
@@ -357,15 +372,18 @@ export const grantProgramsV2026 = [
     kind: "grant",
     // Alberta's page: “The program is delivered by Alberta and funded by the Government of Canada through the
     // Canada–Alberta Workforce Development Agreement.” (held by the source's tool check since 2026-10-29). Until then no
-    // held quote said who else funds it, and this said "Alberta". No screen shows this field, and no line reconciles
-    // the sentence with the funding table's "Government of Alberta" row.
+    // held quote said who else funds it, and this said "Alberta". No screen shows this field. Since the maintainer's
+    // answer of 2026-10-30 the card's line (and the description) quotes the sentence, whole, before the funding table's
+    // rows; no line reconciles it with the table's "Government of Alberta" row in DotAmi's own words.
     authority: "Alberta / federal",
-    // "Employer:" and "Government of Alberta:" are the page's funding table's own row labels, each held with its line as
-    // one row ("Employer | Must contribute 25% …"): since 2026-10-29 scripts/check-quotes.mjs reads a table row as one
-    // piece (the maintainer's answer of 2026-10-29). The $100,000 line sits in the second row's cell too, as its second
-    // item, but only a row's nearest item is held with its label, so it stands as its own quote; it names its subject.
+    // The page's Overview sentence on who delivers and funds the program comes first, as on the page (the maintainer's
+    // answer of 2026-10-30): quoted whole, since it says who delivers it, not only who funds it. "Employer:" and
+    // "Government of Alberta:" are the page's funding table's own row labels, each held with its line as one row
+    // ("Employer | Must contribute 25% …"): since 2026-10-29 scripts/check-quotes.mjs reads a table row as one piece (the
+    // maintainer's answer of 2026-10-29). The $100,000 line sits in the second row's cell too, as its second item, but
+    // only a row's nearest item is held with its label, so it stands as its own quote; it names its subject.
     description:
-      "In the words of Alberta's page on this program: Employer: “Must contribute 25% of the total eligible training costs for existing employees or individuals (includes unemployed individuals) they intend to hire”; Government of Alberta: “Contributes the other 75% of the cost to a maximum of $5,000 per employed trainee per fiscal year”; “An employer is eligible for up to a maximum amount of $100,000 per fiscal year”.",
+      "In the words of Alberta's page on this program: “The program is delivered by Alberta and funded by the Government of Canada through the Canada–Alberta Workforce Development Agreement”. Employer: “Must contribute 25% of the total eligible training costs for existing employees or individuals (includes unemployed individuals) they intend to hire”; Government of Alberta: “Contributes the other 75% of the cost to a maximum of $5,000 per employed trainee per fiscal year”; “An employer is eligible for up to a maximum amount of $100,000 per fiscal year”.",
     // No screen draws a program's eligibility. The page's lists, each after its own lead-in, as the tool check of
     // 2026-10-29 holds them (found on 2026-10-27 first). Three items are times, which DotAmi never writes, so each is in
     // the tool check only and a "…" marks its place: “be operational in Alberta for at least one year” and “have an
@@ -381,8 +399,9 @@ export const grantProgramsV2026 = [
     lensAnnotations: {
       // Shown on screen as the card's payoff (lib/brain/evaluate.ts evaluateGrant). Outside the quotes: the compass's
       // "If", the page's name and the table's own row labels only, never what the program may do. Until 2026-10-29 the
-      // labels weren't held, so neither line named who contributes which.
-      tax: "If training employees is on the venture's path, Alberta's page on this program: Employer: “Must contribute 25% of the total eligible training costs for existing employees or individuals (includes unemployed individuals) they intend to hire”; Government of Alberta: “Contributes the other 75% of the cost to a maximum of $5,000 per employed trainee per fiscal year”; “An employer is eligible for up to a maximum amount of $100,000 per fiscal year”.",
+      // labels weren't held, so neither line named who contributes which. Since 2026-10-30 the page's Overview sentence
+      // on who delivers and funds it comes first (see description).
+      tax: "If training employees is on the venture's path, Alberta's page on this program: “The program is delivered by Alberta and funded by the Government of Canada through the Canada–Alberta Workforce Development Agreement”. Employer: “Must contribute 25% of the total eligible training costs for existing employees or individuals (includes unemployed individuals) they intend to hire”; Government of Alberta: “Contributes the other 75% of the cost to a maximum of $5,000 per employed trainee per fiscal year”; “An employer is eligible for up to a maximum amount of $100,000 per fiscal year”.",
       // The employer's share and the page's requirements for registered employers, the two times among them left out,
       // and a "…" for the unheld list of eligible employer types the lead-in follows (see eligibility).
       legal:
@@ -405,7 +424,8 @@ export const grantProgramsV2026 = [
         // two rows (a row's cells joined by " | ", the checker's row reading of the same day), and the page's
         // requirements for registered employers, what training and costs count, and who delivers and funds it. (A first
         // run that day held 26; the review of #223 added the travel-costs sentence, so a second run held all 27, and
-        // this check is that run's.)
+        // this check is that run's.) The card's line quotes the delivers-and-funds sentence since 2026-10-30; the check
+        // already held it, so nothing new was recorded. A run of the script with all 27 that day found every one again.
         url: "https://www.alberta.ca/canada-alberta-productivity-grant",
         lastVerified: MAINTAINER_READ_ON,
         readBy: "person",
