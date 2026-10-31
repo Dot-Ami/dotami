@@ -548,6 +548,8 @@ describe("CI", () => {
     const clutter = step("Quality numbers (clutter)");
     expect(clutter.at).toBeGreaterThan(step("Browser tests").at);
     expect(clutter.block).toContain("npm run quality:report -- --clutter-only");
+    // The browser tests run in two halves; only the half whose own list holds the clutter file prints it.
+    expect(clutter.block).toContain('npx playwright test --list --shard=${{ matrix.shard }}/2 | grep -q "clutter-budget.spec.ts"');
     for (const { block } of [quality, clutter]) {
       expect(block).toContain("continue-on-error: true");
       expect(block).toContain("if: ${{ !cancelled() }}");

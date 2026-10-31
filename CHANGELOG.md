@@ -765,6 +765,17 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   Prop activation's three sources: the new one in amber until 2026-10-27, each read by a person since).
 
 ### Changed
+- **CI runs the browser tests in two halves at the same time, and the *Browser tests* check waits for both**
+  (the house-cleaning audit of 2026-10-31). The browser job was the slowest of every pull request's required
+  checks, and with main asking for an up-to-date branch every merge waits for it. It now runs as *Browser tests
+  1/2* and *2/2* on two machines (`--shard=N/2`), each building and starting its own server on its own fresh
+  database. Playwright keeps the files in their usual order, so `e2e/your-data.spec.ts`, whose Delete tests
+  remove what earlier files use, is still the last file of half 2. Branch protection requires a check named
+  *Browser tests*, so a small job of that name waits for both halves and passes only when both passed; it runs
+  even when a half failed or the run was cancelled, so it fails then instead of being skipped (GitHub counts a
+  skipped required check as passed). The clutter numbers are printed by the half whose own test list holds
+  `e2e/clutter-budget.spec.ts`. For a new browser test this means: don't rely on what a file in the other half
+  leaves (CLAUDE.md, *Verification*). `.github/workflows/ci.yml`; `tests/quality-report.spec.ts`.
 - **The CRA's GST/HST rate table, on the maintainer's answer about its rows; and the vehicle write-off's s.67.3
   source names only what its page holds** (his answers of 2026-10-28 on his reading page). The table is drawn by a
   script, so no tool can see it; he copied Ontario's row "13%" and Alberta's row "5%". That answer is about two rows,
