@@ -76,63 +76,45 @@ import { destinationWords } from "@/lib/front-door/words";
 import Link from "next/link";
 
 /**
- * The cockpit (S2.5.4h/j shape): one venture, its lifecycle map as tier columns, the rails that
- * explain it.
- * Removed 2026-09-14 (S2.5.4h): labeled-example archetypes, the Lens chat, the five-year
- * projection footer, Track/Compare tabs, header fork chips and the dead Focus / ? /
- * "Graph language" controls. What is left is the cockpit itself — the map and the rails
- * that explain it.
+ * The cockpit: one future the person is considering, drawn whole, and where they work through it. A header
+ * and the goal bar (the four gauges) sit on top; under them are the left rail, the road and the right-hand
+ * panel. The spec is docs/ui-spec/cockpit/_index.md, with one page per region beside it; the design is
+ * docs/architecture/future-cockpit.md § 2. How it came to be built is in CHANGELOG.md.
  *
- * 2026-10-12, the future cockpit's screen, part 1 (docs/architecture/future-cockpit.md § 2, "Cockpit
- * screen as built"): the goal bar and its four gauges on top, the overlay switches over the map, the
- * step panel in place of node detail, the lists behind the gauges, and "Next on your road", all drawn
- * from one run of road evaluation (lib/roads/) on what is kept for this idea (lib/futures/).
+ * Everything on the screen is drawn from one run of road evaluation (lib/roads/) on what is kept for this
+ * idea (lib/futures/): the gauges, the overlay switches over the map, the step panel, the lists behind the
+ * gauges and "Next on your road". The left rail holds "What you've told DotAmi / Not told yet" with the
+ * one-question box, the venture's profile, the structure ladder and prep tools, and the save line. The
+ * right-hand panel holds one thing at a time: a step, the export, one gauge's list, "Compare the two
+ * endings" (with "This is mine"), "Others in this line of work" or "About this job".
  *
- * 2026-10-12, folding and phone width (future-cockpit.md § 2, "Folding and phone width"; issue #4): the
- * rail, the goal bar, the right-hand panel and the map's legend each fold with their own button, the
- * answers remembered in this browser (lib/cockpit/folds.ts). Below 768 px (Tailwind's `md`) the rail is
- * a full-width sheet opened from the header and the page scrolls down instead of squeezing the road;
- * below 1024 px (`lg`) the right-hand panel opens over the road (a full-width sheet on a phone, a 420 px
- * drawer between the two) instead of taking a column from it.
+ * Receipts: an answer gives a receipt (road evaluation before and after it, compared) where it was given and
+ * in "This visit" under the map. An answer kept with the map waits for the map's save before its receipt is
+ * worked out, from the idea the save read back; until then the receipt says so, and a failed save says the
+ * answer wasn't kept. "Others in this line of work" gives no receipt, because nothing on the road reads it.
  *
- * 2026-10-12, part 2 (§ 2, "Cockpit screen as built, part 2"): "What you've told DotAmi / Not told yet"
- * with the one-question box at the top of the left rail, a receipt after every answer (road evaluation
- * before and after it, compared) where it was given and in "This visit", the what-if bar under the
- * map, and "Compare the two endings" with "This is mine" in the right-hand panel.
+ * Compare is offered only at a fork whose own pick, not the rules, puts steps on or off the path
+ * (`forksToCompare`), so today's Alberta road, whose two forks are the map's own toggles and whose sides the
+ * tax rules colour, has none.
  *
- * After review (2026-10-12): the idea's own answers, kept with the map, wait for the map's save before
- * their receipt is worked out, from the idea the save read back; until then it says so, and a failed save
- * says it wasn't kept.
+ * Folding: the rail, the goal bar, the right-hand panel, the map's legend, the what-if bar (with "This visit")
+ * and the road's later columns each fold with their own button, and the header's "Fold all panels" folds them
+ * all. The answers, and the overlays last left on, are remembered in this browser (lib/cockpit/folds.ts). A
+ * first visit is calm (docs/ui-spec/README.md, "The layout rule"): it shows the road, the goal and the next
+ * steps, with Road and Skills on (every overlay switch drawn) and one coach line, and folds the rest. The
+ * rail and the road ahead are one click away; the legend and the what-if bar are items of the goal bar's
+ * Look closer menu, which also holds Compare and Others in this line of work, so the first view has two
+ * controls fewer on a tablet or a laptop. A return visit opens as the person left it. Below 768 px
+ * (Tailwind's `md`) the rail is a full-width sheet opened from the header and the page scrolls down instead of
+ * squeezing the road; below 1024 px (`lg`) the right-hand panel opens over the road (a full-width sheet on a
+ * phone, a 420 px drawer between the two) instead of taking a column from it. Every block still drawn is a
+ * region of its own for the clutter limit (the header, the goal bar, the overlay switches, the coach line,
+ * the road, Next on your road), as the layout rule defines a region.
  *
- * 2026-10-13, the maintainer's answer: Compare is offered only at a fork whose own pick, not the rules,
- * puts steps on or off the path (`forksToCompare`), so today's Alberta road, whose two forks are the map's
- * own toggles and whose sides the tax rules colour, has no Compare.
- *
- * 2026-10-13, every region folds: the told / not-told list folds with the rail it sits in and Compare with
- * the panel; the what-if bar and "This visit" under the map fold together with their own button, the fifth
- * answer remembered (lib/cockpit/folds.ts `whatIf`), and the header's "Fold all panels" folds it too.
- *
- * 2026-10-13, the invented example future (docs/ui-spec/example/_index.md): given `example`, the page draws
- * that example's answers (lib/examples/) through the same road evaluation, read-only. It fetches nothing of
- * the person's, keeps folds for this page only, and every way to save either is disabled with the example's
- * note or answers in the banner, which never folds; nothing reaches the data file or the browser's storage.
- *
- * 2026-10-17, "Others in this line of work" (docs/ui-spec/cockpit/landscape.md): one more thing the right-hand
- * panel can hold, opened from the goal bar on every road and from a step its road marks as opening a business.
- * It holds the person's own list of businesses they're watching, read and kept through its own page-only
- * routes; it gives no receipt, because nothing on the road reads it.
- *
- * 2026-10-17, the calm first view (S2.5.30c; future-cockpit.md § 2, "First visit and return visits as built";
- * docs/ui-spec/README.md, "The layout rule"): a first visit shows the road, the goal and the next steps, and
- * folds everything else (the rail and the road ahead one click away; the legend and the what-if bar, since
- * 2026-10-20, Look closer and then the item), with only
- * Road and Skills on (every overlay switch drawn) and one coach line; a return visit opens as the person left it, the
- * overlays included (lib/cockpit/folds.ts). The goal bar's Compare and Others in this line of work share one
- * Look closer menu. The folded legend and what-if bar were shown from one button each at the end of Next on
- * your road; since 2026-10-20 they are shown from Look closer instead, two controls fewer on a tablet's or a
- * laptop's first view (on a phone they were under the window's edge already) (the
- * maintainer's pick, so the screens stay within their clutter limits). Every block still drawn is a region of its own for the clutter limit (the header, the goal bar, the
- * overlay switches, the coach line, the road, Next on your road), as the layout rule defines a region.
+ * The invented example future (docs/ui-spec/example/_index.md): given `example`, the page draws that
+ * example's answers (lib/examples/) through the same road evaluation, read-only. It fetches nothing of the
+ * person's, keeps folds for this page only, and every way to save either is disabled, with the example's note
+ * or answers in the banner, which never folds; nothing reaches the data file or the browser's storage.
  */
 
 /** The regions' ids, for the fold buttons' aria-controls. */
@@ -202,7 +184,7 @@ export function CockpitPage({ initialScenario, pinned = false, example }: Cockpi
   // paint `journeyScenario` may still be null and the server-loaded scenario is used. Once that settles,
   // adopt the journey's scenario if one exists and differs — the idea last open in this window, with any
   // edit not saved yet, wins over the server snapshot (audit-2026-07-04 C2). After a reload the memory is
-  // empty and the server's idea stays (nothing is in the window's storage since 2026-10-24).
+  // empty and the server's idea stays (nothing about the person is kept in the window's storage).
   useEffect(() => {
     // The example is its own: no journey's scenario ever replaces it.
     if (!hydrated || isExample) return;
@@ -214,9 +196,9 @@ export function CockpitPage({ initialScenario, pinned = false, example }: Cockpi
     }
     // An edit of this idea that no save kept (its save failed, or the page was left before it went and the save
     // sent then didn't come back kept) is newer than the data file's copy: it is drawn, whichever way the idea was
-    // opened, and saved again, and the save line says how that went. Until a review of 2026-10-24 the window's
-    // copy was drawn under "Edits save automatically." with no save on its way, or the data file's copy replaced
-    // it on screen, and the next reload lost the edit without a word.
+    // opened, and saved again, and the save line says how that went. Without this the window's copy sat under
+    // "Edits save automatically." with no save on its way, or the data file's copy replaced it on screen, and
+    // the next reload lost the edit without a word.
     const drawn = pinned ? initialScenario : (journeyScenario ?? currentScenario);
     const unsaved = drawn ? unsavedEdits.find((copy) => copy.id === drawn.id) : undefined;
     if (unsaved) {
@@ -238,14 +220,14 @@ export function CockpitPage({ initialScenario, pinned = false, example }: Cockpi
   // sheet is open (not remembered: it starts closed so the road is what a phone shows first).
   const { folds, toggle, toggleAll, overlays, setOverlays, coachDismissed, dismissCoach } = useFolds(!isExample);
   const showCoach = !coachDismissed && !isExample;
-  // Got it takes its own button off the page with the line, which left keyboard focus on the page's body (a
-  // review, 2026-10-17); focus goes to the road first, the thing the line was about, without scrolling to it.
+  // Got it takes its own button off the page with the line, which would leave keyboard focus on the page's body;
+  // focus goes to the road first, the thing the line was about, without scrolling to it.
   const putCoachAway = useCallback(() => {
     document.querySelector<HTMLElement>(`[data-region="road"]`)?.focus({ preventScroll: true });
     dismissCoach();
   }, [dismissCoach]);
   const [railSheet, setRailSheet] = useState(false);
-  // Whether the Skills list opens with the job's list unfolded: only from a step's Open the list (2026-10-23).
+  // Whether the Skills list opens with the job's list unfolded: only from a step's Open the list.
   const [jobListOpen, setJobListOpen] = useState(false);
   // The last refusal from a save of the person's answers, in the server's words, shown where they clicked.
   const [answerError, setAnswerError] = useState<string | null>(null);
@@ -283,7 +265,7 @@ export function CockpitPage({ initialScenario, pinned = false, example }: Cockpi
       const target = waitingSave.current;
       // Left within the pause (a link of the app's own, which keeps the window's memory): the save goes now. No
       // save line is left to say how it went, so a copy not kept stays held, and the cockpit saves it again and
-      // says so when the idea is opened again in this window. Until a review of 2026-10-24 the save was dropped.
+      // says so when the idea is opened again in this window. The save is never just dropped.
       if (target) void saveScenario(target).then((result) => result.ok && editKept(target));
     },
     [editKept],
@@ -322,8 +304,8 @@ export function CockpitPage({ initialScenario, pinned = false, example }: Cockpi
   const aboutJobHasRoad = jobCode ? roadsWrittenForJob(jobCode).length > 0 : false;
 
   // One run of road evaluation draws everything: the gauges, the step colours, the badges, the step
-  // panel, "Next on your road", and the map's lever cards (its `rules`, run on the idea's own picks;
-  // until 2026-10-11 the map ran on the default picks, so a flipped toggle didn't recolour the cards).
+  // panel, "Next on your road", and the map's lever cards (its `rules`, run on the idea's own picks, so a
+  // flipped toggle recolours the cards).
   // [8a] Only agreed business totals reach the rules (cockpitInput says how).
   // [8e] Today is the person's own day and moves on with the clock: a window left open past
   // midnight or a quarter end re-reads the figures against the new day instead of the old one.
@@ -376,10 +358,10 @@ export function CockpitPage({ initialScenario, pinned = false, example }: Cockpi
     return { input: base, rows: toldRows(base, evaluation, keptAnswers(kept, figures)), notTold: notToldYet(base, evaluation) };
   }, [inputFor, whatIf, roadEvaluation, kept, figures]);
   // The forks Compare is offered at: only where the fork's own pick, not the rules, puts steps on or off
-  // the path (the maintainer, 2026-10-13). None on today's Alberta road, whose sides the tax rules colour
-  // whichever is picked, so both columns' counts would come out the same.
+  // the path (the maintainer's call; docs/ui-spec/cockpit/15-compare.md). None on today's Alberta road,
+  // whose sides the tax rules colour whichever is picked, so both columns' counts would come out the same.
   const compareForks = useMemo(() => (told ? forksToCompare(told.input) : []), [told]);
-  // Export's input (pre-release fix, 2026-10-23): the road on screen as Your plan reads it, from the same kept
+  // Export's input: the road on screen as Your plan reads it, from the same kept
   // answers and the same input without the what-if, so Export prints this road's own steps on every road.
   const exportArgs = useMemo<PlanArgs | null>(
     () =>
@@ -404,7 +386,7 @@ export function CockpitPage({ initialScenario, pinned = false, example }: Cockpi
     () => (example && told ? exampleStory(told.input, example.whatIfFirstYearSalesDollars) : null),
     [example, told],
   );
-  // Where the example's income goal comes from (2026-10-14): the statistic it is, so the goal bar says what
+  // Where the example's income goal comes from: the statistic it is, so the goal bar says what
   // the number is rather than calling it the example person's own.
   const exampleStat = (id: string | null | undefined) => (id ? (example?.sources?.data.statistics.find((s) => s.id === id) ?? null) : null);
   const targetStat = exampleStat(example?.sources?.incomeWantedFrom);
@@ -436,8 +418,8 @@ export function CockpitPage({ initialScenario, pinned = false, example }: Cockpi
   );
 
   // Below 768 px the rail, which holds the save line and the only "Save now", is a closed sheet, and inert while the
-  // panel is open: a save that failed then said "Save now tries again." with nothing to press on screen (the review of
-  // #209's merge, 2026-10-26). So a failed save also draws a bar of its own on a phone, at the foot of the window,
+  // panel is open: a save that failed then said "Save now tries again." with nothing to press on screen. So a
+  // failed save also draws a bar of its own on a phone, at the foot of the window,
   // outside the rail and every inert wrapper and over the panel's sheet: not while the rail's own sheet is open, which
   // shows the line itself, and never on the example, which keeps nothing. Its height is measured so the open panel's
   // sheet ends above it rather than under it.
@@ -585,7 +567,7 @@ export function CockpitPage({ initialScenario, pinned = false, example }: Cockpi
     return Promise.resolve(null);
   }
 
-  /** The person's own "I'd incorporate at $___" (2026-10-11): theirs, saved like a branch pick. */
+  /** The person's own "I'd incorporate at $___": theirs, saved like a branch pick. */
   function handleIncorporateAtChange(value: number | null) {
     // Saved as the person types, so no receipt per keystroke; the one-question box gives one on Save.
     changeScenario(setIncorporateAt(scenario, value), null);
@@ -647,7 +629,7 @@ export function CockpitPage({ initialScenario, pinned = false, example }: Cockpi
   }
 
   /**
-   * Opens "Others in this line of work" (2026-10-17; docs/ui-spec/cockpit/landscape.md): from the goal bar on
+   * Opens "Others in this line of work" (docs/ui-spec/cockpit/landscape.md): from the goal bar on
    * every road, and from a step its road marks as opening a business. It changes nothing on the road.
    */
   function openLandscape() {
@@ -676,7 +658,7 @@ export function CockpitPage({ initialScenario, pinned = false, example }: Cockpi
   function handleGauge(gauge: GaugeId) {
     setAnswerError(null);
     setReceipt(null);
-    // The Skills gauge opens the list with the job's own list folded under its button (2026-10-23).
+    // The Skills gauge opens the list with the job's own list folded under its button.
     if (gauge === "skills") setJobListOpen(false);
     if (activeGauge === gauge) {
       setActiveGauge(null);
@@ -930,7 +912,8 @@ export function CockpitPage({ initialScenario, pinned = false, example }: Cockpi
       };
       save = (value) => viaScenario(answerEquipment(scenario, value === "yes"));
     } else if (question === "sales-year-3") {
-      // The person's own third-year estimate, the number Incorporating compares (2026-10-21).
+      // The person's own third-year estimate, the number Incorporating compares
+      // (docs/ui-spec/cockpit/incorporating-estimate.md).
       title = q.salesYear3.question;
       why = q.salesYear3.why;
       control = { kind: "dollars", label: q.salesYear3.box, value: thirdYearEstimate };
@@ -1067,16 +1050,15 @@ export function CockpitPage({ initialScenario, pinned = false, example }: Cockpi
     <div
       className={`grid ${example ? "min-h-0 flex-1" : "h-[calc(100vh-2.5rem)]"} grid-rows-[auto_1fr] overflow-hidden bg-ink max-md:h-auto max-md:min-h-[calc(100vh-2.5rem)] max-md:overflow-visible`}
     >
-      {/* The top: the header and the goal bar, in one grid row (the calm first view, 2026-10-17). data-region
+      {/* The top: the header and the goal bar, in one grid row (the calm first view). data-region
           marks each block the clutter limit counts (docs/ui-spec/README.md, "The layout rule", rule 2): the
           header, the rail, the coach line and the panel here; the goal bar, the overlay switches, the road, the
           legend, the what-if bar and Next on your road in their own components. Each block still drawn keeps its
-          own mark, so the count sees what a person sees: a review of the calm first view found three blocks that
-          had been counted as one with a neighbour. */}
+          own mark, so the count sees what a person sees and never counts a block as one with its neighbour. */}
       <div className="min-w-0 border-b border-rule bg-[#0f0e12]">
       {/* Header — S2.5.4c: minmax(0, …) columns so nothing overlaps when the window is narrow. Below 768 px
-          the idea's name has a line of its own under the back link and the buttons (the screen review of
-          2026-10-23: between them it got about 75 px of a 375 px phone and showed "In…"). */}
+          the idea's name has a line of its own under the back link and the buttons (between them it got about
+          75 px of a 375 px phone and showed "In…"). */}
       <header
         data-region="header"
         inert={behindSheet}
@@ -1085,8 +1067,8 @@ export function CockpitPage({ initialScenario, pinned = false, example }: Cockpi
         <div className="flex min-w-0 items-center gap-3 border-r border-rule px-3 md:gap-[18px] md:px-[22px]">
           {/* The example has no saved futures behind it: its way back is the front door it came from. Below
               768 px the link wraps onto two lines ("← Your" / "futures"): on one line at body size it took the
-              width the idea's name needs, and a 375 px phone drew no name at all (the type scale's review,
-              2026-10-19). A grid's auto column takes its content's full width before the name's 1fr gets any. */}
+              width the idea's name needs, and a 375 px phone drew no name at all. A grid's auto column takes its
+              content's full width before the name's 1fr gets any. */}
           <Link
             href={isExample ? "/" : "/ventures"}
             className="font-mono text-body text-stone transition hover:text-paper max-md:max-w-[9ch]"
@@ -1096,7 +1078,7 @@ export function CockpitPage({ initialScenario, pinned = false, example }: Cockpi
           {/* Below 768 px the header keeps the idea's name and its buttons; the word mark gives way. */}
           <span className="max-md:hidden">
             {/* On the example the back link beside it already goes to the front door, so the word mark is
-                plain there rather than a second link to the same place (the calm first view, 2026-10-17). */}
+                plain there rather than a second link to the same place. */}
             <WordMark size="sm" href={isExample ? "" : undefined} />
           </span>
         </div>
@@ -1155,7 +1137,7 @@ export function CockpitPage({ initialScenario, pinned = false, example }: Cockpi
             onToggleFold={() => toggle("goal")}
             person={example?.person ?? null}
             targetFrom={targetFrom}
-            // What folds under the map, shown from Look closer while folded (2026-10-20).
+            // What folds under the map, shown from Look closer while folded.
             toShow={[
               ...(folds.legend
                 ? [{ id: "legend", label: words.folds.legend.show, controls: LEGEND_ID, shows: "legend" as const, onSelect: () => toggle("legend") }]
@@ -1309,7 +1291,7 @@ export function CockpitPage({ initialScenario, pinned = false, example }: Cockpi
               </div>
             </section>
 
-            {/* Only on the tax and structure roads (2026-10-23): on the apprentice road it was jargon that fit nothing. */}
+            {/* Only on the tax and structure roads: on the apprentice road it would be jargon that fits nothing. */}
             {drawsTheStructureLadder(road) ? <StructureLadderRail activeStepId={ladderStepId} /> : null}
             {structureAssumed ? (
               <section className="border-t border-rule-soft pt-4">
@@ -1363,15 +1345,15 @@ export function CockpitPage({ initialScenario, pinned = false, example }: Cockpi
         </aside>
 
         {/* Canvas — S2.5.4j: tier columns, not a graph; the overlay switches over it and "Next on your
-            road" under it (2026-10-12). From 768 px the column scrolls down when what it holds is taller
+            road" under it. From 768 px the column scrolls down when what it holds is taller
             than the window (a what-if on, with its receipt): the map's box never shrinks below the road's
             minimum area plus the legend, so the legend can't slide under the what-if bar and cover its
-            own fold button, as it did until 2026-10-14 (12-folding-and-phone.md). */}
+            own fold button (12-folding-and-phone.md). */}
         <div inert={behindSheet} className="relative flex min-h-0 flex-col bg-ink4 md:overflow-y-auto">
           {evaluation ? (
-            // The road's column (the calm first view, 2026-10-17): the overlay switches on top, the coach line,
+            // The road's column (the calm first view): the overlay switches on top, the coach line,
             // the map, the what-if bar and Next on your road at the foot, each a region of its own while drawn;
-            // the folded legend and what-if bar are shown from the goal bar's Look closer menu (2026-10-20), and
+            // the folded legend and what-if bar are shown from the goal bar's Look closer menu, and
             // the foot line keeps only the what-if note.
             <div className="flex flex-1 flex-col">
               <OverlaySwitches
@@ -1425,13 +1407,13 @@ export function CockpitPage({ initialScenario, pinned = false, example }: Cockpi
                 scenario={scenario}
                 onSelectStep={openStep}
                 // The folded what-if bar's note: the map is still relit by a what-if that is on. Its show
-                // button is in Look closer (2026-10-20).
+                // button is in Look closer.
                 after={folds.whatIf && whatIf !== null ? <WhatIfOnNote whatIf={whatIf} /> : null}
               />
-              {/* On a phone nothing above the road folds, so a line over it would push the road down (82 px, a
-                  review found, 2026-10-17). Right under the road it sat on the card the road's own area cuts off
-                  at its edge, and read as covering the road (the screen review of 2026-10-23), so it comes after
-                  Next on your road. Hidden from 768 px, where the one above is drawn, so only one is on the page. */}
+              {/* On a phone nothing above the road folds, so a line over it would push the road down (by 82 px).
+                  Right under the road it sat on the card the road's own area cuts off at its edge, and read as
+                  covering the road, so it comes after Next on your road. Hidden from 768 px, where the one above
+                  is drawn, so only one is on the page. */}
               {showCoach ? <CoachLine onDismiss={putCoachAway} className="border-y md:hidden" /> : null}
             </div>
           ) : null}

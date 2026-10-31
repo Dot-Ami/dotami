@@ -962,6 +962,12 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   [expense-records.md](docs/architecture/expense-records.md) and two lines of
   [other-ways-to-build.md](docs/architecture/other-ways-to-build.md)), they now give it; every screen already
   did, and `tests/reading-list-corrections.spec.ts` fails if the code or those docs drop it again.
+- **The cockpit's code comments say what each piece does, not how it was built** (2026-10-31, comments only:
+  nothing a person or a build sees changes). The dated build histories in `components/cockpit/cockpit-page.tsx`,
+  `what-if-bar.tsx`, `strategy-map.tsx`, `structure-ladder-rail.tsx` and `lib/cockpit/words.ts` are now short
+  present-tense notes that point to [docs/ui-spec/cockpit/_index.md](docs/ui-spec/cockpit/_index.md), since this
+  file already records the history. A comment in `what-if-bar.tsx` named `WhatIfShowButton`, a component that
+  was removed when its button moved into *Look closer*; it no longer does.
 
 ## [0.4.1] — 2026-10-20
 

@@ -2,7 +2,7 @@ import { cockpitWords } from "@/lib/cockpit/words";
 import { structureLadderV2026 } from "@/lib/engines/structure/v2026";
 import type { StructureStepId } from "@/lib/engines/structure/v2026";
 
-/** The ladder's words (lib/cockpit/words.ts, since 2026-10-17; in plain words since 2026-10-23). */
+/** The ladder's words, in plain words (lib/cockpit/words.ts `rail.ladder`). */
 const words = cockpitWords.rail.ladder;
 
 interface StructureLadderRailProps {
