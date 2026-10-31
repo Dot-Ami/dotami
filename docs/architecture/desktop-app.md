@@ -503,3 +503,31 @@ to the data.
   mid-save; a server that never answers; the update dialogs in the real app (they're tested with a
   fake updater, not against a release).
 - An app icon (the default Electron icon is used); Mac and Linux builds.
+
+## Checking where an installer came from (build provenance)
+
+Releases built since the release workflow gained this step carry build provenance (0.2.0 to 0.4.1 have
+none): `.github/workflows/release.yml` has GitHub's own action, `actions/attest-build-provenance`, sign a
+statement that names the repository, the workflow file and the commit that built the installer, and the
+installer's SHA-256. GitHub keeps the statement with the repository, and the draft release carries the same
+statement as `DotAmi-Setup-<version>.exe.sigstore.json`. To check a downloaded installer with the GitHub
+CLI:
+
+```bash
+gh attestation verify DotAmi-Setup-x.y.z.exe --repo Dot-Ami/dotami
+```
+
+It passes only when a statement made in this repository names the file's SHA-256, and it prints the
+workflow and commit. Add `--bundle DotAmi-Setup-x.y.z.exe.sigstore.json` to check against the release's
+copy of the statement instead of GitHub's.
+
+What it doesn't do:
+
+- **It isn't code signing.** The installer is still unsigned, so Windows SmartScreen still shows "Windows
+  protected your PC" (code signing is parked: [7d] in [docs/task-list.md](../task-list.md)).
+- **It proves which workflow and commit built the file, not who published it.** Publishing the draft is
+  still the maintainer's click, and *What protects an update* (above) still applies. Nor does it say
+  anything about what a package the build installed did during the build.
+- An installed app doesn't check it: an update is still checked against the SHA-512 in `latest.yml`.
+- The statement is also written to Sigstore's public log, with the repository, workflow and commit, all
+  of which are public already.

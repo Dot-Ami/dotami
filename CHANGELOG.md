@@ -56,6 +56,15 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   `tests/database-package.spec.ts` failed on #219; `node scripts/keep-gypfile.mjs` put it back.
 
 ### Added
+- **Build provenance for the Windows installer** (the house-cleaning audit of 2026-10-31). None of the installer
+  releases so far (0.2.0 to 0.4.1) carried a signature or anything saying where it was built. The release workflow
+  now has GitHub's `actions/attest-build-provenance` sign a statement that this repository's `release.yml`, at the
+  tagged commit, built the installer with its SHA-256, and adds that statement to the draft release as
+  `DotAmi-Setup-<version>.exe.sigstore.json`. Anyone can check a download with
+  `gh attestation verify DotAmi-Setup-x.y.z.exe --repo Dot-Ami/dotami`. The installer is still unsigned, so
+  Windows SmartScreen still warns, and provenance proves which workflow and commit built the file, not who
+  published it ([desktop-app.md](docs/architecture/desktop-app.md), its last section). It first runs on the next
+  tagged release. `.github/workflows/release.yml`.
 - **The quote checker reads a table row as one piece, and the Productivity Grant's card names who pays which share**
   (the maintainer's answers of 2026-10-29: "Teach the checker to read a table row as one piece" and "One new check
   that holds the old and new sentences"). `scripts/check-quotes.mjs` also reads each table row as one piece, its
