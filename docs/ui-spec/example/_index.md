@@ -7,7 +7,9 @@ Page: `/example/<id>` (one today: `/example/mara`) · Route: `app/example/[id]/p
 numbers), `lib/examples/stats.ts` (every average) · Words: `lib/cockpit/words.ts` `example`
 Type: page (the cockpit, read-only)
 
-Last updated: 2026-10-15 (the maintainer's pick A, "I agree, it should be A": Mara's what-if starts empty, and
+Last updated: 2026-10-29 (Lee Valley's clamp price, which the tool re-check of 2026-10-27 could not re-open
+behind a bot check, carries a note that the maintainer opened the page in his own browser on 2026-10-29 and
+saw $85); 2026-10-15 (the maintainer's pick A, "I agree, it should be A": Mara's what-if starts empty, and
 ISED's $610,300 is shown only as context in *Where these numbers come from*, labelled as an industry average;
 road 1 has 17 steps since main's *Keep your records from day one*). Before that 2026-10-14 (real numbers: the
 maintainer, 2026-10-14, "Lets go for A, but try to go as in depth
@@ -98,7 +100,9 @@ closed by the banner's button. Read-only; it sends nothing and keeps nothing. In
    the seller, the day seen, the page's link, the product as the page names it (a sale, clearance or
    back-order said there), the words seen on the page around the price, and a note where the second check
    found one (a premium model that pulls the average up, a clearance price on an item out of stock, a
-   class match in doubt).
+   class match in doubt, and, on Lee Valley's clamp, that a person looked: the maintainer opened the page
+   in his own browser on 2026-10-29 and saw $85, where a tool's check of 2026-10-27 met a bot check that
+   was not bypassed; its words and day seen stay those of 2026-10-14, and no number moves).
 3. **Software listed for this example, with listed prices in Canadian dollars**: design and drawing (SketchUp,
    Autodesk Fusion), cut lists and sheet layout (free tiers only: no paid plan is listed in Canadian
    dollars), bookkeeping and invoicing (QuickBooks Online Canada, Xero, FreshBooks, Wave). Each category
@@ -244,3 +248,8 @@ None. **Start my own future →** opens `/start`.
   subscription the one-amount line can't hold without picking a plan for her.
 - The prices were seen on one day (2026-10-14); sale prices end and pages move. Re-seeing them is a
   rerun of the same research, then this page's numbers follow (every average is worked out from the data).
+  The four sellers' pages a review couldn't re-open (Busy Bee Tools, Autodesk, QuickBooks and Lee Valley)
+  were opened again on 2026-10-27: Busy Bee's, Autodesk's and QuickBooks' prices were the same, and Lee
+  Valley's page showed a bot check that was not bypassed. The maintainer opened Lee Valley's page in his own
+  browser on 2026-10-29 and saw $85, the same price, which the clamp's note says. The seen day on screen
+  stays 2026-10-14.
