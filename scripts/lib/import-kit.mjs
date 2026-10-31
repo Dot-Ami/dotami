@@ -72,7 +72,7 @@ export function decode(bytes, encoding, name = "the file") {
 
 /** The text as an import reads it: no byte-order mark, "\n" line endings. */
 export function evenText(text) {
-  return text.replace(/^﻿/, "").replace(/\r\n?/g, "\n");
+  return text.replace(/^\uFEFF/, "").replace(/\r\n?/g, "\n");
 }
 
 /** A file's SHA-256, of its text evened out, so the same file checked out with other line endings matches. */

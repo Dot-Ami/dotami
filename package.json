@@ -7,7 +7,7 @@
     "dev": "node scripts/next.mjs dev -H 127.0.0.1",
     "build": "node desktop/notices.mjs && node scripts/next.mjs build",
     "start": "node scripts/next.mjs start",
-    "lint": "node scripts/next.mjs lint",
+    "lint": "eslint . --ext .js,.jsx,.mjs,.cjs,.ts,.tsx",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",

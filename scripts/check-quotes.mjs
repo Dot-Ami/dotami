@@ -44,6 +44,8 @@ const INLINE_TAGS = new Set([
 // between two words of a quote: "$30,000" in one cell and "or less" in the next can't match
 // "$30,000 or less".
 const BLOCK = "\u001e";
+// The regular expressions below look for that control character on purpose.
+/* eslint-disable no-control-regex */
 
 // Elements with no closing tag, so hiding one hides nothing after it.
 const VOID_ELEMENTS = new Set(["area", "base", "br", "col", "embed", "hr", "img", "input", "link", "meta", "param", "source", "track", "wbr"]);

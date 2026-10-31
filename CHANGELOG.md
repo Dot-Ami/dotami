@@ -781,6 +781,21 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   Prop activation's three sources: the new one in amber until 2026-10-27, each read by a person since).
 
 ### Changed
+- **`npm run lint` lints the whole repository with the ESLint command line, not `next lint`.** `next lint`
+  read only `app/`, `components/` and `lib/`, so the desktop app (`desktop/`), the scripts, the unit tests
+  and the browser and desktop tests were never linted, and every run said `next lint` goes away in
+  Next.js 16. The script is now `eslint . --ext .js,.jsx,.mjs,.cjs,.ts,.tsx` (729 files, from 416), still
+  reading `.eslintrc.json` (ESLint 8's own format; Next's codemod writes a flat config that needs ESLint 9
+  and eslint-config-next 16, a dependency change for its own pull request, and the file says why a flat
+  config isn't used yet). The Node folders (`desktop/`, `scripts/`, `tests/`, `e2e/`, `e2e-desktop/`,
+  `prisma/`) leave out React's hook rules and Next's page rules, which fired 11 false alarms there
+  (`useSqliteFrom` in `desktop/main.mjs` read as a React hook, ten test variables called `module`).
+  Plain JavaScript (`.js`, `.mjs`, `.cjs`) also gets ESLint's own recommended rules (a name never
+  defined, a key written twice, unreachable code). They found two things, neither changing what runs: an
+  invisible byte-order-mark character written into a regular expression in `scripts/lib/import-kit.mjs`
+  (now the escape `﻿`), and the control character `scripts/check-quotes.mjs` uses on purpose as its
+  block marker (the rule is switched off there, with the reason). `scripts/next.mjs` no longer runs lint:
+  ESLint sends no usage reports.
 - **The CRA's GST/HST rate table, on the maintainer's answer about its rows; and the vehicle write-off's s.67.3
   source names only what its page holds** (his answers of 2026-10-28 on his reading page). The table is drawn by a
   script, so no tool can see it; he copied Ontario's row "13%" and Alberta's row "5%". That answer is about two rows,
