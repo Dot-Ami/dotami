@@ -71,13 +71,26 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   put it back.
 
 ### Added
+- **The quote checker reads a table row as one piece, and the Productivity Grant's card names who pays which share**
+  (the maintainer's answers of 2026-10-29: "Teach the checker to read a table row as one piece" and "One new check
+  that holds the old and new sentences"). `scripts/check-quotes.mjs` also reads each table row as one piece, its
+  cells joined by " | ", so a quote can hold a row's label with the line beside it ("Employer | Must contribute 25%
+  …"), never two rows; every cell is still found alone, and a run over every recorded quote found the same ones on
+  the old and the new code. The card's line now reads Employer: “Must contribute 25% …”; Government of Alberta:
+  “Contributes the other 75% …”, the labels being the page's own table cells. The entry also quotes the page's
+  requirements for registered employers and some of what training and costs count (no screen draws those yet), and
+  its authority is "Alberta / federal", on the page's sentence on who delivers and funds it. The page's three time
+  items stay in the source's tool check only. One run found all 27 quotes on 2026-10-29, so the source's one tool check is
+  of that day; the maintainer's read of 2026-10-25 still wins on screen. Whether a sole proprietor counts is still
+  open (the page never says). It can't help a table a page's script draws, such as the CRA's GST/HST rates
+  (`tests/check-quotes.spec.ts`, `tests/productivity-grant.spec.ts`; docs/engines/citations.md § The checker).
 - **The Canada-Alberta Productivity Grant, for ideas in Alberta** (the maintainer's call a-call-1 on his reading
   list of 2026-10-23: "ADD it"). The program whose page the Canada-Alberta Job Grant's old address now opens is in
   the programs catalog under its own id, `grant-capg`; the Job Grant's id is never reused. Its card says only what
   Alberta's page says, in quote marks: “Must contribute 25% of the total eligible training costs …”, “Contributes
   the other 75% of the cost to a maximum of $5,000 per employed trainee per fiscal year” and “An employer is
   eligible for up to a maximum amount of $100,000 per fiscal year” (who contributes which share isn't in the words
-  DotAmi holds, so no line names it). Outside the quotes it says only "If training employees is on the venture's
+  DotAmi holds, so no line names it; until 2026-10-29, see the entry above). Outside the quotes it says only "If training employees is on the venture's
   path" and the page's name. The page's “be operational in Alberta for at least one year” is a time, so it is not
   on the card's line. The reading list's matcher found the four quotes on the page on 2026-10-23, kept as a tool
   check (a networked `node scripts/check-quotes.mjs` run should find them again), and the maintainer read the page
@@ -88,8 +101,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   activity match this program", `lib/brain/evaluate.ts` `evaluateGrant`). Road 0's *Hire first employee* names it,
   so for an idea that hires first the map draws it under that card; road 0's other panels list it under
   *Elsewhere on your map*. It is not on the apprentice road, which draws no rules and tax cards, and not outside
-  Alberta. What the page asks of employers beyond that, whether a sole proprietor counts, and who else funds it
-  aren't in the words DotAmi holds, so the card says none of them ([docs/engines/grants.md](docs/engines/grants.md)).
+  Alberta. What the page asks of employers beyond that (until 2026-10-29; see the entry above), whether a sole
+  proprietor counts, and who else funds it (until 2026-10-29; see the entry above) aren't in the words DotAmi holds,
+  so the card says none of them ([docs/engines/grants.md](docs/engines/grants.md)).
   Tests: `tests/productivity-grant.spec.ts` (on the old code there was no such entry), `tests/road-map.spec.ts`
   (the one card the map gained), `tests/cockpit-screen.spec.ts`; road 0's 11 panels in
   `tests/fixtures/official-fees/panels-before.json` are redrawn for it, and for five map stages' corrections
@@ -315,6 +329,12 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   *Annual* and *Monthly* (were "1-year term" and "1-month term"), alis rates "the job market" (was "the 3-year
   job market") and ISED's not profitable is "in the data year". A test holds every word of DotAmi's own in the
   sources to no duration, past one billing phrase used exactly as often as today (`tests/example-sources.spec.ts`).
+- **Mara's example: a person has now seen Lee Valley's clamp price** (2026-10-29). The tool re-check of
+  2026-10-27 met a bot check on Lee Valley's page and was not bypassed, so the price rested on the two checks of
+  2026-10-14. The maintainer opened the page in his own browser on 2026-10-29 and saw $85 and the item line
+  “Item 17F7340, Bessey 40" K Body REVO Clamp”; the clamp's note in *Where these numbers come from* now says so.
+  Its words and its day seen (2026-10-14) are unchanged, and so is every number and average. Test:
+  `tests/example-sources.spec.ts`.
 - **Every page fits a phone, one step counter, and plainer screens** (the screen review of 2026-10-23, its
   pre-release fixes "Phone and layout"). At 375 px: the cockpit's four gauges are stacked, each inside the window
   (Start-up money and Your date were out of sight in a strip that scrolled sideways; two by two from 640 px, four
@@ -760,6 +780,22 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   Prop activation's three sources: the new one in amber until 2026-10-27, each read by a person since).
 
 ### Changed
+- **The CRA's GST/HST rate table, on the maintainer's answer about its rows; and the vehicle write-off's s.67.3
+  source names only what its page holds** (his answers of 2026-10-28 on his reading page). The table is drawn by a
+  script, so no tool can see it; he copied Ontario's row "13%" and Alberta's row "5%". That answer is about two rows,
+  not a read of the page in full, so the page's source still says "Read by a person on 2026-10-25" under both cards,
+  and the answer is recorded beside it. *Alberta — no provincial sales tax* now says only the row's 5%, "The CRA's
+  table of GST/HST rates lists Alberta at 5%." (it went on "… 5% GST, with no provincial sales tax."), and lists
+  Alberta's own *About Tax and Revenue Administration* as a second source, "Checked by a tool on 2026-10-29", with two
+  of its sentences after *Words found on the page:*: “Alberta has no sales tax.” and its block on sales taxes other
+  provinces may charge. The card's name is unchanged, an open question for the maintainer. *Ontario HST (13%)* is
+  unchanged. Under *Motor vehicle expenses*, the source titled "Income Tax Act s.18(1)(a), s.67, s.67.2, s.67.3 —
+  purpose test, reasonableness, interest and lease caps" is "Income Tax Act s.67.3 — Limitation re cost of leasing
+  passenger vehicle" (the section's own heading, his pick A), with a new plain line under it: "Only section 67.3 is
+  on this page: the limit on how much of a passenger vehicle's lease charges can be deducted, and the formulas that
+  set it." (from `lib/engines/shared/words.ts`; the readout carries it too; its four "Show the words" buttons are
+  unchanged). Tests: `tests/rate-table-read.spec.ts`, `tests/source-page-holds.spec.ts`,
+  `tests/maintainer-reads.spec.ts`, `tests/readout-route.spec.ts`.
 - ***What DotAmi knows about you* quotes Anthropic's own words on how long it keeps what the intake sends**
   (the maintainer's decision 2 of 2026-10-24: a provider's period word for word, under a label). While a model
   key is set, the intake's row said Anthropic's page "says API inputs and outputs are deleted within 30 days,
@@ -876,6 +912,13 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   as the area of the workspace divided by the total area of your home”). Two citations take their pages' own
   titles: *What are SR&ED tax incentives* and *Helping small businesses get loans*. The glossary's and the home
   office page's tool checks are of that day, since one run found their older quotes with the new ones.
+- **A sole proprietor's SR&ED card quotes the CRA's newer page on refunds** (2026-10-29; the maintainer's answer, "it
+  should always be the newer page because it's more up-to-date"). After the rates page's two lines it adds *The CRA's
+  SR&ED Investment Tax Credit Policy:* “Generally, for an individual (other than a trust), the refundable ITC is 40% of
+  the unclaimed balance of ITC earned in the current year for qualified SR&ED expenditures.” That page (dated
+  2026-10-07) is the card's sixth source, "Checked by a tool on 2026-10-29" in amber, since nobody has read it yet;
+  the older relationships page's "non-refundable" 15% is quoted nowhere, and the corporation's card, and the fork on
+  a sole proprietor's card that copies its note, are unchanged.
 
 ### Documented
 - **The screen specs say what the pre-release fixes changed** (2026-10-24). Each control the fixes above

@@ -15,6 +15,7 @@ import { roadsV2026 } from "@/lib/engines/roads/v2026";
 import * as aboutJobFile from "@/lib/about-job/words";
 import * as cockpitFile from "@/lib/cockpit/words";
 import * as researchKitFile from "@/lib/engines/research-kit/v2026/words";
+import * as engineSourcesFile from "@/lib/engines/shared/words";
 import * as frontDoorFile from "@/lib/front-door/words";
 import * as landscapeFile from "@/lib/landscape/words";
 import * as personFile from "@/lib/person/words";
@@ -57,6 +58,9 @@ const WORDS_FILES: Readonly<Record<string, unknown>> = {
   "lib/about-job/words.ts": aboutJobFile,
   "lib/cockpit/words.ts": cockpitFile,
   "lib/engines/research-kit/v2026/words.ts": researchKitFile,
+  // The engines' own words about their sources: the line under a source's title saying what its page holds
+  // (since 2026-10-29, tests/source-page-holds.spec.ts).
+  "lib/engines/shared/words.ts": engineSourcesFile,
   "lib/front-door/words.ts": frontDoorFile,
   "lib/landscape/words.ts": landscapeFile,
   "lib/person/words.ts": personFile,

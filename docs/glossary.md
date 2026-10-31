@@ -161,15 +161,17 @@ determine the LRIP, throughout the year."; "File the completed schedule with you
 ### PST (provincial sales tax, British Columbia)
 
 A retail sales tax British Columbia charges when taxable goods, software or services are bought in
-B.C. or brought into B.C. to use there, unless an exemption applies. (Alberta has no PST.)
+B.C. or brought into B.C. to use there, unless an exemption applies. (On Alberta, see Alberta's own page, below.)
 
 Source: [B.C. provincial sales tax (PST)](https://www2.gov.bc.ca/gov/content/taxes/sales-taxes/pst)
 (Government of British Columbia). Checked by a tool on 2026-10-12: "Provincial sales tax (PST) is a
 retail sales tax that applies when taxable goods, software or services are acquired in B.C. or
 brought into B.C. for use in B.C., unless a specific exemption applies."
 
-The words "Alberta has no PST" are DotAmi's compliance catalog's, cited there
-(`lib/engines/compliance/v2026/rules.ts`), not this page's.
+On Alberta: [About Tax and Revenue Administration](https://www.alberta.ca/about-tra) (Government of
+Alberta). Checked by a tool on 2026-10-29: "Alberta has no sales tax." (the tool check is recorded on the
+Alberta sales-tax card's source, `lib/engines/compliance/v2026/rules.ts`). Until 2026-10-29 this entry said
+"Alberta has no PST" in DotAmi's own words, from that card, which no longer says it.
 
 ### RDTOH (refundable dividend tax on hand)
 

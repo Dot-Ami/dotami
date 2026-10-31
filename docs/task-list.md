@@ -1,6 +1,6 @@
 # Task list — what's being built, and what you can pick up
 
-Last updated: 2026-10-27. Every story planned for DotAmi, with its tasks. The plan behind it is
+Last updated: 2026-10-29. Every story planned for DotAmi, with its tasks. The plan behind it is
 [architecture/use-cases.md](architecture/use-cases.md) (who it's for, the decisions, the build
 order); the settings and edge cases each story must test are in
 [architecture/settings-and-edge-cases.md](architecture/settings-and-edge-cases.md) — the codes in
@@ -256,8 +256,9 @@ placed in phase 3.
       429, QuickBooks timed out): every Busy Bee Tools, Autodesk and QuickBooks price is the same as on
       2026-10-14. Fusion's personal-use page does show "CA$940 /YEAR (OR CA$120 /MONTH)", once a browser draws
       it (a plain fetch sees no amount: Autodesk fills its prices in with a script). Lee Valley's page showed
-      a bot check that was not bypassed, so its clamp price still rests on the two checks of 2026-10-14. The
-      Busy Bee planer's page now says it is in stock online, at the same clearance price; its note says both
+      a bot check that was not bypassed, so its clamp price still rests on the two checks of 2026-10-14; on
+      2026-10-29 the maintainer opened it in his own browser and saw $85, the same price, and its note says so.
+      The Busy Bee planer's page now says it is in stock online, at the same clearance price; its note says both
       days. The software notes' promotion lengths ("for 6 months", "for 3 months", "for a year") are out of
       DotAmi's own words (the QuickBooks and FreshBooks quotes keep them, as the pages wrote them), and so are
       three more time words: Fusion's plans are *Annual* and *Monthly* (they were "1-year term" and "1-month
@@ -702,7 +703,14 @@ placed in phase 3.
     2026-10-25); changing your place later with one Change box for every answer (S2.5.33); everything you can
     apply for and write off (S2.5.38); public information on other businesses (S2.5.39); DotAmi as a local
     MCP server, read-only and off by default (S2.5.40)
-  - [ ] Two questions his reads of 2026-10-25 left open: what the CRA's rate table shows for Ontario and
+  - [ ] A line under every source's title saying what its page holds? The maintainer's question, asked on
+    PR #224: since 2026-10-29 only the s.67.3 source has one (`pageHolds`, citations.md § The shape, its words in
+    `lib/engines/shared/words.ts`); each new one would be written from its page, read in full
+  - [x] Two questions his reads of 2026-10-25 left open. Both were answered on his reading page on 2026-10-28
+    (Alberta time). He copied the table's rows, Ontario "13%" and Alberta "5%", and Alberta's line now says only
+    the 5%; his answer isn't a read of the page in full, so its sources keep his read of 2026-10-25. For s.67.3 he
+    picked A: the title names only the section the page holds, with a plain-English line under it saying what
+    the page holds (the line above). The two questions were what the CRA's rate table shows for Ontario and
     Alberta (citations.md § Blocked, 1 and 2), and whether the s.67.3 citation's title or its address changes
     (the title names four sections, the page holds one)
 - ⬜ **[14q] Rules meet your facts, research first (S2.5.41).** How DotAmi could join a rule's conditions,
@@ -1095,12 +1103,16 @@ roadmap's build order.
     on the 25 citations of that day, and all 779 quotes on DotAmi's 337 tool-checked citations
   - [ ] Blocked until an official page's own words are found and checked (citations.md, § The reading list's
     corrections, *Blocked*):
-    - [ ] Alberta has no PST and GST is 5% (`compliance-ab-no-pst`): the CRA's table isn't in its page's HTML;
+    - [x] Alberta has no PST and GST is 5% (`compliance-ab-no-pst`): the CRA's table isn't in its page's HTML;
       Alberta's *About Tax and Revenue Administration* is an unchecked candidate for the first half. The
       card's line is DotAmi's wording of the table's row until then. His read of the page is recorded
       (2026-10-25), but not what he found in the table: his word settles whether the
-      table shows "no provincial sales tax" or only Alberta's 5% GST (then the line says only that)
-    - [ ] Ontario's 13% HST (`compliance-on-hst`): the same table
+      table shows "no provincial sales tax" or only Alberta's 5% GST (then the line says only that).
+      Settled on 2026-10-29: he copied the row on 2026-10-28, "5%", so the line and description say only "… lists
+      Alberta at 5%."; Alberta's page, checked by a tool on 2026-10-29 (“Alberta has no sales tax.” and its block
+      on other provinces' sales taxes), is the card's second source; the card's name is PR #224's question 2
+    - [x] Ontario's 13% HST (`compliance-on-hst`): the same table. Settled on 2026-10-29: he copied the row on
+      2026-10-28, "13%"
     - [ ] Ontario food premises: the regulation in force, read and quoted, under a new id
     - [x] Repeated losses: a CRA, Act or folio page on business versus personal pursuits, with its words. Since
       2026-10-27 (the maintainer's "yah, lets use it") a read is back on the Hobby vs. business card under a new id,
@@ -1108,8 +1120,14 @@ roadmap's build order.
       retired. Since 2026-10-29 (his answers on PR #217) it quotes four sentences, the page's passage from *Martin v
       The Queen* among them, which `node scripts/check-quotes.mjs` found in one run that day, and the same citation
       is listed under the card; the card's own words are unchanged
-    - [ ] SR&ED refunded or not: whether, and how much of, a sole proprietor's 15% credit is, and whether a
-      CCPC's enhanced 35% is (the card said "refundable" on the maintainer's read alone until 2026-10-24)
+    - [x] SR&ED refunded or not, a sole proprietor's 15%: whether, and how much of, it is refunded. Settled on
+      2026-10-29 by his answer, the newer of the two CRA pages that disagree ("it should always be the newer
+      page because it's more up-to-date"): a sole proprietor's card quotes the CRA's *SR&ED Investment Tax
+      Credit Policy* on an individual's 40% refundable ITC, a tool check of 2026-10-29 no person has read yet
+    - [ ] SR&ED refunded or not, a CCPC's enhanced 35% (the card said "refundable" on the maintainer's read alone
+      until 2026-10-24): his call between the policy page's CCPC list quoted whole (a networked check first),
+      the relationships page's “Some CCPCs may also earn a refundable ITC.” (the older page), or leaving it
+      unsaid, as now; the CCPC's note and the fork are unchanged until then
     - [ ] SR&ED's $6 million: the tax years it applies from, and the sentence of s.127(10.2) that leads into
       its formula
     - [x] *SR&ED deepening*'s 35% from the SR&ED glossary, as the maintainer asked: quoted since 2026-10-27,
@@ -1120,8 +1138,17 @@ roadmap's build order.
     - [x] The titles the CRA's SR&ED rates page and ISED's loans page give themselves: *What are SR&ED tax
       incentives* and *Helping small businesses get loans*, each found on its page on 2026-10-27, are the
       citations' titles
-    - [ ] The Productivity Grant's other conditions for employers, whether a sole proprietor counts, what
-      training counts, who else funds it, and the page's labels before its 25% and 75% lines
+    - [x] The Productivity Grant: the page's labels before its 25% and 75% lines, and the sentences found on
+      2026-10-27 (its requirements for registered employers, what training and costs count, who else funds
+      it), held since 2026-10-29 by the maintainer's two answers ("Teach the checker to read a table row as
+      one piece"; "One new check that holds the old and new sentences"): `node scripts/check-quotes.mjs`
+      reads a table row as one piece, its cells joined by " | ", and one run found the card's 27 quotes that
+      day ([docs/engines/citations.md](engines/citations.md), § The checker and *Blocked*;
+      `tests/check-quotes.spec.ts`, `tests/productivity-grant.spec.ts`)
+    - [ ] The Productivity Grant, still open: whether a sole proprietor counts as an employer (the page never
+      says "sole proprietor"); its applicant guidelines, unread (open.alberta.ca refused a plain fetch); and
+      three of the page's lists, not held: the eligible employer types, the ineligible employers and the
+      ineligible training
   - [ ] Open questions for the maintainer, on the same cards but not entries he checked (citations.md,
     § Outside the list): the Holding company and Family trust fork label "… needs a real business
     purpose first"; the "Professional required" heading over the anti-avoidance and loan program boxes
