@@ -56,6 +56,13 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   `tests/database-package.spec.ts` failed on #219; `node scripts/keep-gypfile.mjs` put it back.
 
 ### Added
+- **A test that each hand-written `.d.mts` file names exactly what its JavaScript module exports**
+  (`tests/declarations-match.spec.ts`). The tests that import a module from `desktop/` or `scripts/` are
+  typed against the `.d.mts` file written by hand beside it, never against the module itself, and
+  nothing compared the two. The test reads both syntax trees and fails, naming the file and the name,
+  when a declaration file declares a value its module doesn't export, or the module exports one the
+  declaration file doesn't declare (type-only exports aside). All 26 pairs (18 in `desktop/`, 8 in
+  `scripts/`) match today.
 - **The quote checker reads a table row as one piece, and the Productivity Grant's card names who pays which share**
   (the maintainer's answers of 2026-10-29: "Teach the checker to read a table row as one piece" and "One new check
   that holds the old and new sentences"). `scripts/check-quotes.mjs` also reads each table row as one piece, its
