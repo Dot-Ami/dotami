@@ -152,8 +152,10 @@ Anything that goes wrong says what happened in a dialog and quits — never a bl
 
 The app applies Prisma's own migration files (`prisma/migrations/*/migration.sql`) with the
 SQLite built into Electron's Node (`node:sqlite`; added in Node 22.5, no flag since 22.13, a
-"release candidate" from 25.7 — [Node docs](https://nodejs.org/api/sqlite.html), read 2026-10-05 —
-so still marked experimental in Electron 44's Node 24.21). It replaces shipping the Prisma CLI,
+"release candidate" from 24.15 and 25.7 — [Node docs](https://nodejs.org/api/sqlite.html), read 2026-10-05;
+[Node 24.22.1's](https://nodejs.org/docs/v24.22.1/api/sqlite.html), read 2026-10-31 — so still marked
+experimental, Node's stability 1.2, in the Node 24.22.1 inside Electron 44.10.1). It replaces shipping the
+Prisma CLI,
 which is about 146 MB of engines for five kinds of database and reports usage to
 `checkpoint.prisma.io` on every run.
 

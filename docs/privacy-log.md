@@ -180,14 +180,26 @@ person is asked).
   [`desktop/main.mjs`](../desktop/main.mjs) denies them all); and DotAmi doesn't use
   `setCertificateVerifyProc`. What Electron's browser engine writes to the data folder or requests on its
   own is still *not checked*.
-- **Electron 44.9.3 and electron-updater 6.8.11 in the desktop app, up from 44.9.1 and 6.8.9
-  (2026-10-30, #229; Dependabot's #212).** Electron 44.9.3 adds fixes Electron copied from ANGLE,
-  Chromium, PDFium, Skia and V8, on the same Chromium 152.0.7977.167 and Node 24.22.0 as 44.9.1. Nothing
-  about what DotAmi keeps, sends or asks changes by the
+- **Electron 44.10.1 in the desktop app, up from 44.9.1 (2026-10-31, #229; Dependabot's #212 went only as
+  far as 44.9.3).** It brings Node.js 24.22.1, a Node security release with fixes for 8 CVEs
+  ([Node.js 24.22.1](https://nodejs.org/en/blog/release/v24.22.1), read 2026-10-31), Chromium
+  152.0.7977.169, and fixes Electron copied from ANGLE, Chromium, Dawn, PDFium, Skia and V8 (the
   [44.9.2](https://github.com/electron/electron/releases/tag/v44.9.2) and
-  [44.9.3](https://github.com/electron/electron/releases/tag/v44.9.3) notes (read 2026-10-30): 44.9.2's
-  list nothing, and 44.9.3's one line doesn't mention `safeStorage`, which wraps the data file's and the
-  receipts' keys. The update checker (started by `loadUpdater` in [`desktop/main.mjs`](../desktop/main.mjs)),
+  [44.9.3](https://github.com/electron/electron/releases/tag/v44.9.3) notes, read 2026-10-30;
+  [44.10.0](https://github.com/electron/electron/releases/tag/v44.10.0) and
+  [44.10.1](https://github.com/electron/electron/releases/tag/v44.10.1), read 2026-10-31). That changes
+  nothing about what DotAmi keeps, sends or asks: none of those notes mention `safeStorage`, which wraps the
+  data file's and the receipts' keys; in the desktop app nothing goes out through Node's TLS or DNS (the main
+  process's one Node request is to DotAmi's own server on 127.0.0.1, and the server's call to Anthropic runs
+  only with `ANTHROPIC_API_KEY`, which [`desktop/main.mjs`](../desktop/main.mjs) takes out of its
+  environment); the update check still goes through Chromium's networking; and the File System Access fix
+  is for pickers DotAmi's pages never open. One thing the person may see: the time-zone data moves to tzdata
+  2026e, in which Manitoba no longer turns its clocks back on 2026-11-01 (the
+  [tz database's notes](https://github.com/eggert/tz/blob/main/NEWS), Release 2026e, read 2026-10-31), so for a person there the day DotAmi counts as today follows that
+  ([`lib/figures/age.ts`](../lib/figures/age.ts) `localDay`). What Electron's browser engine writes to the
+  data folder or requests on its own is still *not checked*.
+- **electron-updater 6.8.11 in the desktop app, up from 6.8.9 (2026-10-30, #229; Dependabot's #212).** The
+  update checker (started by `loadUpdater` in [`desktop/main.mjs`](../desktop/main.mjs)),
   by its 6.8.10 and 6.8.11 notes and its code compared with 6.8.9's (read 2026-10-30): its requests go only
   to DotAmi's GitHub releases with the same headers, and the install ID still goes with the check and not the
   download (`AppUpdater.js:386-387` and `:488-500`, the same lines as in 6.8.9). A download of only the
@@ -196,8 +208,7 @@ person is asked).
   a folder path; with no saved block map it fetches the old version's `.blockmap` from the release before,
   as 6.8.9 did, so that fetch can now happen where 6.8.9 read its saved copy. One new progress line names
   that `.blockmap`'s address on GitHub; `updaterLogger` in [`desktop/log.mjs`](../desktop/log.mjs) keeps it
-  as written (it names no folder), and turns the new warnings into its fixed warning line. What Electron's
-  browser engine writes to the data folder or requests on its own is still *not checked*.
+  as written (it names no folder), and turns the new warnings into its fixed warning line.
 - **`@anthropic-ai/sdk` 0.137.0, up from 0.135.0 (2026-10-30, #229; Dependabot's #212).** A request to
   Anthropic is built the same way: the library's code that builds and sends one is 0.135.0's (its client
   gains only a user-profiles section), and the

@@ -54,16 +54,52 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   person's own browser); and DotAmi doesn't use `setCertificateVerifyProc`. For developers: Dependabot's
   rewrite of `package-lock.json` dropped `"gypfile": false` from the database package's entry, so
   `tests/database-package.spec.ts` failed on #219; `node scripts/keep-gypfile.mjs` put it back.
-- **The desktop app moves to Electron 44.9.3 and electron-updater 6.8.11, the Anthropic library to
+- **The desktop app moves to Electron 44.10.1 and electron-updater 6.8.11, the Anthropic library to
   0.137.0, and the installer is built with electron-builder 26.18.0** (from 44.9.1, 6.8.9, 0.135.0 and
-  26.15.3; Dependabot's #212, whose lockfile this replaces). Along the way npm moves two development packages
-  to their patched versions: undici 6.29.0, which `node-gyp` uses (Dependabot alerts 62, 72, 74 and 76, three
-  rated high; #228 makes the same change), and fast-uri 3.1.8, which electron-builder uses, through ajv, to
-  check its settings (alerts 63 to 66, rated medium and low). **Electron:** 44.9.3 adds fixes Electron copied
-  from ANGLE, Chromium, PDFium, Skia and V8, on the same Chromium (152.0.7977.167) and Node (24.22.0) as
-  44.9.1; the
+  26.15.3; Dependabot's #212, whose lockfile this replaces, went only as far as Electron 44.9.3). Along the
+  way npm moves two development packages to their patched versions: undici 6.29.0, which `node-gyp` uses
+  (Dependabot alerts 62, 72, 74 and 76, three rated high; #228 makes the same change), and fast-uri 3.1.8,
+  which electron-builder uses, through ajv, to check its settings (alerts 63 to 66, rated medium and low).
+  **Electron:** 44.10.1 brings Node.js 24.22.1 (from 24.22.0), a Node security release with fixes for 8 CVEs
+  ([Node.js 24.22.1](https://nodejs.org/en/blog/release/v24.22.1), read 2026-10-31). Rated high:
+  CVE-2026-106069 and CVE-2026-106072 (TLS refuses an IP address not written in its standard form),
+  CVE-2026-105482 (a DNS lookup refuses a host name with a NUL byte in it), CVE-2026-105483 (a fix to a
+  regression in how TLS normalises IP addresses) and CVE-2026-111497 (the bundled Brotli decoder); rated medium,
+  CVE-2026-105481 (the `http` Agent's data guard) and CVE-2026-106074 (`crypto`'s cached random values are
+  reset across startup snapshots); rated low, CVE-2026-106073 (`fs.realpathSync` checks Node's permission
+  model). Node's notes also list, with no CVE, TLS refusing chains with blocked public keys, hardened X.509
+  conversion, root certificates from NSS 3.131.1, c-ares 1.34.9, OpenSSL 3.5.9 and undici 7.30.1. Electron's
+  [44.10.0](https://github.com/electron/electron/releases/tag/v44.10.0) moves Chromium to 152.0.7977.169
+  (from .167) and [44.10.1](https://github.com/electron/electron/releases/tag/v44.10.1) adds 18 fixes Electron
+  copied from Chromium, Dawn, Skia and V8 (electron/electron#55492), with no CVE named (read 2026-10-31);
+  44.9.3 added fixes copied from ANGLE, Chromium, PDFium, Skia and V8, and the
   [44.9.2](https://github.com/electron/electron/releases/tag/v44.9.2) notes list nothing
-  ([44.9.3](https://github.com/electron/electron/releases/tag/v44.9.3), read 2026-10-30). **The update
+  ([44.9.3](https://github.com/electron/electron/releases/tag/v44.9.3), read 2026-10-30). Electron marks none
+  of its own fixes in 44.10.0 as security fixes. **Where it reaches DotAmi:** the Chromium fixes reach the
+  window (DotAmi's pages, and the receipt files a person adds) and the update check, which goes through
+  Electron's own network module, that is Chromium's networking (`loadUpdater` in `desktop/main.mjs`;
+  electron-updater's `electronHttpExecutor.js`). Two of 44.10.0's fixes reach how the installed app reads its
+  own files, since its main process loads its code, the window's preload and the migrations from
+  `resources/app.asar` (electron-builder's default; the server runs from its own folder beside it,
+  `desktop/package.mjs`): the handling of an archive whose size fields don't match the file's length
+  (electron/electron#55176), and asar paths the main process and child processes read differently (#55183).
+  The time-zone data moves to tzdata 2026e: Electron's note names Europe/London, and the
+  [tz database's own notes](https://github.com/eggert/tz/blob/main/NEWS) (Release 2026e, read 2026-10-31) add that Manitoba no longer turns its clocks back on 2026-11-01, which the day
+  DotAmi counts as today for a person there now follows (`localDay` in `lib/figures/age.ts`). **What
+  doesn't reach DotAmi:** in the desktop app, Node runs the main process and the server, and neither sends
+  anything through Node's TLS or DNS. The main process's one request is a `HEAD` to DotAmi's own server on
+  127.0.0.1 (`waitForServer` in `desktop/main.mjs`); the server's one outside request, the Anthropic call in
+  `app/api/intent/parse/route.ts`, runs only with `ANTHROPIC_API_KEY`, which the app takes out of the
+  server's environment (`serverEnv` in `desktop/main.mjs`). DotAmi's own code doesn't call `dns`, decode
+  Brotli or turn on Node's permission model. The File System Access fix (#55330) is for pickers DotAmi's
+  pages never open (the window is refused every permission but writing to the clipboard,
+  `setPermissionRequestHandler` in `desktop/main.mjs`); DotAmi doesn't use `protocol.registerSource`
+  (#55177), `onSendHeaders` (#55168; it uses `onBeforeSendHeaders`), `session.registerPreloadScript`,
+  extensions, `webContents.adjustSelection` or `net.fetch`, and its menu has no DevTools item;
+  `utilityProcess` now reports an exit when the app quits while one is still starting (#55273), which
+  DotAmi's server handler ignores while quitting; the rest are for Linux, macOS and login items. Copies
+  already installed get Electron 44.10.1 with the next release; a copy run from source runs on plain Node,
+  which this doesn't change. **The update
   checker:** an update that downloads only the changed parts of the new installer (from the release's
   `.blockmap`) now works in cases where 6.8.9 gave up and downloaded the whole file; a stale saved block
   map is removed so it can't spoil the next one; and a saved update whose file name is missing or is a
@@ -90,7 +126,8 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   one moved line number. The code comments that cite electron-updater 6.8.9 by line now say the lines are
   the same in 6.8.11 (`desktop/log.mjs`, `lib/privacy/inventory.ts`, `tests/error-logging.spec.ts`). For developers: Dependabot's rewrite of
   `package-lock.json` dropped `"gypfile": false` from the database package's entry, so
-  `tests/database-package.spec.ts` failed on #212; `node scripts/keep-gypfile.mjs` put it back.
+  `tests/database-package.spec.ts` failed on #212; `node scripts/keep-gypfile.mjs` put it back. npm's rewrite
+  for Electron 44.10.1 dropped it again, and the script put it back again.
   `@noble/hashes` goes back to 1.8.0 because app-builder-lib 26.16.0 pins it to version 1; it makes the
   `.blockmap` when the installer is built, and doesn't ship.
 
