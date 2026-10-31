@@ -198,6 +198,32 @@ jobs:
         env:
           DOTAMI_DESKTOP_EXE: ${{ github.workspace }}\dist-desktop\out\win-unpacked\DotAmi.exe
 
+      # Playwright runs a failed test once more on CI (retries: 1), and a test that passes on that second try
+      # counts as passed: the job stays green and nothing on the run's page said a first try failed. This writes
+      # the counts on the run's summary page, with each test that needed a second try and its first try's error,
+      # and a warning per such test on the run's page, from the JSON report playwright.desktop.config.ts writes
+      # on CI (scripts/playwright-summary.mjs). Information only: it never fails the job.
+      - name: Count the tests that needed a second try
+        id: count
+        if: ${{ !cancelled() }}
+        continue-on-error: true
+        run: node scripts/playwright-summary.mjs test-results/report.json "Desktop app (Windows) ${{ matrix.shard }}/3" desktop-test-results-${{ matrix.shard }}
+
+      # Playwright keeps a failed try's trace (its steps, the error, what the test printed) and error notes in
+      # test-results/ (trace: "retain-on-failure"), but this machine is thrown away when the job ends. This keeps
+      # test-results/ with the run when a test failed or needed a second try; open a trace with
+      # `npx playwright show-trace <trace.zip>`. The traces hold no screenshots of the app's windows: Playwright
+      # records those only for browsers it opens itself, and the app is started through Electron.
+      - name: Keep the failed tries' traces
+        if: ${{ !cancelled() && (failure() || steps.count.outputs.flaky != '0') }}
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: desktop-test-results-${{ matrix.shard }}
+          path: test-results/
+          if-no-files-found: ignore
+          # A re-run of the job replaces the artifact rather than failing on the name.
+          overwrite: true
+
   # Fails a pull request that adds or upgrades to a dependency with a known high/critical
   # vulnerability, or one under a license the project cannot ship. Alerts on main are
   # Dependabot's job; this stops new ones arriving through a PR.

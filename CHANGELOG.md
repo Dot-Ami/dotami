@@ -776,6 +776,17 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   skipped required check as passed). The clutter numbers are printed by the half whose own test list holds
   `e2e/clutter-budget.spec.ts`. For a new browser test this means: don't rely on what a file in the other half
   leaves (CLAUDE.md, *Verification*). `.github/workflows/ci.yml`; `tests/quality-report.spec.ts`.
+- **A desktop test that fails on its first try and passes on its retry is now counted on the run's page, and its
+  trace is kept** (the house-cleaning audit of 2026-10-31). Playwright runs a failed desktop test once more on CI,
+  and one that then passed counted as passed with no sign outside the job's log (4 of the 48 desktop jobs in the 16
+  most recent finished CI runs on 2026-10-31); the failed try's trace was thrown away with the machine. Each
+  *Desktop app (Windows)* job now writes its counts (passed, flaky, failed) on the run's summary page with each test
+  that needed a second try and its first try's error, adds a warning per such test on the run's page, and, when a
+  test failed or needed a second try, keeps `test-results/` (the failed tries' traces and error notes) as an
+  artifact of the run. A trace holds the test's steps, its error and what it printed, but no pictures of the app's
+  windows: Playwright takes those only for browsers it opens itself. The flaky tests themselves aren't fixed here.
+  `scripts/playwright-summary.mjs` reads the JSON report `playwright.desktop.config.ts` now writes on CI;
+  `.github/workflows/ci.yml`; `tests/playwright-summary.spec.ts`.
 - **The CRA's GST/HST rate table, on the maintainer's answer about its rows; and the vehicle write-off's s.67.3
   source names only what its page holds** (his answers of 2026-10-28 on his reading page). The table is drawn by a
   script, so no tool can see it; he copied Ontario's row "13%" and Alberta's row "5%". That answer is about two rows,
