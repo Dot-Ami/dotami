@@ -804,6 +804,9 @@ receipt**: before the rename the plain file is whole and the leftover `.encrypti
 the next start, which tries again; after it, the encrypted file is whole. A file that can't be done now
 (another program has it open) stays plain, still opens, and is tried at the next start. The log gets
 counts only, never a name. After the first start of this version there is normally nothing left to do.
+Since 2026-10-31 a file already encrypted is told by its first 14 bytes, the text `DOTAMI-RECEIPT`, and
+only a plain one is read whole, so a start reads a few bytes of each receipt kept, not every receipt in
+full (until then each file was read whole just to look at its start).
 
 ### Backups (format 2, unchanged)
 
@@ -827,7 +830,9 @@ counts only, never a name. After the first start of this version there is normal
 - The file format: a round trip; a changed byte anywhere (header, ciphertext, tag), a file cut short,
   the wrong key, a renamed file (another receipt's id) and a changed key id all refused, each with its
   own answer (`tests/receipt-crypto.spec.ts`).
-- The first-start encryption: every plain receipt encrypted, an encrypted one left alone, a file
+- The first-start encryption: every plain receipt encrypted, an encrypted one left alone (and, since
+  2026-10-31, only its first 14 bytes read; an empty file, one shorter than 14 bytes, one too big to be
+  a receipt and one another program holds each handled as before), a file
   DotAmi didn't name never touched, the receipts folders in `backups/` too; a crash between any two
   steps (a real process ended part-way) leaves every receipt readable, and the next start finishes.
 - The key: made and wrapped once, never stored unwrapped, opened again at the next start; an

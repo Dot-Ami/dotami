@@ -765,6 +765,16 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   Prop activation's three sources: the new one in amber until 2026-10-27, each read by a person since).
 
 ### Changed
+- **The desktop app no longer reads every receipt whole when it starts.** At each start, before its window
+  opens, it checks that every receipt file kept is encrypted (in `receipts/` and in the receipts folders
+  earlier restores moved into `backups/`). It used to read each file in full only to look at its first 14
+  bytes, the text that marks an encrypted receipt, so the more receipts were kept, the more it read before the
+  window could open. Now it reads those 14 bytes, and reads a file whole only when it is still plain and is
+  encrypted then; a start with many receipts kept has far less to read. How a receipt is written, encrypted
+  or counted is unchanged, and the same files are opened, so the privacy log has no new line
+  (`desktop/receipt-crypto.mjs`; [expense-records.md § 9](docs/architecture/expense-records.md)). Test:
+  `tests/receipt-crypto.spec.ts`, where on the old code each of three encrypted receipts of 307,251 bytes was
+  read whole.
 - **The CRA's GST/HST rate table, on the maintainer's answer about its rows; and the vehicle write-off's s.67.3
   source names only what its page holds** (his answers of 2026-10-28 on his reading page). The table is drawn by a
   script, so no tool can see it; he copied Ontario's row "13%" and Alberta's row "5%". That answer is about two rows,
