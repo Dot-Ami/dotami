@@ -906,7 +906,7 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   a sole proprietor's card that copies its note, are unchanged.
 - **A corporation's SR&ED card quotes the CRA's list for corporations whole and nothing of the older page, the
   Productivity Grant's card says who delivers and funds it, the Martin passage's label names the case, and the newer
-  page wins as a rule** (2026-10-30; the maintainer's answers on his reading page, items 8 and 9).
+  page wins as a rule** (2026-10-30 and 2026-10-31; the maintainer's answers on his reading page, items 8 and 9).
   - *SR&ED, a corporation's 35%.* After *What's new*'s $6 million line, the CCPC's card now quotes the CRA's *SR&ED
     Investment Tax Credit Policy*, section 4.1, its list for corporations whole and in order (the lead-in and items 1
     to 4, 13 lines), under *The CRA's SR&ED Investment Tax Credit Policy:*. The list says, for each kind of
@@ -919,15 +919,20 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
     large corporations' non-refundable credit, is not quoted. One run of `node scripts/check-quotes.mjs` found the 13
     lines and the 40% line on the live page on 2026-10-30, so the page's one tool check is of that day; nobody has
     read the page yet, so it stays amber.
-  - *SR&ED, the older page quoted nowhere* (his reading page, item 9: “The whole older page”). The CCPC's card and
-    the fork on a sole proprietor's card no longer quote the CRA's relationships page's “Some CCPCs may earn an ITC at
-    an enhanced rate of 35% …”, which opened the CCPC's note until then: the card's 35% rests on the policy page's
-    list. The map stage
-    *Incorporation for liability/SR&ED* quoted the same line for its 35%; it now quotes the CRA's SR&ED glossary,
-    “Some Canadian-controlled private corporations (CCPCs) that meet certain requirements may earn investment tax
-    credits at the enhanced rate of 35%”, as *SR&ED deepening* does, and lists the glossary among its sources ("Read
-    by a person on 2026-10-25"; `node scripts/check-quotes.mjs` found the line again on 2026-10-30, the date of the
-    new citation's tool check). The relationships page stays listed under the card and both stages, with its checks.
+  - *SR&ED, the older page quoted nowhere* (his reading page, item 9, the option labelled *The whole older page*).
+    The CCPC's card and the fork on a sole proprietor's card no longer quote the CRA's relationships page's “Some
+    CCPCs may earn an ITC at an enhanced rate of 35% …”, which opened the CCPC's note until then: the card's 35% rests
+    on the policy page's list. The map stage *Incorporation for liability/SR&ED* quoted the same line for its 35%; it
+    now quotes the policy page's own sentence, “In some cases, a Canadian-controlled private corporation (CCPC) may
+    earn the ITC at an enhanced rate of 35%.”, under *The CRA's SR&ED Investment Tax Credit Policy:*, and lists that
+    page among its sources: "Checked by a tool on 2026-10-31" in amber, since nobody has read it yet
+    (`node scripts/check-quotes.mjs` found the sentence on the live page that day). Not the SR&ED glossary's 35% line,
+    which *SR&ED deepening* quotes: the glossary's page date is 2026-05-22, and its same entry gives a $3 million
+    threshold where the policy page and *What's new* give $6 million, so it is an older page that disagrees too. The
+    relationships page stays listed under the card and both stages, with its checks. Two questions were asked of the
+    maintainer on 2026-10-31 and nothing changes until he answers: whether *SR&ED deepening*'s tax impact and road
+    0's two done-when lines on CCPCs, DotAmi's own words resting on the relationships page, count as showing the
+    older page; and whether rule 8 takes the glossary's 35% line off *SR&ED deepening*.
   - *The Productivity Grant.* The card's line now starts with Alberta's own sentence: “The program is delivered by
     Alberta and funded by the Government of Canada through the Canada–Alberta Workforce Development Agreement”,
     quoted whole, before the funding table's rows. The page's check already held it.
@@ -942,7 +947,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   Tests: `tests/reading-list-corrections.spec.ts` § 3, `tests/brain-evaluate.spec.ts`,
   `tests/productivity-grant.spec.ts`, `tests/repeated-losses-read.spec.ts` (each failed on the code before), and
   `tests/cost-panels-unchanged.spec.ts`, whose recording of *Incorporation for liability/SR&ED*'s panel was redrawn
-  for its 35% line and its new source only.
+  for its 35% line and its new source only. The check that the older page is quoted nowhere reads the cards at all
+  five structures, the holding company and the family trust too, and counts a quoted run as that page's only from six
+  words, so a phrase like “a private corporation” isn't taken for that page's line.
 
 ### Documented
 - **The screen specs say what the pre-release fixes changed** (2026-10-24). Each control the fixes above

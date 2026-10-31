@@ -6,7 +6,12 @@ import {
   CRA_WHEN_TO_REGISTER_TOOL_CHECK,
   CRA_WHEN_TO_REGISTER_URL,
 } from "@/lib/engines/compliance/v2026/gst-official-words";
-import { SRED_PAGES, SRED_QUOTES_FOUND_ON, SRED_WORDS } from "@/lib/engines/grants/v2026/sred-official-words";
+import {
+  SRED_PAGES,
+  SRED_POLICY_TITLE,
+  SRED_QUOTES_FOUND_ON,
+  SRED_WORDS,
+} from "@/lib/engines/grants/v2026/sred-official-words";
 import { MAINTAINER_READ_ON } from "@/lib/engines/shared/maintainer-reads";
 
 import type { CFENode } from "./types";
@@ -22,7 +27,8 @@ const LAST_VERIFIED = "2026-05-01";
  * The day the maintainer's reading list fetched the pages behind its items and, with the repo's matcher (the
  * same whole-word, one-block match as scripts/check-quotes.mjs), found on them the words Incorporating and Hire
  * first employee now quote (the two SR&ED stages' check of the relationships page is SRED_QUOTES_FOUND_ON, the same
- * day; their 35% quotes the SR&ED glossary instead, since 2026-10-27 and 2026-10-30). Each is kept as a
+ * day; their 35% quotes other pages now: SR&ED deepening's the SR&ED glossary since 2026-10-27, Incorporation for
+ * liability/SR&ED's the SR&ED Investment Tax Credit Policy since 2026-10-31). Each is kept as a
  * tool check of that day on the stage the list checked, and on no other citation of the page (his answer of
  * 2026-10-24). A networked `node scripts/check-quotes.mjs` run found each again on 2026-10-26, before merge
  * (docs/engines/citations.md, § The reading list's tool checks). Each of these pages was then read in full by the
@@ -402,8 +408,8 @@ export const cfeNodesV2026 = [
         readBy: "person",
         // The sentence the 35% estimate below quoted from 2026-10-24 until the maintainer's answer of 2026-10-30 (his
         // reading page, item 9: "The whole older page"): this page is the older of the two CRA pages that disagree on
-        // refunds, so no line of it is quoted anywhere now, and the estimate quotes the SR&ED glossary (below). The page
-        // stays listed, with this check, which the reading list's matcher found on 2026-10-23
+        // refunds, so no line of it is quoted anywhere now, and the estimate quotes the SR&ED Investment Tax Credit
+        // Policy (below). The page stays listed, with this check, which the reading list's matcher found on 2026-10-23
         // (lib/engines/grants/v2026/sred-official-words.ts; docs/engines/citations.md, rule 8). The read wins on screen.
         toolCheck: { checkedOn: SRED_QUOTES_FOUND_ON, quotes: [SRED_WORDS.ccpcEnhanced] },
         note: "CRA guidance on CCPC relationships, SBD, and SR&ED investment tax credits.",
@@ -419,19 +425,20 @@ export const cfeNodesV2026 = [
         note: "Corporations Canada guidance on federal incorporation.",
       },
       {
-        // Added on the maintainer's answer of 2026-10-30 (his reading page, item 9) for the line the 35% estimate below
-        // quotes, the SR&ED glossary's entry on the enhanced rate, as SR&ED deepening's 35% has quoted it since
-        // 2026-10-27: a quote on a stage is held by one of the stage's own citations. `node scripts/check-quotes.mjs`
-        // found the line on the live page on 2026-10-30, so this citation's one check is of that day and holds the line
-        // only. The maintainer read the glossary in full on 2026-10-25, and the read wins on screen.
-        title: "SR&ED glossary",
+        // Added on 2026-10-31 for the line the 35% estimate below quotes, the CRA's newest page on the enhanced rate (its
+        // page date 2026-10-07; the SR&ED card cites it too): a quote on a stage is held by one of the stage's own
+        // citations. Not the SR&ED glossary, whose 35% line SR&ED deepening quotes: the glossary's page date is
+        // 2026-05-22, and its same entry gives a $3 million threshold where this page and What's new give $6 million,
+        // so under rule 8 of docs/engines/citations.md it is an older page that disagrees. `node scripts/check-quotes.mjs`
+        // found the sentence on the live page on 2026-10-31, so this citation's one check is of that day and holds the
+        // sentence only. Nobody has read the page in full, so no lastVerified or readBy: its source says "Checked by a
+        // tool" in amber, with the sentence under it.
+        title: SRED_POLICY_TITLE,
         authority: "CRA",
         jurisdiction: "CA",
-        url: SRED_PAGES.glossary,
-        lastVerified: MAINTAINER_READ_ON,
-        readBy: "person",
-        toolCheck: { checkedOn: "2026-10-30", quotes: [SRED_WORDS.glossaryEnhanced] },
-        note: "CRA SR&ED terminology and eligibility concepts.",
+        url: SRED_PAGES.itcPolicy,
+        toolCheck: { checkedOn: "2026-10-31", quotes: [SRED_WORDS.policyCcpcEnhanced] },
+        note: "The CRA's SR&ED investment tax credit policy: its rates, and which claimants can earn a refundable ITC.",
       },
     ],
     financialImpact: {
@@ -447,9 +454,10 @@ export const cfeNodesV2026 = [
           value: "35%",
           // Until 2026-10-24 a paraphrase ("CRA guidance describes enhanced SR&ED ITC access for certain CCPCs subject
           // to limits and relationships."); then the relationships page's own sentence (the maintainer's reading list:
-          // 35% for eligible CCPCs, within the limit); since his answer of 2026-10-30 (his reading page, item 9: the
-          // older page quoted nowhere) the SR&ED glossary's entry, as on SR&ED deepening, from the glossary cited above.
-          basis: `The CRA's SR&ED glossary: “${SRED_WORDS.glossaryEnhanced}”`,
+          // 35% for eligible CCPCs, within the limit), until his answer of 2026-10-30 (his reading page, item 9: the
+          // older page quoted nowhere); since 2026-10-31 the newest page's own sentence, the SR&ED Investment Tax Credit
+          // Policy's, from that page cited above, under its title as the SR&ED card labels the page's lines.
+          basis: `The CRA's ${SRED_POLICY_TITLE}: “${SRED_WORDS.policyCcpcEnhanced}”`,
         },
       ],
     },
@@ -768,7 +776,9 @@ export const cfeNodesV2026 = [
           value: "35%",
           // Until 2026-10-24 "CRA enhanced SR&ED ITC rate for qualifying CCPCs.", with no source of the stage stating
           // 35%; then the relationships page's sentence; since 2026-10-27 the SR&ED glossary's own entry, the line the
-          // maintainer asked for (both pages are cited above).
+          // maintainer asked for (both pages are cited above). The glossary (2026-05-22) disagrees with the newer pages on
+          // the limit ($3 million in the same entry, $6 million on the policy page and What's new); whether rule 8 of
+          // docs/engines/citations.md takes this line off was asked of him on 2026-10-31, so it stays until he answers.
           basis: `The CRA's SR&ED glossary: “${SRED_WORDS.glossaryEnhanced}”`,
         },
       ],

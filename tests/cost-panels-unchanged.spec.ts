@@ -90,15 +90,19 @@
  * only that change and compared with the recording, 1 of 34 differs, and only in that line, "The CRA: “Some CCPCs
  * may earn an ITC at an enhanced rate of 35% …”" becoming "The CRA's SR&ED glossary: “Some Canadian-controlled
  * private corporations (CCPCs) that meet certain requirements may earn investment tax credits at the enhanced rate
- * of 35%”". Its sources' lines are unchanged (the maintainer's read wins on screen). Redrawn on 2026-10-30 for one
- * panel only, road 0's Incorporation for liability/SR&ED, when its 35% basis moved to the same glossary line and the
- * glossary joined its sources (the maintainer's answer on his reading page, item 9: the older relationships page quoted
- * nowhere; tests/reading-list-corrections.spec.ts): drawn from PR #230's branch (fe16e0a) with that change (and the
- * SR&ED card's, which no panel here draws) and compared with the recording, 1 of 34 differs, and only in three places: the basis line, "The CRA: “Some CCPCs may earn
- * an ITC at an enhanced rate of 35% …”" becoming "The CRA's SR&ED glossary: “Some Canadian-controlled private
- * corporations (CCPCs) that meet certain requirements may earn investment tax credits at the enhanced rate of 35%”";
- * "Sources for this stage · 2" becoming "· 3"; and the new third source, SR&ED glossary, "CRA · CA · Read by a person on
- * 2026-10-25" (its tool check's words aren't drawn, the read winning). The only cards allowed to change are the
+ * of 35%”". Its sources' lines are unchanged (the maintainer's read wins on screen). Redrawn on 2026-10-31 for one
+ * panel only, road 0's Incorporation for liability/SR&ED, when its 35% basis moved off the older relationships page
+ * (the maintainer's answer on his reading page, item 9: that page quoted nowhere) to the SR&ED Investment Tax Credit
+ * Policy's own sentence, and that page joined its sources (tests/reading-list-corrections.spec.ts). This takes the
+ * place of a redraw of 2026-10-30 on PR #230's branch (7dfb874), which drew the SR&ED glossary's line and source
+ * there, an older page that disagrees too. Drawn by this test's own path from that branch with the change and compared
+ * with the recording before the 2026-10-30 redraw (fe16e0a's), 1 of 34 differs, and only in three places: the basis
+ * line, "The CRA: “Some CCPCs may earn an ITC at an enhanced rate of 35% …”" becoming "The CRA's SR&ED Investment Tax
+ * Credit Policy: “In some cases, a Canadian-controlled private corporation (CCPC) may earn the ITC at an enhanced rate
+ * of 35%.”"; "Sources for this stage · 2" becoming "· 3"; and the new third source, SR&ED Investment Tax Credit Policy,
+ * "CRA · CA" with "Checked by a tool on 2026-10-31: it found on the page the exact words this entry relies on. Not read
+ * by a person yet." in amber and the sentence under "Words found on the page:" (nobody has read the page, so the check
+ * is drawn). The other 33 are fe16e0a's recording byte for byte. The only cards allowed to change are the
  * ones that gained road 0's named start-up cost lines (docs/architecture/future-cockpit.md § 6, "The official
  * fees catalog and start-up cost lines as built"); with those seven lines taken out, they match too.
  */

@@ -11,10 +11,10 @@
  * change one only after `--url … --quote …` finds the new words. The maintainer read each of these pages in full on
  * 2026-10-25, so their citations carry his read too, which wins on screen (§ The maintainer's reads of 2026-10-25).
  * One is not the reading list's: `glossaryEnhanced`, which `node scripts/check-quotes.mjs` found on 2026-10-27, so
- * SR&ED deepening's citation of the glossary has a check of that day; Incorporation for liability/SR&ED's own citation
- * of it, since 2026-10-30, has a check of that day, when the script found the line again. Nor are
- * `individualRefundable` and `SRED_POLICY_CCPC_LIST`, from the CRA's SR&ED Investment Tax Credit Policy, which the
- * script found together on 2026-10-30 (`SRED_POLICY_FOUND_ON`); nobody has read that page in full yet.
+ * SR&ED deepening's citation of the glossary has a check of that day. Nor are `individualRefundable` and
+ * `SRED_POLICY_CCPC_LIST`, from the CRA's SR&ED Investment Tax Credit Policy, which the script found together on
+ * 2026-10-30 (`SRED_POLICY_FOUND_ON`), nor `policyCcpcEnhanced`, from the same page, which the script found on its own
+ * on 2026-10-31 for Incorporation for liability/SR&ED's citation of the page; nobody has read that page in full yet.
  */
 
 /** The day the reading list's tool found every reading-list quote below on its page. */
@@ -55,17 +55,19 @@ export const SRED_WORDS = {
   someRefundable: "Some businesses may also earn a refundable ITC.",
   // The CRA's How certain relationships affect the small business deduction and SR&ED investment tax credits (its page
   // date 2025-07-21). The CCPC's card quoted it from 2026-10-24, and Incorporation for liability/SR&ED's 35% too. Since
-  // the maintainer's answer of 2026-10-30 (his reading page, item 9: "The whole older page") it is quoted nowhere: the
-  // page is the older of the two CRA pages that disagree on refunds (docs/engines/citations.md, rule 8). It stays as
-  // the words three citations of the page hold in their tool checks: the SR&ED card's and the two SR&ED stages'.
+  // the maintainer's answer of 2026-10-30 (his reading page, item 9: "The whole older page") it is quoted nowhere (the
+  // stage's 35% quotes `policyCcpcEnhanced` since 2026-10-31): the page is the older of the two CRA pages that
+  // disagree on refunds (docs/engines/citations.md, rule 8). It stays as the words three citations of the page hold
+  // in their tool checks: the SR&ED card's and the two SR&ED stages'.
   ccpcEnhanced:
     "Some CCPCs may earn an ITC at an enhanced rate of 35% on qualified SR&ED expenditures up to their expenditure limit for the year.",
   // The CRA's SR&ED glossary, its entry "Enhanced SR&ED investment tax credit rate (35%)": the line the maintainer
   // asked for on SR&ED deepening. Not a reading-list find: `node scripts/check-quotes.mjs` found it on 2026-10-27. It
   // stops before the entry's split of the rate by year, and the entry's next sentence (a $3 million threshold, older
-  // than the $6 million the CRA's other pages give) is never quoted. Since 2026-10-30 Incorporation for
-  // liability/SR&ED's 35% quotes it too, in place of `ccpcEnhanced` (the maintainer's answer on his reading page, item
-  // 9), and the script found it again that day for that stage's own citation of the glossary.
+  // than the $6 million the CRA's other pages give) is never quoted. The glossary's page date is 2026-05-22, older than
+  // the policy page (2026-10-07) and What's new (2026-06-12), and that $3 million is where it disagrees with them; so
+  // Incorporation for liability/SR&ED's 35% doesn't quote this line (`policyCcpcEnhanced` instead), and whether rule 8
+  // of docs/engines/citations.md takes it off SR&ED deepening too was asked of the maintainer on 2026-10-31.
   glossaryEnhanced:
     "Some Canadian-controlled private corporations (CCPCs) that meet certain requirements may earn investment tax credits at the enhanced rate of 35%",
   // The CRA's What's new for corporations, under "2025 – Federal". The page's own line that it lists "proposed,
@@ -83,6 +85,14 @@ export const SRED_WORDS = {
   // which since 2026-10-30 no card quotes at all).
   individualRefundable:
     "Generally, for an individual (other than a trust), the refundable ITC is 40% of the unclaimed balance of ITC earned in the current year for qualified SR&ED expenditures.",
+  // The same policy page, section 1.1 (its overview), the page's own sentence on the enhanced rate: block 87 as
+  // scripts/check-quotes.mjs reads the page, found there by `node scripts/check-quotes.mjs --url … --quote …` on
+  // 2026-10-31. Incorporation for liability/SR&ED's 35% quotes it, whole, since that day: the relationships page's
+  // line it quoted until then is the older page's (rule 8, the maintainer's reading page, item 9), and the SR&ED
+  // glossary's line, which SR&ED deepening quotes, is from an older page that disagrees too (`glossaryEnhanced`). The
+  // block goes on about ECPCs, with a date; only this sentence is quoted.
+  policyCcpcEnhanced:
+    "In some cases, a Canadian-controlled private corporation (CCPC) may earn the ITC at an enhanced rate of 35%.",
 } as const;
 
 /**

@@ -39,8 +39,12 @@ off on 2026-10-23 (see *Retired programs* below), and the Productivity Grant cam
   relationships affect the small business deduction and SR&ED investment tax credits* (already a
   source of the card), says unincorporated businesses' credit is non-refundable; no card quotes
   that line ([citations.md](citations.md), *Blocked*, item 4; § Rules, rule 8: the newer page wins).
-  Since the maintainer's answer of 2026-10-30 (his reading page, item 9: “The whole older page”) no
-  card quotes any line of it; it stays among the card's sources, with its check.
+  Since the maintainer's answer of 2026-10-30 (his reading page, item 9, the option labelled *The
+  whole older page*) no card quotes any line of it; it stays among the card's sources, with its check.
+  The map stage *Incorporation for liability/SR&ED*, whose 35% quoted its line too, quotes the policy
+  page's own sentence since 2026-10-31 (“In some cases, a Canadian-controlled private corporation
+  (CCPC) may earn the ITC at an enhanced rate of 35%.”), from the stage's own citation of the page
+  ([citations.md](citations.md), § Rules, rule 8, As built).
   The CCPC's said refundable ("35% (refundable)", "35% refundable
   treatment") on the maintainer's word alone, which no record held, and none of its quotes said
   it, so it said neither until 2026-10-30. Since his answer of that day (his reading page, item 8)
