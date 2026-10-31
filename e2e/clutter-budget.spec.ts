@@ -22,10 +22,12 @@
  * This file starts a server of its own, from the suite's build, over a data folder of its own
  * (prisma/e2e-clutter/) holding only the two demo ventures, so what it measures doesn't depend on what the
  * suite's other files saved. *What DotAmi knows about you* is measured first, on that seed alone: it counts
- * everything in the data file. The cockpit is then measured on a fresh idea straight after *Pick a future*,
- * the designed first visit (docs/architecture/future-cockpit.md § 2, "First visit and return visits"), on
- * road 0 and on road 1, and *Your futures* with a fresh idea at the top of its list. *About this job* is
- * measured open on road 1, for a job picked the way a person picks one (task 25h).
+ * everything in the data file. *Pick a future* and its steps are opened by its link from *Your destination*,
+ * as a person reaches them: since 2026-10-23 the answers they need are held only in the window's memory, so a
+ * fresh load of /futures has no place to draw them for. The cockpit is then measured on a fresh idea straight
+ * after *Pick a future*, the designed first visit (docs/architecture/future-cockpit.md § 2, "First visit and
+ * return visits"), on road 0 and on road 1, and *Your futures* with a fresh idea at the top of its list. *About
+ * this job* is measured open on road 1, for a job picked the way a person picks one (task 25h).
  */
 import { execFileSync, spawn, type ChildProcess } from "node:child_process";
 import { existsSync, mkdirSync, rmSync, writeFileSync } from "node:fs";
@@ -187,10 +189,10 @@ async function load(page: Page, url: string, ready: (page: Page) => Locator) {
 }
 
 /**
- * *Your destination* answered in this tab the way a person who doesn't know yet answers it: question 1 "I
- * don't know yet" (keeps nothing) unless the data file already holds a destination, a business of their own,
- * Alberta (or `place`), and question 4 skipped (keeps nothing) unless an income is already agreed. Ends on its
- * way on.
+ * *Your destination* answered on this page (held in the window's memory, so the next screen is reached by its
+ * link, never loaded afresh) the way a person who doesn't know yet answers it: question 1 "I don't know yet"
+ * (keeps nothing) unless the data file already holds a destination, a business of their own, Alberta (or
+ * `place`), and question 4 skipped (keeps nothing) unless an income is already agreed. Ends on its way on.
  */
 async function answerDestination(page: Page, place: string = "CA-AB") {
   await page.goto("/start");
@@ -213,11 +215,25 @@ async function answerDestination(page: Page, place: string = "CA-AB") {
   await expect(next).toBeVisible();
 }
 
-/** A fresh idea picked on *Pick a future*, as a person picks one; returns the cockpit's address for it. */
-async function pickFuture(page: Page, roadLabel: string, place = "CA-AB"): Promise<string> {
+/**
+ * *Pick a future*, opened as a person opens it: *Your destination* answered (`answerDestination`), then its
+ * **Pick a future →**, a move inside the page. Never `load(page, "/futures")`: the place it needs is held in the
+ * window's memory only (since 2026-10-23), and a fresh load of /futures says "Say which province or territory
+ * you're in first." instead. Ends on step 1, ready.
+ */
+async function openPickAFuture(page: Page, place: string = "CA-AB") {
   await answerDestination(page, place);
   await page.getByRole("link", { name: "Pick a future →" }).click();
   await expect(page).toHaveURL(/\/futures$/);
+  const search = page.getByRole("searchbox", { name: jobStepWords.boxLabel });
+  await expect(search).toBeVisible();
+  await waitForReact(search);
+  await page.waitForLoadState("networkidle");
+}
+
+/** A fresh idea picked on *Pick a future*, as a person picks one; returns the cockpit's address for it. */
+async function pickFuture(page: Page, roadLabel: string, place = "CA-AB"): Promise<string> {
+  await openPickAFuture(page, place);
   // Pick a future opens on its first step (2026-10-22): skipped, every future is listed.
   await skipTheJob(page);
   const lookInside = page.getByRole("button", { name: `Look inside ${roadLabel}` });
@@ -244,9 +260,8 @@ test("Your destination stays within its clutter budget", async ({ page }, testIn
 });
 
 test("Pick a future stays within its clutter budget", async ({ page }, testInfo) => {
-  await answerDestination(page);
   // It opens on step 1 of its three steps, What's closest to your work? (2026-10-22), with nothing typed.
-  await measureAtEverySize(page, testInfo, "futures", () => load(page, "/futures", (p) => p.getByRole("searchbox", { name: jobStepWords.boxLabel })));
+  await measureAtEverySize(page, testInfo, "futures", () => openPickAFuture(page));
 });
 
 // Pick a future's later steps (docs/ui-spec/futures/02-where-you-are.md, 03-road-match.md), each as it opens.
@@ -254,14 +269,13 @@ const CABINETMAKERS = { code: "72311.00", label: "Cabinetmakers" };
 /** A job no road is written for: step 3's case B, the longest. */
 const BARBERS = { code: "63210.02", label: "Barbers" };
 
-/** Pick a future, freshly loaded, then step 1 answered with `job`. */
-async function stepOneAnswered(page: Page, job: { code: string; label: string }) {
-  await load(page, "/futures", (p) => p.getByRole("searchbox", { name: jobStepWords.boxLabel }));
+/** Pick a future, opened from *Your destination* answered for `place`, then step 1 answered with `job`. */
+async function stepOneAnswered(page: Page, job: { code: string; label: string }, place: string = "CA-AB") {
+  await openPickAFuture(page, place);
   await pickTheJob(page, job);
 }
 
 test("Pick a future's area question stays within its clutter budget", async ({ page }, testInfo) => {
-  await answerDestination(page);
   await measureAtEverySize(page, testInfo, "futures-area", async () => {
     await stepOneAnswered(page, CABINETMAKERS);
     await expect(page.getByRole("combobox", { name: whereStepWords.area.label })).toBeVisible();
@@ -269,7 +283,6 @@ test("Pick a future's area question stays within its clutter budget", async ({ p
 });
 
 test("Pick a future's region question stays within its clutter budget", async ({ page }, testInfo) => {
-  await answerDestination(page);
   await measureAtEverySize(page, testInfo, "futures-region", async () => {
     await stepOneAnswered(page, CABINETMAKERS);
     await page.getByRole("combobox", { name: whereStepWords.area.label }).selectOption("cma-825");
@@ -279,15 +292,13 @@ test("Pick a future's region question stays within its clutter budget", async ({
 });
 
 test("Pick a future's step 2 outside Alberta stays within its clutter budget", async ({ page }, testInfo) => {
-  await answerDestination(page, "CA-ON");
   await measureAtEverySize(page, testInfo, "futures-outside", async () => {
-    await stepOneAnswered(page, CABINETMAKERS);
+    await stepOneAnswered(page, CABINETMAKERS, "CA-ON");
     await expect(page.getByRole("button", { name: whereStepWords.outside.next, exact: true })).toBeVisible();
   });
 });
 
 test("Pick a future's step 3 for a job with no written road stays within its clutter budget", async ({ page }, testInfo) => {
-  await answerDestination(page);
   await measureAtEverySize(page, testInfo, "futures-road", async () => {
     await stepOneAnswered(page, BARBERS);
     await answerWhereInAlberta(page, "cma-825", "4830");
@@ -324,7 +335,6 @@ test("the intake's step 1 stays within its clutter budget", async ({ page }, tes
 // Step 3's other two cases (the PR #202 review: only case B had a row): A, a road written for the picked job, with
 // its group "Written for your pick of job"; C, the job skipped, every future in one group.
 test("Pick a future's step 3 for a job with a written road stays within its clutter budget", async ({ page }, testInfo) => {
-  await answerDestination(page);
   await measureAtEverySize(page, testInfo, "futures-road-written", async () => {
     await stepOneAnswered(page, CABINETMAKERS);
     await answerWhereInAlberta(page, "cma-825", "4830");
@@ -333,9 +343,8 @@ test("Pick a future's step 3 for a job with a written road stays within its clut
 });
 
 test("Pick a future's step 3 with the job skipped stays within its clutter budget", async ({ page }, testInfo) => {
-  await answerDestination(page);
   await measureAtEverySize(page, testInfo, "futures-road-skipped", async () => {
-    await load(page, "/futures", (p) => p.getByRole("searchbox", { name: jobStepWords.boxLabel }));
+    await openPickAFuture(page);
     await skipTheJob(page);
   });
 });
@@ -392,9 +401,8 @@ test("the intake's step 3 for a job with no written road stays within its clutte
 // with the job skipped (every future listed): the federal steps first and the two Alberta futures folded behind
 // one button.
 test("Pick a future outside Alberta stays within its clutter budget", async ({ page }, testInfo) => {
-  await answerDestination(page, "CA-ON");
   await measureAtEverySize(page, testInfo, "futures-outside-alberta", async () => {
-    await load(page, "/futures", (p) => p.getByRole("searchbox", { name: jobStepWords.boxLabel }));
+    await openPickAFuture(page, "CA-ON");
     await skipTheJob(page);
     await expect(page.getByRole("button", { name: pickWords.lookInsideName(roadFederalStepsCA.label), exact: true })).toBeVisible();
   });

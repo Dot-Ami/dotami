@@ -141,7 +141,8 @@ for (const width of WIDTHS) {
     await overlayOn(page, "Rules & tax");
     await page.getByRole("button", { name: /^Write-off: Motor vehicle expenses, / }).first().click();
     await page.locator("#cockpit-panel").getByRole("button", { name: "Show details for Motor vehicle expenses" }).click();
-    // The card's panel draws its sources, the new s.7307 one among them, with the words a tool found.
+    // The card's panel draws its sources, the new s.7307 one among them: with the words a tool found until the
+    // maintainer's read of the page (2026-10-25) was recorded, and "Read by a person on 2026-10-25" since 2026-10-27.
     const text = page.locator("#cockpit-panel").locator('a[href$="/section-7307.html"]').first();
     await text.scrollIntoViewIfNeeded();
     await shot(page, "vehicle", width);

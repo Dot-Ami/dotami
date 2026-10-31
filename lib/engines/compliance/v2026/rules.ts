@@ -1,3 +1,6 @@
+import { CRA_ITAM_27_CITATION } from "@/lib/engines/risk/v2026/audit-manual-official-words";
+import { MAINTAINER_READ_ON } from "@/lib/engines/shared/maintainer-reads";
+
 import { CRA_SMALL_SUPPLIER_TESTS, CRA_WHEN_TO_REGISTER_TOOL_CHECK, CRA_WHEN_TO_REGISTER_URL } from "./gst-official-words";
 import {
   CRA_GI_196_TOOL_CHECK,
@@ -15,9 +18,7 @@ import {
   ETA_240_TOOL_CHECK,
   ETA_240_URL,
 } from "./ride-share-official-words";
-import type { ComplianceRule } from "./types";
-
-const LAST_VERIFIED = "2026-06-08";
+import type { ComplianceRule, RetiredComplianceRule } from "./types";
 
 export const complianceRulesV2026 = [
   {
@@ -44,7 +45,10 @@ export const complianceRulesV2026 = [
         jurisdiction: "CA",
         url: CRA_WHEN_TO_REGISTER_URL,
         // Option B (docs/engines/citations.md): a tool found the words this entry relies on, the two
-        // tests on the card and the exclusions in its description, on the live page. No person has read it.
+        // tests on the card and the exclusions in its description, on the live page. The maintainer read the
+        // page in full on 2026-10-25; the read wins on screen, and the tool check stays.
+        lastVerified: MAINTAINER_READ_ON,
+        readBy: "person",
         toolCheck: {
           checkedOn: CRA_WHEN_TO_REGISTER_TOOL_CHECK.checkedOn,
           quotes: [
@@ -77,7 +81,9 @@ export const complianceRulesV2026 = [
         authority: "provincial",
         jurisdiction: "BC",
         url: "https://www2.gov.bc.ca/gov/content/taxes/sales-taxes/pst",
-        lastVerified: LAST_VERIFIED,
+        // Read on 2026-06-08 (who read it wasn't recorded); the maintainer read it in full on 2026-10-25.
+        lastVerified: MAINTAINER_READ_ON,
+        readBy: "person",
         note: "BC PST overview.",
       },
     ],
@@ -100,7 +106,16 @@ export const complianceRulesV2026 = [
         authority: "CRA",
         jurisdiction: "ON",
         url: "https://www.canada.ca/en/revenue-agency/services/tax/businesses/topics/gst-hst-businesses/charge-collect-which-rate.html",
-        lastVerified: LAST_VERIFIED,
+        // No tool check (the maintainer's reading list, 2026-10-23): the page's table of rates isn't in its HTML, and
+        // the one 13% sentence a tool found there is a worked example (a furniture store's sale), not the rate.
+        // Read on 2026-06-08 (who read it wasn't recorded); the maintainer read it in full on 2026-10-25, which is the
+        // read this records. His answer about the table's two rows, given
+        // on 2026-10-28 (Alberta time; saved 2026-10-29 02:20 UTC on his reading page), copied what
+        // Ontario's row shows: "13%". It was not a read of the page in full, so `lastVerified` stays (docs/engines/
+        // citations.md, rule 5); the card's 13% rests on that answer (§ Blocked, item 2;
+        // tests/fixtures/rate-table-rows-2026-10-28.ts).
+        lastVerified: MAINTAINER_READ_ON,
+        readBy: "person",
         note: "CRA HST rate guidance for participating provinces.",
       },
     ],
@@ -110,10 +125,22 @@ export const complianceRulesV2026 = [
     id: "compliance-ab-no-pst",
     label: "Alberta — no provincial sales tax",
     ruleType: "pst-hst",
-    description:
-      "Alberta has no PST. GST applies at 5% on taxable supplies once registered.",
+    // Until 2026-10-29 "Alberta has no PST. GST applies at 5% on taxable supplies once registered.": the row, as the
+    // maintainer copied it, shows only the 5% (below), so the description says only that, like the line. Drawn on no
+    // screen. The card's name still says "no provincial sales tax": it is the maintainer's call (PR #224, question 2).
+    description: "The CRA's table of GST/HST rates lists Alberta at 5%.",
     lensAnnotations: {
-      tax: "If operating only in Alberta, GST (not HST) applies — simplifying provincial sales tax compliance.",
+      // The card's line. Until 2026-10-24 it said "If operating only in Alberta, GST (not HST) applies — simplifying
+      // provincial sales tax compliance": "simplifying" is a judgement no cited page makes, and the CRA's table lists
+      // rates by province, not by where a business operates (the maintainer's reading list, 2026-10-23). It says only
+      // what the table lists for Alberta, and it is still DotAmi's wording of the table's row, not a quote: the table
+      // isn't in the page's HTML, so no tool can find the row, and the one 5% sentence a tool found there is a worked
+      // example about Manitoba. Until 2026-10-29 it went on "… at 5% GST, with no provincial sales tax.": the
+      // maintainer copied the row on 2026-10-28 and it shows "5%", so the line says only that (docs/engines/
+      // citations.md, § Blocked, item 1: "if the table shows only the 5%, the line says only that"). That Alberta has
+      // no sales tax is now Alberta's own words, under the card's second source; of DotAmi's own words only the card's
+      // name still says it.
+      tax: "The CRA's table of GST/HST rates lists Alberta at 5%.",
       legal: "Federal GST rules still apply for registration and remittance.",
     },
     citations: [
@@ -122,8 +149,34 @@ export const complianceRulesV2026 = [
         authority: "CRA",
         jurisdiction: "AB",
         url: "https://www.canada.ca/en/revenue-agency/services/tax/businesses/topics/gst-hst-businesses/charge-collect-which-rate.html",
-        lastVerified: LAST_VERIFIED,
+        // No tool check, for the reason above: the table's Alberta row isn't in the page's words. Read on 2026-06-08
+        // (who read it wasn't recorded); the maintainer read it in full on 2026-10-25, which is the read this records.
+        // His answer about the table's two rows, given on 2026-10-28 (Alberta time; saved 2026-10-29 02:20 UTC on his
+        // reading page), copied what Alberta's row shows: "5%". It was not a read of the page in full, so `lastVerified`
+        // stays (docs/engines/citations.md, rule 5; tests/fixtures/rate-table-rows-2026-10-28.ts).
+        lastVerified: MAINTAINER_READ_ON,
+        readBy: "person",
         note: "CRA GST rate for non-HST provinces.",
+      },
+      {
+        // Added 2026-10-29: Alberta's own page, the candidate docs/architecture/other-ways-to-build.md [S17] names.
+        // scripts/check-quotes.mjs found both sentences on the live page in one run that day: the first opens its
+        // "Sales tax links" section, the second is its "Sales taxes which may apply to your business" block, which says
+        // what the first leaves out. They show under this source after "Words found on the page:", as Alberta's words.
+        // No person has read the page in full, so it says "Checked by a tool" in amber until one does. It says nothing
+        // of the 5%.
+        title: "About Tax and Revenue Administration",
+        authority: "provincial",
+        jurisdiction: "AB",
+        url: "https://www.alberta.ca/about-tra",
+        toolCheck: {
+          checkedOn: "2026-10-29",
+          quotes: [
+            "Alberta has no sales tax.",
+            "If your business sells products, delivers sold goods, or provides services in other provinces, you may be liable for sales taxes charged by those provinces on those goods or services, and on any equipment you bring into those provinces for use in your business.",
+          ],
+        },
+        note: "Alberta's page on the programs Tax and Revenue Administration runs; its \"Sales tax links\" section opens with the first sentence quoted, and its \"Sales taxes which may apply to your business\" block is the second.",
       },
     ],
     provinces: ["AB"],
@@ -144,9 +197,16 @@ export const complianceRulesV2026 = [
         authority: "CRA",
         jurisdiction: "CA",
         url: "https://www.canada.ca/en/revenue-agency/services/tax/businesses/small-businesses-self-employed-income/setting-your-business.html",
-        lastVerified: LAST_VERIFIED,
+        // Read on 2026-06-08 (who read it wasn't recorded); the maintainer read it in full on 2026-10-25.
+        lastVerified: MAINTAINER_READ_ON,
+        readBy: "person",
         note: "CRA business vs. personal activity framing.",
       },
+      // The page the card's risk box quotes (`risk-losses-source-of-income`), the same citation that read holds: a box
+      // draws no sources of its own, so its page is listed here (the maintainer's "yes" on PR #217's question 1,
+      // 2026-10-29). The card's own words above are unchanged; whether a page supports them is still his call
+      // (docs/engines/citations.md § Outside the list, item 3).
+      CRA_ITAM_27_CITATION,
     ],
     provinces: ["AB", "BC", "ON", "CA"],
     industryTags: ["Content / streaming", "Woodworking", "Creator / influencer"],
@@ -180,29 +240,7 @@ export const complianceRulesV2026 = [
     provinces: ["AB"],
     industryTags: ["Trades", "Woodworking"],
   },
-  {
-    id: "compliance-food-premises-on",
-    label: "Ontario food premises licensing",
-    ruleType: "licensing",
-    description:
-      "Food service and certain hospitality ventures require public health and municipal licensing in Ontario.",
-    lensAnnotations: {
-      tax: "Permit and inspection fees may be deductible when tied to earning business income.",
-      legal: "If serving food to the public, public health compliance is typically required before opening.",
-    },
-    citations: [
-      {
-        title: "Food premises regulation",
-        authority: "provincial",
-        jurisdiction: "ON",
-        url: "https://www.ontario.ca/laws/regulation/900562",
-        lastVerified: LAST_VERIFIED,
-        note: "Ontario Regulation 562 — Food Premises.",
-      },
-    ],
-    provinces: ["ON"],
-    industryTags: ["Hospitality", "Food service"],
-  },
+  // Ontario food premises licensing (compliance-food-premises-on) came off on 2026-10-24: RETIRED_COMPLIANCE_RULES.
   {
     // 2026-10-11: until then a driver expecting under $30,000 was told on a green card that most
     // businesses "need not register yet". The small-supplier line doesn't apply to this work.
@@ -214,7 +252,9 @@ export const complianceRulesV2026 = [
       "The CRA says self-employed taxi operators and commercial ride-sharing drivers have to register for GST/HST even if they are small suppliers: the $30,000 line doesn't apply to those rides. For commercial ride-sharing, its info sheet GI-196 says registration takes effect the day the driver starts making taxable supplies, and the driver has to apply before the thirtieth day after that.",
     officialWords: CRA_RIDESHARING_REGISTRATION,
     lensAnnotations: {
-      tax: "If you drive passengers for fares arranged through an app, or run a taxi business, the CRA says registration for those rides is needed whatever you earn, from the day of your first paid ride, with 30 days to apply (GI-196, for ride-sharing). That date is worth taking to your accountant.",
+      // Until 2026-10-24 it ended "That date is worth taking to your accountant.": no date stood before it, and it
+      // told the person what to do, in DotAmi's own words.
+      tax: "If you drive passengers for fares arranged through an app, or run a taxi business, the CRA says registration for those rides is needed whatever you earn, from the day of your first paid ride. When to apply is in the CRA's own words under this card's sources (its info sheet GI-196, for ride-sharing).",
       legal:
         "The law is the Excise Tax Act: s.240(1.1) requires a small supplier who carries on a taxi business to be registered, and its definition of a taxi business (s.123(1)) takes in rides arranged through an electronic platform. The CRA's pages are about self-employed drivers.",
     },
@@ -305,3 +345,19 @@ export const complianceRulesV2026 = [
 ] satisfies ComplianceRule[];
 
 export type ComplianceRuleId = (typeof complianceRulesV2026)[number]["id"];
+
+/**
+ * Rules taken off the catalog (docs/engines/compliance.md, § Retired rules), in the shape #207 gives the grants
+ * catalog's retired programs (RETIRED_GRANT_PROGRAMS). Their ids are never used again, not even for a rule
+ * on the same subject, which comes back under a new id (IDs are forever); nothing here reaches a screen, and
+ * tests/retired-entries.spec.ts holds this list to the catalog.
+ */
+export const RETIRED_COMPLIANCE_RULES: readonly RetiredComplianceRule[] = [
+  {
+    id: "compliance-food-premises-on",
+    label: "Ontario food premises licensing",
+    url: "https://www.ontario.ca/laws/regulation/900562",
+    readOn: "2026-10-23",
+    why: "On the maintainer's reading list of 2026-10-23 the rule didn't match its source: the regulation it cited, Ontario Regulation 562/90 (Food Premises), is revoked, and the rule said more than that regulation (\"require public health and municipal licensing in Ontario\"). The regulation in force now hasn't been read, so nothing replaces the rule yet; an Ontario food rule comes back only under a new id, citing that regulation and quoting what it requires.",
+  },
+];

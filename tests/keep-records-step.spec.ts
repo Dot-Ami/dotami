@@ -33,6 +33,7 @@ import { input, inventedIdea } from "./helpers/road-to-evaluate";
 
 const CHECKED_ON = "2026-10-14";
 const CRA_RECORDS = "https://www.canada.ca/en/revenue-agency/services/tax/businesses/topics/keeping-records/";
+const WHERE_AND_HOW_LONG = `${CRA_RECORDS}where-keep-your-records-long-request-permission-destroy-them-early.html`;
 
 const ROAD0_STEP = "step-start-keep-records";
 const ROAD1_STEP = "step-shop-keep-records";
@@ -121,7 +122,7 @@ describe("its lines come from the CRA's own Keeping records pages, checked by th
     }
   });
 
-  it("every source is a tool check dated 2026-10-14 with quotes of three words or more, and none claims a read", () => {
+  it("every source is a tool check dated 2026-10-14 with quotes of three words or more, and only the page the maintainer read claims a read", () => {
     for (const step of steps()) {
       for (const c of [...step.citations, ...step.doneWhen.map((d) => d.citation)]) {
         expect(c.toolCheck?.checkedOn, step.id).toBe(CHECKED_ON);
@@ -129,8 +130,15 @@ describe("its lines come from the CRA's own Keeping records pages, checked by th
         for (const q of c.toolCheck!.quotes) {
           expect(q.split(/\s+/).filter((w) => /[\p{L}\p{N}]/u.test(w)).length, q).toBeGreaterThanOrEqual(3);
         }
-        expect(c.lastVerified, step.id).toBeUndefined();
-        expect(c.readBy, step.id).toBeUndefined();
+        // The where-and-how-long page was read in full by the maintainer on 2026-10-25 (tests/maintainer-reads.spec.ts);
+        // until 2026-10-27 no source here had a read. The other two pages still have none.
+        if (c.url === WHERE_AND_HOW_LONG) {
+          expect(c.lastVerified, step.id).toBe("2026-10-25");
+          expect(c.readBy, step.id).toBe("person");
+        } else {
+          expect(c.lastVerified, step.id).toBeUndefined();
+          expect(c.readBy, step.id).toBeUndefined();
+        }
       }
     }
   });

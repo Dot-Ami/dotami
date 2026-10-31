@@ -29,7 +29,7 @@ import {
   type Overlays,
 } from "@/lib/cockpit/view";
 import { cfeCatalogV2026 } from "@/lib/engines/cfe/v2026";
-import { generalRoadV2026, type Road } from "@/lib/engines/roads/v2026";
+import { generalRoadV2026, type Road, skillItemsV2026 } from "@/lib/engines/roads/v2026";
 import type { FigureView } from "@/lib/figures/types";
 import type { PersonFigureView } from "@/lib/futures/person-figures";
 import { evaluateRoad, NO_AGREED_PLANNING, type RoadEvaluation, type RoadEvaluationInput } from "@/lib/roads";
@@ -280,18 +280,18 @@ describe("Next on your road", () => {
       const next = nextOnYourRoad(evaluateRoad(road0Input({ scenario })), scenario, generalRoadV2026.steps.length).map((s) => s.stepId);
       expect(next).toContain(picked);
       expect(next).not.toContain(other);
-      // Nothing the map's own chip calls "not on your path" or "done".
-      for (const id of next) expect(["ghost", "complete"]).not.toContain(getScenarioNodeStatus(id, scenario));
+      // Nothing the map's own chip calls "not on your path".
+      for (const id of next) expect(getScenarioNodeStatus(id, scenario)).not.toBe("ghost");
     }
-    // A first visit on the default picks: stage 0 is drawn done, so the list starts at the
-    // before-you-open steps that follow it in the first column (three on 2026-10-12, and Keep your
-    // records from day one since 2026-10-14), then stage 1.
+    // A first visit on the default picks: nothing is done until the person marks it (2026-10-23; until
+    // then stage 0 was drawn done for everyone and left off), so the list starts at stage 0, then the
+    // before-you-open steps that follow it in the first column.
     expect(nextOnYourRoad(evaluateRoad(road0Input()), inventedIdea(), 5).map((s) => s.stepId)).toEqual([
+      "stage-0-employee-apprentice-baseline",
       "step-start-register-name",
       "step-start-permits-bizpal",
       "step-start-business-account",
       "step-start-keep-records",
-      "stage-1-sole-prop-activation",
     ]);
   });
 
@@ -329,8 +329,10 @@ describe("the gauges", () => {
     const view = gaugeView(result, roadToEvaluate(), inventedIdea());
     expect(view.steps.value).toBe("1 of 7 marked done");
     expect(view.steps.lines).toContain("next on your road: “Get your ticket (test only)”");
-    expect(view.skills.value).toBe("1 have · 1 learning · 1 not yet");
-    expect(view.skills.lines).toContain("2 not marked, out of 5 listed");
+    // The trade ticket is a legal requirement: counted apart from the four skills (2026-10-23).
+    expect(view.skills.value).toBe("1 have · 1 learning · 0 not yet");
+    expect(view.skills.lines).toContain("2 not marked, out of 4 listed");
+    expect(view.skills.lines).toContain("1 legal requirement, apart from skills: 1 not yet");
     // Each part with its lines: Tuition, the exam and the name registration; the table saw quote.
     expect(view.money.value).toBe("$1,860 official fees (3 lines) · $3,400 your numbers (1 line)");
     expect(view.money.lines).toContain("4 not priced yet");
@@ -371,11 +373,17 @@ describe("the gauges", () => {
     for (const view of [fees, named]) expect([view.money.value, ...view.money.lines].join(" ")).not.toContain("$0");
   });
 
-  it("on road 0 the Steps gauge names the first step the map shows on the path, not one it shows done", () => {
-    const view = gaugeView(evaluateRoad(road0Input()), generalRoadV2026, inventedIdea());
-    // Stage 0 is drawn done; the first step after it is the first before-you-open step (2026-10-12).
-    expect(view.steps.lines).toContain("next on your road: “Register your business name, if you use one”");
+  it("on road 0 the Steps gauge names the first step on the path, and only the person's Done passes one", () => {
+    // Nothing marked: stage 0 is first, as the map draws it (since 2026-10-23 the map never counts it done
+    // for the person; until then it was drawn done for everyone and the gauge started after it).
     const stage0 = generalRoadV2026.steps.find((s) => s.id === "stage-0-employee-apprentice-baseline")!;
+    expect(gaugeView(evaluateRoad(road0Input()), generalRoadV2026, inventedIdea()).steps.lines).toContain(
+      `next on your road: “${stage0.label}”`,
+    );
+    // Marked done by the person, the first step after it is the first before-you-open step (2026-10-12).
+    const marked = road0Input({ progress: [{ stepId: stage0.id, status: "done", doneWhenIds: [] }] });
+    const view = gaugeView(evaluateRoad(marked), generalRoadV2026, inventedIdea());
+    expect(view.steps.lines).toContain("next on your road: “Register your business name, if you use one”");
     expect(view.steps.lines.join(" ")).not.toContain(stage0.label);
   });
 
@@ -400,11 +408,13 @@ describe("the gauges", () => {
   });
 
   it("on road 0: its one legal requirement, not marked yet; its cost lines are named lines, never $0", () => {
-    const view = gaugeView(evaluateRoad(road0Input()), generalRoadV2026, inventedIdea());
+    // With the catalog's items, as the cockpit reads them, so the requirement is known as one.
+    const view = gaugeView(evaluateRoad(road0Input({ skillItems: [...skillItemsV2026] })), generalRoadV2026, inventedIdea());
     expect(view.steps.value).toBe(`0 of ${generalRoadV2026.steps.length} marked done`);
-    // The GST/HST registration, from the compliance catalog (2026-10-12).
-    expect(view.skills.value).toBe("0 have · 0 learning · 0 not yet");
-    expect(view.skills.lines).toContain("1 not marked, out of 1 listed");
+    // The GST/HST registration, from the compliance catalog (2026-10-12): a legal requirement, so it is counted
+    // apart from skills, of which road 0 lists none (2026-10-23).
+    expect(view.skills.value).toBe("No skills are listed on this road yet");
+    expect(view.skills.lines).toContain("1 legal requirement, apart from skills: 1 not marked");
     // The before-you-open steps (2026-10-12) name four lines the person prices, and Sole Prop activation
     // seven start-up lines (later the same day), all with no amount: eleven on the path, none priced.
     expect(view.money.value).toBe("your numbers: not given yet");
@@ -466,7 +476,8 @@ describe("the overlays on the road", () => {
 
   it("the switches carry the road's own counts", () => {
     const counts = overlayCounts(road, result, inventedIdea());
-    expect(counts).toEqual({ skillsListed: 5, costLines: 8, rulesCards: 0 });
+    // The trade ticket is a legal requirement, counted apart from the four skills (2026-10-23).
+    expect(counts).toEqual({ skillsListed: 4, requirementsListed: 1, costLines: 8, rulesCards: 0 });
     const html = renderToStaticMarkup(
       createElement(OverlaySwitches, { overlays: { skills: true, money: false, rules: true }, counts, onToggle: () => {} }),
     );
@@ -474,7 +485,7 @@ describe("the overlays on the road", () => {
     expect(html).toContain("always on");
     expect(html).toMatch(/aria-pressed="true"[^>]*>Skills/);
     expect(html).toMatch(/aria-pressed="false"[^>]*>Money/);
-    expect(html).toContain("5 listed");
+    expect(html).toContain("4 listed · 1 legal requirement");
     expect(html).toContain("8 cost lines");
   });
 
@@ -562,7 +573,7 @@ describe("the overlays on the road", () => {
     const scenario = inventedIdea({ activityTags: ["Software / SaaS"] });
     const before = drawRoad0(scenario, evaluateRoad(road0Input({ scenario })));
     // With Money on, the card names its seven start-up lines as not priced (2026-10-12).
-    expect(before).toMatch(/aria-label="Sole Prop activation, now, applies as answered, 7 not priced, opens detail"/);
+    expect(before).toMatch(/aria-label="Sole Prop activation, first stage, applies as answered, 7 not priced, opens detail"/);
     // No one set anything aside: the legend has no line for it.
     expect(before).not.toContain(cockpitWords.road.setAsideLegend);
     const after = drawRoad0(scenario, evaluateRoad(road0Input({ scenario, progress: [notForMe("stage-1-sole-prop-activation")] })));
@@ -611,7 +622,8 @@ describe("the lever cards belong to the road step (engineHints)", () => {
       "stage-3b-incorporation-liability-sred": ["grant-sred", "grant-irap", "writeoff-rd", "writeoff-cca-class-50"],
       "stage-4-sred-deepening": ["grant-sred", "grant-irap"],
       "stage-4-retained-earnings-planning": ["grant-on-innovation"],
-      "branch-hire-first-employee": ["writeoff-vehicle"],
+      // Plus the Canada-Alberta Productivity Grant, named here since 2026-10-24 (the maintainer's call a-call-1).
+      "branch-hire-first-employee": ["writeoff-vehicle", "grant-capg"],
     };
     const fromRoad = Object.fromEntries(
       generalRoadV2026.steps.flatMap((s) => ((s.engineHints ?? []).length > 0 ? [[s.id, s.engineHints]] : [])),
@@ -701,9 +713,11 @@ describe("the step panel", () => {
   });
 
   it("every skill item and named cost line carries its own source; official pages are links the person opens", () => {
-    // The ticket step: its one skill item's citation is drawn with it, mark or no mark.
+    // The ticket step: its one skill item's citation is drawn with it, mark or no mark. The ticket is a legal
+    // requirement, so it sits under What it needs (2026-10-23), above the step's skills.
     const ticket = draw("step-eval-ticket");
-    const skillsPart = ticket.slice(ticket.indexOf(">Skills it needs<"), ticket.indexOf(">Costs<"));
+    const skillsPart = ticket.slice(ticket.indexOf(">What it needs<"), ticket.indexOf(">Costs<"));
+    expect(ticket.indexOf(">What it needs<")).toBeGreaterThan(-1);
     expect((skillsPart.match(/<a /g) ?? []).length).toBe(1);
     // A named line with a source for its name, and a step with an official page.
     const withSources: Road = {

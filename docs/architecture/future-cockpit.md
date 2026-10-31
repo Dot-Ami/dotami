@@ -155,11 +155,16 @@ each choice that differs from the table above says why.
      future; an idea you describe in your own sentence shows that sentence instead."*, with the words
      shown back in quotes (the goal bar shows an idea's own first sentence when it has one, below).
      **I don't know yet** keeps nothing new: *"Nothing kept. You can say it later; nothing here waits on
-     it."*, or, when words of the person's are already kept (said before, in this tab or another),
+     it."*, or, when words of the person's are already kept (said before, in this window or another),
      *"Nothing new kept. Your words of 2026-10-12 are still kept and still show on top of your futures;
      Delete on What DotAmi knows about you removes them, with all your statements."* (statements are
      deleted all at once, never one by one, by design). With no database: *"Not kept: no database
-     reachable. It stays in this tab only."* Changing it adds a new statement; none is written over.
+     reachable. A reload, a new window or the desktop app's Go menu asks it again."* (2026-10-24: the words are
+     held in the window's memory only, never its storage; *"It stays in this tab only"* until 2026-10-23).
+     With no answer from the server at all, held the same way: *"Not kept: the server didn't answer. …"*; a
+     refusal with no words of its own keeps the question open: *"Not kept. Your words are still in the box,
+     and Keep my words tries again."* (a review of 2026-10-24: both said "no database reachable" until then).
+     Changing it adds a new statement; none is written over.
   2. *"Are you after a business of your own, a job or career, or both?"*: **A business of my own** ·
      **A job or career** · **Both, or not sure** (the last is the *I don't know*). The receipt counts the
      futures *Pick a future* lists that have that in them, by each road's `kind` (a *both* road has a
@@ -190,10 +195,15 @@ each choice that differs from the table above says why.
 
   **What is already kept counts as answered.** `/start` is drawn on the server, which reads the person's
   newest destination and the income they agreed to (`lib/front-door/kept.ts`), so a returning person
-  (a new tab, the desktop app started again, or after door 2's *Map it*, which starts the tab's journey
-  afresh) sees 1 and 4 answered from the data file, with **Change**, and is asked only 2 and 3, which
-  live in the tab until a future is picked. The answers to 2 and 3, and what 1 and 4 came to, wait in
-  the tab (the journey draft); 1 and 4 are already in the data file. **Pick a future →** shows once 3
+  (a reload, a new tab or window, the desktop app started again or its Go menu, or after door 2's *Map it*,
+  which starts the journey afresh) sees 1 and 4 answered from the data file, with **Change**, and is asked 2
+  and 3 again. The answers to 2 and 3, and what 1 and 4 came to, wait in the journey draft, held in the
+  window's memory only (`lib/journey/held-journey.ts`, since 2026-10-24; in the tab's storage until
+  2026-10-23): moving between DotAmi's pages, the invented example included, keeps them, and a page loaded
+  afresh empties it. Each future picked keeps 2 and 3 on its idea, and `/start` never reads them back from
+  there, so the line under their receipts says *"Kept with each future you pick, and nowhere else: a reload, a
+  new window or the desktop app's Go menu asks it again, a future picked or not."* 1 and 4 are already in
+  the data file. **Pick a future →** shows once 3
   is answered and 4 answered or skipped.
 
   For the keyboard and a screen reader: the page has one level 1 heading, *Your destination* (seen only
@@ -204,7 +214,9 @@ each choice that differs from the table above says why.
   never ranked: *"In the order they were written, not ranked. More futures are being written."* Which
   roads it lists is one list, `LISTED_ROAD_IDS` in `lib/front-door/futures.ts`: road 0 and, since the
   maintainer's yes of 2026-10-13 (§ 13, *Listing a road nobody has read*), the first written future,
-  whose sources are all tool checks and whose card says so in amber. Picking it opens the cockpit on its
+  whose sources are all tool checks and whose card says in amber how many of them no person has read
+  (since 2026-10-27 it also counts, in grey, the 8 on the three CRA pages the maintainer read in full on
+  2026-10-25: GST/HST, the payroll account, records). Picking it opens the cockpit on its
   own road (`e2e/front-door.spec.ts`). Each card shows its name; what it holds (*"A business"*, *"A career and a
   business"*); where it is written for, and, when that isn't the person's place, *"Written for Alberta.
   You said Yukon."*; counts only (steps · skills listed · official fees found · cost lines you'd price);
@@ -320,8 +332,8 @@ in [docs/ui-spec/example/_index.md](../ui-spec/example/_index.md).
 - **Nothing is written, anywhere.** Every control that would save is disabled with *"This is an example.
   Start your own to keep anything."*, or answers with that sentence and does nothing; no request that
   writes is sent, none of the real person's data is read, and no browser storage is read or written (the
-  page sits outside the journey's pages, so the journey draft isn't touched, and the fold answers are
-  remembered nowhere). `e2e/example-future.spec.ts` compares the data file's row counts, both storages and
+  page sits outside the journey's pages, so the journey draft isn't touched and, held in the window's memory
+  since 2026-10-24, is there again on the way back; the fold answers are remembered nowhere). `e2e/example-future.spec.ts` compares the data file's row counts, both storages and
   the requests sent before and after clicking Keep and Export (the two save controls not disabled), and
   checks that every other save control in the ui-spec's table is disabled.
 - **The appendix's counts against the catalog's.** The page shows what road evaluation gives on today's
@@ -560,11 +572,14 @@ answer), the what-if bar, *Compare* and *This is mine*. The left rail stays as i
   **Add your savings**, through the agree prompt.
   *Your date*: a month and year box, **Save** and **Clear**; a month already gone is refused.
 - **Next on your road**, under the map: the first three steps, in road order, that are on the person's
-  path and not done, labelled *the order steps happen, not importance*. Clicking one opens it. *On the
-  path* and *done* are read the way each card's chip reads them (`lib/cockpit/view.ts` `mapPlace`): the
-  person's own status where they set one, else the map's worked-out place. So the list never names a card
-  the map shows *done* (stage 0, worked out from the toggles) or *not on your path* (the side of a fork
-  not picked), nor one road evaluation greys. The Steps gauge's *next on your road* is its first.
+  path and not marked done, labelled *the order steps happen, not importance*. Clicking one opens it. *On
+  the path* is read the way each card's chip reads it (`lib/cockpit/view.ts` `mapPlace`): the person's own
+  status where they set one, else the map's worked-out place; *done* is only the person's own **Done**. So
+  the list never names a card the map shows *not on your path* (the side of a fork not picked), nor one
+  road evaluation greys, nor one the person marked done or not for me. Stage 0, which the map's lists put
+  first on every idea, is listed until the person marks it done: its chip reads *starting point*
+  (2026-10-23, the pre-release review; until then it read *done*, worked out from the toggles, and the list
+  left it out). The Steps gauge's *next on your road* is its first.
 - **Road 0's statuses are the person's now** (the task list's open line; § 7 said a later pull request
   may do it). The map's *active, done, set aside* lists are worked out from its toggles on every load,
   so a status set "through the map" couldn't be kept, and road evaluation already refused to read those
@@ -627,7 +642,8 @@ wrapped to 342 px and left the road 20 px; at 768x1024 with a step open the road
   inventory lists the key. Everything starts open, so a person who never folds sees part 1 unchanged.
   In the desktop app each launch is served from its own local address, so its storage starts empty: the
   folds last until the app closes and it opens with everything showing (the same as the intake's list of
-  typed job descriptions). *(2026-10-17: no longer; the app uses the same address on every launch while its
+  typed job descriptions, which went on 2026-10-24: the window's storage holds nothing the person typed).
+  *(2026-10-17: no longer; the app uses the same address on every launch while its
   usual port is free, `desktop/app-port.mjs`, so the folds last between launches.)*
 - **The proof at 1280x720.** With every panel folded, each stage card and each rules and tax card on the
   road is fully inside the window once the road's own area is scrolled to it, and the road's area is at
@@ -1158,8 +1174,10 @@ lives in `lib/roads/`.
   *not for me*. Readiness is never a state: what a step needs is a count on the step (*needs 3 · you
   have 2*), never a reason to turn it green.
   On road 0 the person sets no status yet. The map's lists of active, done and set-aside steps are
-  worked out from its toggles alone (stage 0 is always done, stage 1 always active, the side of each
-  fork not picked and the hire-first step while it is off are set aside), not set by the person, so
+  worked out from its toggles alone (stage 0 is always on the done list and stage 1 always active, though
+  since 2026-10-23 their chips read *starting point* and *first stage*, never *done* and *now*, and since
+  2026-10-24 the readout API no longer gives those lists; the side of each fork not picked and the hire-first
+  step while it is off are set aside), not set by the person, so
   passing them in as progress would make the evaluation say *"You marked this step not for me"* about
   steps nobody touched. Road evaluation therefore reads no status on road 0 (its ticked *done when*
   lines still count), and a caller passes none until the person can set one (fixed 2026-10-12, before
@@ -1303,7 +1321,7 @@ Whether to hide it anyway is the maintainer's call (§ 13).
   anyway is the maintainer's call (§ 13); `tests/research-steps.spec.ts` pins it as built.
 - **Not changed:** *Incorporation for liability/SR&ED* (Tier 3) is about liability as well as research,
   so it is not a research-only step and keeps its colours and its line. The readout API
-  (`app/api/readout/route.ts`, `stageChipFor`) still gives *SR&ED deepening* the map's worked-out chip
+  (`app/api/readout/route.ts` through `lib/readout/nodes.ts`, `stageChipFor`) still gives *SR&ED deepening* the map's worked-out chip
   (*ahead*) beside its grey colour, and the playbook export (`lib/playbook/build-skeleton.ts`) lists the
   steps the map's toggles make visible, this one among them, without road evaluation's reason: neither runs
   road evaluation yet. That belongs to the export and print work, tracked in `docs/task-list.md` beside
@@ -1317,7 +1335,8 @@ Road 1, *From apprentice to your own shop (Alberta)*, is written into the catalo
 made while writing it, each for a reason:
 
 - **Four columns, one fork.** *Finish your training* · *Certified* (the fork: *Stay employed* or *Open
-  your own shop*) · *Open the doors* · *First years on your own*. The example trade is Cabinetmaker,
+  your own shop*) · *Open the doors* · *Running your own shop* (*First years on your own* until
+  2026-10-23: a span of time in DotAmi's own words). The example trade is Cabinetmaker,
   Alberta's official name for it. Alberta's pages list three ways to the certificate (apprenticeship,
   Trades Qualifier on work experience, Trades Qualifier with a certificate from outside Alberta); they
   are steps side by side in the first column that all lead to the certificate, not a fork, because a
@@ -1329,9 +1348,13 @@ made while writing it, each for a reason:
   check over the whole catalog). How a screen draws the join is decided with the screens.
 - **Every source is a tool check.** Each citation was checked on 2026-10-12 with
   `node scripts/check-quotes.mjs --url … --quote …` (option B, [citations.md](../engines/citations.md));
-  only quotes the script found are recorded, and none is recorded as read. Because nothing in it has
-  been read yet, the road's own `lastVerified` is empty, and the checks now hold a road with no read
-  source to an empty date instead of letting it carry any date.
+  only quotes the script found are recorded, and none was recorded as read. Because nothing in it had
+  been read then, the road's own `lastVerified` was empty, and the checks hold a road with no read
+  source to an empty date instead of letting it carry any date. Since 2026-10-27, 8 of its sources, on
+  three CRA pages the maintainer read in full on 2026-10-25 (GST/HST, the payroll account, records),
+  carry his read and say *Read by a person on 2026-10-25*, and the road's own `lastVerified`, worked
+  out from its sources, is 2026-10-25 ([citations.md](../engines/citations.md), § The maintainer's
+  reads of 2026-10-25); every source keeps its tool check.
 - **A fee checked only by a tool quotes its amount.** An official fee whose citation has no read must
   have a quote with the amount as the page writes it (`$150`, `$150.00`, `$1,500`), so the typed
   number is one the tool found on the page. A $0 fee is exempt (pages say "no cost"). A fee with a
@@ -1402,9 +1425,14 @@ each for a reason:
   (`dw-start-inc-directors`) says a director may be liable for amounts the corporation failed to
   remit, since the owner of a one-person corporation is usually its director.
 - **Every source is a tool check made on 2026-10-12** (option B, [citations.md](../engines/citations.md)):
-  each quote was found word for word on its live page by `node scripts/check-quotes.mjs`, and none is
-  recorded as read. A tool check is not a read, so road 0's own `lastVerified` stays the newest read
-  among the map stages' sources (2026-05-01).
+  each quote was found word for word on its live page by `node scripts/check-quotes.mjs`, and none was
+  recorded as read then. A tool check is not a read, so road 0's own `lastVerified` is the newest read
+  among its sources: the map stages' 2026-05-01 until the maintainer's reads of 2026-10-25 were
+  recorded (2026-10-27), and 2026-10-25 since then, for road 0 and the federal road alike
+  ([citations.md](../engines/citations.md), § The maintainer's reads of 2026-10-25). The lines on the
+  pages he read (the CRA's sole proprietorship, GST/HST, corporation, payroll, relationships and records
+  pages, and Corporations Canada's federal incorporation) say *Read by a person on 2026-10-25* and keep
+  their tool checks.
 - **Four of the stages' own pages have moved.** The CRA's *Employees* page (under *Employee/Apprentice
   baseline*), the line 4600 page both of *Retained earnings planning*'s sources point at, and the two
   SR&ED pages under *SR&ED deepening* answer "page not found" today. Those steps' *done when* lines cite
@@ -1960,8 +1988,10 @@ figures only); it is budgeted here. With no model, phases 1 and 2 still work by 
 
 **Phase 4 — More futures, more places.** Ongoing: about 5 content days per future; B.C. and Ontario
 versions; contributor-written futures through a compiler (about a week, once) that refuses uncited
-steps. Before any food future, Ontario's food-premises citation is re-read (the compliance catalog
-points at a regulation that looks like the older one).
+steps. Before any food future in Ontario, a person reads the regulation in force: the compliance
+catalog's food-premises rule cited Ontario Regulation 562/90, which the maintainer's reading list of
+2026-10-23 found revoked, and the rule came off on 2026-10-24 (docs/engines/compliance.md, § Retired
+rules).
 
 ## 11. Built to change
 
@@ -2080,6 +2110,8 @@ The maintainer expects the layout, and so the back end, to change as this is bui
 - ~~**Listing a road nobody has read.**~~ Settled 2026-10-13: the maintainer said yes, *Pick a future*
   lists the first written future, its card saying in amber that its sources were checked by a tool and
   not read by a person yet (`LISTED_ROAD_IDS` in `lib/front-door/futures.ts`; § 1, The way in as built).
+  Since 2026-10-27 the card also counts, in grey, the sources the maintainer read in full on 2026-10-25
+  (three CRA pages on the road: GST/HST, payroll account, records; docs/engines/citations.md).
   The question as it was asked: the first written future's sources are all tool checks (option B):
   every quote was found on its live page, but no person is recorded as having read one. Whether *Pick a
   future* may list such a road (each card saying "Checked by a tool" in amber), or only once a person
@@ -2130,7 +2162,8 @@ rules apply"*), and a target of $70,000 a year, which she agrees to.
 
 She opens *From apprentice to your own shop (Alberta)*. The whole road appears, greyed in: *Finish
 your training*, *Certified* (a fork: *Stay employed* or *Open your own shop*), *Open the doors*, *First
-years on your own*, *Incorporating*, *Running as a corporation*. Hovering *Certified* sends arrows to
+years on your own* (on the screen *Running your own shop* since 2026-10-23: no time words), *Incorporating*,
+*Running as a corporation*. Hovering *Certified* sends arrows to
 both endings.
 
 In the cockpit, *Steps: 0 of 22 done*; Skills and Your date show **?** with one invitation each; Start-up

@@ -2,6 +2,8 @@
 # Run: gitleaks git . --log-opts="--all" --redact   (history)   ·   gitleaks dir . --redact   (tree)
 # 2026-09-20: full history of this repo scanned clean; the two shapes below are the only hits and
 # are not credentials — a browser-storage key NAME and Recharts chart-column props.
+# 2026-10-24: that key's constant was renamed when the key was retired, so the name is allowed under both
+# constants (the old one stays for the history scan); not scanned again since.
 
 title = "DotAmi"
 
@@ -16,6 +18,7 @@ paths = [
 ]
 regexTarget = "line"
 regexes = [
-  '''JOURNEY_STORAGE_KEY\s*=\s*"dotami-journey-v\d+"''',   # sessionStorage key name, lib/journey/types.ts
+  '''JOURNEY_STORAGE_KEY\s*=\s*"dotami-journey-v\d+"''',   # sessionStorage key name, lib/journey/types.ts until 2026-10-24 (history)
+  '''RETIRED_JOURNEY_KEY\s*=\s*"dotami-journey-v\d+"''',   # the same name, retired and only removed: lib/journey/window-storage.ts
   '''dataKey="[A-Za-z0-9_]+"''',                            # Recharts series field names
 ]

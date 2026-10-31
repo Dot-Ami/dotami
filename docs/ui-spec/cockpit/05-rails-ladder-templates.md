@@ -8,7 +8,7 @@ Page: Cockpit (`/cockpit`) · Components: `components/cockpit/structure-ladder-r
 `components/cockpit/templates-rail.tsx` (rendered inside the left rail, surface 7)
 Type: display list + external-link list
 
-Last updated: 2026-07-05 (page-mechanics workshop)
+Last updated: 2026-10-26 (rungs by name only; the copy below brought up to date); 2026-07-05 (page-mechanics workshop)
 Workshop status: documented, sign-off pending
 
 ## What it is
@@ -21,6 +21,20 @@ references" (external links for the user's accountant/lawyer).
 
 - **Structure ladder** — display-only. Renders every `structureLadderV2026` step
   (engine catalog, `lib/engines/structure/v2026/`) with label + trigger text.
+  **Changed 2026-10-23 (the screen review's pre-release fixes):** drawn only on the tax and
+  structure roads (road 0 and the federal steps, `drawsTheStructureLadder` in
+  `lib/engines/roads/v2026/index.ts`), not on the apprentice road, and in plain words from
+  `lib/cockpit/words.ts` (`rail.ladder`): the title *Ways a business can be set up*, a note,
+  and each rung's plain name (*In your own name*, *In your own name, registered for GST/HST*,
+  *A company of its own*, *A company that owns companies*, *A family trust*) in place of the
+  catalog's label and trigger text (*Holding company (Holdco)*, *Estate freeze, succession,
+  or income splitting…*). With no structure set: *None is marked: once you say how the
+  business is set up, it shows here.*
+  **Changed 2026-10-26 (the review of #209's merge):** a rung is its plain name only. From
+  2026-10-23 each rung also had a line saying what the set-up is (*A corporation, owned and
+  controlled in Canada.* under *A company of its own*, …): tax and legal claims in DotAmi's
+  own words with no citation behind them, and the CCPC one wrong, so every line is gone
+  (`components/cockpit/structure-ladder-rail.tsx`; `tests/prerelease-plain-screens.spec.ts`).
   **Changed 2026-09-13 (S2.5.4d):** `activeStepId` is derived from the scenario's own
   `profile.structure` for intake-built ventures (null while `structureSource` is
   "assumed" → no rung marked, "set your structure above and the ladder places you"); the
@@ -47,10 +61,20 @@ artifacts.
 
 ## Copy (current labels)
 
-"Structure ladder" · "Entity progression — Canada, the first jurisdiction mapped. Prep
-orientation, not filing advice." · "Current / Passed / Ahead" · "Prep-tool references" · "Orientation
-links for your accountant or lawyer — DotAmi does not generate legal documents." ·
-"Open reference ↗".
+From `lib/cockpit/words.ts` `rail.ladder` and `rail`:
+
+"Ways a business can be set up" · "From a business in your own name to companies that own
+companies, in Canada. Something to take to your accountant, not tax or legal advice." · "None is
+marked: once you say how the business is set up, it shows here." · the rungs: "In your own name" ·
+"In your own name, registered for GST/HST" · "A company of its own" · "A company that owns
+companies" · "A family trust" · "Current / Passed / Ahead" · "Prep-tool references" · "Appear once
+your structure is set." · "Orientation links for your accountant or lawyer — DotAmi does not
+generate legal documents." · "Open reference ↗".
+
+Until 2026-10-23: "Structure ladder" · "Entity progression — Canada, the first jurisdiction
+mapped. Prep orientation, not filing advice." (with the catalog's own labels and trigger text on
+each rung). From 2026-10-23 until 2026-10-26 each rung also had a line under its name (*A
+corporation, owned and controlled in Canada.*, …), dropped as above.
 
 ## State touched (field names only)
 

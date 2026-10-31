@@ -12,7 +12,7 @@ import { areaLabel, regionLabel } from "@/lib/front-door/where";
 
 import { goalRoadLine } from "./road-line";
 import { dayOfMoment, toldDay, toldRows, type KeptAnswers } from "./told";
-import { emptySectionLine, gaugeView, roadSkillsNone } from "./view";
+import { emptySectionLine, gaugeView, roadRequirementsNone, roadSkillsNone } from "./view";
 import { cockpitWords as words } from "./words";
 
 /**
@@ -82,6 +82,12 @@ export interface PlanStep {
   because: string;
   doneWhenTitle: string;
   doneWhen: { text: string; ticked: boolean; mark: string; source: PlanSource }[];
+  /**
+   * The step's legal requirements (an ID number, an agreement, a certificate) and its listed skills, apart, each with
+   * the person's mark: drawn under the step panel's own two headings (the review of #209's merge, 2026-10-26: road 1's
+   * register step listed the Alberta Student Number as a skill on Your plan and in Export).
+   */
+  requirements: { label: string; mark: string }[];
   skills: { label: string; mark: string }[];
   /** "n cost lines, under Start-up money", or null for a step with none. */
   costCount: string | null;
@@ -180,6 +186,14 @@ export function buildPlan(args: PlanArgs): PlanView {
     }),
   }));
 
+  /** A step's items of one kind, in the step's own order, with the person's marks: as the step panel splits them. */
+  function needsOfKind(ids: readonly string[], legal: boolean): { label: string; mark: string }[] {
+    return ids.flatMap((id) => {
+      const item = itemById.get(id);
+      return item && (item.kind === "legal-requirement") === legal ? [{ label: item.label, mark: markWords(markOf.get(id)) }] : [];
+    });
+  }
+
   function planStep(step: (typeof road.steps)[number], evaluated: StepEvaluation): PlanStep {
     const ticked = new Set(evaluated.doneWhen.tickedIds);
     // Its own sources and the pages left out of its lines and links for the idea's place, in one count.
@@ -198,10 +212,8 @@ export function buildPlan(args: PlanArgs): PlanView {
         mark: ticked.has(line.id) ? words.plan.ticked : words.plan.notTicked,
         source: source(line.citation),
       })),
-      skills: step.needs.flatMap((id) => {
-        const item = itemById.get(id);
-        return item ? [{ label: item.label, mark: markWords(markOf.get(id)) }] : [];
-      }),
+      requirements: needsOfKind(step.needs, true),
+      skills: needsOfKind(step.needs, false),
       costCount: step.costs.length > 0 ? words.plan.costCount(step.costs.length) : null,
       officialLinks: step.officialLinks.map((link) => ({ label: link.label, url: link.url })),
       sources: sources.shown.map(source),
@@ -211,6 +223,7 @@ export function buildPlan(args: PlanArgs): PlanView {
 
   // --- Skills: the road's items once each, in road order, then the person's own, then the job's list.
   const roadItemIds = [...new Set(road.steps.flatMap((s) => s.needs))].filter((id) => itemById.has(id));
+  const roadRequirementsLeftOut = roadRequirementsNone(road, input.skillItems);
   const ownDay = new Map(args.kept.skillMarks.flatMap((m) => (m.skillItemId === null && m.ownLabel ? [[m.ownLabel, m.markedOn] as const] : [])));
   const own = input.skillMarks.flatMap((m) =>
     m.skillItemId === null && m.ownLabel ? [{ label: m.ownLabel, mark: markWords(m.mark), day: ownDay.get(m.ownLabel) ?? words.told.dayNotKept }] : [],
@@ -307,7 +320,11 @@ export function buildPlan(args: PlanArgs): PlanView {
         const item = itemById.get(id)!;
         return { label: item.label, kind: words.panel.skillKind[item.kind], mark: markWords(markOf.get(id)) };
       }),
-      roadNone: roadItemIds.length === 0 ? roadSkillsNone(road).gauge : null,
+      // As the Skills gauge says it: its skills' line, and its legal requirements' when the place left them out.
+      roadNone:
+        roadItemIds.length === 0
+          ? [roadSkillsNone(road, input.skillItems).gauge, ...(roadRequirementsLeftOut ? [roadRequirementsLeftOut.gauge] : [])].join(" · ")
+          : null,
       own,
       ownNone: own.length === 0 ? words.plan.ownNone : null,
       job: job

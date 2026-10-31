@@ -1,5 +1,5 @@
-export type { RiskCombination, RiskEntry, RiskSeverity } from "./types";
-export { riskCombinationsV2026, riskEntriesV2026 } from "./triggers";
+export type { RetiredRiskEntry, RiskCombination, RiskEntry, RiskSeverity } from "./types";
+export { RETIRED_RISK_ENTRIES, riskCombinationsV2026, riskEntriesV2026 } from "./triggers";
 export type { RiskEntryId } from "./triggers";
 
 import { riskCombinationsV2026, riskEntriesV2026 } from "./triggers";

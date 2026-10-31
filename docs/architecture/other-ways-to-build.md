@@ -252,7 +252,7 @@ A section of the existing overlay. Each card names the answer or road step that 
 
 - *Shown because you picked Buy for Woodworking machines and tools* (Classes 8 and 12, half-year and amber lines) or
   *Buy or Lease for Vehicle* (the 2026 limits [S5]): as in § 4.2.
-- *Shown because Keep your records from day one is on your road.* Keep records six years from the end of the last tax
+- *Shown because Keep your records from day one is on your road.* Keep records generally six years from the end of the last tax
   year they relate to; long-term property records indefinitely; in Canada unless the CRA gives written permission [S19].
 - *Shown because you said the lease runs more than one year and what's in it is worth $31,000.* The lease-as-purchase
   election, its conditions and "office furniture and vehicles often do not" [S7][S13]; never on vehicles. Also: *"A
@@ -467,7 +467,7 @@ proof (S2.5.25l, a hairstylist road) must get ways, tax rows and *Where to ask* 
 |---|---|
 | Information and options, never a verdict (CLAUDE.md:22-24) | Fixed way order, identical rows, *DotAmi doesn't pick one*, no difference line; help grouped by kind, alphabetical, *doesn't recommend or rank anyone*; new screens join the no-verdict walk |
 | Doesn't rank options by what it thinks matters to the person | **Settled 2026-10-16 by K7 A and K8 A:** the Lens sorts only the person's own numbers by a measure the person names, said on the card, before tax, blanks counted; "strongest" is asked back, not judged; ways screens stay unsorted and say nothing about which costs less |
-| No times (K9: the maintainer's note of 2026-10-16 and "NO TIMES!" of 2026-10-17, § 1) | No time figure, time gauge, timeline or date forecast anywhere; the only periods here are cited rule words (records kept six years, a lease of more than one year) and rent periods the person types as part of a price, none added up or projected |
+| No times (K9: the maintainer's note of 2026-10-16 and "NO TIMES!" of 2026-10-17, § 1) | No time figure, time gauge, timeline or date forecast anywhere; the only periods here are cited rule words (records kept generally six years, a lease of more than one year) and rent periods the person types as part of a price, none added up or projected |
 | Rules decide; the Lens never changes a catalog (:25-30) | Treatments, conditions, questions, places and registry cards are versioned catalogs; the Lens only proposes a number the person agrees to |
 | Every rule, rate, threshold, date cited (:31-40) | Every catalog line cited and read or tool-checked; quotes checked first (S2.5.22e); DotAmi's labels carry no quote marks; regulators, non-profits and cities get their own citation kinds |
 | Not legal or tax advice; never files (:41-43) | Class, election, passenger vehicle, return line and consumer-law reach are questions to take; Form T2145 linked, never filled |

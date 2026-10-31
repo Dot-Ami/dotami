@@ -1,6 +1,6 @@
 import type { UnlockState } from "@/lib/brain/types";
 
-import type { RoadEvaluation, StepEvaluation, StepState, ToldAnswer } from "./evaluate-road";
+import type { MarkCounts, RoadEvaluation, StepState, ToldAnswer } from "./evaluate-road";
 import { changed, listOf, manyAnswers, manyTakenBack, receiptLine, type AnswerGroup } from "./words";
 
 /**
@@ -27,15 +27,19 @@ export function roadReceipt(before: RoadEvaluation, after: RoadEvaluation): stri
     if (n > 0) changes.push(changed.stepsNow(n, state));
   }
 
-  // Steps whose every listed skill is now marked have, and the other way round. A count of skills
-  // only: the step's "done when" lines and money are counted elsewhere.
-  const allHave = (s: StepEvaluation) => s.needs.listed > 0 && s.needs.have === s.needs.listed;
-  // A step that listed no skill before, or lists none now (the road drawn for a new place brought its items back, or
-  // left them out), gained or lost no mark: not counted either way.
-  const nowAllHave = both.filter(([b, a]) => !allHave(b) && allHave(a) && b.needs.listed > 0).length;
-  const noLonger = both.filter(([b, a]) => allHave(b) && !allHave(a) && a.needs.listed > 0).length;
-  if (nowAllHave > 0) changes.push(changed.allSkillsHave(nowAllHave));
-  if (noLonger > 0) changes.push(changed.notAllSkillsHave(noLonger));
+  // Steps whose every listed skill is now marked have, and the other way round; then the same for their legal
+  // requirements, each kind in its own words (a legal requirement is never called a skill: the review of #209's
+  // merge, 2026-10-26). A count of marks only: the step's "done when" lines and money are counted elsewhere.
+  const allHave = (c: MarkCounts) => c.listed > 0 && c.have === c.listed;
+  for (const kind of ["skills", "legalRequirements"] as const) {
+    const of = (s: (typeof both)[number][number]) => s.needsByKind[kind];
+    // A step that listed none of the kind before, or lists none now (the road drawn for a new place brought its items
+    // back, or left them out), gained or lost no mark: not counted either way.
+    const nowAllHave = both.filter(([b, a]) => !allHave(of(b)) && allHave(of(a)) && of(b).listed > 0).length;
+    const noLonger = both.filter(([b, a]) => allHave(of(b)) && !allHave(of(a)) && of(a).listed > 0).length;
+    if (nowAllHave > 0) changes.push(kind === "skills" ? changed.allSkillsHave(nowAllHave) : changed.allRequirementsHave(nowAllHave));
+    if (noLonger > 0) changes.push(kind === "skills" ? changed.notAllSkillsHave(noLonger) : changed.notAllRequirementsHave(noLonger));
+  }
 
   const g0 = before.gauges;
   const g1 = after.gauges;
@@ -45,11 +49,22 @@ export function roadReceipt(before: RoadEvaluation, after: RoadEvaluation): stri
 
   const s0 = g0.skills;
   const s1 = g1.skills;
-  if (s0.have !== s1.have || s0.learning !== s1.learning || s0.notYet !== s1.notYet || s0.notMarked !== s1.notMarked) {
-    // The road's list changes only with the road drawn for the idea's place (`roadForPlace`; a mark changes the counts,
-    // never the list), so a list gone empty is the place leaving every item out: said as the Skills gauge says it,
-    // never as counts of nothing that read as marks gone (third review of #207).
-    changes.push(s1.listed === 0 && s0.listed > 0 ? changed.skillsNoneForPlace : changed.skills(s1.have, s1.learning, s1.notYet, s1.notMarked));
+  // The road's listed skills, then its legal requirements, apart as the Skills gauge counts them (the review of #209's
+  // merge, 2026-10-26: road 1's three legal requirements read as "the skills"). The road's list changes only with the
+  // road drawn for the idea's place (`roadForPlace`; a mark changes the counts, never the list), so a kind gone empty
+  // is the place leaving every item of it out: said as the Skills gauge says it, never as counts of nothing that read
+  // as marks gone (third review of #207).
+  const moved = (c0: MarkCounts, c1: MarkCounts) =>
+    c0.have !== c1.have || c0.learning !== c1.learning || c0.notYet !== c1.notYet || c0.notMarked !== c1.notMarked;
+  const [k0, k1] = [s0.listedSkills, s1.listedSkills];
+  if (moved(k0, k1)) {
+    changes.push(k1.listed === 0 && k0.listed > 0 ? changed.skillsNoneForPlace : changed.skills(k1.have, k1.learning, k1.notYet, k1.notMarked));
+  }
+  const [r0, r1] = [s0.legalRequirements, s1.legalRequirements];
+  if (moved(r0, r1)) {
+    changes.push(
+      r1.listed === 0 && r0.listed > 0 ? changed.requirementsNoneForPlace : changed.requirements(r1.have, r1.learning, r1.notYet, r1.notMarked),
+    );
   }
   const o0 = s0.addedByYou;
   const o1 = s1.addedByYou;
@@ -108,7 +123,8 @@ export function roadReceipt(before: RoadEvaluation, after: RoadEvaluation): stri
 /**
  * The answers that differ between two runs, as the "Because …" part of a line: an answer given or
  * changed reads as said, one that is gone reads as taken back. Three or more of one kind are counted,
- * those given apart from those taken back ("you marked 9 skills", "you took back 3 skill marks").
+ * those given apart from those taken back ("you marked 9 skills", "you took back 3 skill marks"); marks on legal
+ * requirements are their own kind ("you marked 3 legal requirements"), never counted as skills.
  * Null when no answer changed (the month turned over, say).
  *
  * When the pick of job changed, a mark on the job's list that is in only one of the two runs came into or

@@ -149,7 +149,7 @@ export async function lookCloserItems(page: Page, within?: Locator): Promise<str
 export async function pickJob(page: Page, label: string, code: string) {
   await cockpitSettled(page);
   await page.getByRole("region", { name: "Your goal and gauges" }).getByRole("button", { name: /^Skills/ }).click();
-  const skills = page.getByRole("region", { name: "Skills on this road" }).last();
+  const skills = page.getByRole("region", { name: "Skills and legal requirements" }).last();
   // Picked: the list's line names the job, its code and the day ("Athletes · 53200.00 · picked 2026-10-21").
   const picked = skills.getByText(`${label} · ${code} · picked`);
   const search = skills.getByRole("searchbox", { name: jobStepWords.boxLabel });

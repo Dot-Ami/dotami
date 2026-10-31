@@ -1,6 +1,6 @@
 # DotAmi Architecture Overview
 
-Last updated: 2026-09-22
+Last updated: 2026-10-24 (the journey draft is held in the window's memory, never its storage); 2026-09-22
 
 ## Layer map
 
@@ -49,7 +49,7 @@ lib/
     index.ts              # barrel export
   paths/v2026/            # exploration path catalog + scoring
   scenarios/              # user scenario state (database-backed)
-  journey/                # cross-route intake draft (sessionStorage)
+  journey/                # the journey draft, held in the window's memory (never its storage)
   cfe/                    # shim re-export → engines/cfe (legacy imports)
 
 components/
@@ -66,7 +66,12 @@ components/
 
 - **Engines:** read-only catalogs; never in the database
 - **Scenario:** user profile + branch state in SQLite via Prisma
-- **Journey draft:** intake + archetype selection in sessionStorage
+- **Journey draft:** the intake in progress, *Your destination*'s answers and the idea open on the map, held in
+  the window's memory only (`lib/journey/held-journey.ts`, through `components/shared/journey-provider.tsx`;
+  since 2026-10-24, never the window's storage). A reload, a new window or the desktop app's Go menu starts it
+  afresh; each answer reaches the data file where it is kept (`lib/journey/window-storage.ts` says where)
+- **Window storage:** how the cockpit was left (`dotami-cockpit-folds`) and nothing about the person
+  (`lib/privacy/inventory.ts` `WINDOW_STORAGE`)
 
 ## Stack
 

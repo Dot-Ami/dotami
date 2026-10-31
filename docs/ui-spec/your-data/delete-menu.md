@@ -113,7 +113,7 @@ with where they are kept, before confirming.
    Under the boxes: the cited line (from `lib/engines/compliance/v2026/record-keeping.ts`): Delete
    removes DotAmi's own copy only and doesn't touch the person's books, receipts or bank
    statements; the CRA says business records are generally kept for six years from the end of the
-   last tax year they relate to, with exceptions, linked to the CRA's page, then how the page was checked in brackets, "(Read on 2026-10-08. Who read it wasn't recorded.)", grey (the same words and colour as every source since 2026-10-11, amber for a model's read or a tool check, [../shared/citation-links.md](../shared/citation-links.md); it said "(read 2026-10-08)").
+   last tax year they relate to, with exceptions, linked to the CRA's page, then how the page was checked in brackets, "(Read by a person on 2026-10-25)", grey (the same words and colour as every source since 2026-10-11, amber for a model's read or a tool check with no read, [../shared/citation-links.md](../shared/citation-links.md); it said "(read 2026-10-08)", then "(Read on 2026-10-08. Who read it wasn't recorded.)" until the maintainer's read of the page in full on 2026-10-25 was recorded on 2026-10-27, [docs/engines/citations.md](../../engines/citations.md)). Since 2026-10-24 the citation also keeps a tool check of 2026-10-23, the CRA's own sentences on the six years ("Generally, you must keep …" and "In some situations, …"); the read outranks it, so the line's words don't change.
    Then **What Delete doesn't reach** (`NOT_CLEARED_BY_DELETE`): key files set aside on their own in
    the backups folder (`receipts-key-unreadable-….key`; before 2026-10-10 this line was the receipt
    folders set aside there, which the safety-copies box now clears); [8i] the locked data file and the
@@ -132,7 +132,9 @@ with where they are kept, before confirming.
 3. **First ask** (dialog, "Delete these?"): every ticked box with the count of each table it
    touches (and of safety copies, as files); under **Kept, not deleted**, the same warning on the
    expense records that stay; and a line that everything not ticked stays, as does what Delete
-   doesn't reach. With the safety copies ticked, an amber line: they go too, so afterwards only a
+   doesn't reach ("how you left the cockpit, kept in this window's own storage and offered back next
+   time; the log"; until 2026-10-24 it also named the job descriptions typed under "Other…", which the
+   window's storage no longer holds). With the safety copies ticked, an amber line: they go too, so afterwards only a
    backup saved somewhere else could bring anything back; and, when there are set-aside receipt
    folders, the same amber warning as under the box ("Set-aside receipt folders: 2 folders" in the list). Without them, when there are any, a line
    that the safety copies aren't ticked and still hold what is deleted; and, when there are set-aside
@@ -197,8 +199,14 @@ file not named the way DotAmi names receipts is never touched); the safety copie
 set aside there (`receipts-locked-…`, `receipts-before-restore-…`; an emptied folder is removed, one still
 holding the person's own files stays); and the "wipe pending" note beside the data file
 (`<data file>.wipe-pending`, written before the wipe and removed once it has worked; it holds a time,
-safety-copy file names and set-aside folder names only). In the window: after deleting ideas, the intake in progress (`dotami-journey-v3`)
-is reset through the journey provider, so a Save on the map can't bring a deleted idea back.
+safety-copy file names and set-aside folder names only). In the window's memory (the journey: the intake in
+progress, Your destination's answers and the idea open on the map, never in the window's storage since
+2026-10-24), through the journey provider: after deleting ideas the journey is reset, so a Save on the map
+can't bring a deleted idea back; after the statements, the sentence typed on the front door (with its copy in
+`description` and the parse's reading of it) and Your destination's words go from it; after the yearly income,
+the income (`lib/journey/window-storage.ts` `intakeAfterDelete`). Checked in the browser by the last test of
+`e2e/your-data.spec.ts`, which reaches Delete from *Your destination* by the app's own links only, so the memory
+comes through, and finds questions 1 and 4 asked again while 2 and 3 stay answered.
 
 ## Downstream consumers (where the data goes today)
 
@@ -207,10 +215,11 @@ cockpit's *Businesses you're watching* and the settings page read empty or defau
 
 ## Cleanup / open questions
 
-- Clearing what the window keeps in its own storage: a later decision. Since 2026-10-17 the desktop app
-  uses the same local address on every launch, so the page itself can now reach that storage; until a
-  box does, the menu says how to remove it by hand (close DotAmi and delete the "Local Storage" folder
-  in the data folder).
+- Clearing what the window keeps in its own storage: a later decision. Since 2026-10-24 it holds only how
+  the cockpit was left (`dotami-cockpit-folds`), nothing the person typed or answered. Since 2026-10-17 the
+  desktop app uses the same local address on every launch, so the page itself can now reach that storage;
+  until a box does, the menu says how to remove it by hand (close DotAmi and delete the "Local Storage"
+  folder in the data folder).
 - Whether an agent (the Lens, or an outside one) may ever delete: a later decision. Until then the
   route answers only to DotAmi's own page.
 - Known limit: the "wipe pending" note is written just before the rows are deleted. If the computer

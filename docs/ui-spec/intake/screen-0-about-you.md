@@ -4,7 +4,8 @@ Page: Intake (`/intake`) · Component: `components/discovery/intake-page.tsx` (`
 + `components/shared/person-statements.tsx` (`PersonStatements`, `variant="full"`)
 Type: free-text composer + dated record list (wizard step, skippable)
 
-Last updated: 2026-10-12 (no line about an external source of statements when none is set up, #6;
+Last updated: 2026-10-24 (a statement that couldn't be saved stays in its box, said not kept; nothing in the
+window's storage, the maintainer's rule); 2026-10-12 (no line about an external source of statements when none is set up, #6;
 issue #38: shown first only to a person with no saved idea yet; a second idea starts on Screen A, and
 **← Back** from there reaches this screen; [_index.md](./_index.md));
 2026-10-11 (the sentence typed on the front door is listed here too, tagged with its idea; other typed rows say "typed in DotAmi", no longer "typed here"); 2026-09-13 (S2.5.4a — first vertical slice of the UI/UX + backend session)
@@ -31,13 +32,17 @@ statements" deletes it.
   - 200 → the statement is prepended to the list with source `typed in DotAmi`; note "Kept,
     with the date." (sage).
   - 400 → the server's plain-English reason shows under the composer (empty, too long, bad date).
-  - 503 / network failure → **kept in this tab only**: written to `sessionStorage`
-    (`dotami-person-unsaved`), rendered in the list tagged `TYPED · NOT SAVED` (amber), note
-    "Kept in this tab only." The cockpit rail reads the same key, so it still shows up there.
+  - 503 (no database), or any other refusal but a 400 → **not kept**: the words stay in the box and the note reads *"Not kept. Your words are
+    still in the box, and Keep this tries again."* (amber; the status line above says why). No answer
+    at all → *"Not kept: the server didn't answer. Your words are still in the box, and Keep this tries
+    again."* (amber). Words in `lib/person/words.ts` `statementWords`. Nothing goes to the window's
+    storage (since 2026-10-24; until then the statement went to `sessionStorage`,
+    `dotami-person-unsaved`, and was listed tagged `typed · not saved`; a journey page now removes that
+    key unread, `lib/journey/window-storage.ts`).
 - **Record list** — one card per statement: `saidAt` (mono), source tag (`typed for your idea
   “<idea name>”` for a front-door sentence whose idea still exists · `typed in DotAmi` for every
   other typed one, including a front-door sentence whose idea was deleted, which can't be told
-  apart from one typed here · `typed · not saved` · `vault · <file>`; `statementSourceLabel` in
+  apart from one typed here · `vault · <file>`; `statementSourceLabel` in
   `lib/person/types.ts`), the text in serif, and a `+`/`−` toggle when a
   verbatim body exists (a constraint's paragraph, a question's "why this is open").
 - **Status lines (guardrails visible on the surface):**
@@ -66,13 +71,13 @@ what you won't do, what you're after. It keeps your words with the date you said
 does not turn them into a type of person, and nothing you write here is used to rank
 anything." · placeholder "Anything you want DotAmi to know about you — how you work, what you
 won't do, what you're after. Your words, kept as-is." · "Said on" · "Keep this" / "Keeping…"
-· "1 of 3 · About you" · "You can skip this. Nothing here gates the map." · "Continue →".
+· "1 of 6 · About you" (the typed way's one numbering since 2026-10-23, `_index.md`) · "You can skip this. Nothing here gates the map." · "Continue →".
 
 ## State touched (field names only)
 
 **None of the journey draft.** `PersonStatements` holds its own state and never calls
-`setIntake` — the evaluator cannot see anything typed here, by construction. Client-only:
-`sessionStorage["dotami-person-unsaved"]` for statements that could not be saved.
+`setIntake` — the evaluator cannot see anything typed here, by construction. Nothing in the
+window's storage: a statement that couldn't be saved stays in the box only (since 2026-10-24).
 
 ## Downstream consumers (where the data goes today)
 

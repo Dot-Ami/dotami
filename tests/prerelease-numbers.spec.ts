@@ -320,8 +320,9 @@ describe("4. The vehicle caps are the amounts the Regulations prescribe", () => 
     expect(s7307).toHaveLength(1);
     for (const amount of amountsIn(entryText)) expect(inQuotes(quotesOf(s7307), amount), amount).toBe(true);
     expect(s7307[0]!.toolCheck?.checkedOn).toBe("2026-10-23");
-    // Tool-checked, never marked as read by a person (d-call-5).
-    expect(s7307[0]).not.toHaveProperty("readBy");
+    // Tool-checked, and marked as read by a person only from a person's read (d-call-5: a person reads money
+    // amounts): the maintainer read the page in full on 2026-10-25, recorded 2026-10-27 (tests/maintainer-reads.spec.ts).
+    expect(s7307[0]).toMatchObject({ lastVerified: "2026-10-25", readBy: "person" });
   });
 
   it("says each cap is an amount for each 30 days, as the Act's A × B / 30 makes it", () => {

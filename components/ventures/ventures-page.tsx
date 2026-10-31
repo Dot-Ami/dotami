@@ -11,6 +11,7 @@ import { useIdeaReminders } from "@/components/ventures/use-idea-reminders";
 import type { VentureLinkKind, VentureSummary } from "@/lib/db/ventures";
 import { VENTURE_LINK_KINDS, VENTURE_LINK_LABELS } from "@/lib/db/ventures";
 import { INTAKE_GOAL_LABELS, type IntakeGoalId } from "@/lib/journey/types";
+import { venturesWords } from "@/lib/ventures/words";
 import { VENTURE_STAGES, VENTURE_STAGE_LABELS, type VentureStage } from "@/lib/scenarios/types";
 
 /**
@@ -43,7 +44,7 @@ export function VenturesPage() {
   }, [load]);
 
   // Another future starts at the front door, where both ways in are (2026-10-12). The door used resets
-  // what it needs: Map it resets the tab's journey, Start here keeps the destination answers already given.
+  // what it needs: Map it resets the journey, Start here keeps the destination answers already given.
   // A second idea no longer passes through About you (issue #38: app/(journey)/intake/page.tsx).
   function anotherFuture() {
     router.push("/");
@@ -52,7 +53,8 @@ export function VenturesPage() {
   return (
     <div className="flex min-h-[calc(100vh-2.5rem)] flex-col bg-ink">
       {/* data-region marks the blocks the clutter limit counts (docs/ui-spec/README.md, "The layout rule"). */}
-      <nav data-region="nav" className="flex items-center gap-6 border-b border-rule-soft px-8 py-[18px]">
+      {/* Wraps onto a second line on a phone: on one line its five items ran past a 375 px window. */}
+      <nav data-region="nav" className="flex flex-wrap items-center gap-x-6 gap-y-2 border-b border-rule-soft px-8 py-[18px]">
         <GhostLink href="/" tone="stone">
           ← Back
         </GhostLink>
@@ -196,11 +198,7 @@ function VentureCard({
           <h2 className="truncate font-serif text-xl font-bold tracking-tight text-paper" title={venture.name}>
             {venture.name}
           </h2>
-          <p className="mt-0.5 text-body capitalize text-stone">
-            {venture.type} · {venture.province} · structure{" "}
-            {venture.structureSource === "assumed" ? "not set" : venture.structure}
-            {venture.targetRevenueY1 > 0 ? ` · Y1 $${venture.targetRevenueY1.toLocaleString("en-CA")}` : ""}
-          </p>
+          <VentureFacts venture={venture} />
           {venture.activityTags.length > 0 ? (
             <div className="mt-2 flex flex-wrap gap-1.5">
               {venture.activityTags.map((t) => (
@@ -212,7 +210,8 @@ function VentureCard({
           ) : null}
           <FirstWords venture={venture} />
         </div>
-        <div className="flex shrink-0 items-center gap-3">
+        {/* Stage and Open in cockpit wrap under each other where the card is narrower than both (a phone). */}
+        <div className="flex max-w-full flex-wrap items-center gap-3 sm:shrink-0">
           <label className="flex items-center gap-2 text-body text-stone">
             <span className="font-mono text-label uppercase tracking-[0.14em]">Stage</span>
             <select
@@ -349,6 +348,23 @@ function VentureCard({
         ) : null}
       </div>
     </li>
+  );
+}
+
+/** The card's line under the idea's name: kind · province · structure · first-year estimate (exported for tests). */
+export function VentureFacts({
+  venture,
+}: {
+  venture: Pick<VentureSummary, "type" | "typeSaid" | "province" | "structure" | "structureSource" | "targetRevenueY1">;
+}) {
+  return (
+    <p className="mt-0.5 text-body capitalize text-stone">
+      {/* A type nobody was asked for is the intake's starting value, not theirs (2026-10-23). DotAmi's words in
+          its place are drawn as written: the line's capitalize had set them "Type Not Said" (2026-10-24). */}
+      {venture.typeSaid ? venture.type : <span className="normal-case">{venturesWords.card.typeNotSaid}</span>} · {venture.province} · structure{" "}
+      {venture.structureSource === "assumed" ? "not set" : venture.structure}
+      {venture.targetRevenueY1 > 0 ? ` · Y1 $${venture.targetRevenueY1.toLocaleString("en-CA")}` : ""}
+    </p>
   );
 }
 

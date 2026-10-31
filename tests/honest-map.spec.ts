@@ -19,6 +19,7 @@ import { evaluateProfile, type ConfirmedFigure, type EvaluationProfile } from "@
 import { cfeCatalogV2026, type CFENodeId } from "@/lib/engines/cfe/v2026";
 import { complianceCatalogV2026 } from "@/lib/engines/compliance/v2026";
 import { howChecked, toolCheckQuotes } from "@/lib/engines/shared/citation-check";
+import type { EngineCitation } from "@/lib/engines/shared/types";
 import { structureLadderV2026 } from "@/lib/engines/structure/v2026";
 import { parseScenarioInput } from "@/lib/db/parse-scenario-input";
 import { evaluateScenario } from "@/lib/scenarios/evaluate-scenario";
@@ -126,11 +127,12 @@ describe("the GST/HST card quotes the CRA's two tests, word for word", () => {
     expect(passages[1].sentences).toContain(
       "Your effective date of registration is no later than the day of the first supply you make after you are no longer a small supplier.",
     );
-    // How these words were checked on the page: a tool check (option B), never a read date that would
-    // claim a person read them.
-    const check = howChecked(rule.citations.find((c) => c.url === CRA_PAGE)!);
-    expect(check.kind).toBe("tool");
-    expect(check.on).toBe("2026-10-12");
+    // How these words were checked on the page: a tool check (option B), never an older read date that would
+    // claim someone read them. Since 2026-10-27 the citation also carries the maintainer's read of the page in
+    // full on 2026-10-25 (tests/maintainer-reads.spec.ts), which wins on screen; the tool check stays.
+    const citation = (rule.citations as readonly EngineCitation[]).find((c) => c.url === CRA_PAGE)!;
+    expect(citation.toolCheck?.checkedOn).toBe("2026-10-12");
+    expect(howChecked(citation)).toEqual({ kind: "person", on: "2026-10-25" });
   });
 
   it("every quoted sentence, on every card that quotes the page, is covered by that page's tool check", () => {
@@ -143,9 +145,13 @@ describe("the GST/HST card quotes the CRA's two tests, word for word", () => {
     ];
     expect(quoting.length).toBe(3);
     for (const { where, words, citations } of quoting) {
-      const citation = citations.find((c) => c.url === words.url);
+      const citation = (citations as readonly EngineCitation[]).find((c) => c.url === words.url);
       expect(citation, where).toBeDefined();
-      const found = toolCheckQuotes(citation!);
+      // The tool check's own quotes, which the catalog keeps under a read too (a read wins on screen, so
+      // toolCheckQuotes, what a screen lists, is empty once the page is read).
+      expect(citation!.toolCheck, where).toBeDefined();
+      expect(toolCheckQuotes(citation!), where).toEqual([]);
+      const found = citation!.toolCheck!.quotes;
       for (const sentence of words.passages.flatMap((p) => p.sentences)) {
         // A sentence the tool found whole, or one of the two tests: the page puts a footnote number
         // straight after "threshold" ("threshold1"), so the tool found the words on each side of it.

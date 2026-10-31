@@ -7,7 +7,9 @@ Page: `/example/<id>` (one today: `/example/mara`) · Route: `app/example/[id]/p
 numbers), `lib/examples/stats.ts` (every average) · Words: `lib/cockpit/words.ts` `example`
 Type: page (the cockpit, read-only)
 
-Last updated: 2026-10-15 (the maintainer's pick A, "I agree, it should be A": Mara's what-if starts empty, and
+Last updated: 2026-10-29 (Lee Valley's clamp price, which the tool re-check of 2026-10-27 could not re-open
+behind a bot check, carries a note that the maintainer opened the page in his own browser on 2026-10-29 and
+saw $85); 2026-10-15 (the maintainer's pick A, "I agree, it should be A": Mara's what-if starts empty, and
 ISED's $610,300 is shown only as context in *Where these numbers come from*, labelled as an industry average;
 road 1 has 17 steps since main's *Keep your records from day one*). Before that 2026-10-14 (real numbers: the
 maintainer, 2026-10-14, "Lets go for A, but try to go as in depth
@@ -98,14 +100,16 @@ closed by the banner's button. Read-only; it sends nothing and keeps nothing. In
    the seller, the day seen, the page's link, the product as the page names it (a sale, clearance or
    back-order said there), the words seen on the page around the price, and a note where the second check
    found one (a premium model that pulls the average up, a clearance price on an item out of stock, a
-   class match in doubt).
+   class match in doubt, and, on Lee Valley's clamp, that a person looked: the maintainer opened the page
+   in his own browser on 2026-10-29 and saw $85, where a tool's check of 2026-10-27 met a bot check that
+   was not bypassed; its words and day seen stay those of 2026-10-14, and no number moves).
 3. **Software listed for this example, with listed prices in Canadian dollars**: design and drawing (SketchUp,
    Autodesk Fusion), cut lists and sheet layout (free tiers only: no paid plan is listed in Canadian
    dollars), bookkeeping and invoicing (QuickBooks Online Canada, Xero, FreshBooks, Wave). Each category
    says *Average of N plans billed month to month: $X a month (median…; from… to…)* over its plans billed
    month to month only (a yearly price is never turned into a monthly one; a plan billed once a year that
    its page prints by the month, SketchUp's annual plans, reads *$15.08 a month, billed yearly* and is
-   listed apart, the same as Fusion's yearly term, since 2026-10-14 after review; a free tier never pulls an
+   listed apart, the same as Fusion's annual plan, since 2026-10-14 after review; a free tier never pulls an
    average down), then every plan with its price as listed, how it is billed, its words and link.
 4. **What cabinetmakers earn in Alberta**, **Small furniture and cabinet businesses in Canada**, **Industrial
    space rents in Alberta, for context**: every statistic with its value as the source prints it, its unit
@@ -166,9 +170,9 @@ instead (`lib/cockpit/words.ts` `example.theirs`, given to the goal bar, `gaugeV
 | *$14,993.62 your numbers (1 line)*; *your pick of job: …*; *your own skills: …* | *$14,993.62 Mara's numbers (1 line)*; *Mara's pick of job: …*; *Mara's own skills: …* |
 | *What you've told DotAmi*, *16 things you've told DotAmi* | *What Mara told DotAmi*, *16 things Mara told DotAmi* |
 
-The receipt lines (*"Because you marked 9 skills…"*) and the step panel's buttons keep the words every
+The receipt lines (*"Because you told us you have “Alberta Student Number”…"*) and the step panel's buttons keep the words every
 cockpit uses; the banner and *What Mara did* say once that "you" there means Mara. *What Mara did*'s
-headings say her name, not a pronoun (*Mara's skill marks*, *Mara's start-up cost, from listed prices*, *The
+headings say her name, not a pronoun (*Mara's marks*, *Mara's skill marks* until 2026-10-26, when the review of #209's merge found it named her legal requirements skills; *Mara's start-up cost, from listed prices*, *The
 step Mara marked done*), so a second example person never inherits hers. The what-if bar has no words of
 its own on the example (since 2026-10-15): it starts empty, and a what-if the visitor tries reads as on any
 cockpit (*Your what-if, not a forecast*, *First-year sales of $…, for this look only*). From 2026-10-14 to
@@ -180,9 +184,11 @@ what-if of hers, that note and the bar's `note` prop are gone.
 - **No write of any kind.** The example sends no request that writes (no `POST` to any `/api/…` route),
   and reads none of the person's data either: it doesn't ask `/api/ventures`, `/api/figures` or
   `/api/futures/<id>`, so nothing of the real person's appears in it.
-- **No browser storage.** The page is outside the journey's pages (`app/(journey)/`), so the journey
-  draft in `sessionStorage` is neither read nor written; the fold answers are not read from or written to
-  `localStorage`; *In your words* reads no list of unsaved statements. The browser test
+- **No browser storage.** The page is outside the journey's pages (`app/(journey)/`) and draws under its own
+  read-only journey, so the person's journey, held in the window's memory (`lib/journey/held-journey.ts`,
+  never the window's storage since 2026-10-24), is neither read nor changed, and is there again on the way
+  back; the removal of the keys an older DotAmi left in the window's storage runs on the journey's pages
+  only; the fold answers are not read from or written to `localStorage`. The browser test
   (`e2e/example-future.spec.ts`) compares both storages, the data file's row counts and the requests sent
   before and after clicking **Keep** and **Export**, the two save controls that answer in the banner; it
   checks that every other control in the table above is disabled (the step's status and skill marks, the
@@ -198,9 +204,13 @@ The told list shows, for each of Mara's answers, what it unlocked, through the s
 `roadReceipt` every cockpit uses. Measured on the catalog of 2026-10-14 with her real numbers
 (`tests/example-future.spec.ts` keeps them true):
 
-- Her 9 marks: *"Because you marked 9 skills, 4 steps now have every skill they list marked have."* (the
-  appendix wrote *3 steps now say needs 0 more*; road 1 lists three skills of its own, and her two *have*
-  marks cover every skill on four steps).
+- Her 9 marks: *"Because you told us you have “Alberta Student Number”, you told us you have “An
+  apprenticeship education agreement with a sponsor” and you marked 7 skills, 4 steps now have every legal
+  requirement they list marked have."* (the appendix wrote *3 steps now say needs 0 more*; road 1 lists three
+  legal requirements of its own and no skills, and her two *have* marks cover every legal requirement on four
+  steps; her seven other marks are on the job's list, which are skills). Until 2026-10-26 the line said
+  *"Because you marked 9 skills, 4 steps now have every skill they list marked have."*, calling the road's legal
+  requirements skills (the review of #209's merge).
 - The Steps gauge: *1 of 17 marked done* (the appendix wrote *0 of 22* before she marked one; road 1 has
   17 steps since 2026-10-14, when *Keep your records from day one* was added; 16 before).
 - The money gauge, plain arithmetic: *$1,220 official fees (7 lines) · $14,993.62 Mara's numbers (1 line)*,
@@ -238,3 +248,8 @@ None. **Start my own future →** opens `/start`.
   subscription the one-amount line can't hold without picking a plan for her.
 - The prices were seen on one day (2026-10-14); sale prices end and pages move. Re-seeing them is a
   rerun of the same research, then this page's numbers follow (every average is worked out from the data).
+  The four sellers' pages a review couldn't re-open (Busy Bee Tools, Autodesk, QuickBooks and Lee Valley)
+  were opened again on 2026-10-27: Busy Bee's, Autodesk's and QuickBooks' prices were the same, and Lee
+  Valley's page showed a bot check that was not bypassed. The maintainer opened Lee Valley's page in his own
+  browser on 2026-10-29 and saw $85, the same price, which the clamp's note says. The seen day on screen
+  stays 2026-10-14.

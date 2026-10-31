@@ -4,7 +4,8 @@ Page: Landing (`/`) · Component: `components/discovery/landing-page.tsx` (words
 `lib/front-door/words.ts`)
 Type: link + embedded entry box + display
 
-Last updated: 2026-10-13 (door 3 opens the invented example future, Mara: the maintainer's pick of
+Last updated: 2026-10-24 (the journey is held in the window's memory, so the example and back keeps it until a
+reload); 2026-10-13 (door 3 opens the invented example future, Mara: the maintainer's pick of
 2026-10-13, [../example/_index.md](../example/_index.md)). Built 2026-10-12 (the maintainer's decision 6
 of 2026-10-11, "the front door leads with the dream"; design: docs/architecture/future-cockpit.md § 1, The
 way in as built)
@@ -27,13 +28,16 @@ start-up cost, with its sources."*
 
 ## What it does (behavior on interact)
 
-- **Start here →** opens `/start` (*Your destination*). It doesn't reset the tab's journey, so answers
-  already given in this tab are still there.
-- Door 2 behaves as the box always has: **Map it →** resets the tab's journey, reads the sentence and
-  opens the intake.
+- **Start here →** opens `/start` (*Your destination*). It doesn't reset the journey, so answers already
+  given in this window are still there (until a reload: the journey is held in the window's memory only,
+  never its storage, since 2026-10-24).
+- Door 2 behaves as the box always has: **Map it →** resets the journey, reads the sentence and opens the
+  intake.
 - **Show me Mara's example →** opens `/example/mara`, the cockpit drawn read-only for an invented person
-  ([../example/_index.md](../example/_index.md)). It doesn't touch the tab's journey: the example page
-  reads and writes no browser storage, so answers already given in this tab are still there after it.
+  ([../example/_index.md](../example/_index.md)). It doesn't touch the journey: the example page draws
+  under its own read-only journey and reads and writes no browser storage, while the person's journey
+  stays in the window's memory (`lib/journey/held-journey.ts`), so answers already given are still there
+  after it (until a reload).
 
 ## Why it exists (user purpose)
 

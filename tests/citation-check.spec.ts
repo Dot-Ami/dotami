@@ -12,7 +12,7 @@ import path from "node:path";
 import { describe, expect, it } from "vitest";
 
 import { allCatalogCitations } from "@/lib/engines/all-citations";
-import { citationCheckProblems, howChecked, howCheckedWords, isCheckFirst } from "@/lib/engines/shared/citation-check";
+import { citationCheckProblems, howChecked, howCheckedWords, isCheckFirst, toolCheckQuotes } from "@/lib/engines/shared/citation-check";
 import type { EngineCitation } from "@/lib/engines/shared/types";
 import { renderPlaybookMarkdown } from "@/lib/playbook/render-markdown";
 import type { PlaybookSkeleton } from "@/lib/playbook/types";
@@ -72,22 +72,36 @@ describe("what the catalogs say about who read them", () => {
   const all = allCatalogCitations();
 
   // Until 2026-10-12 this page was "read by an AI model on 2026-10-06". The honest map (#145) quotes
-  // its two tests on the card, and those words are now tool-checked (option B), so the card says a tool
-  // found them and that no person has read the page, never a person's read.
-  it("the GST/HST small-supplier page, whose quoted tests a tool found on the page, says so", () => {
+  // its two tests on the card, and those words are tool-checked (option B), so until 2026-10-27 the card
+  // said a tool found them and that no person had read the page. The maintainer read the page in full on
+  // 2026-10-25 (docs/engines/citations.md, § The maintainer's reads of 2026-10-25): his read wins on
+  // screen, and the tool check of 2026-10-12 stays, with the words the card quotes.
+  it("the GST/HST small-supplier page, whose quoted tests a tool found on the page, says the maintainer read it", () => {
     const gst = all.filter(({ where }) => where === "compliance compliance-gst-small-supplier");
     expect(gst.length).toBe(1);
     expect(gst[0].citation.url).toMatch(/\/when-register-charge\.html$/);
     const check = howChecked(gst[0].citation);
-    expect(check.kind).toBe("tool");
-    expect(check.on).toBe("2026-10-12");
-    expect(howCheckedWords(gst[0].citation)).toMatch(/Not read by a person yet\.$/);
+    expect(check).toEqual({ kind: "person", on: "2026-10-25" });
+    expect(gst[0].citation.readBy).toBe("person");
+    expect(gst[0].citation.toolCheck?.checkedOn).toBe("2026-10-12");
+    expect(howCheckedWords(gst[0].citation)).toBe("Read by a person on 2026-10-25");
+    expect(isCheckFirst(gst[0].citation)).toBe(false);
   });
 
-  it("the record-keeping page under Delete doesn't claim a person read it", () => {
+  // Until 2026-10-27 this said "Read on 2026-10-08. Who read it wasn't recorded." and claimed no person: the read
+  // of 2026-10-08 never recorded who made it. The maintainer read the page in full on 2026-10-25, and the line
+  // says so now, from the record, not from that older read.
+  it("the record-keeping page under Delete says a person read it only from the maintainer's read of 2026-10-25", () => {
     const rk = all.filter(({ where }) => where === "compliance cra-business-records-retention");
     expect(rk.length).toBe(1);
-    expect(howChecked(rk[0].citation).kind).not.toBe("person");
+    expect(howChecked(rk[0].citation)).toEqual({ kind: "person", on: "2026-10-25" });
+    // Since 2026-10-24 it also keeps a tool check of 2026-10-23 (the CRA's "Generally" sentence on the six years and
+    // the next one). The read outranks it (docs/engines/citations.md, rule 3), so the Delete line says the read
+    // and lists no quotes.
+    expect(rk[0].citation.toolCheck?.checkedOn).toBe("2026-10-23");
+    expect(howCheckedWords(rk[0].citation)).toBe("Read by a person on 2026-10-25");
+    expect(toolCheckQuotes(rk[0].citation)).toEqual([]);
+    expect(isCheckFirst(rk[0].citation)).toBe(false);
   });
 
   it("the T2125 lines the maintainer checked on 2026-10-10 say a person read them", () => {

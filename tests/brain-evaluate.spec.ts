@@ -34,10 +34,14 @@ describe("strategy rules engine — GPU/workstation golden scenario", () => {
     expect(sred!.state).toBe("yellow");
     expect(sred!.typeChip).toBe("Tax credit");
     expect(sred!.payoff).toContain("15%");
-    expect(sred!.payoff).toContain("non-refundable");
+    // Never "non-refundable" since the maintainer's reading list of 2026-10-23: an individual can get part of the
+    // credit refunded, and the card quotes the CRA instead (tests/reading-list-corrections.spec.ts).
+    expect(sred!.payoff).not.toContain("non-refundable");
     expect(sred!.fork).toBeDefined();
     expect(sred!.fork!.note).toContain("35%");
-    expect(sred!.fork!.note).toContain("refundable");
+    // The CCPC's 35% in the CRA's words. Until 2026-10-24 this pinned "refundable", DotAmi's own word for that rate,
+    // which no held quote says (tests/reading-list-corrections.spec.ts § 3).
+    expect(sred!.fork!.note).toContain("“Some CCPCs may earn an ITC at an enhanced rate of 35%");
   });
 
   it("activates Class 50 with the Immediate Expensing incentive as yellow with expiry", () => {

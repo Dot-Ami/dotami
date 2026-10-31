@@ -1,6 +1,23 @@
+import { MAINTAINER_READ_ON } from "@/lib/engines/shared/maintainer-reads";
+
+import {
+  SRED_PAGES,
+  SRED_POLICY_FOUND_ON,
+  SRED_POLICY_TITLE,
+  SRED_QUOTES_FOUND_ON,
+  SRED_WORDS,
+} from "./sred-official-words";
 import type { GrantProgram } from "./types";
 
 const LAST_VERIFIED = "2026-06-08";
+
+/**
+ * The CRA's lines a sole proprietor's SR&ED card quotes, with or without the GST/HST: its rates page's two (2026-10-24),
+ * then, since the maintainer's answer of 2026-10-29, the SR&ED Investment Tax Credit Policy's line on an individual's
+ * refundable ITC. Two CRA pages disagree on whether that credit is refunded, and his answer is the newer page: "it
+ * should always be the newer page because it's more up-to-date". DotAmi's own words here are only whose words they are.
+ */
+const SOLE_PROP_SRED_NOTE = `The CRA: “${SRED_WORDS.basicRate}” “${SRED_WORDS.someRefundable}” The CRA's ${SRED_POLICY_TITLE}: “${SRED_WORDS.individualRefundable}”`;
 
 export const grantProgramsV2026 = [
   {
@@ -11,7 +28,10 @@ export const grantProgramsV2026 = [
     description:
       "Scientific Research and Experimental Development (SR&ED) program provides tax credits and deductions for eligible R&D in Canada.",
     eligibility:
-      "Eligible SR&ED work performed in Canada; CCPCs may access enhanced ITC rates subject to taxable income and capital limits.",
+      // Until 2026-10-24 "subject to taxable income and capital limits", which no held quote names; now the condition
+      // in the CRA's sentence on the enhanced rate (the maintainer's reading list: 35% for eligible CCPCs, within the
+      // limit).
+      "Eligible SR&ED work performed in Canada; some CCPCs may earn the enhanced rate, up to their expenditure limit for the year.",
     lensAnnotations: {
       tax: "If the venture performs systematic experimentation to resolve technological uncertainty, SR&ED may unlock ITCs and deductions — with contemporaneous documentation.",
       legal:
@@ -23,37 +43,122 @@ export const grantProgramsV2026 = [
         authority: "CRA",
         jurisdiction: "CA",
         // Moved: the old address (…/scientific-research-experimental-development-tax-incentive.html, read
-        // 2026-06-08) answered 404 on 2026-10-13; a tool found these words on the new page that day.
+        // 2026-06-08) answered 404 on 2026-10-13; a tool found these words on the new page that day. The maintainer
+        // read the new page in full on 2026-10-25.
         url: "https://www.canada.ca/en/revenue-agency/services/scientific-research-experimental-development-tax-incentive-program.html",
+        lastVerified: MAINTAINER_READ_ON,
+        readBy: "person",
         toolCheck: {
           checkedOn: "2026-10-13",
           quotes: ["tax incentives are intended to encourage businesses to conduct research and development in Canada."],
         },
         note: "CRA SR&ED program overview.",
       },
+      // The four below were added 2026-10-24 for the rates and the limit the card quotes (the maintainer's reading
+      // list of 2026-10-23, items grant-sred/* and sred-expenditure-limit-6-million). Its tool found each quote on its
+      // page that day (./sred-official-words.ts), and the maintainer read each page in full on 2026-10-25: the read wins
+      // on screen ("Read by a person"), and the tool checks stay.
+      {
+        // The page's own title (./sred-official-words.ts, SRED_PAGES.whatAre).
+        title: "What are SR&ED tax incentives",
+        authority: "CRA",
+        jurisdiction: "CA",
+        url: SRED_PAGES.whatAre,
+        lastVerified: MAINTAINER_READ_ON,
+        readBy: "person",
+        toolCheck: {
+          checkedOn: SRED_QUOTES_FOUND_ON,
+          quotes: [SRED_WORDS.basicRate, SRED_WORDS.enhancedRate, SRED_WORDS.someRefundable],
+        },
+        note: "The SR&ED investment tax credit's basic and enhanced rates, and that some businesses may also earn a refundable credit.",
+      },
+      {
+        title: "How certain relationships affect the small business deduction and SR&ED investment tax credits",
+        authority: "CRA",
+        jurisdiction: "CA",
+        url: SRED_PAGES.relationships,
+        lastVerified: MAINTAINER_READ_ON,
+        readBy: "person",
+        toolCheck: { checkedOn: SRED_QUOTES_FOUND_ON, quotes: [SRED_WORDS.ccpcEnhanced] },
+        note: "Which CCPCs may earn the enhanced 35% rate, up to their expenditure limit for the year, and how associated corporations share that limit.",
+      },
+      {
+        title: "What's new for corporations",
+        authority: "CRA",
+        jurisdiction: "CA",
+        url: SRED_PAGES.whatsNew,
+        lastVerified: MAINTAINER_READ_ON,
+        readBy: "person",
+        toolCheck: { checkedOn: SRED_QUOTES_FOUND_ON, quotes: [SRED_WORDS.limitSixMillion] },
+        note: "The CRA's list of corporation income tax changes; its line on the SR&ED expenditure limit sits under 2025 – Federal.",
+      },
+      {
+        title: "Income Tax Act s.127(10.2) — expenditure limit",
+        authority: "federal",
+        jurisdiction: "CA",
+        url: SRED_PAGES.act127,
+        lastVerified: MAINTAINER_READ_ON,
+        readBy: "person",
+        toolCheck: { checkedOn: SRED_QUOTES_FOUND_ON, quotes: [SRED_WORDS.actFormula] },
+        note: "The formula for a CCPC's expenditure limit for a taxation year, from $6 million (the consolidated Act).",
+      },
+      // Added on the maintainer's answer of 2026-10-29 for the line a sole proprietor's card quotes.
+      // `node scripts/check-quotes.mjs` found the page's main heading and that line on the live page that day; the
+      // heading is the title, not words the card relies on, so the tool check holds the line only. Nobody has read the
+      // page in full, so no lastVerified or readBy: its source says "Checked by a tool" in amber.
+      {
+        title: SRED_POLICY_TITLE,
+        authority: "CRA",
+        jurisdiction: "CA",
+        url: SRED_PAGES.itcPolicy,
+        toolCheck: { checkedOn: SRED_POLICY_FOUND_ON, quotes: [SRED_WORDS.individualRefundable] },
+        note: "The CRA's SR&ED investment tax credit policy: its rates, and which claimants can earn a refundable ITC.",
+      },
     ],
     provinces: ["AB", "BC", "ON", "CA"],
     structures: ["sole-prop", "sole-prop-gst", "ccpc"],
     activityTags: ["Software / SaaS", "AI / ML / R&D", "Manufacturing"],
+    // Shown on no screen. The range is the CRA's basic and enhanced rates (its page on the credit's rates, above).
     estimatedValue: "15–35% ITC on eligible expenditures",
     ratesByStructure: [
       {
         structure: "sole-prop",
         rate: 0.15,
-        refundable: false,
-        note: "Unincorporated claimants earn the basic 15% non-refundable ITC.",
+        // No `refundable`: until 2026-10-24 this said "non-refundable" ("Unincorporated claimants earn the basic 15%
+        // non-refundable ITC."). The maintainer's reading list notes an individual can get part of the credit
+        // refunded; no held quote said that or how much, so the card said neither and quoted the CRA's two lines.
+        // Since 2026-10-29 the note also quotes the policy page's 40% line (his answer: the newer page). `refundable`
+        // stays unset: lib/brain/evaluate.ts would print a bare "(refundable)" after the 15%, more than the CRA's
+        // "Generally … 40% of the unclaimed balance" says.
+        note: SOLE_PROP_SRED_NOTE,
       },
       {
         structure: "sole-prop-gst",
         rate: 0.15,
-        refundable: false,
-        note: "GST registration does not change the SR&ED rate — incorporation does.",
+        // Until 2026-10-24: "GST registration does not change the SR&ED rate — incorporation does." Incorporating
+        // changes it only for some CCPCs (the CRA's sentence on the enhanced rate), so the card quotes the CRA instead.
+        note: SOLE_PROP_SRED_NOTE,
       },
       {
         structure: "ccpc",
         rate: 0.35,
-        refundable: true,
-        note: "CCPCs may earn the enhanced 35% refundable ITC up to the expenditure limit — confirm the current limit with an advisor.",
+        // No `refundable` since 2026-10-24: the card said "35% (refundable)" and its fork "35% refundable treatment",
+        // which rested only on the maintainer's read (his answer of 2026-10-24: his reads weren't recorded then). None
+        // of the card's quotes says the enhanced rate is refundable, so the card leaves it unsaid until a held quote
+        // does (docs/engines/citations.md, § Blocked, item 4). His reads of 2026-10-25 record only that he read these
+        // pages in full, not what he found on refunds.
+        // Until 2026-10-24 the note said "confirm the current limit with an advisor" and gave no limit. The limit is
+        // $6 million in the consolidated Act's s.127(10.2) (the reading list found the formula), for tax years
+        // beginning on or after 2024-12-16. No held quote carries that date, so it is on no screen and in no field, only
+        // here and in docs/engines/citations.md (the rule: no number or date without a held quote); the card gives the amount only
+        // inside the CRA's quote.
+        // Unchanged by the maintainer's answer of 2026-10-29, which was about the sole proprietor's card only. The SR&ED
+        // Investment Tax Credit Policy cited above has lines on a CCPC's refundable ITC, but they run to several kinds of
+        // corporation and expenditure, so a part would read as the whole, and lib/brain/evaluate.ts copies this note into
+        // the sole proprietor's fork, beside the individual's 40%. So none of them is quoted here: whether one is (that
+        // list whole, the relationships page's older line, or nothing) is still his call (docs/engines/citations.md,
+        // § Blocked, item 4, its CCPC part).
+        note: `The CRA: “${SRED_WORDS.ccpcEnhanced}” The CRA's What's new for corporations: “${SRED_WORDS.limitSixMillion}”`,
       },
     ],
   },
@@ -209,15 +314,20 @@ export const grantProgramsV2026 = [
         authority: "federal",
         jurisdiction: "CA",
         url: "https://ised-isde.canada.ca/site/canada-small-business-financing-program/en",
-        lastVerified: "2026-07-02",
+        // Read on 2026-07-02 (who read it wasn't recorded); the maintainer read it in full on 2026-10-25.
+        lastVerified: MAINTAINER_READ_ON,
+        readBy: "person",
         note: "ISED program hub — equipment financing with government loan guarantee.",
       },
       {
         title: "Helping small businesses get loans (Canada Small Business Financing Program)",
         authority: "federal",
         jurisdiction: "CA",
-        // Added 2026-10-23: a tool found these words on ISED's loans page that day; no person has read it yet (option B).
+        // Added 2026-10-23: a tool found these words on ISED's loans page that day (option B), and the maintainer read
+        // the page in full on 2026-10-25.
         url: "https://ised-isde.canada.ca/site/canada-small-business-financing-program/en/canada-small-business-financing-program/find-loan-your-small-business/helping-small-businesses-get-loans",
+        lastVerified: MAINTAINER_READ_ON,
+        readBy: "person",
         toolCheck: {
           checkedOn: "2026-10-23",
           quotes: [
@@ -235,6 +345,114 @@ export const grantProgramsV2026 = [
     structures: ["sole-prop", "sole-prop-gst", "ccpc"],
     activityTags: ["Software / SaaS", "AI / ML / R&D", "Trades", "Manufacturing", "Hospitality"],
     estimatedValue: "Up to $500,000 of a term loan for leasehold improvements and equipment (loan guarantee, not a grant)",
+  },
+  {
+    // The maintainer's call a-call-1 on his reading list of 2026-10-23: "ADD it". The program whose page the
+    // Canada-Alberta Job Grant's old address now opens (https://www.alberta.ca/canada-alberta-job-grant redirects
+    // there). Its own id: grant-cajg is never reused. Every amount and rule below is the page's own words, each held as
+    // a quote of the citation; DotAmi's own words only name the page and give the compass's "If"
+    // (tests/productivity-grant.spec.ts).
+    id: "grant-capg",
+    label: "Canada-Alberta Productivity Grant",
+    kind: "grant",
+    // Alberta's page: “The program is delivered by Alberta and funded by the Government of Canada through the
+    // Canada–Alberta Workforce Development Agreement.” (held by the source's tool check since 2026-10-29). Until then no
+    // held quote said who else funds it, and this said "Alberta". No screen shows this field, and no line reconciles
+    // the sentence with the funding table's "Government of Alberta" row.
+    authority: "Alberta / federal",
+    // "Employer:" and "Government of Alberta:" are the page's funding table's own row labels, each held with its line as
+    // one row ("Employer | Must contribute 25% …"): since 2026-10-29 scripts/check-quotes.mjs reads a table row as one
+    // piece (the maintainer's answer of 2026-10-29). The $100,000 line sits in the second row's cell too, as its second
+    // item, but only a row's nearest item is held with its label, so it stands as its own quote; it names its subject.
+    description:
+      "In the words of Alberta's page on this program: Employer: “Must contribute 25% of the total eligible training costs for existing employees or individuals (includes unemployed individuals) they intend to hire”; Government of Alberta: “Contributes the other 75% of the cost to a maximum of $5,000 per employed trainee per fiscal year”; “An employer is eligible for up to a maximum amount of $100,000 per fiscal year”.",
+    // No screen draws a program's eligibility. The page's lists, each after its own lead-in, as the tool check of
+    // 2026-10-29 holds them (found on 2026-10-27 first). Three items are times, which DotAmi never writes, so each is in
+    // the tool check only and a "…" marks its place: “be operational in Alberta for at least one year” and “have an
+    // active legal entity status throughout the grant term” (the employer list's first two), and “be completed within
+    // 52 weeks” (the training list's second). Until 2026-10-29 the one-year rule was here. The costs list's first item,
+    // "examination fees", is two words, under the checker's three, so a "…" marks it too. A "…" also stands before
+    // “Registered employers must also:”, which follows the page's list of eligible employer types ("Employers must be
+    // one of the following eligible types:" …, in plain quote marks here: not held): that list isn't held, nor are its lists of ineligible employers and
+    // ineligible training, since they come close to whether a sole proprietor counts, the maintainer's call. The
+    // travel-costs sentence between the costs list and its NOTE is quoted in its place (the review of #223).
+    eligibility:
+      "Alberta's page on this program: … “Registered employers must also:” … “be in good standing”; “carry Workers Compensation Benefits coverage for trainees”; “comply with provincial agreements”. “Training must be directly related to the trainees’ current or future job and fall within at least one of the following skills categories:” “Business Process and Operations Management: Improving processes, systems, operations, and resource management”; “Technical: Specialized skills that enhance efficiency, quality, and problem solving”; “Digital and Technological: Skills to use, manage, and integrate digital tools and technologies”. “Training must also:” “be relevant to the trainee’s job”; … “include interaction with a qualified instructor”; “be instructional and structured”; “take place in Alberta, except under exceptional circumstances”. “The Canada–Alberta Productivity Grant is available for direct training costs only, including:” … “tuition or course fees charged by the training provider”; “textbooks or software”. “Small and medium-sized organizations may be eligible for travel costs related to training”. “Employee wages and general business assets are not eligible”.",
+    lensAnnotations: {
+      // Shown on screen as the card's payoff (lib/brain/evaluate.ts evaluateGrant). Outside the quotes: the compass's
+      // "If", the page's name and the table's own row labels only, never what the program may do. Until 2026-10-29 the
+      // labels weren't held, so neither line named who contributes which.
+      tax: "If training employees is on the venture's path, Alberta's page on this program: Employer: “Must contribute 25% of the total eligible training costs for existing employees or individuals (includes unemployed individuals) they intend to hire”; Government of Alberta: “Contributes the other 75% of the cost to a maximum of $5,000 per employed trainee per fiscal year”; “An employer is eligible for up to a maximum amount of $100,000 per fiscal year”.",
+      // The employer's share and the page's requirements for registered employers, the two times among them left out,
+      // and a "…" for the unheld list of eligible employer types the lead-in follows (see eligibility).
+      legal:
+        "Alberta's page on this program: Employer: “Must contribute 25% of the total eligible training costs for existing employees or individuals (includes unemployed individuals) they intend to hire”; … “Registered employers must also:” … “be in good standing”; “carry Workers Compensation Benefits coverage for trainees”; “comply with provincial agreements”.",
+    },
+    citations: [
+      {
+        title: "Canada-Alberta Productivity Grant",
+        authority: "provincial",
+        jurisdiction: "AB",
+        // The maintainer's reading list (2026-10-23, items capg-75-percent, capg-5000-per-trainee,
+        // capg-100000-per-employer and capg-operational-one-year) fetched the page that day from the Job Grant's old
+        // address, which redirects here, and its tool (the repo's matcher, the same whole-word, one-block match as
+        // scripts/check-quotes.mjs) found the first four quotes below on it. The maintainer read the page in full on
+        // 2026-10-25, so its card says "Read by a person" (the read wins on screen); the tool check stays. A networked
+        // `node scripts/check-quotes.mjs` run found them again on 2026-10-26, before merge (docs/engines/citations.md, rule 4).
+        // Since 2026-10-29 this is one check of that day (the maintainer's answer of 2026-10-29 for the sentences found
+        // on 2026-10-27: "One new check that holds the old and new sentences", dated by its run): one
+        // `node scripts/check-quotes.mjs --url … --quote …` run found all 27 quotes, the four above, the funding table's
+        // two rows (a row's cells joined by " | ", the checker's row reading of the same day), and the page's
+        // requirements for registered employers, what training and costs count, and who delivers and funds it. (A first
+        // run that day held 26; the review of #223 added the travel-costs sentence, so a second run held all 27, and
+        // this check is that run's.)
+        url: "https://www.alberta.ca/canada-alberta-productivity-grant",
+        lastVerified: MAINTAINER_READ_ON,
+        readBy: "person",
+        toolCheck: {
+          checkedOn: "2026-10-29",
+          quotes: [
+            "Must contribute 25% of the total eligible training costs for existing employees or individuals (includes unemployed individuals) they intend to hire.",
+            "Contributes the other 75% of the cost to a maximum of $5,000 per employed trainee per fiscal year.",
+            "An employer is eligible for up to a maximum amount of $100,000 per fiscal year.",
+            "be operational in Alberta for at least one year",
+            "Employer | Must contribute 25% of the total eligible training costs for existing employees or individuals (includes unemployed individuals) they intend to hire.",
+            "Government of Alberta | Contributes the other 75% of the cost to a maximum of $5,000 per employed trainee per fiscal year.",
+            "Registered employers must also:",
+            "have an active legal entity status throughout the grant term",
+            "be in good standing",
+            "carry Workers Compensation Benefits coverage for trainees",
+            "comply with provincial agreements",
+            "Training must be directly related to the trainees’ current or future job and fall within at least one of the following skills categories:",
+            "Business Process and Operations Management: Improving processes, systems, operations, and resource management",
+            "Technical: Specialized skills that enhance efficiency, quality, and problem solving",
+            "Digital and Technological: Skills to use, manage, and integrate digital tools and technologies",
+            "Training must also:",
+            "be relevant to the trainee’s job",
+            "be completed within 52 weeks",
+            "include interaction with a qualified instructor",
+            "be instructional and structured",
+            "take place in Alberta, except under exceptional circumstances",
+            "The Canada–Alberta Productivity Grant is available for direct training costs only, including:",
+            "tuition or course fees charged by the training provider",
+            "textbooks or software",
+            "Small and medium-sized organizations may be eligible for travel costs related to training.",
+            "Employee wages and general business assets are not eligible.",
+            "The program is delivered by Alberta and funded by the Government of Canada through the Canada–Alberta Workforce Development Agreement.",
+          ],
+        },
+        note: "Alberta's program page: its funding table (the employer's and the Government of Alberta's shares of training costs, the most per employed trainee and per employer), who delivers and funds the program, what registered employers meet, and the training and costs it lists.",
+      },
+    ],
+    provinces: ["AB"],
+    // Open at every structure: no held word of the page limits it to a corporation. Leaving the sole proprietorship out
+    // would make evaluateGrant's near-miss say "requires incorporation (CCPC)", as the Job Grant's card wrongly did.
+    structures: ["sole-prop", "sole-prop-gst", "ccpc"],
+    // No kind of work: the page's held words name none, so DotAmi names none. It shows for every Alberta idea, and its
+    // reason names only the place (lib/brain/evaluate.ts evaluateGrant).
+    activityTags: [],
+    estimatedValue:
+      "Alberta's page: Government of Alberta: “Contributes the other 75% of the cost to a maximum of $5,000 per employed trainee per fiscal year”; “An employer is eligible for up to a maximum amount of $100,000 per fiscal year”.",
   },
 ] satisfies GrantProgram[];
 
@@ -254,8 +472,10 @@ export interface RetiredGrantProgram {
 /**
  * Programs taken off (the maintainer's call a-call-1, 2026-10-23: "take both off" before release 0.5.0). Their ids
  * are never reused for another program. Nothing here reaches a screen; docs/engines/grants.md keeps the same list.
- * The Canada-Alberta Productivity Grant, which replaced the Job Grant, is added only after the maintainer reads its
- * amounts.
+ * The Canada-Alberta Productivity Grant, whose page the Job Grant's address now opens, is in the catalog above under its
+ * own id, `grant-capg` (2026-10-24, the same call: "ADD it"), saying only the quotes a tool found on its page. The
+ * maintainer read that page in full on 2026-10-25, so its source says "Read by a person on 2026-10-25"
+ * (docs/engines/citations.md, § The maintainer's reads of 2026-10-25).
  */
 export const RETIRED_GRANT_PROGRAMS: readonly RetiredGrantProgram[] = [
   {

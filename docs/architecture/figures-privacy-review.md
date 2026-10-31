@@ -89,9 +89,11 @@ with a test that seeded data survives.
 
 - What still holds deleted data after Delete, said on the menu itself: the safety copies in the
   backups folder unless that box is ticked (the same box clears the receipt folders set aside there,
-  since 2026-10-10), what the window keeps in its own storage (the job descriptions typed on
-  the intake and how the cockpit was left; read again at every desktop launch since 2026-10-17, and the
-  menu says how to remove them by hand; a Delete box for them is a later decision), and the drive under the data file (SQLite's journal and a deleted safety copy are
+  since 2026-10-10), what the window keeps in its own storage (how the cockpit was left,
+  `dotami-cockpit-folds`, nothing the person typed or answered since 2026-10-24, when the job descriptions
+  typed on the intake went and a journey page started removing them unread; read again at every desktop
+  launch since 2026-10-17, and the menu says how to remove it by hand; a Delete box for it is a later
+  decision), and the drive under the data file (SQLite's journal and a deleted safety copy are
   removed, not overwritten, and a drive keeps its own spare copies; disk encryption covers that). Until Delete is used, a figure that was taken back or turned down keeps
   its amount in the file, and the page lists it.
 - The wipe needs free disk space about the size of the file and no other connection mid-change. When
@@ -295,8 +297,8 @@ The maintainer said yes (2026-10-10) to two follow-ups to *Start a new key*
   decided on 2026-10-09 (above), the "start a new key" button on 2026-10-09 (expense-records.md § 10),
   and encrypting the database too on 2026-10-09, and how on 2026-10-10 (the next section).
 - Whether the Delete menu may mention age at all, or stay silent about it; DotAmi supplies the
-  information, the person decides. If it does, the CRA's wording is six years from the end of the
-  last tax year a record relates to; indefinitely for long-term property, the share registry and
+  information, the person decides. If it does, the CRA's wording is generally six years from the
+  end of the last tax year a record relates to; indefinitely for long-term property, the share registry and
   similar history; longer under an objection or appeal ([Where to keep your records](https://www.canada.ca/en/revenue-agency/services/tax/businesses/topics/keeping-records/where-keep-your-records-long-request-permission-destroy-them-early.html),
   page dated 2026-08-03, read 2026-10-07). A cut-off by a receipt's own age would be wrong, so
   "older than six years" must not be the rule.

@@ -174,11 +174,15 @@ describe("the cockpit run on Mara's answers gives the ui-spec's receipts", () =>
   it("her story's receipts, each worked out by comparing road evaluation without and with her answer", () => {
     const story = Object.fromEntries(exampleStory(inputOf(), ex.whatIfFirstYearSalesDollars).map((p) => [p.id, p.lines]));
     // The appendix's "3 steps now say needs 0 more" is 4 on today's road: her two "have" marks cover every
-    // skill on four steps.
+    // legal requirement on four steps. Her two marks on the road's legal requirements are named, never counted as
+    // skills (the review of #209's merge, 2026-10-26: "Because you marked 9 skills, 4 steps now have every skill they
+    // list marked have" until then); her seven on the job's list are skills.
+    const because =
+      "Because you told us you have “Alberta Student Number”, you told us you have “An apprenticeship education agreement with a sponsor” and you marked 7 skills";
     expect(story.marks).toEqual([
-      "Because you marked 9 skills, 4 steps now have every skill they list marked have.",
-      "Because you marked 9 skills, the skills now read 2 have, 0 learning, 0 not yet, 1 not marked.",
-      "Because you marked 9 skills, the government's list for “Cabinetmakers” now reads 4 have, 2 learning, 1 not yet, 37 not marked.",
+      `${because}, 4 steps now have every legal requirement they list marked have.`,
+      `${because}, the legal requirements now read 2 have, 0 learning, 0 not yet, 1 not marked.`,
+      `${because}, the government's list for “Cabinetmakers” now reads 4 have, 2 learning, 1 not yet, 37 not marked.`,
     ]);
     expect(story.costs).toContain(
       "Because you told us your number for “Woodworking machines and tools” on “Open your own shop” is $14,993.62, 29 cost lines are not priced yet.",
@@ -263,7 +267,7 @@ describe("the words", () => {
       expect(parts[id]("Sam"), id).toContain("Sam");
       expect(parts[id]("Sam"), id).not.toMatch(/\b(her|she|hers)\b/i);
     }
-    expect(parts.marks(ex.person)).toBe("Mara's skill marks");
+    expect(parts.marks(ex.person)).toBe("Mara's marks");
     // Her start-up cost is from sellers' listed prices, not a quote she got.
     expect(parts.costs(ex.person)).toBe("Mara's start-up cost, from listed prices");
   });

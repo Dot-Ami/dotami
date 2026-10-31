@@ -2,7 +2,7 @@ import { cockpitWords } from "@/lib/cockpit/words";
 import { structureLadderV2026 } from "@/lib/engines/structure/v2026";
 import type { StructureStepId } from "@/lib/engines/structure/v2026";
 
-/** The ladder's words (lib/cockpit/words.ts, since 2026-10-17). */
+/** The ladder's words (lib/cockpit/words.ts, since 2026-10-17; in plain words since 2026-10-23). */
 const words = cockpitWords.rail.ladder;
 
 interface StructureLadderRailProps {
@@ -10,6 +10,13 @@ interface StructureLadderRailProps {
   activeStepId: StructureStepId | null;
 }
 
+/**
+ * The ways a business can be set up, in the catalog's order, each by its plain name (the catalog's own labels and
+ * trigger lines are tax terms: "Holding company (Holdco)", "Estate freeze, succession, or income splitting"). A
+ * rung is its name only: no line under it says what the set-up is in law (that would be a tax or legal claim in
+ * DotAmi's own words). The cockpit draws it only on the tax and structure roads (lib/engines/roads/v2026
+ * `drawsTheStructureLadder`).
+ */
 export function StructureLadderRail({ activeStepId }: StructureLadderRailProps) {
   const activeIndex =
     activeStepId === null ? -1 : structureLadderV2026.findIndex((step) => step.id === activeStepId);
@@ -23,6 +30,8 @@ export function StructureLadderRail({ activeStepId }: StructureLadderRailProps) 
         {structureLadderV2026.map((step, index) => {
           const isActive = step.id === activeStepId;
           const isPast = activeIndex >= 0 && index < activeIndex;
+          // A rung the words file doesn't name yet shows the catalog's label, never nothing.
+          const name = words.rungs[step.id] ?? step.label;
           return (
             <li
               key={step.id}
@@ -41,10 +50,7 @@ export function StructureLadderRail({ activeStepId }: StructureLadderRailProps) 
               >
                 {isActive ? words.current : isPast ? words.passed : activeStepId === null ? "" : words.ahead}
               </p>
-              <p className={`text-body font-semibold ${isActive ? "text-paper" : "text-stone"}`}>
-                {step.label}
-              </p>
-              <p className="mt-0.5 text-small leading-snug text-stone-dim">{step.trigger}</p>
+              <p className={`text-body font-semibold ${isActive ? "text-paper" : "text-stone"}`}>{name}</p>
             </li>
           );
         })}

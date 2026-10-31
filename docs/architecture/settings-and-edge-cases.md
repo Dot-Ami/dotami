@@ -208,14 +208,22 @@ and can't be undone (but a backup can restore it).
   (tested).*
 - The number of safety copies changed between the asks → *refused, nothing deleted (tested).*
 - An agent, a script or another site calls Delete → *403 (tested).*
-- After deleting ideas, the intake in progress in this tab still holds one → *it is reset, so a Save
-  on the map can't bring the idea back.*
+- After deleting ideas, the intake in progress held in the window's memory still holds one → *it is reset,
+  so a Save on the map can't bring the idea back.* (In this tab's storage until 2026-10-24; the journey is
+  held in the window's memory only since, `lib/journey/held-journey.ts`.)
+- After deleting the statements or the yearly income, the journey held in the window's memory still holds
+  them (the sentence typed on the front door, *Your destination*'s words, the income) → *they go too: the
+  sentence and the destination's words with the statements, the income with the income, everything with the
+  ideas (`intakeAfterDelete` in `lib/journey/window-storage.ts`, tested in `tests/prerelease-honesty.spec.ts`
+  and, reaching Delete by the app's own links, in `e2e/your-data.spec.ts`), so no screen shows back or sends
+  an answer the data file no longer holds (2026-10-24).*
 - Nothing stored → *the button is off: "Nothing to delete".*
-- Not reached yet, and the menu says so: what the window keeps in its own storage (the job
-  descriptions typed on the intake and how the cockpit was left, offered back next time; in the desktop
-  app from one launch to the next since 2026-10-17, with how to remove them: close DotAmi and delete the
-  "Local Storage" folder in the data folder), the log, anything already sent elsewhere, the disk under
-  the data file.
+- Not reached yet, and the menu says so: what the window keeps in its own storage (how the cockpit was
+  left, `dotami-cockpit-folds`, offered back next time; in the desktop app from one launch to the next since
+  2026-10-17, with how to remove it: close DotAmi and delete the "Local Storage" folder in the data folder;
+  until 2026-10-24 also the job descriptions typed on the intake, which the window's storage no longer holds
+  and a journey page removes unread), the log, anything already sent elsewhere, the disk under the data
+  file.
 
 **How old is each figure [8e]** — a figure from the future (a typo in the date) → flagged; time
 zones: a figure dated "March 31" stays March 31 for everyone.

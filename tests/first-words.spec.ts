@@ -71,7 +71,7 @@ describe("one tab, many ideas: the sentence goes once", () => {
     expect(sent.firstWords?.text).toBe(SENTENCE);
     const next = afterFirstSave(draft, sent, { ok: true });
     expect(firstSaveFromIntake(next, "2026-10-11").firstWords).toBeUndefined();
-    // The sentence itself stays in the tab: the intake still shows what was typed.
+    // The sentence itself stays on the page after a save: the intake still shows what was typed.
     expect(next.manualEntry).toBe(SENTENCE);
   });
 
@@ -83,6 +83,23 @@ describe("one tab, many ideas: the sentence goes once", () => {
 
   it("is never carried after the person deleted their statements, even if no save had kept it yet", () => {
     expect(firstSaveFromIntake(afterStatementsDeleted(typed()), "2026-10-11").firstWords).toBeUndefined();
+  });
+
+  it("Delete → Your statements takes the sentence from the window's memory too, and keeps the picks made from it", () => {
+    const draft = typed();
+    // What the sentence put in the draft: the words, their copy, and the parse's reading of them.
+    expect(draft.description).toBe(SENTENCE);
+    expect(draft.intentParse?.rawLabel).toBeTruthy();
+    const after = afterStatementsDeleted(draft);
+    expect(after.manualEntry).toBeUndefined();
+    expect(after.manualEntrySaidAt).toBeUndefined();
+    expect(after.description).toBe("");
+    expect(after.intentParse).toBeNull();
+    expect(JSON.stringify(after)).not.toContain(SENTENCE);
+    // What was confirmed from it is a pick for the idea, deleted with "Your ideas", not with the statements.
+    expect(after.activityTags).toEqual(draft.activityTags);
+    expect(after.goals).toEqual(draft.goals);
+    expect(after.ventureType).toBe(draft.ventureType);
   });
 
   it("a new sentence typed afterwards is carried with the next idea", () => {
@@ -103,8 +120,7 @@ describe("how a statement says where it was typed", () => {
     expect(statementSourceLabel(base)).toBe("typed in DotAmi");
   });
 
-  it("keeps the unsaved and vault tags", () => {
-    expect(statementSourceLabel({ ...base, persisted: false })).toBe("typed · not saved");
+  it("keeps the vault tag (a statement that couldn't be saved is never listed since 2026-10-24: it stays in its box)", () => {
     expect(statementSourceLabel({ ...base, source: "vault", sourceRef: "notes/a.md" })).toBe("vault · notes/a.md");
   });
 });

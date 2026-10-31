@@ -7,6 +7,7 @@ import { PersonStatements } from "@/components/shared/person-statements";
 import { Chip, GhostLink, Pill, WordMark } from "@/components/ui";
 import { buildEvaluationProfile, evaluateProfile } from "@/lib/brain";
 import type { UnlockItem } from "@/lib/brain";
+import { cockpitWords } from "@/lib/cockpit/words";
 import { ACTIVITY_TAXONOMY, applyIntentToDraft, type IntentParseResult } from "@/lib/journey/intent";
 import { parseIntentFallback } from "@/lib/journey/intent-fallback";
 import { saveScenario } from "@/lib/journey/save-scenario";
@@ -15,6 +16,7 @@ import { roadsV2026, type Road } from "@/lib/engines/roads/v2026";
 import { listedRoads } from "@/lib/front-door/futures";
 import type { PlaceCode } from "@/lib/places/codes";
 import { back as stepBack, FIRST_STEP, type StepsState } from "@/lib/front-door/three-steps";
+import { typedWayCount } from "@/lib/front-door/typed-way";
 import { intakeStepsWords, pickWords } from "@/lib/front-door/words";
 import { INTAKE_GOAL_IDS, INTAKE_GOAL_LABELS, type IntakeDraft, type IntakeGoalId } from "@/lib/journey/types";
 import { STATEMENT_FULL_NOTE, STATEMENT_MAX_CHARS } from "@/lib/person/types";
@@ -42,13 +44,12 @@ import { useMemo, useState } from "react";
 
 type ScreenId = "about" | "confirm" | "ground" | "steps";
 
-const SCREEN_LABEL: Record<ScreenId, string> = {
-  about: "1 of 3 · About you",
-  confirm: "2 of 3 · Confirm",
-  ground: "3 of 3 · Ground it",
-  // Pick a future's three steps, on this page since 2026-10-22: each step says its own "n of 3".
-  steps: pickWords.navLabel,
-};
+/**
+ * The nav's line for each screen: the typed way's one numbering (lib/front-door/typed-way.ts), which Pick a
+ * future's three steps carry on in their own heading, so the nav names them only (2026-10-23: Ground it said
+ * "3 of 3" and the next screen "1 of 3").
+ */
+const screenLabel = (screen: ScreenId, startsAtAbout: boolean) => (screen === "steps" ? pickWords.navLabel : typedWayCount(screen, startsAtAbout));
 
 /**
  * The roads Pick a future lists for a person in `province`, which the steps at the end of the intake list too:
@@ -75,30 +76,7 @@ const EMPLOYMENT_OPTIONS: { id: EmploymentStatus; label: string }[] = [
   { id: "other", label: "Other…" },
 ];
 
-const EMPLOYMENT_SUGGESTIONS_KEY = "dotami-employment-suggestions";
-
-function readEmploymentSuggestions(): string[] {
-  if (typeof window === "undefined") return [];
-  try {
-    const raw = localStorage.getItem(EMPLOYMENT_SUGGESTIONS_KEY);
-    return raw ? (JSON.parse(raw) as string[]) : [];
-  } catch {
-    return [];
-  }
-}
-
-function saveEmploymentSuggestion(value: string) {
-  const v = value.trim();
-  if (!v || typeof window === "undefined") return;
-  try {
-    const list = [...new Set([v, ...readEmploymentSuggestions()])].slice(0, 20);
-    localStorage.setItem(EMPLOYMENT_SUGGESTIONS_KEY, JSON.stringify(list));
-  } catch {
-    // ignore quota errors
-  }
-}
-
-/** Consequence-first rank (forks and time-boxed items carry the differentiating info). */
+/** Consequence-first rank (forks and items with an end date carry the differentiating info). */
 function rankUnlocks(unlocks: UnlockItem[]): UnlockItem[] {
   const score = (item: UnlockItem) =>
     (item.fork ? 4 : 0) + (item.expires ? 2 : 0) + (item.state === "yellow" ? 1 : 0);
@@ -129,7 +107,7 @@ export function IntakePage({
   const [parsing, setParsing] = useState(false);
   const [opening, setOpening] = useState(false);
 
-  // Local calendar day, same as the cockpit — a UTC slice flipped time-boxed items a day early
+  // Local calendar day, same as the cockpit — a UTC slice flipped items with an end date a day early
   // in the evening anywhere west of UTC (found 2026-09-14).
   const today = useMemo(() => new Date().toLocaleDateString("en-CA"), []);
   const evaluation = useMemo(
@@ -192,14 +170,11 @@ export function IntakePage({
    * Step 3's Look inside, on the typed way (2026-10-22): saves the idea from the intake's answers on the road the
    * person opened, with the steps' answers, then opens the map. Until then Screen B's "Open my map" did this on the
    * general road with no road picked. A save that fails opens nothing (resolves false), as on Pick a future: the
-   * tab's copy would be drawn on the general road, not the road the person opened.
+   * window's copy would be drawn on the general road, not the road the person opened.
    */
   async function lookInside(road: Road, answers: StepAnswers): Promise<boolean> {
     if (intake.province === null || intake.employmentStatus === null || opening) return false;
     const employmentStatus = intake.employmentStatus;
-    if (intake.employmentStatus === "other") {
-      saveEmploymentSuggestion(intake.employmentOther);
-    }
     setIntake((prev) => ({ ...prev, intentParse: null }));
     const scenario = buildScenarioFromIntake(
       {
@@ -220,11 +195,11 @@ export function IntakePage({
     setScenario(scenario);
     // Issue #1: the venture reaches the database here, not only when someone finds "Save" on
     // the cockpit rail. Since 2026-10-22 a save that fails opens nothing and step 3 says so, as on
-    // Pick a future: the tab's copy would be drawn without the road the person opened.
+    // Pick a future: the window's copy would be drawn without the road the person opened.
     setOpening(true);
     // This first save also keeps the sentence the person typed, word for word with its day, and the goal
     // chips, with the idea (lib/journey/first-save.ts). Later saves of the idea never carry them, and once
-    // a save has kept the sentence this tab never sends it again: the next "Open my map" is a new idea.
+    // a save has kept the sentence this window never sends it again: the next "Open my map" is a new idea.
     const sent = withTheSteps(firstSaveFromIntake(intake, new Date().toLocaleDateString("en-CA")), road.id, answers);
     const saved = await saveScenario(scenario, sent);
     setIntake((prev) => afterFirstSave(prev, sent, saved));
@@ -261,7 +236,7 @@ export function IntakePage({
         )}
         <WordMark />
         <p className="ml-auto font-mono text-small uppercase tracking-[0.14em] text-stone">
-          {SCREEN_LABEL[screen]}
+          {screenLabel(screen, firstScreen === "about")}
         </p>
       </nav>
 
@@ -278,6 +253,7 @@ export function IntakePage({
                 listed={listedFor(intake.province)}
                 roadJobs={roadJobs}
                 firstSentence={intake.manualEntry?.trim() ? intake.manualEntry : null}
+                stepCount={(step) => typedWayCount(step, firstScreen === "about")}
                 onLookInside={(road, answers) => lookInside(road, answers)}
               />
             ) : screen === "about" ? (
@@ -471,23 +447,18 @@ export function IntakePage({
                     ))}
                   </select>
                   {intake.employmentStatus === "other" ? (
-                    <>
-                      <input
-                        list="employment-suggestions"
-                        value={intake.employmentOther}
-                        onChange={(e) =>
-                          setIntake((p) => ({ ...p, employmentOther: e.target.value }))
-                        }
-                        aria-label="Your employment, in your words"
-                        placeholder="Tell us in your words"
-                        className="mt-2 w-full max-w-sm rounded-sm border border-rule bg-ink px-3 py-2 text-lead text-paper outline-hidden placeholder:text-stone-dim focus:border-maple-soft"
-                      />
-                      <datalist id="employment-suggestions">
-                        {readEmploymentSuggestions().map((s) => (
-                          <option key={s} value={s} />
-                        ))}
-                      </datalist>
-                    </>
+                    // Held in the window's memory with the rest of the intake and kept nowhere: the idea keeps
+                    // "other" only. Until 2026-10-24 earlier answers were offered back from the window's storage
+                    // (`dotami-employment-suggestions`), with no end date and out of Delete's reach.
+                    <input
+                      value={intake.employmentOther}
+                      onChange={(e) =>
+                        setIntake((p) => ({ ...p, employmentOther: e.target.value }))
+                      }
+                      aria-label="Your employment, in your words"
+                      placeholder="Tell us in your words"
+                      className="mt-2 w-full max-w-sm rounded-sm border border-rule bg-ink px-3 py-2 text-lead text-paper outline-hidden placeholder:text-stone-dim focus:border-maple-soft"
+                    />
                   ) : null}
                 </FieldGroup>
 
@@ -799,8 +770,10 @@ function PreviewRow({
           <p className="text-stone">{item.why}</p>
           <p className="text-stone-dim">{item.payoff}</p>
           {item.expires ? (
+            // The map legend's words, from the words file, as node detail writes them (2026-10-24: "Time-boxed — in
+            // use before" was written here, where no words check read it).
             <p className="font-mono text-label uppercase tracking-[0.14em] text-amber">
-              Time-boxed — in use before {item.expires.slice(0, 4)}
+              {cockpitWords.map.lever.endDate} · {cockpitWords.map.lever.inUseBefore(item.expires.slice(0, 4))}
             </p>
           ) : null}
           {item.fork ? (

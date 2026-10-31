@@ -77,8 +77,18 @@ describe("the Skills list: your pick of job", () => {
     expect(drawList()).toContain(`>${esc(cockpitWords.lists.roadTitle)}<`);
   });
 
-  it("with a job picked: its name, code and day, Change and Take back, then every item tagged with its marks", () => {
+  // The screen review of 2026-10-23: the job's 44 items swamped the road's own. Folded under one button, below
+  // the road's own items; the rows are drawn once the person opens it.
+  it("with a job picked: its list folded under one Show button, below the road's own items, no row drawn", () => {
     const html = drawList();
+    expect(html).toContain(esc(cockpitWords.lists.job.showList(cabinetmakers.items.length)));
+    expect(html).not.toContain(`>${cockpitWords.lists.job.tag}<`);
+    expect(html.indexOf(esc(cockpitWords.lists.job.showList(cabinetmakers.items.length)))).toBeGreaterThan(html.indexOf(`>${esc(cockpitWords.lists.roadTitle)}<`));
+    expect(cockpitWords.lists.job.showList(44)).toBe("Show the 44 on this job's list");
+  });
+
+  it("with a job picked and its list opened: its name, code and day, Change and Take back, then every item tagged with its marks", () => {
+    const html = drawList({ jobListOpen: true });
     expect(html).toContain("Cabinetmakers");
     expect(html).toContain("72311.00");
     expect(html).toContain(esc(cockpitWords.lists.job.change));
@@ -98,12 +108,12 @@ describe("the Skills list: your pick of job", () => {
   });
 
   it("never shows a rating, a scale or 'Not applicable': names only", () => {
-    expect(drawList()).not.toMatch(RATING);
+    expect(drawList({ jobListOpen: true })).not.toMatch(RATING);
     expect(drawList({ job: null, jobPickedOn: null })).not.toMatch(RATING);
   });
 
   it("puts no job in a link: the person's pick never travels in an address", () => {
-    const hrefs = [...drawList().matchAll(/href="([^"]*)"/g)].map((m) => m[1]);
+    const hrefs = [...drawList({ jobListOpen: true }).matchAll(/href="([^"]*)"/g)].map((m) => m[1]);
     expect(hrefs.length).toBeGreaterThan(0);
     for (const href of hrefs) expect(href).not.toContain("72311");
   });

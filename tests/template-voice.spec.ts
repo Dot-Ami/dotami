@@ -85,7 +85,8 @@ describe("stage chips never say 'your pick' on something the person didn't pick 
     const scenario = buildScenarioFromIntake({ ...intake, hireFirst: true }, "chips-4");
     expect(stageChipFor("branch-service-vs-productize", scenario)).toBe("open-choice");
     expect(stageChipFor("branch-hire-first-employee", scenario)).toBe("your-pick");
-    expect(stageChipFor("stage-1-sole-prop-activation", scenario)).toBe("now");
-    expect(stageChipFor("stage-0-employee-apprentice-baseline", scenario)).toBe("done");
+    // Where the stage sits on the map, never the person's status (2026-10-23: "now" and "done" until then).
+    expect(stageChipFor("stage-1-sole-prop-activation", scenario)).toBe("first-stage");
+    expect(stageChipFor("stage-0-employee-apprentice-baseline", scenario)).toBe("starting-point");
   });
 });

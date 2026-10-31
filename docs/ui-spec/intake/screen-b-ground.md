@@ -5,7 +5,8 @@
 Page: Intake (`/intake`) · Component: `components/discovery/intake-page.tsx`
 Type: location + optional numbers screen
 
-Last updated: 2026-10-12 (the province, employment and name fields are named by their labels); 2026-10-11 (Open my map saves the typed sentence and the goal picks with the idea; 2026-09-21: employment context is explicitly chosen before opening the map)
+Last updated: 2026-10-24 (the box under Other… offers no earlier descriptions: nothing in the window's storage);
+2026-10-12 (the province, employment and name fields are named by their labels); 2026-10-11 (Open my map saves the typed sentence and the goal picks with the idea; 2026-09-21: employment context is explicitly chosen before opening the map)
 Workshop status: **signed off**
 
 ## What it is
@@ -30,9 +31,12 @@ straight to the cockpit.
   names.
 - **Current employment** — starts at **Choose…**, then offers 7 options as of this session (was 5 — see Fixed below):
   employee, self-employed, business-owner, apprentice/student, retired, unemployed,
-  other. Choosing **Other…** reveals a free-text input backed by a `<datalist>` cached in
-  `localStorage` (`dotami-employment-suggestions`, key persists across sessions/tabs —
-  the one piece of intake state that outlives `sessionStorage`). A screen reader names that box
+  other. Choosing **Other…** reveals a free-text input (`intake.employmentOther`, held in the window's
+  memory with the rest of the intake and kept nowhere: the idea keeps `other` only). Since 2026-10-24
+  it offers no earlier descriptions: they were kept in `localStorage` (`dotami-employment-suggestions`)
+  with no end date, out of Delete's reach, and a journey page now removes that key unread
+  (`lib/journey/window-storage.ts`). Whether the words are kept with the idea, or the box goes, is the
+  maintainer's later call (docs/task-list.md). A screen reader names that box
   "Your employment, in your words" (`aria-label`, since 2026-10-12; before, only its placeholder,
   "Tell us in your words", named it).
 - **Name it — optional (added 2026-09-13, S2.5.4d)** — text input (max 80) → `intake.name`.

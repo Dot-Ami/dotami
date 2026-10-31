@@ -23,6 +23,7 @@ import { priceSummary, softwareSummaries, toolsTotalCents } from "@/lib/examples
 import { formatMoney } from "@/lib/format/money-and-months";
 
 import { readSource, simplify, sourceFiles, TS_FILES } from "./helpers/source-scan";
+import { findTimeWords } from "./helpers/time-words";
 import { FRAMING, VERDICT } from "./helpers/verdict-words";
 
 const ex = exampleMara;
@@ -109,6 +110,30 @@ describe("the tools: what the trade's official descriptions name, priced by Cana
     }
   });
 
+  // The maintainer opened Lee Valley's page in his own browser on 2026-10-29 (the re-check of 2026-10-27 met a bot
+  // check, which was not bypassed) and wrote: price "85"; item “Item 17F7340, Bessey 40" K Body REVO Clamp”. The
+  // price entry has no field for a person's check, so the record is its note, and nothing else about it moves.
+  it("Lee Valley's clamp keeps its words, day and price of 2026-10-14, and its note records that the maintainer saw $85 himself on 2026-10-29", () => {
+    const clamp = src.tools.find((t) => t.id === "bar-clamp")!;
+    const lee = clamp.prices.find((p) => p.seller === "Lee Valley")!;
+    expect(lee).toBeDefined();
+    // Nothing the 2026-10-14 check recorded changes, and no number moves.
+    expect(lee.seenOn).toBe("2026-10-14");
+    expect(lee.priceCents).toBe(8500);
+    expect(lee.quote).toBe('LENGTH: 12" 18" 24" 31" 40" 50" 60" 82" 98" $85.00');
+    expect(priceSummary(clamp.prices.map((p) => p.priceCents))).toEqual({ count: 4, meanCents: 8496, medianCents: 8495, lowCents: 8495, highCents: 8500 });
+    // The note says who saw it, on what day, where, what they saw, and why a person's look was wanted.
+    const note = lee.caution ?? "";
+    for (const part of ["maintainer", "own browser", "2026-10-29", "$85", 'Item 17F7340, Bessey 40" K Body REVO Clamp', "2026-10-27", "bot check", "not bypassed"]) {
+      expect(note, part).toContain(part);
+    }
+    // It is on the panel, under the price, with no other seller's note changed to say it.
+    expect(panelText()).toContain(note);
+    expect(clamp.prices.filter((p) => p.caution?.includes("2026-10-29")).map((p) => p.seller)).toEqual(["Lee Valley"]);
+    // The panel still says the prices were seen on 2026-10-14: this is one price seen again, not a re-seeing of them all.
+    expect(src.seenOn).toBe("2026-10-14");
+  });
+
   it("each tool's average is the function's result over its own listed prices", () => {
     for (const t of src.tools) expect(priceSummary(t.prices.map((p) => p.priceCents)), t.id).toEqual(byHand(t.prices.map((p) => p.priceCents)));
   });
@@ -149,7 +174,7 @@ describe("the software: plans listed in Canadian dollars", () => {
       if (s.per === "month-billed-yearly") expect(s.quote, ref).toMatch(/billed annually/i);
     }
     const design = softwareSummaries(src.software, src.softwareCategories).find((x) => x.category === "design")!;
-    // Control: SketchUp Go and Pro monthly and Fusion's 1-month term, (2899 + 13999 + 12000) / 3.
+    // Control: SketchUp Go and Pro monthly and Fusion's monthly plan, (2899 + 13999 + 12000) / 3.
     expect(design.monthly).toEqual({ count: 3, meanCents: 9_633, medianCents: 12_000, lowCents: 2_899, highCents: 13_999 });
     expect(src.software.filter((s) => s.per === "month-billed-yearly").map((s) => s.plan)).toEqual(["Go, annual", "Pro, annual"]);
     expect(cockpitWords.example.sources.per["month-billed-yearly"](1_508)).toBe("$15.08 a month, billed yearly");
@@ -447,6 +472,29 @@ describe("information and options, never a verdict", () => {
     walk(src);
     expect(strings.length).toBeGreaterThan(200);
     expect(strings.filter((s) => VERDICT.test(s) || FRAMING.test(s))).toEqual([]);
+  });
+
+  // No times (the maintainer, 2026-10-17: "NO TIMES!"). A seller's page may say how long its promotion runs,
+  // inside the quote; DotAmi's own words about it don't. One phrase is let through, how a plan is billed, as
+  // whole words and exactly as often as the sources use it today, so a new use, or any other time word, fails.
+  it("DotAmi's own words in the sources hold no duration, past the one billing phrase", () => {
+    const BILLED = { phrase: "billed month to month", uses: 5, why: "how a plan is billed, which keeps month-to-month plans apart from yearly ones" };
+    const own: string[] = [];
+    const walk = (v: unknown, key = "") => {
+      if (key === "quote" || key === "url" || key === "seenOn") return;
+      if (typeof v === "string") own.push(v);
+      else if (v && typeof v === "object") for (const [k, x] of Object.entries(v)) walk(x, k);
+    };
+    walk(src);
+    expect(own.length).toBeGreaterThan(500);
+    const billed = new RegExp(`(?<![\\w-])${BILLED.phrase}(?![\\w-])`, "gi");
+    let uses = 0;
+    const withTimes = own.filter((text) => {
+      uses += text.match(billed)?.length ?? 0;
+      return findTimeWords(text.replace(billed, " ")).length > 0;
+    });
+    expect(withTimes).toEqual([]);
+    expect(uses, BILLED.why).toBe(BILLED.uses);
   });
 
   // The words module isn't the only place text can be typed: a component can hold a string of its own.

@@ -1,6 +1,13 @@
 # Cockpit canvas — the map as tier columns
 
-Last updated: 2026-10-14 (road 0's Tier 1 gains a fifth card, *Keep your records from day one*, and the
+Last updated: 2026-10-27 (SR&ED deepening's 35% quotes the SR&ED glossary; the maintainer's reads of 2026-10-25: every source of the four stages that
+quote their pages, SR&ED deepening's third among them, says *Read by a person on 2026-10-25*, § Four
+more stages quote their pages; 2026-10-24: the maintainer's reading list: Incorporating's business
+limit reads "Up to $500,000" in the T2 guide's words, and four other stages quote their pages,
+§ Incorporating; the readout
+API gives each stage's chip and the person's own mark, `yourStatus`, and no longer the map's `status` or
+its worked-out lists; the accessible names' example says *first stage*; 2026-10-14: road 0's Tier 1 gains
+a fifth card, *Keep your records from day one*, and the
 apprentice road's *Open the doors* starts with the same step; 2026-10-13: in the cockpit, SR&ED deepening on an idea without a research kind of work is
 drawn dashed, chip "not on your path" with its reason, instead of "ahead", issue #40; 2026-10-12: road 0 gains three "before you open" cards in Tier 1, which road evaluation
 colours as on your road, and drawn without road evaluation a card no rule colours says "no rule yet"
@@ -77,13 +84,15 @@ stage card one **lever card** per evaluator item relevant to that stage
 
 | Card | Shows | Click |
 |---|---|---|
-| Stage | name · chip (**now · your pick · default · open choice · done · ahead · not on your path**, from the branch picks; `stageChipFor` in `lib/scenarios/graph.ts`) · trigger (2 lines) · on Incorporating and Liability / SR&ED, one line saying which of the person's answers set the colour (`EvaluationResult.nodeReasons`) · left bar coloured by the evaluator (green met · amber plausible · grey n/a), run on the person's own branch picks | opens node detail |
+| Stage | name · chip (**first stage · your pick · default · open choice · starting point · ahead · not on your path**, from the branch picks; `stageChipFor` in `lib/scenarios/graph.ts`; where the stage sits on the map, never the person's status: "first stage" and "starting point" said **now** and **done** of every idea until 2026-10-23; the person's own Doing, Done or Not for me replaces the chip) · trigger (2 lines) · on Incorporating and Liability / SR&ED, one line saying which of the person's answers set the colour (`EvaluationResult.nodeReasons`) · left bar coloured by the evaluator (green met · amber plausible · grey n/a), run on the person's own branch picks | opens node detail |
 | Stage the rules don't colour, on a map drawn without road evaluation (road 0's before-you-open steps, 2026-10-12; in the cockpit, road evaluation gives them a state, so they are coloured and open the step panel like any card) | name · chip **no rule yet** · its one line (2 lines) · a neutral left bar, no colour | selects it and keeps its arrows; no panel opens (it has no catalog entry; the step panel comes later in phase 1). The right-hand panel is left as it was: an open Export panel stays open, and an open node detail panel closes, since it was about the card no longer selected |
-| Lever | dot + type chip (Write-off / Grant / Threshold / …) · title · **applies** (green) or **check first** (amber) · `fork` when incorporating would change it · `in use before <year>` when time-boxed · PARTIAL chip when a citation is partial | opens the stage's node detail |
+| Lever | dot + type chip (Write-off / Grant / Threshold / …) · title · **applies** (green) or **check first** (amber) · `fork` when incorporating would change it · `in use before <year>` when the item has an end date · PARTIAL chip when a citation is partial | opens the stage's node detail |
 
-Stage and lever buttons have explicit accessible names. Stage names include the current status,
-the left bar's colour in words and the action — "Sole Prop activation, now, applies as answered,
-opens detail"; the words are **applies as answered** (green), **check first** (amber) and
+Stage and lever buttons have explicit accessible names. Stage names include the chip's words (where the
+stage sits on the map, or the person's own status where they set one), the left bar's colour in words and the
+action — "Sole Prop activation, first stage, applies as answered, opens detail", with any badges an overlay
+draws before the action ("…, applies as answered, 7 not priced, opens detail"; `cockpitWords.map.cardName`;
+"now" in place of "first stage" until 2026-10-23); the words are **applies as answered** (green), **check first** (amber) and
 **doesn't apply as answered** (grey), so the colour is never the only way to tell. A card the rules
 don't colour claims no colour and no place on the path: "Register your business name, if you use one,
 no rule reads this step yet, shows where it leads" (grey would say "doesn't apply as answered", which no
@@ -106,8 +115,14 @@ default counts as decided, whether the person's click or a program saving throug
 route put it there (`isBranchDecided`; the toggle's "default, not your pick yet" follows the same
 rule). The same test marks a default in the playbook export (since 2026-10-23, *The map's default pick: “…”,
 not yours yet*, from `buildPlan`, as *Your plan* says it; until then "(default, not picked yet)" beside the
-selection) and in the readout API (each node's `chip`: `your-pick`, `default`, `open-choice`, `now`,
-`done`, `ahead` or `not-on-your-path`). *Hire first
+selection) and in the readout API (each node's `chip`: `your-pick`, `default`, `open-choice`,
+`first-stage`, `starting-point`, `ahead` or `not-on-your-path`: where the stage sits on the map, never the
+person's status; `now` and `done` until 2026-10-23). The person's own mark is the node's `yourStatus`
+(`doing`, `done`, `not-for-me`, or null where they gave none), from the same progress the map draws in place
+of the chip. Since 2026-10-24 the readout gives no `status` (the map's list name, which said `complete` of
+the employee baseline and `active` of Sole Prop activation on every idea) and no `completedNodeIds` or
+`activeNodeIds` in `scenario.state` (`lib/readout/nodes.ts`; `tests/prerelease-honesty.spec.ts`,
+`e2e/app.spec.ts`, `e2e/cockpit.spec.ts`). *Hire first
 employee* reads **your pick** (it is on the map only when the person turned on "Show a hire-first
 path"), and *Service vs. productize*, drawn on every map, reads **open choice**. Until then every
 such card said "your pick", so the GST/HST card said "your pick" under a toggle saying "default, not
@@ -137,10 +152,50 @@ Incorporation timing (the person's pick, or the default until they click, and it
 it is amber (**check first**), and green once the third-year revenue estimate reaches the person's
 own **I'd incorporate at $___** (typed in its detail, 07-node-detail.md); grey when the other option
 is selected. No amount of DotAmi's own lights it. Its detail keeps only cited facts: the CRA's
-corporation page, the small business deduction's $500,000 business limit from the T2 guide, and,
-since 2026-10-11, the federal and Alberta ways to incorporate side by side from their own pages. The
-toggle's options read **When you decide** and **Liability / SR&ED**. Retained earnings planning
-(Tier 4) lights only when the person set their structure to a corporation.
+corporation page, the small business deduction's business limit from the T2 guide, and, since
+2026-10-11, the federal and Alberta ways to incorporate side by side from their own pages. Since
+2026-10-24 (the maintainer's reading list: a maximum, not automatic) the limit's box reads **Federal SBD
+business limit · Up to $500,000**, on the guide's own words: corporations that were CCPCs “throughout the
+tax year may be able to claim the small business deduction”, and “The maximum allowable business limit
+for a corporation that is not associated with any other corporation is $500,000.” (it read "$500,000",
+on DotAmi's paraphrase, before). The toggle's options read **When you decide** and **Liability / SR&ED**.
+
+**Four more stages quote their pages (2026-10-24, the maintainer's reading list).** In each step panel's
+*More about this stage*, where a line said a number or a deadline in DotAmi's words, it now gives the
+page's words in quotation marks, and the page is among the stage's own sources (lib/engines/cfe/v2026/nodes.ts):
+- **Sole Prop activation**'s first note no longer says to track "gross revenue" against the $30,000
+  tests: it quotes the CRA on what a sole proprietor counts toward them (“If you are a sole proprietor,
+  include the total amount of all revenues (before expenses) from your worldwide taxable supplies …”) and
+  what is left out (“do not include revenues from supplies of financial services, sales of capital
+  property” “and goodwill from the sale of a business.”), and names Mandatory GST registration, where the
+  tests are quoted in full. *Sources for this stage* gains the CRA's *When to register for and start
+  charging the GST/HST* (3 sources), in amber: checked by a tool on 2026-10-12, not read by a person.
+  Since the maintainer's read of that page in full on 2026-10-25 (recorded 2026-10-27), it says *Read by
+  a person on 2026-10-25*, as the stage's other two sources do.
+- **Hire first employee**'s **Payroll account timing** box reads “before the first remittance due date”,
+  on the CRA's two sentences (registering before the first remittance due date, and that date: “the 15th
+  day of the month following the month in which you began withholding deductions …”), in place of
+  "Before first remittance due date" on "CRA payroll registration guidance."
+- **Incorporation for liability/SR&ED** and **SR&ED deepening**: each 35% box quotes the CRA, “Some CCPCs may
+  earn an ITC at an enhanced rate of 35% on qualified SR&ED expenditures up to their expenditure limit for
+  the year.”, from its page on how relationships affect the SBD and SR&ED credits. SR&ED deepening gains
+  that page as a third source (amber: a tool check of 2026-10-23, until the maintainer's read of the page
+  in full on 2026-10-25: it says *Read by a person on 2026-10-25* now), and its tax impact says the
+  enhanced rate is for some CCPCs, up to their expenditure limit for the year (it said "subject to taxable
+  income limits", which no held quote says).
+- **SR&ED deepening**, since 2026-10-27: its 35% box quotes the SR&ED glossary's own entry, the line the
+  maintainer asked for, under *The CRA's SR&ED glossary:* (“Some Canadian-controlled private corporations
+  (CCPCs) that meet certain requirements may earn investment tax credits at the enhanced rate of 35%”). The
+  relationships page stays its third source, for the tax impact's "up to their expenditure limit for the
+  year". Its sources still say *Read by a person on 2026-10-25*.
+
+Each stage's other sources said how they were checked as before ("Read on 2026-05-01. Who read it wasn't
+recorded.", or "Checked by a tool" in amber: on SR&ED deepening "on 2026-10-13", and on Hire first employee,
+for an Alberta idea, Alberta's *Employment standards* "on 2026-10-23") until the maintainer's reads of
+2026-10-25 were recorded (2026-10-27). He read every page these four stages cite in full, so each of
+their sources now says *Read by a person on 2026-10-25*, in grey: a read wins on screen over the tool
+checks these pages also carry (docs/engines/citations.md, § The maintainer's reads of 2026-10-25).
+Retained earnings planning (Tier 4) lights only when the person set their structure to a corporation.
 
 **Liability / SR&ED (Tier 3)** lights from the idea's activity tags (Software / SaaS, Manufacturing,
 AI / ML / R&D), not from a need the person stated, and since 2026-10-11 its card says so under the
@@ -174,8 +229,10 @@ work only, as built*.
 
 Lever cards are hidden under a stage that is "not on your path". Grey (not applicable) items
 are never drawn. A legend sits under the grid, with the three colours in the same words as the
-cards' accessible names: **applies as answered**, **check first — confirm, time-boxed, or one fork
-away** and **doesn't apply as answered** (the grey entry added 2026-10-11).
+cards' accessible names: **applies as answered**, **check first — confirm, has an end date, or one fork
+away** ("time-boxed" until 2026-10-23, a time word of DotAmi's own) and **doesn't apply as answered** (the
+grey entry added 2026-10-11). Its chip line says **Stage chip = where it sits on the map; doing, done or not
+for me only when you mark it** (2026-10-23).
 
 **Hover / select a stage card (ruling 2, same day):** `components/cockpit/map-arrows.tsx` draws
 an SVG overlay of arrows from that card along the road's `RoadStep.next` (road 0: the nodes'

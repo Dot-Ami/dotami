@@ -16,7 +16,9 @@
 // the minus sign, and drops the invisible soft hyphen; case, punctuation, numbers and accents must
 // match. A quote is found only as whole words (never inside a longer word or number), only inside
 // one block of the page (never stitched across cells, list items or paragraphs), and never in text
-// the page hides. A quote needs at least 3 words. Exit code 0 when every quote is found (and it
+// the page hides. One more piece per table row (since 2026-10-29): its cells in order, joined by
+// " | ", so a quote can hold a row's label cell with the line beside it ("Employer | Must contribute
+// 25% …"), never two rows. A quote needs at least 3 words. Exit code 0 when every quote is found (and it
 // prints the date to record as `checkedOn`), 1 when a quote is missing or a page couldn't be
 // checked, 2 for a usage error. It never changes a file: the builder copies what it printed into
 // the catalog. The quality report (`npm run quality:report -- --live`, scripts/quality-report.mjs)
@@ -109,12 +111,58 @@ function decodeEntities(text) {
   });
 }
 
+/** Tags removed: an inline tag with nothing in its place, every other tag as BLOCK. */
+function tagsToText(html) {
+  return html.replace(/<\/?([a-z][a-z0-9-]*)\b[^>]*>/gi, (_tag, name) => (INLINE_TAGS.has(name.toLowerCase()) ? "" : BLOCK));
+}
+
+// What joins two cells of one table row in the row's own piece (the maintainer's answer of 2026-10-29: "Teach the
+// checker to read a table row as one piece"). A quote addresses a row by writing its cells in order with " | "
+// between them: "Employer | Must contribute 25% …". The joiner stands only for the edge between two cells. Inside a
+// cell a list item, a paragraph or a line break still ends a piece, so across an edge a quote reaches only the
+// nearest item on each side (the label cell and the first line of a list beside it, never its second line). A page
+// may also write " | " inside one block of its own ("Red Seal Application | $150"); such a quote is found there, as
+// before.
+const CELL_JOINER = " | ";
+
+// The tag names below end at a space, "/" or ">", not at a word boundary (\b), which a hyphen also is: a custom
+// element such as <tr-note> or <td-tip> is neither a row nor a cell, so it never ends a row or splits a cell.
+// Where a row stops: the next row, its own end, or the start or end of a table or one of a table's sections. A row
+// never runs on into the next one, even where the page leaves out a closing </tr>.
+const ROW_STOP = /<\/?(?:tr|table|thead|tbody|tfoot)(?=[\s/>])[^>]*>/gi;
+
+/**
+ * Each table row's cells, in order, joined by CELL_JOINER: one more piece of the page for every row with two cells
+ * or more. Every cell stays a block of its own in the page's text as well, so this adds pieces and changes none. A
+ * row that holds another table gives no piece of its own (the inner table's rows give theirs). Read from the HTML
+ * after the hidden parts are gone, so a row or cell the page hides is never in it. A cell spanning columns
+ * (colspan) is one cell, joined once; a cell spanning rows (rowspan) sits in its first row's HTML only, so it is
+ * joined to that row and not to the rows below it.
+ */
+function tableRowPieces(html) {
+  const pieces = [];
+  const opening = /<tr(?=[\s/>])[^>]*>/gi;
+  for (let m = opening.exec(html); m; m = opening.exec(html)) {
+    ROW_STOP.lastIndex = opening.lastIndex;
+    const stop = ROW_STOP.exec(html);
+    if (stop && /^<table(?=[\s/>])/i.test(stop[0])) continue;
+    const row = html.slice(opening.lastIndex, stop ? stop.index : html.length);
+    // The text before the first cell is the space between <tr> and it, never a cell.
+    const cells = row.split(/<t[dh](?=[\s/>])[^>]*>/i).slice(1);
+    if (cells.length < 2) continue;
+    // A cell's own blocks stay apart; only the BLOCKs at its two edges (its <ul>, <li>, </td>…) give way to the joiner.
+    const piece = cells.map((cell) => tagsToText(cell).replace(/^[\s\u001e]+|[\s\u001e]+$/g, "")).join(CELL_JOINER);
+    if (/[\p{L}\p{N}]/u.test(piece)) pieces.push(piece);
+  }
+  return pieces;
+}
+
 /**
  * The page's text: comments, elements that never show (head, scripts, styles…) and elements the page
  * hides (the hidden attribute, an inline display:none) dropped; tags removed, each block's end marked
  * with BLOCK; entities decoded. Text hidden only by a stylesheet class still counts, such as
  * canada.ca's screen-reader-only "wb-inv": a screen reader reads it, and this script doesn't read
- * stylesheets.
+ * stylesheets. After the page's own text come its table rows, one piece each (tableRowPieces).
  */
 export function pageToText(html) {
   let text = html.replace(/<!--[\s\S]*?-->/g, " ");
@@ -122,7 +170,8 @@ export function pageToText(html) {
     text = text.replace(new RegExp(`<${tag}\\b[\\s\\S]*?</${tag}\\s*>`, "gi"), BLOCK);
   }
   text = dropHiddenByAttribute(text);
-  text = text.replace(/<\/?([a-z][a-z0-9-]*)\b[^>]*>/gi, (_tag, name) => (INLINE_TAGS.has(name.toLowerCase()) ? "" : BLOCK));
+  const rows = tableRowPieces(text);
+  text = [tagsToText(text), ...rows].join(BLOCK);
   // A stray "<" that opened no tag is left alone; a doctype or processing instruction goes.
   text = text.replace(/<![^>]*>|<\?[^>]*>/g, " ");
   return decodeEntities(text);

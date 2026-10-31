@@ -16,6 +16,7 @@ import path from "node:path";
 
 import { expect, test, type Page } from "@playwright/test";
 
+import { cockpitWords } from "../lib/cockpit/words";
 import { generalRoadV2026, roadApprenticeToOwnShopAB } from "../lib/engines/roads/v2026";
 
 import { lookCloser, showRail, showRoadAhead } from "./cockpit-calm";
@@ -203,7 +204,8 @@ test("third review of #207: a tick made in Ontario before the move is saved keep
   await told(page).getByRole("button", { name: "Change: you told us your place is Alberta" }).click();
   await told(page).getByRole("combobox", { name: "Which province or territory are you in?" }).selectOption("ON");
   await told(page).getByRole("button", { name: "Save", exact: true }).click();
-  await expect(page.getByText("Save unavailable — kept in this tab. Save now retries.")).toBeVisible();
+  // The save line as the words file says it (it said "kept in this tab" until the window stopped keeping it).
+  await expect(page.getByText(cockpitWords.rail.save.unavailable, { exact: true })).toBeVisible();
 
   panel = await openHire(page);
   await expect(panel).not.toContainText("WCB-Alberta");
@@ -232,13 +234,18 @@ test("second review of #207: road 1 opened from Ontario lists no skill item rest
   await expect(panel).toBeVisible();
   await expect(panel).not.toContainText("Alberta Student Number");
   expect(await panel.locator(ALBERTA_LINKS).count()).toBe(0);
+  // What the step drew instead: under What it needs, that its legal requirements rest on other provinces' pages.
+  await expect(panel).toContainText(cockpitWords.panel.requirementsNoneForPlace);
   await panel.getByRole("button", { name: "Close", exact: true }).click();
 
   await goalBar(page).getByRole("button", { name: /^Skills/ }).click();
-  const skills = page.getByRole("region", { name: "Skills on this road" });
+  // The list's own name, from the words file (#209 renamed it "Skills and legal requirements"; #207's test, written
+  // first, looked for "Skills on this road" and found nothing once the two were merged).
+  const skills = page.getByRole("region", { name: cockpitWords.lists.skillsTitle });
   await expect(skills).toBeVisible();
   await expect(skills).not.toContainText("Alberta Student Number");
   expect(await skills.locator(ALBERTA_LINKS).count()).toBe(0);
+  await expect(skills).toContainText(cockpitWords.lists.requirementsNoneForPlace);
 });
 
 test("control: road 1 in Alberta lists Alberta Student Number with its Alberta pages, so the check above can see them", async ({ page }) => {

@@ -7,12 +7,15 @@ import type { CitationVerificationStatus, CorpusPointer, EngineCitation } from "
 import { httpsOnly } from "@/lib/http/safe-url";
 import { provisionLines } from "@/lib/law/provision-lines";
 
+import { PageQuotes } from "./page-quotes";
+
 /**
  * S2.5.4f (decided 2026-09-13) — show the law on every item, as clickable official links.
  * Every citation is a link to its official URL (Justice Canada for the Act, canada.ca for
  * CRA), with authority · jurisdiction · how it was checked ("Read by a person on <date>", "Read on
  * <date>. Who read it wasn't recorded.", an AI model's read or "Checked by a tool on <date>: …",
- * 2026-10-11), and the statute-check status where one exists.
+ * 2026-10-11), and the statute-check status where one exists. A citation that says what its page holds
+ * (`pageHolds`, since 2026-10-29) has that line under its title.
  * PARTIAL is amber on purpose: it is the gap the UI must show, not hide.
  *
  * S2.5.4i (decided 2026-09-14) — "Show the words". A citation that carries
@@ -64,6 +67,10 @@ export function CitationLinks({ citations, compact = false }: { citations: Engin
               <span className="min-w-0 flex-1 font-semibold text-paper">{c.title} ↗</span>
               {c.verification ? <StatusChip status={c.verification.status} className="shrink-0" /> : null}
             </span>
+            {/* What the page holds, in plain English, so a reader knows what to look for on it (the maintainer's
+                note of 2026-10-28). Only a source that has one: the line comes from a words file
+                (lib/engines/shared/words.ts), never from this component. */}
+            {c.pageHolds ? <span className="mt-0.5 block text-small leading-4 text-stone">{c.pageHolds}</span> : null}
             {/* How it was checked (decided 2026-10-11, docs/engines/citations.md). A person's read,
                 or a read nobody recorded the reader of, keeps its place on the one line; an AI
                 model's read or a tool check gets its own line, in amber, because it says no person
@@ -78,16 +85,8 @@ export function CitationLinks({ citations, compact = false }: { citations: Engin
                   {c.authority} · {c.jurisdiction}
                 </span>
                 <span className="mt-1 block text-small leading-4 text-amber">{howCheckedWords(c)}</span>
-                {toolCheckQuotes(c).length > 0 ? (
-                  <span className="mt-0.5 block text-small leading-4 text-stone">
-                    Words found on the page:{" "}
-                    {toolCheckQuotes(c).map((q, i) => (
-                      <span key={q} className="text-paper-dim">
-                        {i > 0 ? " · " : ""}“{q}”
-                      </span>
-                    ))}
-                  </span>
-                ) : null}
+                {/* The official-quote component: the page's own words, after their label. */}
+                <PageQuotes quotes={toolCheckQuotes(c)} className="mt-0.5 block text-small leading-4 text-stone" />
               </>
             )}
             {c.verification?.status === "partial" ? (

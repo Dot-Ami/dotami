@@ -310,7 +310,14 @@ export function notToldYet(input: RoadEvaluationInput, evaluation: RoadEvaluatio
     rows.push({ id: "cost-lines", question: q.costLines.question(money.notPricedLines), unlocks: q.costLines.unlocks, answer: "money" });
   }
   if (evaluation.gauges.skills.notMarked > 0) {
-    rows.push({ id: "skills", question: q.skills.question(evaluation.gauges.skills.notMarked), unlocks: q.skills.unlocks, answer: "skills" });
+    // Skills and legal requirements named apart: a legal requirement is never asked about as a skill.
+    const s = evaluation.gauges.skills;
+    rows.push({
+      id: "skills",
+      question: q.skills.question(s.listedSkills.notMarked, s.legalRequirements.notMarked),
+      unlocks: q.skills.unlocks,
+      answer: "skills",
+    });
   }
   if (!onRoad0) {
     // Road 0's forks always hold the map's pick; they are asked below, as map picks.

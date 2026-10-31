@@ -24,7 +24,7 @@ export interface KeptForIdea {
 /**
  * Everything the cockpit reads for the idea on screen: which saved idea it is, its figures (every state,
  * for the reminder banner; the page passes only agreed ones on), and what the cockpit keeps for it. An
- * idea not saved yet (only in this tab) has none of it, and the screen says nothing can be kept.
+ * idea not saved yet (held only in the window's memory) has none of it, and the screen says nothing can be kept.
  * Offline or with no database, the map still runs on the idea's own answers, as it always has.
  */
 export function useCockpitData(scenarioId: string | null) {

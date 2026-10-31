@@ -2,13 +2,15 @@
 
 Page: Landing (`/`) · Component: `components/discovery/landing-page.tsx`
 
-Last updated: 2026-07-02
+Last updated: 2026-10-23 (the chips in the words file, the second reworded; first written 2026-07-02)
 
 ## What it is
 
-Three pill buttons under the free-text box (`EXAMPLE_PROMPTS`, hardcoded in the
-component): "I want to monetize a hobby" / "I'm already running a business — optimize my
-write-offs" / "I don't know what to start yet — show me what's available".
+Three pill buttons under the free-text box: "I want to monetize a hobby" / "I'm already
+running a business — show me the write-off rules for it" / "I don't know what to start yet — show
+me what's available". Since 2026-10-23 they are in the words file (`frontDoorWords.examplePrompts`,
+`lib/front-door/words.ts`), and the second no longer says "optimize my write-offs", which read as a
+promise about the person's taxes.
 
 ## What it does (behavior on interact)
 
@@ -26,6 +28,6 @@ Local `text` state only. No journey state, no API call.
 
 ## Data source
 
-Hardcoded array in the component (`EXAMPLE_PROMPTS`). Not a catalog/engine value — flagged
-per `docs/engines/README.md` § duplication only if these ever needed to reflect real
-taxonomy/engine data; today they're just example copy, so hardcoding is fine.
+`frontDoorWords.examplePrompts` in `lib/front-door/words.ts` (the component held them as
+`EXAMPLE_PROMPTS` until 2026-10-23). Not a catalog/engine value: example copy, held to the words
+files' checks (no verdict, no times).

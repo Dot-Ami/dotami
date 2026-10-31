@@ -21,8 +21,10 @@ import {
 } from "./worker-protocol";
 
 export const BOOK_READ_FAILED = "DotAmi couldn't read that book. Nothing was kept.";
+// "stopped reading that book after a minute" until 2026-10-24: no times in DotAmi's own words (the maintainer's
+// decision 2 of that day). The limit itself is BOOK_READ_TIMEOUT_MS.
 export const BOOK_READ_TOO_SLOW =
-  "DotAmi stopped reading that book after a minute, so nothing was read. Nothing was kept.";
+  "DotAmi stopped reading that book before the read finished, so nothing was read. Nothing was kept.";
 const STOPPED = "Stopped. Nothing was kept.";
 
 /** The parts of a Worker this file uses, so the tests can hand in a stand-in. */

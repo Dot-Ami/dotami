@@ -24,10 +24,11 @@ import { pickWords } from "./words";
 /**
  * The roads *Pick a future* lists, and every count on *Your destination* is of. Road 0, the first written
  * future, and (since 2026-10-21, task 28d) the federal steps for any business in Canada. The first written
- * future's sources are all tool checks: no person has read them yet. The maintainer decided on 2026-10-13 that
- * such a road may be listed (future-cockpit.md § 13, "Listing a road nobody has read"), because its card says
- * so in amber (`sourcesLine` below, counted through lib/engines/shared/citation-check.ts). Listing another
- * road is adding its id here.
+ * future's sources are all tool checks, and until 2026-10-27 no person's read of any was recorded. The
+ * maintainer decided on 2026-10-13 that such a road may be listed (future-cockpit.md § 13, "Listing a road
+ * nobody has read"), because its card says in amber how many of its sources no person has read (`sourcesLine`
+ * below, counted through lib/engines/shared/citation-check.ts); the 8 on the three CRA pages he read in full on
+ * 2026-10-25 say so in grey. Listing another road is adding its id here.
  */
 export const LISTED_ROAD_IDS: readonly string[] = [generalRoadV2026.id, roadApprenticeToOwnShopAB.id, FEDERAL_ROAD_ID];
 
@@ -86,8 +87,13 @@ export interface FutureCard {
   kind: RoadKind;
   writtenFor: readonly Province[];
   steps: number;
-  /** Skill items the road lists, each once. */
+  /** Skill items the road lists, each once: its listed skills, never its legal requirements. */
   skillsListed: number;
+  /**
+   * The road's legal requirements (an ID number, an agreement, a certificate), each once, counted apart from its
+   * skills as the cockpit counts them (a review of 2026-10-23: the apprentice road's card read "3 skills listed").
+   */
+  requirementsListed: number;
   officialFees: number;
   /** Named cost lines: the ones the person prices themselves. */
   linesToPrice: number;
@@ -142,19 +148,23 @@ export function futureCards(
   skillItems: readonly SkillItem[],
   place: string | null = null,
 ): FutureCard[] {
+  const legal = new Set(skillItems.filter((item) => item.kind === "legal-requirement").map((item) => item.id));
   return roads.map((written) => {
     // What this person will be shown inside (call 34): the road as the cockpit draws it for their place, and its
     // skill items' sources for that place (second review of #207). `skillItems` are passed as written.
     const road = place === null ? written : roadForPlace(written, place, skillItems);
     const items = place === null ? skillItems : skillItemsForPlace(skillItems, place);
     const costs = road.steps.flatMap((step) => step.costs);
+    // The road's items for this place, each once, split by kind as the cockpit counts them.
+    const needed = [...new Set(road.steps.flatMap((step) => step.needs))];
     return {
       roadId: road.id,
       label: road.label,
       kind: road.kind,
       writtenFor: road.provinces,
       steps: road.steps.length,
-      skillsListed: new Set(road.steps.flatMap((step) => step.needs)).size,
+      skillsListed: needed.filter((id) => !legal.has(id)).length,
+      requirementsListed: needed.filter((id) => legal.has(id)).length,
       officialFees: costs.filter((cost) => cost.kind === "official-fee").length,
       linesToPrice: costs.filter((cost) => cost.kind === "named").length,
       sources: countSources(roadCitations(road, items, place)),

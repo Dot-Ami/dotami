@@ -1,7 +1,12 @@
+import { MAINTAINER_READ_ON } from "@/lib/engines/shared/maintainer-reads";
+import { sourceWords } from "@/lib/engines/shared/words";
+
 import type { WriteOffCategory } from "./types";
 
 // Until 2026-10-13 the CRA pages here shared one read date, 2026-06-08. Each of those pages moved; the
 // new addresses carry a tool check instead, and each comment names the old address and its read date.
+// A page the maintainer read in full on 2026-10-25 carries his read too, which wins on screen
+// (docs/engines/citations.md, § The maintainer's reads of 2026-10-25).
 
 export const writeOffCategoriesV2026 = [
   {
@@ -31,16 +36,21 @@ export const writeOffCategoriesV2026 = [
         authority: "CRA",
         jurisdiction: "CA",
         // The page moved: its old address (…/report-business-income-expenses/business-expenses/business-use-home-expenses.html,
-        // read 2026-06-08) answered 404 on 2026-10-13. A tool found these words on the new page that day;
-        // no person has read it yet (option B, docs/engines/citations.md).
+        // read 2026-06-08) answered 404 on 2026-10-13. A tool found these words on the new page that day
+        // (option B, docs/engines/citations.md), and the maintainer read it in full on 2026-10-25. The fifth, the
+        // page's sentence on the business part, joined on 2026-10-27: `node scripts/check-quotes.mjs` found all five
+        // that day, so the check is that day's (the home office risk read quotes it).
         url: "https://www.canada.ca/en/revenue-agency/services/tax/businesses/topics/sole-proprietorships-partnerships/report-business-income-expenses/completing-form-t2125/business-use-home-expenses.html",
+        lastVerified: MAINTAINER_READ_ON,
+        readBy: "person",
         toolCheck: {
-          checkedOn: "2026-10-13",
+          checkedOn: "2026-10-27",
           quotes: [
             "You can deduct expenses for the business use of a workspace in your home",
             "it is your principal place of business",
             "you use the space only to earn your business income, and you use it on a regular and ongoing basis to meet your clients, customers, or patients",
             "cannot be more than your net income from the business before you deduct these expenses",
+            "To calculate the part you can deduct, use a reasonable basis, such as the area of the workspace divided by the total area of your home.",
           ],
         },
         note: "CRA home office expense guidance.",
@@ -66,7 +76,15 @@ export const writeOffCategoriesV2026 = [
     },
     citations: [
       {
-        title: "Income Tax Act s.18(1)(a), s.67, s.67.2, s.67.3 — purpose test, reasonableness, interest and lease caps",
+        // The title names only what the page holds: s.67.3, under the section's own heading, which
+        // scripts/check-quotes.mjs found on the page on 2026-10-29 (s.67's and s.67.2's headings are on their own
+        // pages, not this one). The maintainer's pick A on his reading page, 2026-10-28. Until 2026-10-29 it was "Income Tax
+        // Act s.18(1)(a), s.67, s.67.2, s.67.3 — purpose test, reasonableness, interest and lease caps". The corpus
+        // list keeps all four provisions, which "Show the words" reads from DotAmi's own statute store.
+        title: "Income Tax Act s.67.3 — Limitation re cost of leasing passenger vehicle",
+        // His note the same day: "there should be a subtitle explaining what the page holds in plain english so the
+        // user (if they read it) knows what to looks for while reading." DotAmi's own words, from the words file.
+        pageHolds: sourceWords.pageHolds.ita67_3,
         corpus: [
           { source: "ita", label: "18", sub: "(1)(a)" },
           { source: "ita", label: "67" },
@@ -76,7 +94,10 @@ export const writeOffCategoriesV2026 = [
         authority: "federal",
         jurisdiction: "CA",
         url: "https://laws-lois.justice.gc.ca/eng/acts/I-3.3/section-67.3.html",
-        lastVerified: "2026-09-13",
+        // Read from the statute store on 2026-09-13 (who read it wasn't recorded; `verification` keeps that check);
+        // the maintainer read the page in full on 2026-10-25.
+        lastVerified: MAINTAINER_READ_ON,
+        readBy: "person",
         verification: { status: "supported", method: "Provision text read from the consolidated Act in corpus.db (2026-09-13): the 67.2 / 67.3 caps and their A × B / 30 formula. The amounts in the entry text are the ones Income Tax Regulations s.7307 prescribe (the next source), which that reading didn't cover." },
         note: "Read from the consolidated Act (the maintainers' statute store). Proportionality rests on 18(1)(a) 'to the extent... for the purpose of gaining or producing income'; 67 requires reasonableness. 67.2 limits interest and 67.3 limits lease charges; the Act's own figures, $250 and $600, each stand 'or such other amount as may be prescribed', and the amounts prescribed are in Income Tax Regulations s.7307 (the next source).",
       },
@@ -89,8 +110,11 @@ export const writeOffCategoriesV2026 = [
         authority: "federal",
         jurisdiction: "CA",
         // Added 2026-10-23 (the maintainer's reading list, item writeoff-vehicle/interest-and-lease-caps): a tool
-        // found these words on the consolidated Regulations' page that day; no person has read it yet (option B).
+        // found these words on the consolidated Regulations' page that day (option B), and the maintainer read it in
+        // full on 2026-10-25.
         url: "https://laws-lois.justice.gc.ca/eng/regulations/C.R.C.,_c._945/section-7307.html",
+        lastVerified: MAINTAINER_READ_ON,
+        readBy: "person",
         toolCheck: {
           checkedOn: "2026-10-23",
           quotes: [
@@ -109,8 +133,11 @@ export const writeOffCategoriesV2026 = [
         authority: "CRA",
         jurisdiction: "CA",
         // Moved: the old address (…/report-business-income-expenses/business-expenses/motor-vehicle-expenses.html,
-        // read 2026-06-08) answered 404 on 2026-10-13; a tool found this sentence on the new page that day.
+        // read 2026-06-08) answered 404 on 2026-10-13; a tool found this sentence on the new page that day, and the
+        // maintainer read it in full on 2026-10-25.
         url: "https://www.canada.ca/en/revenue-agency/services/tax/businesses/topics/sole-proprietorships-partnerships/business-expenses/motor-vehicle-expenses.html",
+        lastVerified: MAINTAINER_READ_ON,
+        readBy: "person",
         toolCheck: {
           checkedOn: "2026-10-13",
           quotes: ["You can deduct expenses you incur to run a motor vehicle you use to earn business income."],
@@ -156,7 +183,10 @@ export const writeOffCategoriesV2026 = [
         url: "https://laws-lois.justice.gc.ca/eng/regulations/C.R.C.,_c._945/section-1100.html",
         lastVerified: "2026-09-13",
         verification: { status: "confirmed", method: "Read verbatim from corpus.db (Regulations current to 2026-06-21). Sch. II Class 50: 'general-purpose electronic data processing equipment and systems software for that equipment'. s.1100(1)(a)(xxxvi): 'of Class 50, 55 per cent'. s.1100(2)(c.3): 'if the class is Class 50, (i) 9/11, for property that was acquired and became available for use by the taxpayer after April 15, 2024 and before 2027, and (ii) nil … after 2026'. The 100% first year is arithmetic on that factor: 0.55 × (1 + 9/11) = 1.00." },
-        note: "The delegate the Act points to. Class definition, declining-balance rate and the time-boxed first-year factor all read from the Regulations' own text with its currency date — the numbers are the provision's words, not a stored rate.",
+        // "the time-boxed first-year factor" until 2026-10-24: a time word of DotAmi's own, drawn in the cockpit's
+        // Export panel (the playbook's markdown, lib/playbook/render-markdown.ts "Note:"). The factor has an end
+        // date, as the map's legend says.
+        note: "The delegate the Act points to. Class definition, declining-balance rate and the first-year factor with its end date all read from the Regulations' own text with its currency date — the numbers are the provision's words, not a stored rate.",
       },
       {
         title: "Classes of depreciable property",
@@ -179,7 +209,9 @@ export const writeOffCategoriesV2026 = [
         authority: "CRA",
         jurisdiction: "CA",
         url: "https://www.canada.ca/en/revenue-agency/services/forms-publications/publications/t4002/t4002-6.html",
-        lastVerified: "2026-07-02",
+        // Read on 2026-07-02 (who read it wasn't recorded); the maintainer read it in full on 2026-10-25.
+        lastVerified: MAINTAINER_READ_ON,
+        readBy: "person",
         note: "Class 50 enhanced 100% first-year deduction for property acquired after 2024-04-15 and available for use before 2027.",
       },
     ],
@@ -267,8 +299,11 @@ export const writeOffCategoriesV2026 = [
         authority: "CRA",
         jurisdiction: "CA",
         // Moved: the old address (…/scientific-research-experimental-development-tax-incentive/claim-sred-expenditures.html,
-        // read 2026-06-08) answered 404 on 2026-10-13; a tool found these words on the new page that day.
+        // read 2026-06-08) answered 404 on 2026-10-13; a tool found these words on the new page that day, and the
+        // maintainer read it in full on 2026-10-25.
         url: "https://www.canada.ca/en/revenue-agency/services/scientific-research-experimental-development-tax-incentive-program/sred-claim.html",
+        lastVerified: MAINTAINER_READ_ON,
+        readBy: "person",
         toolCheck: {
           checkedOn: "2026-10-13",
           quotes: ["determine which expenditures may be allowable (salary or wages, materials, contracts, overhead, and third-party payments)"],

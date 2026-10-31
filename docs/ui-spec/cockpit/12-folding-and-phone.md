@@ -43,7 +43,8 @@ the what-if bar, below); 2026-10-13 (the what-if bar folds too); built 2026-10-1
 >   anywhere. Each thing you tell us lights up part of the road. Click anything to see where it comes
 >   from.* with **Got it**, which puts it away for good in this browser (`coachDismissed`) and leaves
 >   keyboard focus on the road. On a phone it sits under the road instead (nothing above the road folds
->   there, so a line over it would push the road down), and the overlay switches are 24 px tall, not 32,
+>   there, so a line over it would push the road down), after *Next on your road* since 2026-10-23 (right
+>   under the road it sat on the card the road's area cuts off at its edge, and read as covering it), and the overlay switches are 24 px tall, not 32,
 >   so their two lines stay short; the road starts where it did before the calm view. Not on the
 >   example, where nothing can be told.
 > - **Fold all panels** folds all six, and **Show all panels** opens all six (the road ahead included).
@@ -98,7 +99,14 @@ fold buttons are at least 32 px tall.
 - **The panel stays folded** while the person picks other steps, gauges or Export: the new thing goes in
   the folded panel and the strip names it. **Close** inside the panel closes it and clears what it held,
   as before; the fold answer is kept for the next thing opened.
-- **Phone width (below 768 px).** The page never scrolls sideways. The rail is not drawn as a column:
+- **Phone width (below 768 px).** The page never scrolls sideways (`e2e/phone-width.spec.ts` checks every
+  page the screen review of 2026-10-23 walked at 375 px, held to a planted control), and no box on it scrolls
+  sideways inside itself but the road's own area (since 2026-10-26: a sheet that scrolls down scrolls sideways too,
+  and the check had counted any such box as clipping what it held; the walk now also opens the place box in
+  *What you've told DotAmi* and the Export panel, and measures *Your destination* where it is answered). The header keeps the
+  back link and its buttons on one line and gives the idea's name a line of its own under them, up to two
+  lines (between them it got about 75 px and showed *In…*). The four gauges are stacked, each inside the
+  window. The rail is not drawn as a column:
   **Venture details** in the header opens it as a full-width sheet, and **Close venture details** at the
   sheet's top closes it (not remembered: it is closed whenever the cockpit opens). The right-hand panel
   opens as a full-width sheet over the page, closed by its own **Close**. While a sheet is open, focus is
@@ -106,7 +114,9 @@ fold buttons are at least 32 px tall.
   Close), the page behind it is inert, and when it closes focus goes back to the button or card that
   opened it. The road's area is 70 % of the window's height and scrolls sideways one column at a time
   (each column the window's width less the margins; the scroll snaps to a column's edge); the page
-  scrolls down to *Next on your road* and the legend under it.
+  scrolls down to *Next on your road* and the legend under it. While a save has failed, a bar at the foot of
+  the window shows the save line and **Save now**, the rail's own, over the panel's sheet too (since 2026-10-26;
+  [02-left-rail.md](./02-left-rail.md), "A failed save on a phone").
 - **Below 1024 px, the folded panel's bar** is fixed along the bottom of the window, and the page leaves
   room under its last line for it, so it never covers the *Information, not legal or tax advice* line.
 - **768 to 1024 px.** The rail is a column; the right-hand panel opens as a 420 px drawer under the
@@ -151,7 +161,8 @@ None. The answers are read only by the cockpit page in the same browser.
 
 - Part 2's left list (*What you've told DotAmi*) lives in the same rail and folds with it (2026-10-13,
   as built).
-- On a phone, the folded goal bar's gauges scroll sideways inside their line when they don't fit.
+- On a phone, the folded goal bar's gauges wrap onto a second line when they don't fit (2026-10-23; from
+  768 px they scroll sideways inside their line).
 
 ## Backend wiring
 

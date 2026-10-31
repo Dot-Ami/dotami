@@ -3,6 +3,7 @@ import type { PrismaClient, VentureLinkKind as DbLinkKind } from "@prisma/client
 import { toStringList } from "@/lib/db/json-list";
 import { mapVentureRowToScenario } from "@/lib/db/prisma-venture-to-scenario";
 import { mapStage, reverseStage } from "@/lib/db/scenario-to-prisma";
+import { cleanNotSaid } from "@/lib/scenarios/not-said";
 import type { Scenario, VentureStage } from "@/lib/scenarios/types";
 
 const STUB_EMAIL = process.env.STUB_USER_EMAIL ?? "stub@dotami.local";
@@ -47,6 +48,12 @@ export interface VentureSummary {
   scenarioId: string | null;
   name: string;
   type: string;
+  /**
+   * False when the idea was saved without its kind of venture, because nobody asked (a future picked on Pick
+   * a future, `Venture.notSaid` holds "venture-type"): its `type` is then the intake's starting value, never
+   * the person's answer, and the card says "type not said" (2026-10-23).
+   */
+  typeSaid: boolean;
   province: string;
   stage: VentureStage;
   notes: string;
@@ -90,6 +97,7 @@ export async function listVentures(prisma: PrismaClient): Promise<VentureSummary
     scenarioId: row.scenarioSeedKey,
     name: row.name,
     type: row.type.toLowerCase().replace("_", "-"),
+    typeSaid: !cleanNotSaid(row.notSaid, row.targetRevenueY1).includes("venture-type"),
     province: row.province,
     stage: reverseStage(row.stage),
     notes: row.notes,

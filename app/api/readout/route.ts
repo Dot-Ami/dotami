@@ -1,16 +1,16 @@
 import { NextResponse } from "next/server";
 
 import { logRouteError } from "@/lib/api/log-error";
-import { NODE_ENGINE_HINTS } from "@/lib/brain/node-items";
 import { loadLatestVentureScenarioForStubUser } from "@/lib/db/load-latest-venture-for-stub-user";
 import { listVentures, loadVentureScenarioById } from "@/lib/db/ventures";
-import { cfeCatalogV2026 } from "@/lib/engines/cfe/v2026";
 import { howCheckedWords } from "@/lib/engines/shared/citation-check";
+import { listStepProgress } from "@/lib/futures/step-progress";
+import type { StepStatus } from "@/lib/futures/types";
 import { listTypedStatements } from "@/lib/person/statements";
 import { sortStatementsNewestFirst } from "@/lib/person/types";
 import { prisma } from "@/lib/prisma";
+import { readoutNodes, readoutScenario, stepMarks } from "@/lib/readout/nodes";
 import { evaluateScenario } from "@/lib/scenarios/evaluate-scenario";
-import { getScenarioNodeStatus, stageChipFor } from "@/lib/scenarios/graph";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -20,6 +20,9 @@ export const dynamic = "force-dynamic";
  * so a coding agent working with the person present can read it and reason over it there
  * (decided 2026-09-14: the agent, not the app, is the explorer, and it reaches DotAmi only
  * through this web API). The app computes; nothing in this payload is a judgment.
+ *
+ * Each stage's `chip` is where it sits on the map and `yourStatus` the person's own mark, or null where they
+ * gave none; since 2026-10-24 no list name says what the person did (lib/readout/nodes.ts).
  *
  *   GET /api/readout                → the most recently saved venture
  *   GET /api/readout?venture=<id>   → that venture (row id from /api/ventures)
@@ -61,26 +64,22 @@ export async function GET(request: Request) {
   // The venture's own branch picks, the same way the cockpit colours its map.
   const evaluation = evaluateScenario(scenario, { today });
 
-  const nodes = cfeCatalogV2026.nodes.map((node) => ({
-    id: node.id,
-    label: node.label,
-    stage: node.stage,
-    status: getScenarioNodeStatus(node.id, scenario),
-    // What the card's chip says on the map: "status" is "decision" for a pick and an untouched
-    // default alike, so this tells them apart ("your-pick", "default", "open-choice", …).
-    chip: stageChipFor(node.id, scenario),
-    evaluatorColour: evaluation.nodeStates[node.id],
-    // Which of the person's answers set that colour, in the rules' own sentence (2026-10-11).
-    evaluatorReason: evaluation.nodeReasons[node.id] ?? null,
-    trigger: node.trigger,
-    relevantEntryIds: NODE_ENGINE_HINTS[node.id] ?? [],
-  }));
+  // The person's own marks on the steps (doing, done, not for me): the only status the readout gives
+  // (2026-10-24). A failed read answers 503, never an empty list that would say no mark was given.
+  let marks: Map<string, StepStatus>;
+  try {
+    marks = venture ? stepMarks(await listStepProgress(prisma, venture.id)) : new Map();
+  } catch (error) {
+    logRouteError("readout", error);
+    return NextResponse.json({ error: "No database reachable." }, { status: 503 });
+  }
+  const nodes = readoutNodes(scenario, evaluation, marks);
 
   return NextResponse.json({
     generatedAt: new Date().toISOString(),
     today,
     venture,
-    scenario,
+    scenario: readoutScenario(scenario),
     evaluation: {
       provinceCoverage: evaluation.provinceCoverage,
       unlocks: evaluation.unlocks.map((u) => ({

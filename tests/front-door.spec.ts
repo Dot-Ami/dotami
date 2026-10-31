@@ -20,7 +20,16 @@ import { profileRows, ventureLine } from "@/lib/cockpit/profile-rows";
 import { withKept } from "@/lib/front-door/draft";
 import { futureCards, groupedForPlace, LISTED_ROAD_IDS, listedRoads, sourcesLine } from "@/lib/front-door/futures";
 import { DESTINATION_PLACES, DESTINATION_QUESTIONS, LOOKING_FOR, type LookingFor } from "@/lib/front-door/questions";
-import { destinationReceipt, incomeReceipt, lookingForReceipt, placeName, placeReceipt, roadIncludes } from "@/lib/front-door/receipts";
+import {
+  destinationReceipt,
+  incomeNotKeptLine,
+  incomeReceipt,
+  lookingForReceipt,
+  placeName,
+  placeReceipt,
+  roadIncludes,
+  wordsNotKept,
+} from "@/lib/front-door/receipts";
 import { firstSaveForPickedFuture, scenarioForPickedFuture } from "@/lib/front-door/start-future";
 import { destinationWords, frontDoorWords, incomePromptWords, pickWords } from "@/lib/front-door/words";
 import { parseFirstSave, parseScenarioInput } from "@/lib/db/parse-scenario-input";
@@ -32,6 +41,7 @@ import { buildEvaluationProfileFromScenario } from "@/lib/scenarios/evaluation-p
 import { buildScenarioFromIntake } from "@/lib/scenarios/build-scenario-from-intake";
 import { cockpitInput } from "@/lib/cockpit/view";
 
+import { MAINTAINER_READ_PAGES } from "./fixtures/maintainer-reads-2026-10-25";
 import { VERDICT_WORDS as VERDICT } from "./helpers/verdict-words";
 
 /** Every string a words object can produce, filling each function with plain values. */
@@ -99,16 +109,65 @@ describe("Your destination: the four questions are data", () => {
 });
 
 describe("the receipts: worked out from the answer and the catalogs, never a verdict", () => {
-  it("your words: kept, kept in this tab only, or not given", () => {
+  it("your words: kept, not kept with no database reachable, or not given", () => {
     // Only a future picked on Pick a future shows the destination on top; an idea with its own sentence
     // shows that sentence (components/cockpit/goal-bar.tsx), so the receipt says both (review, 2026-10-12).
     expect(destinationReceipt({ kept: "saved", text: "My own shop", saidAt: "2026-10-12" })).toBe(
       "Kept word for word, dated 2026-10-12. It goes at the top of each future you pick on Pick a future; an idea you describe in your own sentence shows that sentence instead.",
     );
     expect(destinationReceipt({ kept: "tab-only", text: "My own shop", saidAt: "2026-10-12" })).toBe(
-      "Not kept: no database reachable. It stays in this tab only.",
+      // Held in the window's memory only (lib/journey/held-journey.ts), never in window storage: every way a page
+      // is loaded afresh empties it, the desktop app's Go menu among them (2026-10-24).
+      "Not kept: no database reachable. A reload, a new window or the desktop app's Go menu asks it again.",
     );
     expect(destinationReceipt({ kept: "dont-know" })).toBe("Nothing kept. You can say it later; nothing here waits on it.");
+  });
+
+  it("your words when the server didn't answer: held in memory, said not kept, and the cause it knows", () => {
+    expect(destinationReceipt({ kept: "no-answer", text: "My own shop", saidAt: "2026-10-24" })).toBe(
+      "Not kept: the server didn't answer. A reload, a new window or the desktop app's Go menu asks it again.",
+    );
+  });
+
+  it("words the server didn't keep: what the page does, from how the server answered or that it didn't", () => {
+    const typed = ["My own shop", "2026-10-24"] as const;
+    // No database (a 503): held in memory, and the receipt says no database was reachable.
+    expect(wordsNotKept({ status: 503, body: { error: "No database reachable — not saved." } }, ...typed)).toEqual({
+      held: { kept: "tab-only", text: "My own shop", saidAt: "2026-10-24" },
+    });
+    // No answer at all (the server stopped, the request cut off): held, and the receipt says the server didn't answer.
+    expect(wordsNotKept(null, ...typed)).toEqual({ held: { kept: "no-answer", text: "My own shop", saidAt: "2026-10-24" } });
+    // A refusal in the server's words: shown, and the question stays open.
+    expect(wordsNotKept({ status: 400, body: { error: "Statements are 2,000 characters at most." } }, ...typed)).toEqual({
+      error: "Statements are 2,000 characters at most.",
+    });
+    // A refusal with no words of its own (a crash's HTML page): no cause it doesn't know, the words still in the box.
+    // Until a review of 2026-10-24 this said "no database reachable" and that a reload asks it again, though nothing
+    // was held and the database may have been fine.
+    expect(wordsNotKept({ status: 500, body: null }, ...typed)).toEqual({
+      error: "Not kept. Your words are still in the box, and Keep my words tries again.",
+    });
+  });
+
+  it("the yearly income not kept: the server's own words, or a line that names only the cause it knows", () => {
+    // Until 2026-10-24 the words receipt above was shown here, though nothing was held: only the box holds the amount
+    // (components/front-door/destination-page.tsx). Until a review of the same day it said "no database reachable"
+    // wherever the server gave no words of its own; a database that is down answers 503 in its own words.
+    expect(incomeNotKeptLine({ status: 503, body: { error: "No database reachable — nothing was changed." } })).toBe(
+      "No database reachable — nothing was changed.",
+    );
+    expect(incomeNotKeptLine(null)).toBe("Not kept: the server didn't answer. The amount is still in the box, and Keep it tries again.");
+    expect(incomeNotKeptLine({ status: 500, body: null })).toBe("Not kept. The amount is still in the box, and Keep it tries again.");
+    // A 201 that carries no proposal: nothing to agree to, and no cause named.
+    expect(incomeNotKeptLine({ status: 201, body: {} })).toBe(destinationWords.receipts.incomeNotKept);
+  });
+
+  it("a line of DotAmi's says no database was reachable only where the server said so (a 503)", () => {
+    const own = [destinationWords.receipts.incomeNotKept, destinationWords.receipts.incomeNoAnswer, destinationWords.receipts.destinationNotKept, destinationWords.receipts.destinationNoAnswer];
+    expect(own.filter((line) => /no database/i.test(line))).toEqual([]);
+    // The buttons the lines name are the page's own.
+    expect(destinationWords.receipts.destinationNotKept).toContain(destinationWords.keepWords);
+    expect(destinationWords.receipts.incomeNotKept).toContain(destinationWords.keepAmount);
   });
 
   it("I don't know yet, with words already kept: says they are still kept and still shown, and how to remove them", () => {
@@ -245,7 +304,7 @@ describe("Pick a future: every written future, in the order added, as counts", (
 
   it("lists road 0 and the first written future: the maintainer said yes on 2026-10-13 (design § 13)", () => {
     // The first written future's sources are all tool checks; the maintainer decided on 2026-10-13 that it
-    // may be listed, with its card saying so in amber (the test below).
+    // may be listed, with its card saying in amber how many of them no person has read (the test below).
     expect(LISTED_ROAD_IDS).toEqual([generalRoadV2026.id, roadApprenticeToOwnShopAB.id, roadFederalStepsCA.id]);
     expect(listedRoads(roadsV2026, "AB").map((r) => r.id)).toEqual([generalRoadV2026.id, roadApprenticeToOwnShopAB.id]);
     // In the catalog's order, whatever order the list names them in.
@@ -293,20 +352,26 @@ describe("Pick a future: every written future, in the order added, as counts", (
     }
   });
 
-  it("the first written future's card says its sources were checked by a tool, not read by a person, in amber", () => {
+  it("the first written future's card says how many sources a person read, and that the rest were checked by a tool, not read by a person, in amber", () => {
     const apprentice = futureCards(listedRoads(roadsV2026, "AB"), skillItemsV2026).find(
       (c) => c.roadId === roadApprenticeToOwnShopAB.id,
     )!;
     const parts = sourcesLine(apprentice.sources);
-    // One part only, the tool checks, marked check-first (amber on screen): no read of any kind to show.
+    // Until 2026-10-27 one part only, the tool checks. The maintainer read three of its CRA pages in full on 2026-10-25
+    // (tests/maintainer-reads.spec.ts): the GST/HST page under the small-supplier step and its three lines, the
+    // payroll account page under the hiring step and its payroll line, and the records page under the records step
+    // and its where-and-how-long line, 8 sources in grey. The rest, marked check-first (amber on screen), are tool
+    // checks; no read nobody recorded and no model's read.
     expect(parts).toEqual([
+      { text: "8 read by a person", checkFirst: false },
       { text: `${apprentice.sources.tool} checked by a tool only, not read by a person yet`, checkFirst: true },
     ]);
+    expect(apprentice.sources.tool).toBeGreaterThan(0);
     // The same claim lib/engines/shared/citation-check.ts makes for each of these sources.
     const oneSource = roadApprenticeToOwnShopAB.steps[0].citations[0];
     expect(howChecked(oneSource).kind).toBe("tool");
     expect(howCheckedWords(oneSource)).toMatch(/^Checked by a tool on .*Not read by a person yet\.$/);
-    expect(parts[0].text).toMatch(/checked by a tool.*not read by a person yet$/);
+    expect(parts[1].text).toMatch(/checked by a tool.*not read by a person yet$/);
   });
 
   it("the screens count only what Pick a future lists", () => {
@@ -318,15 +383,18 @@ describe("Pick a future: every written future, in the order added, as counts", (
     }
   });
 
-  it("the counts are the catalog's own: steps, skills listed, official fees, lines to price", () => {
+  it("the counts are the catalog's own: steps, skills listed, legal requirements, official fees, lines to price", () => {
+    const legal = new Set(skillItemsV2026.filter((i) => i.kind === "legal-requirement").map((i) => i.id));
     for (const [i, road] of roadsV2026.entries()) {
       const costs = road.steps.flatMap((s) => s.costs);
+      const items = [...new Set(road.steps.flatMap((s) => s.needs))];
       expect(cards[i]).toMatchObject({
         label: road.label,
         kind: road.kind,
         writtenFor: road.provinces,
         steps: road.steps.length,
-        skillsListed: new Set(road.steps.flatMap((s) => s.needs)).size,
+        skillsListed: items.filter((id) => !legal.has(id)).length,
+        requirementsListed: items.filter((id) => legal.has(id)).length,
         officialFees: costs.filter((c) => c.kind === "official-fee").length,
         linesToPrice: costs.filter((c) => c.kind === "named").length,
       });
@@ -335,9 +403,10 @@ describe("Pick a future: every written future, in the order added, as counts", (
 
   it("how the sources were checked: every citation on the road and its skill items, counted by kind", () => {
     const apprentice = cards.find((c) => c.roadId === roadApprenticeToOwnShopAB.id)!;
-    // Every source of the first written future is a tool check (docs/architecture/future-cockpit.md § 6).
+    // Every source of the first written future is a tool check (docs/architecture/future-cockpit.md § 6); those of the
+    // pages the maintainer read in full on 2026-10-25 carry his read too, which the card counts as a person's.
     expect(apprentice.sources.tool).toBeGreaterThan(0);
-    expect(apprentice.sources.person + apprentice.sources.unrecorded + apprentice.sources.model).toBe(0);
+    expect(apprentice.sources.unrecorded + apprentice.sources.model).toBe(0);
 
     // Counted independently here: the step's own sources, its done-when lines, its fee and name sources,
     // and the skill items it lists.
@@ -352,6 +421,12 @@ describe("Pick a future: every written future, in the order added, as counts", (
       ...skillItemsV2026.filter((item) => listed.has(item.id)).flatMap((item) => [...item.citations, ...(item.howToGetIt ? [item.howToGetIt.citation] : [])]),
     ];
     expect(apprentice.sources.tool).toBe(all.filter((c) => howChecked(c).kind === "tool").length);
+    const read = all.filter((c) => howChecked(c).kind === "person");
+    expect(apprentice.sources.person).toBe(read.length);
+    // A person's read only where the maintainer's reads of 2026-10-25 put one, and every source has a tool check.
+    const hisPages = new Set(MAINTAINER_READ_PAGES.map((p) => p.url));
+    expect(read.filter((c) => !hisPages.has(c.url)).map((c) => c.url)).toEqual([]);
+    expect(all.filter((c) => !c.toolCheck).map((c) => c.url)).toEqual([]);
   });
 
   it("the sources line says each kind it has, and only those", () => {

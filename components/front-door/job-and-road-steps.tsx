@@ -61,8 +61,14 @@ export function JobAndRoadSteps({
   roadJobs,
   firstSentence = null,
   introExtra = null,
+  stepCount,
   onLookInside,
 }: {
+  /**
+   * Each step's "n of total" line. Left out on Pick a future, whose three steps count "1 of 3" to "3 of 3"; the
+   * intake gives the typed way's one numbering (lib/front-door/typed-way.ts), so its steps go on from Ground it.
+   */
+  stepCount?: (step: "work" | "where" | "pick") => string;
   host: "futures" | "intake";
   state: StepsState;
   setState: (state: StepsState) => void;
@@ -82,6 +88,8 @@ export function JobAndRoadSteps({
 }) {
   const regions = host === "futures";
   const mark = (name: string) => (regions ? { "data-region": name } : {});
+  const count = (step: "work" | "where" | "pick") =>
+    stepCount ? stepCount(step) : { work: jobStepWords.stepCount, where: whereStepWords.stepCount, pick: pickWords.stepCount }[step];
   const province = provinceOfPlace(place);
   const headingRef = useRef<HTMLHeadingElement | null>(null);
   const firstPart = useRef(true);
@@ -112,7 +120,7 @@ export function JobAndRoadSteps({
   if (state.part === "work") {
     return (
       <>
-        {intro(jobStepWords.stepCount, jobStepWords.heading, <p className="mt-2 text-lead text-paper-dim">{jobStepWords.lead}</p>)}
+        {intro(count("work"), jobStepWords.heading, <p className="mt-2 text-lead text-paper-dim">{jobStepWords.lead}</p>)}
         <WorkStep regions={regions} firstSentence={firstSentence} onPick={(job) => setState(pickedJob(state, job, province))} onSkip={() => setState(skipped())} />
       </>
     );
@@ -121,7 +129,7 @@ export function JobAndRoadSteps({
   if (state.part === "area" || state.part === "region") {
     return (
       <>
-        {intro(whereStepWords.stepCount, whereStepWords.heading, pickedLine)}
+        {intro(count("where"), whereStepWords.heading, pickedLine)}
         <WhereStep regions={regions} state={state} setState={setState} />
       </>
     );
@@ -131,7 +139,7 @@ export function JobAndRoadSteps({
     const name = province ? PROVINCE_LABELS[province] : placeName(place);
     return (
       <>
-        {intro(whereStepWords.stepCount, whereStepWords.outside.heading(name), pickedLine)}
+        {intro(count("where"), whereStepWords.outside.heading(name), pickedLine)}
         <div {...mark("step")} className="max-w-2xl space-y-3">
           <p className="text-lead text-paper-dim">{whereStepWords.outside.notAsked(name)}</p>
           <p className="text-body text-stone">{whereStepWords.outside.why}</p>
@@ -155,7 +163,7 @@ export function JobAndRoadSteps({
       roadJobs={roadJobs}
       intro={(lines) =>
         intro(
-          pickWords.stepCount,
+          count("pick"),
           pickWords.heading,
           <>
             <p className="mt-2 text-lead text-paper-dim">{pickWords.order}</p>

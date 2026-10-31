@@ -16,8 +16,9 @@ A write-off surfaces when its `conditions` predicate (see
 - **Green**: activity/structure/province match, no caution. E.g. SaaS founder → software
   subscriptions.
 - **Yellow**: matches but needs apportionment honesty, documentation, or professional
-  confirmation. Home office (exclusive-use test), vehicle (logbook), **anything CCA with
-  mixed personal/business use**, and every time-boxed incentive.
+  confirmation. Home office (one of the CRA's two conditions, and the business's net income as
+  the limit; its risk read quotes the CRA's page since 2026-10-24), vehicle (logbook), **anything
+  CCA with mixed personal/business use**, and every time-boxed incentive.
 - **Gray**: structure or activity rules it out.
 
 `why` strings are templated from the matched predicate ("Shown because you selected

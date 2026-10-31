@@ -54,3 +54,18 @@ export interface ComplianceRule {
   /** Present when this rule, wherever it applies, takes away another rule's threshold "not yet". */
   setsAsideThreshold?: ThresholdSetAside;
 }
+
+/**
+ * A rule taken off the catalog: the page it cited, the day that page was opened, and why it came off. The same shape
+ * as the grants catalog's retired programs (#207). No `readBy` here: it says nothing about who read the page, and only
+ * lib/engines/shared/citation-check.ts reads a citation's record of that.
+ */
+export interface RetiredComplianceRule {
+  id: string;
+  label: string;
+  /** The page the rule cited, as it cited it. */
+  url: string;
+  /** The day the maintainer's reading list's tool opened that page to see what it says now. */
+  readOn: string;
+  why: string;
+}
