@@ -2,7 +2,8 @@
  * The CRA's and the Income Tax Act's words on the SR&ED credit's rates and the enhanced rate's expenditure limit, as
  * the maintainer's reading list found them on their live pages on 2026-10-23 (items grant-sred/*,
  * stage-3b-incorporation-liability-sred/35, stage-4-sred-deepening/35, sred-expenditure-limit-6-million). The SR&ED
- * card (./programs.ts) quotes them from here, and so can the map's two SR&ED stages, so two copies can't drift.
+ * card (./programs.ts) quotes them from here, and so can the map's two SR&ED stages, so two copies can't drift. One,
+ * `ccpcEnhanced`, is quoted nowhere since 2026-10-30 (the older page's; it stays for its citations' tool checks).
  *
  * The reading list's tool found them with the repo's matcher, the same whole-word, one-block match as
  * scripts/check-quotes.mjs, so each citation that relies on them records a tool check of that day. A networked
@@ -10,9 +11,10 @@
  * change one only after `--url … --quote …` finds the new words. The maintainer read each of these pages in full on
  * 2026-10-25, so their citations carry his read too, which wins on screen (§ The maintainer's reads of 2026-10-25).
  * One is not the reading list's: `glossaryEnhanced`, which `node scripts/check-quotes.mjs` found on 2026-10-27, so
- * its citation's check is of that day. Nor are `individualRefundable` and `SRED_POLICY_CCPC_LIST`, from the CRA's
- * SR&ED Investment Tax Credit Policy, which the script found together on 2026-10-30 (`SRED_POLICY_FOUND_ON`); nobody
- * has read that page in full yet.
+ * SR&ED deepening's citation of the glossary has a check of that day; Incorporation for liability/SR&ED's own citation
+ * of it, since 2026-10-30, has a check of that day, when the script found the line again. Nor are
+ * `individualRefundable` and `SRED_POLICY_CCPC_LIST`, from the CRA's SR&ED Investment Tax Credit Policy, which the
+ * script found together on 2026-10-30 (`SRED_POLICY_FOUND_ON`); nobody has read that page in full yet.
  */
 
 /** The day the reading list's tool found every reading-list quote below on its page. */
@@ -51,13 +53,19 @@ export const SRED_WORDS = {
   basicRate: "Your business may earn the credit at a basic rate of 15%.",
   enhancedRate: "Some corporations may claim an ITC at the enhanced rate of 35%.",
   someRefundable: "Some businesses may also earn a refundable ITC.",
-  // The CRA's How certain relationships affect the small business deduction and SR&ED investment tax credits.
+  // The CRA's How certain relationships affect the small business deduction and SR&ED investment tax credits (its page
+  // date 2025-07-21). The CCPC's card quoted it from 2026-10-24, and Incorporation for liability/SR&ED's 35% too. Since
+  // the maintainer's answer of 2026-10-30 (his reading page, item 9: "The whole older page") it is quoted nowhere: the
+  // page is the older of the two CRA pages that disagree on refunds (docs/engines/citations.md, rule 8). It stays as
+  // the words three citations of the page hold in their tool checks: the SR&ED card's and the two SR&ED stages'.
   ccpcEnhanced:
     "Some CCPCs may earn an ITC at an enhanced rate of 35% on qualified SR&ED expenditures up to their expenditure limit for the year.",
   // The CRA's SR&ED glossary, its entry "Enhanced SR&ED investment tax credit rate (35%)": the line the maintainer
   // asked for on SR&ED deepening. Not a reading-list find: `node scripts/check-quotes.mjs` found it on 2026-10-27. It
   // stops before the entry's split of the rate by year, and the entry's next sentence (a $3 million threshold, older
-  // than the $6 million the CRA's other pages give) is never quoted.
+  // than the $6 million the CRA's other pages give) is never quoted. Since 2026-10-30 Incorporation for
+  // liability/SR&ED's 35% quotes it too, in place of `ccpcEnhanced` (the maintainer's answer on his reading page, item
+  // 9), and the script found it again that day for that stage's own citation of the glossary.
   glossaryEnhanced:
     "Some Canadian-controlled private corporations (CCPCs) that meet certain requirements may earn investment tax credits at the enhanced rate of 35%",
   // The CRA's What's new for corporations, under "2025 – Federal". The page's own line that it lists "proposed,
@@ -71,7 +79,8 @@ export const SRED_WORDS = {
   // item 5: the line a sole proprietor's card quotes (the maintainer's answer of 2026-10-29). Quoted whole, with its
   // "Generally" and the CRA's own "individual (other than a trust)": DotAmi never says in its own words that a sole
   // proprietor is one. The page numbers it "5)"; the line is quoted from its first word, as the card has it. Never
-  // quoted beside it: the relationships page's "non-refundable" 15% for unincorporated businesses (the older page).
+  // quoted beside it: the relationships page's "non-refundable" 15% for unincorporated businesses (the older page,
+  // which since 2026-10-30 no card quotes at all).
   individualRefundable:
     "Generally, for an individual (other than a trust), the refundable ITC is 40% of the unclaimed balance of ITC earned in the current year for qualified SR&ED expenditures.",
 } as const;
@@ -86,7 +95,8 @@ export const SRED_WORDS = {
  * earn an ITC at the basic rate (see section 2.2.1) are for the non-refundable ITC. …" (block 398), follows it outside
  * it, so it is not quoted: the maintainer's to add. "other than 1 that is" in item 2 is the page's own wording. The
  * list's "in the year" and its one date (item 3) are the CRA's words, shown only inside quote marks under the page's
- * title; DotAmi writes no time of its own beside them. Change a line only after the script finds the new words.
+ * title; DotAmi writes no time of its own beside them. The date stays on his answer of 2026-10-30 (his reading page,
+ * item 9): keep the list whole, with the CRA's date in item 3. Change a line only after the script finds the new words.
  */
 export const SRED_POLICY_CCPC_LIST = [
   "According to the definition of refundable ITC in the Income Tax Act, and other supporting provisions, the following types of claimants can earn a refundable ITC:",

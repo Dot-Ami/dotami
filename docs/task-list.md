@@ -1131,17 +1131,22 @@ roadmap's build order.
       the fork on a sole proprietor's card that copies it, quote the policy page's section 4.1 list for
       corporations, its 13 lines whole and in order, found by `node scripts/check-quotes.mjs` with the 40% line
       in one run that day; the page's one tool check holds them. The block after the list, on large
-      corporations' non-refundable ITC, is not quoted; it is his to add
-    - [x] The newer page wins, as a rule (his answer of 2026-10-30): where two official pages disagree, the card
-      quotes the newer one and the older stays listed, not quoted ([docs/engines/citations.md](engines/citations.md),
-      § Rules, rule 8)
+      corporations' non-refundable ITC, is not quoted; it is his to add. His two answers on item 9 the same day:
+      the list stays whole, the CRA's date in its item 3 with it; and the older relationships page is quoted
+      nowhere, so its 35% line came off the CCPC's note and the fork (the card's 35% rests on the list's lines)
+    - [x] The newer page wins, as a rule (his answers of 2026-10-30, items 8 and 9): where two official pages
+      disagree, the card quotes the newer one, and the older stays listed, with its own check, and is quoted
+      nowhere, none of its lines ([docs/engines/citations.md](engines/citations.md), § Rules, rule 8)
     - [ ] Which page applies to which case: his "library that can tell the difference between the old and new
-      pages", research first, with [14q] (S2.5.41) and the planned work on how fresh a source is; not built
+      pages", and which of two pages is accurate and true (his note on item 9), research first, with [14q]
+      (S2.5.41) and the planned work on how fresh a source is; not built
     - [ ] SR&ED's $6 million: the tax years it applies from, and the sentence of s.127(10.2) that leads into
       its formula
     - [x] *SR&ED deepening*'s 35% from the SR&ED glossary, as the maintainer asked: quoted since 2026-10-27,
       when `node scripts/check-quotes.mjs` found the glossary's entry on the enhanced rate with its two older quotes
-      (the stage keeps the relationships page for its tax impact)
+      (the stage keeps the relationships page for its tax impact). Since 2026-10-30 *Incorporation for
+      liability/SR&ED*'s 35% quotes the same line (his reading page, item 9: the older page quoted nowhere), from
+      its own citation of the glossary, a tool check of that day
     - [x] Home office: the CRA page's sentence on working out the business part (floor area as one basis):
       quoted in the box since 2026-10-27, found with the page's four older quotes that day
     - [x] The titles the CRA's SR&ED rates page and ISED's loans page give themselves: *What are SR&ED tax

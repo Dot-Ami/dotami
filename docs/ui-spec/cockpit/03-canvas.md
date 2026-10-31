@@ -1,6 +1,8 @@
 # Cockpit canvas — the map as tier columns
 
-Last updated: 2026-10-27 (SR&ED deepening's 35% quotes the SR&ED glossary; the maintainer's reads of 2026-10-25: every source of the four stages that
+Last updated: 2026-10-30 (Incorporation for liability/SR&ED's 35% quotes the SR&ED glossary too, and the glossary
+joins its sources: the maintainer's answer on his reading page, item 9, § Four more stages quote their pages);
+2026-10-27 (SR&ED deepening's 35% quotes the SR&ED glossary; the maintainer's reads of 2026-10-25: every source of the four stages that
 quote their pages, SR&ED deepening's third among them, says *Read by a person on 2026-10-25*, § Four
 more stages quote their pages; 2026-10-24: the maintainer's reading list: Incorporating's business
 limit reads "Up to $500,000" in the T2 guide's words, and four other stages quote their pages,
@@ -188,6 +190,11 @@ page's words in quotation marks, and the page is among the stage's own sources (
   (CCPCs) that meet certain requirements may earn investment tax credits at the enhanced rate of 35%”). The
   relationships page stays its third source, for the tax impact's "up to their expenditure limit for the
   year". Its sources still say *Read by a person on 2026-10-25*.
+- **Incorporation for liability/SR&ED**, since 2026-10-30: its 35% box quotes the same glossary line, under
+  *The CRA's SR&ED glossary:*, in place of the relationships page's (the maintainer's answer on his reading
+  page, item 9: where two official pages disagree, the older one is listed and quoted nowhere). *Sources for
+  this stage* gains the SR&ED glossary as a third source, after *Federal incorporation*, saying *Read by a
+  person on 2026-10-25* (its tool check of 2026-10-30 isn't drawn); the relationships page stays its first.
 
 Each stage's other sources said how they were checked as before ("Read on 2026-05-01. Who read it wasn't
 recorded.", or "Checked by a tool" in amber: on SR&ED deepening "on 2026-10-13", and on Hire first employee,

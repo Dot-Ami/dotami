@@ -21,17 +21,19 @@ const LAST_VERIFIED = "2026-06-08";
 const SOLE_PROP_SRED_NOTE = `The CRA: “${SRED_WORDS.basicRate}” “${SRED_WORDS.someRefundable}” The CRA's ${SRED_POLICY_TITLE}: “${SRED_WORDS.individualRefundable}”`;
 
 /**
- * The CRA's lines a CCPC's SR&ED card quotes: the relationships page's enhanced 35% and What's new's $6 million
- * (2026-10-24), then, since the maintainer's answer of 2026-10-30, the SR&ED Investment Tax Credit Policy's section 4.1
- * list for corporations, every line in the page's order, under the page's title as the sole proprietor's line is. The
- * policy page is the newer of the CRA's pages on refunds (docs/engines/citations.md, rule 8); the relationships page's
- * older "Some CCPCs may also earn a refundable ITC." is not quoted. lib/brain/evaluate.ts copies this note into a sole
- * proprietor's fork too, beside the individual's 40%, which is why the list is never cut: a part would read as the
- * whole. A "…" after item 4 marks the page's two other items (an individual, quoted on the sole proprietor's own line,
- * and a trust), as the Productivity Grant's card marks a list item it leaves out. DotAmi's own words here are only whose
- * words they are.
+ * The CRA's lines a CCPC's SR&ED card quotes: What's new's $6 million (2026-10-24), then, since the maintainer's answer
+ * of 2026-10-30 (his reading page, item 8), the SR&ED Investment Tax Credit Policy's section 4.1 list for corporations,
+ * every line in the page's order, under the page's title as the sole proprietor's line is. The policy page is the newer
+ * of the CRA's pages on refunds (docs/engines/citations.md, rule 8). The older one, the relationships page, is quoted
+ * nowhere since his answer on item 9 the same day ("The whole older page"): its 35% line, which opened this note from
+ * 2026-10-24, is gone, and the card's 35% rests on the list's own lines. The page stays among the card's sources.
+ * lib/brain/evaluate.ts copies this note into a sole proprietor's fork too, beside the individual's 40%, which is why
+ * the list is never cut: a part would read as the whole. It keeps its item 3, with the CRA's date, on his other answer
+ * on item 9 (keep the list whole). A "…" after item 4 marks the page's two other items (an individual, quoted on the
+ * sole proprietor's own line, and a trust), as the Productivity Grant's card marks a list item it leaves out. DotAmi's
+ * own words here are only whose words they are.
  */
-const CCPC_SRED_NOTE = `The CRA: “${SRED_WORDS.ccpcEnhanced}” The CRA's What's new for corporations: “${SRED_WORDS.limitSixMillion}” The CRA's ${SRED_POLICY_TITLE}: ${SRED_POLICY_CCPC_LIST.map((line) => `“${line}”`).join(" ")} …`;
+const CCPC_SRED_NOTE = `The CRA's What's new for corporations: “${SRED_WORDS.limitSixMillion}” The CRA's ${SRED_POLICY_TITLE}: ${SRED_POLICY_CCPC_LIST.map((line) => `“${line}”`).join(" ")} …`;
 
 export const grantProgramsV2026 = [
   {
@@ -87,6 +89,11 @@ export const grantProgramsV2026 = [
         note: "The SR&ED investment tax credit's basic and enhanced rates, and that some businesses may also earn a refundable credit.",
       },
       {
+        // The older of the two CRA pages that disagree on refunds (its page date 2025-07-21; the policy page below,
+        // 2026-10-07). Its 35% line opened the CCPC's note from 2026-10-24 until the maintainer's answer of 2026-10-30
+        // (his reading page, item 9: "The whole older page"); since then no card quotes any of its lines, and it stays
+        // listed here with its check, as rule 8 of docs/engines/citations.md has it ("the older one is listed but not
+        // quoted"). His read of 2026-10-25 wins on screen, so the check's words aren't drawn.
         title: "How certain relationships affect the small business deduction and SR&ED investment tax credits",
         authority: "CRA",
         jurisdiction: "CA",
@@ -165,6 +172,8 @@ export const grantProgramsV2026 = [
         // which says, for each kind of corporation and expenditure, how much of the credit is refundable
         // (docs/engines/citations.md, § Blocked, item 4, its CCPC part, settled that day). `refundable` stays unset all
         // the same: lib/brain/evaluate.ts would print a bare "refundable" after the 35%, more than the list's lines say.
+        // The 35% itself rests on the list's lines on the enhanced rate since his answer on item 9 the same day; until
+        // then it was the relationships page's line, the older page, quoted nowhere now (CCPC_SRED_NOTE).
         // Until 2026-10-24 the note said "confirm the current limit with an advisor" and gave no limit. The limit is
         // $6 million in the consolidated Act's s.127(10.2) (the reading list found the formula), for tax years
         // beginning on or after 2024-12-16. No held quote carries that date, so it is on no screen and in no field, only

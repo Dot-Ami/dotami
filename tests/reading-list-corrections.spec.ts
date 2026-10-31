@@ -21,6 +21,12 @@
  * around them still hold no time and no date. And docs/engines/citations.md § Rules has the rule his answers of
  * 2026-10-29 and 2026-10-30 make: where two official pages disagree, the card quotes the newer one (rule 8).
  *
+ * Since his two answers of the same day on item 9 (§ 3): the list stays whole, with the CRA's date in its item 3
+ * ("keep-whole"), and the whole older page is quoted nowhere ("whole-page"). So the CCPC's note, and the fork that copies
+ * it, no longer quote the relationships page's 35% line, and Incorporation for liability/SR&ED's 35% quotes the SR&ED
+ * glossary, as SR&ED deepening's does, from its own citation of the glossary (a tool check of 2026-10-30). The older
+ * page stays listed, with its checks, wherever it was.
+ *
  * Addresses and quotes are written out here, not imported, so a change to a catalog's constant can't move the test
  * with it. Each check fails on the code before the corrections unless its comment says it is a guard.
  */
@@ -36,6 +42,7 @@ import { complianceRulesV2026, recordRetentionV2026 } from "@/lib/engines/compli
 import { grantProgramsV2026 } from "@/lib/engines/grants/v2026/programs";
 import type { GrantProgram } from "@/lib/engines/grants/v2026/types";
 import { riskEntriesV2026 } from "@/lib/engines/risk/v2026";
+import { roadsV2026 } from "@/lib/engines/roads/v2026";
 import { howChecked, isCheckFirst } from "@/lib/engines/shared/citation-check";
 
 import { MAINTAINER_READ_DAY, MAINTAINER_READ_PAGES } from "./fixtures/maintainer-reads-2026-10-25";
@@ -82,6 +89,15 @@ const CCPC_ENHANCED =
 // The same page's line on unincorporated businesses (its page date 2025-07-21). The maintainer's answer of 2026-10-29
 // picked the newer page (below) where the two disagree, so this line is quoted nowhere.
 const OLDER_NON_REFUNDABLE = "Corporations and unincorporated businesses may earn a non-refundable ITC at the rate of 15%.";
+// The same page's line on CCPCs' refunds, found by scripts/check-quotes.mjs on 2026-10-27 (one of the options for the
+// CCPC's card until the maintainer's answer of 2026-10-30), held by no citation.
+const OLDER_SOME_CCPCS_REFUNDABLE = "Some CCPCs may also earn a refundable ITC.";
+/**
+ * The older page's lines DotAmi knows, its 35% for some CCPCs among them. Since the maintainer's answer of 2026-10-30
+ * (his reading page, item 9: "The whole older page") none of them is quoted on any card, fork, map stage or road; the
+ * page stays listed, with its checks, where it was (docs/engines/citations.md, § Rules, rule 8).
+ */
+const OLDER_PAGE_LINES = [CCPC_ENHANCED, OLDER_NON_REFUNDABLE, OLDER_SOME_CCPCS_REFUNDABLE] as const;
 // The CRA's SR&ED Investment Tax Credit Policy (its page date 2026-10-07): the line a sole proprietor's card quotes
 // since the maintainer's answer of 2026-10-29, found by scripts/check-quotes.mjs on the live page that day.
 const POLICY_INDIVIDUAL_40 =
@@ -122,10 +138,22 @@ const POLICY_NEVER_QUOTED = [
  * "2026-10-30"). Until then the check was of 2026-10-29 and held the 40% line alone.
  */
 const POLICY_DAY = "2026-10-30";
+/**
+ * The maintainer's note on his reading page, item 9 (2026-10-30), with his answer "The whole older page", word for word,
+ * his line break included.
+ */
+const ITEM_9_NOTE =
+  "yah. this last question is tricky, because obviously we shouldn't be showing the older page at all; BUT there's a reason the older page is still there.\nSo when we run into moments like this, we need to find a way to verify which one is accurate and true, and which one isn't";
 // The CRA's SR&ED glossary, its entry "Enhanced SR&ED investment tax credit rate (35%)": the line the maintainer asked
 // for on stage-4, found by scripts/check-quotes.mjs on 2026-10-27 (not a reading-list find).
 const GLOSSARY_ENHANCED =
   "Some Canadian-controlled private corporations (CCPCs) that meet certain requirements may earn investment tax credits at the enhanced rate of 35%";
+/**
+ * The day `node scripts/check-quotes.mjs --url <the glossary> --quote <GLOSSARY_ENHANCED>` found the line again, for
+ * Incorporation for liability/SR&ED's own citation of the glossary ("The quote was found", checkedOn "2026-10-30"): its
+ * 35% quotes the line since the maintainer's answer of that day (his reading page, item 9).
+ */
+const GLOSSARY_STAGE_3B_DAY = "2026-10-30";
 // The CRA's Business-use-of-home expenses page, on the business part: found by scripts/check-quotes.mjs on 2026-10-27.
 const HOME_OFFICE_BUSINESS_PART =
   "To calculate the part you can deduct, use a reasonable basis, such as the area of the workspace divided by the total area of your home.";
@@ -136,8 +164,11 @@ const LIMIT_SIX_MILLION =
 const ACT_FORMULA = "$6 million × [($60 million − A) ÷ $60 million]";
 // The CCPC's note whole: each label before its own quotes, and the "…" after the list's item 4 that marks its two
 // other items (an individual, a trust). Pinned whole so a label moved onto another quote fails (the review of the
-// rl-8 draft, 2026-10-30).
-const CCPC_NOTE_WHOLE = `The CRA: “${CCPC_ENHANCED}” The CRA's What's new for corporations: “${LIMIT_SIX_MILLION}” The CRA's SR&ED Investment Tax Credit Policy: ${POLICY_CCPC_LIST.map((line) => `“${line}”`).join(" ")} …`;
+// rl-8 draft, 2026-10-30). Since the maintainer's answer on item 9 the same day (the whole older page quoted nowhere)
+// it starts with What's new's line: the relationships page's 35% line, before it until then, is gone.
+const CCPC_NOTE_WHOLE = `The CRA's What's new for corporations: “${LIMIT_SIX_MILLION}” The CRA's SR&ED Investment Tax Credit Policy: ${POLICY_CCPC_LIST.map((line) => `“${line}”`).join(" ")} …`;
+/** The CCPC's note as it was before his answer on item 9, the planted control for the older page's checks below. */
+const CCPC_NOTE_BEFORE_ITEM_9 = `The CRA: “${CCPC_ENHANCED}” ${CCPC_NOTE_WHOLE}`;
 // The CRA's T2 guide, chapter 4: the reading list's quote, and the fragment structure-ccpc already held.
 const MAX_LIMIT = "The maximum allowable business limit for a corporation that is not associated with any other corporation is $500,000.";
 const THROUGHOUT = "throughout the tax year may be able to claim the small business deduction";
@@ -260,6 +291,26 @@ function stringsIn(value: unknown): string[] {
   return [];
 }
 const sorted = (list: readonly string[]) => [...list].sort();
+/** Every string a value holds outside its sources: the words a card, stage or road says, not its citations' checks. */
+const SOURCE_KEYS = new Set(["citation", "citations", "nameSource", "toolCheck"]);
+function ownStringsIn(value: unknown): string[] {
+  if (typeof value === "string") return [value];
+  if (Array.isArray(value)) return value.flatMap(ownStringsIn);
+  if (value && typeof value === "object") {
+    return Object.entries(value).flatMap(([key, v]) => (SOURCE_KEYS.has(key) ? [] : ownStringsIn(v)));
+  }
+  return [];
+}
+/**
+ * The older CRA page's words in a text: any of its known lines, anywhere, or a quoted run that is one of the quotes a
+ * citation of the page holds, or a part of one. Empty when the text quotes none of it.
+ */
+function olderPageWordsIn(text: string): string[] {
+  const held = [...OLDER_PAGE_LINES, ...all.filter((l) => l.citation.url === PAGE.relationships).flatMap((l) => rawQuotes(l.citation))];
+  const lines = OLDER_PAGE_LINES.filter((line) => text.includes(line));
+  const runs = quoted(text).filter((run) => held.some((q) => q === run || q.includes(run)));
+  return [...lines, ...runs];
+}
 
 const node = (id: string) => {
   const n = cfeNodesV2026.find((x) => x.id === id);
@@ -425,6 +476,44 @@ describe("3. SR&ED: the credit's rates in the CRA's words", () => {
     }
   });
 
+  it("the older CRA page is quoted on no card or fork, no map stage and no road, none of its lines, and stays listed with its checks", () => {
+    // The maintainer's answer of 2026-10-30 (his reading page, item 9: “The whole older page”): where two official pages
+    // disagree, the older one is listed but quoted nowhere, none of its lines (docs/engines/citations.md, § Rules, rule
+    // 8). Until then its 35% line stood on the corporation's card, in the fork that copies the card's note, and as
+    // Incorporation for liability/SR&ED's 35%.
+    const texts: { where: string; text: string }[] = [];
+    for (const structure of ["sole-prop", "sole-prop-gst", "ccpc"] as const) {
+      for (const u of evaluateProfile(idea({ structure }), { today: TODAY }).unlocks) {
+        texts.push({ where: `card ${u.id} (${structure})`, text: ownStringsIn(u).join("\n") });
+      }
+    }
+    expect(texts.filter((t) => t.where.startsWith("card grant-sred "))).toHaveLength(3);
+    for (const stage of cfeNodesV2026) texts.push({ where: `stage ${stage.id}`, text: ownStringsIn(stage).join("\n") });
+    for (const road of roadsV2026) texts.push({ where: `road ${road.id}`, text: ownStringsIn(road).join("\n") });
+    for (const { where, text } of texts) expect(olderPageWordsIn(text), where).toEqual([]);
+    // Still listed, with the checks it had: under the SR&ED card, both SR&ED stages, and road 0's two lines on CCPCs
+    // (the federal steps draw the same). The maintainer's read of 2026-10-25 wins on screen, so no check's words are drawn.
+    const listed = all.filter((l) => l.citation.url === PAGE.relationships);
+    expect(listed.map((l) => l.where)).toEqual(
+      expect.arrayContaining([
+        "grants grant-sred",
+        "cfe stage-3b-incorporation-liability-sred",
+        "cfe stage-4-sred-deepening",
+        "roads road-starting-any-business-ab dw-start-incsred-ccpc",
+        "roads road-starting-any-business-ab dw-start-incsred-associated",
+      ]),
+    );
+    for (const { where, citation } of listed) {
+      expect(howChecked(citation), where).toEqual({ kind: "person", on: MAINTAINER_READ_DAY });
+      expect(rawQuotes(citation).length, where).toBeGreaterThan(0);
+    }
+    // Planted controls: the CCPC's note as it was before his answer is caught, and so is the page's line on CCPCs'
+    // refunds in quote marks; the note as it is now is not.
+    expect(olderPageWordsIn(CCPC_NOTE_BEFORE_ITEM_9)).toEqual([CCPC_ENHANCED, CCPC_ENHANCED]);
+    expect(olderPageWordsIn(`The CRA: “${OLDER_SOME_CCPCS_REFUNDABLE}”`)).not.toEqual([]);
+    expect(olderPageWordsIn(CCPC_NOTE_WHOLE)).toEqual([]);
+  });
+
   it("the time words on the SR&ED card are the CRA's, inside the policy page's quotes under its label, never DotAmi's", () => {
     // A guard (NO TIMES): none in DotAmi's own words. The sole proprietor's card holds none, quotes included: the 40% line's "in the
     // current year" is no wait to the check. Since 2026-10-30 the CCPC's note (on the corporation's card, and in the fork
@@ -447,16 +536,20 @@ describe("3. SR&ED: the credit's rates in the CRA's words", () => {
     expect(findTimeWords(withoutPolicyList(`The CRA's SR&ED Investment Tax Credit Policy: ${POLICY_CCPC_LIST[2]}`))).not.toEqual([]);
   });
 
-  it("the enhanced rate is for some CCPCs up to their limit, the limit is $6 million in the CRA's and the Act's words, and no line sends the person to an advisor", () => {
+  it("the CCPC's note quotes What's new's $6 million and the policy page's list for corporations whole, the limit in the CRA's and the Act's words, and no line sends the person to an advisor", () => {
     const ccpc = sred().ratesByStructure!.find((r) => r.structure === "ccpc")!;
     expect(ccpc.note).not.toMatch(/advisor/i);
-    // Since the maintainer's answer of 2026-10-30, after those two the policy page's list for corporations, whole and in
-    // order, labelled with the page's title as the sole proprietor's line is. Until then only the first two.
-    expect(quoted(ccpc.note ?? "")).toEqual([CCPC_ENHANCED, LIMIT_SIX_MILLION, ...POLICY_CCPC_LIST]);
-    expect(ownWordsFlat(ccpc.note ?? "")).toBe(
-      "The CRA: The CRA's What's new for corporations: The CRA's SR&ED Investment Tax Credit Policy: …",
-    );
+    // Since the maintainer's answer of 2026-10-30 (his reading page, item 8), the policy page's list for corporations,
+    // whole and in order, labelled with the page's title as the sole proprietor's line is (until then What's new's line
+    // and the relationships page's 35% only). Since his answer on item 9 the same day the relationships page's line is
+    // gone, the older page quoted nowhere: the note starts with What's new's line.
+    expect(quoted(ccpc.note ?? "")).toEqual([LIMIT_SIX_MILLION, ...POLICY_CCPC_LIST]);
+    expect(ownWordsFlat(ccpc.note ?? "")).toBe("The CRA's What's new for corporations: The CRA's SR&ED Investment Tax Credit Policy: …");
     expect(ccpc.note).toBe(CCPC_NOTE_WHOLE);
+    // The card's 35% rests on the newer page's list (his item 9 option): its lines on the enhanced rate say 35%.
+    const ccpcCard = card(idea({ structure: "ccpc" }), "grant-sred");
+    expect(ccpcCard.payoff).toBe(`If eligible as a CCPC, this may be worth 35%. ${CCPC_NOTE_WHOLE}`);
+    expect(quoted(ccpcCard.payoff).filter((line) => line.includes("enhanced ITC rate of 35%")).length).toBeGreaterThan(0);
     // The two pages for the limit, checked by a tool on the list's day, and read in full by the maintainer on 2026-10-25
     // (until 2026-10-27 a tool check only, with no read on record).
     for (const url of [PAGE.whatsNew, PAGE.act127]) {
@@ -469,7 +562,7 @@ describe("3. SR&ED: the credit's rates in the CRA's words", () => {
     for (const text of shown) expect(ownWords(text).match(/\$\s?\d/g) ?? [], text).toEqual([]);
   });
 
-  it("a sole proprietor's fork names the 35% for some CCPCs, up to their limit, the $6 million, and the policy page's list for corporations whole, in the CRA's words", () => {
+  it("a sole proprietor's fork names the 35%, the $6 million and the policy page's list for corporations whole, in the CRA's words, and nothing of the older page", () => {
     for (const structure of ["sole-prop", "sole-prop-gst"] as const) {
       const c = card(idea({ structure }), "grant-sred");
       const fork = c.fork;
@@ -477,11 +570,13 @@ describe("3. SR&ED: the credit's rates in the CRA's words", () => {
       expect(fork!.note, structure).not.toMatch(/advisor/i);
       // The fork copies the CCPC's note (lib/brain/evaluate.ts), so since the maintainer's answer of 2026-10-30 it shows
       // the policy page's list for corporations, every line in the page's order: beside the individual's 40% on the
-      // same card, a part of the list would read as the whole. Until then it quoted the first two only.
-      expect(quoted(fork!.note), structure).toEqual([CCPC_ENHANCED, LIMIT_SIX_MILLION, ...POLICY_CCPC_LIST]);
+      // same card, a part of the list would read as the whole. Until then it quoted the relationships page's 35% and
+      // What's new's line only; since his answer on item 9 the same day the relationships page's line is gone.
+      expect(quoted(fork!.note), structure).toEqual([LIMIT_SIX_MILLION, ...POLICY_CCPC_LIST]);
       expect(ownWordsFlat(fork!.note), structure).toBe(
-        "A CCPC may access 35% treatment instead of 15%. The CRA: The CRA's What's new for corporations: The CRA's SR&ED Investment Tax Credit Policy: …",
+        "A CCPC may access 35% treatment instead of 15%. The CRA's What's new for corporations: The CRA's SR&ED Investment Tax Credit Policy: …",
       );
+      expect(fork!.note, structure).not.toContain(CCPC_ENHANCED);
       expect(fork!.note, structure).toBe(`A CCPC may access 35% treatment instead of 15%. ${CCPC_NOTE_WHOLE}`);
       // The card's own line keeps the individual's 40% and quotes none of the list; the fork quotes the list and not the
       // individual's line. The trust's line and the block after the list are on neither.
@@ -511,7 +606,8 @@ describe("3. SR&ED: the credit's rates in the CRA's words", () => {
     // A guard (NO TIMES): none in DotAmi's own words. The limit's start date is in no held quote, so no line on the card says it. Since
     // 2026-10-30 the policy page's list for corporations, quoted whole, carries the page's own date in its line on
     // ECPCs (“3) For ECPCs whose tax year begins after December 15, 2024:”), inside its quote marks under the page's
-    // title; leaving that line out would quote a part of the list as the whole.
+    // title; leaving that line out would quote a part of the list as the whole, and the maintainer kept it, the list
+    // whole with its date (his answer of 2026-10-30, his reading page, item 9).
     for (const structure of ["sole-prop", "ccpc"] as const) {
       const c = card(idea({ structure }), "grant-sred");
       const text = `${c.payoff} ${c.fork?.note ?? ""}`;
@@ -524,16 +620,41 @@ describe("3. SR&ED: the credit's rates in the CRA's words", () => {
     expect(POLICY_CCPC_LIST[9]).toMatch(/\b20\d\d\b/);
   });
 
-  it("citations.md § Rules has rule 8: where two official pages disagree, the card quotes the newer page", () => {
+  it("citations.md § Rules has rule 8: the card quotes the newer page, and the older page is listed and quoted nowhere, none of its lines", () => {
     // The maintainer's answers of 2026-10-29 ("it should always be the newer page because it's more up-to-date") and
-    // 2026-10-30, written into the rules with his words of 2026-10-30; which page applies to which case is research,
-    // not built.
+    // 2026-10-30 (his reading page, items 8 and 9), written into the rules with his words; which page applies to which
+    // case, and telling which of two pages is accurate and true, is research first, not built.
     const rules = readFlat("docs/engines/citations.md").split("## Rules")[1]!.split("## What people see")[0]!;
+    const rule8 = rules.split(" 8. **Where two official pages disagree")[1] ?? "";
     expect(rules).toMatch(/8\. \*\*Where two official pages disagree, the card quotes the newer page\*\*/);
-    expect(rules).toContain(
+    // His picked options, word for word: item 8's, and item 9's with his note.
+    expect(rule8).toContain("“The card shows the newer page; the older one is listed but not quoted.”");
+    expect(rule8).toContain(
+      "“The whole older page — The 35% line above comes off the corporation's card and the sole proprietor's note; the card's 35% rests on the newer page's list.”",
+    );
+    expect(rule8).toContain(`“${ITEM_9_NOTE.replace(/\s+/g, " ")}”`);
+    expect(rule8).toContain(
       "“the newer page should generally outrank the old one, but maybe we could make a library that can tell the difference between the old and new pages and see which one applies to each specific case?”",
     );
-    expect(rules).toContain("not quoted");
+    expect(rule8).toContain("The older page stays listed among the sources, with its own check, and is quoted nowhere, none of its lines");
+    expect(rule8).toMatch(/which is accurate and true \(his "library" idea and his note on item 9\), is research first, .*; none of it is built\./);
+    // The reading built before his answer on item 9 is gone, and so is the open question.
+    expect(rule8).not.toContain("its lines that don't disagree stay quoted");
+    expect(rule8).not.toContain("asked of the maintainer");
+  });
+
+  it("the docs give his answers on item 9, no longer the questions: the list kept whole with the CRA's date, and the older page quoted nowhere", () => {
+    // Until then the docs said both were asked of him on 2026-10-30. The $6 million's start-date line (§ Blocked, item
+    // 5) is another line, and it still waits for his call.
+    for (const file of ["docs/engines/citations.md", "docs/engines/grants.md", "CHANGELOG.md", "docs/task-list.md"]) {
+      expect(readFlat(file), file).not.toMatch(/asked (of (the maintainer|him) )?on 2026-10-30/);
+    }
+    const blocked = readFlat("docs/engines/citations.md").split("### Blocked: what each needs")[1]!.split("### Outside the list")[0]!;
+    const item4 = blocked.split(" 4. **SR&ED, refunded or not.**")[1]!.split(" 5. **SR&ED's $6 million.**")[0]!;
+    const item5 = blocked.split(" 5. **SR&ED's $6 million.**")[1]!.split(" 6. **")[0]!;
+    expect(item4).toContain("his reading page, item 9");
+    expect(item4).toContain("the list stays whole, the CRA's date in its item 3 with it");
+    expect(item5).toContain("still waits for his call");
   });
 
   it("citations.md and the task list close the CCPC's part of SR&ED, refunded or not", () => {
@@ -545,21 +666,30 @@ describe("3. SR&ED: the credit's rates in the CRA's words", () => {
     expect(tasks).not.toMatch(/- \[ \] SR&ED refunded or not, a CCPC's enhanced 35%/);
   });
 
-  it("both SR&ED map stages quote the CRA for their 35%, from a page each cites", () => {
-    // Incorporation for liability/SR&ED quotes the relationships page; SR&ED deepening, since 2026-10-27, the SR&ED
-    // glossary's own entry, the line the maintainer asked for (its citation keeps the relationships page too).
-    const quotes = {
-      "stage-3b-incorporation-liability-sred": { quote: CCPC_ENHANCED, page: PAGE.relationships },
-      "stage-4-sred-deepening": { quote: GLOSSARY_ENHANCED, page: PAGE.sredGlossary },
-    } as const;
-    for (const [id, { quote, page }] of Object.entries(quotes)) {
+  it("both SR&ED map stages quote the CRA's SR&ED glossary for their 35%, each from its own citation of the glossary", () => {
+    // SR&ED deepening since 2026-10-27, the line the maintainer asked for. Incorporation for liability/SR&ED since his
+    // answer of 2026-10-30 (his reading page, item 9: the whole older page quoted nowhere): until then its 35% quoted the
+    // relationships page, which both stages still list, with its check of 2026-10-23 (§ 2).
+    for (const id of ["stage-3b-incorporation-liability-sred", "stage-4-sred-deepening"]) {
       const estimate = node(id).financialImpact.estimates.find((e) => e.value === "35%");
       expect(estimate, id).toBeDefined();
-      expect(quoted(estimate!.basis), id).toEqual([quote]);
-      expect(rawQuotes(citationOf(`cfe ${id}`, page)), id).toContain(quote);
+      expect(estimate!.basis, id).toBe(`The CRA's SR&ED glossary: “${GLOSSARY_ENHANCED}”`);
+      expect(rawQuotes(citationOf(`cfe ${id}`, PAGE.sredGlossary)), id).toContain(GLOSSARY_ENHANCED);
+      expect(rawQuotes(citationOf(`cfe ${id}`, PAGE.relationships)), id).toEqual([CCPC_ENHANCED]);
     }
-    // One run found the glossary's new line with the two it held, so the citation's check is that day's.
+    // One run found the glossary's new line with the two it held, so SR&ED deepening's check is that day's.
     expect(citationOf("cfe stage-4-sred-deepening", PAGE.sredGlossary).toolCheck?.checkedOn).toBe("2026-10-27");
+    // Incorporation for liability/SR&ED's own citation of the glossary: one check of the line, of the day
+    // `node scripts/check-quotes.mjs` found it again, and the maintainer's read of 2026-10-25 (he read the glossary in
+    // full), which wins on screen, as on SR&ED deepening's.
+    const glossary = citationOf("cfe stage-3b-incorporation-liability-sred", PAGE.sredGlossary);
+    expect(glossary.title).toBe("SR&ED glossary");
+    expect(glossary.toolCheck).toEqual({ checkedOn: GLOSSARY_STAGE_3B_DAY, quotes: [GLOSSARY_ENHANCED] });
+    expect(howChecked(glossary)).toEqual({ kind: "person", on: MAINTAINER_READ_DAY });
+    // Road 0 draws the stage, so the glossary is one click away under its step there too.
+    expect(citationOf("roads road-starting-any-business-ab stage-3b-incorporation-liability-sred", PAGE.sredGlossary).toolCheck?.checkedOn).toBe(
+      GLOSSARY_STAGE_3B_DAY,
+    );
   });
 
   it("the CRA's What are SR&ED tax incentives page says the maintainer read it, and keeps the list's tool check", () => {

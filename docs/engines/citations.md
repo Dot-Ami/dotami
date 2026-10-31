@@ -1,8 +1,11 @@
 # How a source was checked: read, or checked by a tool
 
-Last updated: 2026-10-30 (the maintainer's answers on his reading page, item 8: where two official pages disagree,
-the card quotes the newer one, § Rules 8; a CCPC's SR&ED card quotes the policy page's list for corporations whole,
-its one tool check of 2026-10-30 holding it with the individual's line, § Blocked, item 4; the Productivity Grant's
+Last updated: 2026-10-30 (the maintainer's answers on his reading page, items 8 and 9: where two official pages
+disagree, the card quotes the newer one, and the older one is listed and quoted nowhere, none of its lines, § Rules 8;
+a CCPC's SR&ED card quotes the policy page's list for corporations whole, the CRA's date in its item 3 with it, its
+one tool check of 2026-10-30 holding it with the individual's line, and no longer the relationships page's 35% line,
+§ Blocked, item 4; Incorporation for liability/SR&ED's 35% quotes the SR&ED glossary, from its own citation of it, a
+tool check of 2026-10-30, § Blocked; the Productivity Grant's
 card quotes the page's sentence on who delivers and funds it, § Blocked, item 6; the label before the Martin passage
 names the case); 2026-10-29 (the maintainer's answers on PR #217: chapter 27 is listed under the Hobby vs. business
 card, the box keeps the card, and the read quotes the page's passage from Martin v The Queen too, four quotes with a
@@ -140,19 +143,21 @@ catalog at run time.
    “it should always be the newer page because it's more up-to-date”, and of 2026-10-30, his reading page, item 8,
    the option he picked: “The card shows the newer page; the older one is listed but not quoted.”). Newer is by each
    page's own date (the day the page gives as modified; on canada.ca its `dcterms.modified`), not the day DotAmi
-   found or read it. As built on 2026-10-30, the older page stays listed among the card's sources, with its own
-   check, and its line that disagrees is quoted on no card; its lines that don't disagree stay quoted. The CRA's
-   relationships page (modified 2025-07-21) is older than its *SR&ED Investment Tax Credit Policy* (2026-10-07): its
-   line on a non-refundable 15% for unincorporated businesses, which the policy page contradicts, is quoted nowhere,
-   and its line on the enhanced 35% for some CCPCs, up to their expenditure limit, stays quoted where it was. Whether
-   "not quoted" means the whole older page instead (then that 35% line comes off the CCPC's card and the fork) was
-   asked of the maintainer on 2026-10-30. So far the rule has decided the sole proprietor's refund line on the
-   SR&ED card, and the CCPC's refund lines follow the same newer page (§ Blocked, item 4).
-   His words of 2026-10-30 on it: “the newer page should generally outrank the old one, but maybe we could make a
-   library that can tell the difference between the old and new pages and see which one applies to each specific
-   case?” Which page applies to which case (a newer page on one kind of claimant beside an older one on another, a
-   page that still applies to past tax years) is research first, with the planned work on how fresh a source is and
-   [14q], rules meeting a person's facts (S2.5.41, [task-list.md](../task-list.md)); none of it is built.
+   found or read it. The older page stays listed among the sources, with its own check, and is quoted nowhere, none
+   of its lines: his answer of 2026-10-30 on what "not quoted" means (his reading page, item 9), the option he picked,
+   “The whole older page — The 35% line above comes off the corporation's card and the sole proprietor's note; the
+   card's 35% rests on the newer page's list.”, with his note: “yah. this last question is tricky, because obviously
+   we shouldn't be showing the older page at all; BUT there's a reason the older page is still there.
+   So when we run into moments like this, we need to find a way to verify which one is accurate and true, and which
+   one isn't”. As built: the CRA's relationships page (modified 2025-07-21) is older than its *SR&ED Investment Tax
+   Credit Policy* (2026-10-07), and no card, map stage or road quotes any of its lines. It stays listed under the
+   SR&ED card, both SR&ED map stages and road 0's two lines on CCPCs, each citation with its check; the maintainer's
+   read of 2026-10-25 wins on screen, so no check's words are drawn (§ Blocked, item 4).
+   His words of 2026-10-30 on the newer page: “the newer page should generally outrank the old one, but maybe we
+   could make a library that can tell the difference between the old and new pages and see which one applies to
+   each specific case?” Telling which of two pages applies to a case, and which is accurate and true (his "library" idea and his
+   note on item 9), is research first, with the planned work on how fresh a source is and [14q], rules meeting a
+   person's facts (S2.5.41, [task-list.md](../task-list.md)); none of it is built.
 
 ## What people see
 
@@ -323,7 +328,7 @@ its row leaves this list.
 
 | Added | Page | Where it is cited | What to read for |
 |---|---|---|---|
-| 2026-10-29 | CRA, [*SR&ED Investment Tax Credit Policy*](https://www.canada.ca/en/revenue-agency/services/scientific-research-experimental-development-tax-incentive-program/investment-tax-credit-policy.html) | program *SR&ED tax incentives* (`grant-sred`), the sole proprietor's note and, since 2026-10-30, the CCPC's (§ The reading list's corrections, *Blocked*, item 4); its one tool check is of 2026-10-30 | the 40% refundable ITC for an individual (other than a trust), the amount the sole proprietor's card quotes; and section 4.1's list for corporations, which the CCPC's card and a sole proprietor's fork quote whole: which corporations' credits are refundable, at what share, and the one line that says when (ECPCs) |
+| 2026-10-29 | CRA, [*SR&ED Investment Tax Credit Policy*](https://www.canada.ca/en/revenue-agency/services/scientific-research-experimental-development-tax-incentive-program/investment-tax-credit-policy.html) | program *SR&ED tax incentives* (`grant-sred`), the sole proprietor's note and, since 2026-10-30, the CCPC's (§ The reading list's corrections, *Blocked*, item 4); its one tool check is of 2026-10-30 | the 40% refundable ITC for an individual (other than a trust), the amount the sole proprietor's card quotes; and section 4.1's list for corporations, which the CCPC's card and a sole proprietor's fork quote whole: which corporations' credits are refundable, at what share, and the one line that says when (ECPCs); since 2026-10-30 the CCPC card's 35% rests on these lines, the older relationships page's 35% line quoted nowhere (§ Rules, rule 8) |
 | 2026-10-29 | Alberta, [*About Tax and Revenue Administration*](https://www.alberta.ca/about-tra) | *Alberta — no provincial sales tax* (`compliance-ab-no-pst`), its second source | “Alberta has no sales tax.” and the page's next sales-tax block, on sales taxes other provinces may charge (“If your business sells products, delivers sold goods, or provides services in other provinces, …”), which `node scripts/check-quotes.mjs` found on the page in one run that day (§ Blocked, item 1) |
 
 Two wait now, the rows above. The three pages listed here until 2026-10-27 (Alberta's *Employment standards* on *Hire
@@ -385,14 +390,14 @@ copied from his list.
 | 23 | [Business registration with the CRA](https://www.canada.ca/en/services/taxes/business-registration.html) | 3 |
 | 24 | [Corporation](https://www.canada.ca/en/revenue-agency/services/tax/businesses/small-businesses-self-employed-income/setting-your-business/corporation.html) | 11 |
 | 25 | [SR&ED claim preparation / SR&ED expenditures](https://www.canada.ca/en/revenue-agency/services/scientific-research-experimental-development-tax-incentive-program/sred-claim.html) | 4 |
-| 26 | [SR&ED glossary](https://www.canada.ca/en/revenue-agency/services/scientific-research-experimental-development-tax-incentive-program/glossary.html) | 3 |
+| 26 | [SR&ED glossary](https://www.canada.ca/en/revenue-agency/services/scientific-research-experimental-development-tax-incentive-program/glossary.html) | 6 (3 until 2026-10-30, when *Incorporation for liability/SR&ED* gained its own citation of it) |
 | 27 | [Set up and manage employee payroll information](https://www.canada.ca/en/revenue-agency/services/tax/businesses/topics/payroll/set-up-new-employee.html) | 5 |
 | 28 | [Federal incorporation](https://ised-isde.canada.ca/site/corporations-canada/en/federal-incorporation) | 5 |
 | 29 | [Provincial Sales Tax (PST)](https://www2.gov.bc.ca/gov/content/taxes/sales-taxes/pst) | 1 |
 | 30 | [Employment standards](https://www2.gov.bc.ca/gov/content/employment-business/employment-standards-advice/employment-standards) | 3 |
 | 31 | [Small business - Your guide to the Employment Standards Act](https://www.ontario.ca/document/your-guide-employment-standards-act-0/small-business) | 3 |
 
-136 citations in all, as [`lib/engines/all-citations.ts`](../../lib/engines/all-citations.ts) lists
+139 citations in all (136 until 2026-10-30), as [`lib/engines/all-citations.ts`](../../lib/engines/all-citations.ts) lists
 them (a map stage's sources count again under each road that draws the stage).
 
 What his reads don't settle, and stays open:
@@ -465,7 +470,7 @@ which wins on screen, and keeps its tool check; his read didn't stand in for tha
 | Page | Where it is cited | What the quotes are |
 |---|---|---|
 | CRA, the SR&ED tax incentives' rates (https://www.canada.ca/en/revenue-agency/services/scientific-research-experimental-development-tax-incentive-program/what-are-sred-tax-incentives.html) | program *SR&ED tax incentives* (`grant-sred`; `SRED_WORDS`, [`lib/engines/grants/v2026/sred-official-words.ts`](../../lib/engines/grants/v2026/sred-official-words.ts)) | the basic 15% rate, the enhanced 35% for some corporations, and that some businesses may also earn a refundable credit. The citation's title is the page's own, *What are SR&ED tax incentives*, since `node scripts/check-quotes.mjs` found it on the page on 2026-10-27; until then it described the page. |
-| CRA, *How certain relationships affect the small business deduction and SR&ED investment tax credits* | `grant-sred` (the CCPC rate); map stages *Incorporation for liability/SR&ED* (`stage-3b-incorporation-liability-sred`, whose read wins on screen) and *SR&ED deepening* (`stage-4-sred-deepening`, a new source of that stage, a tool check only until the maintainer's read of 2026-10-25), each quoting it for its 35% (*SR&ED deepening*'s 35% quotes the SR&ED glossary since 2026-10-27, and the stage keeps this page for its tax impact) | some CCPCs may earn the enhanced 35% up to their expenditure limit for the year (never the page's worked example with an older limit) |
+| CRA, *How certain relationships affect the small business deduction and SR&ED investment tax credits* | `grant-sred` (the CCPC rate); map stages *Incorporation for liability/SR&ED* (`stage-3b-incorporation-liability-sred`, whose read wins on screen) and *SR&ED deepening* (`stage-4-sred-deepening`, a new source of that stage, a tool check only until the maintainer's read of 2026-10-25), each quoting it for its 35% (*SR&ED deepening*'s 35% quotes the SR&ED glossary since 2026-10-27, and the stage keeps this page for its tax impact). Since the maintainer's answer of 2026-10-30 (his reading page, item 9) no card or stage quotes it: it is the older of two CRA pages that disagree (§ Rules, rule 8), and the CCPC's note and *Incorporation for liability/SR&ED*'s 35% dropped its line; each of the three citations stays, with this check | some CCPCs may earn the enhanced 35% up to their expenditure limit for the year (never the page's worked example with an older limit) |
 | CRA, T2 guide chapter 4 (https://www.canada.ca/en/revenue-agency/services/forms-publications/publications/t4012/t2-corporation-income-tax-guide-chapter-4-page-4-t2-return.html) | map stage *Incorporating* (`stage-3a-incorporation-80k-net`, [`lib/engines/cfe/v2026/nodes.ts`](../../lib/engines/cfe/v2026/nodes.ts)), its business-limit estimate | that the maximum allowable business limit for a corporation not associated with any other is $500,000 (the list's quote), and that CCPCs "throughout the tax year may be able to claim the small business deduction", the words structure-ccpc's citation of the page holds from its own check of 2026-10-13, which keeps that date. The list found both held quotes for the page that day. The stage's read wins on screen (2026-05-01, the maintainer's of 2026-10-25 since then). |
 | CRA, *Determine if you need to register for a payroll account* | map stage *Hire first employee* (`branch-hire-first-employee`), its payroll account timing | that you register for a payroll account before the first remittance due date, and when that date is (the list's quote): the two sentences road 0's `dw-start-hire-payroll-account` holds from its check of 2026-10-12, which keeps that date. The list found all five quotes held for the page that day. The stage's read wins on screen (2026-05-01, the maintainer's of 2026-10-25 since then). |
 | CRA, *What's new for corporations* | `grant-sred` (the CCPC rate) | the expenditure limit for the enhanced 35% raised to $6 million (never the page's line that it lists proposed, announced or enacted changes) |
@@ -548,7 +553,7 @@ Three rules from his answers hold for every row:
 
 | Entry | Reading-list item(s) | What changed | The evidence |
 |---|---|---|---|
-| *SR&ED tax incentives* (`grant-sred`) | `grant-sred/estimatedValue`, `grant-sred/rate-unincorporated`, `grant-sred/rate-ccpc`, `sred-expenditure-limit-6-million` | A sole proprietor's card no longer calls the 15% credit non-refundable; it quotes the basic rate and that some businesses may also earn a refundable credit. The CCPC's note quotes the enhanced 35% up to the expenditure limit, and the $6 million limit, where it said "confirm the current limit with an advisor"; its card and the fork no longer call the 35% "refundable", a word no quote held then (*Blocked*). The range "15–35%" (on no screen) is unchanged. Since 2026-10-29 (his answer: the newer page) the sole proprietor's note also quotes the *SR&ED Investment Tax Credit Policy*'s 40% line for an individual (other than a trust). Since 2026-10-30 (his answer, his reading page, item 8) the CCPC's note, and so the fork, also quotes that page's section 4.1 list for corporations, whole and in order; DotAmi still writes "refundable" nowhere in its own words. | Four new sources, tool checks of 2026-10-23: the CRA's rates page, its relationships page, *What's new for corporations*, and s.127(10.2)'s formula ([grants.md](grants.md)); since 2026-10-29 a further source, that policy page, not read by a person yet, its one tool check of 2026-10-30 since (the 40% line and the list, found in one run) |
+| *SR&ED tax incentives* (`grant-sred`) | `grant-sred/estimatedValue`, `grant-sred/rate-unincorporated`, `grant-sred/rate-ccpc`, `sred-expenditure-limit-6-million` | A sole proprietor's card no longer calls the 15% credit non-refundable; it quotes the basic rate and that some businesses may also earn a refundable credit. The CCPC's note quoted the enhanced 35% up to the expenditure limit (the relationships page's line, until 2026-10-30), and quotes the $6 million limit, where it said "confirm the current limit with an advisor"; its card and the fork no longer call the 35% "refundable", a word no quote held then (*Blocked*). The range "15–35%" (on no screen) is unchanged. Since 2026-10-29 (his answer: the newer page) the sole proprietor's note also quotes the *SR&ED Investment Tax Credit Policy*'s 40% line for an individual (other than a trust). Since 2026-10-30 (his answer, his reading page, item 8) the CCPC's note, and so the fork, also quotes that page's section 4.1 list for corporations, whole and in order, the CRA's date in its item 3 with it (his answer on item 9); DotAmi still writes "refundable" nowhere in its own words. Since his other answer on item 9 the same day the relationships page's 35% line is gone from the note and the fork (the older page, quoted nowhere: § Rules, rule 8), and the card's 35% rests on the list's lines. | Four new sources, tool checks of 2026-10-23: the CRA's rates page, its relationships page, *What's new for corporations*, and s.127(10.2)'s formula ([grants.md](grants.md)); since 2026-10-29 a further source, that policy page, not read by a person yet, its one tool check of 2026-10-30 since (the 40% line and the list, found in one run) |
 | *Ontario HST (13%)* (`compliance-on-hst`) | `compliance-on-hst` | Unchanged. | None held: the rate table isn't in the page's HTML, and the one 13% sentence found is a worked example (*Blocked*; since 2026-10-29 the maintainer's answer about the row, "13%", given 2026-10-28) |
 | *Alberta — no provincial sales tax* (`compliance-ab-no-pst`) | `compliance-ab-no-pst` | "… simplifying provincial sales tax compliance" is gone. The line says "The CRA's table of GST/HST rates lists Alberta at 5% GST, with no provincial sales tax.", which is still DotAmi's wording of a table row, and the catalog says so beside it. Since 2026-10-29 it says only "… lists Alberta at 5%." | None held, for the same reason (*Blocked*; since 2026-10-29 the maintainer's answer about the row, "5%", given 2026-10-28, and Alberta's own page, tool check of 2026-10-29) |
 | *BC Provincial Sales Tax (PST)* (`compliance-bc-pst`) | `compliance-bc-pst` | Unchanged. | No quote is held from its page |
@@ -561,7 +566,7 @@ Three rules from his answers hold for every row:
 | Loan program read (`risk-self-declared-valuation`) | `risk-self-declared-valuation` | Kept (his answer 3), saying only ISED's rule on security; "the lesser of purchase price or appraised value" is gone. It cites ISED's loans page in place of the program's hub. | “For real property and equipment, security must be taken on the assets financed.”, tool check of 2026-10-23 |
 | *Sole Prop activation* (`stage-1-sole-prop-activation`) | `stage-1-sole-prop-activation/projection-30000` | "Track gross revenue against" the two tests is gone; the note quotes what the CRA says a sole proprietor counts and what is left out, and points to *Mandatory GST registration* for the tests. | A new source, *When to register for and start charging the GST/HST*, with the tool check of 2026-10-12 those words already had |
 | *Incorporating* (`stage-3a-incorporation-80k-net`) | `stage-3a-incorporation-80k-net/sbd-limit` | The business limit's "$500,000", which read as automatic, is "Up to $500,000", on the T2 guide's words: CCPCs “may be able to claim” the deduction. | Tool check of 2026-10-23 on the T2 guide's citation; a read wins on screen (2026-05-01, the maintainer's of 2026-10-25 since then) |
-| *Incorporation for liability/SR&ED* (`stage-3b-incorporation-liability-sred`) | `stage-3b-incorporation-liability-sred/35` | The 35% quotes the CRA: some CCPCs, up to their expenditure limit for the year. | Tool check of 2026-10-23 on the relationships page's citation; a read wins on screen (2026-05-01, the maintainer's of 2026-10-25 since then) |
+| *Incorporation for liability/SR&ED* (`stage-3b-incorporation-liability-sred`) | `stage-3b-incorporation-liability-sred/35` | The 35% quotes the CRA: some CCPCs, up to their expenditure limit for the year. Since 2026-10-30 (his answer, his reading page, item 9: the older page quoted nowhere) it quotes the SR&ED glossary's entry instead, the line *SR&ED deepening*'s 35% quotes; the relationships page stays listed. | Tool check of 2026-10-23 on the relationships page's citation; a read wins on screen (2026-05-01, the maintainer's of 2026-10-25 since then). Since 2026-10-30 a third source, the glossary, a tool check of that day holding the line (and the maintainer's read of 2026-10-25, which wins on screen) |
 | *SR&ED deepening* (`stage-4-sred-deepening`) | `stage-4-sred-deepening/35` | The 35% quotes the same CRA line (his answer 4); "subject to taxable income limits" is gone from its tax impact. Since 2026-10-27 the 35% quotes the SR&ED glossary's own entry, the line he asked for; the relationships page stays for the tax impact. | The relationships page as a third source, tool check of 2026-10-23 (and the maintainer's read of 2026-10-25 since then); the glossary's citation, tool check of 2026-10-27 (its two quotes and the 35% line, found together) |
 | *Hire first employee* (`branch-hire-first-employee`) | `branch-hire-first-employee/payroll-timing` | "Before first remittance due date" is “before the first remittance due date”, on the CRA's two sentences. | Tool check of 2026-10-23 on the payroll page's citation; a read wins on screen (2026-05-01, the maintainer's of 2026-10-25 since then) |
 | *Canada-Alberta Productivity Grant* (`grant-capg`) | `capg-75-percent`, `capg-5000-per-trainee`, `capg-100000-per-employer`, `capg-operational-one-year` | Added (his call a-call-1), saying only the page's words, in curly quote marks, with no subject before the 25% and 75% lines (none was held until 2026-10-29, when the table's own row labels came on: *Blocked*); the one-year rule is on no card's line; it was among the words found on the page under the card's source until the maintainer's read of 2026-10-25, which wins there, so it is on no screen now ([grants.md](grants.md)). | Four quotes, tool check of 2026-10-23 (since 2026-10-29 one check of that day holding them with the new quotes) |
@@ -596,7 +601,8 @@ machine, before DotAmi says more than it does now. They are listed in [task-list
 4. **SR&ED, refunded or not.** Two questions: whether, and how much of, a sole proprietor's 15% credit
    is refunded, and whether a CCPC's enhanced 35% is. The maintainer answered the first on 2026-10-29
    (his reading page, item 2: what the sole proprietor's card should show), and the second on 2026-10-30
-   (his reading page, item 8). Both follow the newer page (§ Rules, rule 8).
+   (his reading page, items 8 and 9). Both follow the newer page (§ Rules, rule 8), and since his answer on
+   item 9 the older page, the relationships page, is quoted on no card at all.
    - **A sole proprietor's 15%: settled.** The CRA's own pages say different things, each found by the
      script on 2026-10-27: the relationships page the card already cites (its page date 2025-07-21),
      “Corporations and unincorporated businesses may earn a non-refundable ITC at the rate of 15%.”; the
@@ -619,8 +625,9 @@ machine, before DotAmi says more than it does now. They are listed in [task-list
      of it; the relationships page's “Some CCPCs may also earn a refundable ITC.” (the older page, which
      names neither the 35% nor an amount); or leaving it unsaid. His answer of 2026-10-30: the newer
      page's list for corporations, whole and in order, tool-checked first. So the CCPC's note quotes,
-     after its two lines (the relationships page's 35% up to the expenditure limit and *What's new*'s
-     $6 million), under the label *The CRA's SR&ED Investment Tax Credit Policy:*, the list's 13 lines as
+     after *What's new*'s $6 million line (and, until his answer on item 9 the same day, the relationships
+     page's 35% up to the expenditure limit before it), under the label *The CRA's SR&ED Investment Tax
+     Credit Policy:*, the list's 13 lines as
      the script reads the page (one block each): the lead-in (“According to the definition of refundable
      ITC in the Income Tax Act, … the following types of claimants can earn a refundable ITC:”), then
      items 1 to 4, each with the lines under it: CCPCs that are qualifying corporations, other CCPCs
@@ -636,9 +643,16 @@ machine, before DotAmi says more than it does now. They are listed in [task-list
      in the page's order, dated 2026-10-30. The list's own "in the year" and its one date (“3) For ECPCs
      whose tax year begins after December 15, 2024:”) are the CRA's words inside its quote marks under
      the page's title; DotAmi's words around them hold no time and no date, and a screen's no-times check
-     takes a tool-checked quote out before it reads (`e2e/idea-sweep.spec.ts`). `refundable` stays unset:
-     a bare "refundable" after the 35% would say more than the list's lines. The relationships page's
-     older line is quoted nowhere. `tests/reading-list-corrections.spec.ts` § 3 holds it.
+     takes a tool-checked quote out before it reads (`e2e/idea-sweep.spec.ts`). He had asked for the list
+     whole without seeing that date; his answer on it (2026-10-30, his reading page, item 9): the list
+     stays whole, the CRA's date in its item 3 with it. `refundable` stays unset: a bare "refundable"
+     after the 35% would say more than the list's lines. His other answer on item 9 the same day, “The
+     whole older page”: the relationships page is quoted nowhere, none of its lines, so its 35% line came
+     off the CCPC's note and the fork, and the card's 35% rests on the list's lines; the page stays among
+     the card's sources, with its check (§ Rules, rule 8). The same day *Incorporation for liability/SR&ED*'s
+     35%, which quoted that line too, moved to the SR&ED glossary's (below, *SR&ED deepening's 35% from the
+     SR&ED glossary*).
+     `tests/reading-list-corrections.spec.ts` § 3 holds it.
 5. **SR&ED's $6 million.** The tax years it applies from (beginning on or after 2024-12-16) are in no
    held quote, and only the formula of s.127(10.2) is held, not the sentence that leads into it. The
    same policy page says “For tax years that begin after December 15, 2024, the maximum expenditure
@@ -648,8 +662,8 @@ machine, before DotAmi says more than it does now. They are listed in [task-list
    citation, the line would also show under the card's source among the words found on the page,
    until a person reads the page. Since 2026-10-30 the guard lets one year through, inside quote marks:
    the CCPC list's line on ECPCs (the list's item 3; § Blocked, item 4). He asked for the list whole without
-   seeing that line, and his NO TIMES call on it was asked on 2026-10-30. This line is not in that list, so
-   it still waits for his call.
+   seeing that line; asked about it, he kept the list whole with that date (2026-10-30, his reading page,
+   item 9). This line is not in that list, so it still waits for his call.
 6. **The Productivity Grant's other conditions.** Partly settled on 2026-10-29 by the maintainer's
    two answers of that day (his reading page, item 5; "Yes, build them"): the table's labels and the
    sentences found on 2026-10-27 are held, and what stays open is below.
@@ -719,7 +733,13 @@ Four more were settled on 2026-10-27 (five changes, counting the two titles), ea
   35% quotes it (“Some Canadian-controlled private corporations (CCPCs) that meet certain requirements
   may earn investment tax credits at the enhanced rate of 35%”), and the glossary's citation holds it
   with its two older quotes, found together, so its check is of that day. The entry's next sentence (a
-  $3 million threshold, older than the $6 million the CRA's other pages give) is never quoted.
+  $3 million threshold, older than the $6 million the CRA's other pages give) is never quoted. Since
+  2026-10-30 *Incorporation for liability/SR&ED*'s 35% quotes the same line, under the same label (the
+  maintainer's answer on his reading page, item 9: the relationships page it quoted until then is the older
+  page, quoted nowhere; § Rules, rule 8). The stage cites the glossary itself, so the quote is held by one of
+  its own sources: `node scripts/check-quotes.mjs` found the line again that day ("The quote was found"),
+  so that citation's one check holds the line, dated 2026-10-30, and the maintainer's read of the glossary
+  (2026-10-25) wins on screen. The stage keeps the relationships page among its sources, with its check.
 - **Home office: how to work out the business part.** The box quotes the page's sentence: “To
   calculate the part you can deduct, use a reasonable basis, such as the area of the workspace divided
   by the total area of your home.” Both citations of the page hold it with their four older quotes,

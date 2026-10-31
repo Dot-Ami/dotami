@@ -39,6 +39,8 @@ off on 2026-10-23 (see *Retired programs* below), and the Productivity Grant cam
   relationships affect the small business deduction and SR&ED investment tax credits* (already a
   source of the card), says unincorporated businesses' credit is non-refundable; no card quotes
   that line ([citations.md](citations.md), *Blocked*, item 4; § Rules, rule 8: the newer page wins).
+  Since the maintainer's answer of 2026-10-30 (his reading page, item 9: “The whole older page”) no
+  card quotes any line of it; it stays among the card's sources, with its check.
   The CCPC's said refundable ("35% (refundable)", "35% refundable
   treatment") on the maintainer's word alone, which no record held, and none of its quotes said
   it, so it said neither until 2026-10-30. Since his answer of that day (his reading page, item 8)
@@ -48,9 +50,11 @@ off on 2026-10-23 (see *Retired programs* below), and the Productivity Grant cam
   refundable. Its `refundable` stays unset: the list says it, in the CRA's words, and a bare
   "refundable" after the 35% would say more than the list's lines say. The sole proprietor's fork copies the
   CCPC's note (`lib/brain/evaluate.ts`), so it shows the list too, beside the individual's 40%: why
-  the list is never cut ([citations.md](citations.md), *Blocked*, item 4). The 35% is the CRA's “Some CCPCs may earn an ITC
+  the list is never cut ([citations.md](citations.md), *Blocked*, item 4). The 35% was the CRA's “Some CCPCs may earn an ITC
   at an enhanced rate of 35% on qualified SR&ED expenditures up to their expenditure limit for the
-  year.”, and the limit, $6 million, is on the card only inside the CRA's *What's new for
+  year.” (the relationships page, the older one) from 2026-10-24 until his answer on item 9 of
+  2026-10-30, which took that line off the CCPC's note and the fork: the card's 35% rests on the
+  list's lines on the enhanced rate since. The limit, $6 million, is on the card only inside the CRA's *What's new for
   corporations* line (Income Tax Act s.127(10.2) holds the formula). The tax years it applies from
   are in no held quote, so no screen or field says them ([citations.md](citations.md), *The reading
   list's tool checks*). Until then the CCPC's note said "confirm the current limit with an advisor".
@@ -62,7 +66,8 @@ off on 2026-10-23 (see *Retired programs* below), and the Productivity Grant cam
   heading, the individual's 40% line and the 13 lines of the list for corporations that day (until
   then a check of 2026-10-29 holding the 40% line alone). The list's own "in the year" and its one
   date, in its line on ECPCs, are the CRA's words inside its quote marks; DotAmi's words around them
-  hold no time or date.
+  hold no time or date. The date stays on the maintainer's other answer on item 9 (2026-10-30): keep
+  the list whole, with the CRA's date in its item 3.
 
 ## The Canada-Alberta Productivity Grant (`grant-capg`)
 
