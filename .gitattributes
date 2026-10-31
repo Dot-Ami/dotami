@@ -1,3 +1,11 @@
+# Every text file is checked out with Unix line endings (LF) on every computer, Windows included,
+# whatever git's own core.autocrlf says there (Git for Windows turns it on by default). The repository
+# already stores LF everywhere; this keeps the copy on disk the same, so a test that reads a file
+# sees the same text on Windows as on CI. Files git sees as binary are left alone.
+# A clone made before this line still has Windows line endings on disk: run
+# `git rm -r --cached . && git reset --hard` once with nothing uncommitted (CONTRIBUTING.md says more).
+* text=auto eol=lf
+
 # Almost every pull request adds a line under [Unreleased] in these two logs, so two branches
 # meeting there used to conflict on lines that both belong. git's built-in union merge keeps both
 # sides' lines instead (ours first, then theirs) and never stops for a conflict in these files.

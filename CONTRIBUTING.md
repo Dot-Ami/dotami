@@ -292,6 +292,12 @@ npm run seed             # optional: two invented ventures so the map is not emp
 npm run dev
 ```
 
+**Line endings on Windows.** `.gitattributes` checks every text file out with Unix line endings
+(LF), whatever git's own `core.autocrlf` setting says, so the tests read the same text on Windows
+as on CI. A new clone gets this from the start. A clone made before that line reached `main` still has
+Windows line endings on disk until you rewrite it once, with nothing uncommitted (this throws away
+uncommitted changes): `git rm -r --cached . && git reset --hard`. Cloning again does the same.
+
 Before opening a PR, run **`npm run ci:quality`** — it is the exact chain CI runs:
 `prisma generate → typecheck → lint → test → build`. Stop the dev server first. The test
 suite includes `tests/engine-integrity.spec.ts`, which fails on an entry without a citation,

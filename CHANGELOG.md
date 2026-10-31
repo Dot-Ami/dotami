@@ -304,6 +304,15 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   ([docs/engines/citations.md](docs/engines/citations.md), § Outside the list, item 3). Test:
   `tests/repeated-losses-read.spec.ts`.
 ### Fixed
+- **The tests read the same line endings on Windows as on CI.** `.gitattributes` gains
+  `* text=auto eol=lf`, so every text file is checked out with Unix line endings, even where git's
+  `core.autocrlf` is on (Git for Windows' default). Until now a Windows clone had Windows line endings
+  on disk while the repository stores Unix ones, and `tests/prerelease-honesty.spec.ts` failed there
+  (its planted control looked for a `"\n"` in `docs/privacy-log.md` that wasn't on disk); CI runs the
+  unit tests on Ubuntu only, so it never saw that. That spec now reads the log with its line endings
+  made Unix ones, as other specs already do. The `.gitattributes` line takes effect on a new clone; an
+  existing Windows clone runs `git rm -r --cached . && git reset --hard` once (CONTRIBUTING.md,
+  *Line endings on Windows*). The repository's stored files don't change.
 - **Mara's example: its prices re-opened, and no promotion length in DotAmi's own words** (2026-10-27). The
   sellers' pages a review couldn't re-open were opened again: every Busy Bee Tools, Autodesk and QuickBooks
   price is the same as on 2026-10-14 (Autodesk's appear once a browser draws the page); Lee Valley's showed a
