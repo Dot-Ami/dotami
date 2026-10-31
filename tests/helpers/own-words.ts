@@ -3,8 +3,8 @@
  * cockpit): the words a person reads or a screen reader says, written straight into the component. The
  * words files are what the words tests read (verdict words in tests/cockpit-screen.spec.ts, time words in
  * tests/idea-invariants.spec.ts), so a sentence written in a component is a sentence those tests never see.
- * tests/cockpit-own-words.spec.ts runs this over every file in components/cockpit/ (the maintainer's story
- * S2.5.30e, 2026-10-17).
+ * tests/cockpit-own-words.spec.ts runs this over every file in components/cockpit/ since the maintainer's story
+ * S2.5.30e (2026-10-17), and over every file in components/ since the house-cleaning audit of 2026-10-31.
  *
  * It reads the TypeScript syntax tree, so a comment is never text, and reports:
  *
