@@ -18,8 +18,9 @@ import { launchGuardFromEnv, refuseWithoutLaunchSecret } from "@/lib/http/launch
  * and nine routes wrote their own wrappers around them, so a fix to one copy could miss the others
  * (tests/route-helpers-one-copy.spec.ts now fails if a copy comes back).
  *
- * A domain's http.ts keeps only what is its own: the words a refused caller is told, and which of its
- * errors answer which status.
+ * A domain's http.ts keeps what is its own: the words a refused caller is told, which of its errors
+ * answer which status, and the shape of its own request bodies (figures and expenses parse theirs;
+ * figures also keeps refuseUnlessFromAppPage, its binding of pageOnly with the agree prompt's words).
  */
 
 /**

@@ -204,7 +204,7 @@ describe("(b) every route goes through the helpers", () => {
 });
 
 describe("(c) a domain's http.ts reaches into no other domain's http.ts", () => {
-  it("imports and re-exports only from lib/api and its own folder", () => {
+  it("imports and re-exports from no other domain's http.ts", () => {
     const reaches = DOMAIN_HTTP.flatMap((file) => {
       const own = domainOf(`@/${file.replace(/\.ts$/, "")}`);
       return parse(file)

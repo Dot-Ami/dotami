@@ -769,9 +769,10 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   house-cleaning audit of 2026-10-31, item architecture-6). The rate limit, the "only DotAmi's own window" check,
   reading the JSON body and turning a store error into an answer now live once, in `lib/api/route.ts` (`throttle`,
   `pageOnly`, `readBody`, `failure`), where four domains' `http.ts` files and nine routes each had their own wrapper,
-  so a fix to one copy can no longer miss the others. Each domain's `http.ts` keeps only its own words and which of
-  its errors answer which status; every route keeps its rate-limit bucket, its limits, its order of checks and its
-  words. `tests/route-helpers-one-copy.spec.ts` fails if a copy comes back (it failed on the code before, naming
+  so a fix to one copy can no longer miss the others. Each domain's `http.ts` keeps what is its own: its words,
+  which of its errors answer which status, and the shape of its own request bodies (`parseIdsBody`, `parseScope`;
+  figures also keeps `refuseUnlessFromAppPage`, its binding of `pageOnly`); every route keeps its rate-limit bucket,
+  its limits, its order of checks and its words. `tests/route-helpers-one-copy.spec.ts` fails if a copy comes back (it failed on the code before, naming
   the copies). `tests/route-answers-unchanged.spec.ts`, written first, pins the status, every header and the whole
   body of 16 of the 41 route files the move changed (figures propose and bank-sources, the cockpit's date and
   region, expenses propose and agree, the watched-businesses add, and the nine routes that counted their rate limit
