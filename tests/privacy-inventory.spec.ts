@@ -20,6 +20,7 @@ import {
   type DependencyEntry,
 } from "@/lib/privacy/inventory";
 import { settingsWords } from "@/lib/settings/words";
+import { venturesWords } from "@/lib/ventures/words";
 
 import {
   BROWSER_PROBES,
@@ -125,7 +126,9 @@ describe("the privacy inventory lists every database table", () => {
   it("calls the button that removes a link by the label it really has", () => {
     const label = TABLES.find((t) => t.model === "VentureLink")!.removedBy.match(/“([^”]+)”/)?.[1];
     expect(label, "the VentureLink entry should quote the button's label in “curly quotes”").toBeDefined();
-    expect(readSource("components/ventures/ventures-page.tsx")).toMatch(new RegExp(`>\\s*${label}\\s*</button>`));
+    // The label is in the page's words file since 2026-10-31; the page draws it as the button's only text.
+    expect(venturesWords.card.links.remove).toBe(label);
+    expect(readSource("components/ventures/ventures-page.tsx")).toMatch(/>\s*\{words\.card\.links\.remove\}\s*<\/button>/);
   });
 
   it("says the placeholder account's address can be set, by the setting the code really reads", () => {

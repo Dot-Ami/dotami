@@ -37,6 +37,7 @@ export const WORDS_FILES_FROM_COMPONENTS = [
   "lib/expenses/words.ts",
   "lib/licences/words.ts",
   "lib/settings/words.ts",
+  "lib/ventures/words.ts",
 ] as const;
 
 /** One piece of text a component wrote itself. */
