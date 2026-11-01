@@ -54,6 +54,112 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   person's own browser); and DotAmi doesn't use `setCertificateVerifyProc`. For developers: Dependabot's
   rewrite of `package-lock.json` dropped `"gypfile": false` from the database package's entry, so
   `tests/database-package.spec.ts` failed on #219; `node scripts/keep-gypfile.mjs` put it back.
+- **The desktop app moves to Electron 44.10.1 and electron-updater 6.8.11, the Anthropic library to
+  0.137.0, and the installer is built with electron-builder 26.18.0** (from 44.9.1, 6.8.9, 0.135.0 and
+  26.15.3; Dependabot's #212, whose lockfile this replaces, went only as far as Electron 44.9.3). Along the
+  way npm moves two development packages to their patched versions: undici 6.29.0, which `node-gyp` uses
+  (Dependabot alerts 62, 72, 74 and 76, three rated high; #228 makes the same change), and fast-uri 3.1.8,
+  which electron-builder uses, through ajv, to check its settings (alerts 63 to 66, rated medium and low).
+  **Electron:** 44.10.1 brings Node.js 24.22.1 (from 24.22.0), a Node security release that fixes 8 CVEs on
+  Node 24: 4 rated high, 3 medium and 1 low, by Node's
+  [security notice](https://nodejs.org/en/blog/vulnerability/october-2026-security-releases) (read
+  2026-10-31; the [24.22.1 notes](https://nodejs.org/en/blog/release/v24.22.1), read 2026-10-31, list the same
+  8). In plain words: three are in how Node checks that a secure connection reached the computer it asked
+  for, in TLS (how a program makes a secure connection): CVE-2026-106069 and CVE-2026-105483 (high) and
+  CVE-2026-106072 (medium); one let a DNS lookup (the lookup that turns a web address into a computer's
+  address) look up a different name from the one it was given: CVE-2026-105482 (high); one is in unpacking
+  Brotli, one kind of compressed data: CVE-2026-111497 (high); one let a reused connection take a reply written before its
+  request: CVE-2026-105481 (medium); one made programs started from the same saved copy of Node repeat the
+  same random values: CVE-2026-106074 (medium); and one is in Node's optional switch that limits which files
+  a program may use: CVE-2026-106073 (low). Node's notes also list newer security certificates and
+  libraries, with no CVE. Electron's [44.10.0](https://github.com/electron/electron/releases/tag/v44.10.0)
+  moves Chromium, its browser engine, to 152.0.7977.169 (from .167), and
+  [44.10.1](https://github.com/electron/electron/releases/tag/v44.10.1) adds 18 fixes Electron copied from
+  Chromium and its graphics and JavaScript parts (Dawn, Skia and V8; electron/electron#55492), with no CVE
+  named (read 2026-10-31); 44.9.3 added fixes copied from Chromium and its parts (ANGLE, PDFium, Skia and
+  V8), and the [44.9.2](https://github.com/electron/electron/releases/tag/v44.9.2) notes list nothing
+  ([44.9.3](https://github.com/electron/electron/releases/tag/v44.9.3), read 2026-10-30). Electron marks none
+  of its own fixes in 44.10.0 as security fixes. **Where it reaches DotAmi:** the Chromium fixes reach the
+  window (DotAmi's pages, and the receipt files a person adds) and the update check, which goes through
+  Electron's own network module, that is Chromium's networking (`loadUpdater` in `desktop/main.mjs`;
+  electron-updater's `electronHttpExecutor.js`). Two of 44.10.0's fixes reach how the installed app reads its
+  own files, which are packed into one archive, `resources/app.asar` (its code, the window's preload and the
+  migrations; electron-builder's default; the server runs from its own folder beside it,
+  `desktop/package.mjs`): a damaged archive whose size fields don't match the file's length is now handled
+  (electron/electron#55176), and the main process and the programs it starts now read paths inside the
+  archive the same way (#55183). The time-zone data moves to tzdata 2026e: Electron's note names
+  Europe/London, and the [tz database's own notes](https://github.com/eggert/tz/blob/main/NEWS) (Release
+  2026e, read 2026-10-31) add that Manitoba no longer turns its clocks back on 2026-11-01, so for a person
+  there the day DotAmi counts as today follows that change (`localDay` in `lib/figures/age.ts`). **What
+  doesn't reach DotAmi:** in the desktop app, Node runs the main process and the server, and neither sends
+  anything through Node's TLS or DNS. The main process's one request is a `HEAD` to DotAmi's own server on
+  127.0.0.1 (`waitForServer` in `desktop/main.mjs`); the server's one outside request, the Anthropic call in
+  `app/api/intent/parse/route.ts`, runs only with `ANTHROPIC_API_KEY`, which the app takes out of the
+  server's environment (`serverEnv` in `desktop/main.mjs`). DotAmi's own code doesn't look names up with
+  Node's `dns` or turn on Node's file-permission switch, and never unpacks Brotli (the gzip and zip files a
+  person adds are unpacked by a JavaScript library, `fflate`, not by Node). The File System Access fix (#55330) is for pickers DotAmi's
+  pages never open (the window is refused every permission but writing to the clipboard,
+  `setPermissionRequestHandler` in `desktop/main.mjs`); DotAmi doesn't use `protocol.registerSource`
+  (#55177), `onSendHeaders` (#55168; it uses `onBeforeSendHeaders`), `session.registerPreloadScript`,
+  extensions, `webContents.adjustSelection` or `net.fetch`, and its menu has no DevTools item;
+  `utilityProcess` now reports an exit when the app quits while one is still starting (#55273), which
+  DotAmi's server handler ignores while quitting; the rest are for Linux, macOS and login items. Copies
+  already installed get Electron 44.10.1 with the next release; a copy run from source runs on plain Node,
+  which this doesn't change. **The update
+  checker:** an update that downloads only the changed parts of the new installer (from the release's
+  `.blockmap`) now works in cases where 6.8.9 gave up and downloaded the whole file; a stale saved block
+  map is removed so it can't spoil the next one; and a saved update whose file name is missing or is a
+  folder path is refused
+  ([6.8.10](https://github.com/electron-userland/electron-builder/releases/tag/electron-updater%406.8.10),
+  [6.8.11](https://github.com/electron-userland/electron-builder/releases/tag/electron-updater%406.8.11),
+  read 2026-10-30). Its requests still go only to DotAmi's GitHub releases, with the same headers: the new
+  release, and, when no block map is saved, the old version's `.blockmap` from the release before. 6.8.9
+  fetched that too; now that a stale one is deleted, the fetch can happen where 6.8.9 read its saved copy.
+  One new progress line, kept in the log as written, names that `.blockmap`'s address on GitHub. **The
+  Anthropic library**
+  ([0.136.0](https://github.com/anthropics/anthropic-sdk-typescript/releases/tag/sdk-v0.136.0),
+  [0.137.0](https://github.com/anthropics/anthropic-sdk-typescript/releases/tag/sdk-v0.137.0), read
+  2026-10-30) adds administration and user-profile endpoints DotAmi doesn't call, changes how streamed
+  answers are read (DotAmi's one call, `messages.create` in `app/api/intent/parse/route.ts`, doesn't stream)
+  and hides one more header from its own logs; a request is built the same way. The desktop app never calls
+  the model. **The installer:** since
+  [26.16.0](https://github.com/electron-userland/electron-builder/releases/tag/electron-builder%4026.16.0), its
+  step that closes a DotAmi still running starts PowerShell with `-NoProfile -NonInteractive`, so the
+  person's own PowerShell profile doesn't run, and
+  [26.15.6](https://github.com/electron-userland/electron-builder/releases/tag/electron-builder%4026.15.6)
+  makes sure it installs the main program and its native files (the notes from
+  [26.15.4](https://github.com/electron-userland/electron-builder/releases/tag/electron-builder%4026.15.4) to
+  [26.18.0](https://github.com/electron-userland/electron-builder/releases/tag/electron-builder%4026.18.0),
+  read 2026-10-30). The other changes are for macOS, Linux, other
+  kinds of installer, options DotAmi doesn't set (`differentialPackage: "store-asar"`, `useZip`), or the
+  build itself (signing log lines, path checks, the native-rebuild tool, which DotAmi switches off); the
+  installer's own templates differ from 26.15.3's only by those PowerShell flags. The Windows update steps
+  in [desktop-app.md](docs/architecture/desktop-app.md) were re-read in the new versions: the same, except
+  one moved line number. The code comments that cite electron-updater 6.8.9 by line now say the lines are
+  the same in 6.8.11 (`desktop/log.mjs`, `lib/privacy/inventory.ts`, `tests/error-logging.spec.ts`). For developers: Dependabot's rewrite of
+  `package-lock.json` dropped `"gypfile": false` from the database package's entry, so
+  `tests/database-package.spec.ts` failed on #212; `node scripts/keep-gypfile.mjs` put it back. npm's rewrite
+  for Electron 44.10.1 dropped it again, and the script put it back again.
+  `@noble/hashes` goes back from 2.4.0 to 1.8.0 because app-builder-lib
+  [26.16.0](https://github.com/electron-userland/electron-builder/releases/tag/electron-builder%4026.16.0)
+  asks for version 1 (`^1.8.0` in its package.json on npm, where 26.15.3 asked for `^2.2.0`; read
+  2026-10-31); it makes the
+  `.blockmap` when the installer is built, and doesn't ship.
+- **undici, a library for web requests that only developer tools use, moves to its patched versions**
+  (6.29.0 to 6.29.1 and 7.30.0 to 7.30.1; Dependabot's #225, whose lockfile this replaces). It closes
+  Dependabot alerts 62, 72, 74 and 76 (the 6.29.0 copy; #229 makes the same change) and 70, 73, 75, 77 and
+  78 (the 7.30.0 copy); seven are rated high, two medium. The [6.29.1](https://github.com/nodejs/undici/releases/tag/v6.29.1) and
+  [7.30.1](https://github.com/nodejs/undici/releases/tag/v7.30.1) notes (read 2026-10-30) fix ways a
+  malicious server could crash the program using undici or make it run out of memory, a way custom
+  certificate checks were silently dropped, and, in 7.30.1, a way a cached answer could be stored under the
+  wrong address. **Neither copy ships in DotAmi:** 7.30.1 is an optional part of `@electron/get`, which
+  downloads Electron when the packages install and loads undici only to go through a proxy
+  (`dist/proxy.js`), and 6.29.1 is used by `node-gyp`, which electron-builder's native rebuild step brings;
+  all are development packages. Nothing in DotAmi imports undici (the privacy scan in
+  `tests/helpers/source-scan.ts` would flag it), so nothing about what DotAmi keeps, sends, ships or asks
+  changes. For developers: Dependabot's rewrite of `package-lock.json` dropped `"gypfile": false` from the
+  database package's entry, so `tests/database-package.spec.ts` failed on #225; `node scripts/keep-gypfile.mjs`
+  put it back.
 
 ### Added
 - **The quote checker reads a table row as one piece, and the Productivity Grant's card names who pays which share**
