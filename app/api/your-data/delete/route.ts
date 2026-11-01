@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
 
 import { logRouteError } from "@/lib/api/log-error";
+import { pageOnly, readBody, throttle } from "@/lib/api/route";
 import { receiptsFolder, sweepOrphanReceipts, type SweepResult } from "@/lib/expenses/receipts/store";
-import { readBody, refuseUnlessFromAppPage, throttle } from "@/lib/figures/http";
 import { prisma } from "@/lib/prisma";
 import { DeleteInputError, deleteData, finishWipe } from "@/lib/privacy/delete";
 import { databaseFilePath } from "@/lib/settings/today";
@@ -27,15 +27,16 @@ const PAGE_ONLY_MESSAGE =
  *                                                                       an earlier Delete still owes)
  *
  * Answers only to DotAmi's own page: whether an agent may ever delete is a later decision, so like
- * agreeing to a figure it is the person's click and nothing else's (refuseUnlessFromAppPage). The
+ * agreeing to a figure it is the person's click and nothing else's (pageOnly). The
  * page has already asked twice; `seen` is what it showed, and a mismatch deletes nothing (409).
  * Nothing here goes in a URL or the log beyond the error's name and code.
  */
 export async function POST(request: Request) {
-  const limited = throttle(request, "your-data-delete", RATE_LIMIT);
+  // The bucket's name from when this route borrowed the figures routes' throttle, kept so its count is unchanged.
+  const limited = throttle("figures-your-data-delete", request, RATE_LIMIT);
   if (limited) return limited;
 
-  const notFromApp = refuseUnlessFromAppPage(request, PAGE_ONLY_MESSAGE);
+  const notFromApp = pageOnly(request, PAGE_ONLY_MESSAGE);
   if (notFromApp) return notFromApp;
 
   const read = await readBody(request, MAX_BODY_BYTES);

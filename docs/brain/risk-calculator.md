@@ -1,12 +1,14 @@
 # Risk Calculator — Spec
 
-Last updated: 2026-10-29 (the maintainer's answers on PR #217: the repeated-losses read quotes four sentences of the
+Last updated: 2026-10-31 (the status says built, as the code is: `lib/engines/risk/v2026/` is the catalog, and
+`lib/brain/evaluate.ts` imports `riskCatalogV2026` and runs `attachRisk`); 2026-10-29 (the maintainer's answers on PR #217: the repeated-losses read quotes four sentences of the
 audit manual's chapter 27, the page's passage from Martin v The Queen among them, with a tool check of 2026-10-29, and
 the same citation is under the Hobby vs. business card, § What the reads quote); 2026-10-27 (a repeated-losses read is
 back under a new id, `risk-losses-source-of-income`, quoting the CRA's Income Tax Audit Manual, chapter 27; the home office read quotes the CRA's sentence on the business part; ISED's loans page's
 own title; ISED's loans page is under the loan program's card, from #208, merged in; 2026-10-24:
 the maintainer's reading list of 2026-10-23: four reads corrected to what their pages say and one retired, § What
-the reads quote and § Retired risk reads) · Status: **not built** · Build order: #3 (after rules engine)
+the reads quote and § Retired risk reads) · Status: **built** (v0, 2026-07-02, as [README.md](./README.md)'s
+table says) · Build order: #3 (after rules engine)
 
 ## Job
 

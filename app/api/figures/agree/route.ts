@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
-import { parseIdsBody, readBody, refuseUnlessFromAppPage, storeErrorResponse, throttle } from "@/lib/figures/http";
+import { readBody, throttle } from "@/lib/api/route";
+import { parseIdsBody, refuseUnlessFromAppPage, storeErrorResponse } from "@/lib/figures/http";
 import { agreeToFigures } from "@/lib/figures/store";
 import { prisma } from "@/lib/prisma";
 
@@ -19,7 +20,7 @@ const MAX_BODY_BYTES = 64 * 1024;
  * outside agents use /api/figures/propose and wait for the person to agree.
  */
 export async function POST(request: Request) {
-  const limited = throttle(request, "agree", RATE_LIMIT);
+  const limited = throttle("figures-agree", request, RATE_LIMIT);
   if (limited) return limited;
 
   // Checked before the body is read: a request that isn't from the app's page gets nothing.

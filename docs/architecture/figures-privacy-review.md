@@ -53,7 +53,7 @@ details for anything. All of it in the one database file on the person's compute
    once; settings). It asks twice, refuses if the counts changed in between, deletes in one
    transaction, then runs VACUUM so the deleted rows are gone from the file's bytes, not only marked
    free (`tests/privacy-delete.spec.ts` scans the file for a marker string; a plain delete leaves it
-   there). Only DotAmi's own page can call it (`refuseUnlessFromAppPage`), and its body goes through
+   there). Only DotAmi's own page can call it (`pageOnly`, `lib/api/route.ts`), and its body goes through
    `readJsonWithLimit`. *Forget this source* isn't built.
    *Added 2026-10-08:* a box for the safety copies in the backups folder (whole copies of the file,
    so they still hold what was deleted), warning that afterwards only a backup saved elsewhere could

@@ -1,13 +1,7 @@
 import { NextResponse } from "next/server";
 
-import {
-  AGREE_ONLY_MESSAGE,
-  parseIdsBody,
-  readBody,
-  refuseUnlessFromAppPage,
-  storeErrorResponse,
-  throttle,
-} from "@/lib/expenses/http";
+import { pageOnly, readBody, throttle } from "@/lib/api/route";
+import { AGREE_ONLY_MESSAGE, parseIdsBody, storeErrorResponse } from "@/lib/expenses/http";
 import { agreeToExpenses } from "@/lib/expenses/store";
 import { localToday } from "@/lib/figures/age";
 import { prisma } from "@/lib/prisma";
@@ -26,16 +20,16 @@ const MAX_BODY_BYTES = 512 * 1024;
  * to an idea, or left out for any of the person's (the Expenses screen agrees to a typed batch at once).
  *
  * THE PERSON'S CLICK. This is the only way a proposed record becomes a confirmed one, and it
- * answers only to DotAmi's own page (`Sec-Fetch-Site: same-origin`); see `refuseUnlessFromAppPage`
- * (lib/figures/http.ts) for what that does and doesn't stop. Importers, the Lens and outside
+ * answers only to DotAmi's own page (`Sec-Fetch-Site: same-origin`); see `pageOnly`
+ * (lib/api/route.ts) for what that does and doesn't stop. Importers, the Lens and outside
  * agents use /api/expenses/propose and wait for the person to agree.
  */
 export async function POST(request: Request) {
-  const limited = throttle(request, "agree", RATE_LIMIT);
+  const limited = throttle("expenses-agree", request, RATE_LIMIT);
   if (limited) return limited;
 
   // Checked before the body is read: a request that isn't from the app's page gets nothing.
-  const notFromApp = refuseUnlessFromAppPage(request, AGREE_ONLY_MESSAGE);
+  const notFromApp = pageOnly(request, AGREE_ONLY_MESSAGE);
   if (notFromApp) return notFromApp;
 
   const read = await readBody(request, MAX_BODY_BYTES);

@@ -1,8 +1,7 @@
 import { NextResponse } from "next/server";
 
-import { readJsonWithLimit, rejectedResponse, RequestRejectedError } from "@/lib/api/body-limit";
 import { logRouteError } from "@/lib/api/log-error";
-import { checkRateLimit, clientKeyFromRequest, rateLimitResponse } from "@/lib/api/rate-limit";
+import { readBody, throttle } from "@/lib/api/route";
 import { addDestination, addTypedStatement, listTypedStatements } from "@/lib/person/statements";
 import {
   isValidSaidAt,
@@ -55,18 +54,13 @@ export async function GET() {
  * it is no other kind of statement, and any other kind is refused.
  */
 export async function POST(request: Request) {
-  const rateLimit = checkRateLimit(`statements:${clientKeyFromRequest(request)}`, RATE_LIMIT);
-  if (!rateLimit.allowed) return rateLimitResponse(rateLimit);
+  const limited = throttle("statements", request, RATE_LIMIT);
+  if (limited) return limited;
 
-  let raw: unknown;
-  try {
-    raw = await readJsonWithLimit<unknown>(request, MAX_BODY_BYTES);
-  } catch (error) {
-    if (error instanceof RequestRejectedError) return rejectedResponse(error);
-    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
-  }
+  const read = await readBody(request, MAX_BODY_BYTES);
+  if ("refusal" in read) return read.refusal;
 
-  const body = (raw ?? {}) as { text?: unknown; saidAt?: unknown; kind?: unknown };
+  const body = (read.body ?? {}) as { text?: unknown; saidAt?: unknown; kind?: unknown };
   if (body.kind !== undefined && body.kind !== "destination") {
     return NextResponse.json({ error: "A statement can only be marked as your destination." }, { status: 400 });
   }

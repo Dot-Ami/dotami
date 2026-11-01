@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { logRouteError } from "@/lib/api/log-error";
-import { readBody, refuseUnlessFromAppPage, throttle } from "@/lib/expenses/http";
+import { pageOnly, readBody, throttle } from "@/lib/api/route";
 import { receiptLock } from "@/lib/expenses/receipts/lock";
 import { startNewReceiptKey } from "@/lib/expenses/receipts/new-key";
 import { ReceiptError } from "@/lib/expenses/receipts/store";
@@ -30,10 +30,10 @@ const PAGE_ONLY_MESSAGE =
  * body; anything else moves nothing. The log gets the error's name and code only, never a path.
  */
 export async function POST(request: Request) {
-  const limited = throttle(request, "receipt-new-key", RATE_LIMIT);
+  const limited = throttle("expenses-receipt-new-key", request, RATE_LIMIT);
   if (limited) return limited;
 
-  const notFromApp = refuseUnlessFromAppPage(request, PAGE_ONLY_MESSAGE);
+  const notFromApp = pageOnly(request, PAGE_ONLY_MESSAGE);
   if (notFromApp) return notFromApp;
 
   const read = await readBody(request, MAX_BODY_BYTES);

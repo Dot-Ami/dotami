@@ -4,7 +4,7 @@ import path from "node:path";
 
 import { NextResponse } from "next/server";
 
-import { checkRateLimit, clientKeyFromRequest, rateLimitResponse } from "@/lib/api/rate-limit";
+import { throttle } from "@/lib/api/route";
 import { httpsOnly } from "@/lib/http/safe-url";
 
 export const runtime = "nodejs";
@@ -85,8 +85,8 @@ function runLookup(script: string, args: string[]): Promise<{ code: number | nul
 }
 
 export async function GET(request: Request) {
-  const rateLimit = checkRateLimit(`law-provision:${clientKeyFromRequest(request)}`, RATE_LIMIT);
-  if (!rateLimit.allowed) return rateLimitResponse(rateLimit);
+  const limited = throttle("law-provision", request, RATE_LIMIT);
+  if (limited) return limited;
 
   const url = new URL(request.url);
   const source = url.searchParams.get("source")?.trim() ?? "";
