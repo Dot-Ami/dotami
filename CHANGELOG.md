@@ -770,8 +770,11 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   earlier restores moved into `backups/`). It used to read each file in full only to look at its first 14
   bytes, the text that marks an encrypted receipt, so the more receipts were kept, the more it read before the
   window could open. Now it reads those 14 bytes, and reads a file whole only when it is still plain and is
-  encrypted then; a start with many receipts kept has far less to read. How a receipt is written, encrypted
-  or counted is unchanged, and the same files are opened, so the privacy log has no new line
+  encrypted then; a start with many receipts kept has far less to read. How a receipt is written and
+  encrypted is unchanged. What the start counts is unchanged too, with one exception: a receipt already
+  encrypted whose later bytes can't be read (a disk error partway through the file) is now counted as
+  encrypted, where it used to be counted as one that couldn't be done yet, because those bytes are no longer
+  read; nothing is written to it either way. The same files are opened, so the privacy log has no new line
   (`desktop/receipt-crypto.mjs`; [expense-records.md § 9](docs/architecture/expense-records.md)). Test:
   `tests/receipt-crypto.spec.ts`, where on the old code each of three encrypted receipts of 307,251 bytes was
   read whole.

@@ -806,7 +806,10 @@ the next start, which tries again; after it, the encrypted file is whole. A file
 counts only, never a name. After the first start of this version there is normally nothing left to do.
 Since 2026-10-31 a file already encrypted is told by its first 14 bytes, the text `DOTAMI-RECEIPT`, and
 only a plain one is read whole, so a start reads a few bytes of each receipt kept, not every receipt in
-full (until then each file was read whole just to look at its start).
+full (until then each file was read whole just to look at its start). One file is counted differently
+since then: one already encrypted whose later bytes can't be read (a disk error partway through) is
+counted as encrypted, where it used to be counted as one that couldn't be done yet, because those bytes
+are no longer read. Nothing is written to it either way.
 
 ### Backups (format 2, unchanged)
 
