@@ -772,8 +772,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   `settings/`, `licences/`, `ventures/` and `your-data/` into `lib/expenses/words.ts`, `lib/settings/words.ts`,
   `lib/licences/words.ts`, `lib/ventures/words.ts` and `lib/person/words.ts` (`yourDataWords`), so the words files'
   time check reads them as well as the component scan that already did (`tests/prerelease-honesty.spec.ts`), and a
-  verdict-word check reads them for the first time (no verdict check read them in the components, and the ventures
-  and person words files had none at all). The pages draw the same text as before, except
+  unit check holds them to the verdict words for the first time (until now only the browser walk,
+  `e2e/no-verdict.spec.ts`, read these screens for verdict phrases as they first open, and the ventures and person
+  words files had no verdict check at all). The pages draw the same text as before, except
   three sentences changed by a word or two, because the strict verdict list refuses "should" and "enough" even
   where they give no verdict: *Your expenses*' refund note ends "if this refund belongs there too." (was "should go
   there too"); the Delete menu starts "Tick what to delete." (was "Tick what should go."); and *What DotAmi knows
