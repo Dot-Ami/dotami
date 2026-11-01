@@ -181,21 +181,25 @@ person is asked).
   `setCertificateVerifyProc`. What Electron's browser engine writes to the data folder or requests on its
   own is still *not checked*.
 - **Electron 44.10.1 in the desktop app, up from 44.9.1 (2026-10-31, #229; Dependabot's #212 went only as
-  far as 44.9.3).** It brings Node.js 24.22.1, a Node security release with fixes for 8 CVEs
-  ([Node.js 24.22.1](https://nodejs.org/en/blog/release/v24.22.1), read 2026-10-31), Chromium
-  152.0.7977.169, and fixes Electron copied from ANGLE, Chromium, Dawn, PDFium, Skia and V8 (the
+  far as 44.9.3).** It brings Node.js 24.22.1, a Node security release with fixes for 8 CVEs (4 rated
+  high, 3 medium and 1 low by Node's
+  [security notice](https://nodejs.org/en/blog/vulnerability/october-2026-security-releases);
+  [Node.js 24.22.1](https://nodejs.org/en/blog/release/v24.22.1); both read 2026-10-31), Chromium
+  152.0.7977.169, and fixes Electron copied from Chromium and its parts (ANGLE, Dawn, PDFium, Skia, V8; the
   [44.9.2](https://github.com/electron/electron/releases/tag/v44.9.2) and
   [44.9.3](https://github.com/electron/electron/releases/tag/v44.9.3) notes, read 2026-10-30;
   [44.10.0](https://github.com/electron/electron/releases/tag/v44.10.0) and
   [44.10.1](https://github.com/electron/electron/releases/tag/v44.10.1), read 2026-10-31). That changes
   nothing about what DotAmi keeps, sends or asks: none of those notes mention `safeStorage`, which wraps the
-  data file's and the receipts' keys; in the desktop app nothing goes out through Node's TLS or DNS (the main
-  process's one Node request is to DotAmi's own server on 127.0.0.1, and the server's call to Anthropic runs
-  only with `ANTHROPIC_API_KEY`, which [`desktop/main.mjs`](../desktop/main.mjs) takes out of its
-  environment); the update check still goes through Chromium's networking; and the File System Access fix
+  data file's and the receipts' keys; in the desktop app nothing goes out through Node's TLS (how a program
+  makes a secure connection) or DNS (the lookup that turns a web address into a computer's address), since
+  the main process's one Node request is to DotAmi's own server on 127.0.0.1 and the server's call to
+  Anthropic runs only with `ANTHROPIC_API_KEY`, which [`desktop/main.mjs`](../desktop/main.mjs) takes out of
+  its environment; the update check still goes through Chromium's networking; and the File System Access fix
   is for pickers DotAmi's pages never open. One thing the person may see: the time-zone data moves to tzdata
   2026e, in which Manitoba no longer turns its clocks back on 2026-11-01 (the
-  [tz database's notes](https://github.com/eggert/tz/blob/main/NEWS), Release 2026e, read 2026-10-31), so for a person there the day DotAmi counts as today follows that
+  [tz database's notes](https://github.com/eggert/tz/blob/main/NEWS), Release 2026e, read 2026-10-31), so
+  for a person there the day DotAmi counts as today follows that change
   ([`lib/figures/age.ts`](../lib/figures/age.ts) `localDay`). What Electron's browser engine writes to the
   data folder or requests on its own is still *not checked*.
 - **electron-updater 6.8.11 in the desktop app, up from 6.8.9 (2026-10-30, #229; Dependabot's #212).** The
@@ -220,10 +224,15 @@ person is asked).
   source with `ANTHROPIC_API_KEY`; the desktop app never calls the model.
 - **The installer, built with electron-builder 26.18.0, up from 26.15.3 (2026-10-30, #229; Dependabot's
   #212).** Its settings are in [`desktop/package.mjs`](../desktop/package.mjs) (one-click, per user). Since
-  26.16.0, its step that closes a DotAmi still running starts PowerShell with `-NoProfile -NonInteractive`,
-  so the person's own PowerShell profile no longer runs inside the installer; 26.15.6 makes sure the main
-  program and its native files are installed. Nothing about what DotAmi keeps, sends or asks changes by the
-  notes for 26.15.4 to 26.18.0 (read 2026-10-30): the other changes are for macOS, Linux, other kinds of
+  [26.16.0](https://github.com/electron-userland/electron-builder/releases/tag/electron-builder%4026.16.0),
+  its step that closes a DotAmi still running starts PowerShell with `-NoProfile -NonInteractive`, so the
+  person's own PowerShell profile no longer runs inside the installer;
+  [26.15.6](https://github.com/electron-userland/electron-builder/releases/tag/electron-builder%4026.15.6)
+  makes sure the main program and its native files are installed. Nothing about what DotAmi keeps, sends or
+  asks changes by the notes for
+  [26.15.4](https://github.com/electron-userland/electron-builder/releases/tag/electron-builder%4026.15.4) to
+  [26.18.0](https://github.com/electron-userland/electron-builder/releases/tag/electron-builder%4026.18.0)
+  (read 2026-10-30): the other changes are for macOS, Linux, other kinds of
   installer, options DotAmi doesn't set, or the build itself, and the installer's own templates differ from
   26.15.3's only by those PowerShell flags. Running an installer built with 26.18.0 is *not checked*: CI
   builds the app folder, not the installer.
