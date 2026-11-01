@@ -780,6 +780,8 @@ placed in phase 3.
   - [x] Electron 44.8.0 → 44.9.1 (#226, 2026-10-30, eMudhra certificates): it refuses certificates issued
     through eMudhra's compromised intermediate certificates, which 44.8.0 accepted in the update check;
     reaches installed copies with the next release
+  - [x] Electron 44.9.1 → 44.10.1 (#229, 2026-11-01): Node.js 24.22.1, a Node security release with
+    fixes for 8 CVEs, and Chromium 152.0.7977.169; reaches installed copies with the next release
   - [x] The update checker's install ID (`.updaterId`, sent to GitHub with each check, written once into
     the log) is listed on What DotAmi knows about you and in Settings, with how to remove it (and that an
     earlier ID stays in the log); a test reads electron-updater's own code and fails while its file or
