@@ -19,6 +19,7 @@ import {
   type AllowedCall,
   type DependencyEntry,
 } from "@/lib/privacy/inventory";
+import { settingsWords } from "@/lib/settings/words";
 
 import {
   BROWSER_PROBES,
@@ -378,8 +379,10 @@ describe("the privacy inventory lists what electron-updater keeps and sends on i
       `name ${name} in the update check's headers in lib/privacy/inventory.ts`,
     ).toContain(name);
     expect(updateCheck.what).toMatch(/install ID/);
-    // Settings says what the check reveals in its own sentence, so it names the ID too.
-    expect(readFileSync(path.join(process.cwd(), "components/settings/settings-page.tsx"), "utf8")).toMatch(/GitHub sees [^<]*install ID/);
+    // Settings says what the check reveals in its own sentence, so it names the ID too (in its words file since
+    // 2026-10-31, which the page draws).
+    expect(settingsWords.today.privacy.updateCheck).toMatch(/GitHub sees [^<]*install ID/);
+    expect(readFileSync(path.join(process.cwd(), "components/settings/settings-page.tsx"), "utf8")).toContain("{privacy.updateCheck}");
   });
 
   it("the line the updater writes when it makes the ID reaches the log with the ID in it, and the log's entry says so", () => {

@@ -19,8 +19,10 @@ import * as engineSourcesFile from "@/lib/engines/shared/words";
 import * as expensesFile from "@/lib/expenses/words";
 import * as frontDoorFile from "@/lib/front-door/words";
 import * as landscapeFile from "@/lib/landscape/words";
+import * as licencesFile from "@/lib/licences/words";
 import * as personFile from "@/lib/person/words";
 import * as roadsFile from "@/lib/roads/words";
+import * as settingsFile from "@/lib/settings/words";
 import * as venturesFile from "@/lib/ventures/words";
 
 import { COMPONENT_TIME_WORDS, SHOWN_WORDS_GAPS } from "./fixtures/ideas/known-gaps";
@@ -66,8 +68,10 @@ const WORDS_FILES: Readonly<Record<string, unknown>> = {
   "lib/expenses/words.ts": expensesFile,
   "lib/front-door/words.ts": frontDoorFile,
   "lib/landscape/words.ts": landscapeFile,
+  "lib/licences/words.ts": licencesFile,
   "lib/person/words.ts": personFile,
   "lib/roads/words.ts": roadsFile,
+  "lib/settings/words.ts": settingsFile,
   "lib/ventures/words.ts": venturesFile,
 };
 

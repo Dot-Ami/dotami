@@ -2,32 +2,17 @@ import type { ReactNode } from "react";
 
 import { GhostLink, WordMark } from "@/components/ui";
 import type { NoticeEntry, NoticeKind, Notices } from "@/lib/licences/notices";
+import { licencesWords as words } from "@/lib/licences/words";
 
 const LICENSE_URL = "https://github.com/Dot-Ami/dotami/blob/main/LICENSE";
 
 /** The page's sections, in order: one per kind of entry the notices file has. */
 const SECTIONS: readonly { kind: NoticeKind; id: string; title: string; blurb: string }[] = [
-  {
-    kind: "runtime",
-    id: "runtime",
-    title: "The desktop app's runtime",
-    blurb: "What the installed app runs on. Chromium's own notices are a separate file in the app's folder, named below.",
-  },
-  {
-    kind: "package",
-    id: "packages",
-    title: "Packages",
-    blurb: "Code written by others that DotAmi is built with and ships.",
-  },
-  {
-    kind: "inside",
-    id: "inside",
-    title: "Copied inside other packages",
-    blurb:
-      "Code a package above carries inside itself (Next.js ships its own copies of these). Where that package includes no licence file for a copy, the entry says so.",
-  },
-  { kind: "font", id: "fonts", title: "Fonts", blurb: "The fonts the pages are set in." },
-  { kind: "data", id: "data", title: "Data", blurb: "Information written by others that DotAmi shows, with the licence it comes under." },
+  { kind: "runtime", id: "runtime", ...words.sections.runtime },
+  { kind: "package", id: "packages", ...words.sections.packages },
+  { kind: "inside", id: "inside", ...words.sections.inside },
+  { kind: "font", id: "fonts", ...words.sections.fonts },
+  { kind: "data", id: "data", ...words.sections.data },
 ];
 
 /**
@@ -44,36 +29,34 @@ export function LicencesPage({ notices }: { notices: Notices | "missing" | "unre
     <div className="flex min-h-[calc(100vh-2.5rem)] flex-col bg-ink">
       <nav className="flex items-center gap-6 border-b border-rule-soft px-8 py-[18px]">
         <GhostLink href="/settings" tone="stone">
-          ← Settings
+          {words.back}
         </GhostLink>
         <WordMark />
-        <p className="ml-auto font-mono text-small uppercase tracking-[0.14em] text-stone">Licences</p>
+        <p className="ml-auto font-mono text-small uppercase tracking-[0.14em] text-stone">{words.name}</p>
       </nav>
 
       <main className="mx-auto w-full max-w-3xl flex-1 px-8 py-10">
         <header>
           <h1 className="font-serif text-display font-bold leading-[1.15] tracking-tight text-paper">
-            Licences, <span className="font-normal italic text-maple">and who wrote what.</span>
+            {words.heading.lead} <span className="font-normal italic text-maple">{words.heading.rest}</span>
           </h1>
           <p className="mt-2 max-w-xl text-lead text-paper-dim">
-            DotAmi is open source under the{" "}
+            {words.intro.before}{" "}
             <a href={LICENSE_URL} target="_blank" rel="noreferrer" className="text-paper underline decoration-stone-dim underline-offset-2 hover:text-maple">
-              Apache License 2.0
+              {words.intro.link}
             </a>
-            . It is built with work by many other people. Each piece that ships with this copy is listed below with its
-            version and its licence; open one to read the licence word for word, as its authors wrote it.
+            {words.intro.after}
           </p>
         </header>
 
         {notices === "missing" ? (
           <Alert>
-            This copy of DotAmi hasn&apos;t been built, so the list hasn&apos;t been written yet. <Code>npm run build</Code>{" "}
-            (or <Code>npm run notices</Code>) writes it; the installed app always has it.
+            {words.missing.notBuilt} <Code>{words.missing.build}</Code> {words.missing.or} <Code>{words.missing.notices}</Code>
+            {words.missing.writesIt}
           </Alert>
         ) : notices === "unreadable" ? (
           <Alert>
-            DotAmi found its licence list but couldn&apos;t read it. The file is <Code>THIRD-PARTY-NOTICES.txt</Code> in the
-            folder DotAmi&apos;s server runs from; it can be opened with any text editor.
+            {words.unreadable.before} <Code>{words.file}</Code> {words.unreadable.after}
           </Alert>
         ) : (
           <Listed notices={notices} />
@@ -90,10 +73,11 @@ function Listed({ notices }: { notices: Notices }) {
   return (
     <>
       <p className="mt-4 text-body text-stone">
-        {notices.entries.length} entries, from <Code>THIRD-PARTY-NOTICES.txt</Code>, written when this copy was built (
-        {notices.header.split("\n")[1] ?? "DotAmi"}).
+        {notices.entries.length} {words.listed.entries} <Code>{words.file}</Code>
+        {words.listed.written}
+        {notices.header.split("\n")[1] ?? words.listed.noBuildLine}).
       </p>
-      <nav aria-label="On this page" className="mt-4 flex flex-wrap gap-x-4 gap-y-1.5">
+      <nav aria-label={words.sectionsNav} className="mt-4 flex flex-wrap gap-x-4 gap-y-1.5">
         {sections.map((s) => (
           <a key={s.id} href={`#${s.id}`} className="text-body text-stone underline decoration-rule underline-offset-4 hover:text-paper">
             {s.title} ({s.entries.length})
@@ -134,7 +118,7 @@ function EntryRow({ entry }: { entry: NoticeEntry }) {
         <div className="border-t border-rule-soft px-4 py-3">
           <ul className="space-y-0.5 text-body text-paper-dim">
             {entry.shipsIn.map((s) => (
-              <li key={s}>Ships in {s}.</li>
+              <li key={s}>{words.shipsIn(s)}</li>
             ))}
           </ul>
           {entry.note ? <p className="mt-2 text-body text-amber">{entry.note}</p> : null}

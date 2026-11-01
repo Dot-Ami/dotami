@@ -45,9 +45,12 @@ export const SHOWN_WORDS_GAPS: readonly ShownWordsGap[] = [
   // Phase 2", so neither says a span of time any more.
 ];
 
-/** A piece of text a component writes itself in which the no-times check finds a time. */
+/**
+ * A piece of text a component writes itself in which the no-times check finds a time, or one that moved from a
+ * component to a words file on 2026-10-31 (tests/helpers/own-words.ts WORDS_FILES_FROM_COMPONENTS).
+ */
 export interface ComponentTimeWords {
-  /** The component, repo-relative. */
+  /** The component or the words file, repo-relative. */
   file: string;
   /** The text exactly as tests/helpers/own-words.ts reports it: `${…}` for a template's holes, entities as written. */
   text: string;
@@ -64,11 +67,14 @@ export interface ComponentTimeWords {
  * The same ratchet for the text every component under components/ and app/ writes itself
  * (tests/prerelease-honesty.spec.ts, since the review of #210 on 2026-10-24, when two item rows were found
  * writing "Time-boxed" where no words check read them): the spec fails on a piece with a time not listed here,
- * and on a listed one it no longer finds.
+ * and on a listed one it no longer finds. Since 2026-10-31 it also reads the words files that took sentences out
+ * of the components (tests/helpers/own-words.ts WORDS_FILES_FROM_COMPONENTS), and each allowance below moved with
+ * its sentence, word for word (an entity such as &apos; is a plain ' in a words file).
+ * tests/idea-invariants.spec.ts, which reads every plain string in every words file, lets the same ones through.
  */
 export const COMPONENT_TIME_WORDS: readonly ComponentTimeWords[] = [
   {
-    file: "components/settings/settings-page.tsx",
+    file: "lib/settings/words.ts",
     text: "creates it (README, Quick start).",
     kind: "not a time",
     why: "The README's section name; the fastest pattern reads Quick.",

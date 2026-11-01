@@ -35,6 +35,8 @@ import ts from "typescript";
  */
 export const WORDS_FILES_FROM_COMPONENTS = [
   "lib/expenses/words.ts",
+  "lib/licences/words.ts",
+  "lib/settings/words.ts",
 ] as const;
 
 /** One piece of text a component wrote itself. */
