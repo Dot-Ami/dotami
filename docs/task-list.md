@@ -509,8 +509,9 @@ placed in phase 3.
   comes first, or the screen says plainly that no road is written for it yet and offers *About this job*
   ([14i]) and the general road.
   - [x] 28f: research the free tools, datasets and repos that already match a person's words to the
-    government's 2021 job classification (NOC), before building the search; a dated findings note (today's
-    search finds the expected job for 20 of 219 test ideas). Done 2026-10-20: the findings note,
+    government's 2021 job classification (NOC), before building the search; a dated findings note (the
+    search before 28f found the expected job for 20 of 219 test ideas, as research 28f measured it on
+    2026-10-20). Done 2026-10-20: the findings note,
     `28f-job-title-matching.md`, is kept outside this repository; the maintainer's picks from it (option 1
     with rule H) are in [ui-spec/futures/01-whats-closest-to-your-work.md](ui-spec/futures/01-whats-closest-to-your-work.md)
   - [x] 28g: design phase 2's screens before building them, in `docs/ui-spec/`, shown to the maintainer:
@@ -756,9 +757,9 @@ placed in phase 3.
   - [x] *Restore* checks a backup before replacing anything, and keeps a copy of what it replaces
   - [x] Setup suggests turning on disk encryption (the settings page, Windows Home and Pro)
   - [x] A test: back up on one computer → restore on another → the same ventures
-- ✅ **[7d] Installers and automatic updates** (unsigned, through GitHub releases, for now;
-  [how to release](architecture/desktop-app.md#releasing-an-update)). Done; the two open lines at the end are
-  what is left.
+- 🟡 **[7d] Installers and automatic updates** (unsigned, through GitHub releases, for now;
+  [how to release](architecture/desktop-app.md#releasing-an-update)). Partly done: the two open lines at the
+  end are what is left.
   - [x] A Windows installer built on each version tag, uploaded to a draft release (Mac and Linux after) —
     the workflow file was unreadable from #77 until its fix on 2026-10-06; v0.2.0 was built before it
   - [x] The app checks for updates, downloads, and asks before installing; pre-releases only reach pre-release copies
@@ -1253,8 +1254,9 @@ roadmap's build order.
 - 🔄 **[13c] Security** — CodeQL, grouped Dependabot, audit; a privacy review for each import path;
   a threat model for the Lens's powers before [9g].
   - The live list of open advisories is the repository's Security tab
-    (https://github.com/Dot-Ami/dotami/security), not a copy here: the two open lines below are as they
-    were checked on 2026-10-11, and aren't checked again on this page.
+    (https://github.com/Dot-Ami/dotami/security), not a copy here: its list of Dependabot alerts is shown
+    only to the repository's maintainers, and anyone else sees the published security advisories there. The
+    two open lines below are as they were checked on 2026-10-11, and aren't checked again on this page.
   - [x] DotAmi's local server answers only DotAmi's own window, not a program run by another Windows
     account on the same computer (#205, 2026-10-23)
   - [x] `source-map-js` 1.2.1 → 1.2.2 (build-time; Dependabot #71, merged 2026-10-07)

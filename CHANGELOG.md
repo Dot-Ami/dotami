@@ -971,15 +971,17 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   path that isn't on disk. engines.md drops the archetype section (archetypes went on 2026-09-14), shows the shape
   the catalogs really export (three of the ten differ from the `EngineCatalog` type, and it says how), and has a
   row for each of the 14 engine folders. The [docs/brain/](docs/brain/README.md) status lines match the code (the
-  cockpit's colouring reads the evaluator; the risk calculator is built; the RAG plan's pgvector no longer applies
-  with SQLite), and the rules engine's spec drops its "What it replaces" section, whose targets were deleted.
-  future-cockpit.md, use-cases.md and settings-and-edge-cases.md say what on each is built instead of "Nothing
-  here is built". [docs/task-list.md](docs/task-list.md) catches up: research 28f done; the desktop app [7b] and
-  installers [7d] done, with the Electron updates of #185 and #226; the server fix of #205 under security, which
-  now points to the repository's Security tab for open advisories; contributors [13a] paused since 2026-10-11;
-  the finished parts of release 0.5.0's list ticked. CONTRIBUTING.md says to format only the files you changed,
-  and, with `scripts/keep-gypfile.mjs`'s header, how to repair a Dependabot pull request that fails on the
-  database package's `"gypfile": false`. Docs only: nothing DotAmi keeps, sends, ships or asks changes.
+  cockpit's colouring reads the evaluator; the risk calculator is built; the plan for searching the law's text no
+  longer counts on pgvector, a PostgreSQL add-on, since the database is SQLite), and the rules engine's spec
+  drops its "What it replaces" section, whose targets were deleted. future-cockpit.md, use-cases.md and
+  settings-and-edge-cases.md say what on each is built instead of "Nothing here is built".
+  [docs/task-list.md](docs/task-list.md) catches up: research 28f done; the desktop app [7b] done and installers
+  [7d] partly done, with the Electron updates of #185 and #226; the server fix of #205 under security, which now
+  points to the repository's Security tab for open advisories; contributors [13a] paused since 2026-10-11; the
+  finished parts of release 0.5.0's list ticked. CONTRIBUTING.md says to run Prettier only on files you add and
+  to keep an existing file's layout, and, with `scripts/keep-gypfile.mjs`'s header, how to repair a Dependabot
+  pull request that fails on the database package's `"gypfile": false`. Docs only: nothing DotAmi keeps, sends,
+  ships or asks changes.
 
 ## [0.4.1] — 2026-10-20
 

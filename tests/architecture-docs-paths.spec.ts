@@ -14,7 +14,9 @@ import { describe, expect, it } from "vitest";
  *   - a folder tree in a fenced block with no language, indented two spaces a level, so "lib/", then
  *     "  engines/", then "    cfe/v2026/" names lib/engines/cfe/v2026/ (a "# comment" after a name is ignored);
  *   - a path-like word inside any other fenced block (the mermaid map's "lib/brain").
- * A line that says deleted, removed or until is history, not a claim about today, and is skipped. A segment in
+ * A line that says deleted or removed is history, not a claim about today, and is skipped. Not "until": a
+ * line like "PostgreSQL until 2026-09-28; today `lib/db/client.ts`" names a live path, and must stay checked
+ * (the review of #233). A segment in
  * angle brackets or with a star (`lib/engines/<name>/v2026/`) stands for any folder there. A last segment with
  * no extension may name a module (`components/cockpit/cockpit-page` is cockpit-page.tsx). Names are matched
  * with their exact case, so a page that passes on Windows passes on CI's Linux too.
@@ -24,7 +26,7 @@ import { describe, expect, it } from "vitest";
 
 const PAGES = ["docs/architecture/overview.md", "docs/architecture/engines.md"] as const;
 const ROOTS = ["lib", "components", "app", "desktop"];
-const HISTORY = /\b(deleted|removed|until)\b/i;
+const HISTORY = /\b(deleted|removed)\b/i;
 const MODULE_EXTENSIONS = ["", ".ts", ".tsx", ".mts", ".mjs", ".cjs", ".js"];
 
 interface Named {
@@ -121,6 +123,7 @@ describe("the path reader (it must be able to fail)", () => {
   const sample = [
     "Built: `lib/roads/evaluate-road.ts`, `lib/engines/shared/types.ts:118` and `components/cockpit/cockpit-page`.",
     "Deleted 2026-09-14: `lib/archetypes/`.",
+    "PostgreSQL until 2026-09-28; today `lib/db/no-such-client.ts`.",
     "Every engine sits in `lib/engines/<name>/v2026/`. A made-up one: `lib/paths/v2026/`.",
     "```",
     "lib/",
@@ -136,11 +139,12 @@ describe("the path reader (it must be able to fail)", () => {
   ].join("\n");
   const named = pathsIn(sample);
 
-  it("reads spans, folder trees and other fenced blocks, and skips history lines", () => {
+  it("reads spans, folder trees and other fenced blocks, skips deleted/removed lines, keeps until lines", () => {
     expect(named.map((n) => n.path)).toEqual([
       "lib/roads/evaluate-road.ts",
       "lib/engines/shared/types.ts",
       "components/cockpit/cockpit-page",
+      "lib/db/no-such-client.ts",
       "lib/engines/<name>/v2026/",
       "lib/paths/v2026/",
       "lib/",
@@ -156,6 +160,7 @@ describe("the path reader (it must be able to fail)", () => {
 
   it("finds what is on disk and refuses what isn't", () => {
     expect(named.filter((n) => !onDisk(n.path)).map((n) => n.path)).toEqual([
+      "lib/db/no-such-client.ts",
       "lib/paths/v2026/",
       "lib/cfe/",
       "components/lens-chat-panel.tsx",

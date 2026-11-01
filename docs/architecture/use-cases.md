@@ -1,11 +1,16 @@
 # Who DotAmi is for — the people, what each needs, and what the back end must do
 
-Status: a plan of 2026-09-27, of which, as of 2026-10-31, the desktop app on one SQLite file with
-its backup and restore, and confirmed figures with the agree prompt, are built, dropping a file of
-figures, the settings page and business expense records are partly built, and the Lens (with its
-permission levels and model preview), DotAmi as an MCP server, the questionnaire, deadlines, the
-accountant package, new tax years, co-owners, and Quebec and French are not ([the task
-list](../task-list.md) § 7 to § 12 has each one's state). It sits above the other architecture
+Status (2026-10-31): a plan of 2026-09-27.
+
+- Built: the desktop app on one SQLite file, with backup and restore; confirmed figures, with the agree
+  prompt.
+- Partly built: installers and automatic updates (unsigned; code signing is later); dropping a file of
+  figures; the settings page; business expense records.
+- Not built: the Lens (with its permission levels and model preview); DotAmi as an MCP server; the
+  questionnaire; deadlines; the accountant package; new tax years; co-owners; Quebec and French.
+- Each one's state: [the task list](../task-list.md) § 7 to § 12.
+
+It sits above the other architecture
 documents: [settings-and-edge-cases.md](settings-and-edge-cases.md) (every setting, and the
 edge cases each story must test), [connectors-and-agents.md](connectors-and-agents.md) (how figures arrive),
 [engines.md](engines.md) (the catalogs) and [law-store.md](law-store.md) (the statute text).

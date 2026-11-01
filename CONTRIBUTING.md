@@ -307,7 +307,9 @@ harness fails when any idea lands on a future not written for it with nothing on
 
 One PR per topic. A PR that adds a node and also reformats three files is two PRs. To keep
 that from happening by accident, the repository ships `.editorconfig` and a Prettier config:
-format only the files you changed (`npx prettier --write <files>`), or let your editor pick them up.
+run Prettier only on files you add (`npx prettier --write <new files>`). Most existing files,
+CHANGELOG.md and docs/privacy-log.md among them, are not in Prettier's layout yet, so in an existing file
+keep the layout it has and don't run Prettier or format-on-save on it in a topic's pull request.
 (`npm run format` rewrites every file in the repository that Prettier would change, which belongs in no
 topic's PR.) Formatting is not
 part of the gate yet — it joins `ci:quality` once the open pull requests have landed, so
