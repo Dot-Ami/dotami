@@ -20,8 +20,8 @@ const MAX_BODY_BYTES = 512 * 1024;
  * to an idea, or left out for any of the person's (the Expenses screen agrees to a typed batch at once).
  *
  * THE PERSON'S CLICK. This is the only way a proposed record becomes a confirmed one, and it
- * answers only to DotAmi's own page (`Sec-Fetch-Site: same-origin`); see `refuseUnlessFromAppPage`
- * (lib/figures/http.ts) for what that does and doesn't stop. Importers, the Lens and outside
+ * answers only to DotAmi's own page (`Sec-Fetch-Site: same-origin`); see `pageOnly`
+ * (lib/api/route.ts) for what that does and doesn't stop. Importers, the Lens and outside
  * agents use /api/expenses/propose and wait for the person to agree.
  */
 export async function POST(request: Request) {

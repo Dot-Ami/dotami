@@ -1,16 +1,20 @@
 /**
- * What six routes answer, pinned before the route helpers moved into lib/api/route.ts (house-cleaning
- * audit of 2026-10-31, item architecture-6) and kept passing after: the status, every header and the
- * whole body, for a body that isn't JSON (and the other refusals the body guard makes), a caller past
- * the rate limit, a request from outside DotAmi's window where the route answers only that window, the
- * store's own refusals, and a request that works. One route per domain whose http.ts lost its copies
- * (figures, futures, expenses, landscape), then all nine routes that counted their rate limit by hand:
- * settings and the intent parser (whose body-reading words differ: "Invalid JSON payload") in full, the
- * other seven more briefly.
+ * What 16 of the 41 route files the move changed answer, pinned before the route helpers moved into
+ * lib/api/route.ts (house-cleaning audit of 2026-10-31, item architecture-6) and kept passing after: the
+ * status, every header and the whole body, for a body that isn't JSON (and the other refusals the body
+ * guard makes), a caller past the rate limit, a request from outside DotAmi's window where the route
+ * answers only that window, the store's own refusals, and a request that works. One or two routes per
+ * domain whose http.ts lost its copies: figures (propose, bank-sources), futures (<id>/date, <id>/region),
+ * expenses (propose, and agree's refusal from outside the window) and landscape (<id>/watched); then all
+ * nine routes that counted their rate limit by hand: settings and the intent parser (whose body-reading
+ * words differ: "Invalid JSON payload") in full, the other seven more briefly. The other moved routes
+ * keep their own existing tests.
  *
  * The answers that work carry ids and moments that change every run, so those are replaced by
  * placeholders before the comparison; everything else must match to the character. Then each domain's
- * error mapper is given an error none of its classes match, and its 503 and its one log line are pinned.
+ * error mapper is called directly with an error none of its classes match, and its 503 and its one log
+ * line are pinned (no route here meets a database that fails). Every request runs with no launch secret
+ * set, as a copy run from source does; the launch-secret refusal is tests/launch-secret.spec.ts's.
  */
 import { randomUUID } from "node:crypto";
 import { existsSync, rmSync } from "node:fs";
@@ -399,6 +403,185 @@ describe("futures: POST /api/futures/<id>/date", () => {
               "lookingForOn": null,
               "place": "CA-AB",
               "region": null,
+              "roadChosen": false,
+              "roadChosenOn": null,
+              "roadId": "road-starting-any-business-ab",
+              "targetMonth": null,
+              "targetMonthSetOn": null,
+              "ventureId": "<idea id>",
+            },
+          },
+          "headers": {
+            "content-type": "application/json",
+          },
+          "status": 200,
+        },
+      }
+    `);
+  });
+});
+
+// Added after review: no other test loads this route. Its snapshot was recorded with main's own
+// app/api/futures/[id]/region/route.ts, lib/futures/http.ts and lib/figures/http.ts put back for the
+// run, then passed unchanged on the branch. Runs after the date block, so that block still sees no region.
+describe("futures: POST /api/futures/<id>/region", () => {
+  it("answers as it did", async () => {
+    const { POST } = await import("@/app/api/futures/[id]/region/route");
+    const send = (body: string, headers: Record<string, string> = FROM_WINDOW, id = ideaId) =>
+      POST(request(`/api/futures/${id}/region`, body, headers), {
+        params: Promise.resolve({ id }),
+      });
+    const answers = {
+      notFromWindow: await answer(await send(json({ region: "4830" }), {})),
+      notJson: await answer(await send("{")),
+      plainText: await answer(
+        await send(json({ region: "4830" }), { ...FROM_WINDOW, "content-type": "text/plain" }),
+      ),
+      tooBig: await answer(await send(TOO_BIG(2 * 1024))),
+      noRegion: await answer(await send(json({}))),
+      unknownIdea: await answer(await send(json({ region: "4830" }), FROM_WINDOW, "no-such-idea")),
+      notOnTheList: await answer(await send(json({ region: "9999" }))),
+      works: await answer(await send(json({ region: "4830" }))),
+      dontKnow: await answer(await send(json({ region: "dont-know" }))),
+    };
+    __resetRateLimitStateForTests();
+    const limited = await pastTheLimit(120, () => send("{"));
+    expect({ ...answers, limited }).toMatchInlineSnapshot(`
+      {
+        "dontKnow": {
+          "body": {
+            "future": {
+              "area": null,
+              "forkPicks": {
+                "gstTiming": {
+                  "from": "map",
+                  "pickedOn": null,
+                  "stepId": "stage-2b-mandatory-gst-registration",
+                },
+                "incorporationTiming": {
+                  "from": "map",
+                  "pickedOn": null,
+                  "stepId": "stage-3a-incorporation-80k-net",
+                },
+              },
+              "job": null,
+              "lookingFor": null,
+              "lookingForOn": null,
+              "place": "CA-AB",
+              "region": {
+                "setOn": "<today>",
+                "value": "dont-know",
+              },
+              "roadChosen": false,
+              "roadChosenOn": null,
+              "roadId": "road-starting-any-business-ab",
+              "targetMonth": null,
+              "targetMonthSetOn": null,
+              "ventureId": "<idea id>",
+            },
+          },
+          "headers": {
+            "content-type": "application/json",
+          },
+          "status": 200,
+        },
+        "limited": {
+          "body": {
+            "error": "Too many requests — slow down and try again shortly.",
+          },
+          "headers": {
+            "content-type": "application/json",
+            "retry-after": "60",
+          },
+          "status": 429,
+        },
+        "noRegion": {
+          "body": {
+            "error": "Say which region, or I don't know.",
+          },
+          "headers": {
+            "content-type": "application/json",
+          },
+          "status": 400,
+        },
+        "notFromWindow": {
+          "body": {
+            "error": "Your progress, your date, your pick of job and your skill marks can only be changed from DotAmi's own window. An outside agent can't change them yet.",
+          },
+          "headers": {
+            "content-type": "application/json",
+          },
+          "status": 403,
+        },
+        "notJson": {
+          "body": {
+            "error": "Invalid JSON",
+          },
+          "headers": {
+            "content-type": "application/json",
+          },
+          "status": 400,
+        },
+        "notOnTheList": {
+          "body": {
+            "error": "That isn't one of the answers the region question offers. Pick one from the list.",
+          },
+          "headers": {
+            "content-type": "application/json",
+          },
+          "status": 400,
+        },
+        "plainText": {
+          "body": {
+            "error": "Send the body as application/json.",
+          },
+          "headers": {
+            "content-type": "application/json",
+          },
+          "status": 415,
+        },
+        "tooBig": {
+          "body": {
+            "error": "Request body exceeded the 1024-byte limit.",
+          },
+          "headers": {
+            "content-type": "application/json",
+          },
+          "status": 413,
+        },
+        "unknownIdea": {
+          "body": {
+            "error": "That idea isn't in DotAmi.",
+          },
+          "headers": {
+            "content-type": "application/json",
+          },
+          "status": 404,
+        },
+        "works": {
+          "body": {
+            "future": {
+              "area": null,
+              "forkPicks": {
+                "gstTiming": {
+                  "from": "map",
+                  "pickedOn": null,
+                  "stepId": "stage-2b-mandatory-gst-registration",
+                },
+                "incorporationTiming": {
+                  "from": "map",
+                  "pickedOn": null,
+                  "stepId": "stage-3a-incorporation-80k-net",
+                },
+              },
+              "job": null,
+              "lookingFor": null,
+              "lookingForOn": null,
+              "place": "CA-AB",
+              "region": {
+                "setOn": "<today>",
+                "value": "4830",
+              },
               "roadChosen": false,
               "roadChosenOn": null,
               "roadId": "road-starting-any-business-ab",

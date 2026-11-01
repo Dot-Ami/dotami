@@ -14,7 +14,7 @@ const MAX_BODY_BYTES = 64 * 1024;
 /**
  * POST /api/expenses/retract { ventureId?, expenseIds } (ventureId as in agree) — takes confirmed records back. Like
  * agreeing, it is the person's call and answers only to DotAmi's own page (see
- * `refuseUnlessFromAppPage`).
+ * `pageOnly`, lib/api/route.ts).
  */
 export async function POST(request: Request) {
   const limited = throttle("expenses-retract", request, RATE_LIMIT);
