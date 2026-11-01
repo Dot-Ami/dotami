@@ -905,8 +905,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   the older relationships page's "non-refundable" 15% is quoted nowhere, and the corporation's card, and the fork on
   a sole proprietor's card that copies its note, are unchanged.
 - **A corporation's SR&ED card quotes the CRA's list for corporations whole and nothing of the older page, the
-  Productivity Grant's card says who delivers and funds it, the Martin passage's label names the case, and the newer
-  page wins as a rule** (2026-10-30 and 2026-10-31; the maintainer's answers on his reading page, items 8 and 9).
+  Productivity Grant's card says who delivers and funds it, the Martin passage's label names the case, the newer
+  page wins as a rule, and the SR&ED steps show the newer pages' words** (2026-10-30 to 2026-11-01; the maintainer's
+  answers on his reading page, items 8, 9 and 10).
   - *SR&ED, a corporation's 35%.* After *What's new*'s $6 million line, the CCPC's card now quotes the CRA's *SR&ED
     Investment Tax Credit Policy*, section 4.1, its list for corporations whole and in order (the lead-in and items 1
     to 4, 13 lines), under *The CRA's SR&ED Investment Tax Credit Policy:*. The list says, for each kind of
@@ -927,12 +928,30 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
     earn the ITC at an enhanced rate of 35%.”, under *The CRA's SR&ED Investment Tax Credit Policy:*, and lists that
     page among its sources: "Checked by a tool on 2026-10-31" in amber, since nobody has read it yet
     (`node scripts/check-quotes.mjs` found the sentence on the live page that day). Not the SR&ED glossary's 35% line,
-    which *SR&ED deepening* quotes: the glossary's page date is 2026-05-22, and its same entry gives a $3 million
-    threshold where the policy page and *What's new* give $6 million, so it is an older page that disagrees too. The
-    relationships page stays listed under the card and both stages, with its checks. Two questions were asked of the
-    maintainer on 2026-10-31 and nothing changes until he answers: whether *SR&ED deepening*'s tax impact and road
-    0's two done-when lines on CCPCs, DotAmi's own words resting on the relationships page, count as showing the
-    older page; and whether rule 8 takes the glossary's 35% line off *SR&ED deepening*.
+    which *SR&ED deepening* quoted then: the glossary's page date is 2026-05-22, and its same entry gives a $3
+    million threshold where the policy page and *What's new* give $6 million, so it is an older page that disagrees
+    too. The relationships page stays listed under the card and both stages, with its checks.
+  - *SR&ED, the newer pages' words on the SR&ED steps* (his answers of 2026-11-01 on his reading page, item 10). The
+    map stage *SR&ED deepening*'s 35% quotes the same policy sentence, in place of the SR&ED glossary's line ("Apply
+    the rule: quote the newer policy page's line"); the glossary stays among its sources, quoted nowhere. Four lines
+    DotAmi had written in its own words from the relationships page alone now show the newer pages' words ("Rest
+    them on the newer pages"), each found by `node scripts/check-quotes.mjs` on the live page that day:
+    *SR&ED deepening*'s tax impact quotes the policy page, “In some cases, a Canadian-controlled private corporation
+    (CCPC) may earn the ITC at an enhanced rate of 35%.” and “The current year qualified SR&ED expenditures in
+    excess of the expenditure limit for the tax year earn an ITC at the basic rate (see section 2.2.1).”, in place of
+    "The enhanced rate is for some CCPCs, up to their expenditure limit for the year.", and the stage lists the
+    policy page as a fourth source, "Checked by a tool on 2026-11-01" in amber; the note on its source on the
+    relationships page, printed in the road exports, names the page's topic only. On road 0 and the federal steps,
+    *Incorporation for liability/SR&ED*'s *Done when* list has four lines now: the line on CCPCs quotes the CRA's
+    *Type of corporation* page's list of what makes a corporation a CCPC, whole, its source that page in amber; the
+    line on associated corporations quotes the T2 guide on the business limit, both sides, its source read by a
+    person on 2026-10-25; and a new line quotes the policy page on how associated corporations allocate the SR&ED
+    expenditure limit (T2SCH49, and the separate form the page names for ECPCs and for CCPCs that use the revenue
+    method), its source in amber. A tick already on the line on associated corporations stays on it. What no newer
+    page states came off: the older page's "in general" summary of a CCPC, the one sentence that the small
+    business deduction and the enhanced credit are both for certain CCPCs, the word "share", and the code
+    "T2SCH23". The SR&ED card's own eligibility line and its note on the relationships page were not among the
+    four and are unchanged, listed for his call (docs/engines/citations.md, § Outside the list, item 4).
   - *The Productivity Grant.* The card's line now starts with Alberta's own sentence: “The program is delivered by
     Alberta and funded by the Government of Canada through the Canada–Alberta Workforce Development Agreement”,
     quoted whole, before the funding table's rows. The page's check already held it.
@@ -945,14 +964,20 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
     "library" idea and his note), is research first and isn't built.
 
   Tests: `tests/reading-list-corrections.spec.ts` § 3, `tests/brain-evaluate.spec.ts`,
-  `tests/productivity-grant.spec.ts`, `tests/repeated-losses-read.spec.ts` (each failed on the code before), and
-  `tests/cost-panels-unchanged.spec.ts`, whose recording of *Incorporation for liability/SR&ED*'s panel was redrawn
-  for its 35% line and its new source only. The check that the older page is quoted nowhere reads the cards at all
-  five structures, the holding company and the family trust too; it counts one of that page's held quotes whole at
-  any length, and a part of one from six words, so a phrase like “private corporation” isn't taken for that page's
-  line. Seen on screen besides: road 0's and the federal steps' cards on *Pick a future* each count one more source
-  checked by a tool only (the policy page's new citation under *Incorporation for liability/SR&ED*), and their exports
-  count one more source in their header.
+  `tests/productivity-grant.spec.ts`, `tests/repeated-losses-read.spec.ts`, `tests/road-starting-any-business.spec.ts`,
+  `tests/roads.spec.ts` (each failed on the code before), and `tests/cost-panels-unchanged.spec.ts`, whose recordings
+  of *Incorporation for liability/SR&ED*'s panel (its 35% line and new source on 2026-10-31; its four *Done when*
+  lines and their sources on 2026-11-01) and *SR&ED deepening*'s (its tax impact, its 35% line and its fourth
+  source, 2026-11-01) were redrawn for those only. The check that an older page is quoted nowhere reads the cards at
+  all five structures, the holding company and the family trust too, and since 2026-11-01 holds the SR&ED glossary
+  to the same as the relationships page; it counts one of a page's held quotes whole at any length, and a part of
+  one from six words, so a phrase like “private corporation” isn't taken for that page's line. Seen on screen
+  besides: road 0's and the federal steps' cards on *Pick a future* each counted one more source checked by a tool
+  only from 2026-10-31 (the policy page's citation under *Incorporation for liability/SR&ED*), and since 2026-11-01
+  each counts three more checked by a tool only and one fewer read by a person (SR&ED deepening's policy page, the
+  new line's policy page, and the line on CCPCs' source, a page nobody has read, where the relationships page was);
+  their exports count one more source in their header on each of those two days (the policy page on 2026-10-31, the
+  *Type of corporation* page on 2026-11-01), the read count unchanged.
 
 ### Documented
 - **The screen specs say what the pre-release fixes changed** (2026-10-24). Each control the fixes above

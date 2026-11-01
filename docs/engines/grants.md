@@ -44,7 +44,12 @@ off on 2026-10-23 (see *Retired programs* below), and the Productivity Grant cam
   The map stage *Incorporation for liability/SR&ED*, whose 35% quoted its line too, quotes the policy
   page's own sentence since 2026-10-31 (“In some cases, a Canadian-controlled private corporation
   (CCPC) may earn the ITC at an enhanced rate of 35%.”), from the stage's own citation of the page
-  ([citations.md](citations.md), § Rules, rule 8, As built).
+  ([citations.md](citations.md), § Rules, rule 8, As built). *SR&ED deepening*'s 35% quotes the same sentence
+  since 2026-11-01, in place of the SR&ED glossary's line (an older page that disagrees too), and its tax impact
+  quotes the policy page's words on the enhanced rate and its limit in place of DotAmi's own words from the
+  relationships page (the maintainer's answers on his reading page, item 10). This card's eligibility line and its
+  note on the relationships page's citation are still DotAmi's own words from that page; they were not among
+  item 10's four lines and wait for his call ([citations.md](citations.md), § Outside the list, item 4).
   The CCPC's said refundable ("35% (refundable)", "35% refundable
   treatment") on the maintainer's word alone, which no record held, and none of its quotes said
   it, so it said neither until 2026-10-30. Since his answer of that day (his reading page, item 8)

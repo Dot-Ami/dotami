@@ -102,7 +102,21 @@
  * of 35%.”"; "Sources for this stage · 2" becoming "· 3"; and the new third source, SR&ED Investment Tax Credit Policy,
  * "CRA · CA" with "Checked by a tool on 2026-10-31: it found on the page the exact words this entry relies on. Not read
  * by a person yet." in amber and the sentence under "Words found on the page:" (nobody has read the page, so the check
- * is drawn). The other 33 are fe16e0a's recording byte for byte. The only cards allowed to change are the
+ * is drawn). The other 33 are fe16e0a's recording byte for byte. Redrawn on 2026-11-01 for two panels only, road 0's
+ * Incorporation for liability/SR&ED and SR&ED deepening, for the maintainer's answers on his reading page, item 10
+ * (tests/reading-list-corrections.spec.ts, § 3 and § 8). Drawn by this test's own path from e98f909 with the change and
+ * compared with e98f909's recording, 2 of 34 differ, and only so. Incorporation for liability/SR&ED: "0 of 3 ticked"
+ * becomes "0 of 4 ticked"; the line on CCPCs quotes the CRA's Type of corporation page's list whole in place of DotAmi's
+ * own words from the relationships page, and its source is that page, "CRA · CA" with "Checked by a tool on 2026-11-01"
+ * in amber and the nine runs under "Words found on the page:", where the relationships page with "Read by a person on
+ * 2026-10-25" was; the line on associated corporations quotes the T2 guide's three sentences on the business limit, its
+ * source the T2 guide's chapter 4, read by a person on 2026-10-25 as the relationships page was; and a new fourth line,
+ * the expenditure limit in the SR&ED Investment Tax Credit Policy's four sentences, its source that page, checked by a
+ * tool on 2026-11-01 in amber, with the four runs. SR&ED deepening: its tax impact quotes the policy page's two
+ * sentences under its title in place of "The enhanced rate is for some CCPCs, up to their expenditure limit for the
+ * year."; its 35% basis quotes the policy page's sentence in place of the SR&ED glossary's; "Sources for this stage · 3"
+ * becomes "· 4", the fourth the policy page, checked by a tool on 2026-11-01 in amber, with its two sentences. The other
+ * 32 are e98f909's recording byte for byte. The only cards allowed to change are the
  * ones that gained road 0's named start-up cost lines (docs/architecture/future-cockpit.md § 6, "The official
  * fees catalog and start-up cost lines as built"); with those seven lines taken out, they match too.
  */

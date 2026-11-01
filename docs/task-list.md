@@ -1,6 +1,6 @@
 # Task list — what's being built, and what you can pick up
 
-Last updated: 2026-10-31. Every story planned for DotAmi, with its tasks. The plan behind it is
+Last updated: 2026-11-01. Every story planned for DotAmi, with its tasks. The plan behind it is
 [architecture/use-cases.md](architecture/use-cases.md) (who it's for, the decisions, the build
 order); the settings and edge cases each story must test are in
 [architecture/settings-and-edge-cases.md](architecture/settings-and-edge-cases.md) — the codes in
@@ -1137,19 +1137,25 @@ roadmap's build order.
     - [x] The newer page wins, as a rule (his answers of 2026-10-30, items 8 and 9): where two official pages
       disagree, the card quotes the newer one, and the older stays listed, with its own check, and is quoted
       nowhere, none of its lines ([docs/engines/citations.md](engines/citations.md), § Rules, rule 8)
-    - [ ] Two questions on rule 8, asked of him on 2026-10-31 (rule 8, As built): whether *SR&ED deepening*'s tax
-      impact and road 0's two done-when lines on CCPCs (`dw-start-incsred-ccpc`, `dw-start-incsred-associated`),
-      DotAmi's own words on the relationships page, count as showing the older page; and whether rule 8 takes
-      the SR&ED glossary's 35% line off *SR&ED deepening* (the glossary, 2026-05-22, gives a $3 million
-      threshold where the newer pages give $6 million). Nothing changes until he answers
+    - [x] Two questions on rule 8, put to him on his reading page as item 10, answered on 2026-11-01 (rule 8, As
+      built): *SR&ED deepening*'s 35% quotes the policy page's own sentence and the SR&ED glossary is quoted
+      nowhere ("Apply the rule: quote the newer policy page's line"); and the four lines DotAmi had written from
+      the relationships page alone show the newer pages' words ("Rest them on the newer pages"): *SR&ED
+      deepening*'s tax impact quotes the policy page on the enhanced rate and its limit, its note on that page names
+      the page's topic only, road 0's line on CCPCs (`dw-start-incsred-ccpc`) quotes the CRA's *Type of
+      corporation* list whole, and the line on associated corporations is two, one per newer page
+      (`dw-start-incsred-associated` from the T2 guide on the business limit, `dw-start-incsred-expenditure-limit`
+      from the policy page on the expenditure limit); what no newer page states came off. Each new quote found by
+      `node scripts/check-quotes.mjs` that day
     - [ ] Which page applies to which case: his "library that can tell the difference between the old and new
       pages", and which of two pages is accurate and true (his note on item 9), research first, with [14q]
       (S2.5.41) and the planned work on how fresh a source is; not built
     - [ ] SR&ED's $6 million: the tax years it applies from, and the sentence of s.127(10.2) that leads into
       its formula
-    - [x] *SR&ED deepening*'s 35% from the SR&ED glossary, as the maintainer asked: quoted since 2026-10-27,
-      when `node scripts/check-quotes.mjs` found the glossary's entry on the enhanced rate with its two older quotes
-      (the stage keeps the relationships page for its tax impact). *Incorporation for liability/SR&ED*'s 35%,
+    - [x] *SR&ED deepening*'s 35% from the SR&ED glossary, as the maintainer asked: quoted from 2026-10-27,
+      when `node scripts/check-quotes.mjs` found the glossary's entry on the enhanced rate with its two older quotes,
+      until his answer on item 10 (2026-11-01): the glossary disagrees with the newer pages, so the 35% quotes the
+      policy page's own sentence, and the glossary stays listed with its check. *Incorporation for liability/SR&ED*'s 35%,
       which quoted the relationships page (his reading page, item 9: the older page quoted nowhere), quotes the
       policy page's own sentence on the enhanced rate since 2026-10-31, not the glossary's line (an older page
       that disagrees too), from its own citation of the policy page, a tool check of that day
@@ -1176,6 +1182,8 @@ roadmap's build order.
     (`tests/engine-integrity.spec.ts` holds GAAR reads there); and the *Hobby vs. business income test*
     card's profit-expectation and business-like lines, which cite the page the retired hobby read's
     record says supports neither (he read that page in full on 2026-10-25; the card's words wait for his call).
+    Since 2026-11-01 also the SR&ED card's eligibility line and its note on the relationships page, DotAmi's own
+    words from that older page, not among item 10's four lines (citations.md § Outside the list, item 4).
     Settled on 2026-10-29 by his answers on PR #217: the card lists the audit manual's chapter 27, which its risk
     box quotes, and the box keeps the card ("The box keeps the card"; recorded beside his call 3 of 2026-10-25 in
     docs/architecture/cards-in-official-words.md, which had retired it)

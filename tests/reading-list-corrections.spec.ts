@@ -30,6 +30,12 @@
  * is an older page that disagrees too (the review of 2026-10-31). The older page stays listed, with its checks,
  * wherever it was.
  *
+ * Since his answers on item 10 (2026-11-01, § 8): SR&ED deepening's 35% quotes the same policy sentence, from the
+ * stage's own citation of the policy page, and the glossary stays listed and is quoted nowhere, like the relationships
+ * page; and the four lines in DotAmi's own words that rested on the relationships page alone show the newer pages'
+ * words instead (SR&ED deepening's tax impact, the note on its source, and road 0's lines on CCPCs, the line on
+ * associated corporations now two, one per newer page), each new quote found by scripts/check-quotes.mjs that day.
+ *
  * Addresses and quotes are written out here, not imported, so a change to a catalog's constant can't move the test
  * with it. Each check fails on the code before the corrections unless its comment says it is a guard.
  */
@@ -68,6 +74,7 @@ const PAGE = {
   sredGlossary: `${CRA}/scientific-research-experimental-development-tax-incentive-program/glossary.html`,
   sredItcPolicy: `${CRA}/scientific-research-experimental-development-tax-incentive-program/investment-tax-credit-policy.html`,
   relationships: `${CRA}/tax/businesses/topics/corporations/business-tax-credits/how-relationships-affect-small-business-deduction-sred-investment-tax-credits.html`,
+  typeOfCorporation: `${CRA}/tax/businesses/topics/corporations/type-corporation.html`,
   whatsNew: `${CRA}/tax/businesses/topics/corporations/whats-new-corporations.html`,
   act127: "https://laws-lois.justice.gc.ca/eng/acts/I-3.3/section-127.html",
   act245: "https://laws-lois.justice.gc.ca/eng/acts/I-3.3/section-245.html",
@@ -97,11 +104,26 @@ const OLDER_NON_REFUNDABLE = "Corporations and unincorporated businesses may ear
 // CCPC's card until the maintainer's answer of 2026-10-30), held by no citation.
 const OLDER_SOME_CCPCS_REFUNDABLE = "Some CCPCs may also earn a refundable ITC.";
 /**
+ * The same page's sentences road 0's two lines on CCPCs held in their checks from 2026-10-12 until the maintainer's
+ * answer on item 10 (2026-11-01), when the lines moved to newer pages: kept here so they stay caught though no citation
+ * holds them now. Left out: the page's short phrases (“a private corporation”, “a resident in Canada”), which any page
+ * on CCPCs may use, and the two schedules' titles, the forms' own names on every page that names them (the policy page
+ * names T2SCH49's).
+ */
+const OLDER_ROAD_LINES = [
+  "The small business deduction (SBD) and the investment tax credit (ITC) for scientific research and experimental development (SR&ED) at the enhanced rate are available to certain Canadian-controlled private corporations (CCPC).",
+  "In general terms, a corporation is a CCPC if it is all of the following:",
+  "not controlled directly or indirectly by one or more non-resident persons or public corporations",
+  "When one CCPC is associated with other CCPCs, these corporations must share the business limit.",
+  "When one CCPC is associated with other CCPCs, these corporations must share the expenditure limit.",
+] as const;
+/**
  * The older page's lines DotAmi knows, its 35% for some CCPCs among them. Since the maintainer's answer of 2026-10-30
  * (his reading page, item 9: "The whole older page") none of them is quoted on any card, fork, map stage or road; the
- * page stays listed, with its checks, where it was (docs/engines/citations.md, § Rules, rule 8).
+ * page stays listed, with its checks, where it was (docs/engines/citations.md, § Rules, rule 8), and since his answer on
+ * item 10 road 0's lines on CCPCs rest on newer pages instead.
  */
-const OLDER_PAGE_LINES = [CCPC_ENHANCED, OLDER_NON_REFUNDABLE, OLDER_SOME_CCPCS_REFUNDABLE] as const;
+const OLDER_PAGE_LINES = [CCPC_ENHANCED, OLDER_NON_REFUNDABLE, OLDER_SOME_CCPCS_REFUNDABLE, ...OLDER_ROAD_LINES] as const;
 // The CRA's SR&ED Investment Tax Credit Policy (its page date 2026-10-07): the line a sole proprietor's card quotes
 // since the maintainer's answer of 2026-10-29, found by scripts/check-quotes.mjs on the live page that day.
 const POLICY_INDIVIDUAL_40 =
@@ -166,6 +188,78 @@ const ITEM_9_PICK =
 // for on stage-4, found by scripts/check-quotes.mjs on 2026-10-27 (not a reading-list find).
 const GLOSSARY_ENHANCED =
   "Some Canadian-controlled private corporations (CCPCs) that meet certain requirements may earn investment tax credits at the enhanced rate of 35%";
+// The same entry's next sentence, where the glossary (its page date 2026-05-22) disagrees with the newer pages: they
+// give $6 million (docs/engines/citations.md, rule 8). Held by no citation.
+const GLOSSARY_THREE_MILLION =
+  "This enhanced rate may be earned on their qualified SR&ED expenditures up to a maximum threshold of $3 million.";
+/**
+ * The glossary's lines DotAmi knows on the enhanced rate. Since the maintainer's answer of 2026-11-01 (his reading page,
+ * item 10, Part A) none of them is quoted on any card, fork, map stage or road, and neither is any of the glossary's
+ * other held quotes: it is an older page that disagrees, listed under SR&ED deepening with its check, like the
+ * relationships page.
+ */
+const GLOSSARY_LINES = [GLOSSARY_ENHANCED, GLOSSARY_THREE_MILLION] as const;
+/**
+ * The policy page's section 3.0, the last sentence of its paragraph on the enhanced rate (block 200 as
+ * scripts/check-quotes.mjs reads the page): spending above the expenditure limit for the tax year earns the basic rate,
+ * the other side of the enhanced rate's limit. SR&ED deepening's tax impact quotes it beside POLICY_CCPC_ENHANCED since
+ * item 10.
+ */
+const POLICY_ABOVE_LIMIT =
+  "The current year qualified SR&ED expenditures in excess of the expenditure limit for the tax year earn an ITC at the basic rate (see section 2.2.1).";
+/**
+ * The day `node scripts/check-quotes.mjs --url … --quote …` found every new quote of item 10's change on its page, one
+ * run per page ("All 7 quotes were found", "All 10 …", "All 4 …", each with checkedOn "2026-11-01").
+ */
+const ITEM_10_DAY = "2026-11-01";
+/** His two picks on item 10, each option's description under its bold label, word for word as his page showed them. */
+const ITEM_10_LABEL_A = "Apply the rule: quote the newer policy page's line";
+const ITEM_10_PICK_A =
+  'The glossary stays listed under the stage and is quoted nowhere. The new line\'s source shows "Checked by a tool" in amber until a person reads the policy page.';
+const ITEM_10_LABEL_B = "Rest them on the newer pages";
+const ITEM_10_PICK_B =
+  "Find the same facts on the newer CRA pages, check them with the tool, and show those pages' words instead; any fact no newer page states comes off.";
+/** The four lines item 10 names, as they read in DotAmi's own words before his answer, each from the relationships page. */
+const OWN_WORDS_BEFORE_ITEM_10 = {
+  taxImpact: "The enhanced rate is for some CCPCs, up to their expenditure limit for the year.",
+  note: "Which CCPCs may earn the enhanced 35% rate, up to their expenditure limit for the year.",
+  ccpc: "in general, a private corporation, resident in Canada, not controlled by non-residents or public corporations. The small business deduction and the enhanced investment tax credit for scientific research and experimental development (SR&ED) are for certain CCPCs.",
+  associated:
+    "they share the business limit and the SR&ED expenditure limit; the agreements that allocate them are schedules T2SCH23 and T2SCH49.",
+} as const;
+/**
+ * The CRA's Type of corporation page (its page date 2026-09-11, newer than the relationships page's 2025-07-21): its
+ * list of what makes a corporation a CCPC, whole and in order, the lead-in and its eight items, one block each. Road 0's
+ * line on CCPCs quotes all of it since item 10: the page has no "in general" summary like the older page's.
+ */
+const TYPE_CCPC_LIST = [
+  "The corporation is a CCPC if it meets all of the following requirements at the end of the tax year:",
+  "it is a private corporation",
+  "it is a corporation that was resident in Canada and was either incorporated in Canada or resident in Canada from June 18, 1971, to the end of the tax year",
+  "it is not controlled directly or indirectly by one or more non-resident persons",
+  "it is not controlled directly or indirectly by one or more public corporations (other than a prescribed venture capital corporation, as defined in section 6700 of the Income Tax Regulations)",
+  "it is not controlled by a Canadian resident corporation that lists its shares on a designated stock exchange outside of Canada",
+  "it is not controlled directly or indirectly by any combination of persons described in the three previous conditions",
+  "if all of its shares that are owned by a non-resident person, by a public corporation (other than a prescribed venture capital corporation), or by a corporation with a class of shares listed on a designated stock exchange were owned by one person, that person would not own sufficient shares to control the corporation",
+  "no class of its shares of capital stock is listed on a designated stock exchange",
+] as const;
+// The CRA's T2 guide, chapter 4 (its page date 2026-05-28), its Line 410 – Business limit: the associated side, after
+// the not-associated side (MAX_LIMIT). The same block's last sentence only points to the schedule.
+const SCHEDULE_23 =
+  "CCPCs that are associated with one or more corporations during the tax year have to file Schedule 23, Agreement Among Associated Canadian-Controlled Private Corporations to Allocate the Business Limit.";
+const SCHEDULE_23_SHARES =
+  "On this schedule, a percentage of the business limit is allocated to each corporation, and the total of all percentages cannot be more than 100%.";
+/**
+ * The policy page's section 3.1.3 on allocating the expenditure limit: its first sentence (block 254), and the whole of
+ * block 256, T2SCH49 for CCPCs with the other side (ECPCs, and CCPCs on the revenue method: a separate form) and what
+ * the CRA says to keep meanwhile.
+ */
+const POLICY_EXPENDITURE_LIMIT = [
+  "A CCPC and its associated corporations (associated group), or an ECPC and the members of a consolidated group (see section 3.2), must allocate the annual expenditure limit for the purposes of calculating their ITCs earned at the enhanced 35% rate.",
+  "For CCPCs, the expenditure limit for the applicable tax year may be allocated among the associated corporations by filing Schedule T2SCH49, Agreement Among Associated Canadian-Controlled Private Corporations to Allocate the Expenditure Limit.",
+  "For ECPCs, and CCPCs electing to calculate their expenditure limit based on the revenue method, a separate form will be published in Fall 2026.",
+  "In the interim, corporations should maintain copies of their working papers to demonstrate how the expenditure limit was calculated and allocated.",
+] as const;
 // The CRA's Business-use-of-home expenses page, on the business part: found by scripts/check-quotes.mjs on 2026-10-27.
 const HOME_OFFICE_BUSINESS_PART =
   "To calculate the part you can deduct, use a reasonable basis, such as the area of the workspace divided by the total area of your home.";
@@ -184,6 +278,34 @@ const CCPC_NOTE_BEFORE_ITEM_9 = `The CRA: “${CCPC_ENHANCED}” ${CCPC_NOTE_WHO
 // The CRA's T2 guide, chapter 4: the reading list's quote, and the fragment structure-ccpc already held.
 const MAX_LIMIT = "The maximum allowable business limit for a corporation that is not associated with any other corporation is $500,000.";
 const THROUGHOUT = "throughout the tax year may be able to claim the small business deduction";
+/** In curly quote marks, one after another: how a line shows a page's words. */
+const curly = (lines: readonly string[]) => lines.map((line) => `“${line}”`).join(" ");
+/** The four lines item 10 names, and the line it adds, word for word as they read since his answer. */
+const ITEM_10_LINES = {
+  taxImpact: `Eligible SR&ED expenditures generate ITCs and deductions. The CRA's SR&ED Investment Tax Credit Policy: “${POLICY_CCPC_ENHANCED}” “${POLICY_ABOVE_LIMIT}” Provincial top-ups may apply in some jurisdictions.`,
+  note: "CRA guidance on CCPC relationships, SBD, and SR&ED investment tax credits.",
+  ccpc: `You checked whether the corporation is a Canadian-controlled private corporation (CCPC). The CRA's Type of corporation page: ${curly(TYPE_CCPC_LIST)}`,
+  associated: `You checked whether the corporation is associated with any other corporation. The CRA's Corporation Income Tax Guide on the business limit: ${curly([MAX_LIMIT, SCHEDULE_23, SCHEDULE_23_SHARES])}`,
+  expenditureLimit: `If it is associated with other corporations, the CRA's SR&ED Investment Tax Credit Policy on the expenditure limit: ${curly(POLICY_EXPENDITURE_LIMIT)}`,
+} as const;
+/** Road 0's three lines on Incorporation for liability/SR&ED since item 10, and the newer page each quotes. */
+const ITEM_10_ROAD_LINES = [
+  { id: "dw-start-incsred-ccpc", text: ITEM_10_LINES.ccpc, url: PAGE.typeOfCorporation, title: "Type of corporation (CRA)", quotes: [...TYPE_CCPC_LIST] },
+  {
+    id: "dw-start-incsred-associated",
+    text: ITEM_10_LINES.associated,
+    url: PAGE.t2Guide,
+    title: "T2 Corporation – Income Tax Guide – Chapter 4: Page 4 of the T2 return (CRA)",
+    quotes: [MAX_LIMIT, SCHEDULE_23, SCHEDULE_23_SHARES],
+  },
+  {
+    id: "dw-start-incsred-expenditure-limit",
+    text: ITEM_10_LINES.expenditureLimit,
+    url: PAGE.sredItcPolicy,
+    title: "SR&ED Investment Tax Credit Policy (CRA)",
+    quotes: [...POLICY_EXPENDITURE_LIMIT],
+  },
+] as const;
 // The CRA's Determine if you need to register for a payroll account (both held by road 0's
 // dw-start-hire-payroll-account; the second is also the reading list's quote).
 const REGISTER_BEFORE = "You have to register for a payroll account before the first remittance due date.";
@@ -255,13 +377,14 @@ const TOOL_CHECKS_OF_THE_DAY: { where: string; url: string; quotes: string[] }[]
  * Every other citation of those pages (not on an entry the list corrected, and not a road's copy of a corrected map
  * stage, which is the stage's own object), with the check it had before the corrections (main at 694007d): its day
  * and how many quotes. None of them changes (the maintainer's answer 2 of 2026-10-24: only the entries he checked).
+ * Road 0's lines on CCPCs were among them (the relationships page, checked 2026-10-12) until his answer on item 10
+ * (2026-11-01): they show the newer pages' words now, each from its own citation of a newer page (§ 8), so they are
+ * left out here.
  */
 const OTHER_CITATIONS_BEFORE: { where: string; url: string; checkedOn: string | null; quotes: number }[] = [
   { where: "structure structure-ccpc", url: PAGE.t2Guide, checkedOn: "2026-10-13", quotes: 2 },
   { where: "writeoffs writeoff-cca-class-50", url: PAGE.t4002, checkedOn: null, quotes: 0 },
   ...["road-starting-any-business-ab", "road-federal-steps-ca"].flatMap((road) => [
-    { where: `roads ${road} dw-start-incsred-ccpc`, url: PAGE.relationships, checkedOn: "2026-10-12", quotes: 5 },
-    { where: `roads ${road} dw-start-incsred-associated`, url: PAGE.relationships, checkedOn: "2026-10-12", quotes: 4 },
     { where: `roads ${road} dw-start-hire-status`, url: PAGE.payrollAccount, checkedOn: "2026-10-12", quotes: 2 },
     { where: `roads ${road} dw-start-hire-payroll-account`, url: PAGE.payrollAccount, checkedOn: "2026-10-12", quotes: 2 },
     { where: `roads ${road} step-start-keep-records`, url: PAGE.records, checkedOn: "2026-10-14", quotes: 2 },
@@ -314,25 +437,36 @@ function ownStringsIn(value: unknown): string[] {
   return [];
 }
 /**
- * The fewest words a quoted run needs before a PART of one of the older page's held quotes counts as that page's: fewer
+ * The fewest words a quoted run needs before a PART of one of an older page's held quotes counts as that page's: fewer
  * is a phrase any CRA page on corporations may use (“private corporation”), not that page's line. A whole held quote
- * counts at any length (“a private corporation” is one: a check of road 0's holds it).
+ * counts at any length (“a private corporation” was one: road 0's check of the relationships page held it until item 10).
  */
 const OLDER_PAGE_MIN_WORDS = 6;
 const wordCount = (text: string) => text.trim().split(/\s+/).filter(Boolean).length;
 /**
- * The older CRA page's words in a text: any of its known lines, anywhere; a quoted run that is one of the quotes a
- * citation of the page holds, whole; or a quoted run of at least OLDER_PAGE_MIN_WORDS words that is a part of one.
- * Empty when the text quotes none of it. Only quoted runs are read: DotAmi's own words written from that page, without
- * quote marks, are the subject of the maintainer's questions of 2026-10-31 (citations.md rule 8, As built), not this check.
+ * The older pages that disagree with a newer one, each quoted nowhere (docs/engines/citations.md, rule 8): the CRA's
+ * relationships page since the maintainer's answer of 2026-10-30 (his reading page, item 9), and its SR&ED glossary
+ * since his answer of 2026-11-01 (item 10, Part A). Each with the lines DotAmi knows of it.
  */
-function olderPageWordsIn(text: string): string[] {
-  const held = [...OLDER_PAGE_LINES, ...all.filter((l) => l.citation.url === PAGE.relationships).flatMap((l) => rawQuotes(l.citation))];
-  const lines = OLDER_PAGE_LINES.filter((line) => text.includes(line));
-  const runs = quoted(text).filter(
-    (run) => held.includes(run) || (wordCount(run) >= OLDER_PAGE_MIN_WORDS && held.some((q) => q.includes(run))),
-  );
-  return [...lines, ...runs];
+const OLDER_PAGES: { url: string; lines: readonly string[] }[] = [
+  { url: PAGE.relationships, lines: OLDER_PAGE_LINES },
+  { url: PAGE.sredGlossary, lines: GLOSSARY_LINES },
+];
+/**
+ * The older pages' words in a text: any of their known lines, anywhere; a quoted run that is one of the quotes a
+ * citation of the page holds, whole; or a quoted run of at least OLDER_PAGE_MIN_WORDS words that is a part of one.
+ * Empty when the text quotes none of it. Only quoted runs are read here; DotAmi's own words written from the
+ * relationships page alone, without quote marks, were the four lines of item 10, which § 8 checks by their words.
+ */
+function olderPageWordsIn(text: string, listed: readonly { citation: ListedCitation }[] = all): string[] {
+  return OLDER_PAGES.flatMap(({ url, lines: known }) => {
+    const held = [...known, ...listed.filter((l) => l.citation.url === url).flatMap((l) => rawQuotes(l.citation))];
+    const lines = known.filter((line) => text.includes(line));
+    const runs = quoted(text).filter(
+      (run) => held.includes(run) || (wordCount(run) >= OLDER_PAGE_MIN_WORDS && held.some((q) => q.includes(run))),
+    );
+    return [...lines, ...runs];
+  });
 }
 /**
  * Every structure a person can pick: a record, so a structure added to StructureEntityType fails `tsc` here until it is
@@ -409,9 +543,11 @@ describe("2. The words the reading list's tool found on 2026-10-23", () => {
     const corrected = new Set(TOOL_CHECKS_OF_THE_DAY.map((t) => t.where));
     const stageIds = [...corrected].filter((w) => w.startsWith("cfe ")).map((w) => w.slice("cfe ".length));
     const roadCopy = (where: string) => stageIds.some((id) => new RegExp(`^roads \\S+ ${id}$`).test(where));
+    // Road 0's lines on CCPCs, which his answer on item 10 rested on newer pages (§ 8), the T2 guide among them.
+    const item10Line = (where: string) => ITEM_10_ROAD_LINES.some(({ id }) => new RegExp(`^roads \\S+ ${id}$`).test(where));
     const pages = new Set(TOOL_CHECKS_OF_THE_DAY.map((t) => t.url));
     const others = all
-      .filter(({ where, citation }) => pages.has(citation.url) && !corrected.has(where) && !roadCopy(where))
+      .filter(({ where, citation }) => pages.has(citation.url) && !corrected.has(where) && !roadCopy(where) && !item10Line(where))
       .map(({ where, citation }) => ({
         where,
         url: citation.url,
@@ -511,13 +647,15 @@ describe("3. SR&ED: the credit's rates in the CRA's words", () => {
     }
   });
 
-  it("the older CRA page is quoted on no card or fork, no map stage and no road, none of its lines, and stays listed with its checks", () => {
+  it("the older CRA pages are quoted on no card or fork, no map stage and no road, none of their lines, and stay listed with their checks", () => {
     // The maintainer's answer of 2026-10-30 (his reading page, item 9, the option labelled "The whole older page"):
     // where two official pages disagree, the older one is listed but quoted nowhere, none of its lines
-    // (docs/engines/citations.md, § Rules, rule 8). Until then its 35% line stood on the corporation's card, in the fork
-    // that copies the card's note, and as Incorporation for liability/SR&ED's 35%. Every structure a person can pick,
-    // the holding company and the family trust too (until the review of 2026-10-31 only the first three): the SR&ED
-    // card shows at each.
+    // (docs/engines/citations.md, § Rules, rule 8). Until then the relationships page's 35% line stood on the
+    // corporation's card, in the fork that copies the card's note, and as Incorporation for liability/SR&ED's 35%. Since
+    // his answer of 2026-11-01 (item 10, Part A) the SR&ED glossary is held to the same: an older page that disagrees
+    // ($3 million where the newer pages give $6 million), whose 35% line SR&ED deepening quoted until then. Every
+    // structure a person can pick, the holding company and the family trust too (until the review of 2026-10-31 only
+    // the first three): the SR&ED card shows at each.
     expect(sorted(STRUCTURES)).toEqual(sorted(structureLadderV2026.map((s) => s.entityType)));
     expect(STRUCTURES).toHaveLength(5);
     const texts: { where: string; text: string }[] = [];
@@ -530,22 +668,30 @@ describe("3. SR&ED: the credit's rates in the CRA's words", () => {
     for (const stage of cfeNodesV2026) texts.push({ where: `stage ${stage.id}`, text: ownStringsIn(stage).join("\n") });
     for (const road of roadsV2026) texts.push({ where: `road ${road.id}`, text: ownStringsIn(road).join("\n") });
     for (const { where, text } of texts) expect(olderPageWordsIn(text), where).toEqual([]);
-    // Still listed, with the checks it had: under the SR&ED card, both SR&ED stages, and road 0's two lines on CCPCs
-    // (the federal steps draw the same). The maintainer's read of 2026-10-25 wins on screen, so no check's words are drawn.
+    // Still listed, with the checks they had. The relationships page: under the SR&ED card and both SR&ED stages (road 0
+    // and the federal steps draw the stages' sources); road 0's two lines on CCPCs cited it until item 10, and rest on
+    // newer pages since (§ 8). The glossary: under SR&ED deepening, and the same stage on both roads. The maintainer's
+    // read of 2026-10-25 wins on screen for each, so no check's words are drawn.
     const listed = all.filter((l) => l.citation.url === PAGE.relationships);
-    expect(listed.map((l) => l.where)).toEqual(
-      expect.arrayContaining([
+    expect(sorted(listed.map((l) => l.where))).toEqual(
+      sorted([
         "grants grant-sred",
-        "cfe stage-3b-incorporation-liability-sred",
-        "cfe stage-4-sred-deepening",
-        "roads road-starting-any-business-ab dw-start-incsred-ccpc",
-        "roads road-starting-any-business-ab dw-start-incsred-associated",
+        ...["cfe", "roads road-starting-any-business-ab", "roads road-federal-steps-ca"].flatMap((at) => [
+          `${at} stage-3b-incorporation-liability-sred`,
+          `${at} stage-4-sred-deepening`,
+        ]),
       ]),
     );
-    for (const { where, citation } of listed) {
+    const glossary = all.filter((l) => l.citation.url === PAGE.sredGlossary);
+    expect(sorted(glossary.map((l) => l.where))).toEqual(
+      sorted(["cfe", "roads road-starting-any-business-ab", "roads road-federal-steps-ca"].map((at) => `${at} stage-4-sred-deepening`)),
+    );
+    for (const { where, citation } of [...listed, ...glossary]) {
       expect(howChecked(citation), where).toEqual({ kind: "person", on: MAINTAINER_READ_DAY });
       expect(rawQuotes(citation).length, where).toBeGreaterThan(0);
     }
+    // The glossary's check keeps its 35% line, the words his request of 2026-10-27 had it find, though no line quotes it.
+    for (const { where, citation } of glossary) expect(rawQuotes(citation), where).toContain(GLOSSARY_ENHANCED);
     // Planted controls: the CCPC's note as it was before his answer is caught, and so is the page's line on CCPCs'
     // refunds in quote marks; the note as it is now is not, nor is Incorporation for liability/SR&ED's 35% as it is now.
     expect(olderPageWordsIn(CCPC_NOTE_BEFORE_ITEM_9)).toEqual([CCPC_ENHANCED, CCPC_ENHANCED]);
@@ -553,20 +699,43 @@ describe("3. SR&ED: the credit's rates in the CRA's words", () => {
     expect(olderPageWordsIn(CCPC_NOTE_WHOLE)).toEqual([]);
     expect(olderPageWordsIn(`The CRA's SR&ED Investment Tax Credit Policy: “${POLICY_CCPC_ENHANCED}”`)).toEqual([]);
     // A part of one of its lines counts from six words: a 6-word run of the 35% line is caught, the same line's first
-    // five words are not, and “private corporation”, a phrase any page on corporations may use, is not. A whole held
-    // quote counts at any length: “a private corporation” is one (road 0's check holds it), so it is caught.
+    // five words are not, and “private corporation”, a phrase any page on corporations may use, is not.
     const sixWords = "Some CCPCs may earn an ITC";
     expect(wordCount(sixWords)).toBe(OLDER_PAGE_MIN_WORDS);
     expect(CCPC_ENHANCED.startsWith(sixWords)).toBe(true);
     expect(olderPageWordsIn(`The CRA: “${sixWords}”`)).toEqual([sixWords]);
     expect(olderPageWordsIn("The CRA: “Some CCPCs may earn an”")).toEqual([]);
     expect(olderPageWordsIn("The CRA: “private corporation”")).toEqual([]);
-    expect(olderPageWordsIn("The CRA: “a private corporation”")).toEqual(["a private corporation"]);
-    expect(all.some((l) => l.citation.url === PAGE.relationships && rawQuotes(l.citation).includes("a private corporation"))).toBe(true);
-    // A whole held quote of six words or more is caught, whichever citation of the page holds it.
-    const held = "When one CCPC is associated with other CCPCs, these corporations must share the business limit.";
-    expect(all.some((l) => l.citation.url === PAGE.relationships && rawQuotes(l.citation).includes(held))).toBe(true);
-    expect(olderPageWordsIn(`The CRA: “${held}”`)).toEqual([held]);
+    // A whole held quote counts at any length. “a private corporation” was one, in road 0's check of the page until
+    // item 10; no citation holds it now, so it is planted on a copy of a citation of the page, and caught there only.
+    expect(all.some((l) => l.citation.url === PAGE.relationships && rawQuotes(l.citation).includes("a private corporation"))).toBe(false);
+    const relationships = citationOf("cfe stage-4-sred-deepening", PAGE.relationships);
+    const plantedShort = [...all, { citation: { ...relationships, toolCheck: { checkedOn: "2026-10-12", quotes: ["a private corporation"] } } }];
+    expect(olderPageWordsIn("The CRA: “a private corporation”", plantedShort)).toEqual(["a private corporation"]);
+    expect(olderPageWordsIn("The CRA: “a private corporation”")).toEqual([]);
+    // The page's sentences road 0's checks held until item 10 are caught anywhere, in quote marks or not.
+    const shareLimit = "When one CCPC is associated with other CCPCs, these corporations must share the business limit.";
+    expect(olderPageWordsIn(`The CRA: “${shareLimit}”`)).toEqual([shareLimit, shareLimit]);
+    expect(olderPageWordsIn(`they say ${shareLimit}`)).toEqual([shareLimit]);
+    // Road 0's lines as they are now quote the newer pages, some in the same words as a form's title the older page
+    // used (T2SCH49's), and are not caught; the lines as they read before item 10 had no quote marks, so § 8 checks them.
+    for (const { text } of ITEM_10_ROAD_LINES) expect(olderPageWordsIn(text), text.slice(0, 60)).toEqual([]);
+    // The glossary, the same rules (item 10, Part A): SR&ED deepening's 35% as it was until then is caught, its line
+    // anywhere and its quoted run; a 6-word part of the line is caught, its first five words are not; the entry's $3
+    // million sentence is caught, quoted or not; a whole held quote of its other entries is caught; the stage's 35% as it
+    // is now is not.
+    expect(olderPageWordsIn(`The CRA's SR&ED glossary: “${GLOSSARY_ENHANCED}”`)).toEqual([GLOSSARY_ENHANCED, GLOSSARY_ENHANCED]);
+    const glossarySix = "Some Canadian-controlled private corporations (CCPCs) that";
+    expect(wordCount(glossarySix)).toBe(OLDER_PAGE_MIN_WORDS);
+    expect(GLOSSARY_ENHANCED.startsWith(glossarySix)).toBe(true);
+    expect(olderPageWordsIn(`The CRA: “${glossarySix}”`)).toEqual([glossarySix]);
+    expect(olderPageWordsIn("The CRA: “Some Canadian-controlled private corporations (CCPCs)”")).toEqual([]);
+    expect(olderPageWordsIn(`The CRA: “${GLOSSARY_THREE_MILLION}”`)).toEqual([GLOSSARY_THREE_MILLION, GLOSSARY_THREE_MILLION]);
+    expect(olderPageWordsIn(`the glossary says ${GLOSSARY_THREE_MILLION}`)).toEqual([GLOSSARY_THREE_MILLION]);
+    const routine = "quality control or routine testing of materials, devices, products or processes";
+    expect(glossary.every(({ citation }) => rawQuotes(citation).includes(routine))).toBe(true);
+    expect(olderPageWordsIn(`The CRA's SR&ED glossary: “${routine}”`)).toEqual([routine]);
+    expect(olderPageWordsIn(`The CRA's SR&ED Investment Tax Credit Policy: “${POLICY_CCPC_ENHANCED}”`)).toEqual([]);
   });
 
   it("the time words on the SR&ED card are the CRA's, inside the policy page's quotes under its label, never DotAmi's", () => {
@@ -697,23 +866,30 @@ describe("3. SR&ED: the credit's rates in the CRA's words", () => {
     expect(rule8).not.toContain("His words of 2026-10-30 on the newer page");
     expect(rule8).toContain("The older page stays listed among the sources, with its own check, and is quoted nowhere, none of its lines");
     expect(rule8).toMatch(/which is accurate and true \(his "library" idea and his note on item 9\), is research first, .*; none of it is built\./);
-    // As built, honestly: no card, stage or road quotes a line of the older page, and what still stands is listed with
-    // the two questions asked of him on 2026-10-31, not settled by a rule of DotAmi's own.
-    const asBuilt = rule8.split("As built (2026-10-31):")[1] ?? "";
+    // As built, honestly: no card, stage or road quotes a line of either older page, and the two questions asked of him
+    // on 2026-10-31 (his reading page, item 10) are answered, his picks quoted word for word, each option's description
+    // under its bold label named outside the quote marks, as item 9's is. Until then the paragraph was "As built
+    // (2026-10-31)" and listed the four lines in DotAmi's own words and the glossary's line as asked.
+    const asBuilt = rule8.split("As built (2026-11-01):")[1] ?? "";
     expect(asBuilt).not.toBe("");
-    expect(asBuilt).toContain("no card, map stage or road quotes any line of it");
-    expect(asBuilt).toContain("Still in DotAmi's own words, without quote marks, and shown:");
-    // In straight quotes, as the doc gives DotAmi's own strings: curly ones are for an official page's words.
-    expect(asBuilt).toContain('("The enhanced rate is for some CCPCs, up to their expenditure limit for the year.")');
-    expect(asBuilt).toContain("`dw-start-incsred-ccpc`");
-    expect(asBuilt).toContain("`dw-start-incsred-associated`");
-    expect(asBuilt).toContain("Whether these count as showing the older page was asked of him on 2026-10-31.");
-    expect(asBuilt).toContain("The CRA's SR&ED glossary (its page date 2026-05-22) also disagrees with the newer pages");
+    expect(rule8).not.toContain("As built (2026-10-31):");
+    expect(asBuilt).toContain("no card, map stage or road quotes any line of either");
+    expect(asBuilt).toContain("his reading page, item 10");
+    expect(asBuilt).toContain(`the option he picked, labelled *${ITEM_10_LABEL_A}*: “${ITEM_10_PICK_A}”`);
+    expect(asBuilt).toContain(`the option he picked, labelled *${ITEM_10_LABEL_B}*: “${ITEM_10_PICK_B}”`);
+    expect(asBuilt).toContain("The CRA's SR&ED glossary (its page date 2026-05-22)");
     expect(asBuilt).toContain("$3 million");
     expect(asBuilt).toContain("$6 million");
-    expect(asBuilt).toContain("Whether rule 8 takes that line off was asked of him on 2026-10-31.");
-    // The tax impact it names is the stage's own sentence, as the stage has it.
-    expect(node("stage-4-sred-deepening").taxImpact).toContain("The enhanced rate is for some CCPCs, up to their expenditure limit for the year.");
+    // What was built for each, and what came off, named.
+    for (const id of ["`dw-start-incsred-ccpc`", "`dw-start-incsred-associated`", "`dw-start-incsred-expenditure-limit`"]) {
+      expect(asBuilt, id).toContain(id);
+    }
+    expect(asBuilt).toContain("came off");
+    expect(asBuilt).toContain("Nothing of item 10 is still asked of him.");
+    expect(asBuilt).not.toContain("Still in DotAmi's own words, without quote marks, and shown:");
+    expect(rule8).not.toContain("asked of him on 2026-10-31");
+    // The tax impact it named then is gone from the stage.
+    expect(node("stage-4-sred-deepening").taxImpact).not.toContain(OWN_WORDS_BEFORE_ITEM_10.taxImpact);
     // The reading built before his answer on item 9 is gone, and so is the open question.
     expect(rule8).not.toContain("its lines that don't disagree stay quoted");
     expect(rule8).not.toContain("asked of the maintainer");
@@ -785,20 +961,64 @@ describe("3. SR&ED: the credit's rates in the CRA's words", () => {
     expect(findTimeWords(estimate!.basis)).toEqual([]);
   });
 
-  it("SR&ED deepening still quotes the CRA's SR&ED glossary for its 35%, from its own citation of the glossary", () => {
-    // A guard: the line the maintainer asked for, quoted since 2026-10-27. The glossary disagrees with the newer pages on
-    // the limit ($3 million against $6 million); whether rule 8 takes this line off was asked of him on 2026-10-31
-    // (docs/engines/citations.md, § Rules, rule 8, As built), so it stays until he answers.
+  it("SR&ED deepening's 35% quotes the policy page's own sentence, from the stage's own citation of the policy page, checked by a tool on 2026-11-01", () => {
+    // The maintainer's answer of 2026-11-01 (his reading page, item 10, Part A, "Apply the rule: quote the newer policy
+    // page's line"). From 2026-10-27 until then it quoted the SR&ED glossary's line, the line he had asked for, from an
+    // older page that disagrees with the newer ones ($3 million against $6 million). Now the same sentence
+    // Incorporation for liability/SR&ED's 35% quotes, under the page's title.
     const id = "stage-4-sred-deepening";
     const estimate = node(id).financialImpact.estimates.find((e) => e.value === "35%");
     expect(estimate, id).toBeDefined();
-    expect(estimate!.basis).toBe(`The CRA's SR&ED glossary: “${GLOSSARY_ENHANCED}”`);
-    expect(rawQuotes(citationOf(`cfe ${id}`, PAGE.sredGlossary))).toContain(GLOSSARY_ENHANCED);
-    expect(rawQuotes(citationOf(`cfe ${id}`, PAGE.relationships))).toEqual([CCPC_ENHANCED]);
-    // One run found the glossary's new line with the two it held, so the citation's check is that day's.
-    expect(citationOf(`cfe ${id}`, PAGE.sredGlossary).toolCheck?.checkedOn).toBe("2026-10-27");
-    // The entry's $3 million sentence is quoted nowhere.
+    expect(estimate!.label).toBe("Enhanced ITC reference");
+    expect(estimate!.basis).toBe(`The CRA's SR&ED Investment Tax Credit Policy: “${POLICY_CCPC_ENHANCED}”`);
+    expect(estimate!.basis).not.toContain(GLOSSARY_ENHANCED);
     expect(estimate!.basis).not.toContain("$3 million");
+    // Held by the stage's own citation of the page, as on Incorporation for liability/SR&ED: titled with the page's main
+    // heading, no read, one tool check of the day the script found the stage's two quotes of the page together (the
+    // 35% sentence and the tax impact's sentence on the expenditure limit, § 8). Amber, check first.
+    const policy = citationOf(`cfe ${id}`, PAGE.sredItcPolicy);
+    expect(policy.title).toBe("SR&ED Investment Tax Credit Policy");
+    expect(policy.toolCheck).toEqual({ checkedOn: ITEM_10_DAY, quotes: [POLICY_CCPC_ENHANCED, POLICY_ABOVE_LIMIT] });
+    expect(policy.lastVerified).toBeUndefined();
+    expect(policy.readBy).toBeUndefined();
+    expect(howChecked(policy)).toEqual({ kind: "tool", on: ITEM_10_DAY, quotes: [POLICY_CCPC_ENHANCED, POLICY_ABOVE_LIMIT] });
+    expect(isCheckFirst(policy)).toBe(true);
+    const inCatalog = node(id).citations.find((c) => c.url === PAGE.sredItcPolicy);
+    expect(inCatalog?.authority).toBe("CRA");
+    expect(inCatalog?.jurisdiction).toBe("CA");
+    // The glossary stays listed under the stage, with its check of 2026-10-27 and the maintainer's read winning on
+    // screen, and is quoted nowhere (§ 3, the older pages); so does the relationships page. The policy page is fourth.
+    const glossary = citationOf(`cfe ${id}`, PAGE.sredGlossary);
+    expect(glossary.toolCheck?.checkedOn).toBe("2026-10-27");
+    expect(rawQuotes(glossary)).toContain(GLOSSARY_ENHANCED);
+    expect(howChecked(glossary)).toEqual({ kind: "person", on: MAINTAINER_READ_DAY });
+    expect(rawQuotes(citationOf(`cfe ${id}`, PAGE.relationships))).toEqual([CCPC_ENHANCED]);
+    expect(citationsAt(`cfe ${id}`).map((c) => c.url)).toEqual([
+      "https://www.canada.ca/en/revenue-agency/services/scientific-research-experimental-development-tax-incentive-program/sred-claim.html",
+      PAGE.sredGlossary,
+      PAGE.relationships,
+      PAGE.sredItcPolicy,
+    ]);
+    // Both roads that draw the stage show the same sources under its step.
+    for (const road of ["road-starting-any-business-ab", "road-federal-steps-ca"]) {
+      const where = `roads ${road} ${id}`;
+      expect(citationOf(where, PAGE.sredItcPolicy).toolCheck, where).toEqual({ checkedOn: ITEM_10_DAY, quotes: [POLICY_CCPC_ENHANCED, POLICY_ABOVE_LIMIT] });
+      expect(howChecked(citationOf(where, PAGE.sredGlossary)), where).toEqual({ kind: "person", on: MAINTAINER_READ_DAY });
+    }
+    expect(findTimeWords(estimate!.basis)).toEqual([]);
+  });
+
+  it("the docs give his answers on item 10, no longer the questions of 2026-10-31", () => {
+    // Until 2026-11-01 the docs said the glossary's line and the four lines in DotAmi's own words were asked of him on
+    // 2026-10-31.
+    for (const file of ["docs/engines/citations.md", "docs/engines/grants.md", "CHANGELOG.md", "docs/task-list.md", "docs/ui-spec/cockpit/03-canvas.md"]) {
+      expect(readFlat(file), file).not.toMatch(/asked (of (the maintainer|him) )?on 2026-10-31/);
+    }
+    // The CHANGELOG and the task list say what his answers changed, with his day.
+    for (const file of ["CHANGELOG.md", "docs/task-list.md"]) {
+      expect(readFlat(file), file).toContain("item 10");
+      expect(readFlat(file), file).toContain("2026-11-01");
+    }
   });
 
   it("the CRA's What are SR&ED tax incentives page says the maintainer read it, and keeps the list's tool check", () => {
@@ -1079,5 +1299,124 @@ describe("7. The corrected words are gone from the docs that copied them", () =>
     expect(readFlat("docs/brain/risk-calculator.md").includes("the four quotes docs/glossary.md")).toBe(false);
     // The risk catalog's row in the brain's README: attachRisk evaluates combinations and the ladder's GAAR read.
     expect(readFlat("docs/brain/README.md").includes("not yet evaluated")).toBe(false);
+  });
+});
+
+describe("8. His answers on item 10 (2026-11-01): the four lines rest on the newer pages", () => {
+  // His pick on Part B, "Rest them on the newer pages": “Find the same facts on the newer CRA pages, check them with the
+  // tool, and show those pages' words instead; any fact no newer page states comes off.” The four lines were in
+  // DotAmi's own words, without quote marks, and rested on the relationships page alone (2025-07-21). Each new quote was
+  // found by `node scripts/check-quotes.mjs --url … --quote …` on 2026-11-01, one run per page.
+  const roadLine = (roadId: string, id: string) => {
+    const road = roadsV2026.find((r) => r.id === roadId);
+    expect(road, roadId).toBeDefined();
+    const found = road!.steps.flatMap((s) => s.doneWhen).find((d) => d.id === id);
+    expect(found, `${roadId} ${id}`).toBeDefined();
+    return found!;
+  };
+  const ROADS = ["road-starting-any-business-ab", "road-federal-steps-ca"] as const;
+
+  it("SR&ED deepening's tax impact quotes the policy page on the enhanced rate and its limit, both sides, in place of DotAmi's own words", () => {
+    const stage = node("stage-4-sred-deepening");
+    expect(stage.taxImpact).toBe(ITEM_10_LINES.taxImpact);
+    expect(stage.taxImpact).not.toContain(OWN_WORDS_BEFORE_ITEM_10.taxImpact);
+    // The two sentences, under the page's title: some CCPCs may earn the enhanced 35% (section 1.1), and spending above
+    // the expenditure limit for the tax year earns the basic rate (section 3.0), the other side of the limit.
+    expect(quoted(stage.taxImpact)).toEqual([POLICY_CCPC_ENHANCED, POLICY_ABOVE_LIMIT]);
+    const held = rawQuotes(citationOf("cfe stage-4-sred-deepening", PAGE.sredItcPolicy));
+    for (const run of quoted(stage.taxImpact)) expect(held, run).toContain(run);
+    // Outside the quotes, the stage's own two sentences, which rest on no line of the relationships page, and the label.
+    expect(ownWordsFlat(stage.taxImpact)).toBe(
+      "Eligible SR&ED expenditures generate ITCs and deductions. The CRA's SR&ED Investment Tax Credit Policy: Provincial top-ups may apply in some jurisdictions.",
+    );
+    // No time and no number of DotAmi's own: the quotes' "current year" and "tax year" are the CRA's.
+    expect(findTimeWords(ownWords(stage.taxImpact))).toEqual([]);
+    expect(ownWords(stage.taxImpact)).not.toMatch(/\d/);
+    // Planted control: the line as it read before quotes nothing, and says the limit in DotAmi's own words.
+    const before = `Eligible SR&ED expenditures generate ITCs and deductions. ${OWN_WORDS_BEFORE_ITEM_10.taxImpact} Provincial top-ups may apply in some jurisdictions.`;
+    expect(quoted(before)).toEqual([]);
+    expect(ownWords(before)).toContain("expenditure limit for the year");
+  });
+
+  it("the note on SR&ED deepening's source on the older page names only the page's topic, as Incorporation for liability/SR&ED's does", () => {
+    const noteOf = (id: string) => node(id).citations.find((c) => c.url === PAGE.relationships)?.note;
+    const note = noteOf("stage-4-sred-deepening");
+    expect(note).toBe(ITEM_10_LINES.note);
+    expect(note).toBe(noteOf("stage-3b-incorporation-liability-sred"));
+    // No stage's or road's source carries the old note, which stated the older page's rate and limit as its content.
+    // (The SR&ED card's note on the same page is not one of item 10's four lines.)
+    const sources = [
+      ...cfeNodesV2026.flatMap((s) => s.citations.map((c) => ({ where: `cfe ${s.id}`, note: c.note }))),
+      ...roadsV2026.flatMap((r) =>
+        r.steps.flatMap((s) => [...s.citations, ...s.doneWhen.map((d) => d.citation)].map((c) => ({ where: `roads ${r.id} ${s.id}`, note: c.note }))),
+      ),
+    ];
+    expect(sources.length).toBeGreaterThan(0);
+    expect(sources.filter((s) => s.note === OWN_WORDS_BEFORE_ITEM_10.note).map((s) => s.where)).toEqual([]);
+    expect(note).not.toMatch(/35%|expenditure limit/);
+  });
+
+  it.each(ROADS)("%s: Incorporation for liability/SR&ED's lines on CCPCs show the newer pages' words, each from its own citation of that page", (roadId) => {
+    const road = roadsV2026.find((r) => r.id === roadId)!;
+    const step = road.steps.find((s) => s.id === "stage-3b-incorporation-liability-sred")!;
+    // The line on associated corporations is two now, one per newer page: a line holds one citation, and the business
+    // limit (the T2 guide) and the SR&ED expenditure limit (the policy page) are on two pages.
+    expect(step.doneWhen.map((d) => d.id)).toEqual(["dw-start-incsred-incorporated", ...ITEM_10_ROAD_LINES.map((l) => l.id)]);
+    for (const expected of ITEM_10_ROAD_LINES) {
+      const line = roadLine(roadId, expected.id);
+      expect(line.text, expected.id).toBe(expected.text);
+      // Every quoted run is held whole by the line's own citation, which holds those runs and nothing else.
+      expect(quoted(line.text), expected.id).toEqual([...expected.quotes]);
+      expect(line.citation.url, expected.id).toBe(expected.url);
+      expect(line.citation.title, expected.id).toBe(expected.title);
+      expect(line.citation.authority, expected.id).toBe("CRA");
+      expect(line.citation.jurisdiction, expected.id).toBe("CA");
+      expect(line.citation.toolCheck, expected.id).toEqual({ checkedOn: ITEM_10_DAY, quotes: [...expected.quotes] });
+      // Outside the quotes, only what the person checked and whose words follow: no fact of DotAmi's own.
+      expect(ownWordsFlat(line.text), expected.id).toMatch(/^(You checked whether|If it is associated)[^.:]*[.,] [Tt]he CRA's [^:]+:$/);
+    }
+    // The T2 guide is a page the maintainer read in full on 2026-10-25, so its read wins on screen; nobody has read the
+    // Type of corporation page or the policy page, so those two say "Checked by a tool" in amber, with the words found.
+    expect(howChecked(roadLine(roadId, "dw-start-incsred-associated").citation)).toEqual({ kind: "person", on: MAINTAINER_READ_DAY });
+    for (const id of ["dw-start-incsred-ccpc", "dw-start-incsred-expenditure-limit"]) {
+      const c = roadLine(roadId, id).citation;
+      expect(c.lastVerified, id).toBeUndefined();
+      expect(c.readBy, id).toBeUndefined();
+      expect(isCheckFirst(c), id).toBe(true);
+    }
+  });
+
+  it("no road line cites the relationships page any more, and the old lines' own words are gone, the facts no newer page states with them", () => {
+    for (const roadId of ROADS) {
+      for (const id of ["dw-start-incsred-ccpc", "dw-start-incsred-associated"]) {
+        expect(roadLine(roadId, id).citation.url, `${roadId} ${id}`).not.toBe(PAGE.relationships);
+      }
+    }
+    const roadLines = roadsV2026.flatMap((r) => r.steps.flatMap((s) => s.doneWhen.map((d) => ({ where: `${r.id} ${d.id}`, citation: d.citation }))));
+    expect(roadLines.filter((l) => l.citation.url === PAGE.relationships).map((l) => l.where)).toEqual([]);
+    const shown = [...cfeNodesV2026.map((s) => ownStringsIn(s).join("\n")), ...roadsV2026.map((r) => ownStringsIn(r).join("\n"))].join("\n");
+    for (const words of [OWN_WORDS_BEFORE_ITEM_10.taxImpact, OWN_WORDS_BEFORE_ITEM_10.ccpc, OWN_WORDS_BEFORE_ITEM_10.associated]) {
+      expect(shown.includes(words), words).toBe(false);
+    }
+    // What came off: the older page's "in general" summary (the newer page gives the whole list instead), the one
+    // sentence that the small business deduction and the enhanced credit are both for certain CCPCs (no newer page says
+    // both), DotAmi's word "share" and the code "T2SCH23", which no newer page writes so (its form page is from 2019).
+    expect(shown).not.toMatch(/in general, a private corporation/);
+    expect(shown).not.toContain("are for certain CCPCs");
+    expect(shown).not.toContain("T2SCH23");
+    expect(shown).not.toMatch(/they share the business limit/);
+  });
+
+  it("every quoted run on any road's done-when line is held whole by that line's own citation", () => {
+    // A guard for every road, the lines item 10 changed and any later one: a line quoting a page has the page one click
+    // away, its words in the citation's tool check.
+    for (const road of roadsV2026) {
+      for (const line of road.steps.flatMap((s) => s.doneWhen)) {
+        for (const run of quoted(line.text)) expect(rawQuotes(line.citation), `${road.id} ${line.id}: “${run}”`).toContain(run);
+      }
+    }
+    // Planted control: a run the line's citation doesn't hold is not among its quotes.
+    const line = roadLine("road-starting-any-business-ab", "dw-start-incsred-ccpc");
+    expect(rawQuotes(line.citation)).not.toContain("in general, a private corporation");
   });
 });
