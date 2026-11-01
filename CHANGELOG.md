@@ -58,8 +58,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ### Added
 - **A test that each hand-written `.d.mts` file names exactly what its JavaScript module exports**
   (`tests/declarations-match.spec.ts`). The tests that import a module from `desktop/` or `scripts/` are
-  typed against the `.d.mts` file written by hand beside it, never against the module itself, and
-  nothing compared the two. The test reads both syntax trees and fails, naming the file and the name,
+  typed against the `.d.mts` file (a file of type declarations) written by hand beside it, never against
+  the module itself, and nothing compared the two. The test reads both files as code, not as text, and
+  fails, naming the file and the name,
   when a declaration file declares a value its module doesn't export, or the module exports one the
   declaration file doesn't declare (type-only exports aside). All 26 pairs (18 in `desktop/`, 8 in
   `scripts/`) match today.
@@ -318,8 +319,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   (its planted control looked for a `"\n"` in `docs/privacy-log.md` that wasn't on disk); CI runs the
   unit tests on Ubuntu only, so it never saw that. That spec now reads the log with its line endings
   made Unix ones, as other specs already do. The `.gitattributes` line takes effect on a new clone; an
-  existing Windows clone runs `git rm -r --cached . && git reset --hard` once (CONTRIBUTING.md,
-  *Line endings on Windows*). The repository's stored files don't change.
+  existing Windows clone, with its work committed first (the command throws away uncommitted changes),
+  runs `git rm -r --cached . && git reset --hard` once (CONTRIBUTING.md, *Line endings on Windows*). The
+  repository's stored files don't change.
 - **Mara's example: its prices re-opened, and no promotion length in DotAmi's own words** (2026-10-27). The
   sellers' pages a review couldn't re-open were opened again: every Busy Bee Tools, Autodesk and QuickBooks
   price is the same as on 2026-10-14 (Autodesk's appear once a browser draws the page); Lee Valley's showed a
@@ -785,11 +787,14 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   read only `app/`, `components/` and `lib/`, so the desktop app (`desktop/`), the scripts, the unit tests
   and the browser and desktop tests were never linted, and every run said `next lint` goes away in
   Next.js 16. The script is now `eslint . --ext .js,.jsx,.mjs,.cjs,.ts,.tsx` (729 files, from 416), still
-  reading `.eslintrc.json` (ESLint 8's own format; Next's codemod writes a flat config that needs ESLint 9
-  and eslint-config-next 16, a dependency change for its own pull request, and the file says why a flat
-  config isn't used yet). The Node folders (`desktop/`, `scripts/`, `tests/`, `e2e/`, `e2e-desktop/`,
+  reading `.eslintrc.json` (ESLint 8's own format. Next's codemod, its tool that converts a project for
+  you, writes a flat config, ESLint's newer kind of config file, which needs ESLint 9 and
+  eslint-config-next 16: a dependency change for its own pull request. The file says why a flat config
+  isn't used yet). The Node folders (`desktop/`, `scripts/`, `tests/`, `e2e/`, `e2e-desktop/`,
   `prisma/`) leave out React's hook rules and Next's page rules, which fired 11 false alarms there
   (`useSqliteFrom` in `desktop/main.mjs` read as a React hook, ten test variables called `module`).
+  In the desktop app's main process and the scripts, which run in Node, a browser-only name such as
+  `window` is an error; the desktop pages' own scripts and their preload files keep them.
   Plain JavaScript (`.js`, `.mjs`, `.cjs`) also gets ESLint's own recommended rules (a name never
   defined, a key written twice, unreachable code). They found two things, neither changing what runs: an
   invisible byte-order-mark character written into a regular expression in `scripts/lib/import-kit.mjs`
@@ -798,19 +803,25 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   ESLint sends no usage reports.
 - **`npm run typecheck` also checks the JavaScript of the desktop app and the scripts.** `tsconfig.json` has
   `allowJs` off, so the first pass never read the `.mjs`, `.cjs` and `.js` files in `desktop/` and `scripts/`.
-  A second pass, `tsc --noEmit -p tsconfig.desktop.json`, now checks them against their JSDoc types and the
-  `.d.mts` files they import one another through. It is looser than the TypeScript for now: parameters
-  without a JSDoc type are allowed, and a caught error is read as `any`; tightening it to strict is left for
-  later (510 places would need a type today). Clearing it took JSDoc and type-only changes, nothing that
-  changes what runs: `@param` types for options objects with defaults (most of them `= null` or `= {}`),
-  type casts in comments where the code already guarantees a value (a key made a few lines up, a window that
-  may be missing), three `@ts-expect-error` lines in `desktop/main.mjs` where a cast would have hidden the
-  `log.write(` text `tests/error-logging.spec.ts` follows (its guard caught the first try, which did), and
-  corrections to two hand-written declaration files: `EncryptionStopped` and
+  A second pass, `tsc --noEmit -p tsconfig.desktop.json`, now checks them against their JSDoc types (type
+  notes written in comments, which JavaScript ignores) and the `.d.mts` files they import one another
+  through. It is looser than the TypeScript for now: parameters without a JSDoc type are allowed, and a
+  caught error is read as `any`; tightening it to strict is left for later (510 places would need a type
+  on 2026-11-01, 380 of them parameters: `npx tsc --noEmit -p tsconfig.desktop.json --noImplicitAny true
+  --useUnknownInCatchVariables true`). Clearing it took JSDoc and type-only changes: `@param` types for
+  options objects with defaults (most of them `= null` or `= {}`); type casts in comments where the code
+  already guarantees a value (a key made a few lines up, the data file a backup always starts with); casts
+  on Electron's dialogs, which accept "no window" though their type lists that only as a separate form
+  (without a window argument at all); and corrections to two hand-written declaration files: `EncryptionStopped` and
   `DecryptionStopped` take `(kind, message)`, and the results of `encryptFile`, `decryptFile`,
   `resumeEncryption` and `resumeDecryption` list `wipePending` as absent on the kinds of result that don't
   carry it, so `desktop/main.mjs` may read it from any of them, as it does. The desktop pages' three small
-  scripts type their window bridge from its preload file.
+  scripts type their window bridge from its preload file. One change is code, not a note: three arrow
+  functions in `desktop/main.mjs` that write to the log now use `log?.write(`, as 27 other places there
+  already do. The log is always open by the time they run, so nothing changes in practice; it lets the
+  type checker see the line whole (an earlier try silenced the whole line instead, and with it a check of
+  the data file's key passed on the same line), and `tests/error-logging.spec.ts` still follows every
+  write.
 - **The CRA's GST/HST rate table, on the maintainer's answer about its rows; and the vehicle write-off's s.67.3
   source names only what its page holds** (his answers of 2026-10-28 on his reading page). The table is drawn by a
   script, so no tool can see it; he copied Ontario's row "13%" and Alberta's row "5%". That answer is about two rows,

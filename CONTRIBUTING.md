@@ -292,11 +292,13 @@ npm run seed             # optional: two invented ventures so the map is not emp
 npm run dev
 ```
 
-**Line endings on Windows.** `.gitattributes` checks every text file out with Unix line endings
-(LF), whatever git's own `core.autocrlf` setting says, so the tests read the same text on Windows
-as on CI. A new clone gets this from the start. A clone made before that line reached `main` still has
-Windows line endings on disk until you rewrite it once, with nothing uncommitted (this throws away
-uncommitted changes): `git rm -r --cached . && git reset --hard`. Cloning again does the same.
+**Line endings on Windows.** The line `* text=auto eol=lf` in `.gitattributes` checks every text
+file out with Unix line endings (LF), whatever git's own `core.autocrlf` setting says, so the tests
+read the same text on Windows as on CI. A new clone gets this from the start. A clone made before
+that line reached `main` may still have Windows line endings on disk: `git ls-files --eol` shows
+`w/crlf` beside such files. To rewrite them once, commit your work first (the command throws away
+uncommitted changes), then run `git rm -r --cached . && git reset --hard`. Cloning again does the
+same.
 
 Before opening a PR, run **`npm run ci:quality`** — it is the exact chain CI runs:
 `prisma generate → typecheck → lint → test → build`. Stop the dev server first. Typecheck reads

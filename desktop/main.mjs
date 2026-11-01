@@ -216,10 +216,7 @@ async function start() {
   // opens the file. Only then — an ordinary start, with no note, does nothing here: free space in
   // the file is normal after any edit, and rebuilding it on every start would only slow it down.
   // It never stops the start: what still can't be done stays owed for the next one.
-  // `log` is open by now, but the type checker can't carry that into an arrow function. A cast would hide
-  // the `log.write(` that tests/error-logging.spec.ts reads for, so the type error is expected instead.
-  // @ts-expect-error -- `log` is open by now
-  const wipe = finishPendingWipe(dbFile, { vacuum: (file) => vacuumFile(file, databaseKey), log: (line) => log.write(`${line}\n`) });
+  const wipe = finishPendingWipe(dbFile, { vacuum: (file) => vacuumFile(file, databaseKey), log: (line) => log?.write(`${line}\n`) });
   if (wipe.ran) log.write(`[desktop] wipe-pending note ${wipe.wiped && wipe.backupsLeft.length === 0 && wipe.receiptFoldersLeft.length === 0 ? "cleared" : "kept for the next start"}\n`);
 
   // A fresh data folder gets its database here; an existing one gets any new migrations, after a
@@ -227,8 +224,7 @@ async function start() {
   // untouched (the one exception is the owed wipe just above: when a "wipe pending" note was there,
   // the file has already been rebuilt, with the same contents, before these checks run).
   try {
-    // @ts-expect-error -- `log` is open by now (see finishPendingWipe above)
-    const { applied, backup } = migrate(dbFile, migrations, { log: (line) => log.write(`${line}\n`), key: databaseKey });
+    const { applied, backup } = migrate(dbFile, migrations, { log: (line) => log?.write(`${line}\n`), key: databaseKey });
     log.write(`[desktop] database ready (${applied.length} update(s) applied${backup ? `, backup ${backup}` : ""})\n`);
   } catch (error) {
     if (error instanceof MigrationRefused) return fail(error.message);
@@ -427,10 +423,7 @@ function safetyCopyFiles() {
  *   the new data file must then be encrypted, never created plain (if no key can be made, the start stops).
  */
 async function prepareDatabase({ afterStartFresh = false } = {}) {
-  // Called only once start() has opened the log. Not a cast: tests/error-logging.spec.ts follows every
-  // `say(…)` through this exact `=> log.write(` and checks what each one writes.
-  // @ts-expect-error -- `log` is open by now
-  const say = (line) => log.write(`[database] ${line}\n`);
+  const say = (line) => log?.write(`[database] ${line}\n`);
   // After "Start fresh" the person was promised an empty file under a new key: never an unencrypted one.
   const noPlainAfterStartFresh = () => {
     say("no key could be made after starting fresh; no unencrypted data file was created");

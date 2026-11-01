@@ -64,8 +64,16 @@
       "env": { "node": true, "es2024": true }
     },
     {
-      // The desktop app's small pages (passphrase, lost key, the encryption question) and its
-      // preload scripts run in a window, where `window` and `document` exist.
+      // Next's config turns the browser's globals on everywhere. The desktop app's main process and
+      // the scripts run in Node, where `window` and `document` don't exist, so a stray one is an error
+      // here. (The tests keep them: some run with a browser-like document.)
+      "files": ["desktop/**", "scripts/**"],
+      "env": { "browser": false }
+    },
+    {
+      // Comes after the block above, so it wins for these files: the desktop app's small pages
+      // (passphrase, lost key, the encryption question) and its preload scripts run in a window,
+      // where `window` and `document` exist.
       "files": ["desktop/*.js", "desktop/*-preload.cjs"],
       "env": { "browser": true }
     }

@@ -2,8 +2,9 @@
 # whatever git's own core.autocrlf says there (Git for Windows turns it on by default). The repository
 # already stores LF everywhere; this keeps the copy on disk the same, so a test that reads a file
 # sees the same text on Windows as on CI. Files git sees as binary are left alone.
-# A clone made before this line still has Windows line endings on disk: run
-# `git rm -r --cached . && git reset --hard` once with nothing uncommitted (CONTRIBUTING.md says more).
+# A clone made before this line still has Windows line endings on disk. Commit your work first: the
+# command throws away uncommitted changes. Then run `git rm -r --cached . && git reset --hard` once
+# (CONTRIBUTING.md, "Line endings on Windows", says more).
 * text=auto eol=lf
 
 # Almost every pull request adds a line under [Unreleased] in these two logs, so two branches
