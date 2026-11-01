@@ -22,6 +22,9 @@ import { pathToFileURL } from "node:url";
 const USAGE = "Usage: node scripts/playwright-summary.mjs <report.json> [title] [artifact name]";
 
 /** Playwright's error messages carry the terminal's colour codes; the summary page would show them as text. */
+// The escape character is the point of this pattern (it starts every colour code), so the lint rule
+// against control characters in a regular expression is switched off for this one line.
+// eslint-disable-next-line no-control-regex
 const stripColours = (text) => text.replace(/\u001b\[[0-9;]*m/g, "");
 
 /** The first line of an error that says something, without colour codes. */
