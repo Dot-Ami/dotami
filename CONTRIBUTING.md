@@ -307,9 +307,29 @@ harness fails when any idea lands on a future not written for it with nothing on
 
 One PR per topic. A PR that adds a node and also reformats three files is two PRs. To keep
 that from happening by accident, the repository ships `.editorconfig` and a Prettier config:
-run `npm run format` before you commit, or let your editor pick them up. Formatting is not
+run Prettier only on files you add (`npx prettier --write <new files>`). Most existing files,
+CHANGELOG.md and docs/privacy-log.md among them, are not in Prettier's layout yet, so in an existing file
+keep the layout it has and don't run Prettier or format-on-save on it in a topic's pull request.
+(`npm run format` rewrites every file in the repository that Prettier would change, which belongs in no
+topic's PR.) Formatting is not
 part of the gate yet — it joins `ci:quality` once the open pull requests have landed, so
 that nobody's branch is invalidated by a whitespace commit.
+
+**When a Dependabot pull request is red.** When Dependabot updates an npm package it rewrites
+`package-lock.json`, and npm drops the `"gypfile": false` line from the database package's entry
+(`node_modules/better-sqlite3`) whenever it rewrites that file, so `tests/database-package.spec.ts` fails on the
+pull request (CLAUDE.md says why the line is there). The repair is one signed-off commit on Dependabot's own
+branch, which needs write access to the repository, so it is a maintainer's job:
+
+```bash
+gh pr checkout <number>                # Dependabot's branch
+node scripts/keep-gypfile.mjs          # puts "gypfile": false back; --check only says whether it's missing
+git add package-lock.json
+git commit -s -m "deps: keep gypfile false on the database package after the update"
+git push                               # to the same Dependabot branch
+```
+
+That is how #167 and #185 went green. The same applies after any `npm install <package>` on your own branch.
 
 **The privacy log.** If your PR changes what DotAmi keeps (a table, a file, a browser-storage
 key), sends (any request out), ships (a package in the app) or asks the person to agree to, add a
