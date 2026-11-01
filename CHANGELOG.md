@@ -793,9 +793,24 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   Plain JavaScript (`.js`, `.mjs`, `.cjs`) also gets ESLint's own recommended rules (a name never
   defined, a key written twice, unreachable code). They found two things, neither changing what runs: an
   invisible byte-order-mark character written into a regular expression in `scripts/lib/import-kit.mjs`
-  (now the escape `﻿`), and the control character `scripts/check-quotes.mjs` uses on purpose as its
+  (now the escape `\uFEFF`), and the control character `scripts/check-quotes.mjs` uses on purpose as its
   block marker (the rule is switched off there, with the reason). `scripts/next.mjs` no longer runs lint:
   ESLint sends no usage reports.
+- **`npm run typecheck` also checks the JavaScript of the desktop app and the scripts.** `tsconfig.json` has
+  `allowJs` off, so the first pass never read the `.mjs`, `.cjs` and `.js` files in `desktop/` and `scripts/`.
+  A second pass, `tsc --noEmit -p tsconfig.desktop.json`, now checks them against their JSDoc types and the
+  `.d.mts` files they import one another through. It is looser than the TypeScript for now: parameters
+  without a JSDoc type are allowed, and a caught error is read as `any`; tightening it to strict is left for
+  later (510 places would need a type today). Clearing it took JSDoc and type-only changes, nothing that
+  changes what runs: `@param` types for options objects with defaults (most of them `= null` or `= {}`),
+  type casts in comments where the code already guarantees a value (a key made a few lines up, a window that
+  may be missing), three `@ts-expect-error` lines in `desktop/main.mjs` where a cast would have hidden the
+  `log.write(` text `tests/error-logging.spec.ts` follows (its guard caught the first try, which did), and
+  corrections to two hand-written declaration files: `EncryptionStopped` and
+  `DecryptionStopped` take `(kind, message)`, and the results of `encryptFile`, `decryptFile`,
+  `resumeEncryption` and `resumeDecryption` list `wipePending` as absent on the kinds of result that don't
+  carry it, so `desktop/main.mjs` may read it from any of them, as it does. The desktop pages' three small
+  scripts type their window bridge from its preload file.
 - **The CRA's GST/HST rate table, on the maintainer's answer about its rows; and the vehicle write-off's s.67.3
   source names only what its page holds** (his answers of 2026-10-28 on his reading page). The table is drawn by a
   script, so no tool can see it; he copied Ontario's row "13%" and Alberta's row "5%". That answer is about two rows,

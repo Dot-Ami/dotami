@@ -153,6 +153,8 @@ export function sourceCard(id, cards = SOURCES) {
 /**
  * The card's credit line with its `{table}` and `{period}` filled from the import's table id and reference
  * period. Throws when the line asks for one the import didn't give, or the card owes no credit line.
+ * @param {import("../../lib/engines/research-kit/v2026/types").SourceCard} card
+ * @param {{ tableId?: string, referencePeriod?: string }} [inputs]
  */
 export function creditLine(card, { tableId, referencePeriod } = {}) {
   if (card.creditLine === null) throw new Error(`${card.id}: the card has no credit line, so nothing from it may be shipped`);

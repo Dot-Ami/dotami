@@ -299,9 +299,10 @@ Windows line endings on disk until you rewrite it once, with nothing uncommitted
 uncommitted changes): `git rm -r --cached . && git reset --hard`. Cloning again does the same.
 
 Before opening a PR, run **`npm run ci:quality`** — it is the exact chain CI runs:
-`prisma generate → typecheck → lint → test → build`. Stop the dev server first. Lint is ESLint
-over every code folder, the desktop app, the scripts and the tests included; `.eslintrc.json`
-says which rules apply where. The test
+`prisma generate → typecheck → lint → test → build`. Stop the dev server first. Typecheck reads
+the JavaScript of the desktop app and the scripts too (`tsconfig.desktop.json`, through their JSDoc
+types). Lint is ESLint over every code folder, the desktop app, the scripts and the tests included;
+`.eslintrc.json` says which rules apply where. The test
 suite includes `tests/engine-integrity.spec.ts`, which fails on an entry without a citation,
 a citation without an official URL or without a person's read or a tool check, a duplicate id, or a corpus pointer
 that cannot resolve. Green is the floor, not the bar: a tool check proves only that the quoted words are on the page, and the maintainer chooses which sources to read.

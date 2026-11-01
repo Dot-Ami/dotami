@@ -149,10 +149,15 @@ const changedWhileWriting = () =>
  * versions wrote, to prove those still restore; the desktop app never passes it
  * (tests/desktop-backup.spec.ts checks desktop/main.mjs).
  * @param {{ passphrase?: string, appVersion: string, now?: () => number, receiptKey?: Buffer | null, databaseKey?: Buffer | null, allowUnlocked?: boolean }} options
- *   `databaseKey`: the data file's key when it is encrypted ([8i])
+ *   `databaseKey`: the data file's key when it is encrypted ([8i]). The `{}` default (typed loosely, as it
+ *   has no `appVersion`) only lets a call with no options reach the passphrase check.
  * @returns {{ encrypted: boolean, bytes: number, migrations: string[], receipts: number, missingReceipts: number, unreadableReceipts: number }}
  */
-export function writeBackup(dbFile, outFile, { passphrase = "", appVersion, now = Date.now, receiptKey = null, databaseKey = null, allowUnlocked = false } = {}) {
+export function writeBackup(
+  dbFile,
+  outFile,
+  { passphrase = "", appVersion, now = Date.now, receiptKey = null, databaseKey = null, allowUnlocked = false } = /** @type {any} */ ({}),
+) {
   if (passphrase === "" && !allowUnlocked) throw new BackupError("needs-passphrase", "Every backup needs a passphrase. No backup was saved.");
   const receiptsDir = path.join(path.dirname(dbFile), RECEIPTS_FOLDER);
   const listed = new Set(receiptNamesIn(receiptsDir));
@@ -164,6 +169,7 @@ export function writeBackup(dbFile, outFile, { passphrase = "", appVersion, now 
     const { image, migrations, described } = rebuiltImage(dbFile, databaseKey);
 
     // First pass: every file's size and fingerprint, for the header.
+    /** @type {({ path: string, image: Buffer, source?: undefined, receipt: false, bytes: number, sha256: string } | { path: string, image?: undefined, source: string, receipt: true, bytes: number, sha256: string })[]} */
     const files = [{ path: DB_ENTRY, image, receipt: false, bytes: image.length, sha256: sha256(image) }];
     let missingReceipts = 0;
     let unreadableReceipts = 0;
@@ -189,7 +195,8 @@ export function writeBackup(dbFile, outFile, { passphrase = "", appVersion, now 
     const headerBytes = Buffer.from(JSON.stringify(header), "utf8");
     let cipher = null;
     if (encrypted) {
-      const enc = header.encryption;
+      // `encrypted` is what gave the header its encryption settings, so they are there.
+      const enc = /** @type {NonNullable<typeof header.encryption>} */ (header.encryption);
       cipher = createCipheriv("aes-256-gcm", deriveKey(passphrase, Buffer.from(enc.salt, "base64")), Buffer.from(enc.iv, "base64"), {
         authTagLength: TAG_BYTES,
       });
@@ -245,6 +252,8 @@ export function writeBackup(dbFile, outFile, { passphrase = "", appVersion, now 
  * rebuilt there with VACUUM, so free pages, and the words deleted or edited over that they may hold, are
  * left out, as VACUUM INTO left them out before. Returns the rebuilt image, the migrations it has, and
  * the receipt files it describes. Nothing is written to the disk.
+ * @param {string} dbFile
+ * @param {Buffer | null} [key]
  */
 export function rebuiltImage(dbFile, key = null) {
   const source = openDatabase(dbFile, { key, readonly: true, fileMustExist: true });
@@ -383,7 +392,8 @@ function readFormat2(fd, size, header, headerBytes, passphrase, unpackTo, receip
     }
     if (hash.digest("hex") !== entry.sha256) throw wrong();
     if (isDatabase) database = whole;
-    else if (whole !== null) writeNewFile(target, encryptReceipt(whole, { key: receiptKey, id: encryptFor }));
+    // A receipt is held whole only when it is to be encrypted, that is when it has an id to encrypt for.
+    else if (whole !== null) writeNewFile(target, encryptReceipt(whole, { key: receiptKey, id: /** @type {string} */ (encryptFor) }));
   }
   if (decipher) {
     try {
@@ -463,10 +473,12 @@ export function prepareRestore(file, { passphrase = "", migrationsDir, stagingFi
       receiptKey,
     });
 
+    // With `unpackTo`, readBackup always returns the data file's bytes: a backup's first entry must be the
+    // data file (isFormat2Header), so `database` is never null here.
     let migrations;
     let staged = null;
     try {
-      staged = openImage(database);
+      staged = openImage(/** @type {Buffer} */ (database));
       const verdict = staged.pragma("integrity_check", { simple: true });
       if (verdict !== "ok") throw damaged();
       migrations = appliedMigrations(staged);
@@ -478,7 +490,7 @@ export function prepareRestore(file, { passphrase = "", migrationsDir, stagingFi
     try {
       mkdirSync(path.dirname(stagingFile), { recursive: true });
       if (databaseKey) copyIntoKeyedFile(staged, stagingFile, databaseKey);
-      else writeFileSync(stagingFile, database, { flag: "wx" });
+      else writeFileSync(stagingFile, /** @type {Buffer} */ (database), { flag: "wx" });
     } finally {
       staged.close();
     }
@@ -666,7 +678,9 @@ function receiptForBackup(file, name, key) {
   if (!isEncryptedReceipt(onDisk)) return onDisk.length <= MAX_RECEIPT_BYTES ? onDisk : "unreadable";
   if (!key) return "unreadable";
   try {
-    return decryptReceipt(onDisk, { key, id: receiptIdOfName(name) });
+    // A name the receipts folder listing kept (RECEIPT_NAME) has its id; were it null, decryptReceipt
+    // would throw and the receipt would count as unreadable.
+    return decryptReceipt(onDisk, { key, id: /** @type {string} */ (receiptIdOfName(name)) });
   } catch {
     return "unreadable";
   }

@@ -7,6 +7,9 @@ const url = `file:${file.replace(/\\/g, "/")}`;
 
 let t = performance.now();
 const { PrismaClient } = await import("@prisma/client");
+// A stand-in for the adapter's factory, shaped by hand: left untyped, as the type checker reads it as
+// Prisma's narrower factory type, which has no connectToShadowDb.
+/** @type {any} */
 let factory = null;
 if (mode !== "engine") {
   const { PrismaBetterSQLite3 } = await import("@prisma/adapter-better-sqlite3");
@@ -16,7 +19,8 @@ if (mode !== "engine") {
     adapterName: inner.adapterName,
     async connect() {
       const adapter = await inner.connect();
-      if (mode === "encrypted") adapter.client.pragma(`key = "x'${keyHex}'"`);
+      // `client` is the adapter's own better-sqlite3 handle, which its published type doesn't list.
+      if (mode === "encrypted") /** @type {any} */ (adapter).client.pragma(`key = "x'${keyHex}'"`);
       return adapter;
     },
     connectToShadowDb: () => inner.connectToShadowDb(),

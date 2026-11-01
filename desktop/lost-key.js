@@ -1,7 +1,10 @@
 // [8i] The lost-key window's behaviour (desktop/lost-key.html). Runs in a sandboxed page with no Node and
 // no network; it talks to the app only through `window.dotamiChoice` (desktop/choice-preload.cjs).
 (() => {
-  const bridge = window.dotamiChoice;
+  // The bridge's shape is choice-preload.cjs's; `$` finds this page's own elements by the ids its HTML has.
+  /** @type {{ status: string, detail: string, mode: string, answer: (choice: string) => void }} */
+  const bridge = /** @type {any} */ (window).dotamiChoice;
+  /** @type {(id: string) => any} */
   const $ = (id) => document.getElementById(id);
   $("why").textContent = bridge.detail;
   // Windows' key store only unavailable for now: nothing that gives up the locked file is offered (the app

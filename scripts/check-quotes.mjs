@@ -308,6 +308,9 @@ function parseArgs(argv) {
  * { checkedOn, pages: [{ where, url, outcome, status }] }, `outcome` one of "found", "words-missing",
  * "answered" (the server answered `status`, not the page), "unreachable" or "pdf". The quality report
  * counts the dead pages from it (scripts/quality-report.mjs --live). Returns the exit code.
+ * @param {string[]} argv
+ * @param {{ fetchPage?: typeof fetchLive, collect?: typeof collectToolChecked, log?: (line: string) => void, today?: string,
+ *   onResult?: (found: import("./check-quotes.mjs").CheckQuotesRun) => void }} [options]
  */
 export async function main(
   argv,
@@ -327,12 +330,14 @@ export async function main(
 
   let missing = 0;
   let unchecked = 0;
+  /** @type {import("./check-quotes.mjs").CheckedPage[]} */
   const pages = [];
   for (const target of targets) {
     log("");
     log(target.where === "--url" ? target.url : `${target.where}  ${target.url}`);
     const page = await fetchPage(target.url);
     let reason;
+    /** @type {"answered" | "unreachable" | "pdf" | undefined} */
     let outcome;
     if (!page.ok) {
       reason = page.status ? `the server answered ${page.status}` : `the page couldn't be reached (${page.error ?? "no answer"})`;
@@ -344,7 +349,8 @@ export async function main(
     if (reason) {
       log(`  could not be checked: ${reason}`);
       unchecked += target.quotes.length;
-      pages.push({ where: target.where, url: target.url, outcome, status: page.status ?? 0 });
+      // `outcome` is set wherever `reason` is.
+      pages.push({ where: target.where, url: target.url, outcome: /** @type {"answered" | "unreachable" | "pdf"} */ (outcome), status: page.status ?? 0 });
       continue;
     }
     let pageMissing = 0;

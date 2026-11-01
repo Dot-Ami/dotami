@@ -36,6 +36,7 @@ if (process.argv.includes("--check")) {
   process.exit(1);
 }
 // Inserted after "license", keeping npm's own layout (two spaces, a newline at the end, the same line endings).
+/** @type {Record<string, unknown>} */
 const ordered = {};
 for (const [key, value] of Object.entries(entry)) {
   ordered[key] = value;

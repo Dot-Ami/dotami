@@ -5,6 +5,7 @@ export const COPY_SUFFIX: string;
 export const PLAIN_SUFFIX: string;
 export type CrashPoint = "copied" | "checked" | "note-swap" | "first-rename" | "second-rename" | "note-wipe" | "plain-deleted";
 export class EncryptionStopped extends Error {
+  constructor(kind: EncryptionStopped["kind"], message: string);
   kind: "damaged" | "busy" | "stuck" | "mismatch" | "pending";
 }
 export function notePath(dataDir: string): string;
@@ -18,13 +19,13 @@ export function encryptFile(
   file: string,
   key: Buffer,
   options?: { log?: (line: string) => void; crashAt?: CrashPoint; rename?: (from: string, to: string) => void },
-): { crashed: true } | { wipePending: boolean };
+): { crashed: true; wipePending?: undefined } | { wipePending: boolean };
 export function resumeEncryption(
   dataDir: string,
   key: Buffer | null,
   options?: { log?: (line: string) => void },
 ):
   | { action: "none" }
-  | { action: "cleared" }
+  | { action: "cleared"; wipePending?: undefined }
   | { action: "finished"; file: string; wipePending: boolean }
-  | { action: "restart"; file: string };
+  | { action: "restart"; file: string; wipePending?: undefined };
