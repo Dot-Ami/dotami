@@ -13,6 +13,11 @@
 // (it loads each entry whole), but drops it whenever it rewrites the lockfile (`npm install <package>`,
 // a Dependabot update). tests/database-package.spec.ts fails until this script has put it back.
 // Only reads and writes package-lock.json; reaches nothing on the network.
+//
+// When a Dependabot pull request is red on tests/database-package.spec.ts (CONTRIBUTING.md, "When a
+// Dependabot pull request is red"): check out its branch (`gh pr checkout <number>`), run this script,
+// commit package-lock.json with a sign-off (`git commit -s`) and push to the same Dependabot branch. One
+// commit; that is how #167 and #185 went green.
 import { readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
 
