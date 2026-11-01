@@ -962,6 +962,24 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   [expense-records.md](docs/architecture/expense-records.md) and two lines of
   [other-ways-to-build.md](docs/architecture/other-ways-to-build.md)), they now give it; every screen already
   did, and `tests/reading-list-corrections.spec.ts` fails if the code or those docs drop it again.
+- **The docs say what is on disk and what is done** (the house-cleaning audit of 2026-10-31).
+  [docs/architecture/overview.md](docs/architecture/overview.md) lists all 12 pages, every folder under `lib/`,
+  `components/` and `desktop/`, and the layers since added (roads, futures, the front door, the cockpit, figures,
+  expenses); it no longer names four paths that had gone, or Recharts. A new test,
+  `tests/architecture-docs-paths.spec.ts`, fails when overview.md or
+  [docs/architecture/engines.md](docs/architecture/engines.md) names a `lib/`, `components/`, `app/` or `desktop/`
+  path that isn't on disk. engines.md drops the archetype section (archetypes went on 2026-09-14), shows the shape
+  the catalogs really export (three of the ten differ from the `EngineCatalog` type, and it says how), and has a
+  row for each of the 14 engine folders. The [docs/brain/](docs/brain/README.md) status lines match the code (the
+  cockpit's colouring reads the evaluator; the risk calculator is built; the RAG plan's pgvector no longer applies
+  with SQLite), and the rules engine's spec drops its "What it replaces" section, whose targets were deleted.
+  future-cockpit.md, use-cases.md and settings-and-edge-cases.md say what on each is built instead of "Nothing
+  here is built". [docs/task-list.md](docs/task-list.md) catches up: research 28f done; the desktop app [7b] and
+  installers [7d] done, with the Electron updates of #185 and #226; the server fix of #205 under security, which
+  now points to the repository's Security tab for open advisories; contributors [13a] paused since 2026-10-11;
+  the finished parts of release 0.5.0's list ticked. CONTRIBUTING.md says to format only the files you changed,
+  and, with `scripts/keep-gypfile.mjs`'s header, how to repair a Dependabot pull request that fails on the
+  database package's `"gypfile": false`. Docs only: nothing DotAmi keeps, sends, ships or asks changes.
 
 ## [0.4.1] — 2026-10-20
 
