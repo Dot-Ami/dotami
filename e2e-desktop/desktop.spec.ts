@@ -130,13 +130,16 @@ async function launchTo(which: "encrypt-ask" | "lost-key", dir = dataDir): Promi
 
 /**
  * [8i] Clicks a button whose answer closes its own start-up window: desktop/main.mjs `askInWindow` closes the
- * window as soon as the answer arrives. Playwright's click waits for the window to acknowledge the mouse-up, and
- * a window closed by that same click sometimes never does: on CI the click then waited at "performing click
- * action" for its whole 30 s and the test failed, though the button had been clicked (run 39876293335, the first
- * start's "Preparing DotAmi…" test, twice in one job; run 39539308119, a missing data file's test, through
- * launch()). What the answer does is close the window, so that is what this waits for: the button is still clicked
- * for real (visible, enabled and steady first), and once the window has closed a click still waiting on it is let
- * go. If the window doesn't close, this fails, as before.
+ * window as soon as the answer arrives. Playwright's click only finishes once that window is gone. What the answer
+ * does is close the window, so that is what this waits for: the button is still clicked for real (visible, enabled
+ * and steady first), and once the window has closed a click still waiting on it is let go. If the window doesn't
+ * close, this fails.
+ *
+ * On CI the click used to wait at "performing click action" for its whole 30 s with the window still open (runs
+ * 39876293335, 39968358405, 39974613525, 40149944677, 41054321382). The cause was in the app, not here: the window
+ * couldn't finish closing until the work its answer started (a new key, the data file and its updates) was done,
+ * and on a slow machine that took longer than the click's 30 s. askInWindow now waits for the window to be gone
+ * before that work starts; a main process kept busy after the answer reproduces the old failure exactly.
  */
 async function clickClosingItsWindow(window: Page, name: string): Promise<void> {
   const closed = window.waitForEvent("close", { timeout: 60_000 });
@@ -225,7 +228,15 @@ async function describeVenture(page: Page) {
   await page.getByText("Current employment", { exact: true }).locator("xpath=following-sibling::select").selectOption("self-employed");
   // Since 2026-10-22 the typed way ends on Pick a future's three steps: Skip, then the general road.
   await openTheMapFromTheIntake(page);
-  await expect(page.getByRole("button", { name: /^Sole Prop activation, / })).toBeVisible();
+  // The map shows after the idea is saved and the cockpit's first load. On CI's Windows machines it was sometimes
+  // not there when the 5 s an expect waits by default ran out (runs 40635367751, 41049883130, 41059248632 and 17
+  // others: "element(s) not found", and the retry passed). It gets the 30 s every click before it gets, and says
+  // so in the log when it needed more than the old 5 s.
+  const map = page.getByRole("button", { name: /^Sole Prop activation, / });
+  const opened = Date.now();
+  await expect(map).toBeVisible({ timeout: 30_000 });
+  const took = Date.now() - opened;
+  if (took > 5_000) console.log(`describeVenture: the map showed ${took} ms after Look inside`);
 }
 
 /**

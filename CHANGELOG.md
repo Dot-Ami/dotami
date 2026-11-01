@@ -304,6 +304,17 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   ([docs/engines/citations.md](docs/engines/citations.md), § Outside the list, item 3). Test:
   `tests/repeated-losses-read.spec.ts`.
 ### Fixed
+- **The desktop app's start-up questions close as soon as they're answered** (2026-10-31). The window that asks
+  whether to lock the data file, and the one shown when the data file's key can't be opened, used to stay on the
+  screen after a click, not redrawing, until DotAmi had made the key and prepared the data file; on a slow
+  computer that could look as if the app had stopped. The answer is now acted on once its window is gone
+  (`desktop/main.mjs` `askInWindow`). This was also the cause of one of the desktop tests' two failures on CI: the
+  click on **Encrypt now** gave up while its window stayed open (runs 39968358405, 39974613525, 40149944677,
+  41054321382). Keeping the app's main process busy after the answer reproduces that failure word for word on
+  main's code, and the same test passes with this change. Developers: `describeVenture` in
+  `e2e-desktop/desktop.spec.ts` now waits for the map as long as Playwright waits for the clicks before it,
+  instead of the shorter default for an `expect`, which sometimes ran out on CI before the map showed (the retry
+  passed every time), and writes a line to the test log when the map needed more than that old default.
 - **Mara's example: its prices re-opened, and no promotion length in DotAmi's own words** (2026-10-27). The
   sellers' pages a review couldn't re-open were opened again: every Busy Bee Tools, Autodesk and QuickBooks
   price is the same as on 2026-10-14 (Autodesk's appear once a browser draws the page); Lee Valley's showed a
