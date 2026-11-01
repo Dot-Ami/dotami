@@ -1,6 +1,6 @@
 # Task list — what's being built, and what you can pick up
 
-Last updated: 2026-10-29. Every story planned for DotAmi, with its tasks. The plan behind it is
+Last updated: 2026-10-31. Every story planned for DotAmi, with its tasks. The plan behind it is
 [architecture/use-cases.md](architecture/use-cases.md) (who it's for, the decisions, the build
 order); the settings and edge cases each story must test are in
 [architecture/settings-and-edge-cases.md](architecture/settings-and-edge-cases.md) — the codes in
@@ -508,9 +508,11 @@ placed in phase 3.
   saying so. After phase 2 the person picks the job closest to their work; the road written for that job
   comes first, or the screen says plainly that no road is written for it yet and offers *About this job*
   ([14i]) and the general road.
-  - [ ] 28f: research the free tools, datasets and repos that already match a person's words to the
+  - [x] 28f: research the free tools, datasets and repos that already match a person's words to the
     government's 2021 job classification (NOC), before building the search; a dated findings note (today's
-    search finds the expected job for 20 of 219 test ideas)
+    search finds the expected job for 20 of 219 test ideas). Done 2026-10-20: the findings note,
+    `28f-job-title-matching.md`, is kept outside this repository; the maintainer's picks from it (option 1
+    with rule H) are in [ui-spec/futures/01-whats-closest-to-your-work.md](ui-spec/futures/01-whats-closest-to-your-work.md)
   - [x] 28g: design phase 2's screens before building them, in `docs/ui-spec/`, shown to the maintainer:
     where the job question sits on both ways in, what *Skip* leads to, the one place the area is asked, and
     the "not written yet" screen (2026-10-20: [ui-spec/futures/](ui-spec/futures/_index.md) steps 1 to 3 and
@@ -683,9 +685,13 @@ placed in phase 3.
     `node scripts/check-quotes.mjs` run it waited for found every quote on 2026-10-26 ([11b]); merged on his
     word 2026-10-27, then its follow-ups the same day: #214 (Anthropic's retention words quoted on *What
     DotAmi knows about you*), #215 (three of [11b]'s blocked items settled) and #216 (Mara's prices re-checked)
-  - [ ] Release 0.5.0: no silent fallbacks, every Alberta test idea ending on a road written for it or an
-    honest "not written yet", the maintainer's walk done (32b), a Quality line in the changelog, the privacy
-    log's section for the new version; publishing is the maintainer's click
+  - [ ] Release 0.5.0, once all of these hold; publishing is the maintainer's click
+    - [x] No silent fallbacks: 0, and since #203 (2026-10-23) any above 0 fails the tests
+    - [ ] Every Alberta test idea ending on a road written for it or an honest "not written yet"
+    - [ ] The maintainer's walk done (32b): three test ideas plus one of the maintainer's own
+    - [x] A Quality line for the changelog: `npm run quality:line` prints it for the release pull request
+      to paste (#199, 2026-10-22)
+    - [ ] The privacy log's section for the new version
 - ⬜ **[14p] Phase 3, honesty first.** The maintainer's order (d-call-1), after release 0.5.0:
   - [ ] Cards in official words: DotAmi's own tax and legal wording on cards becomes the pages' own words or
     nothing. Planned 2026-10-24, his 15 calls of 2026-10-25:
@@ -732,7 +738,7 @@ placed in phase 3.
 ## 7 — The desktop app (one download, everything on your computer)
 
 - ✅ **[7a] SQLite database.** One file, no database server (#60).
-- 🔄 **[7b] The Electron app** — the same screens in their own window
+- ✅ **[7b] The Electron app** — the same screens in their own window
   ([how it runs](architecture/desktop-app.md); `npm run desktop:build && npm run desktop`).
   - [x] Build Next.js as a self-contained server the app can start
   - [x] Electron starts it on a private local port and opens a window on it
@@ -750,8 +756,9 @@ placed in phase 3.
   - [x] *Restore* checks a backup before replacing anything, and keeps a copy of what it replaces
   - [x] Setup suggests turning on disk encryption (the settings page, Windows Home and Pro)
   - [x] A test: back up on one computer → restore on another → the same ventures
-- 🔄 **[7d] Installers and automatic updates** (unsigned, through GitHub releases, for now;
-  [how to release](architecture/desktop-app.md#releasing-an-update)).
+- ✅ **[7d] Installers and automatic updates** (unsigned, through GitHub releases, for now;
+  [how to release](architecture/desktop-app.md#releasing-an-update)). Done; the two open lines at the end are
+  what is left.
   - [x] A Windows installer built on each version tag, uploaded to a draft release (Mac and Linux after) —
     the workflow file was unreadable from #77 until its fix on 2026-10-06; v0.2.0 was built before it
   - [x] The app checks for updates, downloads, and asks before installing; pre-releases only reach pre-release copies
@@ -768,6 +775,10 @@ placed in phase 3.
   - [x] Electron 44.5.1 → 44.7.0 (2026-10-11): 55 fixes copied from Chrome's engine, and time-zone
     data 2026d (British Columbia stays on UTC-7 from November 2026, so "today" there turns over an hour
     earlier; a desktop test checks it); reaches installed copies with the next release
+  - [x] Electron 44.7.0 → 44.8.0 (#185, 2026-10-20)
+  - [x] Electron 44.8.0 → 44.9.1 (#226, 2026-10-30, eMudhra certificates): it refuses certificates issued
+    through eMudhra's compromised intermediate certificates, which 44.8.0 accepted in the update check;
+    reaches installed copies with the next release
   - [x] The update checker's install ID (`.updaterId`, sent to GitHub with each check, written once into
     the log) is listed on What DotAmi knows about you and in Settings, with how to remove it (and that an
     earlier ID stays in the log); a test reads electron-updater's own code and fails while its file or
@@ -1220,7 +1231,9 @@ roadmap's build order.
 
 ## 13 — The project itself
 
-- 🔄 **[13a] Contributors** — issues as the to-do list; every commit signed off, merges included.
+- ⏸ **[13a] Contributors** — issues as the to-do list; every commit signed off, merges included.
+  Paused 2026-10-11 by the maintainer's ruling: the build is planned without counting on outside
+  contributors, so the set-up only contributors would need (labels, a board, outreach) waits until the end.
   - [x] A plain-words glossary ([glossary.md](glossary.md)) — 2026-10-12: 51 entries for the short
     forms and terms on the map, the roads and the settings, each linked to its official page and
     checked by a tool that day (53 pages, every quote found); linked from the README and CONTRIBUTING
@@ -1239,6 +1252,11 @@ roadmap's build order.
     (`tests/desktop-migrate.spec.ts`), and says so in its CHANGELOG entry
 - 🔄 **[13c] Security** — CodeQL, grouped Dependabot, audit; a privacy review for each import path;
   a threat model for the Lens's powers before [9g].
+  - The live list of open advisories is the repository's Security tab
+    (https://github.com/Dot-Ami/dotami/security), not a copy here: the two open lines below are as they
+    were checked on 2026-10-11, and aren't checked again on this page.
+  - [x] DotAmi's local server answers only DotAmi's own window, not a program run by another Windows
+    account on the same computer (#205, 2026-10-23)
   - [x] `source-map-js` 1.2.1 → 1.2.2 (build-time; Dependabot #71, merged 2026-10-07)
   - [ ] `sprintf-js` GHSA-hp3w-g68c-fv3c (build-time, under the installer builder: `electron-builder` →
     `app-builder-lib` → `@electron/get` → `global-agent` → `roarr`). **No fixed version exists yet** — it covers every
