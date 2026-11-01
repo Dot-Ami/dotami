@@ -1,6 +1,8 @@
 # DotAmi Brain — Architecture of Record
 
-Last updated: 2026-07-04 (status corrected after code-review audit)
+Last updated: 2026-10-31 (each status line read again against the code: the cockpit's card colouring reads the
+evaluator, and the RAG pipeline's store would be SQLite now); 2026-10-27 (the risk row and the SR&ED seed facts,
+after the maintainer's reading list, #211); 2026-07-04 (status corrected after code-review audit)
 
 The "brain" is the intelligence layer that turns the static engine catalogs into
 profile-driven reasoning. It has three components, specified in this folder:
@@ -9,10 +11,13 @@ profile-driven reasoning. It has three components, specified in this folder:
 |-----------|------|--------------|--------|
 | Strategy Rules Engine | [strategy-rules-engine.md](./strategy-rules-engine.md) | Deterministic evaluator: `(profile, catalogs) → unlocks + node states (green/yellow/gray)` | **Built** (v0, 2026-07-02): `lib/brain/` — predicate DSL, `evaluateProfile`, golden-tested |
 | Risk Calculator | [risk-calculator.md](./risk-calculator.md) | Audit-trigger + GAAR-exposure catalog; attaches an honest risk chip to every surfaced lever | **Built** (v0, 2026-07-02): `lib/engines/risk/v2026/` — 7 entries (on 2026-10-24, after the maintainer's reading list, one retired and four corrected to what their pages say: [risk-calculator.md](./risk-calculator.md) § What the reads quote); `riskCombinations` and the structure ladder's GAAR read are evaluated (`lib/brain/evaluate.ts` `attachRisk` and `evaluateStructureStep`, which closed the audit-2026-07-04 H2 gap) |
-| RAG pipeline | [rag-pipeline.md](./rag-pipeline.md) | Citation-grounded retrieval over ITA/CRA/provincial text — explains, never decides | **Not built** — needs stack promotion (pgvector, embeddings provider) |
+| RAG pipeline | [rag-pipeline.md](./rag-pipeline.md) | Citation-grounded retrieval over ITA/CRA/provincial text — explains, never decides | **Not built** — needs stack promotion (an embeddings provider and somewhere to keep the vectors; pgvector no longer applies, since the database has been SQLite since 2026-09-28: [rag-pipeline.md](./rag-pipeline.md)) |
 
 Intake live preview reads from the evaluator (hardcoded card builders deleted).
-Remaining wire-up: cockpit node coloring from evaluator states (Phase 6 exit item).
+The cockpit's card colouring reads it too (checked against the code 2026-10-31): the cockpit
+(`components/cockpit/cockpit-page.tsx`) runs road evaluation (`lib/roads/evaluate-road.ts`), which colours a
+saved idea's map through `lib/scenarios/evaluate-scenario.ts`, "the one way a saved venture's map is coloured",
+and that runs `evaluateProfile`.
 Evaluator correctness issues found in the 2026-07-04 audit (GST boundary, `acquiredAfter`,
 hardcoded structure) have boundary tests in `tests/brain-evaluate-boundaries.spec.ts`.
 
