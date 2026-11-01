@@ -27,6 +27,16 @@
  */
 import ts from "typescript";
 
+/**
+ * The words files that took sentences out of the components on 2026-10-31 (the house-cleaning audit's item
+ * architecture-5), one folder of components/ at a time. The checks that read those sentences in the components
+ * read them here now: the time words (tests/prerelease-honesty.spec.ts, with the pieces it lets through in
+ * tests/fixtures/ideas/known-gaps.ts) and the verdict words (tests/cockpit-own-words.spec.ts).
+ */
+export const WORDS_FILES_FROM_COMPONENTS = [
+  "lib/expenses/words.ts",
+] as const;
+
 /** One piece of text a component wrote itself. */
 export interface OwnWords {
   /** 1-based line in the file. */

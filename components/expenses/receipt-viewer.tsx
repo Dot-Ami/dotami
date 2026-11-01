@@ -5,6 +5,9 @@ import { useEffect, useId, useRef, useState } from "react";
 import { typeName, type ReceiptType } from "@/lib/expenses/receipts/types";
 import { VIEW_MESSAGES } from "@/lib/expenses/receipts/viewer/messages";
 import { ReceiptOpener, type ShownReceipt } from "@/lib/expenses/receipts/viewer/open";
+import { expensesWords } from "@/lib/expenses/words";
+
+const words = expensesWords.viewer;
 
 /**
  * [8i] A receipt, shown inside DotAmi (the maintainer's decision of 2026-10-08), by the rules of § 8
@@ -96,15 +99,18 @@ export function ReceiptViewer({
         <div className="flex items-start justify-between gap-4">
           <div>
             <h2 id={titleId} className="font-serif text-title font-bold tracking-tight text-paper">
-              Receipt: {title}
+              {words.title}
+              {title}
             </h2>
             <p className="mt-0.5 text-body text-stone">
-              {typeName(type)}, shown inside DotAmi from its copy on this computer
-              {type === "image/heic" ? ", drawn by this computer's graphics chip" : ""}. Nothing in it can be clicked or run.
+              {typeName(type)}
+              {words.shownInside}
+              {type === "image/heic" ? words.drawnByChip : ""}
+              {words.nothingRuns}
             </p>
           </div>
           <button type="button" onClick={onClose} className="text-body text-stone hover:text-paper">
-            Close
+            {words.close}
           </button>
         </div>
         <div className="mt-3 min-h-0 flex-1 overflow-auto">
@@ -114,11 +120,11 @@ export function ReceiptViewer({
             </p>
           ) : !shown ? (
             <p role="status" className="text-lead text-paper-dim">
-              Opening the receipt…
+              {words.opening}
             </p>
           ) : shown.kind === "drawn" ? (
             // A HEIC photo: the worker's finished picture in a canvas, like a PDF page.
-            <PageCanvas bitmap={shown.picture} label={`The receipt photo (${shown.width} × ${shown.height} pixels)`} />
+            <PageCanvas bitmap={shown.picture} label={words.photo(shown.width, shown.height)} />
           ) : shown.kind === "picture" ? (
             pictureFailed ? (
               <p role="alert" className="text-lead text-amber">
@@ -129,7 +135,7 @@ export function ReceiptViewer({
               // eslint-disable-next-line @next/next/no-img-element
               <img
                 src={shown.url}
-                alt={`The receipt picture (${shown.width} × ${shown.height} pixels)`}
+                alt={words.picture(shown.width, shown.height)}
                 width={shown.width || undefined}
                 height={shown.height || undefined}
                 decoding="async"
@@ -140,13 +146,15 @@ export function ReceiptViewer({
           ) : (
             <div className="space-y-3">
               {shown.pages.map((bitmap, i) => (
-                <PageCanvas key={i} bitmap={bitmap} label={`Page ${i + 1} of ${shown.pageCount}`} />
+                <PageCanvas key={i} bitmap={bitmap} label={words.page(i + 1, shown.pageCount)} />
               ))}
               {/* Fewer pages than the PDF has: past MAX_PDF_PAGES, or past the memory budget for all pages together. */}
               {shown.pages.length < shown.pageCount ? (
                 <p className="text-body text-stone">
-                  DotAmi shows the first {shown.pages.length === 1 ? "page" : `${shown.pages.length} pages`}; this PDF has{" "}
-                  {shown.pageCount}. The rest are kept in the file.
+                  {words.firstPages.lead}
+                  {shown.pages.length === 1 ? words.firstPages.page : words.firstPages.pages(shown.pages.length)}
+                  {words.firstPages.has} {shown.pageCount}
+                  {words.firstPages.rest}
                 </p>
               ) : null}
             </div>

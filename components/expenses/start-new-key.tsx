@@ -5,6 +5,9 @@ import { useState } from "react";
 
 import { postJson } from "@/components/ventures/agree-prompt";
 import { ConfirmDialog } from "@/components/your-data/delete-menu";
+import { expensesWords } from "@/lib/expenses/words";
+
+const words = expensesWords.newKey;
 
 /** What the route answers (app/api/expenses/receipt/new-key/route.ts). */
 interface Started {
@@ -28,9 +31,9 @@ const RESTART_PAUSE_MS = 2_000;
 
 /** "2 locked receipt files and the old key file were", "1 locked receipt file was", "the old key file was". */
 function movedSentence({ receipts, keyFile }: Started): string {
-  const files = receipts === 0 ? "" : receipts === 1 ? "1 locked receipt file" : `${receipts} locked receipt files`;
-  const what = [files, keyFile ? "the old key file" : ""].filter(Boolean).join(" and ");
-  return `${what.charAt(0).toUpperCase()}${what.slice(1)} ${receipts + (keyFile ? 1 : 0) === 1 ? "was" : "were"}`;
+  const files = receipts === 0 ? "" : receipts === 1 ? words.moved.oneFile : words.moved.files(receipts);
+  const what = [files, keyFile ? words.moved.oldKeyFile : ""].filter(Boolean).join(words.moved.and);
+  return `${what.charAt(0).toUpperCase()}${what.slice(1)} ${receipts + (keyFile ? 1 : 0) === 1 ? words.moved.was : words.moved.were}`;
 }
 
 /**
@@ -97,53 +100,44 @@ export function StartNewReceiptKey() {
           }}
           className="rounded-sm border border-amber/50 px-2.5 py-1 text-body font-semibold text-amber transition hover:bg-amber/10"
         >
-          Start a new key…
+          {words.start}
         </button>
       ) : null}
 
       {step === "warn" ? (
         <ConfirmDialog
-          title="Start a new key, and give up the locked receipts?"
-          intro="A new key can't open the receipts locked with the old one. Starting one gives those receipts up for good, unless the old key comes back: receipts.key found again (it may be in the Recycle Bin), or the Windows profile that could open it."
-          confirmLabel="Continue…"
+          title={words.warn.title}
+          intro={words.warn.intro}
+          confirmLabel={words.warn.confirm}
           focusCancel
           onCancel={() => setStep("closed")}
           onConfirm={() => setStep("sure")}
         >
           <div className="space-y-2 text-body text-paper-dim">
-            <p>
-              Nothing is deleted. DotAmi moves the locked receipt files, and the old key file if it&apos;s there, into a new
-              folder in the backups folder beside its data file, and tells you where. Your expense records stay; a receipt
-              that was set aside says so when you open it.
-            </p>
-            <p>
-              If you have a backup made before the key was lost, restore it instead (File → Restore from a backup…): it
-              brings those receipts back.
-            </p>
+            <p>{words.warn.nothingDeleted}</p>
+            <p>{words.warn.restoreInstead}</p>
           </div>
         </ConfirmDialog>
       ) : null}
 
       {step === "sure" ? (
         <ConfirmDialog
-          title="Are you sure?"
-          intro={`The receipts locked with the old key are given up for good unless the old key comes back. ${
-            canRestart ? "Then DotAmi restarts by itself to start the new key." : "DotAmi starts the new key the next time it starts."
-          }`}
-          confirmLabel={busy ? "Moving them aside…" : "Give up the locked receipts and start a new key"}
+          title={words.sure.title}
+          intro={words.sure.intro(canRestart ? words.sure.restartsItself : words.sure.startsNextTime)}
+          confirmLabel={busy ? words.sure.moving : words.sure.confirm}
           focusCancel
           busy={busy}
           onCancel={() => setStep("closed")}
           onConfirm={() => void start()}
         >
-          <p className="text-body text-paper-dim">Press Cancel to keep things as they are.</p>
+          <p className="text-body text-paper-dim">{words.sure.cancel}</p>
         </ConfirmDialog>
       ) : null}
 
       {step === "done" && started ? (
         <p role="status" className="mt-1 text-body text-amber">
-          {started.movedTo ? `Done. ${movedSentence(started)} moved to ${started.movedTo}.` : "Done. There were no locked receipt files left to move."}{" "}
-          {restarting ? "DotAmi will restart now to start the new key…" : "Close DotAmi and open it again to start the new key."}
+          {started.movedTo ? words.done.moved(movedSentence(started), started.movedTo) : words.done.nothingToMove}{" "}
+          {restarting ? words.done.restartingNow : words.done.restartByHand}
         </p>
       ) : null}
 

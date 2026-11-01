@@ -3,8 +3,9 @@
  * The rule is the maintainer's decision of 2026-10-11 that screens keep their words in one place. It was first
  * enforced for the cockpit (story S2.5.30e, 2026-10-17) and, since the house-cleaning audit of 2026-10-31, for
  * every file under components/. The words tests read the words files: the verdict words (tests/cockpit-screen.spec.ts
- * and the other words files' specs) and the time words (tests/idea-invariants.spec.ts reads every words file
- * under lib/). Text written straight into a component is text those tests never see.
+ * and the other words files' specs, and the last block below for the words files that took the other folders'
+ * sentences on 2026-10-31) and the time words (tests/idea-invariants.spec.ts reads every words file under lib/).
+ * Text written straight into a component is text those tests never see.
  *
  * tests/helpers/own-words.ts reads each file's syntax tree and names the text it wrote itself: JSX text, and
  * strings that read as a sentence or a label (the header there says what is left alone: class names, ids,
@@ -25,8 +26,9 @@ import path from "node:path";
 import ts from "typescript";
 import { describe, expect, it } from "vitest";
 
-import { ownWords, readsAsWords } from "./helpers/own-words";
+import { ownWords, readsAsWords, WORDS_FILES_FROM_COMPONENTS } from "./helpers/own-words";
 import { readSource, sourceFiles } from "./helpers/source-scan";
+import { findVerdicts, VERDICT_WORDS } from "./helpers/verdict-words";
 
 /**
  * A piece of text a component may write itself, why, and since when. Each must still be found, or it is stale.
@@ -53,14 +55,6 @@ const NOT_MOVED_YET: { since: string; pieces: Readonly<Record<string, number>> }
   pieces: {
     "components/discovery/intake-page.tsx": 68,
     "components/discovery/landing-page.tsx": 3,
-    "components/expenses/bring-back-receipts.tsx": 8,
-    "components/expenses/expense-form.tsx": 37,
-    "components/expenses/expense-review.tsx": 13,
-    "components/expenses/expenses-page.tsx": 59,
-    "components/expenses/receipt-line.tsx": 13,
-    "components/expenses/receipt-protection.tsx": 3,
-    "components/expenses/receipt-viewer.tsx": 12,
-    "components/expenses/start-new-key.tsx": 20,
     "components/front-door/income-agree-prompt.tsx": 1,
     "components/licences/licences-page.tsx": 31,
     "components/node-detail-panel.tsx": 25,
@@ -267,6 +261,75 @@ describe("no component writes words of its own", () => {
     ]) {
       expect(readsAsWords(token), token).toBe(false);
     }
+  });
+});
+
+/**
+ * Every piece of text a words file holds, as a person could read it: each string, and each template with `${…}` in
+ * its holes. Left out, as in tests/helpers/own-words.ts: module names, types, property names, and what a value is
+ * compared with (`kind === "typed"`, `case "file":`), none of which is ever shown.
+ */
+function textsIn(source: string, file: string): { line: number; text: string }[] {
+  const tree = ts.createSourceFile(file, source, ts.ScriptTarget.Latest, true, ts.ScriptKind.TS);
+  const out: { line: number; text: string }[] = [];
+  const shown = (node: ts.Node) => {
+    const parent = node.parent;
+    if (ts.isImportDeclaration(parent) || ts.isExportDeclaration(parent) || ts.isExternalModuleReference(parent)) return false;
+    if (ts.isPropertyAssignment(parent) && parent.name === node) return false;
+    if (ts.isElementAccessExpression(parent) && parent.argumentExpression === node) return false;
+    if (ts.isCaseClause(parent)) return false;
+    if (ts.isBinaryExpression(parent) && [ts.SyntaxKind.EqualsEqualsEqualsToken, ts.SyntaxKind.ExclamationEqualsEqualsToken, ts.SyntaxKind.EqualsEqualsToken, ts.SyntaxKind.ExclamationEqualsToken].includes(parent.operatorToken.kind)) {
+      return false;
+    }
+    for (let up: ts.Node | undefined = parent; up && !ts.isSourceFile(up); up = up.parent) if (ts.isTypeNode(up)) return false;
+    return true;
+  };
+  const line = (node: ts.Node) => tree.getLineAndCharacterOfPosition(node.getStart(tree)).line + 1;
+  const visit = (node: ts.Node) => {
+    if ((ts.isStringLiteral(node) || ts.isNoSubstitutionTemplateLiteral(node)) && shown(node)) out.push({ line: line(node), text: node.text });
+    else if (ts.isTemplateExpression(node) && shown(node)) {
+      out.push({ line: line(node), text: [node.head.text, ...node.templateSpans.map((span) => span.literal.text)].join("${…}") });
+    }
+    ts.forEachChild(node, visit);
+  };
+  visit(tree);
+  return out.filter(({ text }) => /[A-Za-z]/.test(text));
+}
+
+/** Each verdict a piece of text gives: a word on the strict list the words files are held to, or a phrase. */
+const verdictsIn = (text: string) => [...(VERDICT_WORDS.exec(text) ? [`word “${VERDICT_WORDS.exec(text)![0]}”`] : []), ...findVerdicts(text)];
+
+describe("the words files that took the components' sentences give no verdict", () => {
+  // The other words files have their own verdict checks (tests/cockpit-screen.spec.ts, tests/front-door.spec.ts,
+  // tests/landscape-words.spec.ts, tests/about-job.spec.ts); these had none, or didn't exist, until 2026-10-31.
+  it("reads every string and template in each of those words files", () => {
+    for (const file of WORDS_FILES_FROM_COMPONENTS) expect(textsIn(readSource(file), file).length, file).toBeGreaterThan(5);
+  });
+
+  it("no word or phrase on the verdict lists, in any of them", () => {
+    const found = WORDS_FILES_FROM_COMPONENTS.flatMap((file) =>
+      textsIn(readSource(file), file).flatMap(({ line, text }) => verdictsIn(text).map((v) => `${file}:${line}: ${v} in ${JSON.stringify(text)}`)),
+    );
+    expect(found).toEqual([]);
+  });
+
+  it("control: a verdict in a string, a template or a function's words is caught; keys, types and comparisons are not words", () => {
+    const planted = `
+      type Kind = "best" | "worse";
+      export const plantedWords = {
+        tick: "Tick what should go.",
+        refund: (idea: string) => \`The refund is recommended for \${idea}.\`,
+        count: (n: number) => \`\${n} records, top pick first\`,
+        "best-key": "Saved.",
+        quiet: (kind: string) => (kind === "ready" ? "Kept." : "Not kept."),
+      } as const;
+    `;
+    expect(textsIn(planted, "planted.ts").flatMap(({ text }) => verdictsIn(text).map((v) => v.split(":")[0]))).toEqual([
+      "word “should”",
+      "word “recommended”",
+      "recommended",
+      "top pick",
+    ]);
   });
 });
 
