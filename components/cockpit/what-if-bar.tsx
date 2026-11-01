@@ -13,29 +13,21 @@ export const WHAT_IF_BAR_ID = "cockpit-what-if";
 export const THIS_VISIT_ID = "cockpit-this-visit";
 
 /**
- * The what-if bar and "This visit" (docs/architecture/future-cockpit.md § 2, "Cockpit screen as built,
- * part 2"), under the map. "Try first-year sales of $___" relights the rules for the screen's run under a
- * fixed banner, "Your what-if, not a forecast"; it never touches a money sum or a figure and is kept
- * nowhere, until Keep makes it the idea's own first-year sales. "This visit" keeps this visit's newest
- * receipt lines, so one closed with its panel isn't lost; a reload starts it empty.
+ * The what-if bar and "This visit", under the map (docs/ui-spec/cockpit/14-what-if-bar.md and 13-receipts.md;
+ * design: docs/architecture/future-cockpit.md § 2, "Cockpit screen as built, part 2"). "Try first-year sales
+ * of $___" relights the rules for the screen's run under a fixed banner, "Your what-if, not a forecast"; it
+ * never touches a money sum or a figure and is kept nowhere, until Keep makes it the idea's own first-year
+ * sales (Keep also empties the Try box, as the number is kept). "This visit" keeps this visit's newest
+ * receipt lines, so one closed with its panel isn't lost; a reload starts it empty. It shows only the
+ * newest line, the rest behind "n more this visit" (five lines took the map down to its tier headings at
+ * 1280 by 720), and it is called "This visit" because "Since last time" reads as "since my last visit".
  *
- * 2026-10-12, after review: named "This visit" (it was "Since last time", which reads as "since my last
- * visit"), and it shows only the newest line, the rest behind "n more this visit": five lines took the
- * map down to its tier headings at 1280 by 720. Keep also empties the Try box, as the number is kept.
- *
- * 2026-10-13, folding (future-cockpit.md § 2, "Folding and phone width"): given `fold`, the bar and "This
- * visit" fold together to one line with a button, the same way the map's legend does, so every region of
- * the cockpit folds. Folded, what they hold stays on the page, hidden (a half-typed number included), and
- * while a what-if is on the one line still says so, banner and number, because the map is still relit by
- * it. Left out, the bar is drawn as before.
- *
- * The calm first view (2026-10-17, S2.5.30c): folded, the bar and "This visit" are no line of their own. The
- * whole bar stays on the page, hidden, and the cockpit draws `WhatIfShowButton` in the road's bottom line,
- * under the map where the bar was, still saying while a what-if is on that it is one, and its number. Open,
- * the bar is a region of its own again.
- *
- * 2026-10-20: the button moved into the goal bar's Look closer menu (the maintainer's pick, so the screens
- * stay within their clutter limits); the road's bottom line keeps `WhatIfOnNote`, the banner and number.
+ * Folding (future-cockpit.md § 2, "Folding and phone width"): given `fold`, the bar and "This visit" fold
+ * together with one button, the same way the map's legend does, so every region of the cockpit folds. Folded,
+ * the whole bar stays on the page, hidden (a half-typed number included), and the goal bar's Look closer menu
+ * shows it again. While a what-if is on, the map is still relit by it, so the road's bottom line keeps
+ * `WhatIfOnNote`, the banner and number. Left out, the bar has no fold button. Open, it is a region of its
+ * own for the clutter limit.
  */
 export function WhatIfBar({
   whatIf,
@@ -172,9 +164,9 @@ export function WhatIfBar({
 }
 
 /**
- * The folded what-if bar's note in the road's bottom line (the calm first view, 2026-10-17; its show button
- * is in the goal bar's Look closer menu since 2026-10-20): while a what-if is on, the map is still relit by
- * it, so the line says so, banner and number. Nothing to press, so it adds no control to the first view.
+ * The folded what-if bar's note in the road's bottom line (its show button is in the goal bar's Look closer
+ * menu): while a what-if is on, the map is still relit by it, so the line says so, banner and number. Nothing
+ * to press, so it adds no control to the first view.
  */
 export function WhatIfOnNote({ whatIf }: { whatIf: number }) {
   return (

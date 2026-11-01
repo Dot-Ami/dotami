@@ -309,7 +309,8 @@ describe("no desktop code writes an error to DotAmi's log, by any of its ways of
     expect(main).toMatch(/autoUpdater\.logger\s*=\s*updaterLogger\(/);
   });
 
-  // 2026-10-12, review: the error channel wrote a fixed line, but electron-updater (6.8.9) also puts
+  // 2026-10-12, review: the error channel wrote a fixed line, but electron-updater (6.8.9; 6.8.11 has the
+  // same messages at the same lines, re-read 2026-10-30) also puts
   // an error's message or stack in its warn lines and in some info lines. These are its own messages,
   // copied from node_modules/electron-updater/out, with a made-up folder in the error.
   describe("updaterLogger: what electron-updater's messages leave in the log", () => {
