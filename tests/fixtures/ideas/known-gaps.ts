@@ -116,19 +116,19 @@ export const COMPONENT_TIME_WORDS: readonly ComponentTimeWords[] = [
     why: "A choice of rows; the takes-about pattern reads \"take only\".",
   },
   {
-    file: "components/your-data/your-data-page.tsx",
-    text: "These live in the window, not in the data file, so this page can&apos;t see what is in them right now. This is what DotAmi puts there and how long it stays.",
+    file: "lib/person/words.ts",
+    text: "These live in the window, not in the data file, so this page can't see what is in them right now. This is what DotAmi puts there and how long it stays.",
     kind: "retention",
     why: "How long DotAmi keeps what it puts in the window: a disclosure the privacy page owes the person.",
   },
   {
-    file: "components/your-data/your-data-page.tsx",
+    file: "lib/person/words.ts",
     text: "How long ·",
     kind: "retention",
     why: "The same, as each window key's row label.",
   },
   {
-    file: "components/your-data/your-data-page.tsx",
+    file: "lib/person/words.ts",
     text: "How long Anthropic keeps it:",
     kind: "retention",
     why: "The label before the link to Anthropic's own page on what it keeps of what the intake's parser sends.",

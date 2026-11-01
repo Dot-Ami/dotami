@@ -64,10 +64,6 @@ const NOT_MOVED_YET: { since: string; pieces: Readonly<Record<string, number>> }
     "components/ui/or-divider.tsx": 1,
     "components/ui/section-card.tsx": 3,
     "components/ui/word-mark.tsx": 3,
-    "components/your-data/delete-menu.tsx": 64,
-    "components/your-data/figures-by-source.tsx": 12,
-    "components/your-data/format.ts": 11,
-    "components/your-data/your-data-page.tsx": 65,
   },
 };
 
