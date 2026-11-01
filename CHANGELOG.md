@@ -767,19 +767,21 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ### Changed
 - **Every sentence on *Your expenses*, *Settings*, *Licences*, *Your futures* and *What DotAmi knows about you* now
   lives in a words file, and a test reads every folder of `components/` for text written anywhere else** (the
-  house-cleaning audit of 2026-10-31, item architecture-5; the maintainer's decision of 2026-10-11 that screens
-  keep their words in one place). 707 pieces of text moved, word for word, out of `components/expenses/`,
+  maintainer's decision of 2026-10-11 that new screens keep their words in one file, widened to every screen by his
+  "Do it" on the house-cleaning audit of 2026-10-31, item architecture-5). 707 pieces of text moved, word for word,
+  out of `components/expenses/`,
   `settings/`, `licences/`, `ventures/` and `your-data/` into `lib/expenses/words.ts`, `lib/settings/words.ts`,
   `lib/licences/words.ts`, `lib/ventures/words.ts` and `lib/person/words.ts` (`yourDataWords`), so the words files'
   time check reads them as well as the component scan that already did (`tests/prerelease-honesty.spec.ts`), and a
-  unit check holds them to the verdict words for the first time (until now only the browser walk,
-  `e2e/no-verdict.spec.ts`, read these screens for verdict phrases as they first open, and the ventures and person
-  words files had no verdict check at all). The pages draw the same text as before, except
+  unit check holds them to the verdict words for the first time (until now only the browser tests read these
+  screens for verdict phrases: `e2e/no-verdict.spec.ts` as each screen first opens, and `e2e/journey.spec.ts` on
+  *Your futures* and the agree prompt; the ventures and person words files had no verdict check at all). The pages draw the same text as before, except
   three sentences changed by a word or two, because the strict verdict list refuses "should" and "enough" even
   where they give no verdict: *Your expenses*' refund note ends "if this refund belongs there too." (was "should go
   there too"); the Delete menu starts "Tick what to delete." (was "Tick what should go."); and *What DotAmi knows
-  about you* says it read "the first few bytes of each (only to tell an encrypted receipt from a plain one)" (was
-  "enough to tell"). The ten sentences the time check had already let through in those components (words it
+  about you* says it read "the first few bytes of each (only to tell an encrypted receipt from a plain one, and
+  which key locked it)" (was "(enough to tell an encrypted receipt from a plain one)"; the bytes are the file's
+  mark and its key's id, read by `describeReceiptFiles` in `lib/expenses/receipts/store.ts`). The ten sentences the time check had already let through in those components (words it
   misreads, and how long DotAmi keeps something) keep their allowances, moved with them in
   `tests/fixtures/ideas/known-gaps.ts`. `tests/cockpit-own-words.spec.ts` read only `components/cockpit/`; it now
   reads every file under `components/`. The eleven files that still write their own text (141 pieces: the intake,

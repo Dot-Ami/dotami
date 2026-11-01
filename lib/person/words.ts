@@ -1,6 +1,7 @@
 /**
  * Words about the person and what DotAmi keeps of them, kept in one place (the maintainer's decision of
- * 2026-10-11 that screens keep their words in one place; tests/cockpit-own-words.spec.ts fails on a sentence
+ * 2026-10-11 that new screens keep their words in one file, widened to every screen by his "Do it" on the
+ * house-cleaning audit of 2026-10-31, item architecture-5; tests/cockpit-own-words.spec.ts fails on a sentence
  * written back into a component):
  *
  * - `statementWords`: *In your words*' box (components/shared/person-statements.tsx).
@@ -95,7 +96,7 @@ export const yourDataWords = {
       lastWritten: "last written",
       /** How far DotAmi looked: into the receipts folder a little further, to tell encrypted files from plain ones. */
       countedReceipts:
-        "DotAmi counted the files, read their dates and the first few bytes of each (only to tell an encrypted receipt from a plain one); it never opened a receipt.",
+        "DotAmi counted the files, read their dates and the first few bytes of each (only to tell an encrypted receipt from a plain one, and which key locked it); it never opened a receipt.",
       countedOnly: "DotAmi only counted the files and read their dates; it never opened them.",
     },
 

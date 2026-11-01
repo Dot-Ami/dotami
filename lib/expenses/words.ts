@@ -2,8 +2,9 @@
  * Every sentence and label of *Your expenses* (/expenses) and of the receipt pieces it shares with Settings and
  * What DotAmi knows about you: the page itself, the typing form, the review list, a record's receipt line, the
  * receipt viewer, Start a new key… and Bring these receipts back. They lived in components/expenses/ until
- * 2026-10-31, when they moved here under the maintainer's decision of 2026-10-11 that screens keep their words in
- * one place; tests/cockpit-own-words.spec.ts fails on text written back into one of those components.
+ * 2026-10-31, when they moved here under the maintainer's decision of 2026-10-11 that new screens keep their words
+ * in one file, widened to every screen by his "Do it" on the house-cleaning audit of 2026-10-31 (item
+ * architecture-5); tests/cockpit-own-words.spec.ts fails on text written back into one of those components.
  *
  * Sentences about how the receipt files are protected, and what Bring back found, stay in
  * lib/expenses/receipts/protection.ts, where the server reads them too. A record's own facts (its share, its

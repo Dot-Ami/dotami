@@ -2,7 +2,8 @@
  * Every sentence and label of *Your futures*, the ideas page (components/ventures/ventures-page.tsx), and of the
  * figures on each idea's card: the figures panel, the agree prompt, the reminder banners, "Add from a file" with
  * its GnuCash book review, and "Add from last year's return" (components/ventures/). The maintainer decided on
- * 2026-10-11 that screens keep their words in one place. This file started on 2026-10-23 with the card's line
+ * 2026-10-11 that new screens keep their words in one file, and widened it to every screen by his "Do it" on the
+ * house-cleaning audit of 2026-10-31 (item architecture-5). This file started on 2026-10-23 with the card's line
  * for a type nobody was asked for; the rest of the folder's sentences moved here from the components on
  * 2026-10-31, word for word. tests/cockpit-own-words.spec.ts fails on text written back into a component.
  *
@@ -89,7 +90,8 @@ export const venturesWords = {
     remindHelp: {
       before: "Off until you turn it on. How often is your choice under",
       link: "Settings → Figure reminders",
-      after: "; the reminder shows here, and on this idea's map, when a period has ended that your figures don't cover.",
+      after:
+        "; the reminder shows here, and on this idea's map, when a period has ended that your figures don't cover.",
     },
     remindFailed: "Couldn't save that — the switch is back where it was.",
     expenses: {
@@ -117,7 +119,8 @@ export const venturesWords = {
   figures: {
     couldNotLoad: "Could not load your figures.",
     heading: "Your figures",
-    intro: "Totals you've agreed to — never your individual transactions. Where they settle a rule, cards use them instead of your estimates.",
+    intro:
+      "Totals you've agreed to — never your individual transactions. Where they settle a rule, cards use them instead of your estimates.",
     /** "<n> figure(s) waiting for you to agree". */
     figureWord: (n: number) => (n === 1 ? "figure" : "figures"),
     waiting: "waiting for you to agree",
@@ -141,7 +144,9 @@ export const venturesWords = {
       pickBothDates: "Pick both dates.",
       endBeforeStart: "The end date can't be before the start date.",
       taxYearHelp: "Write the tax year as four digits, like 2025.",
-      /** The source a typed figure is kept under, shown later as where it came from. */
+      /**
+       * The source a typed figure is kept under, shown later as where it came from. It is saved with the record, so changing these words changes what new records keep, not the ones already kept.
+       */
       typedByYou: "typed by you",
       what: "What",
       taxYear: "Tax year",
@@ -149,7 +154,8 @@ export const venturesWords = {
       to: "To",
       amount: "Amount",
       /** Under the tax year box until four digits are typed: the line a T2125 total goes on depends on the year. */
-      taxYearHint: "The tax year this total is for. The CRA line it goes on can change from one year's form to the next.",
+      taxYearHint:
+        "The tax year this total is for. The CRA line it goes on can change from one year's form to the next.",
       askedToAgree: "You'll be asked to agree before it counts.",
     },
   },
@@ -159,7 +165,20 @@ export const venturesWords = {
     amountHelp: "Write it like 12,500 or 12500.50.",
     /** The line above the buttons, every time the prompt opens. */
     checkFirst: "Double-check what DotAmi did, and how, before you agree.",
-    months: ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"],
+    months: [
+      "January",
+      "February",
+      "March",
+      "April",
+      "May",
+      "June",
+      "July",
+      "August",
+      "September",
+      "October",
+      "November",
+      "December",
+    ],
     /** A period: one calendar month, one calendar quarter, or the two days as given. */
     period: {
       month: (month: string, year: number) => `${month} ${year}`,
@@ -214,13 +233,14 @@ export const venturesWords = {
     dropRegion: "Drop a spreadsheet here",
     dropLine: "Drop a .xlsx or .csv file, or a GnuCash book, here, or",
     chooseFile: "Choose a file",
-    readHere: "It's read here, on this computer, and never kept — only the monthly totals you agree to are saved.",
+    readHere:
+      "It's read here, on this computer, and never kept — only the monthly totals you agree to are saved.",
     /**
      * After "Reading <file>…" while a GnuCash book is read. "A big one can take a little while." followed until
      * 2026-10-24: a time in DotAmi's own words.
      */
     bookInBackground: "A GnuCash book is read in the background, so this window stays usable.",
-    /** The source label of a file with no name. */
+    /** The source label of a file with no name. It is saved with the record, so changing these words changes what new records keep, not the ones already kept. */
     aFile: "a file",
     /** Shown for every file: DotAmi was only ever tried on invented files laid out from each program's help pages. */
     testedOn:
@@ -242,7 +262,8 @@ export const venturesWords = {
     totalsFrom: "Totals come from",
     everyRow: "Every row, added down each month",
     rowOnly: (n: number, label: string) => `Row ${n} only${label ? ` · ${label}` : ""}`,
-    everyRowHint: "Every row leaves out the file's own totals rows. Pick one row to take only its figures, such as the file's Total row.",
+    everyRowHint:
+      "Every row leaves out the file's own totals rows. Pick one row to take only its figures, such as the file's Total row.",
     readAsMonths: "Read as months",
     notMonths: "Not months, so not added:",
     columnNamesRow: "Column names are in row",
@@ -261,7 +282,8 @@ export const venturesWords = {
     statusColumn: "Status column (optional)",
     statusHint:
       "Invoice lists can include void, deleted and draft invoices, which were never sales. With a status column, rows marked Void, Voided, Deleted or Draft are left out and listed. Choose None to count every row.",
-    conflictingDates: "Some dates in this column only make sense month first and others only day first — check the column.",
+    conflictingDates:
+      "Some dates in this column only make sense month first and others only day first — check the column.",
     datesWritten: "Dates are written",
     pickOne: "Pick one",
     onlyClearDates: "Only read dates that are clear",
@@ -280,22 +302,33 @@ export const venturesWords = {
     monthsRight: "These months are right",
     nothingNew: "Nothing new to propose from this file.",
     /** The refund rule's one surprise, said where the totals are. */
-    refundsNote: "Refunds are taken off the month they were paid back, which may be a later month than the sale they refund.",
+    refundsNote:
+      "Refunds are taken off the month they were paid back, which may be a later month than the sale they refund.",
     /** "This file has more than <500> months of totals, …" */
     tooMany: {
       before: "This file has more than",
-      after: "months of totals, more than DotAmi proposes at once. Remove the oldest rows and drop it again.",
+      after:
+        "months of totals, more than DotAmi proposes at once. Remove the oldest rows and drop it again.",
     },
     tickOnceTheyMatch: (box: string) => `Tick "${box}" once they match the file.`,
     askedToAgree: "You'll be asked to agree before anything counts.",
     /** Beside a month's total: what its refunds took off, e.g. "1 refund taken off ($40.00)". */
-    refundsTakenOff: (n: number, amount: string) => `${n} ${n === 1 ? "refund" : "refunds"} taken off (${amount})`,
+    refundsTakenOff: (n: number, amount: string) =>
+      `${n} ${n === 1 ? "refund" : "refunds"} taken off (${amount})`,
     /** The words for the first few row numbers, cell names or month columns: "row 7", "cells C3, C4". */
-    places: { row: "row", rows: "rows", cell: "cell", cells: "cells", column: "column", columns: "columns" },
+    places: {
+      row: "row",
+      rows: "rows",
+      cell: "cell",
+      cells: "cells",
+      column: "column",
+      columns: "columns",
+    },
     /** Rows the totals leave out, one line per reason, e.g. "2 rows without a date DotAmi can read". */
     leftOut: {
       blank: (n: number) => `${n} blank ${rows(n)}`,
-      total: (n: number) => `${n} ${rows(n)} that ${n === 1 ? "is a totals row" : "are totals rows"} (the file's own sum)`,
+      total: (n: number) =>
+        `${n} ${rows(n)} that ${n === 1 ? "is a totals row" : "are totals rows"} (the file's own sum)`,
       noDate: (n: number) => `${n} ${rows(n)} without a date DotAmi can read`,
       noAmount: (n: number) => `${n} ${rows(n)} with a date but no amount`,
       badAmount: (n: number) => `${n} ${rows(n)} with an amount DotAmi can't read`,
@@ -322,20 +355,25 @@ export const venturesWords = {
      * a whole row or a month column that isn't over yet. "Under a month" is the month column a cell sits in.
      */
     across: {
-      badCells: (n: number, places: string) => `${n} ${cells(n)} under a month with an amount DotAmi can't read: ${places}`,
-      unsavedCells: (n: number, places: string) => `${n} ${cells(n)} under a month holding ${UNSAVED_FORMULA_ADVICE}: ${places}`,
+      badCells: (n: number, places: string) =>
+        `${n} ${cells(n)} under a month with an amount DotAmi can't read: ${places}`,
+      unsavedCells: (n: number, places: string) =>
+        `${n} ${cells(n)} under a month holding ${UNSAVED_FORMULA_ADVICE}: ${places}`,
       emptyCells: (n: number, places: string) => `${n} empty ${cells(n)} under a month: ${places}`,
-      nothingUnderAnyMonth: (n: number, places: string) => `${n} ${rows(n)} with nothing under any month: ${places}`,
-      notOverMonths: (n: number, places: string) => `${n} ${n === 1 ? "month that isn't over yet" : "months that aren't over yet"}: ${places}`,
+      nothingUnderAnyMonth: (n: number, places: string) =>
+        `${n} ${rows(n)} with nothing under any month: ${places}`,
+      notOverMonths: (n: number, places: string) =>
+        `${n} ${n === 1 ? "month that isn't over yet" : "months that aren't over yet"}: ${places}`,
     },
   },
 
   /** A GnuCash book's accounts and totals (components/ventures/books-drop.tsx). */
   books: {
-    /** The source label of a book with no file name. */
+    /** The source label of a book with no file name. It is saved with the record, so changing these words changes what new records keep, not the ones already kept. */
     aGnuCashBook: "a GnuCash book",
     /** GnuCash writes the book to disk only when the person saves; the file is what was saved. */
-    lastSave: "DotAmi read your last save. Anything changed in GnuCash after that save isn't in it.",
+    lastSave:
+      "DotAmi read your last save. Anything changed in GnuCash after that save isn't in it.",
     testedOn:
       "DotAmi's GnuCash reader was tested on invented books written to GnuCash's file format, not on real ones, so check the accounts and totals.",
     accounts: "Accounts in this book",
@@ -354,7 +392,8 @@ export const venturesWords = {
     /** "This book has more than <500> months of totals, …" */
     tooMany: {
       before: "This book has more than",
-      after: "months of totals, more than DotAmi proposes at once. Untick some accounts to propose fewer at a time.",
+      after:
+        "months of totals, more than DotAmi proposes at once. Untick some accounts to propose fewer at a time.",
     },
   },
 
@@ -369,7 +408,10 @@ export const venturesWords = {
     pageWord: (n: number) => (n === 1 ? "page" : "pages"),
     copies: (n: number) => (n === 1 ? "1 T2125" : `${n} T2125s`),
     /** Where a T2125 is in the PDF. */
-    pages: { one: (page: number) => `page ${page}`, range: (first: number, last: number) => `pages ${first} to ${last}` },
+    pages: {
+      one: (page: number) => `page ${page}`,
+      range: (first: number, last: number) => `pages ${first} to ${last}`,
+    },
     caption: {
       one: (pages: string) => `T2125 on ${pages}`,
       of: (n: number, count: number, pages: string) => `T2125 ${n} of ${count}, on ${pages}`,
@@ -377,6 +419,7 @@ export const venturesWords = {
     columns: { line: "Line", onTheForm: "On the form", page: "Page", amount: "Amount as printed" },
     notFound: "not found in this T2125",
     nothingBeside: "nothing DotAmi can read beside it",
-    checkThese: "Check these against your return. DotAmi only shows them: nothing is added to your figures or kept, and Close forgets the file.",
+    checkThese:
+      "Check these against your return. DotAmi only shows them: nothing is added to your figures or kept, and Close forgets the file.",
   },
 } as const;

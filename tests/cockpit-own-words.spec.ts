@@ -1,8 +1,8 @@
 /**
  * Every sentence and label a screen shows comes from a words file (lib/<area>/words.ts), never from a component.
- * The rule is the maintainer's decision of 2026-10-11 that screens keep their words in one place. It was first
- * enforced for the cockpit (story S2.5.30e, 2026-10-17) and, since the house-cleaning audit of 2026-10-31, for
- * every file under components/. The words tests read the words files: the verdict words (tests/cockpit-screen.spec.ts
+ * The rule is the maintainer's decision of 2026-10-11 that new screens keep their words in one file, widened to
+ * every screen by his "Do it" on the house-cleaning audit of 2026-10-31 (item architecture-5). It was first
+ * enforced for the cockpit (story S2.5.30e, 2026-10-17) and, since 2026-10-31, for every file under components/. The words tests read the words files: the verdict words (tests/cockpit-screen.spec.ts
  * and the other words files' specs, and the last block below for the words files that took the other folders'
  * sentences on 2026-10-31) and the time words (tests/idea-invariants.spec.ts reads every words file under lib/).
  * Text written straight into a component is text those tests never see.

@@ -834,6 +834,7 @@ export const cockpitWords = {
   /**
    * The source label of a number typed in the cockpit (a quote, savings), as the figures list and *What
    * DotAmi knows about you* show it; the ideas page and the expenses page write the same words for theirs.
+   * It is saved with the record, so changing these words changes what new records keep, not the ones already kept.
    */
   typedByYou: "typed by you",
 

@@ -1,8 +1,8 @@
 /**
  * Every sentence the settings page shows (components/settings/: the page, its "Today" lines and its controls).
- * The maintainer decided on 2026-10-11 that screens keep their words in one place; these moved here from the
- * components on 2026-10-31, word for word. tests/cockpit-own-words.spec.ts fails on text written back into a
- * component.
+ * The maintainer decided on 2026-10-11 that new screens keep their words in one file, and widened it to every
+ * screen by his "Do it" on the house-cleaning audit of 2026-10-31 (item architecture-5); these moved here from the
+ * components that day, word for word. tests/cockpit-own-words.spec.ts fails on text written back into a component.
  *
  * The settings' own names, defaults, choices and warnings are lib/settings/catalog.ts, not here: this file holds
  * only what the components say around them. A sentence broken by a link or a piece of code is kept as its parts,
