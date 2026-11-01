@@ -438,7 +438,7 @@ export const cfeNodesV2026 = [
         jurisdiction: "CA",
         url: SRED_PAGES.itcPolicy,
         toolCheck: { checkedOn: "2026-10-31", quotes: [SRED_WORDS.policyCcpcEnhanced] },
-        note: "The CRA's SR&ED investment tax credit policy: its rates, and which claimants can earn a refundable ITC.",
+        note: "The CRA's SR&ED investment tax credit policy: its overview of the credit's basic and enhanced rates.",
       },
     ],
     financialImpact: {

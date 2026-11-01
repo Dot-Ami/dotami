@@ -314,22 +314,23 @@ function ownStringsIn(value: unknown): string[] {
   return [];
 }
 /**
- * The fewest words a quoted run needs before it counts as the older page's, whether it is a part of one of the quotes
- * its citations hold or one of them whole: fewer is a phrase any CRA page on corporations may use (“a private
- * corporation”, which a check of road 0's holds whole, as a fragment), not that page's line.
+ * The fewest words a quoted run needs before a PART of one of the older page's held quotes counts as that page's: fewer
+ * is a phrase any CRA page on corporations may use (“private corporation”), not that page's line. A whole held quote
+ * counts at any length (“a private corporation” is one: a check of road 0's holds it).
  */
 const OLDER_PAGE_MIN_WORDS = 6;
 const wordCount = (text: string) => text.trim().split(/\s+/).filter(Boolean).length;
 /**
- * The older CRA page's words in a text: any of its known lines, anywhere, or a quoted run of at least
- * OLDER_PAGE_MIN_WORDS words that is one of the quotes a citation of the page holds, or a part of one. Empty when the
- * text quotes none of it.
+ * The older CRA page's words in a text: any of its known lines, anywhere; a quoted run that is one of the quotes a
+ * citation of the page holds, whole; or a quoted run of at least OLDER_PAGE_MIN_WORDS words that is a part of one.
+ * Empty when the text quotes none of it. Only quoted runs are read: DotAmi's own words written from that page, without
+ * quote marks, are the subject of the maintainer's questions of 2026-10-31 (citations.md rule 8, As built), not this check.
  */
 function olderPageWordsIn(text: string): string[] {
   const held = [...OLDER_PAGE_LINES, ...all.filter((l) => l.citation.url === PAGE.relationships).flatMap((l) => rawQuotes(l.citation))];
   const lines = OLDER_PAGE_LINES.filter((line) => text.includes(line));
   const runs = quoted(text).filter(
-    (run) => wordCount(run) >= OLDER_PAGE_MIN_WORDS && held.some((q) => q === run || q.includes(run)),
+    (run) => held.includes(run) || (wordCount(run) >= OLDER_PAGE_MIN_WORDS && held.some((q) => q.includes(run))),
   );
   return [...lines, ...runs];
 }
@@ -552,14 +553,15 @@ describe("3. SR&ED: the credit's rates in the CRA's words", () => {
     expect(olderPageWordsIn(CCPC_NOTE_WHOLE)).toEqual([]);
     expect(olderPageWordsIn(`The CRA's SR&ED Investment Tax Credit Policy: “${POLICY_CCPC_ENHANCED}”`)).toEqual([]);
     // A part of one of its lines counts from six words: a 6-word run of the 35% line is caught, the same line's first
-    // five words are not, and “a private corporation” alone, a phrase any page on corporations may use (one of road 0's
-    // checks holds it as a fragment of the older page), is not.
+    // five words are not, and “private corporation”, a phrase any page on corporations may use, is not. A whole held
+    // quote counts at any length: “a private corporation” is one (road 0's check holds it), so it is caught.
     const sixWords = "Some CCPCs may earn an ITC";
     expect(wordCount(sixWords)).toBe(OLDER_PAGE_MIN_WORDS);
     expect(CCPC_ENHANCED.startsWith(sixWords)).toBe(true);
     expect(olderPageWordsIn(`The CRA: “${sixWords}”`)).toEqual([sixWords]);
     expect(olderPageWordsIn("The CRA: “Some CCPCs may earn an”")).toEqual([]);
-    expect(olderPageWordsIn("The CRA: “a private corporation”")).toEqual([]);
+    expect(olderPageWordsIn("The CRA: “private corporation”")).toEqual([]);
+    expect(olderPageWordsIn("The CRA: “a private corporation”")).toEqual(["a private corporation"]);
     expect(all.some((l) => l.citation.url === PAGE.relationships && rawQuotes(l.citation).includes("a private corporation"))).toBe(true);
     // A whole held quote of six words or more is caught, whichever citation of the page holds it.
     const held = "When one CCPC is associated with other CCPCs, these corporations must share the business limit.";

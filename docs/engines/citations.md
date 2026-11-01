@@ -167,8 +167,10 @@ catalog at run time.
    35%.”, from the stage's own citation of that page, a tool check of 2026-10-31 (§ Blocked, *SR&ED deepening's 35%
    from the SR&ED glossary*). Two things stay as they were until he answers:
    - Still in DotAmi's own words, without quote marks, and shown: *SR&ED deepening*'s tax impact ("The enhanced
-     rate is for some CCPCs, up to their expenditure limit for the year.") and road 0's two done-when lines on CCPCs
-     (`dw-start-incsred-ccpc`, `dw-start-incsred-associated`), whose sources are the relationships page.
+     rate is for some CCPCs, up to their expenditure limit for the year."), the note on its citation of the
+     relationships page ("Which CCPCs may earn the enhanced 35% rate, up to their expenditure limit for the year.",
+     printed in the road exports), and road 0's two done-when lines on CCPCs (`dw-start-incsred-ccpc`,
+     `dw-start-incsred-associated`), whose sources are the relationships page.
      Whether these count as showing the older page was asked of him on 2026-10-31.
    - The CRA's SR&ED glossary (its page date 2026-05-22) also disagrees with the newer pages: its entry on the
      enhanced rate says “This enhanced rate may be earned on their qualified SR&ED expenditures up to a maximum

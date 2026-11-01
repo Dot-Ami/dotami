@@ -948,8 +948,11 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   `tests/productivity-grant.spec.ts`, `tests/repeated-losses-read.spec.ts` (each failed on the code before), and
   `tests/cost-panels-unchanged.spec.ts`, whose recording of *Incorporation for liability/SR&ED*'s panel was redrawn
   for its 35% line and its new source only. The check that the older page is quoted nowhere reads the cards at all
-  five structures, the holding company and the family trust too, and counts a quoted run as that page's only from six
-  words, so a phrase like “a private corporation” isn't taken for that page's line.
+  five structures, the holding company and the family trust too; it counts one of that page's held quotes whole at
+  any length, and a part of one from six words, so a phrase like “private corporation” isn't taken for that page's
+  line. Seen on screen besides: road 0's and the federal steps' cards on *Pick a future* each count one more source
+  checked by a tool only (the policy page's new citation under *Incorporation for liability/SR&ED*), and their exports
+  count one more source in their header.
 
 ### Documented
 - **The screen specs say what the pre-release fixes changed** (2026-10-24). Each control the fixes above
