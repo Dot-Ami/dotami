@@ -236,7 +236,7 @@ cockpit's *Businesses you're watching* and the settings page read empty or defau
 ## Backend wiring
 
 `POST /api/your-data/delete` (`app/api/your-data/delete/route.ts`): rate-limited, refused (403)
-unless the request comes from DotAmi's own page (`refuseUnlessFromAppPage`), body read through
+unless the request comes from DotAmi's own page (`pageOnly`, `lib/api/route.ts`), body read through
 `readJsonWithLimit` (JSON only, 8 KB). `{ kinds, seen }` runs `deleteData` (`lib/privacy/delete.ts`):
 the counts are checked against `seen` and the tables emptied in one transaction (409 with fresh
 counts on a mismatch, 400 for a kind it can't delete), then `VACUUM` outside the transaction.

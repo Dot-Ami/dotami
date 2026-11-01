@@ -6,7 +6,8 @@
  * shared PC could call http://127.0.0.1:<port>/api/... and read or change the person's data with no
  * login, even though Windows' folder permissions and the encrypted data file kept that account out of
  * the files themselves. The `Sec-Fetch-Site: same-origin` check on the agree and settings routes
- * (lib/figures/http.ts) didn't stop it: any program can write that header.
+ * (then in lib/figures/http.ts, now lib/api/route.ts `pageOnly`) didn't stop it: any program can
+ * write that header.
  *
  * How: each time the desktop app starts, its main process makes a fresh random secret (32 bytes),
  * hands it to the server in its environment (DOTAMI_LAUNCH_SECRET, desktop/main.mjs serverEnv), and
@@ -14,7 +15,7 @@
  * (desktop/main.mjs sendLaunchSecret). The page's scripts never see it: the header is added below the
  * page, in Electron's network layer. middleware.ts refuses every request without the exact header
  * before it reaches a page, a server action or an API route; the agree and settings routes check it
- * again themselves (refuseUnlessFromAppPage).
+ * again themselves (`pageOnly`, lib/api/route.ts).
  *
  * Honest limit: a program running as the SAME Windows user can read the app's memory and the
  * server's environment, so this does not stop it. It stops other accounts on the computer, and

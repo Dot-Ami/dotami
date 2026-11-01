@@ -1,7 +1,9 @@
 import { NextResponse } from "next/server";
 
-import { guardWatched, readBody, watchedFailure } from "@/lib/landscape/http";
+import { pageOnly, readBody, throttle } from "@/lib/api/route";
+import { watchedFailure } from "@/lib/landscape/http";
 import { addWatched, listWatched } from "@/lib/landscape/watched";
+import { landscapeWords } from "@/lib/landscape/words";
 import { prisma } from "@/lib/prisma";
 
 export const runtime = "nodejs";
@@ -19,7 +21,7 @@ const MAX_BODY_BYTES = 64 * 1024;
  * added them (docs/ui-spec/cockpit/landscape.md). Only from DotAmi's own window.
  */
 export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
-  const refused = guardWatched(request, "watched-read", READ_LIMIT);
+  const refused = pageOnly(request, landscapeWords.errors.pageOnly) ?? throttle("watched-read", request, READ_LIMIT);
   if (refused) return refused;
   const { id } = await params;
   try {
@@ -35,7 +37,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
  * nothing kept (lib/landscape/links.ts). Answers the business as kept. Only from DotAmi's own window.
  */
 export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
-  const refused = guardWatched(request, "watched-add", ADD_LIMIT);
+  const refused = pageOnly(request, landscapeWords.errors.pageOnly) ?? throttle("watched-add", request, ADD_LIMIT);
   if (refused) return refused;
   const { id } = await params;
 

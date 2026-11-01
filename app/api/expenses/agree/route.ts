@@ -1,13 +1,7 @@
 import { NextResponse } from "next/server";
 
-import {
-  AGREE_ONLY_MESSAGE,
-  parseIdsBody,
-  readBody,
-  refuseUnlessFromAppPage,
-  storeErrorResponse,
-  throttle,
-} from "@/lib/expenses/http";
+import { pageOnly, readBody, throttle } from "@/lib/api/route";
+import { AGREE_ONLY_MESSAGE, parseIdsBody, storeErrorResponse } from "@/lib/expenses/http";
 import { agreeToExpenses } from "@/lib/expenses/store";
 import { localToday } from "@/lib/figures/age";
 import { prisma } from "@/lib/prisma";
@@ -31,11 +25,11 @@ const MAX_BODY_BYTES = 512 * 1024;
  * agents use /api/expenses/propose and wait for the person to agree.
  */
 export async function POST(request: Request) {
-  const limited = throttle(request, "agree", RATE_LIMIT);
+  const limited = throttle("expenses-agree", request, RATE_LIMIT);
   if (limited) return limited;
 
   // Checked before the body is read: a request that isn't from the app's page gets nothing.
-  const notFromApp = refuseUnlessFromAppPage(request, AGREE_ONLY_MESSAGE);
+  const notFromApp = pageOnly(request, AGREE_ONLY_MESSAGE);
   if (notFromApp) return notFromApp;
 
   const read = await readBody(request, MAX_BODY_BYTES);

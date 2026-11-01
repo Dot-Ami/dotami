@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { logRouteError } from "@/lib/api/log-error";
-import { readBody, refuseUnlessFromAppPage, throttle } from "@/lib/expenses/http";
+import { pageOnly, readBody, throttle } from "@/lib/api/route";
 import { RECEIPT_FILE_HEADERS } from "@/lib/expenses/receipts/file-headers";
 import { readReceiptFile, ReceiptError, receiptsFolder } from "@/lib/expenses/receipts/store";
 import { prisma } from "@/lib/prisma";
@@ -25,10 +25,10 @@ const PAGE_ONLY_MESSAGE = "Only DotAmi's own window can open a receipt. An agent
  * goes in the log.
  */
 export async function POST(request: Request) {
-  const limited = throttle(request, "receipt-file", RATE_LIMIT);
+  const limited = throttle("expenses-receipt-file", request, RATE_LIMIT);
   if (limited) return limited;
 
-  const notFromApp = refuseUnlessFromAppPage(request, PAGE_ONLY_MESSAGE);
+  const notFromApp = pageOnly(request, PAGE_ONLY_MESSAGE);
   if (notFromApp) return notFromApp;
 
   const read = await readBody(request, MAX_BODY_BYTES);

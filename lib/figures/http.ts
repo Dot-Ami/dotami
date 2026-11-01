@@ -1,15 +1,13 @@
-import { NextResponse } from "next/server";
-
-import { readJsonWithLimit, rejectedResponse, RequestRejectedError } from "@/lib/api/body-limit";
-import { checkRateLimit, clientKeyFromRequest, rateLimitResponse, type RateLimitOptions } from "@/lib/api/rate-limit";
-
-import { logRouteError } from "@/lib/api/log-error";
-import { launchGuardFromEnv, refuseWithoutLaunchSecret } from "@/lib/http/launch-secret";
+import { failure, pageOnly } from "@/lib/api/route";
 
 import { AccountInputError, AccountNotFoundError, BankRecordsOffError } from "./source-accounts";
 import { FigureInputError, VentureNotFoundError } from "./store";
 
-/** Shared plumbing for the /api/figures routes, so each route file reads as its own rule. */
+/**
+ * What the /api/figures routes say and answer that is their own: the words a refused caller is told,
+ * which store errors answer which status, and the shape of an agree/discard/retract body. The steps
+ * every route shares (rate limit, own-window check, body guard, error answer) are lib/api/route.ts.
+ */
 
 export const AGREE_ONLY_MESSAGE = "Only the agree prompt in DotAmi's window can confirm figures.";
 
@@ -23,67 +21,32 @@ export const BANK_SOURCES_PAGE_ONLY =
  * person's own words.
  */
 export function bankSourcesFailure(route: string, error: unknown): Response {
-  if (error instanceof AccountInputError) return NextResponse.json({ error: error.message }, { status: 400 });
-  if (error instanceof AccountNotFoundError) return NextResponse.json({ error: error.message }, { status: 404 });
-  if (error instanceof BankRecordsOffError) return NextResponse.json({ error: error.message }, { status: 409 });
-  logRouteError(route, error);
-  return NextResponse.json({ error: "No database reachable — nothing was changed." }, { status: 503 });
+  return failure(route, error, [
+    [AccountInputError, 400],
+    [AccountNotFoundError, 404],
+    [BankRecordsOffError, 409],
+  ]);
 }
 
 /**
- * Returns a 403 unless this request comes from DotAmi's own page, else null.
- *
- * Two checks. First the launch secret (lib/http/launch-secret.ts), which middleware.ts already
- * demands of every request; checked here again so these routes stay closed even if the middleware's
- * matcher ever changed. In the desktop app only DotAmi's window carries it, so another program on
- * the computer (another Windows account's included) is refused, whatever headers it writes.
- *
- * Then `Sec-Fetch-Site`: browsers stamp every request with it, and the app's own page is
- * "same-origin". DotAmi's own agent paths (an importer, the Lens) calling the API send no such
- * header, so they can't confirm figures for the person. Honest limit: a program running as the
- * SAME Windows user can read the secret from the app's memory and write both headers; the privacy
- * review (docs/architecture/figures-privacy-review.md, "A program running as the person") says so.
- * `message` is what a refused caller is told; the settings routes pass their own.
+ * The figures routes' "only DotAmi's own window" check (pageOnly in lib/api/route.ts, which says what
+ * it does and doesn't stop), telling a refused caller the agree prompt's words unless the route passes
+ * its own.
  */
 export function refuseUnlessFromAppPage(request: Request, message: string = AGREE_ONLY_MESSAGE): Response | null {
-  const noSecret = refuseWithoutLaunchSecret(request, launchGuardFromEnv(process.env));
-  if (noSecret) return noSecret;
-  if (request.headers.get("sec-fetch-site")?.trim().toLowerCase() === "same-origin") return null;
-  return NextResponse.json({ error: message }, { status: 403 });
-}
-
-/** Rate limit for one route; a 429 response to return, or null to carry on. */
-export function throttle(request: Request, route: string, options: RateLimitOptions): Response | null {
-  const result = checkRateLimit(`figures-${route}:${clientKeyFromRequest(request)}`, options);
-  return result.allowed ? null : rateLimitResponse(result);
-}
-
-/** Reads the JSON body through the shared guard; a Response to return on refusal, else the parsed body. */
-export async function readBody(request: Request, maxBytes: number): Promise<{ body: unknown } | { refusal: Response }> {
-  try {
-    return { body: await readJsonWithLimit<unknown>(request, maxBytes) };
-  } catch (error) {
-    if (error instanceof RequestRejectedError) return { refusal: rejectedResponse(error) };
-    return { refusal: NextResponse.json({ error: "Invalid JSON" }, { status: 400 }) };
-  }
+  return pageOnly(request, message);
 }
 
 /**
- * Turns a store error into the response. Unknown failures log only the error's name and
- * code — never the error itself, because a database error can carry the values being written
- * and figures never go in a log (privacy review, rule 2).
+ * Turns a store error into the response. Unknown failures log only the error's name and code under
+ * "figures/<route>" — never the error itself, because a database error can carry the values being
+ * written and figures never go in a log (privacy review, rule 2).
  */
 export function storeErrorResponse(route: string, error: unknown): Response {
-  if (error instanceof VentureNotFoundError) {
-    return NextResponse.json({ error: error.message }, { status: 404 });
-  }
-  if (error instanceof FigureInputError) {
-    return NextResponse.json({ error: error.message }, { status: 400 });
-  }
-  const name = error instanceof Error ? error.name : "unknown";
-  const code = typeof (error as { code?: unknown })?.code === "string" ? (error as { code: string }).code : "-";
-  console.error(`[figures/${route}] failed (${name}, ${code})`);
-  return NextResponse.json({ error: "No database reachable — nothing was changed." }, { status: 503 });
+  return failure(`figures/${route}`, error, [
+    [VentureNotFoundError, 404],
+    [FigureInputError, 400],
+  ]);
 }
 
 /** Pulls `ventureId` and a list of ids out of an agree/discard/retract body, or says what is wrong. */

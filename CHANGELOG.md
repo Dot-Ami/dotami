@@ -765,6 +765,15 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   Prop activation's three sources: the new one in amber until 2026-10-27, each read by a person since).
 
 ### Changed
+- **The API routes share one copy of their route helpers** (developer-facing; nothing a person sees changes;
+  house-cleaning audit of 2026-10-31, item architecture-6). The rate limit, the "only DotAmi's own window" check,
+  reading the JSON body and turning a store error into an answer now live once, in `lib/api/route.ts` (`throttle`,
+  `pageOnly`, `readBody`, `failure`), where four domains' `http.ts` files and nine routes each had their own wrapper,
+  so a fix to one copy can no longer miss the others. Each domain's `http.ts` keeps only its own words and which of
+  its errors answer which status; every route keeps its rate-limit bucket, its limits, its order of checks and its
+  words. `tests/route-helpers-one-copy.spec.ts` fails if a copy comes back (it failed on the code before, naming
+  the copies), and `tests/route-answers-unchanged.spec.ts`, written first, pins every status, header and body the
+  moved routes answer.
 - **The CRA's GST/HST rate table, on the maintainer's answer about its rows; and the vehicle write-off's s.67.3
   source names only what its page holds** (his answers of 2026-10-28 on his reading page). The table is drawn by a
   script, so no tool can see it; he copied Ontario's row "13%" and Alberta's row "5%". That answer is about two rows,

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { logRouteError } from "@/lib/api/log-error";
-import { readBody, refuseUnlessFromAppPage, throttle } from "@/lib/expenses/http";
+import { pageOnly, readBody, throttle } from "@/lib/api/route";
 import { ReceiptError, receiptsFolder, removeReceipt } from "@/lib/expenses/receipts/store";
 import { prisma } from "@/lib/prisma";
 
@@ -21,10 +21,10 @@ const PAGE_ONLY_MESSAGE = "Only DotAmi's own window can remove a receipt. An age
  * DotAmi's own page, like adding one.
  */
 export async function POST(request: Request) {
-  const limited = throttle(request, "receipt-remove", RATE_LIMIT);
+  const limited = throttle("expenses-receipt-remove", request, RATE_LIMIT);
   if (limited) return limited;
 
-  const notFromApp = refuseUnlessFromAppPage(request, PAGE_ONLY_MESSAGE);
+  const notFromApp = pageOnly(request, PAGE_ONLY_MESSAGE);
   if (notFromApp) return notFromApp;
 
   const read = await readBody(request, MAX_BODY_BYTES);
