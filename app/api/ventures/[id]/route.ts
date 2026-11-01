@@ -1,8 +1,7 @@
 import { NextResponse } from "next/server";
 
-import { readJsonWithLimit, rejectedResponse, RequestRejectedError } from "@/lib/api/body-limit";
 import { logRouteError } from "@/lib/api/log-error";
-import { checkRateLimit, clientKeyFromRequest, rateLimitResponse } from "@/lib/api/rate-limit";
+import { readBody, throttle } from "@/lib/api/route";
 import { updateVenture, type VentureUpdate } from "@/lib/db/ventures";
 import { prisma } from "@/lib/prisma";
 import { VENTURE_STAGES, type VentureStage } from "@/lib/scenarios/types";
@@ -18,17 +17,12 @@ const MAX_BODY_BYTES = 96 * 1024;
 /** PATCH { stage?, notes?, name? } — the three things the ideas page edits. Everything else is the map's. */
 export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const rateLimit = checkRateLimit(`venture-patch:${clientKeyFromRequest(request)}`, RATE_LIMIT);
-  if (!rateLimit.allowed) return rateLimitResponse(rateLimit);
+  const limited = throttle("venture-patch", request, RATE_LIMIT);
+  if (limited) return limited;
 
-  let raw: unknown;
-  try {
-    raw = await readJsonWithLimit<unknown>(request, MAX_BODY_BYTES);
-  } catch (error) {
-    if (error instanceof RequestRejectedError) return rejectedResponse(error);
-    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
-  }
-  const body = (raw ?? {}) as { stage?: unknown; notes?: unknown; name?: unknown };
+  const read = await readBody(request, MAX_BODY_BYTES);
+  if ("refusal" in read) return read.refusal;
+  const body = (read.body ?? {}) as { stage?: unknown; notes?: unknown; name?: unknown };
   const patch: VentureUpdate = {};
 
   if (body.stage !== undefined) {

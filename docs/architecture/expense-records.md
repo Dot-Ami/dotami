@@ -968,7 +968,7 @@ someone who has no backup and wants to go on adding receipts without deleting th
   *Since 2026-10-10 there is a button for it in the desktop app, "Bring these receipts back", which
   keeps the receipts added under the new key (§ 12).*
 - **The route** is `POST /api/expenses/receipt/new-key` with `{ "giveUp": true }`: page-only like the
-  agree and delete routes (`refuseUnlessFromAppPage`: an agent or another program gets 403 and nothing
+  agree and delete routes (`pageOnly` in `lib/api/route.ts`: an agent or another program gets 403 and nothing
   moves), its body read through `readJsonWithLimit` (1 KB), rate-limited, and refused (409, nothing
   moved) unless this server's lock is `key-unreadable` (`key-out-of-reach` included). Once the files are moved, the server's lock
   becomes `new-key-at-restart` for the rest of its run, so a second press is refused and the pages say

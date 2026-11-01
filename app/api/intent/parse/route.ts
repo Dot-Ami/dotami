@@ -1,7 +1,6 @@
 import Anthropic from "@anthropic-ai/sdk";
 
-import { readJsonWithLimit, rejectedResponse, RequestRejectedError } from "@/lib/api/body-limit";
-import { checkRateLimit, clientKeyFromRequest, rateLimitResponse } from "@/lib/api/rate-limit";
+import { readBody, throttle } from "@/lib/api/route";
 import { ACTIVITY_TAXONOMY, type IntentParseResult } from "@/lib/journey/intent";
 import { parseIntentFallback } from "@/lib/journey/intent-fallback";
 import type { IntakeGoalId } from "@/lib/journey/types";
@@ -25,6 +24,8 @@ const MAX_TEXT_LENGTH = 2000;
 /** `{ text }` payloads are tiny; this is generous headroom over `MAX_TEXT_LENGTH` in bytes. */
 const MAX_BODY_BYTES = 8 * 1024;
 const RATE_LIMIT = { limit: 30, windowMs: 60_000 };
+/** What a body that isn't usable JSON is told here (most routes say "Invalid JSON"). */
+const INVALID_JSON = "Invalid JSON payload";
 
 const INTENT_TOOL: Anthropic.Tool = {
   name: "report_intent",
@@ -109,16 +110,18 @@ function sanitize(result: Record<string, unknown>, text: string): IntentParseRes
 }
 
 export async function POST(request: Request) {
-  const rateLimit = checkRateLimit(`intent-parse:${clientKeyFromRequest(request)}`, RATE_LIMIT);
-  if (!rateLimit.allowed) return rateLimitResponse(rateLimit);
+  const limited = throttle("intent-parse", request, RATE_LIMIT);
+  if (limited) return limited;
 
+  const read = await readBody(request, MAX_BODY_BYTES, INVALID_JSON);
+  if ("refusal" in read) return read.refusal;
   let text = "";
   try {
-    const body = await readJsonWithLimit<{ text?: unknown }>(request, MAX_BODY_BYTES);
-    text = `${body.text ?? ""}`.trim();
-  } catch (error) {
-    if (error instanceof RequestRejectedError) return rejectedResponse(error);
-    return Response.json({ error: "Invalid JSON payload" }, { status: 400 });
+    // A body of null, or a `text` that can't be made into a string, has always been told the same
+    // as a body that isn't JSON, so this stays inside a try of its own.
+    text = `${(read.body as { text?: unknown }).text ?? ""}`.trim();
+  } catch {
+    return Response.json({ error: INVALID_JSON }, { status: 400 });
   }
 
   if (text.length === 0) {

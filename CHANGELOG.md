@@ -871,6 +871,19 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   Prop activation's three sources: the new one in amber until 2026-10-27, each read by a person since).
 
 ### Changed
+- **The API routes share one copy of their route helpers** (developer-facing; nothing a person sees changes;
+  house-cleaning audit of 2026-10-31, item architecture-6). The rate limit, the "only DotAmi's own window" check,
+  reading the JSON body and turning a store error into an answer now live once, in `lib/api/route.ts` (`throttle`,
+  `pageOnly`, `readBody`, `failure`), where four domains' `http.ts` files and nine routes each had their own wrapper,
+  so a fix to one copy can no longer miss the others. Each domain's `http.ts` keeps what is its own: its words,
+  which of its errors answer which status, and the shape of its own request bodies (`parseIdsBody`, `parseScope`;
+  figures also keeps `refuseUnlessFromAppPage`, its binding of `pageOnly`); every route keeps its rate-limit bucket,
+  its limits, its order of checks and its words. `tests/route-helpers-one-copy.spec.ts` fails if a copy comes back (it failed on the code before, naming
+  the copies). `tests/route-answers-unchanged.spec.ts`, written first, pins the status, every header and the whole
+  body of 16 of the 41 route files the move changed (figures propose and bank-sources, the cockpit's date and
+  region, expenses propose and agree, the watched-businesses add, and the nine routes that counted their rate limit
+  by hand), and each domain's 503 answer and log line by calling its error mapper directly; the other moved routes
+  keep their existing tests, and the launch-secret refusal stays `tests/launch-secret.spec.ts`'s.
 - **The desktop app no longer reads every receipt whole when it starts.** At each start, before its window
   opens, it checks that every receipt file kept is encrypted (in `receipts/` and in the receipts folders
   earlier restores moved into `backups/`). It used to read each file in full only to look at its first 14
