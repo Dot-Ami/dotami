@@ -66,8 +66,8 @@ export function updaterLogger(write) {
   };
 }
 
-// The words electron-updater 6.8.9 uses when an info line carries a failure (NsisUpdater.js:135,
-// DownloadedUpdateHelper.js:102).
+// The words electron-updater 6.8.11 uses when an info line carries a failure (NsisUpdater.js:135,
+// DownloadedUpdateHelper.js:102; the same lines as 6.8.9's, re-read 2026-10-30).
 const UPDATER_FAILURE = /error|cannot|can't|couldn't|failed|unable/i;
 
 /**

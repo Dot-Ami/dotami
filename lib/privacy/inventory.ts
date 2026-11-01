@@ -838,7 +838,8 @@ export const FOLDERS: readonly FolderEntry[] = [
     desktopOnly: false,
     whenAbsent: "None: no wipe is owed.",
   },
-  // electron-updater's own file, not DotAmi's (found in PR #169's review, 2026-10-14). In 6.8.9,
+  // electron-updater's own file, not DotAmi's (found in PR #169's review, 2026-10-14). In 6.8.9 (and
+  // 6.8.11, the same lines, re-read 2026-10-30),
   // node_modules/electron-updater/out/AppUpdater.js:501-526 getOrCreateStagingUserId: it reads
   // path.join(userDataPath, ".updaterId") (:502), and when that holds no valid ID, makes a random one
   // (:517, a UUID from 4096 random bytes), writes "Generated new staging user ID: <id>" to its logger
@@ -890,7 +891,7 @@ export const SENT_ELSEWHERE: readonly SentElsewhereEntry[] = [
         why: "The installed app's update check: asks GitHub Releases for a newer version at start and from Help → Check for updates.",
       },
     ],
-    // electron-updater 6.8.9 sets this on its update provider before every check
+    // electron-updater 6.8.11 (as 6.8.9) sets this on its update provider before every check
     // (node_modules/electron-updater/out/AppUpdater.js:386-387, getUpdateInfoAndProvider), so it goes
     // with the requests that look for a newer version: the release list, the latest release's tag when
     // it asks for one, and the release's latest.yml (providers/GitHubProvider.js:43, :165 and :119, all

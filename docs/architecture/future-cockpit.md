@@ -1,8 +1,16 @@
 # Look inside your future — the future cockpit (design)
 
 Status: **design, 2026-10-11, written before any code. The maintainer made all six decisions on
-2026-10-11 (below); phase 1 is built from this page in pull requests that follow it.** Nothing here
-is built yet. Where this page and an older one disagree about the journey, the cockpit, progress or
+2026-10-11 (below); phase 1 is built from this page in pull requests that follow it.**
+
+What is built, as of 2026-10-31:
+
+- Built: cockpit phase 1, shipped in 0.4.0. Each part has its own *as built* section below (fourteen,
+  dated 2026-10-11 to 2026-10-17).
+- Left of phase 1: listed under [14a] in the [task list](../task-list.md).
+- Not built: phases 2 to 4 (§ 10), and everything § 12 lists as not in phase 1.
+
+Where this page and an older one disagree about the journey, the cockpit, progress or
 planning, this page is newer; each older page that disagreed was given a dated note in the same
 pull request as this one.
 
