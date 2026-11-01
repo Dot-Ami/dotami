@@ -765,6 +765,28 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   Prop activation's three sources: the new one in amber until 2026-10-27, each read by a person since).
 
 ### Changed
+- **Every sentence on *Your expenses*, *Settings*, *Licences*, *Your futures* and *What DotAmi knows about you* now
+  lives in a words file, and a test reads every folder of `components/` for text written anywhere else** (the
+  house-cleaning audit of 2026-10-31, item architecture-5; the maintainer's decision of 2026-10-11 that screens
+  keep their words in one place). 707 pieces of text moved, word for word, out of `components/expenses/`,
+  `settings/`, `licences/`, `ventures/` and `your-data/` into `lib/expenses/words.ts`, `lib/settings/words.ts`,
+  `lib/licences/words.ts`, `lib/ventures/words.ts` and `lib/person/words.ts` (`yourDataWords`), so the words files'
+  time check reads them as well as the component scan that already did (`tests/prerelease-honesty.spec.ts`), and a
+  verdict-word check reads them for the first time (no verdict check read them in the components, and the ventures
+  and person words files had none at all). The pages draw the same text as before, except
+  three sentences changed by a word or two, because the strict verdict list refuses "should" and "enough" even
+  where they give no verdict: *Your expenses*' refund note ends "if this refund belongs there too." (was "should go
+  there too"); the Delete menu starts "Tick what to delete." (was "Tick what should go."); and *What DotAmi knows
+  about you* says it read "the first few bytes of each (only to tell an encrypted receipt from a plain one)" (was
+  "enough to tell"). The ten sentences the time check had already let through in those components (words it
+  misreads, and how long DotAmi keeps something) keep their allowances, moved with them in
+  `tests/fixtures/ideas/known-gaps.ts`. `tests/cockpit-own-words.spec.ts` read only `components/cockpit/`; it now
+  reads every file under `components/`. The eleven files that still write their own text (141 pieces: the intake,
+  the landing page, node detail, the playbook export, the citation links, the official words' link, *In your words*'
+  box, the word mark, the section card, the "or" divider, and one label on the income prompt) keep a count each,
+  dated 2026-10-31, that must match the scan and may only go down from main's, and its one older allowance (the
+  cockpit legend's last line) may only shrink the same way. The rule is now a line in CLAUDE.md's Hard constraints. Tests:
+  `tests/cockpit-own-words.spec.ts`, `tests/idea-invariants.spec.ts`, `tests/prerelease-honesty.spec.ts`.
 - **The CRA's GST/HST rate table, on the maintainer's answer about its rows; and the vehicle write-off's s.67.3
   source names only what its page holds** (his answers of 2026-10-28 on his reading page). The table is drawn by a
   script, so no tool can see it; he copied Ontario's row "13%" and Alberta's row "5%". That answer is about two rows,
