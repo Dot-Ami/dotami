@@ -12,7 +12,8 @@
 // test, which GitHub lists on the run's page.
 //
 // Information only: the exit code is 0, also when the report is missing (the tests then never got to the end,
-// and the step that ran them has failed already), and 2 for a usage error.
+// and the step that ran them has failed already) or can't be read (empty, cut off, not a report: then both
+// counts are `unknown`, which the workflow treats as a reason to keep test-results/), and 2 for a usage error.
 
 import { appendFileSync, existsSync, readFileSync } from "node:fs";
 import path from "node:path";
@@ -42,7 +43,8 @@ export function testsIn(report, { cwd = process.cwd() } = {}) {
   // The report names a file from the config's test folder (`desktop.spec.ts`); from the checkout's top folder it
   // reads the way Playwright's own list prints it (`e2e-desktop/desktop.spec.ts`).
   const rootDir = report.config?.rootDir;
-  const fileOf = (file) => (rootDir ? path.relative(cwd, path.join(rootDir, file)).split(path.sep).join("/") : file);
+  const fileOf = (file) =>
+    rootDir ? path.relative(cwd, path.join(rootDir, file)).split(path.sep).join("/") : file;
   const walk = (suite, titles) => {
     for (const spec of suite.specs ?? []) {
       for (const test of spec.tests ?? []) {
@@ -88,9 +90,16 @@ export function summarize(report, { title = "Playwright tests", artifact = "" } 
       "",
     );
   }
-  if (failed.length) lines.push(`**${failed.length === 1 ? "1 test" : `${failed.length} tests`} failed on every try:**`, ...failed.map(testLine), "");
-  if (runErrors.length) lines.push("**The run itself stopped with an error:**", ...runErrors.map((e) => `- ${e}`), "");
-  if (!flaky.length && !failed.length && !runErrors.length) lines.push("No test needed a second try.", "");
+  if (failed.length)
+    lines.push(
+      `**${failed.length === 1 ? "1 test" : `${failed.length} tests`} failed on every try:**`,
+      ...failed.map(testLine),
+      "",
+    );
+  if (runErrors.length)
+    lines.push("**The run itself stopped with an error:**", ...runErrors.map((e) => `- ${e}`), "");
+  if (!flaky.length && !failed.length && !runErrors.length)
+    lines.push("No test needed a second try.", "");
   if ((flaky.length || failed.length) && artifact) {
     lines.push(
       `The failed tries' traces and error notes are kept with this run, in the artifact **${artifact}** (open a trace with \`npx playwright show-trace <trace.zip>\`).`,
@@ -98,7 +107,14 @@ export function summarize(report, { title = "Playwright tests", artifact = "" } 
     );
   }
 
-  return { passed, flaky: flaky.length, failed: failed.length, skipped, flakyTests: flaky, markdown: lines.join("\n") };
+  return {
+    passed,
+    flaky: flaky.length,
+    failed: failed.length,
+    skipped,
+    flakyTests: flaky,
+    markdown: lines.join("\n"),
+  };
 }
 
 /** A GitHub Actions warning annotation; its message escaped the way workflow commands need. */
@@ -114,15 +130,29 @@ export function main(argv, { env = process.env, log = console.log } = {}) {
     return 2;
   }
   if (!existsSync(reportFile)) {
-    log(`${reportFile} isn't there: the tests didn't get to the end, so there is nothing to count.`);
+    log(
+      `${reportFile} isn't there: the tests didn't get to the end, so there is nothing to count.`,
+    );
     if (env.GITHUB_OUTPUT) appendFileSync(env.GITHUB_OUTPUT, "failed=0\nflaky=0\n");
     return 0;
   }
-  const result = summarize(JSON.parse(readFileSync(reportFile, "utf8")), { title, artifact });
+  let result;
+  try {
+    result = summarize(JSON.parse(readFileSync(reportFile, "utf8")), { title, artifact });
+  } catch {
+    // An empty or cut-off file (a run stopped while writing it) or something that isn't a report: say so in one
+    // line rather than fail the step, and leave the counts unknown so the traces are kept.
+    const said = `### ${title ?? "Playwright tests"}: the test report couldn't be read, so nothing was counted; CI keeps test-results/ with the run.`;
+    log(said);
+    if (env.GITHUB_STEP_SUMMARY) appendFileSync(env.GITHUB_STEP_SUMMARY, `${said}\n`);
+    if (env.GITHUB_OUTPUT) appendFileSync(env.GITHUB_OUTPUT, "failed=unknown\nflaky=unknown\n");
+    return 0;
+  }
   log(result.markdown);
   for (const t of result.flakyTests) log(warningFor(t));
   if (env.GITHUB_STEP_SUMMARY) appendFileSync(env.GITHUB_STEP_SUMMARY, `${result.markdown}\n`);
-  if (env.GITHUB_OUTPUT) appendFileSync(env.GITHUB_OUTPUT, `failed=${result.failed}\nflaky=${result.flaky}\n`);
+  if (env.GITHUB_OUTPUT)
+    appendFileSync(env.GITHUB_OUTPUT, `failed=${result.failed}\nflaky=${result.flaky}\n`);
   return 0;
 }
 

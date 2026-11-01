@@ -125,12 +125,15 @@ jobs:
       # (e2e/clutter-budget.spec.ts), against its budget. Information only, like the quality job's step.
       # Only the half that ran e2e/clutter-budget.spec.ts has those measurements, so only that half prints
       # them. Which half that is comes from Playwright's own list of the half's tests (half 1 today), so the
-      # numbers still appear if new tests move the file to the other half.
+      # numbers still appear if new tests move the file to the other half. The list goes to a file before it is
+      # searched: piped straight into `grep -q`, which stops reading at the first match, Playwright failed
+      # writing the rest of it ("write EPIPE", run 41268399037).
       - name: Quality numbers (clutter)
         if: ${{ !cancelled() }}
         continue-on-error: true
         run: |
-          if npx playwright test --list --shard=${{ matrix.shard }}/2 | grep -q "clutter-budget.spec.ts"; then
+          npx playwright test --list --shard=${{ matrix.shard }}/2 > "$RUNNER_TEMP/browser-half-tests.txt"
+          if grep -q "clutter-budget.spec.ts" "$RUNNER_TEMP/browser-half-tests.txt"; then
             npm run quality:report -- --clutter-only
             cat test-results/quality.md >> "$GITHUB_STEP_SUMMARY"
           else
@@ -207,22 +210,22 @@ jobs:
         id: count
         if: ${{ !cancelled() }}
         continue-on-error: true
-        run: node scripts/playwright-summary.mjs test-results/report.json "Desktop app (Windows) ${{ matrix.shard }}/3" desktop-test-results-${{ matrix.shard }}
+        run: node scripts/playwright-summary.mjs test-results/report.json "Desktop app (Windows) ${{ matrix.shard }}/3" desktop-test-results-${{ matrix.shard }}-attempt-${{ github.run_attempt }}
 
       # Playwright keeps a failed try's trace (its steps, the error, what the test printed) and error notes in
       # test-results/ (trace: "retain-on-failure"), but this machine is thrown away when the job ends. This keeps
-      # test-results/ with the run when a test failed or needed a second try; open a trace with
-      # `npx playwright show-trace <trace.zip>`. The traces hold no screenshots of the app's windows: Playwright
-      # records those only for browsers it opens itself, and the app is started through Electron.
+      # test-results/ with the run when a test failed or needed a second try, or when the count above couldn't
+      # read the report (its counts are then "unknown"); open a trace with `npx playwright show-trace <trace.zip>`.
+      # The traces hold no screenshots of the app's windows: Playwright records those only for browsers it opens
+      # itself, and the app is started through Electron. The name carries the run's attempt, so re-running a job
+      # adds its own artifact and never replaces an earlier attempt's traces.
       - name: Keep the failed tries' traces
         if: ${{ !cancelled() && (failure() || steps.count.outputs.flaky != '0') }}
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
-          name: desktop-test-results-${{ matrix.shard }}
+          name: desktop-test-results-${{ matrix.shard }}-attempt-${{ github.run_attempt }}
           path: test-results/
           if-no-files-found: ignore
-          # A re-run of the job replaces the artifact rather than failing on the name.
-          overwrite: true
 
   # Fails a pull request that adds or upgrades to a dependency with a known high/critical
   # vulnerability, or one under a license the project cannot ship. Alerts on main are

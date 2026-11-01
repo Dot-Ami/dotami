@@ -788,11 +788,12 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - **A desktop test that fails on its first try and passes on its retry is now counted on the run's page, and its
   trace is kept** (the house-cleaning audit of 2026-10-31). Playwright runs a failed desktop test once more on CI,
   and one that then passed counted as passed with no sign outside the job's log (4 of the 48 desktop jobs in the 16
-  most recent finished CI runs on 2026-10-31); the failed try's trace was thrown away with the machine. Each
+  most recent CI runs that passed, on 2026-10-31); the failed try's trace was thrown away with the machine. Each
   *Desktop app (Windows)* job now writes its counts (passed, flaky, failed) on the run's summary page with each test
   that needed a second try and its first try's error, adds a warning per such test on the run's page, and, when a
-  test failed or needed a second try, keeps `test-results/` (the failed tries' traces and error notes) as an
-  artifact of the run. A trace holds the test's steps, its error and what it printed, but no pictures of the app's
+  test failed or needed a second try or the report couldn't be read, keeps `test-results/` (the failed tries'
+  traces and error notes) as an artifact named for its machine and the run's attempt, so a re-run never replaces
+  an earlier attempt's traces. A trace holds the test's steps, its error and what it printed, but no pictures of the app's
   windows: Playwright takes those only for browsers it opens itself. The flaky tests themselves aren't fixed here.
   `scripts/playwright-summary.mjs` reads the JSON report `playwright.desktop.config.ts` now writes on CI;
   `.github/workflows/ci.yml`; `tests/playwright-summary.spec.ts`.
