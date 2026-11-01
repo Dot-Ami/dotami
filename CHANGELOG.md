@@ -965,9 +965,10 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - **The cockpit's code comments say what each piece does, not how it was built** (2026-10-31, comments only:
   nothing a person or a build sees changes). The dated build histories in `components/cockpit/cockpit-page.tsx`,
   `what-if-bar.tsx`, `strategy-map.tsx`, `structure-ladder-rail.tsx` and `lib/cockpit/words.ts` are now short
-  present-tense notes that point to [docs/ui-spec/cockpit/_index.md](docs/ui-spec/cockpit/_index.md), since this
-  file already records the history. A comment in `what-if-bar.tsx` named `WhatIfShowButton`, a component that
-  was removed when its button moved into *Look closer*; it no longer does.
+  present-tense notes, pointing to the cockpit's screen spec ([docs/ui-spec/cockpit/](docs/ui-spec/cockpit/_index.md))
+  where one applies, since this file and the ui-spec pages already record the history. A comment in
+  `what-if-bar.tsx` named `WhatIfShowButton`, a component that was removed when its button moved into
+  *Look closer*; it no longer does.
 
 ## [0.4.1] — 2026-10-20
 

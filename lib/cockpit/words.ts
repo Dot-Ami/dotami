@@ -284,7 +284,8 @@ export const cockpitWords = {
       // can say about itself.
       aboutTheList: "This is the government's list for the job you picked. DotAmi doesn't say which skills a business needs.",
       /**
-       * The job's list folds under one button, below the road's own items, so its 44 rows don't swamp the road's 3.
+       * The job's list folds under one button, below the road's own items, so a long list doesn't swamp the road's
+       * own (Cabinetmakers' 44 rows against road 1's 3, in a screen review).
        */
       showList: (n: number) => `Show the ${n} on this job's list`,
       hideList: "Fold this job's list",

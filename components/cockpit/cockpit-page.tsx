@@ -79,7 +79,7 @@ import Link from "next/link";
  * The cockpit: one future the person is considering, drawn whole, and where they work through it. A header
  * and the goal bar (the four gauges) sit on top; under them are the left rail, the road and the right-hand
  * panel. The spec is docs/ui-spec/cockpit/_index.md, with one page per region beside it; the design is
- * docs/architecture/future-cockpit.md § 2. How it came to be built is in CHANGELOG.md.
+ * docs/architecture/future-cockpit.md § 2. How it came to be built is in CHANGELOG.md and the ui-spec pages.
  *
  * Everything on the screen is drawn from one run of road evaluation (lib/roads/) on what is kept for this
  * idea (lib/futures/): the gauges, the overlay switches over the map, the step panel, the lists behind the
@@ -265,7 +265,8 @@ export function CockpitPage({ initialScenario, pinned = false, example }: Cockpi
       const target = waitingSave.current;
       // Left within the pause (a link of the app's own, which keeps the window's memory): the save goes now. No
       // save line is left to say how it went, so a copy not kept stays held, and the cockpit saves it again and
-      // says so when the idea is opened again in this window. The save is never just dropped.
+      // says so when the idea is opened again in this window. A reload, a closed window or the desktop app's Go
+      // menu within the pause is a fresh load, not one of the app's own links, and still loses the edit.
       if (target) void saveScenario(target).then((result) => result.ok && editKept(target));
     },
     [editKept],
@@ -1054,11 +1055,11 @@ export function CockpitPage({ initialScenario, pinned = false, example }: Cockpi
           marks each block the clutter limit counts (docs/ui-spec/README.md, "The layout rule", rule 2): the
           header, the rail, the coach line and the panel here; the goal bar, the overlay switches, the road, the
           legend, the what-if bar and Next on your road in their own components. Each block still drawn keeps its
-          own mark, so the count sees what a person sees and never counts a block as one with its neighbour. */}
+          own mark, so the count sees each block the way a person sees it, on its own. */}
       <div className="min-w-0 border-b border-rule bg-[#0f0e12]">
       {/* Header — S2.5.4c: minmax(0, …) columns so nothing overlaps when the window is narrow. Below 768 px
           the idea's name has a line of its own under the back link and the buttons (between them it got about
-          75 px of a 375 px phone and showed "In…"). */}
+          75 px of a 375 px phone in a screen review, and showed "In…"). */}
       <header
         data-region="header"
         inert={behindSheet}
@@ -1410,10 +1411,10 @@ export function CockpitPage({ initialScenario, pinned = false, example }: Cockpi
                 // button is in Look closer.
                 after={folds.whatIf && whatIf !== null ? <WhatIfOnNote whatIf={whatIf} /> : null}
               />
-              {/* On a phone nothing above the road folds, so a line over it would push the road down (by 82 px).
-                  Right under the road it sat on the card the road's own area cuts off at its edge, and read as
-                  covering the road, so it comes after Next on your road. Hidden from 768 px, where the one above
-                  is drawn, so only one is on the page. */}
+              {/* On a phone nothing above the road folds, so a line over it would push the road down (82 px, in a
+                  screen review). Right under the road it sat on the card the road's own area cuts off at its edge,
+                  and read as covering the road, so it comes after Next on your road. Hidden from 768 px, where the
+                  one above is drawn, so only one is on the page. */}
               {showCoach ? <CoachLine onDismiss={putCoachAway} className="border-y md:hidden" /> : null}
             </div>
           ) : null}
