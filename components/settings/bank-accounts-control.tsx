@@ -4,6 +4,9 @@ import { useEffect, useId, useState } from "react";
 
 import { postJson } from "@/components/ventures/agree-prompt";
 import { describeAllowance, type BankSourcesState } from "@/lib/figures/source-account-name";
+import { settingsWords } from "@/lib/settings/words";
+
+const words = settingsWords.bankAccounts;
 
 /**
  * [8g] The bank and card accounts list under "Bank and card records" on Settings: each account the
@@ -51,7 +54,7 @@ export function BankAccountsControl({ initial }: { initial: BankSourcesState }) 
       return;
     }
     setState(result.body as BankSourcesState);
-    setMessage(`Taken back: ${name}.`);
+    setMessage(words.takenBack(name));
   }
 
   const empty = state.accounts.length === 0 && state.everyAccountSince === null;
@@ -59,20 +62,20 @@ export function BankAccountsControl({ initial }: { initial: BankSourcesState }) 
   return (
     <section aria-labelledby={headingId}>
       <h4 id={headingId} className="font-mono text-label uppercase tracking-[0.14em] text-stone">
-        Your bank and card accounts
+        {words.heading}
       </h4>
-      {empty ? <p className="mt-1.5 text-body text-paper-dim">No accounts in your list.</p> : null}
+      {empty ? <p className="mt-1.5 text-body text-paper-dim">{words.empty}</p> : null}
       <ul className="mt-1.5 space-y-2">
         {state.everyAccountSince !== null ? (
           <Item
-            title="Every account"
-            detail={`Always allowed since ${state.everyAccountSince}, including accounts added later`}
+            title={words.every.title}
+            detail={words.every.detail(state.everyAccountSince)}
             asking={asking === "every"}
             working={working}
-            question="Take back “Always allow every account”? Each account's next statement shows the warning again, unless you chose “Always allow this account” for it."
+            question={words.every.question}
             onAsk={() => setAsking("every")}
             onCancel={() => setAsking(null)}
-            onConfirm={() => void takeBack({ every: true }, "every account")}
+            onConfirm={() => void takeBack({ every: true }, words.every.name)}
           />
         ) : null}
         {state.accounts.map((a) => (
@@ -82,7 +85,7 @@ export function BankAccountsControl({ initial }: { initial: BankSourcesState }) 
             detail={describeAllowance(a)}
             asking={asking === a.id}
             working={working}
-            question={`Take back “${a.name}”? It leaves this list, and its next statement shows the warning again as a new account. Figures already read from it stay.`}
+            question={words.question(a.name)}
             onAsk={() => setAsking(a.id)}
             onCancel={() => setAsking(null)}
             onConfirm={() => void takeBack({ id: a.id }, a.name)}
@@ -120,15 +123,15 @@ function Item(props: {
             type="button"
             onClick={props.onAsk}
             disabled={props.working}
-            aria-label={`Take back ${props.title}`}
+            aria-label={words.takeBackLabel(props.title)}
             className="rounded-sm border border-amber/50 px-2.5 py-1 text-body font-semibold text-amber transition hover:bg-amber/10 disabled:opacity-50"
           >
-            Take back
+            {words.takeBack}
           </button>
         )}
       </div>
       {props.asking ? (
-        <div role="group" aria-label={`Take back ${props.title}?`} className="mt-2 rounded-sm border border-amber/40 bg-amber/5 px-3 py-2">
+        <div role="group" aria-label={words.askingLabel(props.title)} className="mt-2 rounded-sm border border-amber/40 bg-amber/5 px-3 py-2">
           <p className="text-body text-amber">{props.question}</p>
           <div className="mt-2 flex flex-wrap gap-2">
             <button
@@ -137,7 +140,7 @@ function Item(props: {
               disabled={props.working}
               className="rounded-sm border border-rule px-2.5 py-1 text-body text-paper transition hover:bg-ink disabled:opacity-50"
             >
-              Keep it
+              {words.keep}
             </button>
             <button
               type="button"
@@ -145,7 +148,7 @@ function Item(props: {
               disabled={props.working}
               className="rounded-sm border border-amber/50 px-2.5 py-1 text-body font-semibold text-amber transition hover:bg-amber/10 disabled:opacity-50"
             >
-              {props.working ? "Taking back…" : "Yes, take it back"}
+              {props.working ? words.takingBack : words.yes}
             </button>
           </div>
         </div>

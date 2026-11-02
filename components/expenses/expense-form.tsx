@@ -5,6 +5,7 @@ import { useId, useState } from "react";
 import { Pill } from "@/components/ui";
 import { formToDraft, purchaseLabel, type ExpenseDraft, type ExpenseFormValues } from "@/lib/expenses/display";
 import type { ExpenseView } from "@/lib/expenses/types";
+import { expensesWords } from "@/lib/expenses/words";
 
 /**
  * [8i] The form for typing one expense record. "Add to the list" puts it on this window's typed list
@@ -20,6 +21,8 @@ const FIELD =
   "rounded-sm border border-rule bg-ink px-2 py-1 text-lead text-paper outline-hidden placeholder:text-stone-dim focus:border-maple-soft aria-invalid:border-amber";
 const FIELD_LABEL = "block font-mono text-label uppercase tracking-[0.14em] text-stone";
 const HINT = "mt-0.5 text-small text-stone-dim";
+
+const words = expensesWords.form;
 
 export function ExpenseForm({
   values,
@@ -52,7 +55,7 @@ export function ExpenseForm({
   function submit(e: React.FormEvent) {
     e.preventDefault();
     if (values.date > today) {
-      setProblem({ error: "That day hasn't happened yet.", field: "date" });
+      setProblem({ error: words.dayNotYet, field: "date" });
       return;
     }
     const result = formToDraft(values, newKey());
@@ -65,17 +68,17 @@ export function ExpenseForm({
   }
 
   return (
-    <form onSubmit={submit} aria-label="Type an expense" className="rounded-sm border border-rule-soft bg-ink2 px-4 py-4" noValidate>
+    <form onSubmit={submit} aria-label={words.name} className="rounded-sm border border-rule-soft bg-ink2 px-4 py-4" noValidate>
       <fieldset>
-        <legend className={FIELD_LABEL}>This is</legend>
+        <legend className={FIELD_LABEL}>{words.thisIs}</legend>
         <div className="mt-1.5 flex flex-wrap gap-4 text-lead text-paper">
           <label className="flex items-center gap-2">
             <input type="radio" name={`${uid}-is`} checked={!refund} onChange={() => set({ is: "purchase" })} className="accent-maple" />
-            A purchase
+            {words.purchase}
           </label>
           <label className="flex items-center gap-2">
             <input type="radio" name={`${uid}-is`} checked={refund} onChange={() => set({ is: "refund" })} className="accent-maple" />
-            A refund or credit
+            {words.refund}
           </label>
         </div>
       </fieldset>
@@ -83,7 +86,7 @@ export function ExpenseForm({
       {refund ? (
         <div className="mt-3 rounded-sm border border-rule-soft bg-ink px-3 py-3">
           <fieldset>
-            <legend className={FIELD_LABEL}>Keep it as</legend>
+            <legend className={FIELD_LABEL}>{words.keepItAs}</legend>
             <div className="mt-1.5 space-y-1.5 text-lead text-paper">
               <label className="flex items-start gap-2">
                 <input
@@ -94,8 +97,8 @@ export function ExpenseForm({
                   className="mt-1 accent-maple"
                 />
                 <span>
-                  A negative amount on a record
-                  <span className="block text-body text-stone">The record holds minus the amount that came back.</span>
+                  {words.negative.label}
+                  <span className="block text-body text-stone">{words.negative.help}</span>
                 </span>
               </label>
               <label className="flex items-start gap-2">
@@ -107,19 +110,18 @@ export function ExpenseForm({
                   className="mt-1 accent-maple"
                 />
                 <span>
-                  A separate refund record, linked to the purchase
-                  <span className="block text-body text-stone">The purchase keeps its own amount; the refund sits beside it.</span>
+                  {words.separate.label}
+                  <span className="block text-body text-stone">{words.separate.help}</span>
                 </span>
               </label>
             </div>
           </fieldset>
-          <p className="mt-2 text-body text-stone-dim">
-            Either way it keeps the refund&apos;s date, the purchase it came from, the GST/HST part and the credit note when you give them. Which way is yours to choose; DotAmi doesn&apos;t say how a refund is taxed.
-          </p>
+          <p className="mt-2 text-body text-stone-dim">{words.eitherWay}</p>
           <div className="mt-3 flex flex-wrap gap-3">
             <div className="min-w-[16rem] flex-1">
               <label htmlFor={id("refundOfId")} className={FIELD_LABEL}>
-                The purchase it came from{values.refundWay === "separate" ? "" : " (optional)"}
+                {words.cameFrom}
+                {values.refundWay === "separate" ? "" : words.optional}
               </label>
               <select
                 id={id("refundOfId")}
@@ -128,7 +130,7 @@ export function ExpenseForm({
                 aria-invalid={invalid("refundOfId")}
                 className={`${FIELD} mt-1 w-full`}
               >
-                <option value="">{values.refundWay === "separate" ? "Choose a purchase…" : "None in DotAmi"}</option>
+                <option value="">{values.refundWay === "separate" ? words.choosePurchase : words.noneInDotAmi}</option>
                 {purchases.map((p) => (
                   <option key={p.id} value={p.id}>
                     {purchaseLabel(p)}
@@ -138,14 +140,14 @@ export function ExpenseForm({
             </div>
             <div className="min-w-[12rem] flex-1">
               <label htmlFor={id("creditNote")} className={FIELD_LABEL}>
-                Credit note (optional)
+                {words.creditNote}
               </label>
               <input
                 id={id("creditNote")}
                 value={values.creditNote}
                 onChange={(e) => set({ creditNote: e.target.value })}
                 maxLength={200}
-                placeholder="its number and date"
+                placeholder={words.creditNoteHint}
                 aria-invalid={invalid("creditNote")}
                 className={`${FIELD} mt-1 w-full`}
               />
@@ -157,7 +159,7 @@ export function ExpenseForm({
       <div className="mt-3 flex flex-wrap items-start gap-3">
         <div>
           <label htmlFor={id("date")} className={FIELD_LABEL}>
-            {refund ? "Day it came back" : "Day"}
+            {refund ? words.dayCameBack : words.day}
           </label>
           <input
             id={id("date")}
@@ -171,7 +173,7 @@ export function ExpenseForm({
         </div>
         <div>
           <label htmlFor={id("amount")} className={FIELD_LABEL}>
-            {refund ? "Amount that came back" : "Amount"}
+            {refund ? words.amountCameBack : words.amount}
           </label>
           <input
             id={id("amount")}
@@ -179,14 +181,14 @@ export function ExpenseForm({
             inputMode="decimal"
             value={values.amount}
             onChange={(e) => set({ amount: e.target.value })}
-            placeholder="45.99"
+            placeholder={words.amountHint}
             aria-invalid={invalid("amount")}
             className={`${FIELD} mt-1 w-32 text-right font-mono`}
           />
         </div>
         <div>
           <label htmlFor={id("currency")} className={FIELD_LABEL}>
-            Currency
+            {words.currency}
           </label>
           <input
             id={id("currency")}
@@ -200,14 +202,14 @@ export function ExpenseForm({
         </div>
         <div className="min-w-[12rem] flex-1">
           <label htmlFor={id("paidTo")} className={FIELD_LABEL}>
-            {refund ? "Who it came back from" : "Paid to"}
+            {refund ? words.cameBackFrom : words.paidTo}
           </label>
           <input
             id={id("paidTo")}
             value={values.paidTo}
             onChange={(e) => set({ paidTo: e.target.value })}
             maxLength={120}
-            placeholder="Staples"
+            placeholder={words.paidToHint}
             aria-invalid={invalid("paidTo")}
             className={`${FIELD} mt-1 w-full`}
           />
@@ -217,34 +219,34 @@ export function ExpenseForm({
       <div className="mt-3 flex flex-wrap items-start gap-3">
         <div className="min-w-[14rem] flex-[2]">
           <label htmlFor={id("whatFor")} className={FIELD_LABEL}>
-            What for
+            {words.whatFor}
           </label>
           <input
             id={id("whatFor")}
             value={values.whatFor}
             onChange={(e) => set({ whatFor: e.target.value })}
             maxLength={200}
-            placeholder="printer paper"
+            placeholder={words.whatForHint}
             aria-invalid={invalid("whatFor")}
             className={`${FIELD} mt-1 w-full`}
           />
         </div>
         <div className="min-w-[10rem] flex-1">
           <label htmlFor={id("category")} className={FIELD_LABEL}>
-            Category (optional)
+            {words.category}
           </label>
           <input
             id={id("category")}
             value={values.category}
             onChange={(e) => set({ category: e.target.value })}
             maxLength={80}
-            placeholder="your own word"
+            placeholder={words.categoryHint}
             className={`${FIELD} mt-1 w-full`}
           />
         </div>
         <div>
           <label htmlFor={id("businessShare")} className={FIELD_LABEL}>
-            Business share % (optional)
+            {words.businessShare}
           </label>
           <input
             id={id("businessShare")}
@@ -252,18 +254,18 @@ export function ExpenseForm({
             inputMode="numeric"
             value={values.businessShare}
             onChange={(e) => set({ businessShare: e.target.value })}
-            placeholder="100"
+            placeholder={words.businessShareHint}
             aria-invalid={invalid("businessShare")}
             aria-describedby={`${id("businessShare")}-hint`}
             className={`${FIELD} mt-1 w-24 text-right font-mono`}
           />
           <p id={`${id("businessShare")}-hint`} className={HINT}>
-            Yours to set: a whole number, 1 to 100. Kept beside the full amount.
+            {words.businessShareHelp}
           </p>
         </div>
         <div>
           <label htmlFor={id("gstHst")} className={FIELD_LABEL}>
-            GST/HST part (optional)
+            {words.gstHst}
           </label>
           <input
             id={id("gstHst")}
@@ -271,7 +273,7 @@ export function ExpenseForm({
             inputMode="decimal"
             value={values.gstHst}
             onChange={(e) => set({ gstHst: e.target.value })}
-            placeholder="5.98"
+            placeholder={words.gstHstHint}
             aria-invalid={invalid("gstHst")}
             className={`${FIELD} mt-1 w-28 text-right font-mono`}
           />
@@ -279,11 +281,11 @@ export function ExpenseForm({
       </div>
 
       <details className="mt-3">
-        <summary className="cursor-pointer text-body text-stone hover:text-paper">The seller&apos;s address and GST/HST number (optional)</summary>
+        <summary className="cursor-pointer text-body text-stone hover:text-paper">{words.seller}</summary>
         <div className="mt-2 flex flex-wrap gap-3">
           <div className="min-w-[16rem] flex-[2]">
             <label htmlFor={id("sellerAddress")} className={FIELD_LABEL}>
-              Seller&apos;s address
+              {words.sellerAddress}
             </label>
             <textarea
               id={id("sellerAddress")}
@@ -296,14 +298,14 @@ export function ExpenseForm({
           </div>
           <div className="min-w-[12rem] flex-1">
             <label htmlFor={id("vendorGstNumber")} className={FIELD_LABEL}>
-              Seller&apos;s GST/HST number
+              {words.sellerGstNumber}
             </label>
             <input
               id={id("vendorGstNumber")}
               value={values.vendorGstNumber}
               onChange={(e) => set({ vendorGstNumber: e.target.value })}
               maxLength={40}
-              placeholder="123456789 RT 0001"
+              placeholder={words.sellerGstNumberHint}
               className={`${FIELD} mt-1 w-full font-mono`}
             />
           </div>
@@ -318,9 +320,9 @@ export function ExpenseForm({
 
       <div className="mt-4 flex flex-wrap items-center gap-3">
         <Pill type="submit" variant="maple" size="small">
-          Add to the list
+          {words.add}
         </Pill>
-        <p className="text-body text-stone-dim">Nothing is kept until you agree. No bank or card numbers here.</p>
+        <p className="text-body text-stone-dim">{words.nothingKept}</p>
       </div>
     </form>
   );

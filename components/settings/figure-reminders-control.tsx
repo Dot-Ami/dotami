@@ -6,6 +6,7 @@ import { CALENDAR_FILE_NAME, CALENDAR_MIME, reminderCalendar } from "@/lib/figur
 import { useLocalToday } from "@/lib/figures/use-local-today";
 import { loadSetting, saveSetting } from "@/lib/settings/client";
 import { REMINDER_CADENCES, REMINDER_CADENCE_LABELS, type ReminderCadence } from "@/lib/settings/values";
+import { settingsWords } from "@/lib/settings/words";
 import { saveTextFile } from "@/lib/utils/save-file";
 
 /**
@@ -25,6 +26,7 @@ import { saveTextFile } from "@/lib/utils/save-file";
  * file always matches what is saved.
  */
 export function FigureRemindersControl({ initial }: { initial: ReminderCadence[] | null }) {
+  const words = settingsWords.figureReminders;
   const [ticked, setTicked] = useState<ReminderCadence[]>(initial ?? []);
   const [state, setState] = useState<"idle" | "saving" | "saved" | "error">("idle");
   // "reading" until the saved value has been asked for; "failed" when it couldn't be read.
@@ -77,7 +79,7 @@ export function FigureRemindersControl({ initial }: { initial: ReminderCadence[]
 
   return (
     <fieldset disabled={read !== "ready"}>
-      <legend className="font-mono text-label uppercase tracking-[0.14em] text-stone">Remind me</legend>
+      <legend className="font-mono text-label uppercase tracking-[0.14em] text-stone">{words.legend}</legend>
       <div className="mt-1.5 flex flex-wrap gap-x-5 gap-y-1.5">
         {REMINDER_CADENCES.map((c) => (
           <label key={c} className="flex items-center gap-2 text-lead text-paper">
@@ -93,15 +95,15 @@ export function FigureRemindersControl({ initial }: { initial: ReminderCadence[]
       </div>
       <p role="status" className="mt-1.5 min-h-4 font-mono text-label uppercase tracking-wider text-stone-dim">
         {read === "failed"
-          ? "Couldn't read your saved choice, so it can't be changed right now."
+          ? words.status.readFailed
           : state === "saving"
-            ? "Saving…"
+            ? words.status.saving
             : state === "saved"
-              ? "Saved."
+              ? words.status.saved
               : state === "error"
-                ? "Save failed — nothing was changed."
+                ? words.status.saveFailed
                 : read === "ready" && ticked.length === 0
-                  ? "None ticked: no reminder."
+                  ? words.status.none
                   : ""}
       </p>
       <div className="mt-2 flex flex-wrap items-start gap-x-4 gap-y-1.5">
@@ -111,18 +113,9 @@ export function FigureRemindersControl({ initial }: { initial: ReminderCadence[]
           disabled={ticked.length === 0 || state === "saving"}
           className="shrink-0 rounded-sm border border-rule px-2 py-0.5 font-mono text-small uppercase tracking-wider text-stone transition hover:border-maple-soft hover:text-paper disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:border-rule disabled:hover:text-stone"
         >
-          Add to my calendar
+          {words.addToCalendar}
         </button>
-        <p className="min-w-0 flex-1 text-body leading-relaxed text-stone">
-          Saves a calendar file (.ics) with one repeating event per ticked box, on the first day after
-          each month, quarter or year ends. Open it with your calendar app, or use its Import menu.
-          Google Calendar: import it on a computer at calendar.google.com (Settings, then Import &amp;
-          export). Importing the same file again adds a second copy, so after changing your ticks,
-          delete the old events first. Your calendar
-          can&apos;t see DotAmi, so it reminds you whether or not your figures are already in. The file
-          holds only those general words: no amounts and no idea names. A calendar that syncs online
-          shares them with the company that runs it.
-        </p>
+        <p className="min-w-0 flex-1 text-body leading-relaxed text-stone">{words.calendarHelp}</p>
       </div>
     </fieldset>
   );

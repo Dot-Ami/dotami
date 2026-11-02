@@ -8,6 +8,7 @@ import { BUSINESS_TOTAL_KINDS, FIGURE_KIND_LABELS, type FigureKind, type FigureV
 import { parseMoneyToCents } from "@/lib/figures/money";
 import { isTaxLineKind, kindWithNewestLine, taxLineStatus, taxLineWords, taxYearHint } from "@/lib/figures/tax-line";
 import { useLocalToday } from "@/lib/figures/use-local-today";
+import { venturesWords } from "@/lib/ventures/words";
 
 import { AMOUNT_HELP, AgreePrompt, describePeriod, formatAmount, postJson } from "./agree-prompt";
 import { FigureDates, FutureDateNote } from "./figure-age";
@@ -31,6 +32,9 @@ import { ReturnDrop } from "./return-drop";
 const FIELD =
   "rounded-sm border border-rule bg-ink px-2 py-1 text-lead text-paper outline-hidden placeholder:text-stone-dim focus:border-maple-soft";
 const FIELD_LABEL = "block font-mono text-label uppercase tracking-[0.14em] text-stone";
+
+const words = venturesWords.figures;
+const common = venturesWords.common;
 
 /** Newest period first; ties broken by the start day so a month sorts above the year around it. */
 function newestPeriodFirst(a: FigureView, b: FigureView): number {
@@ -67,14 +71,14 @@ export function FiguresPanel({
       const res = await fetch(`/api/figures?venture=${encodeURIComponent(ventureId)}`, { cache: "no-store" });
       const body = (await res.json()) as { figures?: FigureView[]; error?: string };
       if (!res.ok || !Array.isArray(body.figures)) {
-        setLoadError(body.error ?? "Could not load your figures.");
+        setLoadError(body.error ?? words.couldNotLoad);
         setFigures((current) => current ?? []);
         return;
       }
       setLoadError(null);
       setFigures(body.figures);
     } catch {
-      setLoadError("Could not load your figures.");
+      setLoadError(words.couldNotLoad);
       setFigures((current) => current ?? []);
     }
   }, [ventureId]);
@@ -145,11 +149,8 @@ export function FiguresPanel({
         reminders={reminders}
         onAddFigures={openAddForm}
       />
-      <p className="font-mono text-label uppercase tracking-[0.14em] text-stone">Your figures</p>
-      <p className="mt-1 text-body text-stone-dim">
-        Totals you&apos;ve agreed to — never your individual transactions. Where they settle a rule, cards use
-        them instead of your estimates.
-      </p>
+      <p className="font-mono text-label uppercase tracking-[0.14em] text-stone">{words.heading}</p>
+      <p className="mt-1 text-body text-stone-dim">{words.intro}</p>
 
       {loadError ? (
         <p role="alert" className="mt-2 rounded-sm border border-amber/40 bg-amber/5 px-3 py-2 text-body text-amber">
@@ -163,22 +164,22 @@ export function FiguresPanel({
       ) : null}
 
       {figures === null ? (
-        <p className="mt-2 text-body text-stone-dim">Loading…</p>
+        <p className="mt-2 text-body text-stone-dim">{common.loading}</p>
       ) : (
         <>
           {proposed.length > 0 ? (
             <div className="mt-2 flex flex-wrap items-center gap-3 rounded-sm border border-amber/40 bg-amber/5 px-3 py-2">
               <p className="text-body text-amber">
-                {proposed.length} {proposed.length === 1 ? "figure" : "figures"} waiting for you to agree
+                {proposed.length} {words.figureWord(proposed.length)} {words.waiting}
               </p>
               <Pill variant="amber-out" size="small" className="ml-auto" onClick={() => setReviewing(proposed)}>
-                Review
+                {words.review}
               </Pill>
             </div>
           ) : null}
 
           {confirmed.length === 0 && retracted.length === 0 ? (
-            <p className="mt-2 text-body text-stone-dim">No figures yet.</p>
+            <p className="mt-2 text-body text-stone-dim">{words.none}</p>
           ) : null}
 
           {confirmed.length > 0 ? (
@@ -191,11 +192,11 @@ export function FiguresPanel({
                     {taxLineWords(f) ? <span className="text-stone">{taxLineWords(f)}</span> : null}
                     <span className="font-mono text-paper">{formatAmount(f.amountCents, f.currency)}</span>
                     <span className="text-stone-dim">
-                      from {f.sourceLabel}
-                      {f.sourceRows !== null ? ` · ${f.sourceRows} ${f.sourceRows === 1 ? "row" : "rows"}` : ""}
+                      {words.from} {f.sourceLabel}
+                      {f.sourceRows !== null ? words.sourceRows(f.sourceRows) : ""}
                     </span>
                     {f.editedByPerson ? (
-                      <span className="font-mono text-label uppercase tracking-wider text-maple">edited by you</span>
+                      <span className="font-mono text-label uppercase tracking-wider text-maple">{words.editedByYou}</span>
                     ) : null}
                     {confirmingId !== f.id ? (
                       <button
@@ -206,7 +207,7 @@ export function FiguresPanel({
                         }}
                         className="ml-auto text-small text-stone-dim hover:text-maple"
                       >
-                        Retract
+                        {words.retract}
                       </button>
                     ) : null}
                   </div>
@@ -214,12 +215,12 @@ export function FiguresPanel({
                   <FutureDateNote periodEnd={f.periodEnd} today={today} />
                   {confirmingId === f.id ? (
                     <div className="mt-1 flex flex-wrap items-center gap-2 rounded-sm border border-rule-soft bg-ink px-3 py-1.5">
-                      <span className="text-body text-paper-dim">Retract this figure? Cards go back to your estimate.</span>
+                      <span className="text-body text-paper-dim">{words.retractQuestion}</span>
                       <Pill variant="maple-out" size="small" onClick={() => void retract(f.id)} disabled={retractBusy}>
-                        Retract
+                        {words.retract}
                       </Pill>
                       <Pill variant="ghost" size="small" onClick={() => setConfirmingId(null)} disabled={retractBusy}>
-                        Keep
+                        {words.keep}
                       </Pill>
                     </div>
                   ) : null}
@@ -230,7 +231,7 @@ export function FiguresPanel({
 
           {retracted.length > 0 ? (
             <div className="mt-3">
-              <p className="font-mono text-label uppercase tracking-wider text-stone-dim">Retracted</p>
+              <p className="font-mono text-label uppercase tracking-wider text-stone-dim">{words.retracted}</p>
               <ul className="mt-1 space-y-1">
                 {retracted.map((f) => {
                   // The person's own day, not the UTC day the timestamp starts with.
@@ -241,9 +242,15 @@ export function FiguresPanel({
                       <span>{describePeriod(f.periodStart, f.periodEnd)}</span>
                       {taxLineWords(f) ? <span>{taxLineWords(f)}</span> : null}
                       <span className="font-mono">{formatAmount(f.amountCents, f.currency)}</span>
-                      <span>from {f.sourceLabel}</span>
+                      <span>
+                        {words.from} {f.sourceLabel}
+                      </span>
                       <span>{describeFigureDates(f.periodEnd, today, f.confirmedAt)}</span>
-                      {retractedDay ? <span className="ml-auto">retracted {retractedDay}</span> : null}
+                      {retractedDay ? (
+                        <span className="ml-auto">
+                          {words.retractedOn} {retractedDay}
+                        </span>
+                      ) : null}
                     </li>
                   );
                 })}
@@ -268,13 +275,13 @@ export function FiguresPanel({
         ) : (
           <div className="flex flex-wrap items-center gap-2">
             <Pill variant="ghost" size="small" onClick={() => setAdding("typed")}>
-              Add a figure
+              {words.addFigure}
             </Pill>
             <Pill variant="ghost" size="small" onClick={() => setAdding("file")}>
-              Add from a file
+              {words.addFromFile}
             </Pill>
             <Pill variant="ghost" size="small" onClick={() => setAdding("return")}>
-              Add from last year&apos;s return
+              {words.addFromReturn}
             </Pill>
           </div>
         )}
@@ -328,28 +335,28 @@ function AddFigureForm({
     setAmountError(cents === null ? AMOUNT_HELP : null);
     if (cents === null) return;
     if (!from || !to) {
-      setError("Pick both dates.");
+      setError(words.form.pickBothDates);
       return;
     }
     if (to < from) {
-      setError("The end date can't be before the start date.");
+      setError(words.form.endBeforeStart);
       return;
     }
     const code = currency.trim().toUpperCase();
     if (!/^[A-Z]{3}$/.test(code)) {
-      setError("Write the currency as three letters, like CAD.");
+      setError(common.currencyHelp);
       return;
     }
     const asksTaxYear = isTaxLineKind(kind);
     if (asksTaxYear && !/^\d{4}$/.test(taxYear.trim())) {
-      setError("Write the tax year as four digits, like 2025.");
+      setError(words.form.taxYearHelp);
       return;
     }
 
     setBusy(true);
     const result = await postJson("/api/figures/propose", {
       ventureId,
-      source: { kind: "typed", label: "typed by you" },
+      source: { kind: "typed", label: words.form.typedByYou },
       figures: [
         {
           kind,
@@ -369,7 +376,7 @@ function AddFigureForm({
     }
     const created = (result.body as { figures?: FigureView[] } | null)?.figures;
     if (!Array.isArray(created) || created.length === 0) {
-      setError("That didn't go through. Nothing was changed.");
+      setError(common.notThrough);
       return;
     }
     onProposed(created);
@@ -380,7 +387,7 @@ function AddFigureForm({
       <div className="flex flex-wrap items-start gap-3">
         <div>
           <label htmlFor={`${uid}-kind`} className={FIELD_LABEL}>
-            What
+            {words.form.what}
           </label>
           <select
             id={`${uid}-kind`}
@@ -398,7 +405,7 @@ function AddFigureForm({
         {isTaxLineKind(kind) ? (
           <div>
             <label htmlFor={`${uid}-tax-year`} className={FIELD_LABEL}>
-              Tax year
+              {words.form.taxYear}
             </label>
             <input
               id={`${uid}-tax-year`}
@@ -415,19 +422,19 @@ function AddFigureForm({
         ) : null}
         <div>
           <label htmlFor={`${uid}-from`} className={FIELD_LABEL}>
-            From
+            {words.form.from}
           </label>
           <input id={`${uid}-from`} type="date" value={from} onChange={(e) => setFrom(e.target.value)} className={`${FIELD} mt-1`} />
         </div>
         <div>
           <label htmlFor={`${uid}-to`} className={FIELD_LABEL}>
-            To
+            {words.form.to}
           </label>
           <input id={`${uid}-to`} type="date" value={to} onChange={(e) => setTo(e.target.value)} className={`${FIELD} mt-1`} />
         </div>
         <div>
           <label htmlFor={`${uid}-amount`} className={FIELD_LABEL}>
-            Amount
+            {words.form.amount}
           </label>
           <input
             id={`${uid}-amount`}
@@ -446,7 +453,7 @@ function AddFigureForm({
         </div>
         <div>
           <label htmlFor={`${uid}-currency`} className={FIELD_LABEL}>
-            Currency
+            {common.currency}
           </label>
           <input
             id={`${uid}-currency`}
@@ -470,7 +477,7 @@ function AddFigureForm({
         >
           {/^\d{4}$/.test(taxYear.trim())
             ? taxYearHint(kind, Number(taxYear.trim()))
-            : "The tax year this total is for. The CRA line it goes on can change from one year's form to the next."}
+            : words.form.taxYearHint}
         </p>
       ) : null}
       {amountError ? (
@@ -486,12 +493,12 @@ function AddFigureForm({
 
       <div className="mt-3 flex items-center gap-2">
         <Pill type="submit" variant="maple" size="small" disabled={busy}>
-          Review this figure
+          {common.reviewOne}
         </Pill>
         <Pill variant="ghost" size="small" onClick={onCancel} disabled={busy}>
-          Cancel
+          {common.cancel}
         </Pill>
-        <p className="text-body text-stone-dim">You&apos;ll be asked to agree before it counts.</p>
+        <p className="text-body text-stone-dim">{words.form.askedToAgree}</p>
       </div>
     </form>
   );

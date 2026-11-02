@@ -4,6 +4,7 @@ import { createContext, useContext } from "react";
 
 import type { ReceiptLockState } from "@/lib/expenses/receipts/lock";
 import { KEY_LOSS_SENTENCE, RECEIPTS_CANT_BE_ADDED, receiptProtectionText } from "@/lib/expenses/receipts/protection";
+import { expensesWords } from "@/lib/expenses/words";
 
 import { StartNewReceiptKey } from "./start-new-key";
 
@@ -20,11 +21,11 @@ export const useReceiptProtection = () => useContext(ReceiptProtectionContext);
 export function receiptNoteSentence(state: ReceiptLockState): string {
   switch (state) {
     case "on":
-      return `In this app the copy is encrypted, with a key Windows keeps for your Windows account only. ${KEY_LOSS_SENTENCE}`;
+      return expensesWords.protection.on(KEY_LOSS_SENTENCE);
     case "source":
-      return "In this copy, run from source, the copy isn't encrypted: anyone who can read the receipts folder can open it. The desktop app encrypts receipts.";
+      return expensesWords.protection.source;
     case "no-key-store":
-      return "On this computer the copy isn't encrypted (the key store Windows keeps for your account isn't available to DotAmi right now): anyone who can read the receipts folder can open it.";
+      return expensesWords.protection.noKeyStore;
     case "key-unreadable":
     case "key-out-of-reach":
     case "new-key-at-restart":

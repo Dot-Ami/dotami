@@ -8,10 +8,14 @@ import { postJson } from "@/components/ventures/agree-prompt";
 import type { RecordRetentionEntry } from "@/lib/engines/compliance/v2026";
 import { howCheckedWords, isCheckFirst } from "@/lib/engines/shared/citation-check";
 import { intakeAfterDelete } from "@/lib/journey/window-storage";
+import { yourDataWords } from "@/lib/person/words";
 import type { DeleteKindId, DeleteMenuEntry, KeptLink } from "@/lib/privacy/inventory";
 import { folderKeys, keptLinkKey, keptLinks, SAFETY_COPIES_KEY, SET_ASIDE_RECEIPTS_KEY } from "@/lib/privacy/kept-links";
 
 import { numberWords, plural } from "./format";
+
+const words = yourDataWords.delete;
+const { counted, itOrThem } = yourDataWords;
 
 export interface DeleteMenuProps {
   menu: readonly DeleteMenuEntry[];
@@ -63,7 +67,7 @@ const tablesOf = (e: DeleteMenuEntry) => [...e.tables, ...e.alsoDeletes, ...fold
 
 /** "3 records"; "1 file" for the safety copies and "2 folders" for the set-aside receipts, which aren't rows. */
 const countWords = (key: string, n: number) =>
-  key === COPIES ? plural(n, "file") : key === SET_ASIDE ? plural(n, "folder") : plural(n, "record");
+  key === COPIES ? plural(n, counted.file) : key === SET_ASIDE ? plural(n, counted.folder) : plural(n, counted.record);
 
 /** Safety copies the server couldn't delete (another program had them open); 0 when none were ticked. */
 const copiesLeftOf = (o: Outcome) => o.left?.[COPIES] ?? 0;
@@ -203,11 +207,9 @@ export function DeleteMenu({ menu, counts, keptCounts, tableNames, notCleared, r
           }}
           className="rounded-sm border border-amber/50 px-3 py-1.5 text-lead font-semibold text-amber transition hover:bg-amber/10 disabled:cursor-not-allowed disabled:opacity-50"
         >
-          Delete
+          {words.button}
         </button>
-        {!anything && step === "closed" ? (
-          <span className="text-body text-stone">Nothing to delete: the data file holds nothing of yours.</span>
-        ) : null}
+        {!anything && step === "closed" ? <span className="text-body text-stone">{words.nothingOfYours}</span> : null}
       </div>
 
       {(wipePending || pendingResult) && !outcome && step === "closed" ? (
@@ -232,10 +234,8 @@ export function DeleteMenu({ menu, counts, keptCounts, tableNames, notCleared, r
       {step !== "closed" && step !== "done" ? (
         <div id={panelId} className="mt-3 rounded-lg border border-rule bg-ink2 px-4 py-4">
           <fieldset>
-            <legend className="font-semibold text-paper">What do you want to delete?</legend>
-            <p className="mt-1 text-body text-stone">
-              Tick what should go. Each box says what else goes with it. Nothing is deleted until you have said yes twice.
-            </p>
+            <legend className="font-semibold text-paper">{words.menu.legend}</legend>
+            <p className="mt-1 text-body text-stone">{words.menu.lead}</p>
             {error ? (
               <p role="alert" className="mt-3 rounded-sm border border-amber/40 bg-amber/5 px-3 py-2 text-lead text-amber">
                 {error}
@@ -263,9 +263,9 @@ export function DeleteMenu({ menu, counts, keptCounts, tableNames, notCleared, r
                         </label>
                         <p className="mt-0.5 font-mono text-body text-stone">
                           {!e.built
-                            ? "Not kept yet"
+                            ? words.menu.notKeptYet
                             : total === 0
-                              ? "Nothing to delete"
+                              ? words.menu.nothingToDelete
                               : tablesOf(e)
                                   .map((m) => `${tableNames[m] ?? m}: ${counts[m] ?? 0}`)
                                   .join(" · ")}
@@ -273,10 +273,9 @@ export function DeleteMenu({ menu, counts, keptCounts, tableNames, notCleared, r
                         {e.built && total > 0
                           ? e.keeps.map((k) => (
                               <p key={keyOf(k)} className="font-mono text-body text-stone">
-                                {capitalise(k.one)}s attached to them: {keptCounts[keyOf(k)] ?? 0}{" "}
-                                {affected.includes(k.model)
-                                  ? `(they go too: “${tableNames[k.model] ?? k.model}” is ticked)`
-                                  : `(they stay, as “${k.becomes}”)`}
+                                {capitalise(k.one)}
+                                {words.menu.attachedToThem} {keptCounts[keyOf(k)] ?? 0}{" "}
+                                {affected.includes(k.model) ? words.menu.goToo(tableNames[k.model] ?? k.model) : words.menu.stayAs(k.becomes)}
                               </p>
                             ))
                           : null}
@@ -290,7 +289,7 @@ export function DeleteMenu({ menu, counts, keptCounts, tableNames, notCleared, r
                           : null}
                         <details className="mt-1">
                           <summary className="cursor-pointer text-body text-stone underline decoration-rule underline-offset-4 hover:text-paper">
-                            Learn more
+                            {words.menu.learnMore}
                           </summary>
                           <p className="mt-1 text-body text-paper-dim">{e.learnMore}</p>
                         </details>
@@ -304,15 +303,16 @@ export function DeleteMenu({ menu, counts, keptCounts, tableNames, notCleared, r
 
           <div className="mt-4 space-y-2 text-body text-paper-dim">
             <p>
-              {retention.scope} The CRA says business records are generally kept for {numberWords(retention.retentionYears)}{" "}
-              years from {retention.countsFrom}, with exceptions.{" "}
+              {retention.scope} {words.menu.craSays} {numberWords(retention.retentionYears)} {words.menu.yearsFrom}{" "}
+              {retention.countsFrom}
+              {words.menu.withExceptions}{" "}
               <a
                 href={citation.url}
                 target="_blank"
                 rel="noreferrer"
                 className="text-paper underline decoration-stone-dim underline-offset-2 hover:text-maple"
               >
-                CRA: {citation.title}
+                {words.menu.cra} {citation.title}
               </a>{" "}
               {/* How the page was checked, in the same words and colour as every source: amber when
                   no person has read it (docs/engines/citations.md). */}
@@ -321,7 +321,7 @@ export function DeleteMenu({ menu, counts, keptCounts, tableNames, notCleared, r
           </div>
 
           <div className="mt-4">
-            <h4 className="font-semibold text-paper">What Delete doesn&apos;t reach</h4>
+            <h4 className="font-semibold text-paper">{words.menu.notReached}</h4>
             <ul className="mt-1.5 space-y-1.5 text-body text-paper-dim">
               {notCleared.map((n) => (
                 <li key={n.name}>
@@ -341,7 +341,7 @@ export function DeleteMenu({ menu, counts, keptCounts, tableNames, notCleared, r
               }}
               className="rounded-sm border border-amber/50 px-3 py-1.5 text-lead font-semibold text-amber transition hover:bg-amber/10 disabled:cursor-not-allowed disabled:opacity-50"
             >
-              Delete what&apos;s ticked…
+              {words.menu.deleteTicked}
             </button>
             <button
               type="button"
@@ -351,7 +351,7 @@ export function DeleteMenu({ menu, counts, keptCounts, tableNames, notCleared, r
               }}
               className="rounded-sm border border-rule px-3 py-1.5 text-lead text-stone transition hover:text-paper"
             >
-              Cancel
+              {words.menu.cancel}
             </button>
           </div>
         </div>
@@ -359,10 +359,10 @@ export function DeleteMenu({ menu, counts, keptCounts, tableNames, notCleared, r
 
       {step === "first-ask" ? (
         <ConfirmDialog
-          title="Delete these?"
-          intro="This is everything that goes. Check it before you go on."
+          title={words.firstAsk.title}
+          intro={words.firstAsk.intro}
           onCancel={backToMenu}
-          confirmLabel="Yes, continue"
+          confirmLabel={words.firstAsk.confirm}
           onConfirm={() => setStep("second-ask")}
         >
           <ul className="space-y-2">
@@ -381,49 +381,39 @@ export function DeleteMenu({ menu, counts, keptCounts, tableNames, notCleared, r
           </ul>
           {kept.length > 0 ? (
             <div className="mt-3">
-              <p className="text-lead font-semibold text-paper">Kept, not deleted</p>
+              <p className="text-lead font-semibold text-paper">{words.firstAsk.keptNotDeleted}</p>
               {kept.map((k) => (
                 <KeptWarning key={keyOf(k)} link={k} count={keptCounts[keyOf(k)] ?? 0} />
               ))}
             </div>
           ) : null}
           {copiesGoing ? (
-            <p className="mt-3 text-body text-amber">
-              The safety copies go too, so afterwards only a backup you saved somewhere else could bring anything back.
-            </p>
+            <p className="mt-3 text-body text-amber">{words.firstAsk.copiesGoToo}</p>
           ) : null}
           {setAsideTicked ? <SetAsideWarning text={setAsideWarning} /> : null}
           <p className="mt-3 text-body text-paper-dim">
-            Everything not ticked stays, and so does what Delete doesn&apos;t reach (how you left the cockpit, kept in
-            this window&apos;s own storage and offered back next time; the log).
+            {words.firstAsk.everythingElseStays}
             {/* Only said when there are copies to leave: a copy run from source has none. */}
-            {!copiesTicked && (counts[COPIES] ?? 0) > 0
-              ? " The safety copies in the backups folder aren't ticked, so they still hold what you delete."
-              : null}
+            {!copiesTicked && (counts[COPIES] ?? 0) > 0 ? words.firstAsk.copiesNotTicked : null}
             {/* The set-aside receipt folders ride on the same box, and can be there with no safety
                 copy at all (a restore's receipts-before-restore-…), so they get their own line. */}
-            {!copiesTicked && (counts[SET_ASIDE] ?? 0) > 0
-              ? " The receipt folders set aside in the backups folder aren't ticked, so they still hold their receipt files."
-              : null}
+            {!copiesTicked && (counts[SET_ASIDE] ?? 0) > 0 ? words.firstAsk.setAsideNotTicked : null}
           </p>
         </ConfirmDialog>
       ) : null}
 
       {step === "second-ask" || step === "working" ? (
         <ConfirmDialog
-          title="Delete them now?"
-          intro="This can't be undone. DotAmi wipes them from the data file, so they can't be dug back out of it."
+          title={words.secondAsk.title}
+          intro={words.secondAsk.intro}
           onCancel={backToMenu}
-          confirmLabel={step === "working" ? "Deleting…" : "Delete now"}
+          confirmLabel={step === "working" ? words.secondAsk.deleting : words.secondAsk.confirm}
           onConfirm={() => void deleteNow()}
           busy={step === "working"}
           focusCancel
         >
           {copiesGoing ? (
-            <p className="mb-2 text-body text-amber">
-              The safety copies in the backups folder go too. Afterwards, only a backup you saved somewhere else could bring
-              anything back.
-            </p>
+            <p className="mb-2 text-body text-amber">{words.secondAsk.copiesGoToo}</p>
           ) : null}
           {setAsideTicked ? (
             <div className="mb-2">
@@ -431,9 +421,7 @@ export function DeleteMenu({ menu, counts, keptCounts, tableNames, notCleared, r
             </div>
           ) : null}
           <p className="text-body text-paper-dim">
-            {desktop
-              ? "If you might want them back, cancel and use File → Back up… first; File → Restore puts a backup back."
-              : "If you might want them back, cancel and copy the data file somewhere first; it is listed above."}
+            {desktop ? words.secondAsk.backUpFirst.desktop : words.secondAsk.backUpFirst.source}
           </p>
         </ConfirmDialog>
       ) : null}
@@ -465,7 +453,10 @@ function KeptWarning({ link, count }: { link: KeptLink; count: number }) {
   return (
     <p className="mt-1.5 rounded-sm border border-amber/40 bg-amber/5 px-2.5 py-1.5 text-body text-paper">
       <span className="font-semibold">
-        {plural(count, link.one)} {count === 1 ? "stays" : "stay"}, as “{link.becomes}”.
+        {plural(count, link.one)} {count === 1 ? words.kept.stays : words.kept.stay}
+        {words.kept.as}
+        {link.becomes}
+        {words.kept.asEnd}
       </span>{" "}
       {link.whereAndHow}
     </p>
@@ -495,65 +486,68 @@ function DoneNote({
   const foldersLeft = foldersLeftOf(outcome);
   return (
     <div role="status" className="mt-3 rounded-lg border border-spruce-line/60 bg-spruce/20 px-4 py-3 text-lead text-paper">
-      <p className="font-semibold">Deleted.</p>
+      <p className="font-semibold">{words.done.heading}</p>
       <ul className="mt-1 space-y-0.5 text-body text-paper-dim">
         {rows.map((m) => (
           <li key={m}>
-            {tableNames[m] ?? m}: {countWords(m, outcome.deleted[m])} deleted
-            {outcome.left ? `, ${outcome.left[m] ?? 0} left` : ""}
+            {tableNames[m] ?? m}: {countWords(m, outcome.deleted[m])} {words.done.deleted}
+            {outcome.left ? words.done.left(outcome.left[m] ?? 0) : ""}
           </li>
         ))}
         {keptRows.map(([m, k]) => (
           <li key={m}>
-            {tableNames[m] ?? m}: {plural(k.unlinked, "record")} kept, now “{keeps.find((x) => x.model === m)?.becomes ?? "kept"}”
-            {k.total === null ? "" : `; ${plural(k.total, "record")} in all`}
+            {tableNames[m] ?? m}: {plural(k.unlinked, counted.record)} {words.done.keptNow}
+            {keeps.find((x) => x.model === m)?.becomes ?? words.done.kept}
+            {words.done.keptNowEnd}
+            {k.total === null ? "" : words.done.inAll(plural(k.total, counted.record))}
           </li>
         ))}
-        {outcome.receiptFiles ? <li>Receipt files: {plural(outcome.receiptFiles.removed, "file")} removed from the receipts folder</li> : null}
+        {outcome.receiptFiles ? (
+          <li>
+            {words.done.receiptFiles} {plural(outcome.receiptFiles.removed, counted.file)} {words.done.removedFromReceipts}
+          </li>
+        ) : null}
       </ul>
       {outcome.receiptFiles === null || (outcome.receiptFiles && outcome.receiptFiles.failed > 0) ? (
         <p className="mt-2 text-body text-amber">
           {outcome.receiptFiles === null
-            ? "DotAmi couldn't open the receipts folder to remove the receipt files."
-            : `${plural(outcome.receiptFiles.failed, "receipt file")} couldn't be removed yet (another program may have it open).`}{" "}
-          No record points to them any more; DotAmi removes them the next time you add or delete a receipt.
+            ? words.done.couldNotOpenReceipts
+            : words.done.couldNotRemove(plural(outcome.receiptFiles.failed, counted.receiptFile))}{" "}
+          {words.done.noRecordPoints}
         </p>
       ) : null}
       {outcome.left ? null : (
-        <p className="mt-2 text-body text-amber">DotAmi couldn&apos;t read the data file back to count what is left. Reload this page to check.</p>
+        <p className="mt-2 text-body text-amber">{words.done.couldNotReadBack}</p>
       )}
       {/* Deleting only safety copies and set-aside folders takes nothing out of the data file, so there is no space to speak of. */}
       {outcome.wiped && rows.some((m) => m !== COPIES && m !== SET_ASIDE) ? (
-        <p className="mt-2 text-body text-paper-dim">Their space in the data file is wiped, so they can&apos;t be read back out of it.</p>
+        <p className="mt-2 text-body text-paper-dim">{words.done.wiped}</p>
       ) : null}
       {outcome.wiped && copiesLeft === 0 && foldersLeft === 0 ? null : (
         <div className="mt-2 space-y-1 text-body text-amber">
           {outcome.wiped ? null : (
-            <p>
-              They are deleted, but their space in the data file isn&apos;t wiped yet, so their words could still be dug out of
-              the file. The wipe needs free disk space about the size of the data file, and nothing else using the file.
-            </p>
+            <p>{words.done.notWiped}</p>
           )}
           {copiesLeft > 0 ? (
             <p>
-              {plural(copiesLeft, "safety copy", "safety copies")} in the backups folder couldn&apos;t be deleted, because another
-              program has {copiesLeft === 1 ? "it" : "them"} open. Close that program and try again.
+              {plural(copiesLeft, counted.safetyCopy.one, counted.safetyCopy.many)} {words.done.copiesLeft.start}{" "}
+              {copiesLeft === 1 ? itOrThem.one : itOrThem.many} {words.done.copiesLeft.end}
             </p>
           ) : null}
           {foldersLeft > 0 ? (
             <p>
-              {plural(foldersLeft, "set-aside receipt folder")} in the backups folder couldn&apos;t be cleared, because another
-              program has a file in {foldersLeft === 1 ? "it" : "them"} open. Close that program and try again.
+              {plural(foldersLeft, counted.setAsideFolder)} {words.done.foldersLeft.start}{" "}
+              {foldersLeft === 1 ? itOrThem.one : itOrThem.many} {words.done.foldersLeft.end}
             </p>
           ) : null}
-          {desktop ? <p>If it still can&apos;t finish, the desktop app finishes it the next time it starts.</p> : null}
+          {desktop ? <p>{words.done.desktopFinishes}</p> : null}
           <button
             type="button"
             onClick={onRetry}
             disabled={retrying}
             className="mt-2 rounded-sm border border-amber/50 px-2.5 py-1 text-body font-semibold text-amber hover:bg-amber/10 disabled:opacity-50"
           >
-            {retrying ? "Wiping…" : "Try the wipe again"}
+            {retrying ? words.done.wiping : words.done.tryAgain}
           </button>
         </div>
       )}
@@ -579,25 +573,23 @@ function PendingNote({
   if (result && result.wiped && result.backupsLeft === 0 && result.receiptFoldersLeft === 0) {
     return (
       <p role="status" className="mt-3 text-body text-paper-dim">
-        Finished: the earlier Delete&apos;s wipe is done.
+        {words.pending.finished}
       </p>
     );
   }
   return (
     <div role="status" className="mt-3 rounded-sm border border-amber/40 bg-amber/5 px-3 py-2 text-body text-amber">
       <p>
-        An earlier Delete hasn&apos;t finished: what it deleted could still be dug out of the data file, or a safety copy or
-        set-aside receipt folder it was deleting is still there.{" "}
-        {desktop ? "The desktop app finishes it the next time it starts." : "Finish it here."}
+        {words.pending.notFinished} {desktop ? words.pending.desktopFinishes : words.pending.finishHere}
       </p>
-      {result ? <p className="mt-1">It still couldn&apos;t finish. Close any program using DotAmi&apos;s files, and check there is free disk space.</p> : null}
+      {result ? <p className="mt-1">{words.pending.stillCouldNot}</p> : null}
       <button
         type="button"
         onClick={onFinish}
         disabled={retrying}
         className="mt-2 rounded-sm border border-amber/50 px-2.5 py-1 text-body font-semibold text-amber hover:bg-amber/10 disabled:opacity-50"
       >
-        {retrying ? "Finishing…" : "Finish it now"}
+        {retrying ? words.pending.finishing : words.pending.finishNow}
       </button>
     </div>
   );
@@ -689,7 +681,7 @@ export function ConfirmDialog({
             disabled={busy}
             className="rounded-sm border border-rule px-3 py-1.5 text-lead text-paper transition hover:border-maple-soft disabled:opacity-50"
           >
-            Cancel
+            {words.cancel}
           </button>
           <button
             ref={confirmRef}

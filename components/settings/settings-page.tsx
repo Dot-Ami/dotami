@@ -10,6 +10,7 @@ import type { BankSourcesState } from "@/lib/figures/source-account-name";
 import { SETTING_GROUPS, settingsInGroup, type SettingEntry, type SettingGroupId } from "@/lib/settings/catalog";
 import type { SettingsToday } from "@/lib/settings/today";
 import type { FigureRemindersValue } from "@/lib/settings/values";
+import { settingsWords } from "@/lib/settings/words";
 
 import { BankAccountsControl } from "./bank-accounts-control";
 import { CopyPathButton } from "./copy-path-button";
@@ -47,31 +48,28 @@ export function SettingsPage({
     <div className="flex min-h-[calc(100vh-2.5rem)] flex-col bg-ink">
       <nav className="flex items-center gap-6 border-b border-rule-soft px-8 py-[18px]">
         <GhostLink href="/" tone="stone">
-          ← Back
+          {settingsWords.page.back}
         </GhostLink>
         <WordMark />
-        <p className="ml-auto font-mono text-small uppercase tracking-[0.14em] text-stone">Settings</p>
+        <p className="ml-auto font-mono text-small uppercase tracking-[0.14em] text-stone">{settingsWords.page.name}</p>
       </nav>
 
       <main className="mx-auto w-full max-w-3xl flex-1 px-8 py-10">
         <header>
           <h1 className="font-serif text-display font-bold leading-[1.15] tracking-tight text-paper">
-            Settings, <span className="font-normal italic text-maple">and what&apos;s true today.</span>
+            {settingsWords.page.heading.lead}{" "}
+            <span className="font-normal italic text-maple">{settingsWords.page.heading.rest}</span>
           </h1>
           <p className="mt-2 max-w-xl text-lead text-paper-dim">
-            Each group starts with what this copy of DotAmi does right now. Below that is every
-            setting planned for it: its default, its choices, and the warning you&apos;ll see
-            before switching on anything risky. Only the ones with a tick-box below can be
-            changed so far; each of the others arrives with the feature it controls, named by its
-            code on the{" "}
+            {settingsWords.page.intro.before}{" "}
             <a href={TASK_LIST_URL} target="_blank" rel="noreferrer" className="text-paper underline decoration-stone-dim underline-offset-2 hover:text-maple">
-              public task list
+              {settingsWords.page.intro.link}
             </a>
-            .
+            {settingsWords.page.intro.after}
           </p>
         </header>
 
-        <nav aria-label="Setting groups" className="mt-6 flex flex-wrap gap-x-4 gap-y-1.5">
+        <nav aria-label={settingsWords.page.groups} className="mt-6 flex flex-wrap gap-x-4 gap-y-1.5">
           {SETTING_GROUPS.map((g) => (
             <a key={g.id} href={`#${g.id}`} className="text-body text-stone underline decoration-rule underline-offset-4 hover:text-paper">
               {g.title}
@@ -88,7 +86,7 @@ export function SettingsPage({
               <p className="mt-0.5 text-body text-stone">{g.blurb}</p>
 
               <div className="mt-3 rounded-lg border border-spruce-line/60 bg-spruce/20 px-4 py-3">
-                <p className="font-mono text-label uppercase tracking-[0.14em] text-sage">Today</p>
+                <p className="font-mono text-label uppercase tracking-[0.14em] text-sage">{settingsWords.page.today}</p>
                 <div className="mt-1.5 space-y-2 text-lead leading-relaxed text-paper">{todayFor(g.id, today)}</div>
               </div>
 
@@ -122,13 +120,14 @@ function SettingRow({
   const showAccounts =
     setting.id === "bank-records" && bankSources !== null && (bankSources.accounts.length > 0 || bankSources.everyAccountSince !== null);
 
+  const words = settingsWords.row;
   const status =
     setting.status === "undecided"
-      ? "Waiting on a decision"
+      ? words.undecided
       : setting.status === "planned"
-        ? `Not built yet · [${setting.story}]`
+        ? words.planned(setting.story)
         : setting.status === "asked"
-          ? `Asked each time · ${setting.where}`
+          ? words.asked(setting.where)
           : null;
 
   return (
@@ -144,9 +143,9 @@ function SettingRow({
       </div>
       <p className="mt-1 text-body text-paper-dim">{setting.does}</p>
       <dl className="mt-2 grid grid-cols-[auto_minmax(0,1fr)] gap-x-3 gap-y-0.5 text-body">
-        <dt className="font-mono text-label uppercase leading-[18px] tracking-[0.14em] text-stone">Default</dt>
+        <dt className="font-mono text-label uppercase leading-[18px] tracking-[0.14em] text-stone">{words.default}</dt>
         <dd className="text-paper">{setting.defaultValue}</dd>
-        <dt className="font-mono text-label uppercase leading-[18px] tracking-[0.14em] text-stone">Choices</dt>
+        <dt className="font-mono text-label uppercase leading-[18px] tracking-[0.14em] text-stone">{words.choices}</dt>
         <dd className="text-paper-dim">
           {setting.status === "undecided" ? (
             <a href={PART_4_URL} target="_blank" rel="noreferrer" className="underline decoration-stone-dim underline-offset-2 hover:text-paper">
@@ -159,7 +158,9 @@ function SettingRow({
       </dl>
       {setting.warning ? (
         <p className="mt-2 rounded-sm border border-amber/40 bg-amber/5 px-3 py-1.5 text-body text-amber">
-          <span className="font-mono text-label uppercase tracking-[0.14em]">Warning · </span>
+          <span className="font-mono text-label uppercase tracking-[0.14em]">
+            {words.warning}{" "}
+          </span>
           {setting.warning}
         </p>
       ) : null}
@@ -232,26 +233,26 @@ function Code({ children }: { children: ReactNode }) {
   return <code className="break-all rounded-sm bg-ink px-1.5 py-0.5 font-mono text-body text-paper">{children}</code>;
 }
 
-/** The "Today" lines for one group. Every sentence here must stay true of the running app. */
+/** The "Today" lines for one group. Every sentence they say must stay true of the running app. */
 function todayFor(group: SettingGroupId, today: SettingsToday): ReactNode {
+  const words = settingsWords.today;
   switch (group) {
     case "data": {
       const { path, exists } = today.dataFile;
       if (!path) {
-        return <p>This copy&apos;s database setting doesn&apos;t point at a file, so there is no single data file to show.</p>;
+        return <p>{words.data.noPath}</p>;
       }
       if (!exists) {
         return (
           <p>
-            Your data file belongs at <Code>{path}</Code>, but there&apos;s no file there yet.{" "}
-            <Code>npm run prisma:deploy</Code> creates it (README, Quick start).
+            {words.data.noFile.before} <Code>{path}</Code>
+            {words.data.noFile.after} <Code>{words.data.noFile.command}</Code> {words.data.noFile.createsIt}
           </p>
         );
       }
       return (
         <>
-          {/* Receipt files ([8i]) live in a receipts folder beside the data file, not inside it. */}
-          <p>Your data is one file on this computer, plus the copies of your receipts in a folder named receipts beside it:</p>
+          <p>{words.data.oneFile}</p>
           <div className="flex flex-wrap items-center gap-2">
             <Code>{path}</Code>
             <CopyPathButton path={path} />
@@ -266,118 +267,78 @@ function todayFor(group: SettingGroupId, today: SettingsToday): ReactNode {
           />
           {today.desktop ? (
             <p className="text-paper-dim">
-              <strong className="font-semibold text-paper">File → Back up…</strong> makes one file you
-              can keep somewhere else, locked with a passphrase you choose (every backup needs one), with
-              your receipt files in it.{" "}
-              <strong className="font-semibold text-paper">File → Restore from a backup…</strong> puts
-              one back — on this computer or a new one — after checking it, and keeps a copy of
-              what was here in the backups folder.
+              <strong className="font-semibold text-paper">{words.data.backUp.backUp}</strong> {words.data.backUp.backUpDoes}{" "}
+              <strong className="font-semibold text-paper">{words.data.backUp.restore}</strong> {words.data.backUp.restoreDoes}
             </p>
           ) : (
-            <p className="text-paper-dim">
-              Copying that file and the receipts folder beside it while DotAmi is stopped is a
-              complete backup; deleting both starts over. The desktop app has Back up and Restore in
-              its File menu.
-            </p>
+            <p className="text-paper-dim">{words.data.copyIt}</p>
           )}
-          <p className="text-paper-dim">
-            {/* Microsoft's own page, read 2026-10-06: support.microsoft.com "Device encryption in Windows". */}
-            The backup doesn&apos;t protect this computer&apos;s copy if the computer is lost or
-            stolen — disk encryption does. On Windows: Settings → Privacy &amp; security → Device
-            encryption (on Windows Home; Pro also has BitLocker). It needs supported hardware and is
-            only switched on by itself if you signed in with a Microsoft account. On a Mac:
-            FileVault.
-          </p>
+          <p className="text-paper-dim">{words.data.diskEncryption}</p>
         </>
       );
     }
     case "figures":
       return (
         <p>
-          DotAmi keeps the totals you agree to, each with where it came from and the day you agreed.
-          It also keeps the ones still waiting for your answer, and the ones you turned down or took
-          back. None of those count, but every one stays in your data file, amount included. Your
-          revenue estimates from the intake are kept separately. Every figure, and where it came from,
-          is listed on{" "}
+          {words.figures.before}{" "}
           <Link href="/your-data" className="underline decoration-stone-dim underline-offset-2 hover:text-paper">
-            What DotAmi knows about you
+            {words.figures.link}
           </Link>
-          .
+          {words.figures.after}
         </p>
       );
     case "lens":
-      return (
-        <p>
-          No model is chosen: the Lens isn&apos;t built yet (it arrives with [9a]), and no outside
-          agent can connect. The only AI in the app today is the reader for the sentence you type to
-          describe a venture — see Privacy.
-        </p>
-      );
+      return <p>{words.lens}</p>;
     case "map":
-      return (
-        <p>
-          The cards use the {today.taxYear} rules, the only tax year mapped so far. The app is in
-          English.
-        </p>
-      );
+      return <p>{words.map(today.taxYear)}</p>;
     case "privacy": {
+      const privacy = words.privacy;
+      const source = privacy.fromSource;
       const sends = today.intake.sentTo === "anthropic" || today.updates === "github";
       return (
         <>
           {sends ? (
             <p>
-              <strong>What leaves this computer:</strong>
+              <strong>{privacy.whatLeaves}</strong>
             </p>
           ) : (
             <p>
-              <strong>DotAmi sends nothing off this computer.</strong> The sentence you type to
-              describe a venture is read here, by keyword matching — no model key is set.
+              <strong>{privacy.nothing}</strong> {privacy.readHereNoKey}
             </p>
           )}
           {today.intake.sentTo === "anthropic" ? (
             <p>
-              The sentence you type to describe a venture is sent to Anthropic to be read (model{" "}
-              <Code>{today.intake.model}</Code>), because a model key (<Code>ANTHROPIC_API_KEY</Code>)
-              is set for this copy, usually in its <Code>.env</Code> file. Empty the key and it&apos;s
-              read here, by keyword matching, instead.
+              {privacy.toAnthropic.before} <Code>{today.intake.model}</Code>
+              {privacy.toAnthropic.because}
+              <Code>{privacy.toAnthropic.keyName}</Code>
+              {privacy.toAnthropic.isSet} <Code>{privacy.toAnthropic.envFile}</Code> {privacy.toAnthropic.after}
             </p>
           ) : null}
           {today.updates === "github" ? (
             <p>
-              When the app starts, it asks GitHub whether there&apos;s a newer version, and downloads
-              it if there is. GitHub sees this computer&apos;s internet address, which version it
-              runs, and a random install ID the update checker made for this copy, the same on every
-              check — none of your data. That ID is kept in the data folder; What DotAmi knows about
-              you, linked below, says how to remove it.
-              {today.intake.sentTo === "anthropic" ? null : " The sentence you type to describe a venture is read here, by keyword matching."}
+              {privacy.updateCheck}
+              {today.intake.sentTo === "anthropic" ? null : <> {privacy.readHere}</>}
             </p>
           ) : null}
           <p className="text-paper-dim">
-            DotAmi has no server of its own and collects no usage data. Links to official sources
-            and to GitHub open those sites only when you click them. Everything DotAmi keeps about
-            you is listed on{" "}
+            {privacy.noServer.before}{" "}
             <Link href="/your-data" className="underline decoration-stone-dim underline-offset-2 hover:text-paper">
-              What DotAmi knows about you
+              {privacy.noServer.link}
             </Link>
-            .
+            {privacy.noServer.after}
           </p>
           {today.updates === "github" ? null : (
-          <p className="text-paper-dim">
-            If you run DotAmi from its source code: two tools it is built with report anonymous
-            counts unless told not to — the Next.js framework to Vercel when it builds or runs in
-            development mode (the command, versions, the kind of computer, the app&apos;s size;{" "}
-            <a href={NEXT_TELEMETRY_URL} target="_blank" rel="noreferrer" className="underline decoration-stone-dim underline-offset-2 hover:text-paper">
-              nextjs.org/telemetry
-            </a>
-            , read 2026-10-05), and the Prisma database tool to Prisma each time it runs. The
-            project&apos;s own commands (<Code>npm run dev</Code>, <Code>npm run build</Code> and the
-            rest) switch both off. Installing with <Code>npm ci</Code> runs Prisma once on its own,
-            and <Code>npx next</Code> or <Code>npx prisma</Code> typed by hand skip the switch: set{" "}
-            <Code>NEXT_TELEMETRY_DISABLED=1</Code> and <Code>CHECKPOINT_DISABLE=1</Code> in your
-            environment for those. <Code>npm run dev</Code> also asks npm&apos;s registry which
-            Next.js version is newest each time it starts; npm sees this computer&apos;s internet address
-            and nothing else.
-          </p>
+            <p className="text-paper-dim">
+              {source.lead}{" "}
+              <a href={NEXT_TELEMETRY_URL} target="_blank" rel="noreferrer" className="underline decoration-stone-dim underline-offset-2 hover:text-paper">
+                {source.telemetryLink}
+              </a>
+              {source.readOn}
+              <Code>{source.dev}</Code>, <Code>{source.build}</Code> {source.andTheRest} <Code>{source.ci}</Code> {source.runsPrismaOnce}{" "}
+              <Code>{source.npxNext}</Code> {source.or} <Code>{source.npxPrisma}</Code> {source.skipTheSwitch}{" "}
+              <Code>{source.nextOff}</Code> {source.and} <Code>{source.prismaOff}</Code> {source.inYourEnvironment}{" "}
+              <Code>{source.dev}</Code> {source.devAlsoAsks}
+            </p>
           )}
         </>
       );
@@ -387,24 +348,22 @@ function todayFor(group: SettingGroupId, today: SettingsToday): ReactNode {
         <>
           {today.updates === "github" ? (
             <p>
-              This is version <Code>{today.version}</Code>. Each time it starts, the app checks GitHub
-              for a newer version and downloads it, then asks before installing it — nothing installs
-              without your click. Help → Check for updates does it now.
+              {words.updates.thisIsVersion} <Code>{today.version}</Code>
+              {words.updates.fromGitHub}
             </p>
           ) : (
             <p>
-              This is version <Code>{today.version}</Code>, run from DotAmi&apos;s source code: it updates
-              with git, not by itself. The installed app checks GitHub for new versions.
+              {words.updates.thisIsVersion} <Code>{today.version}</Code>
+              {words.updates.fromSource}
             </p>
           )}
           {/* The third-party notices (/licences): the licences of everything DotAmi ships with. */}
           <p>
-            DotAmi is open source under the Apache License 2.0, and ships with work by many other people.
-            Each piece, its version and its licence, word for word:{" "}
+            {words.updates.licences.before}{" "}
             <Link href="/licences" className="underline decoration-stone-dim underline-offset-2 hover:text-paper">
-              Licences
+              {words.updates.licences.link}
             </Link>
-            {today.desktop ? " (also under Help → Licences)" : ""}.
+            {today.desktop ? <> {words.updates.licences.alsoInHelp}</> : ""}.
           </p>
         </>
       );

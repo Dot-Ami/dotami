@@ -10,6 +10,7 @@ import { RECEIPT_REFUSALS } from "@/lib/expenses/receipts/refusals";
 import { sniffReceipt } from "@/lib/expenses/receipts/sniff";
 import { MAX_RECEIPT_BYTES, typeName } from "@/lib/expenses/receipts/types";
 import type { ExpenseView } from "@/lib/expenses/types";
+import { expensesWords } from "@/lib/expenses/words";
 
 import { receiptNoteSentence, useReceiptProtection } from "./receipt-protection";
 import { ReceiptViewer } from "./receipt-viewer";
@@ -27,6 +28,8 @@ import { ReceiptViewer } from "./receipt-viewer";
  */
 
 const LINK = "text-small text-stone hover:text-paper";
+
+const words = expensesWords.receipt;
 
 /** The file's bytes as base64, without loading them into a JavaScript string twice. */
 function base64Of(file: Blob): Promise<string> {
@@ -71,7 +74,7 @@ export function ReceiptLine({ record, onChanged }: { record: ExpenseView; onChan
       setAdding(false);
       await onChanged();
     } catch {
-      setError("DotAmi couldn't read that file. Nothing was kept.");
+      setError(words.unreadable);
     } finally {
       setBusy(false);
       // So picking the same file again (after fixing something) still fires a change.
@@ -105,24 +108,27 @@ export function ReceiptLine({ record, onChanged }: { record: ExpenseView; onChan
         <div className="flex flex-wrap items-center gap-2 text-body text-stone">
           <span>
             {/* The day on the person's own clock: the stored time is UTC, which is already tomorrow on a Canadian evening. */}
-            Receipt: {typeName(r.type)} · {sizeWords(r.bytes)} · added {new Date(r.addedAt).toLocaleDateString("en-CA")}
+            {words.lead}
+            {typeName(r.type)} · {sizeWords(r.bytes)}
+            {words.added}
+            {new Date(r.addedAt).toLocaleDateString("en-CA")}
           </span>
           <button type="button" onClick={() => setShowing(true)} className={LINK}>
-            Show receipt
+            {words.show}
           </button>
           {confirmingRemove ? (
             <span className="flex items-center gap-2">
-              <span className="text-paper-dim">Remove this receipt? DotAmi deletes its copy of the file; the record stays.</span>
+              <span className="text-paper-dim">{words.removeQuestion}</span>
               <button type="button" onClick={() => void remove()} disabled={busy} className="text-maple hover:underline">
-                Remove receipt
+                {words.remove}
               </button>
               <button type="button" onClick={() => setConfirmingRemove(false)} className="hover:text-paper">
-                Keep it
+                {words.keepIt}
               </button>
             </span>
           ) : (
             <button type="button" onClick={() => setConfirmingRemove(true)} className={LINK}>
-              Remove receipt
+              {words.remove}
             </button>
           )}
         </div>
@@ -147,17 +153,12 @@ export function ReceiptLine({ record, onChanged }: { record: ExpenseView; onChan
     <div className="mt-1.5">
       {adding ? (
         <div className="rounded-sm border border-rule bg-ink px-2.5 py-2 text-body text-paper-dim">
-          <p>
-            DotAmi keeps a copy of the file exactly as you give it, on this computer: anything printed on it (the last digits of a card, your name and
-            address) is kept too. A JPEG, PNG, WebP or HEIC (iPhone) picture, or a PDF, up to 10 MB; DotAmi checks what is inside the file, not its
-            name. A HEIC photo is shown with this computer&apos;s graphics chip, and some computers can&apos;t show one (it is kept either way). The copy is your
-            own record; it says nothing about whether you can stop keeping the original.
-          </p>
+          <p>{words.beforeAdding}</p>
           {/* [8i] Whether the copy is encrypted here, and what losing the key means (expense-records.md § 9). */}
           <p className="mt-1.5">{receiptNoteSentence(protection)}</p>
           <div className="mt-2 flex flex-wrap items-center gap-2">
             <label htmlFor={inputId} className="cursor-pointer rounded-sm border border-rule px-2 py-0.5 text-paper hover:border-maple-soft">
-              {busy ? "Adding…" : "Choose the receipt file"}
+              {busy ? words.adding : words.choose}
             </label>
             <input
               ref={input}
@@ -173,7 +174,7 @@ export function ReceiptLine({ record, onChanged }: { record: ExpenseView; onChan
               }}
             />
             <Pill variant="ghost" size="small" onClick={() => setAdding(false)} disabled={busy}>
-              Not now
+              {words.notNow}
             </Pill>
           </div>
         </div>
@@ -186,7 +187,7 @@ export function ReceiptLine({ record, onChanged }: { record: ExpenseView; onChan
           }}
           className={LINK}
         >
-          Add a receipt
+          {words.add}
         </button>
       )}
       {errorLine}
