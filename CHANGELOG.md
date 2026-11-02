@@ -427,6 +427,24 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   ([docs/engines/citations.md](docs/engines/citations.md), § Outside the list, item 3). Test:
   `tests/repeated-losses-read.spec.ts`.
 ### Fixed
+- **The desktop app's start-up questions close as soon as they're answered** (2026-10-31). The window that asks
+  whether to lock the data file, and the one shown when the data file's key can't be opened, used to stay on the
+  screen after a click, not redrawing, until DotAmi had made the key and prepared the data file; on a slow
+  computer that could look as if the app had stopped. The answer is now acted on once its window is gone
+  (`desktop/main.mjs` `askInWindow`). After the answer, no DotAmi window is on the screen until the main window
+  shows ("Preparing DotAmi…" is closed for good when the question opens); whether to show something there is a
+  separate change for the maintainer. This is the likeliest cause of one of the desktop tests' two failures on CI,
+  and the only one that reproduces it: the click on **Encrypt now** gave up while its window stayed open (runs
+  39968358405, 39974613525, 40149944677, 41054321382). Keeping the app's main process (the part that opens its
+  windows) busy after the answer reproduces that failure word for word on the code before this change, and the
+  same test passes with this change. The backup passphrase window (`askPassphrase`) has the same shape and is
+  unchanged, and so are the tests' plain clicks on buttons that close a start-up window (the lost-key window's
+  **Quit**, **Restore from a backup…** and **Start fresh**, the lock question's **Back up first…** and **Keep it
+  unencrypted**): a possible follow-up. Developers: `describeVenture` in `e2e-desktop/desktop.spec.ts` now waits for
+  the map as long as Playwright waits for the clicks before it, instead of the shorter default for an `expect`,
+  which ran out on CI with the map not yet there (the retry passed in 19 of the 20; whether the map would have come
+  later isn't known, and the new log line will say), and writes a line to the test log when the map needed more
+  than that old default.
 - **The tests read the same line endings on Windows as on CI.** `.gitattributes` gains
   `* text=auto eol=lf`, so every text file is checked out with Unix line endings, even where git's
   `core.autocrlf` is on (Git for Windows' default). Until now a Windows clone had Windows line endings
@@ -763,9 +781,8 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   had reached 60.5 and 65.7 seconds for the same work; and a run keeps each step 1 search's answer for its own
   length, so the harness takes about 27 seconds alone on a builder's machine instead of 36.
 - **A desktop test that sometimes hung on "Encrypt now"** (tests only). Clicking an answer in the window that asks
-  whether to lock the data file closes that window, and the test's click sometimes waited for an
-  acknowledgement the closed window never sent. The test now waits for the window to close, which is what the
-  answer does; the app was not changed.
+  whether to lock the data file closes that window. The test now waits for the window to close, which is what the
+  answer does (why the click waited is in the entry on the start-up questions above).
 - **The quality report counts step 3's own silent fallbacks on their way in** (tests and report only). A road
   written for the job listed after another on step 3 was counted among the ideas but on neither way in.
 - **The SR&ED card says what the CRA says about its rates** (the maintainer's reading list of 2026-10-23). For a

@@ -773,7 +773,7 @@ function saveEncryptionChoice(on) {
 /**
  * [8i] One of the start-up windows (desktop/encrypt-ask.html, desktop/lost-key.html): a local page that can
  * send back only one of `answers` (desktop/choice-preload.cjs, checked again here). Closing it answers
- * `closed`. Resolves with the answer.
+ * `closed`. Resolves with the answer once the window has closed.
  * @param {"encrypt-ask" | "lost-key"} which
  * @param {readonly string[]} answers
  * @param {string} closed
@@ -795,21 +795,25 @@ function askInWindow(which, answers, closed, { status = "", detail = "", mode = 
       webPreferences: { preload: path.join(root, "desktop", "choice-preload.cjs"), contextIsolation: true, sandbox: true, nodeIntegration: false },
     });
     ask.setMenu(null);
-    let settled = false;
-    const finish = (value) => {
-      if (settled) return;
-      settled = true;
-      ipcMain.removeListener("dotami-choice", onAnswer);
-      if (!ask.isDestroyed()) ask.close();
-      resolve(value);
-    };
+    // The answer is resolved only once the window is really gone, not when close() is called. What an answer
+    // starts (a new key, the data file created or encrypted, its updates) runs in this process without a break,
+    // and a window can't finish closing until that ends: resolving at close() left the clicked window on the
+    // screen, frozen, for as long as that work took. On CI's slower Windows machines that was long enough for
+    // the desktop tests' click on "Encrypt now" to give up (runs 39968358405, 41054321382 and others).
+    let answer = null;
     const onAnswer = (event, message) => {
       // Only this window's own page, and only one of its answers, is believed (Electron security checklist #17).
-      if (event.sender !== ask.webContents || message?.which !== which) return;
-      finish(answers.includes(message?.answer) ? message.answer : closed);
+      if (event.sender !== ask.webContents || message?.which !== which || answer !== null) return;
+      answer = answers.includes(message?.answer) ? message.answer : closed;
+      ipcMain.removeListener("dotami-choice", onAnswer);
+      ask.close();
     };
     ipcMain.on("dotami-choice", onAnswer);
-    ask.on("closed", () => finish(closed));
+    // Closed by an answer, or by the person with the window's own close button (then no answer: `closed`).
+    ask.on("closed", () => {
+      ipcMain.removeListener("dotami-choice", onAnswer);
+      resolve(answer ?? closed);
+    });
     void ask.loadFile(path.join(root, "desktop", `${which}.html`), { query: { which, status, detail, mode } });
   });
 }
