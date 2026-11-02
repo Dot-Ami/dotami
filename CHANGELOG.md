@@ -162,6 +162,15 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   put it back.
 
 ### Added
+- **Build provenance for the Windows installer** (the house-cleaning audit of 2026-10-31). None of the installer
+  releases so far (0.2.0 to 0.4.1) carried a signature or anything saying where it was built. The release workflow
+  now has GitHub's `actions/attest-build-provenance` sign a statement that this repository's `release.yml`, at the
+  tagged commit, built the installer with its SHA-256, and adds that statement to the draft release as
+  `DotAmi-Setup-<version>.exe.sigstore.json`. Anyone can check a download with
+  `gh attestation verify DotAmi-Setup-x.y.z.exe --repo Dot-Ami/dotami`. The installer is still unsigned, so
+  Windows SmartScreen still warns, and provenance proves which workflow and commit built the file, not who
+  published it ([desktop-app.md](docs/architecture/desktop-app.md), its last section). It first runs on the next
+  tagged release. `.github/workflows/release.yml`.
 - **A test that each hand-written `.d.mts` file names exactly what its JavaScript module exports**
   (`tests/declarations-match.spec.ts`). The tests that import a module from `desktop/` or `scripts/` are
   typed against the `.d.mts` file (a file of type declarations) written by hand beside it, never against
@@ -889,6 +898,29 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   Prop activation's three sources: the new one in amber until 2026-10-27, each read by a person since).
 
 ### Changed
+- **CI runs the browser tests in two halves at the same time, and the *Browser tests* check waits for both**
+  (the house-cleaning audit of 2026-10-31). The browser job was the slowest of every pull request's required
+  checks, and with main asking for an up-to-date branch every merge waits for it. It now runs as *Browser tests
+  1/2* and *2/2* on two machines (`--shard=N/2`), each building and starting its own server on its own fresh
+  database. Playwright keeps the files in their usual order, so `e2e/your-data.spec.ts`, whose Delete tests
+  remove what earlier files use, is still the last file of half 2. Branch protection requires a check named
+  *Browser tests*, so a small job of that name waits for both halves and passes only when both passed; it runs
+  even when a half failed or the run was cancelled, so it fails then instead of being skipped (GitHub counts a
+  skipped required check as passed). The clutter numbers are printed by the half whose own test list holds
+  `e2e/clutter-budget.spec.ts`. For a new browser test this means: don't rely on what a file in the other half
+  leaves (CLAUDE.md, *Verification*). `.github/workflows/ci.yml`; `tests/quality-report.spec.ts`.
+- **A desktop test that fails on its first try and passes on its retry is now counted on the run's page, and its
+  trace is kept** (the house-cleaning audit of 2026-10-31). Playwright runs a failed desktop test once more on CI,
+  and one that then passed counted as passed with no sign outside the job's log (4 of the 48 desktop jobs in the 16
+  most recent CI runs that passed, on 2026-10-31); the failed try's trace was thrown away with the machine. Each
+  *Desktop app (Windows)* job now writes its counts (passed, flaky, failed) on the run's summary page with each test
+  that needed a second try and its first try's error, adds a warning per such test on the run's page, and, when a
+  test failed or needed a second try or the report couldn't be read, keeps `test-results/` (the failed tries'
+  traces and error notes) as an artifact named for its machine and the run's attempt, so a re-run never replaces
+  an earlier attempt's traces. A trace holds the test's steps, its error and what it printed, but no pictures of the app's
+  windows: Playwright takes those only for browsers it opens itself. The flaky tests themselves aren't fixed here.
+  `scripts/playwright-summary.mjs` reads the JSON report `playwright.desktop.config.ts` now writes on CI;
+  `.github/workflows/ci.yml`; `tests/playwright-summary.spec.ts`.
 - **`npm run lint` lints the whole repository with the ESLint command line, not `next lint`.** `next lint`
   read only `app/`, `components/` and `lib/`, so the desktop app (`desktop/`), the scripts, the unit tests
   and the browser and desktop tests were never linted, and every run said `next lint` goes away in

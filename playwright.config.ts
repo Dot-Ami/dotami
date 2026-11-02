@@ -23,7 +23,9 @@ const LAUNCH_SECRET = process.env[LAUNCH_SECRET_ENV];
 
 export default defineConfig({
   testDir: "e2e",
-  // One shared database, so tests run one after another in a known order.
+  // One shared database, so tests run one after another in a known order. CI runs the files in two
+  // halves on two machines (--shard=N/2, .github/workflows/ci.yml): each half starts this server, and so
+  // a fresh database, of its own, and half 2 never sees what half 1's files left.
   workers: 1,
   fullyParallel: false,
   forbidOnly: !!process.env.CI,

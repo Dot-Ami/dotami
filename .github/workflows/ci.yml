@@ -80,10 +80,24 @@ jobs:
   # The app built and started for real, driven in Chromium like a person would drive it
   # (playwright.config.ts, e2e/). Catches what the code-level tests can't: a page whose
   # scripts never run, a button that never enables, a save that doesn't survive a reload.
+  # Split in two halves that run on two machines at the same time (--shard=N/2), because this was the
+  # slowest job and every merge waits for it. Playwright keeps the files in their usual order and gives
+  # each half a run of whole files, so e2e/your-data.spec.ts, whose Delete tests wipe what files before it
+  # use, is still the last file of half 2. Each half builds and starts its own server on its own fresh
+  # database (playwright.config.ts webServer, e2e/prepare-db.mjs), so a file in half 2 must not rely on
+  # what a file in half 1 leaves: `npx playwright test --shard=2/2` alone shows it doesn't. Halves are cut
+  # by test count, so new tests can move a file across the line; `--shard=1/2 --list` shows where it falls.
+  # The check main requires, "Browser tests", is the browser-tests job below: it passes only when both
+  # halves did.
   browser:
-    name: Browser tests
+    name: Browser tests ${{ matrix.shard }}/2
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    strategy:
+      # One half failing doesn't stop the other, so a run shows every failing test at once.
+      fail-fast: false
+      matrix:
+        shard: [1, 2]
     env:
       NEXT_TELEMETRY_DISABLED: "1"
       CHECKPOINT_DISABLE: "1"
@@ -105,16 +119,46 @@ jobs:
         run: npx playwright install --with-deps chromium
 
       - name: Browser tests
-        run: npm run test:browser
+        run: npm run test:browser -- --shard=${{ matrix.shard }}/2
 
       # The clutter part of the quality numbers: each screen at each width as this run measured it
       # (e2e/clutter-budget.spec.ts), against its budget. Information only, like the quality job's step.
+      # Only the half that ran e2e/clutter-budget.spec.ts has those measurements, so only that half prints
+      # them. Which half that is comes from Playwright's own list of the half's tests (half 1 today), so the
+      # numbers still appear if new tests move the file to the other half. The list goes to a file before it is
+      # searched: piped straight into `grep -q`, which stops reading at the first match, Playwright failed
+      # writing the rest of it ("write EPIPE", run 41268399037).
       - name: Quality numbers (clutter)
         if: ${{ !cancelled() }}
         continue-on-error: true
         run: |
-          npm run quality:report -- --clutter-only
-          cat test-results/quality.md >> "$GITHUB_STEP_SUMMARY"
+          npx playwright test --list --shard=${{ matrix.shard }}/2 > "$RUNNER_TEMP/browser-half-tests.txt"
+          if grep -q "clutter-budget.spec.ts" "$RUNNER_TEMP/browser-half-tests.txt"; then
+            npm run quality:report -- --clutter-only
+            cat test-results/quality.md >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "e2e/clutter-budget.spec.ts ran in the other half of the browser tests, which prints its numbers."
+          fi
+
+  # The check main's branch protection requires. GitHub matches a required check by its job's name, and
+  # the two halves above are named "Browser tests 1/2" and "Browser tests 2/2", so this job carries the
+  # name "Browser tests" and passes only when both halves passed. `if: always()` runs it even when a half
+  # failed or the run was cancelled, so it fails then instead of being skipped: GitHub counts a skipped
+  # required check as passed.
+  browser-tests:
+    name: Browser tests
+    needs: browser
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Both halves of the browser tests passed
+        env:
+          # success only when every half succeeded; failure, cancelled or skipped otherwise.
+          HALVES: ${{ needs.browser.result }}
+        run: |
+          echo "The two halves of the browser tests ended: $HALVES"
+          test "$HALVES" = "success"
 
   # The desktop app packaged for Windows and driven like a person drives it (e2e-desktop/):
   # start on an empty data folder → describe a venture → close → start again → still there.
@@ -156,6 +200,32 @@ jobs:
         run: npm run desktop:package && npx playwright test -c playwright.desktop.config.ts --fully-parallel --shard=${{ matrix.shard }}/3
         env:
           DOTAMI_DESKTOP_EXE: ${{ github.workspace }}\dist-desktop\out\win-unpacked\DotAmi.exe
+
+      # Playwright runs a failed test once more on CI (retries: 1), and a test that passes on that second try
+      # counts as passed: the job stays green and nothing on the run's page said a first try failed. This writes
+      # the counts on the run's summary page, with each test that needed a second try and its first try's error,
+      # and a warning per such test on the run's page, from the JSON report playwright.desktop.config.ts writes
+      # on CI (scripts/playwright-summary.mjs). Information only: it never fails the job.
+      - name: Count the tests that needed a second try
+        id: count
+        if: ${{ !cancelled() }}
+        continue-on-error: true
+        run: node scripts/playwright-summary.mjs test-results/report.json "Desktop app (Windows) ${{ matrix.shard }}/3" desktop-test-results-${{ matrix.shard }}-attempt-${{ github.run_attempt }}
+
+      # Playwright keeps a failed try's trace (its steps, the error, what the test printed) and error notes in
+      # test-results/ (trace: "retain-on-failure"), but this machine is thrown away when the job ends. This keeps
+      # test-results/ with the run when a test failed or needed a second try, or when the count above couldn't
+      # read the report (its counts are then "unknown"); open a trace with `npx playwright show-trace <trace.zip>`.
+      # The traces hold no screenshots of the app's windows: Playwright records those only for browsers it opens
+      # itself, and the app is started through Electron. The name carries the run's attempt, so re-running a job
+      # adds its own artifact and never replaces an earlier attempt's traces.
+      - name: Keep the failed tries' traces
+        if: ${{ !cancelled() && (failure() || steps.count.outputs.flaky != '0') }}
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: desktop-test-results-${{ matrix.shard }}-attempt-${{ github.run_attempt }}
+          path: test-results/
+          if-no-files-found: ignore
 
   # Fails a pull request that adds or upgrades to a dependency with a known high/critical
   # vulnerability, or one under a license the project cannot ship. Alerts on main are
