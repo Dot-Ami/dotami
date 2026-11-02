@@ -32,11 +32,24 @@ import type { DoneWhenLine, NamedCostLine, RoadStep, SkillItem } from "./types";
  * catalogue that stops tools, and permit fees vary, so they are named lines the person prices. Sole Prop
  * activation also carries the seven named start-up cost lines the design names (tools, a space deposit,
  * insurance, …), names only. Since 2026-10-14 the first column also holds "Keep your records from day
- * one" (./keep-records.ts), whose sources were checked by the tool that day.
+ * one" (./keep-records.ts), whose sources were checked by the tool that day. Since 2026-11-01 Incorporation
+ * for liability/SR&ED's lines on CCPCs quote newer pages, checked by the tool on ITEM_10_CHECKED_ON.
  */
 
-/** The day scripts/check-quotes.mjs found every quote below on its page. */
+/** The day scripts/check-quotes.mjs found every quote below on its page, but item 10's. */
 const CHECKED_ON = "2026-10-12";
+
+/**
+ * The day `node scripts/check-quotes.mjs --url … --quote …` found the words Incorporation for liability/SR&ED's lines
+ * on CCPCs quote on the newer CRA pages, one run per page (the Type of corporation page, the T2 guide's chapter 4, the
+ * SR&ED Investment Tax Credit Policy). Until then the lines were written in DotAmi's own words from the CRA's older
+ * relationships page (its page date 2025-07-21); the maintainer's answer on his reading page, item 10 (2026-11-01,
+ * "Rest them on the newer pages"), had them show the newer pages' words instead, with any fact no newer page states
+ * taken off (docs/engines/citations.md, rule 8, As built). The review of the same day added a block to the T2 guide's
+ * line and one to the policy page's, and the script found each of those two citations' quotes again that day, one run
+ * per citation holding all its quotes ("All 5 quotes were found" and "All 6 …", each with the page's heading).
+ */
+const ITEM_10_CHECKED_ON = "2026-11-01";
 
 interface Page {
   title: string;
@@ -119,14 +132,34 @@ const PAGES = {
     // The maintainer read it in full on 2026-10-25 (docs/engines/citations.md).
     read: MAINTAINER_READ,
   },
-  relationships: {
-    title: "How certain relationships affect the small business deduction and SR&ED investment tax credits (CRA)",
+  // The three pages Incorporation for liability/SR&ED's lines on CCPCs quote since 2026-11-01, each newer than the
+  // CRA's relationships page (2025-07-21) the lines were written from until then: by their own dates (dcterms.modified),
+  // 2026-09-11, 2026-05-28 and 2026-10-07. Each title is the page's own main heading, found on it by the tool that day.
+  // Each note is DotAmi's own words, so it names the page's topic only and states none of its facts (the review of
+  // 2026-11-01; until then the policy page's note named the enhanced rate's expenditure limit, and the other two said a
+  // little of what the pages hold). The T2 guide's is the note the map stage Incorporating has on the same page.
+  typeOfCorporation: {
+    title: "Type of corporation (CRA)",
     authority: "CRA",
     jurisdiction: "CA",
-    url: `${CRA}/tax/businesses/topics/corporations/business-tax-credits/how-relationships-affect-small-business-deduction-sred-investment-tax-credits.html`,
-    note: "What a CCPC is, and how associated corporations share the business limit and the SR&ED expenditure limit.",
+    url: `${CRA}/tax/businesses/topics/corporations/type-corporation.html`,
+    note: "CRA guidance on types of corporation, including the CCPC.",
+  },
+  t2GuideChapter4: {
+    title: "T2 Corporation – Income Tax Guide – Chapter 4: Page 4 of the T2 return (CRA)",
+    authority: "CRA",
+    jurisdiction: "CA",
+    url: `${CRA}/forms-publications/publications/t4012/t2-corporation-income-tax-guide-chapter-4-page-4-t2-return.html`,
+    note: "CRA guidance on the small business deduction and business limit.",
     // The maintainer read it in full on 2026-10-25 (docs/engines/citations.md).
     read: MAINTAINER_READ,
+  },
+  sredItcPolicy: {
+    title: "SR&ED Investment Tax Credit Policy (CRA)",
+    authority: "CRA",
+    jurisdiction: "CA",
+    url: `${CRA}/scientific-research-experimental-development-tax-incentive-program/investment-tax-credit-policy.html`,
+    note: "The CRA's SR&ED investment tax credit policy: the credit's rates, and its sections on associated corporations.",
   },
   newEmployee: {
     title: "Set up and manage employee payroll information (CRA)",
@@ -230,12 +263,20 @@ const PAGES = {
  * there. It carries a read only when the page has one on record (its `read`), never otherwise.
  */
 function checked(page: Page, ...quotes: string[]): EngineCitation {
+  return checkedOn(CHECKED_ON, page, ...quotes);
+}
+
+/** The same, for words the tool found on another day: its date is the one the script printed that day. */
+function checkedOn(day: string, page: Page, ...quotes: string[]): EngineCitation {
   const { title, authority, jurisdiction, url, note, read } = page;
-  const toolCheck = { checkedOn: CHECKED_ON, quotes };
+  const toolCheck = { checkedOn: day, quotes };
   return read
     ? { title, authority, jurisdiction, url, note, ...read, toolCheck }
     : { title, authority, jurisdiction, url, note, toolCheck };
 }
+
+/** Quotes shown in a line, each in curly quote marks, one after another: how a line shows a page's own words. */
+const quoting = (quotes: readonly string[]) => quotes.map((q) => `“${q}”`).join(" ");
 
 function named(id: string, label: string, nameSource?: EngineCitation): NamedCostLine {
   return nameSource ? { id, kind: "named", label, nameSource } : { id, kind: "named", label };
@@ -259,6 +300,58 @@ const Q = {
   separateAccount:
     "If your business has a name other than your own, you'll need a separate bank account to process cheques payable to your business.",
 } as const;
+
+// The newer pages' words Incorporation for liability/SR&ED's lines on CCPCs show since 2026-11-01 (item 10), each run
+// whole as its page has it, one block each as scripts/check-quotes.mjs reads the page; each line's citation holds
+// exactly the runs the line shows.
+
+/**
+ * The Type of corporation page's list of what makes a corporation a CCPC, whole and in order: its lead-in and its
+ * eight items. The page has no "in general" summary like the older page's three items, so the line shows the whole
+ * list. Its date and its "tax year" are the CRA's words, inside quote marks under the page's name.
+ */
+const CCPC_REQUIREMENTS = [
+  "The corporation is a CCPC if it meets all of the following requirements at the end of the tax year:",
+  "it is a private corporation",
+  "it is a corporation that was resident in Canada and was either incorporated in Canada or resident in Canada from June 18, 1971, to the end of the tax year",
+  "it is not controlled directly or indirectly by one or more non-resident persons",
+  "it is not controlled directly or indirectly by one or more public corporations (other than a prescribed venture capital corporation, as defined in section 6700 of the Income Tax Regulations)",
+  "it is not controlled by a Canadian resident corporation that lists its shares on a designated stock exchange outside of Canada",
+  "it is not controlled directly or indirectly by any combination of persons described in the three previous conditions",
+  "if all of its shares that are owned by a non-resident person, by a public corporation (other than a prescribed venture capital corporation), or by a corporation with a class of shares listed on a designated stock exchange were owned by one person, that person would not own sufficient shares to control the corporation",
+  "no class of its shares of capital stock is listed on a designated stock exchange",
+] as const;
+
+/**
+ * The T2 guide's chapter 4, its "Line 430 – Small business deduction" block 55 whole (who may claim the deduction, and
+ * what it reduces), then its "Line 410 – Business limit", both sides: a corporation not associated with any other, then
+ * associated ones (Schedule 23, and how the schedule shares the limit). That block's last sentence only points to the
+ * schedule. The first joined on the review of 2026-11-01: the older line on CCPCs said in DotAmi's own words that the
+ * small business deduction is for certain CCPCs, and this newer page says it, so the fact shows in its words here (the
+ * line on CCPCs cites the Type of corporation page, and a line holds one citation). Its "tax year" is the CRA's.
+ */
+const SBD_AND_BUSINESS_LIMIT = [
+  "Corporations that were Canadian-controlled private corporations (CCPCs) throughout the tax year may be able to claim the small business deduction (SBD). The SBD reduces Part I tax that the corporation would otherwise have to pay.",
+  "The maximum allowable business limit for a corporation that is not associated with any other corporation is $500,000.",
+  "CCPCs that are associated with one or more corporations during the tax year have to file Schedule 23, Agreement Among Associated Canadian-Controlled Private Corporations to Allocate the Business Limit.",
+  "On this schedule, a percentage of the business limit is allocated to each corporation, and the total of all percentages cannot be more than 100%.",
+] as const;
+
+/**
+ * The SR&ED Investment Tax Credit Policy's section 3.1.3 on allocating the expenditure limit: its first sentence (the
+ * group allocates the annual limit, block 254); the whole of block 255, every associated group files an agreement on
+ * the prescribed form, otherwise the CRA determines the limit to be nil (added on the review of 2026-11-01: the line
+ * went from the one block to the next without it); then the whole of block 256 on the form, T2SCH49 for CCPCs and the
+ * other side (ECPCs, and CCPCs that use the revenue method, a separate form), and what the CRA says to keep meanwhile.
+ * The season and year in it are the CRA's words, inside quote marks under the page's name.
+ */
+const EXPENDITURE_LIMIT = [
+  "A CCPC and its associated corporations (associated group), or an ECPC and the members of a consolidated group (see section 3.2), must allocate the annual expenditure limit for the purposes of calculating their ITCs earned at the enhanced 35% rate.",
+  "All CCPCs in an associated group, and all ECPCs that are part of a consolidated group, must file an agreement to allocate the expenditure limit on the prescribed form, otherwise the CRA will determine the expenditure limit to be nil.",
+  "For CCPCs, the expenditure limit for the applicable tax year may be allocated among the associated corporations by filing Schedule T2SCH49, Agreement Among Associated Canadian-Controlled Private Corporations to Allocate the Expenditure Limit.",
+  "For ECPCs, and CCPCs electing to calculate their expenditure limit based on the revenue method, a separate form will be published in Fall 2026.",
+  "In the interim, corporations should maintain copies of their working papers to demonstrate how the expenditure limit was calculated and allocated.",
+] as const;
 
 // ---- Done-when lines on today's ten map stages ----------------------------------------------------
 
@@ -454,27 +547,43 @@ const stageDoneWhen = {
       ),
     },
     {
+      // Until 2026-11-01 in DotAmi's own words from the CRA's older relationships page: "…: in general, a private
+      // corporation, resident in Canada, not controlled by non-residents or public corporations. The small business
+      // deduction and the enhanced investment tax credit for scientific research and experimental development (SR&ED)
+      // are for certain CCPCs." The maintainer's answer on his reading page, item 10 ("Rest them on the newer pages"):
+      // the newer Type of corporation page's own list, whole, in place of the summary. The second sentence is not on
+      // this line, since no newer page says both facts in one place and a line holds one citation; each fact shows in
+      // its own newer page's words instead. The small business deduction's is the T2 guide's sentence, first on the
+      // next line, whose citation is that page (back since the review of 2026-11-01: ca18ae2 had left it out). The
+      // enhanced credit's is the policy page's sentence, which the stage's own 35% quotes (that page gives the
+      // enhanced rate to ECPCs too).
       id: "dw-start-incsred-ccpc",
-      text: "You checked whether the corporation is a Canadian-controlled private corporation (CCPC): in general, a private corporation, resident in Canada, not controlled by non-residents or public corporations. The small business deduction and the enhanced investment tax credit for scientific research and experimental development (SR&ED) are for certain CCPCs.",
-      citation: checked(
-        PAGES.relationships,
-        "The small business deduction (SBD) and the investment tax credit (ITC) for scientific research and experimental development (SR&ED) at the enhanced rate are available to certain Canadian-controlled private corporations (CCPC).",
-        "a private corporation",
-        "a resident in Canada",
-        "In general terms, a corporation is a CCPC if it is all of the following:",
-        "not controlled directly or indirectly by one or more non-resident persons or public corporations",
-      ),
+      text: `You checked whether the corporation is a Canadian-controlled private corporation (CCPC). The CRA's Type of corporation page: ${quoting(CCPC_REQUIREMENTS)}`,
+      citation: checkedOn(ITEM_10_CHECKED_ON, PAGES.typeOfCorporation, ...CCPC_REQUIREMENTS),
     },
     {
+      // Until 2026-11-01 one line, in DotAmi's own words from the older page: "If it is associated with other CCPCs,
+      // they share the business limit and the SR&ED expenditure limit; the agreements that allocate them are schedules
+      // T2SCH23 and T2SCH49." Since item 10 two lines, one per newer page, as a line holds one citation: this one, the
+      // business limit in the T2 guide's words, both sides; and the next, the expenditure limit in the policy page's.
+      // The id stays with the first, so a tick already on it stays. "T2SCH23", written so, is on no page newer than the
+      // older one (the form's own page is dated 2019), so the line names the schedule as the T2 guide does. Since the
+      // review of 2026-11-01 it quotes the guide's sentence on the small business deduction first (the fact the older
+      // line on CCPCs said), and its label is a plain description of the guide, with no page code: a number in a line
+      // must be in its own quotes, and the "2" of the guide's code is in none. The citation keeps the page's own title.
       id: "dw-start-incsred-associated",
-      text: "If it is associated with other CCPCs, they share the business limit and the SR&ED expenditure limit; the agreements that allocate them are schedules T2SCH23 and T2SCH49.",
-      citation: checked(
-        PAGES.relationships,
-        "When one CCPC is associated with other CCPCs, these corporations must share the business limit.",
-        "When one CCPC is associated with other CCPCs, these corporations must share the expenditure limit.",
-        "T2SCH23, Agreement Among Associated Canadian-Controlled Private Corporations to Allocate the Business Limit",
-        "T2SCH49, Agreement Among Associated Canadian-Controlled Private Corporations to Allocate the Expenditure Limit",
-      ),
+      text: `You checked whether the corporation is associated with any other corporation. The CRA's income tax guide for corporations, on the small business deduction and the business limit: ${quoting(SBD_AND_BUSINESS_LIMIT)}`,
+      citation: checkedOn(ITEM_10_CHECKED_ON, PAGES.t2GuideChapter4, ...SBD_AND_BUSINESS_LIMIT),
+    },
+    {
+      // Split off dw-start-incsred-associated on 2026-11-01 (item 10): the SR&ED expenditure limit, in the policy page's
+      // words. They show the case the old line left out: ECPCs, and CCPCs that use the revenue method, file a separate
+      // form, not T2SCH49. Since the review of the same day its lead says what the person checked, as its neighbours'
+      // do (until then "If it is associated with other corporations, the CRA's … on the expenditure limit:"), and it
+      // quotes the section's block on the agreement and the prescribed form too.
+      id: "dw-start-incsred-expenditure-limit",
+      text: `You checked how an associated group allocates the SR&ED expenditure limit, if the corporation is associated with other corporations. The CRA's SR&ED Investment Tax Credit Policy, on the expenditure limit: ${quoting(EXPENDITURE_LIMIT)}`,
+      citation: checkedOn(ITEM_10_CHECKED_ON, PAGES.sredItcPolicy, ...EXPENDITURE_LIMIT),
     },
   ],
   "branch-hire-first-employee": [

@@ -17,9 +17,14 @@
  * 3. "add-martin": the page's two-sided passage, from the paragraph it quotes from Martin v The Queen, is added after
  *    the personal-element quote (not swapped in). The page names the case in the paragraph just before the passage
  *    ("Judge Bowman states in Martin v The Queen, 2003 TCC 155 at paragraph 18:"), not in the passage's own
- *    paragraph, so its label is "The same page:", not one naming the case. `node scripts/check-quotes.mjs` found all
+ *    paragraph, so its label was "The same page:" too until 2026-10-30. `node scripts/check-quotes.mjs` found all
  *    four quotes on the live page on 2026-10-29, in one run, so that is the check's date.
  * 4. "later": risk labels move to a words file with phase 3's first story, not here.
+ *
+ * The maintainer's answer of 2026-10-30 (his reading page, item 8): the label before the Martin passage becomes "The
+ * same page, quoting Martin v The Queen:". It names the case the page quotes, as the page's own paragraph before the
+ * passage does; the four quotes and their check are unchanged. The label stays in the catalog's line, where the box's
+ * other labels are (answer 4 above: risk labels move to a words file later).
  *
  * Kept as they were: the retired read's trigger (none) and severity (`caution`), the one card it shows on, and that
  * card's own words and its first source (whether that page supports its words is a separate open question for the
@@ -72,11 +77,13 @@ const MARTIN =
 const QUOTES = [PURSUIT_OF_PROFIT, INTENTION_TO_CREATE_LOSSES, PERSONAL_ELEMENT, MARTIN];
 
 /**
- * DotAmi's own words on the box: only the labels that say whose words follow. The Martin passage's label is "The same
- * page:" too: the page names the case in the paragraph before the passage, not in the passage's own paragraph.
+ * DotAmi's own words on the box: only the labels that say whose words follow. The Martin passage's label names the
+ * case the page quotes (the maintainer's answer of 2026-10-30), which the page names in the paragraph just before the
+ * passage. Until then it was "The same page:" too.
  */
 const WHY_LABELS = "The CRA's Income Tax Audit Manual, chapter 27: The same page:";
-const MITIGATION_LABELS = "The same page: The same page:";
+const MARTIN_LABEL = "The same page, quoting Martin v The Queen:";
+const MITIGATION_LABELS = `The same page: ${MARTIN_LABEL}`;
 
 /**
  * Words on the same page that are never quoted: the auditors' own instructions, the factor list (its "Nature and
@@ -174,6 +181,16 @@ describe("2. It says only what chapter 27 says, quoted, joined only by labels", 
   it("outside the quotes, only the labels that name the page", () => {
     expect(ownWordsFlat(read().why)).toBe(WHY_LABELS);
     expect(ownWordsFlat(read().mitigation)).toBe(MITIGATION_LABELS);
+  });
+
+  it("the Martin passage's label names the case, straight before the passage", () => {
+    // The maintainer's answer of 2026-10-30. The label stands right before the passage's opening quote mark, after the
+    // personal-element sentence, so it labels the passage and nothing else.
+    const m = read().mitigation;
+    expect(m).toContain(`${MARTIN_LABEL} “${MARTIN}”`);
+    expect(m.indexOf(MARTIN_LABEL)).toBeGreaterThan(m.indexOf(PERSONAL_ELEMENT));
+    // The case's name is in the label only: the passage's own words don't name it.
+    expect(MARTIN).not.toMatch(/Martin/);
   });
 
   it("every quote on the box is a whole quote the tool check holds, and every quote it holds is on the box", () => {
@@ -323,6 +340,8 @@ describe("5. The docs say it came back", () => {
     expect(reads).toContain(MARTIN);
     expect(reads).toContain(`a tool check of ${CHECKER_DAY}`);
     expect(reads).not.toContain("One exception, for now");
+    // The label before the Martin passage, since the maintainer's answer of 2026-10-30.
+    expect(reads).toContain(`"${MARTIN_LABEL}"`);
     expect(section("docs/brain/risk-calculator.md", "## Retired risk reads")).toContain(NEW_ID);
   });
 

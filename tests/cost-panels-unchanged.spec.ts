@@ -90,7 +90,46 @@
  * only that change and compared with the recording, 1 of 34 differs, and only in that line, "The CRA: “Some CCPCs
  * may earn an ITC at an enhanced rate of 35% …”" becoming "The CRA's SR&ED glossary: “Some Canadian-controlled
  * private corporations (CCPCs) that meet certain requirements may earn investment tax credits at the enhanced rate
- * of 35%”". Its sources' lines are unchanged (the maintainer's read wins on screen). The only cards allowed to change are the
+ * of 35%”". Its sources' lines are unchanged (the maintainer's read wins on screen). Redrawn on 2026-10-31 for one
+ * panel only, road 0's Incorporation for liability/SR&ED, when its 35% basis moved off the older relationships page
+ * (the maintainer's answer on his reading page, item 9: that page quoted nowhere) to the SR&ED Investment Tax Credit
+ * Policy's own sentence, and that page joined its sources (tests/reading-list-corrections.spec.ts). This takes the
+ * place of a redraw of 2026-10-30 on PR #230's branch (7dfb874), which drew the SR&ED glossary's line and source
+ * there, an older page that disagrees too. Drawn by this test's own path from that branch with the change and compared
+ * with the recording before the 2026-10-30 redraw (fe16e0a's), 1 of 34 differs, and only in three places: the basis
+ * line, "The CRA: “Some CCPCs may earn an ITC at an enhanced rate of 35% …”" becoming "The CRA's SR&ED Investment Tax
+ * Credit Policy: “In some cases, a Canadian-controlled private corporation (CCPC) may earn the ITC at an enhanced rate
+ * of 35%.”"; "Sources for this stage · 2" becoming "· 3"; and the new third source, SR&ED Investment Tax Credit Policy,
+ * "CRA · CA" with "Checked by a tool on 2026-10-31: it found on the page the exact words this entry relies on. Not read
+ * by a person yet." in amber and the sentence under "Words found on the page:" (nobody has read the page, so the check
+ * is drawn). The other 33 are fe16e0a's recording byte for byte. Redrawn on 2026-11-01 for two panels only, road 0's
+ * Incorporation for liability/SR&ED and SR&ED deepening, for the maintainer's answers on his reading page, item 10
+ * (tests/reading-list-corrections.spec.ts, § 3 and § 8). Drawn by this test's own path from e98f909 with the change and
+ * compared with e98f909's recording, 2 of 34 differ, and only so. Incorporation for liability/SR&ED: "0 of 3 ticked"
+ * becomes "0 of 4 ticked"; the line on CCPCs quotes the CRA's Type of corporation page's list whole in place of DotAmi's
+ * own words from the relationships page, and its source is that page, "CRA · CA" with "Checked by a tool on 2026-11-01"
+ * in amber and the nine runs under "Words found on the page:", where the relationships page with "Read by a person on
+ * 2026-10-25" was; the line on associated corporations quotes the T2 guide's three sentences on the business limit, its
+ * source the T2 guide's chapter 4, read by a person on 2026-10-25 as the relationships page was; and a new fourth line,
+ * the expenditure limit in the SR&ED Investment Tax Credit Policy's four sentences, its source that page, checked by a
+ * tool on 2026-11-01 in amber, with the four runs. SR&ED deepening: its tax impact quotes the policy page's two
+ * sentences under its title in place of "The enhanced rate is for some CCPCs, up to their expenditure limit for the
+ * year."; its 35% basis quotes the policy page's sentence in place of the SR&ED glossary's; "Sources for this stage · 3"
+ * becomes "· 4", the fourth the policy page, checked by a tool on 2026-11-01 in amber, with its two sentences. The other
+ * 32 are e98f909's recording byte for byte. Redrawn again on 2026-11-01 for the same two panels only, for the review of
+ * that change (tests/reading-list-corrections.spec.ts, § 3 and § 8): drawn by this test's own path from ca18ae2 with the
+ * fixes and compared with ca18ae2's recording, 2 of 34 differ, and only so. Incorporation for liability/SR&ED: the line
+ * on associated corporations is labelled "The CRA's income tax guide for corporations, on the small business deduction
+ * and the business limit:" in place of "The CRA's Corporation Income Tax Guide on the business limit:" and quotes the
+ * guide's sentence on the small business deduction first (its source, read by a person on 2026-10-25, draws no words);
+ * the line on the expenditure limit leads with "You checked how an associated group allocates the SR&ED expenditure
+ * limit, if the corporation is associated with other corporations." in place of "If it is associated with other
+ * corporations, the CRA's …", and quotes, and its amber source lists among "Words found on the page:", the policy page's
+ * block on the agreement and the prescribed form, between the first and second runs. SR&ED deepening: its tax impact's
+ * second quote is What's new's line on the limit, under "The CRA's What's new for corporations:", in place of the policy
+ * page's section 3.0 sentence; "Sources for this stage · 4" becomes "· 5"; the policy page's amber source lists the one
+ * sentence; and the fifth source is What's new for corporations, "CRA · CA · Read by a person on 2026-10-25". The other 32
+ * are ca18ae2's recording byte for byte. The only cards allowed to change are the
  * ones that gained road 0's named start-up cost lines (docs/architecture/future-cockpit.md § 6, "The official
  * fees catalog and start-up cost lines as built"); with those seven lines taken out, they match too.
  */

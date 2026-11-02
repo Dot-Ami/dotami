@@ -203,6 +203,11 @@ describe("engine catalog integrity", () => {
       // The small business deduction: the maximum allowable business limit (CRA, T2 guide chapter 4).
       "$500,000":
         "https://www.canada.ca/en/revenue-agency/services/forms-publications/publications/t4012/t2-corporation-income-tax-guide-chapter-4-page-4-t2-return.html",
+      // The SR&ED expenditure limit, "increased from the previously announced $4.5 million to $6 million" (CRA, What's new
+      // for corporations): SR&ED deepening's tax impact quotes that line since the maintainer's answer of 2026-11-01
+      // (item 10), from the stage's own citation of the page. The pattern below reads "$4.5 million" as "$4.5".
+      "$4.5": "https://www.canada.ca/en/revenue-agency/services/tax/businesses/topics/corporations/whats-new-corporations.html",
+      "$6": "https://www.canada.ca/en/revenue-agency/services/tax/businesses/topics/corporations/whats-new-corporations.html",
     };
     const cited = new Set(cfeCatalogV2026.nodes.flatMap((n) => n.citations.map((c) => c.url)));
     for (const url of Object.values(CITED_AMOUNTS)) expect(cited.has(url), url).toBe(true);
