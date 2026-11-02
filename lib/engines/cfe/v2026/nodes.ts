@@ -694,11 +694,15 @@ export const cfeNodesV2026 = [
     // Until 2026-10-24 "Enhanced rates for CCPCs subject to taxable income limits", which no held quote says; then, in
     // DotAmi's own words, the condition of the relationships page's sentence ("The enhanced rate is for some CCPCs, up
     // to their expenditure limit for the year."). Since the maintainer's answer of 2026-11-01 (his reading page, item
-    // 10: "Rest them on the newer pages") the newer policy page's own words for both facts, from the stage's citation of
-    // that page below: some CCPCs may earn the enhanced 35% (section 1.1), and spending above the expenditure limit for
-    // the tax year earns the basic rate (section 3.0), so both sides of the limit show. The first and last sentences
-    // rest on no line of the relationships page and stay.
-    taxImpact: `Eligible SR&ED expenditures generate ITCs and deductions. The CRA's ${SRED_POLICY_TITLE}: “${SRED_WORDS.policyCcpcEnhanced}” “${SRED_WORDS.policyAboveLimit}” Provincial top-ups may apply in some jurisdictions.`,
+    // 10: "Rest them on the newer pages") newer pages' own words for both facts, each under its page's name as the
+    // CCPC's SR&ED card labels them, each from the stage's own citation of that page below: some CCPCs may earn the
+    // enhanced 35% (the policy page, section 1.1), and the limit on which it can be earned (What's new for
+    // corporations, its page date 2026-06-12). On 2026-11-01 the second was first the policy page's section 3.0
+    // sentence on spending above the limit; the review of the same day found it one side of a two-sided passage (the
+    // other side, the $6 million, comes with a date in the same block), so What's new's line, which holds no date,
+    // stands in its place. "For the year" came off with the old words: no line quoted here says the limit is a year's.
+    // The first and last sentences rest on no line of the relationships page and stay.
+    taxImpact: `Eligible SR&ED expenditures generate ITCs and deductions. The CRA's ${SRED_POLICY_TITLE}: “${SRED_WORDS.policyCcpcEnhanced}” The CRA's What's new for corporations: “${SRED_WORDS.limitSixMillion}” Provincial top-ups may apply in some jurisdictions.`,
     lensAnnotations: {
       tax: "If experimentation is ongoing, annual SR&ED documentation may unlock recurring credits — with audit-ready records.",
       legal:
@@ -761,9 +765,9 @@ export const cfeNodesV2026 = [
         // the page in full on 2026-10-25. It is the older of the two CRA pages that disagree on refunds, so since his
         // answer of 2026-10-30 (his reading page, item 9) no line of it is quoted anywhere, and since his answer of
         // 2026-11-01 (item 10: "Rest them on the newer pages") nothing on the stage rests on it: the tax line quotes the
-        // policy page below. It stays listed, with this check (rule 8 of docs/engines/citations.md). Its note said
-        // "Which CCPCs may earn the enhanced 35% rate, up to their expenditure limit for the year." until then, the
-        // page's facts as its content (the road exports print it); now it names the page's topic only, as
+        // policy page and What's new below. It stays listed, with this check (rule 8 of docs/engines/citations.md).
+        // Its note said "Which CCPCs may earn the enhanced 35% rate, up to their expenditure limit for the year." until
+        // then, the page's facts as its content (the road exports print it); now it names the page's topic only, as
         // Incorporation for liability/SR&ED's note on the page does.
         title: "How certain relationships affect the small business deduction and SR&ED investment tax credits",
         authority: "CRA",
@@ -776,18 +780,39 @@ export const cfeNodesV2026 = [
       },
       {
         // Added on 2026-11-01 for the maintainer's answers on his reading page, item 10: the stage's 35% quotes the
-        // newer policy page's own sentence, as Incorporation for liability/SR&ED's does ("Apply the rule"), and the tax
-        // impact quotes the page's words for the enhanced rate and its limit ("Rest them on the newer pages"). A quote on
-        // a stage is held by one of the stage's own citations. `node scripts/check-quotes.mjs --url … --quote …` found
-        // both sentences on the live page together on 2026-11-01, so this citation's one check is of that day and holds
-        // the two. Nobody has read the page in full, so no lastVerified or readBy: its source says "Checked by a tool"
-        // in amber, with the sentences under it.
+        // newer policy page's own sentence, as Incorporation for liability/SR&ED's does ("Apply the rule"), and so does
+        // the tax impact, on the enhanced rate ("Rest them on the newer pages"). A quote on a stage is held by one of
+        // the stage's own citations. On 2026-11-01 this check first held the page's section 3.0 sentence on spending
+        // above the limit too, for the tax impact; the review of the same day took that sentence off (What's new below
+        // says the limit instead), and `node scripts/check-quotes.mjs --url … --quote …` found the one sentence left on
+        // the live page again that day ("All 2 quotes were found", with the page's heading), so this citation's one
+        // check is of that day and holds it alone. Nobody has read the page in full, so no lastVerified or readBy: its
+        // source says "Checked by a tool" in amber, with the sentence under it. Its note names the page's topic only, as
+        // Incorporation for liability/SR&ED's note on the page does: a note is DotAmi's own words, so it states none of
+        // the page's facts (until the review it named the enhanced rate's expenditure limit).
         title: SRED_POLICY_TITLE,
         authority: "CRA",
         jurisdiction: "CA",
         url: SRED_PAGES.itcPolicy,
-        toolCheck: { checkedOn: "2026-11-01", quotes: [SRED_WORDS.policyCcpcEnhanced, SRED_WORDS.policyAboveLimit] },
-        note: "The CRA's SR&ED investment tax credit policy: its overview of the enhanced rate, and the expenditure limit it is earned up to.",
+        toolCheck: { checkedOn: "2026-11-01", quotes: [SRED_WORDS.policyCcpcEnhanced] },
+        note: "The CRA's SR&ED investment tax credit policy: its overview of the credit's basic and enhanced rates.",
+      },
+      {
+        // Added on 2026-11-01 (the review of the maintainer's answers on item 10) for the tax impact's line on the limit,
+        // What's new's own sentence, which the SR&ED card quotes too: a quote on a stage is held by one of the stage's
+        // own citations. The page's date (2026-06-12) is newer than the relationships page's (2025-07-21), whose words
+        // the tax impact said the limit in until item 10. The maintainer read the page in full on 2026-10-25, so this
+        // citation carries his read, as the card's does, and the read wins on screen. `node scripts/check-quotes.mjs
+        // --url … --quote …` found the sentence on the live page on 2026-11-01 ("All 2 quotes were found", with the
+        // page's heading), so its one check is of that day. Its note names the page's topic only.
+        title: "What's new for corporations",
+        authority: "CRA",
+        jurisdiction: "CA",
+        url: SRED_PAGES.whatsNew,
+        lastVerified: MAINTAINER_READ_ON,
+        readBy: "person",
+        toolCheck: { checkedOn: "2026-11-01", quotes: [SRED_WORDS.limitSixMillion] },
+        note: "The CRA's list of changes to corporation income tax.",
       },
     ],
     financialImpact: {

@@ -116,7 +116,20 @@
  * sentences under its title in place of "The enhanced rate is for some CCPCs, up to their expenditure limit for the
  * year."; its 35% basis quotes the policy page's sentence in place of the SR&ED glossary's; "Sources for this stage · 3"
  * becomes "· 4", the fourth the policy page, checked by a tool on 2026-11-01 in amber, with its two sentences. The other
- * 32 are e98f909's recording byte for byte. The only cards allowed to change are the
+ * 32 are e98f909's recording byte for byte. Redrawn again on 2026-11-01 for the same two panels only, for the review of
+ * that change (tests/reading-list-corrections.spec.ts, § 3 and § 8): drawn by this test's own path from ca18ae2 with the
+ * fixes and compared with ca18ae2's recording, 2 of 34 differ, and only so. Incorporation for liability/SR&ED: the line
+ * on associated corporations is labelled "The CRA's income tax guide for corporations, on the small business deduction
+ * and the business limit:" in place of "The CRA's Corporation Income Tax Guide on the business limit:" and quotes the
+ * guide's sentence on the small business deduction first (its source, read by a person on 2026-10-25, draws no words);
+ * the line on the expenditure limit leads with "You checked how an associated group allocates the SR&ED expenditure
+ * limit, if the corporation is associated with other corporations." in place of "If it is associated with other
+ * corporations, the CRA's …", and quotes, and its amber source lists among "Words found on the page:", the policy page's
+ * block on the agreement and the prescribed form, between the first and second runs. SR&ED deepening: its tax impact's
+ * second quote is What's new's line on the limit, under "The CRA's What's new for corporations:", in place of the policy
+ * page's section 3.0 sentence; "Sources for this stage · 4" becomes "· 5"; the policy page's amber source lists the one
+ * sentence; and the fifth source is What's new for corporations, "CRA · CA · Read by a person on 2026-10-25". The other 32
+ * are ca18ae2's recording byte for byte. The only cards allowed to change are the
  * ones that gained road 0's named start-up cost lines (docs/architecture/future-cockpit.md § 6, "The official
  * fees catalog and start-up cost lines as built"); with those seven lines taken out, they match too.
  */

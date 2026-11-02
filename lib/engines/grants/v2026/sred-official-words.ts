@@ -14,8 +14,8 @@
  * SR&ED deepening's citation of the glossary has a check of that day. Nor are `individualRefundable` and
  * `SRED_POLICY_CCPC_LIST`, from the CRA's SR&ED Investment Tax Credit Policy, which the script found together on
  * 2026-10-30 (`SRED_POLICY_FOUND_ON`), nor `policyCcpcEnhanced`, from the same page, which the script found on its own
- * on 2026-10-31 for Incorporation for liability/SR&ED's citation of the page, nor `policyAboveLimit`, which it found with
- * `policyCcpcEnhanced` on 2026-11-01 for SR&ED deepening's citation of the page; nobody has read that page in full yet.
+ * on 2026-10-31 for Incorporation for liability/SR&ED's citation of the page, and again on 2026-11-01 for SR&ED
+ * deepening's; nobody has read that page in full yet.
  */
 
 /** The day the reading list's tool found every reading-list quote below on its page. */
@@ -61,7 +61,7 @@ export const SRED_WORDS = {
   // disagree on refunds (docs/engines/citations.md, rule 8). It stays as the words three citations of the page hold
   // in their tool checks: the SR&ED card's and the two SR&ED stages'. SR&ED deepening's tax impact said its limit in
   // DotAmi's own words ("up to their expenditure limit for the year") until his answer of 2026-11-01 (item 10, "Rest
-  // them on the newer pages"); it quotes `policyCcpcEnhanced` and `policyAboveLimit` since.
+  // them on the newer pages"); it quotes `policyCcpcEnhanced` and `limitSixMillion` since.
   ccpcEnhanced:
     "Some CCPCs may earn an ITC at an enhanced rate of 35% on qualified SR&ED expenditures up to their expenditure limit for the year.",
   // The CRA's SR&ED glossary, its entry "Enhanced SR&ED investment tax credit rate (35%)": the line the maintainer
@@ -75,8 +75,11 @@ export const SRED_WORDS = {
   // citation of the glossary holds in its tool check.
   glossaryEnhanced:
     "Some Canadian-controlled private corporations (CCPCs) that meet certain requirements may earn investment tax credits at the enhanced rate of 35%",
-  // The CRA's What's new for corporations, under "2025 – Federal". The page's own line that it lists "proposed,
-  // announced, or enacted" changes is a disclaimer, never a quote an entry relies on.
+  // The CRA's What's new for corporations, under "2025 – Federal" (its page date 2026-06-12). The page's own line that
+  // it lists "proposed, announced, or enacted" changes is a disclaimer, never a quote an entry relies on. The CCPC's
+  // card quotes it, and since the review of 2026-11-01 SR&ED deepening's tax impact too, from the stage's own citation
+  // of the page: the limit on which the enhanced 35% can be earned, whole in one sentence with no date in it. (The block
+  // goes on to point at the Fall Economic Statement, with its date; only this sentence is quoted.)
   limitSixMillion:
     "The expenditure limit on which the SR&ED enhanced 35% tax credit can be earned is increased from the previously announced $4.5 million to $6 million.",
   // Income Tax Act s.127(10.2), the consolidated Act (current to 2026-09-30, the reading list noted). Only the
@@ -97,18 +100,13 @@ export const SRED_WORDS = {
   // glossary's line is from an older page that disagrees too (`glossaryEnhanced`). SR&ED deepening's 35% and its tax
   // impact quote it too since the maintainer's answer of 2026-11-01 (item 10). The block goes on about ECPCs, with a
   // date, a second group rather than the other side of this sentence; only this sentence is quoted.
+  //
+  // Not kept here: the same page's section 3.0 sentence on spending above the expenditure limit (block 200, "… earn an
+  // ITC at the basic rate …"), which SR&ED deepening's tax impact quoted beside this one on 2026-11-01 until the review
+  // of the same day. It is one side of that block's two-sided passage on the limit, the enhanced side being the
+  // block's $6 million sentence, which comes with a date of its own; the tax impact quotes `limitSixMillion` instead.
   policyCcpcEnhanced:
     "In some cases, a Canadian-controlled private corporation (CCPC) may earn the ITC at an enhanced rate of 35%.",
-  // The same page, section 3.0 ("Determining the enhanced rate of 35%"), the last sentence of its first paragraph
-  // (block 200): what spending above the expenditure limit for the tax year earns, the basic rate. SR&ED deepening's tax
-  // impact quotes it beside `policyCcpcEnhanced` since 2026-11-01, so both sides of the limit show: the enhanced rate,
-  // then the basic rate above the limit (until then it said "up to their expenditure limit for the year" in DotAmi's
-  // own words, from the relationships page). The paragraph's $6 million and its date ("This change applies to tax years
-  // that begin after December 15, 2024.") are a pair of their own and are not quoted with it. `node
-  // scripts/check-quotes.mjs` found it with `policyCcpcEnhanced` on 2026-11-01. Its "current year" and "tax year" are
-  // the CRA's words, inside quote marks under the page's title.
-  policyAboveLimit:
-    "The current year qualified SR&ED expenditures in excess of the expenditure limit for the tax year earn an ITC at the basic rate (see section 2.2.1).",
 } as const;
 
 /**

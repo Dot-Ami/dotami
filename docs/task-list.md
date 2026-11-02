@@ -1141,12 +1141,15 @@ roadmap's build order.
       built): *SR&ED deepening*'s 35% quotes the policy page's own sentence and the SR&ED glossary is quoted
       nowhere ("Apply the rule: quote the newer policy page's line"); and the four lines DotAmi had written from
       the relationships page alone show the newer pages' words ("Rest them on the newer pages"): *SR&ED
-      deepening*'s tax impact quotes the policy page on the enhanced rate and its limit, its note on that page names
-      the page's topic only, road 0's line on CCPCs (`dw-start-incsred-ccpc`) quotes the CRA's *Type of
-      corporation* list whole, and the line on associated corporations is two, one per newer page
-      (`dw-start-incsred-associated` from the T2 guide on the business limit, `dw-start-incsred-expenditure-limit`
-      from the policy page on the expenditure limit); what no newer page states came off. Each new quote found by
-      `node scripts/check-quotes.mjs` that day
+      deepening*'s tax impact quotes the policy page on the enhanced rate and *What's new for corporations* on its
+      limit (a fifth source, read by him), its note on that page names the page's topic only, road 0's line on CCPCs
+      (`dw-start-incsred-ccpc`) quotes the CRA's *Type of corporation* list whole, and the line on associated
+      corporations is two, one per newer page (`dw-start-incsred-associated` from the T2 guide on the small
+      business deduction and the business limit, `dw-start-incsred-expenditure-limit` from the policy page on the
+      expenditure limit, its agreement on the prescribed form among it); what no newer page states came off. Each new
+      quote found by `node scripts/check-quotes.mjs` that day. A review of the same day fixed what was first built
+      (the tax impact's one-sided second quote, the notes that stated a limit, the deduction's sentence left out, the
+      expenditure limit's lead and its missing block), each changed citation checked again that day
     - [ ] Which page applies to which case: his "library that can tell the difference between the old and new
       pages", and which of two pages is accurate and true (his note on item 9), research first, with [14q]
       (S2.5.41) and the planned work on how fresh a source is; not built
