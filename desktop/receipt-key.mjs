@@ -36,6 +36,11 @@ const KEY_ID = /^[0-9a-f]{16}$/;
 /**
  * @typedef {{ isEncryptionAvailable(): boolean, encryptString(text: string): Buffer, decryptString(wrapped: Buffer): string, getSelectedStorageBackend?(): string }} KeyStore
  */
+/**
+ * What openReceiptKey answers, as receipt-key.d.mts declares it (an import of this file's own name reads
+ * its declaration file), so the states stay the exact words "on", "no-key-store" and "key-unreadable".
+ * @typedef {import("./receipt-key.mjs").OpenedReceiptKey} OpenedReceiptKey
+ */
 
 /**
  * Whether `store` really protects what it wraps. On Linux, Electron falls back to a fixed password
@@ -124,6 +129,7 @@ export async function waitForLocalState(dataDir, { platform = process.platform, 
  * @param {string} dataDir
  * @param {KeyStore} store
  * @param {{ platform?: string, now?: () => number, keyStoreSaved?: () => Promise<boolean> }} [options]
+ * @returns {Promise<OpenedReceiptKey>}
  */
 export async function openReceiptKey(dataDir, store, { platform = process.platform, now = Date.now, keyStoreSaved } = {}) {
   const file = path.join(dataDir, RECEIPT_KEY_FILE);
@@ -182,7 +188,7 @@ export async function openReceiptKey(dataDir, store, { platform = process.platfo
  *   "key-out-of-reach" the key store isn't available right now (the key file may still open at a later
  *       start, and no new key could be made while the store is down), or nothing is locked and a new
  *       key just wasn't saved yet (the next start tries again by itself). Never offered.
- * @param {Awaited<ReturnType<typeof openReceiptKey>>} opened
+ * @param {OpenedReceiptKey} opened
  */
 export function receiptLockEnv(opened) {
   if (opened.state === "on") return { DOTAMI_RECEIPT_LOCK: "on", DOTAMI_RECEIPT_KEY: opened.key.toString("base64") };
@@ -315,7 +321,7 @@ export function setAsideLockedReceipts(dataDir, { now = Date.now, rename = renam
  * app exits and Electron starts the new copy. The log gets the rule that stopped it, never a path.
  * @param {string} dataDir
  * @param {{
- *   opened: Awaited<ReturnType<typeof openReceiptKey>> | null,
+ *   opened: OpenedReceiptKey | null,
  *   fromDotAmi: boolean,
  *   quitting: boolean,
  *   relaunch: () => void,
@@ -326,6 +332,7 @@ export function setAsideLockedReceipts(dataDir, { now = Date.now, rename = renam
  * @returns {Promise<"restarting" | "refused">}
  */
 export async function restartForNewKey(dataDir, { opened, fromDotAmi, quitting, relaunch, stopServer, exit, log }) {
+  /** @type {(why: string) => "refused"} */
   const refuse = (why) => {
     log(`[desktop] a restart for a new receipts key was refused: ${why}`);
     return "refused";

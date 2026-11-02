@@ -190,7 +190,8 @@ export function readmeLicensing(dir) {
   const lines = readFileSync(path.join(dir, readme), "utf8").replace(/\r\n?/g, "\n").split("\n");
   const start = lines.findIndex((l) => /^#{1,3}\s+licen[cs](e|ing)\b/i.test(l));
   if (start < 0) return null;
-  const level = lines[start].match(/^#+/)[0].length;
+  // The line was found by a pattern that starts with "#", so this always matches.
+  const level = /** @type {RegExpMatchArray} */ (lines[start].match(/^#+/))[0].length;
   const end = lines.findIndex((l, i) => i > start && new RegExp(`^#{1,${level}}\\s`).test(l));
   return { file: `${readme} (its "${lines[start].replace(/^#+\s+/, "")}" section)`, text: lines.slice(start, end < 0 ? undefined : end).join("\n").trimEnd() };
 }
@@ -282,6 +283,9 @@ function resolveRel(root, fromRel, dep) {
  *
  * `leaveOut` (a test on a package name) skips a package and what only it pulls in: the desktop
  * build passes desktop/left-out.mjs's isLeftOut, for the packages its server doesn't carry.
+ * @param {string} root
+ * @param {string[]} names
+ * @param {{ copied?: boolean, leaveOut?: (name: string) => boolean }} [options]
  */
 export function dependencyClosure(root, names, { copied = false, leaveOut = () => false } = {}) {
   const found = new Map();
@@ -311,7 +315,11 @@ export function dependencyClosure(root, names, { copied = false, leaveOut = () =
   return [...found.values()];
 }
 
-/** What DotAmi's own package.json "dependencies" need to run (see dependencyClosure). */
+/**
+ * What DotAmi's own package.json "dependencies" need to run (see dependencyClosure).
+ * @param {string} root
+ * @param {{ leaveOut?: (name: string) => boolean }} [options]
+ */
 export function productionPackages(root, { leaveOut } = {}) {
   const manifest = readJson(path.join(root, "package.json"));
   return dependencyClosure(root, Object.keys({ ...manifest.dependencies, ...manifest.optionalDependencies }), { leaveOut });
@@ -326,6 +334,8 @@ function bundledInside(root, owner, shipped) {
   const compiled = path.join(root, "node_modules", owner.rel, "dist", "compiled");
   if (!existsSync(compiled)) return [];
   const shippedCompiled = shipped ? path.join(shipped, owner.rel, "dist", "compiled") : null;
+  // Entries, like collectNotices' own; the caller adds `kind`, `ships` and `note` to each.
+  /** @type {any[]} */
   const out = [];
   for (const entry of readdirSync(compiled, { withFileTypes: true })) {
     if (!entry.isDirectory()) continue;
@@ -359,6 +369,8 @@ function bundledInside(root, owner, shipped) {
  * (desktop/build.mjs's .next-desktop/standalone); with it, the list is the installer's.
  * `leaveOut` names packages that don't ship although DotAmi's dependencies name them: the desktop
  * server leaves sharp out though next names it as an optional dependency (desktop/left-out.mjs).
+ * @param {string} root
+ * @param {{ standalone?: string, leaveOut?: (name: string) => boolean }} [options]
  */
 export function collectNotices(root, { standalone, leaveOut } = {}) {
   /** @type {Map<string, any>} */
@@ -507,7 +519,12 @@ export function formatNotices(entries, { version, desktop }) {
   return `${header}\n\n${blocks.map((b) => `${SEPARATOR}\n${b}`).join("\n\n")}\n`;
 }
 
-/** Collects, formats and writes the file; returns the entries written. */
+/**
+ * Collects, formats and writes the file; returns the entries written.
+ * @param {string} root
+ * @param {string} out
+ * @param {{ standalone?: string, leaveOut?: (name: string) => boolean }} [options]
+ */
 export function writeNotices(root, out, { standalone, leaveOut } = {}) {
   const entries = collectNotices(root, { standalone, leaveOut });
   const version = readJson(path.join(root, "package.json")).version;

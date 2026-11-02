@@ -1,5 +1,4 @@
-import { readJsonWithLimit, rejectedResponse, RequestRejectedError } from "@/lib/api/body-limit";
-import { checkRateLimit, clientKeyFromRequest, rateLimitResponse } from "@/lib/api/rate-limit";
+import { readBody, throttle } from "@/lib/api/route";
 import { cfeCatalogV2026 } from "@/lib/engines/cfe/v2026";
 import { roadById } from "@/lib/engines/roads/v2026";
 import { buildPlaybookSkeleton } from "@/lib/playbook/build-skeleton";
@@ -53,17 +52,13 @@ function isScenarioPayload(value: unknown): value is Scenario {
 }
 
 export async function POST(request: Request) {
-  const rateLimit = checkRateLimit(`playbook:${clientKeyFromRequest(request)}`, RATE_LIMIT);
-  if (!rateLimit.allowed) return rateLimitResponse(rateLimit);
+  const limited = throttle("playbook", request, RATE_LIMIT);
+  if (limited) return limited;
 
-  let bodyUnknown: unknown;
-
-  try {
-    bodyUnknown = await readJsonWithLimit<unknown>(request, MAX_BODY_BYTES);
-  } catch (error) {
-    if (error instanceof RequestRejectedError) return rejectedResponse(error);
-    return Response.json({ error: "Invalid JSON payload" }, { status: 400 });
-  }
+  // This route has always told a body that isn't JSON "Invalid JSON payload".
+  const read = await readBody(request, MAX_BODY_BYTES, "Invalid JSON payload");
+  if ("refusal" in read) return read.refusal;
+  const bodyUnknown = read.body;
 
   const scenario = (bodyUnknown as { scenario?: unknown }).scenario;
 

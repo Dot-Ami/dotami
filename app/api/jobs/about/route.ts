@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { aboutJobForAnswers } from "@/lib/about-job/view";
-import { guardRead, readBody } from "@/lib/futures/http";
+import { readBody, throttle } from "@/lib/api/route";
 import { isRecord } from "@/lib/futures/types";
 import { PROVINCES, type Province } from "@/lib/scenarios/types";
 
@@ -30,7 +30,7 @@ const answer = (value: unknown): string | null | undefined =>
  * an answer that isn't on the list reads as not picked, and nothing is worked out from the area.
  */
 export async function POST(request: Request) {
-  const refused = guardRead(request, "jobs-about", RATE_LIMIT);
+  const refused = throttle("jobs-about", request, RATE_LIMIT);
   if (refused) return refused;
 
   const read = await readBody(request, MAX_BODY_BYTES);

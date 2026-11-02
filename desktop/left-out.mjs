@@ -54,7 +54,9 @@ export function ownPlatformBuild(platform = process.platform, arch = process.arc
 }
 
 function isLinuxMusl(platform) {
-  return platform === "linux" && !process.report.getReport().header.glibcVersionRuntime;
+  // Node's type for the report is a bare object; the field read is in its documented header. The report
+  // is made only on Linux, as before.
+  return platform === "linux" && !(/** @type {{ header: { glibcVersionRuntime?: string } }} */ (process.report.getReport()).header.glibcVersionRuntime);
 }
 
 /**

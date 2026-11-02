@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
-import { futureFailure, guardWrite, readBody } from "@/lib/futures/http";
+import { pageOnly, readBody, throttle } from "@/lib/api/route";
+import { COCKPIT_PAGE_ONLY, futureFailure } from "@/lib/futures/http";
 import { setStepProgress } from "@/lib/futures/step-progress";
 import { prisma } from "@/lib/prisma";
 
@@ -19,7 +20,7 @@ const MAX_BODY_BYTES = 16 * 1024;
  * progress as kept. Only from DotAmi's own window.
  */
 export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
-  const refused = guardWrite(request, "futures-progress", RATE_LIMIT);
+  const refused = pageOnly(request, COCKPIT_PAGE_ONLY) ?? throttle("futures-progress", request, RATE_LIMIT);
   if (refused) return refused;
   const { id } = await params;
 

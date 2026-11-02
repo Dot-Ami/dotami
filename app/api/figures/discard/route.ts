@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
-import { parseIdsBody, readBody, storeErrorResponse, throttle } from "@/lib/figures/http";
+import { readBody, throttle } from "@/lib/api/route";
+import { parseIdsBody, storeErrorResponse } from "@/lib/figures/http";
 import { discardFigures } from "@/lib/figures/store";
 import { prisma } from "@/lib/prisma";
 
@@ -16,7 +17,7 @@ const MAX_BODY_BYTES = 64 * 1024;
  * agreed to, and only "proposed" figures move.
  */
 export async function POST(request: Request) {
-  const limited = throttle(request, "discard", RATE_LIMIT);
+  const limited = throttle("figures-discard", request, RATE_LIMIT);
   if (limited) return limited;
 
   const read = await readBody(request, MAX_BODY_BYTES);

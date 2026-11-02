@@ -66,15 +66,15 @@ export function updaterLogger(write) {
   };
 }
 
-// The words electron-updater 6.8.9 uses when an info line carries a failure (NsisUpdater.js:135,
-// DownloadedUpdateHelper.js:102).
+// The words electron-updater 6.8.11 uses when an info line carries a failure (NsisUpdater.js:135,
+// DownloadedUpdateHelper.js:102; the same lines as 6.8.9's, re-read 2026-10-30).
 const UPDATER_FAILURE = /error|cannot|can't|couldn't|failed|unable/i;
 
 /**
  * "Error, EPERM": an error's name and code, never its message, which can quote what it was given.
  * The same rule as lib/api/log-error.ts describeError, for the desktop side (plain JavaScript, so it
  * can't import the TypeScript one).
- * @param {unknown} error
+ * @param {any} error anything a `catch` caught; its `code` is read only when it is a string
  * @returns {string}
  */
 export function describeError(error) {

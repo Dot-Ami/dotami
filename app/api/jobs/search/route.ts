@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 
-import { guardRead, readBody } from "@/lib/futures/http";
+import { readBody, throttle } from "@/lib/api/route";
 import { isRecord } from "@/lib/futures/types";
 import { searchJobTitles } from "@/lib/engines/oasis/v2026/title-search";
 
@@ -26,7 +26,7 @@ const MAX_QUERY_CHARS = 500;
  * is picked: the answer is a list for the person to click.
  */
 export async function POST(request: Request) {
-  const refused = guardRead(request, "jobs-search", RATE_LIMIT);
+  const refused = throttle("jobs-search", request, RATE_LIMIT);
   if (refused) return refused;
 
   const read = await readBody(request, MAX_BODY_BYTES);

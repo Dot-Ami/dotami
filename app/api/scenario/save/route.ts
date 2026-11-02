@@ -1,8 +1,7 @@
 import { NextResponse } from "next/server";
 
-import { readJsonWithLimit, rejectedResponse, RequestRejectedError } from "@/lib/api/body-limit";
 import { logRouteError } from "@/lib/api/log-error";
-import { checkRateLimit, clientKeyFromRequest, rateLimitResponse } from "@/lib/api/rate-limit";
+import { readBody, throttle } from "@/lib/api/route";
 import { ensureVentureFromScenario } from "@/lib/db/ensure-venture-from-scenario";
 import { parseFirstSave, parseScenarioInput } from "@/lib/db/parse-scenario-input";
 import { loadVentureScenarioById } from "@/lib/db/ventures";
@@ -17,16 +16,12 @@ const RATE_LIMIT = { limit: 120, windowMs: 60_000 };
 const MAX_BODY_BYTES = 128 * 1024;
 
 export async function POST(request: Request) {
-  const rateLimit = checkRateLimit(`scenario-save:${clientKeyFromRequest(request)}`, RATE_LIMIT);
-  if (!rateLimit.allowed) return rateLimitResponse(rateLimit);
+  const limited = throttle("scenario-save", request, RATE_LIMIT);
+  if (limited) return limited;
 
-  let body: unknown;
-  try {
-    body = await readJsonWithLimit<unknown>(request, MAX_BODY_BYTES);
-  } catch (error) {
-    if (error instanceof RequestRejectedError) return rejectedResponse(error);
-    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
-  }
+  const read = await readBody(request, MAX_BODY_BYTES);
+  if ("refusal" in read) return read.refusal;
+  const body = read.body;
 
   const scenario = parseScenarioInput(body);
   if (!scenario) {

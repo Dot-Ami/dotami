@@ -136,7 +136,8 @@ function readFamily(text, family, descriptors, fileName) {
     const byCode = new Map(columns.map((c, i) => [c, row[i + 2] ?? ""]));
     const digits = order
       .map((d) => {
-        const value = byCode.get(d.code);
+        // Every descriptor in `order` is one of `columns`, so byCode has it.
+        const value = /** @type {string} */ (byCode.get(d.code));
         if (!/^\d$/.test(value) || Number(value) > family.top) {
           throw new Error(`${fileName}: rating "${value}" for ${tidy(d.name)} of job ${code} is outside its scale (0 to ${family.top})`);
         }
