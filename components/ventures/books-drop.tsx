@@ -16,6 +16,7 @@ import { booksMonthlyTotals, splitKnownByCurrency } from "@/lib/figures/books/to
 import type { BookData } from "@/lib/figures/books/types";
 import type { FigureView } from "@/lib/figures/types";
 import { useLocalToday } from "@/lib/figures/use-local-today";
+import { venturesWords } from "@/lib/ventures/words";
 
 import { describePeriod, formatAmount } from "./agree-prompt";
 
@@ -39,7 +40,9 @@ const FIELD_LABEL = "block font-mono text-label uppercase tracking-[0.14em] text
 const MAX_FIGURES_PER_FILE = 500;
 const MAX_LABEL_CHARS = 120;
 
-const lineWord = (n: number) => (n === 1 ? "line" : "lines");
+const words = venturesWords.books;
+const common = venturesWords.common;
+const lineWord = words.lineWord;
 
 export type BookProposal = ReturnType<typeof bookProposal>;
 
@@ -76,7 +79,7 @@ export function BookReview({
   );
   const skipped = useMemo(() => (totals.ok ? skipSummary(totals.skipped) : []), [totals]);
   const freshCount = splits.reduce((sum, s) => sum + s.fresh.length, 0);
-  const label = fileName.trim().slice(0, MAX_LABEL_CHARS) || "a GnuCash book";
+  const label = fileName.trim().slice(0, MAX_LABEL_CHARS) || words.aGnuCashBook;
 
   function toggle(id: string, on: boolean) {
     setTicked((current) => {
@@ -91,23 +94,15 @@ export function BookReview({
     <div className="mt-3">
       {/* Focus lands here once the book is read, since the Choose a file button it came from is gone. */}
       <p data-autofocus tabIndex={-1} className="text-body text-paper-dim outline-hidden">
-        File: <span className="text-paper">{fileName}</span>
+        {common.file} <span className="text-paper">{fileName}</span>
       </p>
-      {/* GnuCash writes the book to disk only when the person saves; the file is what was saved. */}
-      <p className="mt-1 text-body text-paper-dim">
-        DotAmi read your last save. Anything changed in GnuCash after that save isn&apos;t in it.
-      </p>
-      <p className="mt-1 text-body text-stone-dim">
-        DotAmi&apos;s GnuCash reader was tested on invented books written to GnuCash&apos;s file
-        format, not on real ones, so check the accounts and totals.
-      </p>
+      <p className="mt-1 text-body text-paper-dim">{words.lastSave}</p>
+      <p className="mt-1 text-body text-stone-dim">{words.testedOn}</p>
 
       <fieldset className="mt-3" aria-describedby={`${uid}-accounts-hint`}>
-        <legend className={FIELD_LABEL}>Accounts in this book</legend>
+        <legend className={FIELD_LABEL}>{words.accounts}</legend>
         <p id={`${uid}-accounts-hint`} className="mt-1 max-w-prose text-body text-stone-dim">
-          Accounts GnuCash marks as income start ticked. An income account can also hold
-          interest, or GST/HST you collected, which isn&apos;t revenue from sales. Tick or untick
-          any account; only the ticked ones are added up.
+          {words.accountsHint}
         </p>
         <ul className="mt-2 max-h-64 space-y-1 overflow-y-auto pr-2 text-body">
           {book.accounts.map((account) => {
@@ -137,7 +132,7 @@ export function BookReview({
                 </span>
                 {reason !== null ? (
                   <span id={`${id}-why`} className="text-body text-stone-dim">
-                    — can&apos;t be ticked: {reason}
+                    {words.cantBeTicked} {reason}
                   </span>
                 ) : null}
                 {note !== null ? (
@@ -154,9 +149,7 @@ export function BookReview({
 
       <div className="mt-3 border-t border-rule-soft pt-3">
         {ticked.size === 0 ? (
-          <p className="text-body text-stone-dim">
-            Tick at least one account to see its monthly totals.
-          </p>
+          <p className="text-body text-stone-dim">{words.tickOne}</p>
         ) : !totals.ok ? (
           <p role="alert" className={ALERT}>
             {totals.error}
@@ -168,7 +161,7 @@ export function BookReview({
               .map((s) => (
                 <table key={s.currency} className="mb-2 text-body">
                   <caption className="mb-1 text-left font-mono text-label uppercase tracking-[0.14em] text-stone">
-                    Monthly totals from {fileName} ({s.currency})
+                    {common.monthlyTotalsFrom} {fileName} ({s.currency})
                   </caption>
                   <tbody>
                     {s.fresh.map((m) => (
@@ -188,7 +181,7 @@ export function BookReview({
                 </table>
               ))}
             {freshCount === 0 ? (
-              <p className="text-body text-paper-dim">Nothing new to propose from this book.</p>
+              <p className="text-body text-paper-dim">{words.nothingNew}</p>
             ) : null}
 
             {splits.some((s) => s.known.length > 0) ? (
@@ -196,8 +189,7 @@ export function BookReview({
                 {splits.flatMap((s) =>
                   s.known.map((m) => (
                     <li key={`${s.currency}-${m.periodStart}`}>
-                      {describePeriod(m.periodStart, m.periodEnd)} ({s.currency}) — already in
-                      DotAmi with the same total, not proposed again
+                      {describePeriod(m.periodStart, m.periodEnd)} ({s.currency}) {common.alreadyInDotAmi}
                     </li>
                   )),
                 )}
@@ -207,7 +199,7 @@ export function BookReview({
             {skipped.length > 0 ? (
               <div className="mt-2">
                 <p className="font-mono text-label uppercase tracking-wider text-stone-dim">
-                  Left out
+                  {common.leftOut}
                 </p>
                 <ul className="mt-1 space-y-0.5 text-body text-stone-dim">
                   {skipped.map((group) => (
@@ -219,16 +211,15 @@ export function BookReview({
 
             {totals.scheduledLines > 0 ? (
               <p className="mt-2 text-body text-stone-dim">
-                The book&apos;s scheduled transactions ({totals.scheduledLines}{" "}
-                {lineWord(totals.scheduledLines)}) are plans GnuCash hasn&apos;t posted, so
-                they are never counted.
+                {words.scheduled.before}
+                {totals.scheduledLines} {lineWord(totals.scheduledLines)}
+                {words.scheduled.after}
               </p>
             ) : null}
 
             {freshCount > MAX_FIGURES_PER_FILE ? (
               <p className={ALERT}>
-                This book has more than {MAX_FIGURES_PER_FILE} months of totals, more than DotAmi
-                proposes at once. Untick some accounts to propose fewer at a time.
+                {words.tooMany.before} {MAX_FIGURES_PER_FILE} {words.tooMany.after}
               </p>
             ) : null}
           </>
@@ -243,7 +234,7 @@ export function BookReview({
             disabled={busy}
             onClick={() => onReview(bookProposal(ventureId, label, splits))}
           >
-            {freshCount === 1 ? "Review this figure" : `Review these ${freshCount} figures`}
+            {freshCount === 1 ? common.reviewOne : common.reviewMany(freshCount)}
           </Pill>
         </div>
       ) : null}

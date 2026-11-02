@@ -4,6 +4,9 @@ import { useEffect, useState } from "react";
 
 import type { DatabaseLockState } from "@/lib/db/lock";
 import { loadSetting, saveSetting } from "@/lib/settings/client";
+import { settingsWords } from "@/lib/settings/words";
+
+const words = settingsWords.databaseEncryption;
 
 /**
  * [8i] The "Encrypt the data file" switch (docs/architecture/database-encryption.md § 7 and § 15; the
@@ -41,7 +44,7 @@ export function DatabaseEncryptionControl({ lock }: { lock: DatabaseLockState })
   }, []);
 
   if (lock === "source") {
-    return <p className="text-body text-paper-dim">Only the desktop app encrypts the data file; this copy, run from source, can&apos;t.</p>;
+    return <p className="text-body text-paper-dim">{words.source}</p>;
   }
   const encrypted = lock === "on";
 
@@ -70,65 +73,55 @@ export function DatabaseEncryptionControl({ lock }: { lock: DatabaseLockState })
             else setConfirming(true);
           }}
         />
-        Encrypt the data file
+        {words.label}
       </label>
       {confirming && encrypted ? (
         <div
           role="alertdialog"
-          aria-label="Turn off locking for the data file?"
+          aria-label={words.turnOff.question}
           className="rounded-sm border border-amber/40 bg-amber/5 px-3 py-2 text-amber"
         >
-          <p className="font-medium">Turn off locking for the data file?</p>
-          <p className="mt-1">
-            At DotAmi&apos;s next start, your data file and its safety copies are decrypted, and their key is deleted once
-            nothing is locked with it. After that, anyone who can read your data folder, a copy of it, or this
-            computer&apos;s disk outside Windows can read your ideas, figures, expense records and statements. A copy of the
-            whole data folder holds its own copy of the key, so it still opens on your Windows account. Backups you make
-            with File → Back up… stay locked with their passphrase either way. Your receipt files keep their own
-            encryption.
-          </p>
+          <p className="font-medium">{words.turnOff.question}</p>
+          <p className="mt-1">{words.turnOff.detail}</p>
           <div className="mt-2 flex gap-2">
             <button type="button" className="rounded-full border border-rule px-3 py-0.5 text-paper" onClick={() => setConfirming(false)}>
-              Go back
+              {words.turnOff.back}
             </button>
             <button type="button" className="rounded-full border border-amber/60 px-3 py-0.5 text-amber" onClick={() => void save(false)}>
-              Turn it off
+              {words.turnOff.confirm}
             </button>
           </div>
         </div>
       ) : confirming ? (
-        <div role="alertdialog" aria-label="Never encrypt the data file?" className="rounded-sm border border-amber/40 bg-amber/5 px-3 py-2 text-amber">
-          <p>
-            Your data file stays unencrypted: anyone who can read your data folder, a copy of it, or this computer&apos;s
-            disk outside Windows can read it. DotAmi won&apos;t ask again until you turn this back on.
-          </p>
+        <div role="alertdialog" aria-label={words.never.question} className="rounded-sm border border-amber/40 bg-amber/5 px-3 py-2 text-amber">
+          <p>{words.never.detail}</p>
           <div className="mt-2 flex gap-2">
             <button type="button" className="rounded-full border border-rule px-3 py-0.5 text-paper" onClick={() => setConfirming(false)}>
-              Go back
+              {words.never.back}
             </button>
             <button type="button" className="rounded-full border border-amber/60 px-3 py-0.5 text-amber" onClick={() => void save(false)}>
-              Keep it unencrypted
+              {words.never.confirm}
             </button>
           </div>
         </div>
       ) : null}
       <p role="status" className="text-body text-paper-dim">
         {read === "failed"
-          ? "DotAmi couldn't read this choice from your data file."
+          ? words.status.readFailed
           : state === "error"
-            ? "Couldn't save; nothing changed."
+            ? words.status.saveFailed
             : encrypted
               ? on === true
-                ? "On: your data file is encrypted. Untick to decrypt it at the next start."
+                ? words.status.on
                 : on === false
-                  ? "Off: DotAmi decrypts your data file the next time it starts. Tick the box again before then to keep it encrypted."
+                  ? words.status.offAtNextStart
                   : ""
               : on === true
                 ? lock === "no-key-store"
-                  ? "On: DotAmi encrypts the file once Windows' key store is available, asking first."
-                  : "On: DotAmi asks to encrypt your data file the next time it starts."
+                  ? words.status.onNoKeyStore
+                  : words.status.onAsks
                 : on === false
-                  ? "Never: the data file stays unencrypted, and DotAmi doesn't ask."
+                  ? words.status.never
                   : ""}
       </p>
     </div>

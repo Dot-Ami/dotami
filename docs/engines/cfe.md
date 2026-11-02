@@ -79,9 +79,12 @@ in v0 of the brain; merging the two systems is its own reviewed change.
    matcher found on 2026-10-23 are recorded as a tool check of that day, on the stage the list checked
    only (citations.md, § The reading list's tool checks). As built: Sole Prop activation's note on what
    counts toward the $30,000 tests, Incorporating's business limit ("Up to $500,000"), Hire first
-   employee's payroll account timing, and the 35% on Incorporation for liability/SR&ED and SR&ED
-   deepening. `tests/reading-list-corrections.spec.ts` § 4 fails on a quoted run that no citation of
-   its node holds.
+   employee's payroll account timing, the 35% on Incorporation for liability/SR&ED and SR&ED
+   deepening, and, since 2026-11-01, SR&ED deepening's tax impact (the SR&ED Investment Tax Credit Policy's
+   sentence on the enhanced rate and *What's new for corporations*' line on its limit, each under its page's name
+   and held by the stage's own citation of that page; the maintainer's answers on his reading page, item 10, and
+   the review of the same day). `tests/reading-list-corrections.spec.ts` § 4 fails on a quoted run that no
+   citation of its node holds.
    **A number only the person can give** is asked on the node (`asksOwnNumber`): Incorporating's
    "I'd incorporate at $___" is the only thing that can light it green.
 3. Node count is version-locked scope (v1 = 10; 20+ is roadmap v4). Do not add nodes

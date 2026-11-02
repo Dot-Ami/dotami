@@ -66,7 +66,7 @@ import { getScenarioNodeStatus } from "@/lib/scenarios/graph";
 import { venturesWords } from "@/lib/ventures/words";
 
 import { COMPONENT_TIME_WORDS } from "./fixtures/ideas/known-gaps";
-import { ownWords } from "./helpers/own-words";
+import { ownWords, WORDS_FILES_FROM_COMPONENTS } from "./helpers/own-words";
 import { input } from "./helpers/road-to-evaluate";
 import { simplify } from "./helpers/source-scan";
 import { findTimeWords, TIME_PATTERNS } from "./helpers/time-words";
@@ -657,7 +657,9 @@ describe("3. Time words in DotAmi's own words", () => {
 
   // It parses every component, which takes seconds, so a slower machine is given more than vitest's default.
   it("no component writes a time word of its own, past the listed ones", () => {
-    const files = sourceFiles(["components", "app"]);
+    // And the words files that took the components' sentences on 2026-10-31: read the same way, so a template
+    // that became a function there is still read piece by piece, and its allowance moved with it.
+    const files = [...sourceFiles(["components", "app"]), ...WORDS_FILES_FROM_COMPONENTS.map((file) => ({ file, text: readFileSync(file, "utf8") }))];
     // The two that wrote "Time-boxed" until 2026-10-24 are read.
     expect(files.map((f) => f.file)).toEqual(expect.arrayContaining(["components/node-detail-panel.tsx", "components/discovery/intake-page.tsx"]));
     const found: string[] = [];

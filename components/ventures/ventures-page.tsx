@@ -11,7 +11,7 @@ import { useIdeaReminders } from "@/components/ventures/use-idea-reminders";
 import type { VentureLinkKind, VentureSummary } from "@/lib/db/ventures";
 import { VENTURE_LINK_KINDS, VENTURE_LINK_LABELS } from "@/lib/db/ventures";
 import { INTAKE_GOAL_LABELS, type IntakeGoalId } from "@/lib/journey/types";
-import { venturesWords } from "@/lib/ventures/words";
+import { venturesWords as words } from "@/lib/ventures/words";
 import { VENTURE_STAGES, VENTURE_STAGE_LABELS, type VentureStage } from "@/lib/scenarios/types";
 
 /**
@@ -32,10 +32,10 @@ export function VenturesPage() {
       const res = await fetch("/api/ventures", { cache: "no-store" });
       const body = (await res.json()) as { ventures: VentureSummary[]; db: { available: boolean; reason?: string } };
       setVentures(body.ventures ?? []);
-      setDbDown(body.db?.available === false ? (body.db.reason ?? "No database reachable.") : null);
+      setDbDown(body.db?.available === false ? (body.db.reason ?? words.page.noDatabase) : null);
     } catch {
       setVentures([]);
-      setDbDown("Could not reach the app.");
+      setDbDown(words.page.noApp);
     }
   }, []);
 
@@ -56,15 +56,15 @@ export function VenturesPage() {
       {/* Wraps onto a second line on a phone: on one line its five items ran past a 375 px window. */}
       <nav data-region="nav" className="flex flex-wrap items-center gap-x-6 gap-y-2 border-b border-rule-soft px-8 py-[18px]">
         <GhostLink href="/" tone="stone">
-          ← Back
+          {words.page.back}
         </GhostLink>
         <WordMark />
-        <p className="ml-auto font-mono text-small uppercase tracking-[0.14em] text-stone">Your futures</p>
+        <p className="ml-auto font-mono text-small uppercase tracking-[0.14em] text-stone">{words.page.name}</p>
         <GhostLink href="/expenses" tone="stone">
-          Your expenses
+          {words.page.expenses}
         </GhostLink>
         <GhostLink href="/settings" tone="stone">
-          Settings
+          {words.page.settings}
         </GhostLink>
       </nav>
 
@@ -72,16 +72,12 @@ export function VenturesPage() {
         <header data-region="intro" className="flex flex-wrap items-end justify-between gap-4">
           <div>
             <h1 className="font-serif text-display font-bold leading-[1.15] tracking-tight text-paper">
-              Every future, <span className="font-normal italic text-maple">saved and cross-referenced.</span>
+              {words.page.heading.lead} <span className="font-normal italic text-maple">{words.page.heading.rest}</span>
             </h1>
-            <p className="mt-2 max-w-xl text-lead text-paper-dim">
-              Listed by when you last touched them — not ranked. Each opens in its own cockpit. Link
-              the ones that overlap or could become sister companies; the map reads the links, it
-              never scores them.
-            </p>
+            <p className="mt-2 max-w-xl text-lead text-paper-dim">{words.page.intro}</p>
           </div>
           <Pill variant="maple" onClick={anotherFuture}>
-            + Another future
+            {words.page.another}
           </Pill>
         </header>
 
@@ -90,13 +86,13 @@ export function VenturesPage() {
         ) : null}
 
         {ventures === null ? (
-          <p className="mt-10 text-lead text-stone">Loading…</p>
+          <p className="mt-10 text-lead text-stone">{words.common.loading}</p>
         ) : ventures.length === 0 ? (
           <div data-region="futures" className="mt-10 rounded-lg border border-dashed border-rule p-8 text-center">
-            <p className="text-lead text-stone">Nothing saved yet. Describe one on the intake and press Save on its map.</p>
+            <p className="text-lead text-stone">{words.page.empty}</p>
             <div className="mt-4 flex justify-center">
               <Pill variant="maple" onClick={anotherFuture}>
-                Start a future →
+                {words.page.start}
               </Pill>
             </div>
           </div>
@@ -213,7 +209,7 @@ function VentureCard({
         {/* Stage and Open in cockpit wrap under each other where the card is narrower than both (a phone). */}
         <div className="flex max-w-full flex-wrap items-center gap-3 sm:shrink-0">
           <label className="flex items-center gap-2 text-body text-stone">
-            <span className="font-mono text-label uppercase tracking-[0.14em]">Stage</span>
+            <span className="font-mono text-label uppercase tracking-[0.14em]">{words.card.stage}</span>
             <select
               value={venture.stage}
               onChange={(e) => void patch({ stage: e.target.value as VentureStage })}
@@ -228,14 +224,14 @@ function VentureCard({
           </label>
           <Link href={cockpitHref}>
             <Pill variant="maple" size="small">
-              Open in cockpit →
+              {words.card.open}
             </Pill>
           </Link>
         </div>
       </div>
 
       <div className="mt-4">
-        <p className="font-mono text-label uppercase tracking-[0.14em] text-stone">Your notes</p>
+        <p className="font-mono text-label uppercase tracking-[0.14em] text-stone">{words.card.notes}</p>
         <textarea
           value={notes}
           onChange={(e) => setNotes(e.target.value)}
@@ -243,11 +239,17 @@ function VentureCard({
             if (notes !== venture.notes) void patch({ notes });
           }}
           rows={3}
-          placeholder="Anything about this idea, in your words. Saved when you click away."
+          placeholder={words.card.notesPlaceholder}
           className="mt-1.5 w-full resize-y rounded-sm border border-rule bg-ink px-3 py-2 text-lead text-paper outline-hidden placeholder:text-stone-dim focus:border-maple-soft"
         />
         <p className="mt-1 text-right font-mono text-label uppercase tracking-wider text-stone-dim">
-          {saving === "saving" ? "Saving…" : saving === "saved" ? "Saved." : saving === "error" ? "Save failed." : `touched ${venture.updatedAt.slice(0, 10)}`}
+          {saving === "saving"
+            ? words.card.saving
+            : saving === "saved"
+              ? words.card.saved
+              : saving === "error"
+                ? words.card.saveFailed
+                : words.card.touched(venture.updatedAt.slice(0, 10))}
         </p>
       </div>
 
@@ -262,36 +264,36 @@ function VentureCard({
             onChange={(e) => onRemindMe(e.target.checked)}
             className="relative h-5 w-9 shrink-0 cursor-pointer appearance-none rounded-full border border-rule bg-ink transition before:absolute before:left-0.5 before:top-0.5 before:size-3.5 before:rounded-full before:bg-stone before:transition checked:border-maple checked:bg-maple/30 checked:before:translate-x-4 checked:before:bg-maple focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-maple disabled:cursor-not-allowed"
           />
-          Remind me about this idea
+          {words.card.remindMe}
         </label>
         <p className="mt-1 text-body text-stone-dim">
-          Off until you turn it on. How often is your choice under{" "}
+          {words.card.remindHelp.before}{" "}
           <Link href="/settings#figures" className="underline decoration-stone-dim underline-offset-2 hover:text-paper">
-            Settings → Figure reminders
+            {words.card.remindHelp.link}
           </Link>
-          ; the reminder shows here, and on this idea&apos;s map, when a period has ended that your figures don&apos;t cover.
+          {words.card.remindHelp.after}
         </p>
-        {remindFailed ? <p className="mt-1 text-body text-amber">Couldn&apos;t save that — the switch is back where it was.</p> : null}
+        {remindFailed ? <p className="mt-1 text-body text-amber">{words.card.remindFailed}</p> : null}
       </div>
 
       <FiguresPanel ventureId={venture.id} ventureName={venture.name} reminders={reminders} openAddSignal={addSignal} />
 
       <div className="mt-3 flex flex-wrap items-baseline gap-x-3 gap-y-1 border-t border-rule-soft pt-3">
-        <p className="font-mono text-label uppercase tracking-[0.14em] text-stone">Expense records</p>
-        <p className="text-body text-stone-dim">Single business expenses you keep for this idea, typed and agreed to one list at a time.</p>
+        <p className="font-mono text-label uppercase tracking-[0.14em] text-stone">{words.card.expenses.heading}</p>
+        <p className="text-body text-stone-dim">{words.card.expenses.line}</p>
         {/* Only the idea's id goes in the address; the records themselves load in the page's request bodies. */}
         <Link
           href={`/expenses?idea=${encodeURIComponent(venture.id)}`}
           className="ml-auto text-body text-paper underline decoration-stone-dim underline-offset-2 hover:text-maple"
         >
-          Expense records for this idea →
+          {words.card.expenses.link}
         </Link>
       </div>
 
       <div className="mt-3 border-t border-rule-soft pt-3">
-        <p className="font-mono text-label uppercase tracking-[0.14em] text-stone">Cross-references</p>
+        <p className="font-mono text-label uppercase tracking-[0.14em] text-stone">{words.card.links.heading}</p>
         {venture.links.length === 0 ? (
-          <p className="mt-1 text-body text-stone-dim">None yet.</p>
+          <p className="mt-1 text-body text-stone-dim">{words.card.links.none}</p>
         ) : (
           <ul className="mt-1.5 space-y-1">
             {venture.links.map((l) => (
@@ -304,7 +306,7 @@ function VentureCard({
                 </Link>
                 {l.note ? <span className="text-stone">— {l.note}</span> : null}
                 <button type="button" onClick={() => void removeLink(l.id)} className="ml-auto text-small text-stone-dim hover:text-maple">
-                  remove
+                  {words.card.links.remove}
                 </button>
               </li>
             ))}
@@ -328,7 +330,7 @@ function VentureCard({
               onChange={(e) => setLinkTo(e.target.value)}
               className="rounded-sm border border-rule bg-ink px-1.5 py-0.5 font-mono text-small text-paper"
             >
-              <option value="">Choose an idea…</option>
+              <option value="">{words.card.links.chooseIdea}</option>
               {others.map((o) => (
                 <option key={o.id} value={o.id}>
                   {o.name}
@@ -338,11 +340,11 @@ function VentureCard({
             <input
               value={linkNote}
               onChange={(e) => setLinkNote(e.target.value)}
-              placeholder="why (optional)"
+              placeholder={words.card.links.why}
               className="min-w-[160px] flex-1 rounded-sm border border-rule bg-ink px-2 py-0.5 text-body text-paper outline-hidden placeholder:text-stone-dim focus:border-maple-soft"
             />
             <Pill variant="ghost" size="small" onClick={() => void addLink()} disabled={!linkTo}>
-              + Link
+              {words.card.links.add}
             </Pill>
           </div>
         ) : null}
@@ -361,9 +363,9 @@ export function VentureFacts({
     <p className="mt-0.5 text-body capitalize text-stone">
       {/* A type nobody was asked for is the intake's starting value, not theirs (2026-10-23). DotAmi's words in
           its place are drawn as written: the line's capitalize had set them "Type Not Said" (2026-10-24). */}
-      {venture.typeSaid ? venture.type : <span className="normal-case">{venturesWords.card.typeNotSaid}</span>} · {venture.province} · structure{" "}
-      {venture.structureSource === "assumed" ? "not set" : venture.structure}
-      {venture.targetRevenueY1 > 0 ? ` · Y1 $${venture.targetRevenueY1.toLocaleString("en-CA")}` : ""}
+      {venture.typeSaid ? venture.type : <span className="normal-case">{words.card.typeNotSaid}</span>} · {venture.province} {words.card.structure}{" "}
+      {venture.structureSource === "assumed" ? words.card.structureNotSet : venture.structure}
+      {venture.targetRevenueY1 > 0 ? words.card.firstYear(venture.targetRevenueY1.toLocaleString("en-CA")) : ""}
     </p>
   );
 }
@@ -383,14 +385,20 @@ function FirstWords({ venture }: { venture: VentureSummary }) {
     <div className="mt-3 max-w-[60ch]">
       {venture.firstWords ? (
         <>
-          <p className="font-mono text-label uppercase tracking-[0.14em] text-stone">In your words, {venture.firstWords.saidAt}</p>
+          <p className="font-mono text-label uppercase tracking-[0.14em] text-stone">
+            {words.card.firstWords.inYourWords} {venture.firstWords.saidAt}
+          </p>
           {/* whitespace-pre-wrap: the sentence is shown exactly as typed, spaces and line breaks too. */}
           <p className="mt-1 whitespace-pre-wrap font-serif text-lead italic leading-snug text-paper-dim">
             “{venture.firstWords.text}”
           </p>
         </>
       ) : null}
-      {goals.length > 0 ? <p className="mt-1.5 text-body text-stone">Goals marked on the intake: {goals.join(" · ")}</p> : null}
+      {goals.length > 0 ? (
+        <p className="mt-1.5 text-body text-stone">
+          {words.card.firstWords.goals} {goals.join(" · ")}
+        </p>
+      ) : null}
     </div>
   );
 }

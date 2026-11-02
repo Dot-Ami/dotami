@@ -69,8 +69,9 @@ lowered can't be raised back later (CI compares with main; locally, with where t
 `origin/main`). A screen over its limit fails the browser
 suite. To add a region, take one away first; a new screen arrives with its own `data-region` marks and its
 own row in `e2e/budgets.ts`, the written way (task 29j): listed in `ADDED_SCREENS` with the measured screen it
-is a part, a state or a sibling of (`ADDED_SCREEN_PART_OF`), its first row in `FIRST_MEASURED` is what CI's
-Browser tests job counts the first time the screen runs there, at or under that screen's baseline row. It has no
+is a part, a state or a sibling of (`ADDED_SCREEN_PART_OF`), its first row in `FIRST_MEASURED` is what CI counts,
+in the half of the browser tests that runs `e2e/clutter-budget.spec.ts` (*Browser tests 1/2* as of 2026-11-01),
+the first time the screen runs there, at or under that screen's baseline row. It has no
 baseline row of its own (the baseline stays the record of 2026-10-17); its first row is a record like the
 baseline, and its budget starts equal to it and only goes down, like every other. The test saves a screenshot of
 each screen at each width with its results.
@@ -80,7 +81,8 @@ The test starts a server of its own, from the suite's build, over a data folder 
 the suite's other tests saved. *What DotAmi knows about you* counts everything in the data file, so it is
 measured first, on that seed alone.
 
-The numbers are the gate's: Chromium on Ubuntu, in CI's *Browser tests* job. Where Chromium on Windows
+The numbers are the gate's: Chromium on Ubuntu, in the half of CI's browser tests that runs
+`e2e/clutter-budget.spec.ts` (*Browser tests 1/2* as of 2026-11-01). Where Chromium on Windows
 measures more on a screen, `WINDOWS_EXTRA` in `e2e/budgets.ts` adds the difference for a run on Windows
 only, so a local run there passes on an unchanged screen; CI never reads it. It is empty: from the calm first
 view until 2026-10-20 it held one line, Mara's example at 1280×720 (23 controls on Windows, 21 on Ubuntu), gone

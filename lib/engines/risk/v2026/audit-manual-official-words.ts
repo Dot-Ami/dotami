@@ -11,8 +11,9 @@ import type { EngineCitation } from "@/lib/engines/shared/types";
  * later reading (Chad), and two from 27.2.2 (Commercial manner). The last is the last sentence of the indented
  * paragraph the page quotes from Martin v The Queen, added after the personal-element sentence (his "add-martin" of
  * 2026-10-29), not in its place. The page names the case in the paragraph just before that one ("Judge Bowman states
- * in Martin v The Queen, 2003 TCC 155 at paragraph 18:"), not in the passage's own paragraph, so the box's label for it
- * is "The same page:".
+ * in Martin v The Queen, 2003 TCC 155 at paragraph 18:"), not in the passage's own paragraph. The box's label for it
+ * was "The same page:" until the maintainer's answer of 2026-10-30, and is "The same page, quoting Martin v The Queen:"
+ * since: the case's name, taken from that paragraph, so the box says whose words the passage is.
  *
  * `node scripts/check-quotes.mjs` found all four on the live page in one run on 2026-10-29, so that is the check's
  * date (docs/engines/citations.md, rule 4). Nobody has read the page in full, so it has no `lastVerified` or `readBy`

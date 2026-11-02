@@ -6,6 +6,7 @@ import { Pill } from "@/components/ui";
 import { T2125_HINT, T2125_LINES } from "@/lib/figures/return/lines";
 import type { ReturnReader } from "@/lib/figures/return/read-pdf";
 import type { ReturnReadResult, T2125Copy } from "@/lib/figures/return/types";
+import { venturesWords } from "@/lib/ventures/words";
 
 /**
  * [8f] "Add from last year's return": reads a return PDF in this window and SHOWS, for each T2125
@@ -20,10 +21,11 @@ const ACCEPT = ".pdf,application/pdf";
 
 type Phase = "pick" | "reading" | "done";
 
+const words = venturesWords.returnDrop;
+const common = venturesWords.common;
+
 function pagesText(copy: T2125Copy): string {
-  return copy.firstPage === copy.lastPage
-    ? `page ${copy.firstPage}`
-    : `pages ${copy.firstPage} to ${copy.lastPage}`;
+  return copy.firstPage === copy.lastPage ? words.pages.one(copy.firstPage) : words.pages.range(copy.firstPage, copy.lastPage);
 }
 
 export function ReturnDrop({ onClose }: { onClose: () => void }) {
@@ -106,7 +108,7 @@ export function ReturnDrop({ onClose }: { onClose: () => void }) {
     <div
       ref={panelRef}
       role="group"
-      aria-label="Add from last year's return"
+      aria-label={words.region}
       // A PDF let go anywhere on the panel must not make the browser open it.
       onDragOver={(e) => e.preventDefault()}
       onDrop={(e) => e.preventDefault()}
@@ -115,7 +117,7 @@ export function ReturnDrop({ onClose }: { onClose: () => void }) {
       {phase === "pick" ? (
         <div
           role="group"
-          aria-label="Drop a return PDF here"
+          aria-label={words.dropRegion}
           onDragOver={(e) => {
             e.preventDefault();
             setDragging(true);
@@ -128,9 +130,7 @@ export function ReturnDrop({ onClose }: { onClose: () => void }) {
               : "border-rule hover:border-maple-soft focus-within:border-maple-soft"
           }`}
         >
-          <p className="text-body text-paper">
-            Drop the PDF of last year&apos;s return that your tax software saved, or
-          </p>
+          <p className="text-body text-paper">{words.dropLine}</p>
           <div className="mt-2 flex flex-wrap items-center gap-3">
             <Pill
               data-autofocus
@@ -139,21 +139,20 @@ export function ReturnDrop({ onClose }: { onClose: () => void }) {
               aria-describedby={`${uid}-hint`}
               onClick={() => inputRef.current?.click()}
             >
-              Choose a PDF
+              {words.choosePdf}
             </Pill>
             <input
               ref={inputRef}
               type="file"
               accept={ACCEPT}
-              aria-label="Choose a PDF"
+              aria-label={words.choosePdf}
               tabIndex={-1}
               onChange={onPicked}
               className="sr-only"
             />
           </div>
           <p id={`${uid}-hint`} className="mt-2 text-body text-stone-dim">
-            {T2125_HINT} It&apos;s read here, on this computer, and never kept. Nothing is added to
-            your figures.
+            {T2125_HINT} {words.readHere}
           </p>
         </div>
       ) : null}
@@ -165,7 +164,7 @@ export function ReturnDrop({ onClose }: { onClose: () => void }) {
           role="status"
           className="text-body text-stone-dim outline-hidden"
         >
-          Reading {fileName}…
+          {common.reading} {fileName}…
         </p>
       ) : null}
 
@@ -178,23 +177,31 @@ export function ReturnDrop({ onClose }: { onClose: () => void }) {
       {phase === "done" && result?.ok ? (
         <div>
           <p data-autofocus tabIndex={-1} className="text-body text-paper-dim outline-hidden">
-            File: <span className="text-paper">{fileName}</span> · {result.pageCount}{" "}
-            {result.pageCount === 1 ? "page" : "pages"} ·{" "}
-            {result.copies.length === 1 ? "1 T2125" : `${result.copies.length} T2125s`}
+            {common.file} <span className="text-paper">{fileName}</span> · {result.pageCount}{" "}
+            {words.pageWord(result.pageCount)} ·{" "}
+            {words.copies(result.copies.length)}
           </p>
           {result.copies.map((copy, index) => (
             <table key={copy.firstPage} className="mt-3 text-body">
               <caption className="mb-1 text-left font-mono text-label uppercase tracking-[0.14em] text-stone">
                 {result.copies.length === 1
-                  ? `T2125 on ${pagesText(copy)}`
-                  : `T2125 ${index + 1} of ${result.copies.length}, on ${pagesText(copy)}`}
+                  ? words.caption.one(pagesText(copy))
+                  : words.caption.of(index + 1, result.copies.length, pagesText(copy))}
               </caption>
               <thead>
                 <tr className="text-left text-small text-stone-dim">
-                  <th scope="col" className="pr-4 font-normal">Line</th>
-                  <th scope="col" className="pr-4 font-normal">On the form</th>
-                  <th scope="col" className="pr-4 font-normal">Page</th>
-                  <th scope="col" className="font-normal">Amount as printed</th>
+                  <th scope="col" className="pr-4 font-normal">
+                    {words.columns.line}
+                  </th>
+                  <th scope="col" className="pr-4 font-normal">
+                    {words.columns.onTheForm}
+                  </th>
+                  <th scope="col" className="pr-4 font-normal">
+                    {words.columns.page}
+                  </th>
+                  <th scope="col" className="font-normal">
+                    {words.columns.amount}
+                  </th>
                 </tr>
               </thead>
               <tbody>
@@ -208,7 +215,7 @@ export function ReturnDrop({ onClose }: { onClose: () => void }) {
                         </th>
                         <td className="pr-4 text-stone">{label}</td>
                         <td className="pr-4 text-stone-dim">—</td>
-                        <td className="text-amber">not found in this T2125</td>
+                        <td className="text-amber">{words.notFound}</td>
                       </tr>,
                     ];
                   }
@@ -222,7 +229,7 @@ export function ReturnDrop({ onClose }: { onClose: () => void }) {
                       {o.printed !== null ? (
                         <td className="text-right font-mono text-paper">{o.printed}</td>
                       ) : (
-                        <td className="text-amber">nothing DotAmi can read beside it</td>
+                        <td className="text-amber">{words.nothingBeside}</td>
                       )}
                     </tr>
                   ));
@@ -230,21 +237,18 @@ export function ReturnDrop({ onClose }: { onClose: () => void }) {
               </tbody>
             </table>
           ))}
-          <p className="mt-3 max-w-prose text-body text-stone-dim">
-            Check these against your return. DotAmi only shows them: nothing is added to your
-            figures or kept, and Close forgets the file.
-          </p>
+          <p className="mt-3 max-w-prose text-body text-stone-dim">{words.checkThese}</p>
         </div>
       ) : null}
 
       <div className="mt-3 flex flex-wrap items-center gap-2">
         {phase === "done" ? (
           <Pill data-autofocus={result && !result.ok ? true : undefined} variant="ghost" size="small" onClick={another}>
-            Choose another file
+            {common.chooseAnother}
           </Pill>
         ) : null}
         <Pill variant="ghost" size="small" onClick={onClose}>
-          Close
+          {common.close}
         </Pill>
       </div>
     </div>

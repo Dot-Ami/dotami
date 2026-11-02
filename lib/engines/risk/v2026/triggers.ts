@@ -191,11 +191,13 @@ export const riskEntriesV2026 = [
     // use it" of 2026-10-27): four sentences quoted whole, in the page's order, and DotAmi's words between them are only
     // the labels that say whose words follow (./audit-manual-official-words.ts says which sentences, and what is left
     // out on purpose). The fourth, the passage the page quotes from Martin v The Queen, came on 2026-10-29 (his
-    // "add-martin"), after the personal-element sentence; its label is "The same page:", because the page names the case
-    // in the paragraph before the passage, not in its own. The page also names the court decisions behind the first two
-    // sentences; the labels don't.
+    // "add-martin"), after the personal-element sentence. Its label, since his answer of 2026-10-30, is "The same page,
+    // quoting Martin v The Queen:" (until then "The same page:"): the passage is the court's words, which the page quotes,
+    // and the page names the case in the paragraph just before it, not in the passage's own. The page also names the
+    // court decisions behind the first two sentences; their labels don't. The labels stay here, beside the quotes they
+    // name, until risk labels move to a words file (his "later" on PR #217's question 4).
     why: `The CRA's Income Tax Audit Manual, chapter 27: “${CRA_ITAM_27_QUOTES.pursuitOfProfit}” The same page: “${CRA_ITAM_27_QUOTES.intentionToCreateLosses}”`,
-    mitigation: `The same page: “${CRA_ITAM_27_QUOTES.personalElement}” The same page: “${CRA_ITAM_27_QUOTES.martin}”`,
+    mitigation: `The same page: “${CRA_ITAM_27_QUOTES.personalElement}” The same page, quoting Martin v The Queen: “${CRA_ITAM_27_QUOTES.martin}”`,
     // A tool check only, of 2026-10-29. Since that day the same citation is listed under the Hobby vs. business card
     // (the maintainer's "yes" on PR #217's question 1), where the box shows: a risk read's own sources are drawn nowhere
     // (attachRisk in lib/brain/evaluate.ts copies only the level, GAAR flag, why and mitigation).

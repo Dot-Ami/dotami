@@ -39,8 +39,22 @@ const KEEP_RECORDS_CHECKED_ON = "2026-10-14";
 /** Every step written for road 0 rather than wrapped from the tax map: the three, then the records step. */
 const ADDED_STEPS = [...BEFORE_YOU_OPEN, KEEP_RECORDS];
 
-/** The day the tool checked a citation's quotes: the records step's on 2026-10-14, the rest on 2026-10-12. */
-const checkedOnFor = (where: string) => (where === KEEP_RECORDS || where.startsWith("dw-start-records-") ? KEEP_RECORDS_CHECKED_ON : "2026-10-12");
+/**
+ * Incorporation for liability/SR&ED's lines on CCPCs, which the maintainer's answer on his reading page, item 10
+ * (2026-11-01: "Rest them on the newer pages") moved off the CRA's older relationships page: each quotes a newer page,
+ * found by the tool that day (tests/reading-list-corrections.spec.ts, § 8). The line on associated corporations became
+ * two, one per newer page.
+ */
+const ITEM_10_LINES = ["dw-start-incsred-ccpc", "dw-start-incsred-associated", "dw-start-incsred-expenditure-limit"];
+const ITEM_10_CHECKED_ON = "2026-11-01";
+
+/** The day the tool checked a citation's quotes: the records step's on 2026-10-14, item 10's lines on 2026-11-01, the rest on 2026-10-12. */
+const checkedOnFor = (where: string) =>
+  where === KEEP_RECORDS || where.startsWith("dw-start-records-")
+    ? KEEP_RECORDS_CHECKED_ON
+    : ITEM_10_LINES.includes(where)
+      ? ITEM_10_CHECKED_ON
+      : "2026-10-12";
 
 /** Where the named start-up cost lines sit: the first step where the business runs (2026-10-12). */
 const START_UP_STEP = "stage-1-sole-prop-activation";
@@ -91,6 +105,7 @@ describe("every step on road 0 has its done-when lines", () => {
         "dw-start-incsred-incorporated",
         "dw-start-incsred-ccpc",
         "dw-start-incsred-associated",
+        "dw-start-incsred-expenditure-limit",
       ],
       "branch-hire-first-employee": [
         "dw-start-hire-status",
@@ -243,14 +258,14 @@ describe("road 0's legal requirements come from the compliance catalog, where it
   });
 });
 
-describe("every new source is a tool check made on 2026-10-12 (the records step's on 2026-10-14), and only the maintainer's reads claim a read", () => {
+describe("every new source is a tool check made on 2026-10-12 (the records step's on 2026-10-14, item 10's lines on 2026-11-01), and only the maintainer's reads claim a read", () => {
   const all = newCitations();
 
   it("each has quotes of three words or more, found by the tool that day, on an https page", () => {
-    // 47 done-when lines from 2026-10-12 and the records step's 4 (2026-10-14), plus the new steps' own
-    // sources and their cost lines' name sources.
-    expect(road.steps.flatMap((s) => s.doneWhen)).toHaveLength(51);
-    expect(all.length).toBeGreaterThan(51);
+    // 47 done-when lines from 2026-10-12, the records step's 4 (2026-10-14) and the line item 10 split off (2026-11-01),
+    // plus the new steps' own sources and their cost lines' name sources.
+    expect(road.steps.flatMap((s) => s.doneWhen)).toHaveLength(52);
+    expect(all.length).toBeGreaterThan(52);
     for (const { where, citation } of all) {
       expect(citation.toolCheck, where).toBeDefined();
       expect(citation.toolCheck!.checkedOn, where).toBe(checkedOnFor(where));

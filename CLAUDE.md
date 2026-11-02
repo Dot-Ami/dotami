@@ -198,6 +198,7 @@ says where it is going.
 - IDs are forever. Numbers the engine reasons about are typed fields, not prose. Time-boxed
   rules carry an expiry and surface amber.
 - Never put venture or tax knowledge in a component — it goes in a catalog.
+- Every sentence a person can see in a component under `components/` lives in a words file (`lib/<area>/words.ts`), never inline in the component (the maintainer's decision of 2026-10-11 that new screens keep their words in one file, widened to every screen by his "Do it" on the house-cleaning audit of 2026-10-31, item architecture-5); `tests/cockpit-own-words.spec.ts` enforces it across `components/`, where the files not moved yet keep a count dated 2026-10-31 that may only go down, and `app/`'s pages are not read by the check yet.
 - Never derive a fact about the person that the person did not state.
 - Never invent a number: no projections, no dollar ranges without a sourced figure. A government's own published wage range for a job (Job Bank's low, median and high) is a sourced figure and may appear, always labelled with its geography level (economic region, province-wide figure or small-area estimate, from the row's source code), its reference period and its source, as what workers in the job were paid, never as the person's income, and never added to a cost total or gauge (the maintainer's K5 B of 2026-10-16, written here 2026-10-20: `docs/architecture/research-kit.md` § 4.2, `docs/architecture/future-cockpit.md` decision 2). Outlook ratings and other projections stay out, the government's own included (K5 C was not picked).
 - Stack: Next.js 15 App Router (15.5.24 or later), React 19, TypeScript, Tailwind, Prisma,
@@ -235,7 +236,9 @@ binary while `next dev` holds it), and delete `.next` before restarting the dev 
 a production build. `tests/engine-integrity.spec.ts` must stay green; new catalog work adds
 its test first. Never claim green without the command and its output.
 `npm run test:browser` (Playwright, `e2e/`) runs the production build on a throwaway database in
-Chromium; CI runs it as its own job. A new screen arrives with a browser test for its main path, and
+Chromium; CI runs it in two halves on two machines (`--shard=N/2`, files in their usual order), each
+on its own fresh database, so a file must not rely on what a file in the other half leaves
+(`npx playwright test --shard=2/2` alone shows it doesn't). A new screen arrives with a browser test for its main path, and
 joins the walk in `e2e/no-verdict.spec.ts`, which reads the visible text of every screen of the journey
 as it opens and fails on advice or ranking words ("you should", "we recommend", "DotAmi recommends", "top
 pick", "#1"…). Those words, and the only official quotes allowed to carry one (each with its reason, and

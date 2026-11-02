@@ -548,12 +548,35 @@ describe("CI", () => {
     const clutter = step("Quality numbers (clutter)");
     expect(clutter.at).toBeGreaterThan(step("Browser tests").at);
     expect(clutter.block).toContain("npm run quality:report -- --clutter-only");
+    // The browser tests run in two halves; only the half whose own list holds the clutter file prints it. The list
+    // goes to a file first: piped into `grep -q`, Playwright fails writing the rest of it (EPIPE, run 41268399037).
+    expect(clutter.block).toContain('npx playwright test --list --shard=${{ matrix.shard }}/2 > "$RUNNER_TEMP/browser-half-tests.txt"');
+    expect(clutter.block).toContain('if grep -q "clutter-budget.spec.ts" "$RUNNER_TEMP/browser-half-tests.txt"; then');
+    expect(clutter.block).not.toMatch(/--list[^\n]*\|/);
     for (const { block } of [quality, clutter]) {
       expect(block).toContain("continue-on-error: true");
       expect(block).toContain("if: ${{ !cancelled() }}");
       // Nothing fetched in CI.
       expect(block).not.toContain("--live");
     }
+  });
+
+  it("has one job named Browser tests, the check main requires: it waits for both halves, runs when one failed, and passes only on success", () => {
+    // Each job of the workflow: from its "  <id>:" line to the next job's.
+    const jobs = ci.slice(ci.indexOf("\njobs:")).split(/\n(?=  [\w-]+:\s*\n)/).slice(1);
+    const named = jobs.filter((block) => block.includes("\n    name: Browser tests\n"));
+    expect(named).toHaveLength(1);
+    const [job] = named;
+    expect(job).toContain("\n    needs: browser\n");
+    // Not skipped when a half failed or the run was cancelled: GitHub counts a skipped required check as passed.
+    expect(job).toContain("\n    if: always()\n");
+    expect(job).toContain("HALVES: ${{ needs.browser.result }}");
+    expect(job).toContain('test "$HALVES" = "success"');
+    // What it needs is the two halves.
+    const halves = jobs.find((block) => block.startsWith("  browser:\n"));
+    expect(halves).toContain("\n    name: Browser tests ${{ matrix.shard }}/2\n");
+    expect(halves).toContain("\n        shard: [1, 2]\n");
+    expect(halves).toContain("run: npm run test:browser -- --shard=${{ matrix.shard }}/2\n");
   });
 
   it("keeps the numbers out of npm run ci:quality, the gate's own chain", () => {

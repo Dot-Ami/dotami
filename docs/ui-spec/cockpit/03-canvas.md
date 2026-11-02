@@ -1,6 +1,15 @@
 # Cockpit canvas — the map as tier columns
 
-Last updated: 2026-10-27 (SR&ED deepening's 35% quotes the SR&ED glossary; the maintainer's reads of 2026-10-25: every source of the four stages that
+Last updated: 2026-11-01 (SR&ED deepening's 35% and tax impact quote the SR&ED Investment Tax Credit Policy, which
+joins its sources, checked by a tool, and road 0's lines on CCPCs on Incorporation for liability/SR&ED quote newer
+pages, four lines now: the maintainer's answers on his reading page, item 10, § Four more stages quote their pages;
+and the review of the same day: the tax impact's limit in What's new for corporations' words, a fifth source, read,
+the small business deduction's sentence on the line on associated corporations, the expenditure limit's line led by
+what the person checked, with the block on the prescribed form);
+2026-10-31 (Incorporation for liability/SR&ED's 35% quotes the SR&ED Investment Tax Credit Policy, and
+that page joins its sources, checked by a tool: the maintainer's answer on his reading page, item 9, § Four more
+stages quote their pages);
+2026-10-27 (SR&ED deepening's 35% quotes the SR&ED glossary; the maintainer's reads of 2026-10-25: every source of the four stages that
 quote their pages, SR&ED deepening's third among them, says *Read by a person on 2026-10-25*, § Four
 more stages quote their pages; 2026-10-24: the maintainer's reading list: Incorporating's business
 limit reads "Up to $500,000" in the T2 guide's words, and four other stages quote their pages,
@@ -186,15 +195,49 @@ page's words in quotation marks, and the page is among the stage's own sources (
 - **SR&ED deepening**, since 2026-10-27: its 35% box quotes the SR&ED glossary's own entry, the line the
   maintainer asked for, under *The CRA's SR&ED glossary:* (“Some Canadian-controlled private corporations
   (CCPCs) that meet certain requirements may earn investment tax credits at the enhanced rate of 35%”). The
-  relationships page stays its third source, for the tax impact's "up to their expenditure limit for the
+  relationships page stayed its third source, for the tax impact's "up to their expenditure limit for the
   year". Its sources still say *Read by a person on 2026-10-25*.
+- **SR&ED deepening**, since 2026-11-01 (the maintainer's answers on his reading page, item 10): its 35% box
+  quotes the policy page's sentence Incorporation for liability/SR&ED's quotes, under *The CRA's SR&ED Investment
+  Tax Credit Policy:*, in place of the glossary's (an older page that disagrees with the newer ones on the
+  limit); its tax impact, in place of "The enhanced rate is for some CCPCs, up to their expenditure limit for the
+  year.", quotes the same sentence under the same label, then *What's new for corporations*' line on the limit
+  under its own: "The CRA's SR&ED Investment Tax Credit Policy: “In some cases, a Canadian-controlled private
+  corporation (CCPC) may earn the ITC at an enhanced rate of 35%.” The CRA's What's new for corporations: “The
+  expenditure limit on which the SR&ED enhanced 35% tax credit can be earned is increased from the previously
+  announced $4.5 million to $6 million.”" (until the review of the same day the second was the policy page's
+  section 3.0 sentence on spending above the limit, one side of a two-sided passage). *Sources for this stage · 5*:
+  the policy page joins as the fourth, in amber, *Checked by a tool on 2026-11-01*, with the one sentence under
+  "Words found on the page:"; *What's new for corporations* as the fifth, *Read by a person on 2026-10-25* in
+  grey, its check's words not drawn; the glossary and the relationships page stay listed, quoted nowhere.
+- **Incorporation for liability/SR&ED**, since 2026-10-31: its 35% box quotes the CRA's newest page on the
+  rate, under *The CRA's SR&ED Investment Tax Credit Policy:* (“In some cases, a Canadian-controlled private
+  corporation (CCPC) may earn the ITC at an enhanced rate of 35%.”), in place of the relationships page's
+  (the maintainer's answer on his reading page, item 9: where two official pages disagree, the older one is
+  listed and quoted nowhere). Not the glossary's line SR&ED deepening quotes: the glossary is older than
+  the policy page and disagrees with it on the limit (docs/engines/citations.md, § Rules, rule 8). *Sources
+  for this stage* gains the *SR&ED Investment Tax Credit Policy* as a third source, after *Federal
+  incorporation*, in amber: *Checked by a tool on 2026-10-31*, not read by a person yet, with the sentence
+  under "Words found on the page:"; the relationships page stays its first. Since 2026-11-01 (item 10) the
+  step's *Done when* list on road 0 and the federal steps has four lines, "0 of 4 ticked" for a new idea: the line
+  on CCPCs quotes the CRA's *Type of corporation* page's list whole, its source that page in amber (*Checked by a
+  tool on 2026-11-01*); the line on associated corporations, under "The CRA's income tax guide for corporations,
+  on the small business deduction and the business limit:", quotes the T2 guide's sentence on the small business
+  deduction and then its lines on the business limit, its source read by a person on 2026-10-25; and a new fourth
+  line, "You checked how an associated group allocates the SR&ED expenditure limit, if the corporation is
+  associated with other corporations.", quotes the policy page on the expenditure limit (five runs, the block on
+  the agreement on the prescribed form among them), its source in amber with the five under "Words found on the
+  page:". None of them cites the relationships page now.
 
 Each stage's other sources said how they were checked as before ("Read on 2026-05-01. Who read it wasn't
 recorded.", or "Checked by a tool" in amber: on SR&ED deepening "on 2026-10-13", and on Hire first employee,
 for an Alberta idea, Alberta's *Employment standards* "on 2026-10-23") until the maintainer's reads of
-2026-10-25 were recorded (2026-10-27). He read every page these four stages cite in full, so each of
-their sources now says *Read by a person on 2026-10-25*, in grey: a read wins on screen over the tool
-checks these pages also carry (docs/engines/citations.md, § The maintainer's reads of 2026-10-25).
+2026-10-25 were recorded (2026-10-27). He read every page these four stages cited then in full, so each of
+those sources now says *Read by a person on 2026-10-25*, in grey: a read wins on screen over the tool
+checks these pages also carry (docs/engines/citations.md, § The maintainer's reads of 2026-10-25). Of the
+sources added since, the policy page under Incorporation for liability/SR&ED (2026-10-31) and SR&ED deepening
+(2026-11-01) is a tool check only; *What's new for corporations* under SR&ED deepening (2026-11-01) is one of the
+pages he read, so it says *Read by a person on 2026-10-25*.
 Retained earnings planning (Tier 4) lights only when the person set their structure to a corporation.
 
 **Liability / SR&ED (Tier 3)** lights from the idea's activity tags (Software / SaaS, Manufacturing,

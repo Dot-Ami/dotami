@@ -7,8 +7,12 @@ import { FIGURE_KIND_LABELS, type FigureView } from "@/lib/figures/types";
 import { taxLineWords } from "@/lib/figures/tax-line";
 import { formatCents, parseMoneyToCents } from "@/lib/figures/money";
 import { useLocalToday } from "@/lib/figures/use-local-today";
+import { venturesWords } from "@/lib/ventures/words";
 
 import { FigureDates, FutureDateNote } from "./figure-age";
+
+const words = venturesWords.agree;
+const common = venturesWords.common;
 
 /**
  * [8b] The agree prompt. This is the only place a proposed figure becomes a figure the person
@@ -19,28 +23,15 @@ import { FigureDates, FutureDateNote } from "./figure-age";
  * this file logs them.
  */
 
-export const AMOUNT_HELP = "Write it like 12,500 or 12500.50.";
+export const AMOUNT_HELP = words.amountHelp;
 
 /** The line above the buttons, every time the prompt opens. */
-export const CHECK_FIRST_LINE = "Double-check what DotAmi did, and how, before you agree.";
+export const CHECK_FIRST_LINE = words.checkFirst;
 
 /** More figures than this and "Agree" waits until the person has scrolled to the end of the list. */
 const MUST_SCROLL_ABOVE = 20;
 
-const MONTHS = [
-  "January",
-  "February",
-  "March",
-  "April",
-  "May",
-  "June",
-  "July",
-  "August",
-  "September",
-  "October",
-  "November",
-  "December",
-];
+const MONTHS = words.months;
 
 function parseDay(day: string): { y: number; m: number; d: number } | null {
   const parts = day.match(/^(\d{4})-(\d{2})-(\d{2})$/);
@@ -62,13 +53,13 @@ export function describePeriod(periodStart: string, periodEnd: string): string {
   const end = parseDay(periodEnd);
   if (start && end && start.y === end.y && start.d === 1) {
     if (start.m === end.m && end.d === lastDayOfMonth(end.y, end.m)) {
-      return `${MONTHS[start.m - 1]} ${start.y}`;
+      return words.period.month(MONTHS[start.m - 1], start.y);
     }
     if ((start.m - 1) % 3 === 0 && end.m === start.m + 2 && end.d === lastDayOfMonth(end.y, end.m)) {
-      return `${MONTHS[start.m - 1]} to ${MONTHS[end.m - 1]} ${start.y}`;
+      return words.period.quarter(MONTHS[start.m - 1], MONTHS[end.m - 1], start.y);
     }
   }
-  return `${periodStart} to ${periodEnd}`;
+  return words.period.days(periodStart, periodEnd);
 }
 
 /** "$12,500.00", falling back to a plain reading if the browser doesn't know the currency code. */
@@ -114,12 +105,12 @@ export async function postJson(
       const message = (body as { error?: unknown } | null)?.error;
       return {
         ok: false,
-        error: typeof message === "string" && message ? message : "That didn't go through. Nothing was changed.",
+        error: typeof message === "string" && message ? message : common.notThrough,
       };
     }
     return { ok: true, body };
   } catch {
-    return { ok: false, error: "Could not reach the app. Nothing was changed." };
+    return { ok: false, error: words.noApp };
   }
 }
 
@@ -299,14 +290,14 @@ export function AgreePrompt({ ventureId, figures, onDone, onClose, rowNote }: Ag
         <div className="flex items-start justify-between gap-4">
           <div>
             <h2 id={titleId} className="font-serif text-xl font-bold tracking-tight text-paper">
-              Agree to these figures?
+              {words.title}
             </h2>
             <p id={introId} className="mt-1 text-lead text-paper-dim">
-              Nothing counts until you agree. Check each one against where it came from.
+              {words.intro}
             </p>
           </div>
           <button type="button" onClick={onClose} className="shrink-0 text-body text-stone hover:text-paper">
-            Close
+            {common.close}
           </button>
         </div>
 
@@ -317,16 +308,16 @@ export function AgreePrompt({ ventureId, figures, onDone, onClose, rowNote }: Ag
         ) : null}
 
         <div ref={listRef} onScroll={checkScrolled} className="mt-4 min-h-0 flex-1 space-y-4 overflow-y-auto pr-1">
-          {rows.length === 0 ? <p className="text-lead text-stone">Nothing left to review.</p> : null}
+          {rows.length === 0 ? <p className="text-lead text-stone">{words.nothingLeft}</p> : null}
           {groups.map((group) => {
             // Rows are summed only when every figure in the group says how many it covered.
             const allKnown = group.rows.every((r) => r.sourceRows !== null);
             const totalRows = allKnown ? group.rows.reduce((sum, r) => sum + (r.sourceRows ?? 0), 0) : null;
             return (
-              <section key={group.label} aria-label={`From ${group.label}`}>
+              <section key={group.label} aria-label={words.from(group.label)}>
                 <p className="font-mono text-label uppercase tracking-[0.14em] text-stone">
-                  From {group.label}
-                  {totalRows !== null ? ` · ${totalRows} rows` : ""}
+                  {words.from(group.label)}
+                  {totalRows !== null ? words.rowsInGroup(totalRows) : ""}
                 </p>
                 <ul className="mt-1.5 space-y-2">
                   {group.rows.map((row) => {
@@ -345,7 +336,7 @@ export function AgreePrompt({ ventureId, figures, onDone, onClose, rowNote }: Ag
                             {rowNote?.(row) ? <span className="text-stone"> · {rowNote(row)}</span> : null}
                           </span>
                           <label htmlFor={inputId} className="sr-only">
-                            Amount for {period}
+                            {words.amountFor} {period}
                           </label>
                           <input
                             id={inputId}
@@ -374,7 +365,7 @@ export function AgreePrompt({ ventureId, figures, onDone, onClose, rowNote }: Ag
                             disabled={busy}
                             className="text-body text-stone-dim hover:text-maple disabled:opacity-50"
                           >
-                            Discard
+                            {words.discard}
                           </button>
                         </div>
                         <FigureDates figure={row} today={today} />
@@ -398,14 +389,14 @@ export function AgreePrompt({ ventureId, figures, onDone, onClose, rowNote }: Ag
           <p className="basis-full text-lead text-paper-dim">{CHECK_FIRST_LINE}</p>
           {waitingToScroll ? (
             <p className="mr-auto text-body text-stone" role="status">
-              Scroll through all {rows.length} to agree
+              {words.scroll.before} {rows.length} {words.scroll.after}
             </p>
           ) : null}
           <Pill variant="ghost" onClick={() => void discardAll()} disabled={busy || rows.length === 0}>
-            No, I&apos;ll do it myself
+            {words.doItMyself}
           </Pill>
           <Pill variant="maple" onClick={() => void agree()} disabled={busy || rows.length === 0 || waitingToScroll}>
-            Agree
+            {words.agree}
           </Pill>
         </div>
       </div>

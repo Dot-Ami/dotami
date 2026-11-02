@@ -16,13 +16,16 @@ import * as aboutJobFile from "@/lib/about-job/words";
 import * as cockpitFile from "@/lib/cockpit/words";
 import * as researchKitFile from "@/lib/engines/research-kit/v2026/words";
 import * as engineSourcesFile from "@/lib/engines/shared/words";
+import * as expensesFile from "@/lib/expenses/words";
 import * as frontDoorFile from "@/lib/front-door/words";
 import * as landscapeFile from "@/lib/landscape/words";
+import * as licencesFile from "@/lib/licences/words";
 import * as personFile from "@/lib/person/words";
 import * as roadsFile from "@/lib/roads/words";
+import * as settingsFile from "@/lib/settings/words";
 import * as venturesFile from "@/lib/ventures/words";
 
-import { SHOWN_WORDS_GAPS } from "./fixtures/ideas/known-gaps";
+import { COMPONENT_TIME_WORDS, SHOWN_WORDS_GAPS } from "./fixtures/ideas/known-gaps";
 import { fakeIdDigits, IDEAS_V1 } from "./fixtures/ideas/v1";
 import { checkRun, reachesTheEnd, sameOutput, type InvariantId } from "./helpers/idea-invariants";
 import { runDigest, runIdea, type IdeaRun } from "./helpers/idea-pipeline";
@@ -61,12 +64,23 @@ const WORDS_FILES: Readonly<Record<string, unknown>> = {
   // The engines' own words about their sources: the line under a source's title saying what its page holds
   // (since 2026-10-29, tests/source-page-holds.spec.ts).
   "lib/engines/shared/words.ts": engineSourcesFile,
+  // Made on 2026-10-31 for sentences that were written in components (tests/helpers/own-words.ts).
+  "lib/expenses/words.ts": expensesFile,
   "lib/front-door/words.ts": frontDoorFile,
   "lib/landscape/words.ts": landscapeFile,
+  "lib/licences/words.ts": licencesFile,
   "lib/person/words.ts": personFile,
   "lib/roads/words.ts": roadsFile,
+  "lib/settings/words.ts": settingsFile,
   "lib/ventures/words.ts": venturesFile,
 };
+
+/**
+ * A sentence that moved from a component to a words file on 2026-10-31 with an allowance for the time check
+ * (tests/fixtures/ideas/known-gaps.ts COMPONENT_TIME_WORDS: words the patterns misread, or how long DotAmi keeps
+ * something). tests/prerelease-honesty.spec.ts holds that list to what it still finds, so it is only let through here.
+ */
+const movedWithItsAllowance = (file: string, text: string) => COMPONENT_TIME_WORDS.some((a) => a.file === file && a.text === text.trim());
 
 describe("the harness's checks catch what they guard", () => {
   it("1. a verdict word or phrase in DotAmi's words", () => {
@@ -345,7 +359,7 @@ describe("the words no-times lets through", () => {
     // these files (the front door's doors, the cockpit's help lines). Each plain string is read here; the
     // functions among them are read when the harness calls them, and whole screens by the browser sweep (29e).
     const withTimes = Object.entries(WORDS_FILES).flatMap(([file, mod]) =>
-      plainStrings(mod).flatMap(({ path, text }) => (findTimeWords(text).length > 0 ? [`${file} ${path}`] : [])),
+      plainStrings(mod).flatMap(({ path, text }) => (findTimeWords(text).length > 0 && !movedWithItsAllowance(file, text) ? [`${file} ${path}`] : [])),
     );
     // known-gaps.ts SHOWN_WORDS_GAPS: each one the maintainer's call.
     expect(withTimes).toEqual(SHOWN_WORDS_GAPS.map((gap) => gap.where));

@@ -19,6 +19,8 @@ import {
   type AllowedCall,
   type DependencyEntry,
 } from "@/lib/privacy/inventory";
+import { settingsWords } from "@/lib/settings/words";
+import { venturesWords } from "@/lib/ventures/words";
 
 import {
   BROWSER_PROBES,
@@ -124,7 +126,9 @@ describe("the privacy inventory lists every database table", () => {
   it("calls the button that removes a link by the label it really has", () => {
     const label = TABLES.find((t) => t.model === "VentureLink")!.removedBy.match(/“([^”]+)”/)?.[1];
     expect(label, "the VentureLink entry should quote the button's label in “curly quotes”").toBeDefined();
-    expect(readSource("components/ventures/ventures-page.tsx")).toMatch(new RegExp(`>\\s*${label}\\s*</button>`));
+    // The label is in the page's words file since 2026-10-31; the page draws it as the button's only text.
+    expect(venturesWords.card.links.remove).toBe(label);
+    expect(readSource("components/ventures/ventures-page.tsx")).toMatch(/>\s*\{words\.card\.links\.remove\}\s*<\/button>/);
   });
 
   it("says the placeholder account's address can be set, by the setting the code really reads", () => {
@@ -378,8 +382,10 @@ describe("the privacy inventory lists what electron-updater keeps and sends on i
       `name ${name} in the update check's headers in lib/privacy/inventory.ts`,
     ).toContain(name);
     expect(updateCheck.what).toMatch(/install ID/);
-    // Settings says what the check reveals in its own sentence, so it names the ID too.
-    expect(readFileSync(path.join(process.cwd(), "components/settings/settings-page.tsx"), "utf8")).toMatch(/GitHub sees [^<]*install ID/);
+    // Settings says what the check reveals in its own sentence, so it names the ID too (in its words file since
+    // 2026-10-31, which the page draws).
+    expect(settingsWords.today.privacy.updateCheck).toMatch(/GitHub sees [^<]*install ID/);
+    expect(readFileSync(path.join(process.cwd(), "components/settings/settings-page.tsx"), "utf8")).toContain("{privacy.updateCheck}");
   });
 
   it("the line the updater writes when it makes the ID reaches the log with the ID in it, and the log's entry says so", () => {
