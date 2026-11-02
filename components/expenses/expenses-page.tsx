@@ -19,6 +19,7 @@ import {
 } from "@/lib/expenses/display";
 import type { ReceiptLockState } from "@/lib/expenses/receipts/lock";
 import type { ExpenseView } from "@/lib/expenses/types";
+import { expensesWords } from "@/lib/expenses/words";
 import { useLocalToday } from "@/lib/figures/use-local-today";
 
 import { ExpenseForm } from "./expense-form";
@@ -54,6 +55,8 @@ const NONE = "none";
 
 const FIELD = "rounded-sm border border-rule bg-ink px-2 py-1 text-lead text-paper outline-hidden focus:border-maple-soft";
 const SECTION_LABEL = "font-mono text-label uppercase tracking-[0.14em] text-stone";
+
+const words = expensesWords.page;
 
 const titleOf = (r: { date: string; paidTo: string; whatFor: string }) => `${r.date} · ${r.paidTo} — ${r.whatFor}`;
 /** Newest day first, then the most recently proposed. */
@@ -101,14 +104,14 @@ export function ExpensesPage({
       const res = await fetch("/api/expenses", { cache: "no-store" });
       const body = (await res.json()) as { expenses?: ExpenseView[]; error?: string };
       if (!res.ok || !Array.isArray(body.expenses)) {
-        setLoadError(body.error ?? "Could not load your expense records.");
+        setLoadError(body.error ?? words.loadFailed);
         setRecords((current) => current ?? []);
         return;
       }
       setLoadError(null);
       setRecords(body.expenses);
     } catch {
-      setLoadError("Could not load your expense records.");
+      setLoadError(words.loadFailed);
       setRecords((current) => current ?? []);
     }
   }, []);
@@ -133,7 +136,7 @@ export function ExpensesPage({
     setTarget(NONE);
   }, [ideas, initialIdea]);
 
-  const ideaName = useCallback((id: string | null) => (id === null ? null : (ideas?.find((i) => i.id === id)?.name ?? "an idea")), [ideas]);
+  const ideaName = useCallback((id: string | null) => (id === null ? null : (ideas?.find((i) => i.id === id)?.name ?? words.anIdea)), [ideas]);
   const byId = useMemo(() => new Map((records ?? []).map((r) => [r.id, r])), [records]);
   const inView = (r: ExpenseView) => show === ALL || (show === NONE ? r.ventureId === null : r.ventureId === show);
 
@@ -176,7 +179,10 @@ export function ExpensesPage({
     setNotice(
       nextTarget === purchaseFor
         ? null
-        : `The typed list stays for ${target === NONE ? "“not attached to an idea yet”" : ideaName(target)}; the purchase is ${purchase.ventureId === null ? "not attached to an idea" : `for ${ideaName(purchase.ventureId)}`}. Change “For” above the list if this refund should go there too.`,
+        : words.refundNotice(
+            target === NONE ? words.listNotAttached : ideaName(target),
+            purchase.ventureId === null ? words.notAttached : words.forIdea(ideaName(purchase.ventureId)),
+          ),
     );
     formBox.current?.scrollIntoView?.({ block: "nearest" });
     window.setTimeout(() => document.getElementById("expense-form")?.querySelector<HTMLElement>("input[type=radio]:checked")?.focus(), 0);
@@ -190,7 +196,7 @@ export function ExpensesPage({
     setReviewError(null);
     const proposed = await postJson("/api/expenses/propose", {
       ventureId: target === NONE ? null : target,
-      source: { kind: "typed", label: "typed by you" },
+      source: { kind: "typed", label: words.typedSource },
       expenses: chosen.map(draftToProposal),
     });
     if (!proposed.ok) {
@@ -205,7 +211,7 @@ export function ExpensesPage({
     setReviewBusy(false);
     setReviewing(null);
     if (!agreedResult.ok) {
-      setActionError(`They were saved as waiting, not agreed to: ${agreedResult.error} You can agree to them under “Waiting for you”.`);
+      setActionError(words.savedAsWaiting(agreedResult.error));
     } else {
       setActionError(null);
       setNotice(keptText(agreedResult.body));
@@ -274,7 +280,7 @@ export function ExpensesPage({
     key: r.id,
     title: titleOf(r),
     amount: moneyText(r.amountCents, r.currency),
-    facts: [...factsFor(r), `From ${r.sourceLabel} · ${r.ventureId === null ? "not attached to an idea" : `for ${ideaName(r.ventureId)}`}`],
+    facts: [...factsFor(r), words.fromSource(r.sourceLabel, r.ventureId === null ? words.notAttached : words.forIdea(ideaName(r.ventureId)))],
   }));
 
   const ideaOptions = (ideas ?? []).map((i) => (
@@ -288,34 +294,32 @@ export function ExpensesPage({
     <div className="flex min-h-[calc(100vh-2.5rem)] flex-col bg-ink">
       <nav className="flex items-center gap-6 border-b border-rule-soft px-8 py-[18px]">
         <GhostLink href="/ventures" tone="stone">
-          ← Your futures
+          {words.back}
         </GhostLink>
         <WordMark />
-        <p className="ml-auto font-mono text-small uppercase tracking-[0.14em] text-stone">Your expenses</p>
+        <p className="ml-auto font-mono text-small uppercase tracking-[0.14em] text-stone">{words.name}</p>
         <GhostLink href="/settings" tone="stone">
-          Settings
+          {words.settings}
         </GhostLink>
       </nav>
 
       <main className="mx-auto w-full max-w-4xl flex-1 px-8 py-10">
         <header>
           <h1 className="font-serif text-display font-bold leading-[1.15] tracking-tight text-paper">
-            Your expense records, <span className="font-normal italic text-maple">in your own words.</span>
+            {words.title.lead}
+            <span className="font-normal italic text-maple">{words.title.emphasis}</span>
           </h1>
-          <p className="mt-2 max-w-2xl text-lead text-paper-dim">
-            Each business expense you keep, one record at a time, on this computer. DotAmi keeps what you type and agree to. It never
-            picks a category, never sets the business share, and never says what is deductible or how a refund is taxed. Not tax advice.
-          </p>
+          <p className="mt-2 max-w-2xl text-lead text-paper-dim">{words.intro}</p>
           <ReceiptKeyProblem setAsideTo={receiptsSetAside} desktop={desktop} />
         </header>
 
         <div className="mt-6 flex flex-wrap items-center gap-2">
           <label htmlFor="expenses-show" className={SECTION_LABEL}>
-            Show
+            {words.show}
           </label>
           <select id="expenses-show" value={show} onChange={(e) => setShow(e.target.value)} className={FIELD}>
-            <option value={ALL}>All your records</option>
-            <option value={NONE}>Not attached to an idea yet</option>
+            <option value={ALL}>{words.allRecords}</option>
+            <option value={NONE}>{words.notAttachedYet}</option>
             {ideaOptions}
           </select>
         </div>
@@ -337,9 +341,10 @@ export function ExpensesPage({
         ) : null}
 
         {waiting.length > 0 ? (
-          <section aria-label="Waiting for you" className="mt-6 flex flex-wrap items-center gap-3 rounded-sm border border-amber/40 bg-amber/5 px-3 py-2">
+          <section aria-label={words.waiting.region} className="mt-6 flex flex-wrap items-center gap-3 rounded-sm border border-amber/40 bg-amber/5 px-3 py-2">
             <p className="text-lead text-amber">
-              {waiting.length} {waiting.length === 1 ? "record" : "records"} waiting for you to agree (proposed by an agent, a file, or typed earlier)
+              {waiting.length} {waiting.length === 1 ? words.waiting.record : words.waiting.records}
+              {words.waiting.line}
             </p>
             <Pill
               variant="amber-out"
@@ -350,16 +355,16 @@ export function ExpensesPage({
                 setReviewing("waiting");
               }}
             >
-              Review
+              {words.waiting.review}
             </Pill>
           </section>
         ) : null}
 
         <section aria-labelledby="type-heading" className="mt-8">
           <h2 id="type-heading" className="font-serif text-title font-bold text-paper">
-            Type expenses
+            {words.typed.heading}
           </h2>
-          <p className="mt-1 text-body text-stone">Type as many as you like; they wait on the list below until you agree to them, all at once.</p>
+          <p className="mt-1 text-body text-stone">{words.typed.line}</p>
           <div ref={formBox} id="expense-form" className="mt-3 scroll-mt-4">
             <ExpenseForm values={form} onChange={setForm} onAdd={addDraft} today={today} purchases={purchases} newKey={newKey} />
           </div>
@@ -367,30 +372,33 @@ export function ExpensesPage({
           {drafts.length > 0 ? (
             <div className="mt-4 rounded-sm border border-rule bg-ink2 px-4 py-3">
               <div className="flex flex-wrap items-center gap-3">
-                <p className={SECTION_LABEL}>Typed, not kept yet · {drafts.length}</p>
+                <p className={SECTION_LABEL}>
+                  {words.typed.count}
+                  {drafts.length}
+                </p>
                 <label htmlFor="expenses-target" className="ml-auto text-body text-stone">
-                  For
+                  {words.typed.for}
                 </label>
                 <select id="expenses-target" value={target} onChange={(e) => setTarget(e.target.value)} className={FIELD}>
-                  <option value={NONE}>Not attached to an idea yet</option>
+                  <option value={NONE}>{words.notAttachedYet}</option>
                   {ideaOptions}
                 </select>
               </div>
-              <ul aria-label="Typed, not kept yet" className="mt-2 space-y-1.5">
+              <ul aria-label={words.typed.listName} className="mt-2 space-y-1.5">
                 {drafts.map((d) => (
                   <li key={d.key} className="text-body">
                     <div className="flex flex-wrap items-baseline gap-x-3 gap-y-0.5">
                       <span className="text-paper">{titleOf(d)}</span>
                       <span className="font-mono text-paper">{moneyText(d.amountCents, d.currency)}</span>
                       <button type="button" onClick={() => editDraft(d.key)} className="ml-auto text-small text-stone hover:text-paper">
-                        Edit
+                        {words.typed.edit}
                       </button>
                       <button
                         type="button"
                         onClick={() => setDrafts((current) => current.filter((x) => x.key !== d.key))}
                         className="text-small text-stone-dim hover:text-maple"
                       >
-                        Remove
+                        {words.typed.remove}
                       </button>
                     </div>
                     {factsFor(d).length > 0 ? <p className="text-small text-stone">{factsFor(d).join(" · ")}</p> : null}
@@ -406,9 +414,10 @@ export function ExpensesPage({
                     setReviewing("typed");
                   }}
                 >
-                  Review {drafts.length}
+                  {words.typed.review}
+                  {drafts.length}
                 </Pill>
-                <p className="text-body text-stone-dim">Kept only once you agree. Closing this window forgets this list.</p>
+                <p className="text-body text-stone-dim">{words.typed.notKept}</p>
               </div>
             </div>
           ) : null}
@@ -416,14 +425,14 @@ export function ExpensesPage({
 
         <section aria-labelledby="kept-heading" className="mt-10">
           <h2 id="kept-heading" className="font-serif text-title font-bold text-paper">
-            Records you agreed to
+            {words.agreed.heading}
           </h2>
           {records === null ? (
-            <p className="mt-2 text-body text-stone-dim">Loading…</p>
+            <p className="mt-2 text-body text-stone-dim">{words.agreed.loading}</p>
           ) : agreed.length === 0 ? (
-            <p className="mt-2 text-body text-stone-dim">None here yet.</p>
+            <p className="mt-2 text-body text-stone-dim">{words.agreed.none}</p>
           ) : (
-            <ul aria-label="Records you agreed to" className="mt-3 space-y-2">
+            <ul aria-label={words.agreed.heading} className="mt-3 space-y-2">
               {agreed.map((r) => (
                 <RecordRow
                   key={r.id}
@@ -446,12 +455,12 @@ export function ExpensesPage({
 
           {takenBack.length > 0 ? (
             <>
-              <p className={`${SECTION_LABEL} mt-6`}>Taken back</p>
-              <ul aria-label="Taken back" className="mt-2 space-y-1.5 opacity-70">
+              <p className={`${SECTION_LABEL} mt-6`}>{words.takenBack.heading}</p>
+              <ul aria-label={words.takenBack.heading} className="mt-2 space-y-1.5 opacity-70">
                 {takenBack.map((r) => (
                   <li key={r.id} className="text-body text-stone">
                     <span className="text-paper-dim">{titleOf(r)}</span> <span className="font-mono">{moneyText(r.amountCents, r.currency)}</span>
-                    {r.retractedAt ? ` · taken back ${r.retractedAt.slice(0, 10)}` : ""}
+                    {r.retractedAt ? words.takenBack.on(r.retractedAt.slice(0, 10)) : ""}
                     {/* Taking a record back keeps its receipt; this is where that one receipt can still be removed. */}
                     {r.receipt ? <ReceiptLine record={r} onChanged={load} /> : null}
                   </li>
@@ -464,8 +473,8 @@ export function ExpensesPage({
 
       {reviewing === "typed" ? (
         <ExpenseReview
-          title="Agree to keep these records?"
-          intro={`Nothing is kept until you agree. Untick any you want to leave out: they stay on your typed list. For: ${target === NONE ? "not attached to an idea yet" : (ideaName(target) ?? "")}.`}
+          title={words.reviewTyped.title}
+          intro={words.reviewTyped.intro(target === NONE ? words.reviewTyped.notAttached : (ideaName(target) ?? ""))}
           rows={typedRows}
           busy={reviewBusy}
           error={reviewError}
@@ -475,8 +484,8 @@ export function ExpensesPage({
       ) : null}
       {reviewing === "waiting" ? (
         <ExpenseReview
-          title="Agree to these proposed records?"
-          intro="An agent, a file or an earlier visit proposed these. Nothing counts until you agree; untick any to leave them waiting, or turn one down."
+          title={words.reviewWaiting.title}
+          intro={words.reviewWaiting.intro}
           rows={waitingRows}
           busy={reviewBusy}
           error={reviewError}
@@ -520,53 +529,61 @@ function RecordRow({
   const current = record.ventureId ?? NONE;
   const [moveTo, setMoveTo] = useState(current);
   const selectId = `move-${record.id}`;
+  const own = expensesWords.record;
 
   return (
     <li className="rounded-sm border border-rule-soft bg-ink2 px-3 py-2 text-body">
       <div className="flex flex-wrap items-baseline gap-x-3 gap-y-0.5">
         <span className="font-semibold text-paper">{titleOf(record)}</span>
         <span className="font-mono text-paper">{moneyText(record.amountCents, record.currency)}</span>
-        <span className="text-stone-dim">{ideaName === null ? "Not attached to an idea yet" : `For ${ideaName}`}</span>
-        <span className="text-stone-dim">from {record.sourceLabel}</span>
-        {record.editedByPerson ? <span className="font-mono text-label uppercase tracking-wider text-maple">edited by you</span> : null}
+        <span className="text-stone-dim">{ideaName === null ? words.notAttachedYet : own.forIdea(ideaName)}</span>
+        <span className="text-stone-dim">
+          {own.from}
+          {record.sourceLabel}
+        </span>
+        {record.editedByPerson ? <span className="font-mono text-label uppercase tracking-wider text-maple">{own.editedByYou}</span> : null}
       </div>
       {facts.length > 0 ? <p className="mt-0.5 text-body text-stone">{facts.join(" · ")}</p> : null}
       {refunds.length > 0 ? (
         <p className="mt-0.5 text-body text-stone">
-          Refunds linked to it:{" "}
-          {refunds.map((x) => `${moneyText(Math.abs(x.amountCents), x.currency)} on ${x.date}${x.status === "proposed" ? " (waiting)" : x.status === "retracted" ? " (taken back)" : ""}`).join("; ")}
+          {own.refundsLinked}{" "}
+          {refunds
+            .map((x) =>
+              own.refundOn(moneyText(Math.abs(x.amountCents), x.currency), x.date, x.status === "proposed" ? own.refundWaiting : x.status === "retracted" ? own.refundTakenBack : ""),
+            )
+            .join("; ")}
         </p>
       ) : null}
       <ReceiptLine record={record} onChanged={onReceiptChanged} />
       <div className="mt-1.5 flex flex-wrap items-center gap-2">
         <label htmlFor={selectId} className="text-small text-stone">
-          {record.ventureId === null ? "Attach to" : "Move to"}
+          {record.ventureId === null ? own.attachTo : own.moveTo}
         </label>
         <select id={selectId} value={moveTo} onChange={(e) => setMoveTo(e.target.value)} disabled={busy} className="rounded-sm border border-rule bg-ink px-1.5 py-0.5 text-body text-paper">
-          <option value={NONE}>Not attached to an idea yet</option>
+          <option value={NONE}>{words.notAttachedYet}</option>
           {ideaOptions}
         </select>
         <Pill variant="ghost" size="small" disabled={busy || moveTo === current} onClick={() => onAttach(moveTo)}>
-          {record.ventureId === null ? "Attach" : "Move"}
+          {record.ventureId === null ? own.attach : own.move}
         </Pill>
         {onRecordRefund ? (
           <button type="button" onClick={onRecordRefund} className="text-small text-stone hover:text-paper">
-            Record a refund for this
+            {own.recordRefund}
           </button>
         ) : null}
         {confirming ? (
           <span className="ml-auto flex items-center gap-2">
-            <span className="text-body text-paper-dim">Take this record back? It stays listed as taken back.</span>
+            <span className="text-body text-paper-dim">{own.takeBackQuestion}</span>
             <button type="button" onClick={onTakeBack} disabled={busy} className="text-body text-maple hover:underline">
-              Take back
+              {own.takeBack}
             </button>
             <button type="button" onClick={() => onConfirm(false)} className="text-body text-stone hover:text-paper">
-              Keep
+              {own.keep}
             </button>
           </span>
         ) : (
           <button type="button" onClick={() => onConfirm(true)} className="ml-auto text-small text-stone-dim hover:text-maple">
-            Take back
+            {own.takeBack}
           </button>
         )}
       </div>

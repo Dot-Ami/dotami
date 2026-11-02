@@ -1,3 +1,4 @@
+import { yourDataWords } from "@/lib/person/words";
 import type { Holdings, HeldFigure, HeldSource } from "@/lib/privacy/holdings";
 
 import {
@@ -12,6 +13,9 @@ import {
   plural,
 } from "./format";
 
+const words = yourDataWords.figures;
+const { counted } = yourDataWords;
+
 /**
  * "Your figures, by source" on /your-data: every figure in the data file, in the groups the
  * person would recognise — a file name, "typed by you", an agent. Server-rendered and read-only;
@@ -24,22 +28,17 @@ import {
 export function FiguresBySource({ figures }: { figures: Holdings["figures"] }) {
   if (figures.total === 0) {
     return (
-      <p className="mt-3 rounded-lg border border-dashed border-rule px-4 py-5 text-lead text-stone">
-        No figures are kept. Nothing has been typed, read from a file, or proposed to you.
-      </p>
+      <p className="mt-3 rounded-lg border border-dashed border-rule px-4 py-5 text-lead text-stone">{words.none}</p>
     );
   }
 
   return (
     <>
       <p className="mt-3 text-lead text-paper">
-        {plural(figures.total, "figure")} in the data file:{" "}
+        {plural(figures.total, counted.figure)} {words.inTheDataFile}{" "}
         {STATUS_ORDER.map((s) => `${figures.byStatus[s]} ${STATUS_COUNT_WORDS[s]}`).join(" · ")}.
       </p>
-      <p className="mt-1 max-w-2xl text-body text-stone">
-        A figure you took back or turned down stops counting, but its amount is still stored in the file, so it
-        is listed here with the rest.
-      </p>
+      <p className="mt-1 max-w-2xl text-body text-stone">{words.stillStored}</p>
       <ul className="mt-4 space-y-3">
         {figures.sources.map((source) => (
           <SourceRow key={`${source.sourceKind}:${source.sourceLabel}`} source={source} />
@@ -52,8 +51,8 @@ export function FiguresBySource({ figures }: { figures: Holdings["figures"] }) {
 function SourceRow({ source }: { source: HeldSource }) {
   const days =
     source.firstProposedOn === source.lastProposedOn
-      ? `proposed ${source.firstProposedOn}`
-      : `proposed ${source.firstProposedOn} to ${source.lastProposedOn}`;
+      ? words.proposedOn(source.firstProposedOn)
+      : words.proposedFromTo(source.firstProposedOn, source.lastProposedOn);
   return (
     <li className="rounded-lg border border-rule bg-ink2">
       <details className="group">
@@ -64,15 +63,15 @@ function SourceRow({ source }: { source: HeldSource }) {
               {SOURCE_KIND_WORDS[source.sourceKind] ?? source.sourceKind}
             </span>
             <span className="ml-auto font-mono text-small uppercase tracking-wider text-stone-dim group-open:hidden">
-              Show {plural(source.figures.length, "figure")}
+              {words.show} {plural(source.figures.length, counted.figure)}
             </span>
             <span className="ml-auto hidden font-mono text-small uppercase tracking-wider text-stone-dim group-open:inline">
-              Hide
+              {words.hide}
             </span>
           </div>
           <p className="mt-1 text-body text-paper-dim">{countLine(source.counts)}</p>
           <p className="mt-0.5 text-body text-stone">
-            {source.ideaNames.length === 1 ? "Idea" : "Ideas"}: {source.ideaNames.join(", ")} · {days}
+            {source.ideaNames.length === 1 ? words.idea : words.ideas}: {source.ideaNames.join(", ")} · {days}
           </p>
         </summary>
         <ul className="space-y-2 border-t border-rule-soft px-4 py-3">
@@ -98,28 +97,30 @@ function FigureRow({ figure, showIdea }: { figure: HeldFigure; showIdea: boolean
           {STATUS_WORDS[figure.status] ?? figure.status}
         </span>
         {figure.editedByPerson ? (
-          <span className="font-mono text-label uppercase tracking-wider text-maple">edited by you</span>
+          <span className="font-mono text-label uppercase tracking-wider text-maple">{words.editedByYou}</span>
         ) : null}
         {figure.sourceRows !== null ? (
-          <span>{plural(figure.sourceRows, "row")} summed</span>
+          <span>
+            {plural(figure.sourceRows, counted.row)} {words.summed}
+          </span>
         ) : null}
         {showIdea ? <span>· {figure.ideaName}</span> : null}
       </div>
       {/* Only the days that happened. Turning a proposal down isn't dated in the data file, so it has no day here. */}
       <dl className="mt-0.5 flex flex-wrap gap-x-4 gap-y-0.5 text-body text-stone">
         <div className="flex gap-1">
-          <dt>Proposed</dt>
+          <dt>{words.days.proposed}</dt>
           <dd className="font-mono text-paper-dim">{figure.proposedOn}</dd>
         </div>
         {figure.agreedOn ? (
           <div className="flex gap-1">
-            <dt>Agreed</dt>
+            <dt>{words.days.agreed}</dt>
             <dd className="font-mono text-paper-dim">{figure.agreedOn}</dd>
           </div>
         ) : null}
         {figure.takenBackOn ? (
           <div className="flex gap-1">
-            <dt>Taken back</dt>
+            <dt>{words.days.takenBack}</dt>
             <dd className="font-mono text-paper-dim">{figure.takenBackOn}</dd>
           </div>
         ) : null}

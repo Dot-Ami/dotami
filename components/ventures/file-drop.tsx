@@ -44,9 +44,13 @@ import {
   type SkipReason,
 } from "@/lib/figures/file/types";
 import type { FigureView } from "@/lib/figures/types";
+import { venturesWords } from "@/lib/ventures/words";
 
 import { describePeriod, formatAmount, postJson } from "./agree-prompt";
 import { BookReview, type BookProposal } from "./books-drop";
+
+const words = venturesWords.fileDrop;
+const common = venturesWords.common;
 
 /**
  * [8c] "Add from a file": reads a spreadsheet inside this window and proposes one total per
@@ -83,9 +87,9 @@ const ACCEPT =
   ".xlsx,.csv,.txt,.gnucash,.xml,.gz,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
 /** How much of a file is looked at to tell what it is (a book, a workbook, a CSV) before it is read. */
 const HEAD_BYTES = 8192;
-const ACCOUNTING_LABEL = "Accounting software or a spreadsheet you keep";
-const BANK_LABEL = "A bank or credit card account";
-const READ_FAILED = "DotAmi couldn't read that file. Nothing was kept.";
+const ACCOUNTING_LABEL = words.accounting;
+const BANK_LABEL = words.bank;
+const READ_FAILED = words.readFailed;
 
 type Phase = "pick" | "reading" | "ready";
 
@@ -125,13 +129,12 @@ const MAX_TOTAL_ROW_CHOICES = 200;
 const MAX_ROW_LABEL_CHARS = 40;
 
 function rowWord(n: number): string {
-  return n === 1 ? "row" : "rows";
+  return n === 1 ? words.places.row : words.places.rows;
 }
 
 /** Beside a month's total: what its refunds took off, e.g. "1 refund taken off ($40.00)". */
 function refundsText(refunds: { rows: number; cents: number }, currency: string): string {
-  const word = refunds.rows === 1 ? "refund" : "refunds";
-  return `${refunds.rows} ${word} taken off (${formatAmount(refunds.cents, currency)})`;
+  return words.refundsTakenOff(refunds.rows, formatAmount(refunds.cents, currency));
 }
 
 /** "1 row 7" / "2 rows 3, 9" / "6 rows 3, 4, 5, 6, 7, …": the first few row numbers or cell names. */
@@ -156,44 +159,29 @@ function acrossLeftOut(result: AcrossResult): string[] {
   const rowsFor = (reason: "blank" | "total" | "no-amount") =>
     result.skippedRows.filter((r) => r.reason === reason).map((r) => String(r.row));
 
+  const { places, across } = words;
+  const cellPlaces = (list: string[]) => placesText(places.cell, places.cells, list);
+  const rowPlaces = (list: string[]) => placesText(places.row, places.rows, list);
+
   const bad = cellsFor("bad-amount");
-  if (bad.length > 0) {
-    lines.push(
-      `${bad.length} ${bad.length === 1 ? "cell" : "cells"} under a month with an amount DotAmi can't read: ${placesText("cell", "cells", bad)}`,
-    );
-  }
+  if (bad.length > 0) lines.push(across.badCells(bad.length, cellPlaces(bad)));
   const unsaved = cellsFor("unsaved-formula");
-  if (unsaved.length > 0) {
-    lines.push(
-      `${unsaved.length} ${unsaved.length === 1 ? "cell" : "cells"} under a month holding ${UNSAVED_FORMULA_ADVICE}: ${placesText("cell", "cells", unsaved)}`,
-    );
-  }
+  if (unsaved.length > 0) lines.push(across.unsavedCells(unsaved.length, cellPlaces(unsaved)));
   const empty = cellsFor("empty");
-  if (empty.length > 0) {
-    lines.push(
-      `${empty.length} empty ${empty.length === 1 ? "cell" : "cells"} under a month: ${placesText("cell", "cells", empty)}`,
-    );
-  }
+  if (empty.length > 0) lines.push(across.emptyCells(empty.length, cellPlaces(empty)));
   const totals = rowsFor("total");
   if (totals.length > 0) {
-    lines.push(`${leftOutText("total", totals.length)}: ${placesText("row", "rows", totals)}`);
+    lines.push(`${leftOutText("total", totals.length)}: ${rowPlaces(totals)}`);
   }
   const nothing = rowsFor("no-amount");
-  if (nothing.length > 0) {
-    lines.push(
-      `${nothing.length} ${rowWord(nothing.length)} with nothing under any month: ${placesText("row", "rows", nothing)}`,
-    );
-  }
+  if (nothing.length > 0) lines.push(across.nothingUnderAnyMonth(nothing.length, rowPlaces(nothing)));
   if (result.notOver.length > 0) {
-    const n = result.notOver.length;
     const columns = result.notOver.map((m) => `${columnLetter(m.column)} (${monthInWords(m.month)})`);
-    lines.push(
-      `${n} ${n === 1 ? "month that isn't over yet" : "months that aren't over yet"}: ${placesText("column", "columns", columns)}`,
-    );
+    lines.push(across.notOverMonths(columns.length, placesText(places.column, places.columns, columns)));
   }
   const blank = rowsFor("blank");
   if (blank.length > 0) {
-    lines.push(`${leftOutText("blank", blank.length)}: ${placesText("row", "rows", blank)}`);
+    lines.push(`${leftOutText("blank", blank.length)}: ${rowPlaces(blank)}`);
   }
   return lines;
 }
@@ -210,46 +198,31 @@ function rowLabel(row: Cell[] | undefined, monthColumns: Set<number>): string {
   return "";
 }
 
-/**
- * What a formula saved with no value is, and what to do about it. Some programs (Xero says so for
- * its Excel reports) leave a formula's result for Excel to work out on opening; until the file is
- * opened in Excel and saved again, the cell holds no number, and DotAmi never works one out.
- */
-const UNSAVED_FORMULA_ADVICE =
-  "a formula Excel didn't save a value for (open the file in Excel, click Enable Editing if it asks, save it, then drop it here again)";
-
 /** No unsaved formulas: one shared empty list, so a CSV doesn't make the preview work again. */
 const NO_PLACES: CellPlace[] = [];
 
 /** Sentence for rows the totals leave out, e.g. "2 rows without a date DotAmi can read". */
 function leftOutText(reason: SkipReason, n: number): string {
+  const line = words.leftOut;
   switch (reason) {
     case "blank":
-      return `${n} blank ${rowWord(n)}`;
+      return line.blank(n);
     case "total":
-      return `${n} ${rowWord(n)} that ${n === 1 ? "is a totals row" : "are totals rows"} (the file's own sum)`;
+      return line.total(n);
     case "no-date":
-      return `${n} ${rowWord(n)} without a date DotAmi can read`;
+      return line.noDate(n);
     case "no-amount":
-      return `${n} ${rowWord(n)} with a date but no amount`;
+      return line.noAmount(n);
     case "bad-amount":
-      return `${n} ${rowWord(n)} with an amount DotAmi can't read`;
+      return line.badAmount(n);
     case "unsaved-formula":
-      return `${n} ${rowWord(n)} with ${UNSAVED_FORMULA_ADVICE}`;
+      return line.unsavedFormula(n);
     case "payment":
-      // DotAmi can't tell whether these rows are money for a sale listed elsewhere (QuickBooks) or
-      // the person's own sales (their own sheet, or a deposit straight to an income account), so
-      // the line says what was done and how to undo it rather than claiming a sale was counted.
-      return n === 1
-        ? "1 row typed Payment or Deposit, left out because a Type column is chosen (in QuickBooks that is money received for a sale listed on another row; if it is a sale of yours, choose None)"
-        : `${n} rows typed Payment or Deposit, left out because a Type column is chosen (in QuickBooks those are money received for sales listed on other rows; if they are sales of yours, choose None)`;
+      return line.payment(n);
     case "void-or-draft":
-      // Said the same careful way as the payment line: what was done, why, and how to undo it.
-      return n === 1
-        ? "1 row marked void, deleted or draft, left out because a Status column is chosen (if it is a sale of yours, choose None)"
-        : `${n} rows marked void, deleted or draft, left out because a Status column is chosen (if they are sales of yours, choose None)`;
+      return line.voidOrDraft(n);
     case "not-over":
-      return `${n} ${rowWord(n)} in a month that isn't over yet`;
+      return line.notOver(n);
   }
 }
 
@@ -593,7 +566,7 @@ export function FileDrop({
   const followedCheck = followDatesCheck(datesCheck, datesKey);
   if (followedCheck !== datesCheck) setDatesCheck(followedCheck);
   const datesOk = datesConfirmed(datesCheck, datesKey);
-  const datesBoxLabel = acrossPreview ? "These months are right" : "These dates are right";
+  const datesBoxLabel = acrossPreview ? words.monthsRight : words.datesRight;
 
   const split = useMemo(
     () => (shown.months ? splitAlreadyKnown(shown.months, existing, code) : null),
@@ -603,7 +576,7 @@ export function FileDrop({
   async function review() {
     // The button is disabled until the dates are confirmed; this is the second lock on the same door.
     if (busy || !split || !datesOk) return;
-    const label = fileName.trim().slice(0, MAX_LABEL_CHARS) || "a file";
+    const label = fileName.trim().slice(0, MAX_LABEL_CHARS) || words.aFile;
     // Row counts go along only when each row lands in exactly one month. With the months across
     // the top, one client row adds into every month, and the agree prompt (and the cards' "from
     // your records") add the figures' counts up: 3 clients over 3 months would read "9 rows".
@@ -640,7 +613,7 @@ export function FileDrop({
     }
     const created = (result.body as { figures?: FigureView[] } | null)?.figures;
     if (!Array.isArray(created) || created.length === 0) {
-      setProposeError("That didn't go through. Nothing was changed.");
+      setProposeError(common.notThrough);
       return;
     }
     onProposed(created);
@@ -702,7 +675,7 @@ export function FileDrop({
     <div
       ref={panelRef}
       role="group"
-      aria-label="Add from a file"
+      aria-label={words.region}
       // A file let go anywhere on the panel must not make the browser open it. While the question
       // or the bank warning is showing, the drop is simply ignored: it is never read.
       onDragOver={(e) => e.preventDefault()}
@@ -712,7 +685,7 @@ export function FileDrop({
       {origin === "ask" ? (
         <div>
           <p id={`${uid}-origin`} className="text-body text-paper">
-            Where is this file from?
+            {words.whereFrom}
           </p>
           <div
             role="group"
@@ -733,22 +706,18 @@ export function FileDrop({
             </Pill>
           </div>
           <p id={`${uid}-origin-hint`} className="mt-2 text-body text-stone-dim">
-            Accounting software means QuickBooks, Xero, Wave, FreshBooks, GnuCash or similar; a
-            spreadsheet you keep is one in Excel. Nothing is opened until you answer.
+            {words.whereFromHint}
           </p>
         </div>
       ) : null}
 
       {origin === "bank" ? (
         <div role="alert" className={BANK_NOTICE}>
-          <p className="font-medium">DotAmi can&apos;t add bank or card statements yet.</p>
-          <p className="mt-1">
-            When it can, you&apos;ll pick which deposits are business revenue, after a warning about
-            what DotAmi would keep. Nothing from your file was opened or kept.
-          </p>
+          <p className="font-medium">{words.bankNotice.cantYet}</p>
+          <p className="mt-1">{words.bankNotice.whenItCan}</p>
           <div className="mt-2">
             <Pill data-autofocus variant="ghost" size="small" onClick={askAgain}>
-              Back
+              {words.bankNotice.back}
             </Pill>
           </div>
         </div>
@@ -758,17 +727,17 @@ export function FileDrop({
         <div>
           <div className="mb-2 flex flex-wrap items-center gap-2 text-body text-stone-dim">
             <span>
-              From: <span className="text-paper-dim">{ACCOUNTING_LABEL}</span>
+              {words.from} <span className="text-paper-dim">{ACCOUNTING_LABEL}</span>
             </span>
             <Pill variant="ghost" size="small" onClick={askAgain} disabled={busy}>
-              Change
+              {words.change}
             </Pill>
           </div>
           {/* The drop area exists only until a file is accepted; for the next file the question comes back. */}
           {fileName === "" ? (
             <div
               role="group"
-              aria-label="Drop a spreadsheet here"
+              aria-label={words.dropRegion}
               onDragOver={(e) => {
                 e.preventDefault();
                 setDragging(true);
@@ -782,31 +751,26 @@ export function FileDrop({
               }`}
             >
               <div className="flex flex-wrap items-center gap-3">
-                <p className="text-body text-paper-dim">
-                  Drop a .xlsx or .csv file, or a GnuCash book, here, or
-                </p>
+                <p className="text-body text-paper-dim">{words.dropLine}</p>
                 <Pill
                   data-autofocus
                   variant="elev"
                   size="small"
                   onClick={() => inputRef.current?.click()}
                 >
-                  Choose a file
+                  {words.chooseFile}
                 </Pill>
                 <input
                   ref={inputRef}
                   type="file"
                   accept={ACCEPT}
-                  aria-label="Choose a file"
+                  aria-label={words.chooseFile}
                   tabIndex={-1}
                   onChange={onPicked}
                   className="sr-only"
                 />
               </div>
-              <p className="mt-2 text-body text-stone-dim">
-                It&apos;s read here, on this computer, and never kept — only the monthly totals you
-                agree to are saved.
-              </p>
+              <p className="mt-2 text-body text-stone-dim">{words.readHere}</p>
             </div>
           ) : null}
         </div>
@@ -819,16 +783,14 @@ export function FileDrop({
           role="status"
           className="mt-2 text-body text-stone-dim outline-hidden"
         >
-          Reading {fileName}…
-          {/* "A big one can take a little while." followed until 2026-10-24: a time in DotAmi's own words. */}
-          {readingBook ? " A GnuCash book is read in the background, so this window stays usable." : ""}
+          {common.reading} {fileName}…{readingBook ? ` ${words.bookInBackground}` : ""}
         </p>
       ) : null}
       {origin === "accounting" && readError ? (
         <p role="alert" className={ALERT}>
           {readError}{" "}
           <Pill data-autofocus variant="ghost" size="small" onClick={askAgain}>
-            Choose another file
+            {common.chooseAnother}
           </Pill>
         </p>
       ) : null}
@@ -848,19 +810,16 @@ export function FileDrop({
         <div className="mt-3">
           {/* Focus lands here once a file is read, since the Choose a file button it came from is gone. */}
           <p data-autofocus tabIndex={-1} className="text-body text-paper-dim outline-hidden">
-            File: <span className="text-paper">{fileName}</span>
+            {common.file} <span className="text-paper">{fileName}</span>
           </p>
           {/* Shown for every file: DotAmi was only ever tried on invented files laid out from each
               program's help pages (tests/fixtures/packages/), never on a real export. */}
-          <p className="mt-1 text-body text-stone-dim">
-            Each accounting program&apos;s export was tested on files shaped from that program&apos;s
-            help pages, not on real exports, so check the columns and totals.
-          </p>
+          <p className="mt-1 text-body text-stone-dim">{words.testedOn}</p>
 
           {nonEmptySheets.length > 1 ? (
             <div className="mt-2">
               <label htmlFor={`${uid}-sheet`} className={FIELD_LABEL}>
-                Sheet
+                {words.sheet}
               </label>
               <select
                 id={`${uid}-sheet`}
@@ -886,7 +845,7 @@ export function FileDrop({
 
           <div className="mt-2">
             <label htmlFor={`${uid}-layout`} className={FIELD_LABEL}>
-              The file has
+              {words.layout.label}
             </label>
             <select
               id={`${uid}-layout`}
@@ -894,41 +853,33 @@ export function FileDrop({
               onChange={(e) => setLayout(e.target.value as Layout)}
               className={`${FIELD} mt-1`}
             >
-              <option value="rows">One row per sale, with a date</option>
-              <option value="across">Months across the top, one column per month</option>
+              <option value="rows">{words.layout.rows}</option>
+              <option value="across">{words.layout.across}</option>
             </select>
           </div>
 
           {noGuess ? (
-            <p className="mt-2 text-body text-amber">
-              DotAmi couldn&apos;t find a row of column names in the first 30 rows.
-            </p>
+            <p className="mt-2 text-body text-amber">{words.noColumnNames}</p>
           ) : null}
           {exportInstead ? (
             <p className="mt-1 max-w-prose text-body text-amber">{exportInstead}</p>
           ) : null}
           {layout === "rows" && guessed ? (
-            <p className="mt-2 text-body text-stone-dim">
-              DotAmi guessed these from the column names — check them.
-            </p>
+            <p className="mt-2 text-body text-stone-dim">{words.guessedColumns}</p>
           ) : null}
 
           {layout === "across" ? (
             <div className="mt-2">
               {acrossPicks.monthsRow === null ? (
-                <p className="text-body text-amber">
-                  DotAmi couldn&apos;t find a row of month names in the first 30 rows.
-                </p>
+                <p className="text-body text-amber">{words.noMonthNames}</p>
               ) : null}
               {acrossGuessed ? (
-                <p className="text-body text-stone-dim">
-                  DotAmi guessed the row of month names — check it.
-                </p>
+                <p className="text-body text-stone-dim">{words.guessedMonthsRow}</p>
               ) : null}
               <div className="mt-2 flex flex-wrap items-start gap-3">
                 <div>
                   <label htmlFor={`${uid}-months-row`} className={FIELD_LABEL}>
-                    Month names are in row
+                    {words.monthNamesRow}
                   </label>
                   <select
                     id={`${uid}-months-row`}
@@ -940,10 +891,10 @@ export function FileDrop({
                     }}
                     className={`${FIELD} mt-1`}
                   >
-                    <option value="">Pick a row</option>
+                    <option value="">{words.pickRow}</option>
                     {Array.from({ length: headerChoices }, (_, i) => (
                       <option key={i} value={i}>
-                        Row {i + 1}
+                        {words.row} {i + 1}
                       </option>
                     ))}
                   </select>
@@ -951,7 +902,7 @@ export function FileDrop({
                 {acrossPicks.monthsRow !== null ? (
                   <div>
                     <label htmlFor={`${uid}-add-up`} className={FIELD_LABEL}>
-                      Totals come from
+                      {words.totalsFrom}
                     </label>
                     <select
                       id={`${uid}-add-up`}
@@ -965,23 +916,22 @@ export function FileDrop({
                       aria-describedby={`${uid}-add-up-hint`}
                       className={`${FIELD} mt-1`}
                     >
-                      <option value="every-row">Every row, added down each month</option>
+                      <option value="every-row">{words.everyRow}</option>
                       {totalRowChoices.map((choice) => (
                         <option key={choice.index} value={choice.index}>
-                          {`Row ${choice.index + 1} only${choice.label ? ` · ${choice.label}` : ""}`}
+                          {words.rowOnly(choice.index + 1, choice.label)}
                         </option>
                       ))}
                     </select>
                     <p id={`${uid}-add-up-hint`} className="mt-1 max-w-xs text-body text-stone-dim">
-                      Every row leaves out the file&apos;s own totals rows. Pick one row to take only
-                      its figures, such as the file&apos;s Total row.
+                      {words.everyRowHint}
                     </p>
                   </div>
                 ) : null}
               </div>
               {acrossPreview && acrossPreview.monthColumns.length > 0 ? (
                 <div className="mt-2 text-body text-stone-dim">
-                  <p className="font-mono text-label uppercase tracking-wider">Read as months</p>
+                  <p className="font-mono text-label uppercase tracking-wider">{words.readAsMonths}</p>
                   <ul className="mt-1 space-y-0.5">
                     {acrossPreview.monthColumns.map((m) => (
                       <li key={m.column}>
@@ -991,7 +941,7 @@ export function FileDrop({
                   </ul>
                   {notMonths.length > 0 ? (
                     <p className="mt-1">
-                      Not months, so not added:{" "}
+                      {words.notMonths}{" "}
                       {notMonths.map((c) => `${c.letter} · ${c.label}`).join(", ")}
                     </p>
                   ) : null}
@@ -1004,7 +954,7 @@ export function FileDrop({
             <div className="mt-2 flex flex-wrap items-start gap-3">
               <div>
                 <label htmlFor={`${uid}-header`} className={FIELD_LABEL}>
-                  Column names are in row
+                  {words.columnNamesRow}
                 </label>
                 <select
                   id={`${uid}-header`}
@@ -1020,10 +970,10 @@ export function FileDrop({
                   }}
                   className={`${FIELD} mt-1`}
                 >
-                  <option value="">Pick a row</option>
+                  <option value="">{words.pickRow}</option>
                   {Array.from({ length: headerChoices }, (_, i) => (
                     <option key={i} value={i}>
-                      Row {i + 1}
+                      {words.row} {i + 1}
                     </option>
                   ))}
                 </select>
@@ -1033,7 +983,7 @@ export function FileDrop({
                 <>
                   <div>
                     <label htmlFor={`${uid}-date`} className={FIELD_LABEL}>
-                      Date column
+                      {words.dateColumn}
                     </label>
                     <select
                       id={`${uid}-date`}
@@ -1044,7 +994,7 @@ export function FileDrop({
                       }}
                       className={`${FIELD} mt-1`}
                     >
-                      <option value="">Pick a column</option>
+                      <option value="">{words.pickColumn}</option>
                       {columns.map((c) => (
                         <option key={c.index} value={c.index}>
                           {c.letter} · {c.label}
@@ -1054,7 +1004,7 @@ export function FileDrop({
                   </div>
                   <div>
                     <label htmlFor={`${uid}-amount`} className={FIELD_LABEL}>
-                      Amount column (revenue)
+                      {words.amountColumn}
                     </label>
                     <select
                       id={`${uid}-amount`}
@@ -1066,7 +1016,7 @@ export function FileDrop({
                       aria-describedby={`${uid}-tax`}
                       className={`${FIELD} mt-1`}
                     >
-                      <option value="">Pick a column</option>
+                      <option value="">{words.pickColumn}</option>
                       {columns.map((c) => (
                         <option key={c.index} value={c.index}>
                           {c.letter} · {c.label}
@@ -1074,12 +1024,12 @@ export function FileDrop({
                       ))}
                     </select>
                     <p id={`${uid}-tax`} className="mt-1 max-w-xs text-body text-stone-dim">
-                      If the file also has a tax column, check whether this one includes the tax.
+                      {words.taxHint}
                     </p>
                   </div>
                   <div>
                     <label htmlFor={`${uid}-refund`} className={FIELD_LABEL}>
-                      Refunds / money out column (optional)
+                      {words.refundColumn}
                     </label>
                     {/* Never pre-filled: a column that takes money off the totals is only ever the
                         person's own pick (lib/figures/file/preview.ts, Picks.refundColumn). */}
@@ -1093,7 +1043,7 @@ export function FileDrop({
                       aria-describedby={`${uid}-refund-hint`}
                       className={`${FIELD} mt-1`}
                     >
-                      <option value="">None — refunds not taken off</option>
+                      <option value="">{words.noRefunds}</option>
                       {columns.map((c) => (
                         <option key={c.index} value={c.index}>
                           {c.letter} · {c.label}
@@ -1101,15 +1051,12 @@ export function FileDrop({
                       ))}
                     </select>
                     <p id={`${uid}-refund-hint`} className="mt-1 max-w-xs text-body text-stone-dim">
-                      Ledger exports, such as Wave&apos;s Account Transactions, keep sales in one column
-                      (Credit) and refunds paid back to customers in another (Debit). Pick the refunds
-                      column and each amount in it is taken off the month it was paid back. Choose
-                      None to leave refunds out.
+                      {words.refundHint}
                     </p>
                   </div>
                   <div>
                     <label htmlFor={`${uid}-type`} className={FIELD_LABEL}>
-                      Type column (optional)
+                      {words.typeColumn}
                     </label>
                     <select
                       id={`${uid}-type`}
@@ -1121,7 +1068,7 @@ export function FileDrop({
                       aria-describedby={`${uid}-type-hint`}
                       className={`${FIELD} mt-1`}
                     >
-                      <option value="">None — count every row</option>
+                      <option value="">{words.countEveryRow}</option>
                       {columns.map((c) => (
                         <option key={c.index} value={c.index}>
                           {c.letter} · {c.label}
@@ -1129,15 +1076,12 @@ export function FileDrop({
                       ))}
                     </select>
                     <p id={`${uid}-type-hint`} className="mt-1 max-w-xs text-body text-stone-dim">
-                      Some files list a sale and the payment received for it as two rows. With a type
-                      column, rows typed Payment or Deposit are left out so the sale isn&apos;t
-                      counted twice. That also leaves out a Deposit that is the only record of a sale,
-                      so check the left-out list. Choose None to count every row.
+                      {words.typeHint}
                     </p>
                   </div>
                   <div>
                     <label htmlFor={`${uid}-status`} className={FIELD_LABEL}>
-                      Status column (optional)
+                      {words.statusColumn}
                     </label>
                     <select
                       id={`${uid}-status`}
@@ -1149,7 +1093,7 @@ export function FileDrop({
                       aria-describedby={`${uid}-status-hint`}
                       className={`${FIELD} mt-1`}
                     >
-                      <option value="">None — count every row</option>
+                      <option value="">{words.countEveryRow}</option>
                       {columns.map((c) => (
                         <option key={c.index} value={c.index}>
                           {c.letter} · {c.label}
@@ -1157,9 +1101,7 @@ export function FileDrop({
                       ))}
                     </select>
                     <p id={`${uid}-status-hint`} className="mt-1 max-w-xs text-body text-stone-dim">
-                      Invoice lists can include void, deleted and draft invoices, which were never
-                      sales. With a status column, rows marked Void, Voided, Deleted or Draft are left
-                      out and listed. Choose None to count every row.
+                      {words.statusHint}
                     </p>
                   </div>
                 </>
@@ -1173,13 +1115,10 @@ export function FileDrop({
           (needsDateQuestion || detectedOrder.conflicting) ? (
             <div className="mt-3">
               {detectedOrder.conflicting ? (
-                <p className="text-body text-amber">
-                  Some dates in this column only make sense month first and others only day first —
-                  check the column.
-                </p>
+                <p className="text-body text-amber">{words.conflictingDates}</p>
               ) : null}
               <label htmlFor={`${uid}-order`} className={FIELD_LABEL}>
-                Dates are written
+                {words.datesWritten}
               </label>
               <select
                 id={`${uid}-order`}
@@ -1190,11 +1129,9 @@ export function FileDrop({
                 }
                 className={`${FIELD} mt-1`}
               >
-                <option value="">
-                  {needsDateQuestion ? "Pick one" : "Only read dates that are clear"}
-                </option>
-                <option value="mdy">Month first — 03/01/2026 is March 1</option>
-                <option value="dmy">Day first — 03/01/2026 is 3 January</option>
+                <option value="">{needsDateQuestion ? words.pickOne : words.onlyClearDates}</option>
+                <option value="mdy">{words.monthFirst}</option>
+                <option value="dmy">{words.dayFirst}</option>
               </select>
             </div>
           ) : null}
@@ -1207,7 +1144,7 @@ export function FileDrop({
           twoDigitYear !== null ? (
             <div className="mt-3">
               <label htmlFor={`${uid}-century`} className={FIELD_LABEL}>
-                {`Is ${twoDigitYear} the year 20${twoDigitYear}?`}
+                {words.century.question(twoDigitYear)}
               </label>
               <select
                 id={`${uid}-century`}
@@ -1222,13 +1159,12 @@ export function FileDrop({
                 aria-describedby={`${uid}-century-hint`}
                 className={`${FIELD} mt-1`}
               >
-                <option value="">Pick one</option>
-                <option value="2000">{`Yes — ${twoDigitYear} is 20${twoDigitYear}`}</option>
-                <option value="1900">{`No — ${twoDigitYear} is 19${twoDigitYear}`}</option>
+                <option value="">{words.pickOne}</option>
+                <option value="2000">{words.century.yes(twoDigitYear)}</option>
+                <option value="1900">{words.century.no(twoDigitYear)}</option>
               </select>
               <p id={`${uid}-century-hint`} className="mt-1 max-w-xs text-body text-stone-dim">
-                This file writes years with two digits. Your answer is used for every date written
-                that way in this column, for this file only.
+                {words.century.hint}
               </p>
             </div>
           ) : null}
@@ -1238,7 +1174,7 @@ export function FileDrop({
             <div className="mt-3 flex flex-wrap items-start gap-3">
               <div>
                 <label htmlFor={`${uid}-style`} className={FIELD_LABEL}>
-                  Amounts are written
+                  {words.amountsWritten}
                 </label>
                 <select
                   id={`${uid}-style`}
@@ -1257,7 +1193,7 @@ export function FileDrop({
 
           <div className="mt-3">
             <label htmlFor={`${uid}-currency`} className={FIELD_LABEL}>
-              Currency
+              {common.currency}
             </label>
             <input
               id={`${uid}-currency`}
@@ -1269,9 +1205,7 @@ export function FileDrop({
               className={`${FIELD} mt-1 w-16 font-mono uppercase`}
             />
             {!currencyOk ? (
-              <p className="mt-1 text-body text-amber">
-                Write the currency as three letters, like CAD.
-              </p>
+              <p className="mt-1 text-body text-amber">{common.currencyHelp}</p>
             ) : null}
           </div>
 
@@ -1312,7 +1246,7 @@ export function FileDrop({
               {split.fresh.length > 0 ? (
                 <table className="text-body">
                   <caption className="mb-1 text-left font-mono text-label uppercase tracking-[0.14em] text-stone">
-                    Monthly totals from {fileName}
+                    {common.monthlyTotalsFrom} {fileName}
                   </caption>
                   <tbody>
                     {split.fresh.map((m) => (
@@ -1332,24 +1266,20 @@ export function FileDrop({
                   </tbody>
                 </table>
               ) : (
-                <p className="text-body text-paper-dim">Nothing new to propose from this file.</p>
+                <p className="text-body text-paper-dim">{words.nothingNew}</p>
               )}
 
               {split.fresh.some((m) => m.refunds) ? (
                 // The refund rule's one surprise, said where the totals are: a refund lowers the
                 // month the money went back, which can be a later month than the sale's.
-                <p className="mt-2 text-body text-stone-dim">
-                  Refunds are taken off the month they were paid back, which may be a later month
-                  than the sale they refund.
-                </p>
+                <p className="mt-2 text-body text-stone-dim">{words.refundsNote}</p>
               ) : null}
 
               {split.known.length > 0 ? (
                 <ul className="mt-2 space-y-0.5 text-body text-stone-dim">
                   {split.known.map((m) => (
                     <li key={m.periodStart}>
-                      {describePeriod(m.periodStart, m.periodEnd)} — already in DotAmi with the same
-                      total, not proposed again
+                      {describePeriod(m.periodStart, m.periodEnd)} {common.alreadyInDotAmi}
                     </li>
                   ))}
                 </ul>
@@ -1358,7 +1288,7 @@ export function FileDrop({
               {leftOut.length > 0 ? (
                 <div className="mt-2">
                   <p className="font-mono text-label uppercase tracking-wider text-stone-dim">
-                    Left out
+                    {common.leftOut}
                   </p>
                   <ul className="mt-1 space-y-0.5 text-body text-stone-dim">
                     {leftOut.map((line) => (
@@ -1370,8 +1300,7 @@ export function FileDrop({
 
               {split.fresh.length > MAX_FIGURES_PER_FILE ? (
                 <p className={ALERT}>
-                  This file has more than {MAX_FIGURES_PER_FILE} months of totals, more than DotAmi
-                  proposes at once. Remove the oldest rows and drop it again.
+                  {words.tooMany.before} {MAX_FIGURES_PER_FILE} {words.tooMany.after}
                 </p>
               ) : null}
             </div>
@@ -1394,24 +1323,18 @@ export function FileDrop({
             disabled={busy || !datesOk}
             aria-describedby={datesOk ? undefined : `${uid}-confirm-first`}
           >
-            {split.fresh.length === 1
-              ? "Review this figure"
-              : `Review these ${split.fresh.length} figures`}
+            {split.fresh.length === 1 ? common.reviewOne : common.reviewMany(split.fresh.length)}
           </Pill>
         ) : null}
         {split && split.fresh.length > 0 && split.fresh.length <= MAX_FIGURES_PER_FILE && !datesOk ? (
           <p id={`${uid}-confirm-first`} className="text-body text-amber">
-            {`Tick "${datesBoxLabel}" once they match the file.`}
+            {words.tickOnceTheyMatch(datesBoxLabel)}
           </p>
         ) : null}
         <Pill variant="ghost" size="small" onClick={onCancel} disabled={busy}>
-          Cancel
+          {common.cancel}
         </Pill>
-        {origin === "accounting" ? (
-          <p className="text-body text-stone-dim">
-            You&apos;ll be asked to agree before anything counts.
-          </p>
-        ) : null}
+        {origin === "accounting" ? <p className="text-body text-stone-dim">{words.askedToAgree}</p> : null}
       </div>
     </div>
   );

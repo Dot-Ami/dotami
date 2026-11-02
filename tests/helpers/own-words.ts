@@ -3,8 +3,8 @@
  * cockpit): the words a person reads or a screen reader says, written straight into the component. The
  * words files are what the words tests read (verdict words in tests/cockpit-screen.spec.ts, time words in
  * tests/idea-invariants.spec.ts), so a sentence written in a component is a sentence those tests never see.
- * tests/cockpit-own-words.spec.ts runs this over every file in components/cockpit/ (the maintainer's story
- * S2.5.30e, 2026-10-17).
+ * tests/cockpit-own-words.spec.ts runs this over every file in components/cockpit/ since the maintainer's story
+ * S2.5.30e (2026-10-17), and over every file in components/ since the house-cleaning audit of 2026-10-31.
  *
  * It reads the TypeScript syntax tree, so a comment is never text, and reports:
  *
@@ -26,6 +26,20 @@
  * file may carry an explicit allowance in the spec, with the reason.
  */
 import ts from "typescript";
+
+/**
+ * The words files that took sentences out of the components on 2026-10-31 (the house-cleaning audit's item
+ * architecture-5), one folder of components/ at a time. The checks that read those sentences in the components
+ * read them here now: the time words (tests/prerelease-honesty.spec.ts, with the pieces it lets through in
+ * tests/fixtures/ideas/known-gaps.ts) and the verdict words (tests/cockpit-own-words.spec.ts).
+ */
+export const WORDS_FILES_FROM_COMPONENTS = [
+  "lib/expenses/words.ts",
+  "lib/licences/words.ts",
+  "lib/person/words.ts",
+  "lib/settings/words.ts",
+  "lib/ventures/words.ts",
+] as const;
 
 /** One piece of text a component wrote itself. */
 export interface OwnWords {

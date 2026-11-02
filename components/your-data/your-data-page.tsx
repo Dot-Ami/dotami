@@ -18,18 +18,16 @@ import {
 } from "@/lib/privacy/anthropic-retention-official-words";
 import { howCheckedWords, isCheckFirst, toolCheckQuotes } from "@/lib/engines/shared/citation-check";
 import { PageQuotes } from "@/components/shared/page-quotes";
+import { yourDataWords } from "@/lib/person/words";
 
 import { DeleteMenu } from "./delete-menu";
 import { FiguresBySource } from "./figures-by-source";
 import { plural, sizeWords } from "./format";
 
-const SECTIONS = [
-  { id: "figures", title: "Your figures, by source" },
-  { id: "file", title: "Everything else in the data file" },
-  { id: "computer", title: "On this computer, outside the data file" },
-  { id: "leaves", title: "What leaves this computer" },
-  { id: "removing", title: "Taking things out" },
-] as const;
+const words = yourDataWords.page;
+const { counted, itOrThem } = yourDataWords;
+
+const SECTIONS = (["figures", "file", "computer", "leaves", "removing"] as const).map((id) => ({ id, title: words.sections[id] }));
 
 /**
  * [8d] "What DotAmi knows about you". One page that lists everything
@@ -59,31 +57,27 @@ export function YourDataPage({ holdings }: { holdings: Holdings | null }) {
       {/* data-region marks the blocks the clutter limit counts (docs/ui-spec/README.md, "The layout rule"). */}
       <nav data-region="nav" className="flex items-center gap-6 border-b border-rule-soft px-8 py-[18px]">
         <GhostLink href="/settings" tone="stone">
-          ← Settings
+          {words.back}
         </GhostLink>
         <WordMark />
-        <p className="ml-auto font-mono text-small uppercase tracking-[0.14em] text-stone">Your data</p>
+        <p className="ml-auto font-mono text-small uppercase tracking-[0.14em] text-stone">{words.navLabel}</p>
       </nav>
 
       <main className="mx-auto w-full max-w-3xl flex-1 px-8 py-10">
         <header data-region="intro">
           <h1 className="font-serif text-display font-bold leading-[1.15] tracking-tight text-paper">
-            What DotAmi <span className="font-normal italic text-maple">knows about you</span>
+            {words.heading.start} <span className="font-normal italic text-maple">{words.heading.stress}</span>
           </h1>
-          <p className="mt-2 max-w-xl text-lead text-paper-dim">
-            Everything DotAmi keeps, counted from your data file each time you open this page — not a saved
-            summary. Nothing here changes anything unless you use Delete, at the bottom.
-          </p>
+          <p className="mt-2 max-w-xl text-lead text-paper-dim">{words.intro}</p>
         </header>
 
         {holdings === null ? (
           <p role="alert" className="mt-8 rounded-lg border border-amber/40 bg-amber/5 px-4 py-3 text-lead text-amber">
-            DotAmi couldn&apos;t read its data file just now, so it can&apos;t list what is in it. Nothing was
-            changed. Check that the file is where Settings says it is, then reload this page.
+            {words.unreadable}
           </p>
         ) : (
           <>
-            <nav data-region="on-this-page" aria-label="On this page" className="mt-6 flex flex-wrap gap-x-4 gap-y-1.5">
+            <nav data-region="on-this-page" aria-label={words.onThisPage} className="mt-6 flex flex-wrap gap-x-4 gap-y-1.5">
               {SECTIONS.map((s) => (
                 <a
                   key={s.id}
@@ -96,14 +90,12 @@ export function YourDataPage({ holdings }: { holdings: Holdings | null }) {
             </nav>
 
             <div className="mt-8 space-y-10">
-              <Section id="figures" title="Your figures, by source">
+              <Section id="figures" title={words.sections.figures}>
                 <FiguresBySource figures={holdings.figures} />
               </Section>
 
-              <Section id="file" title="Everything else in the data file">
-                <p className="mt-0.5 text-body text-stone">
-                  Every table in the data file, with how many records it holds and what takes one out today.
-                </p>
+              <Section id="file" title={words.sections.file}>
+                <p className="mt-0.5 text-body text-stone">{words.tables.lead}</p>
                 <ul className="mt-3 space-y-3">
                   {holdings.tables.map((t) => (
                     <TableRow key={t.entry.model} table={t} ideasWithNotes={holdings.ideasWithNotes} />
@@ -111,7 +103,7 @@ export function YourDataPage({ holdings }: { holdings: Holdings | null }) {
                 </ul>
               </Section>
 
-              <Section id="computer" title="On this computer, outside the data file">
+              <Section id="computer" title={words.sections.computer}>
                 <DataFileRow holdings={holdings} />
                 <ul className="mt-3 space-y-3">
                   {holdings.folders.map((f) => (
@@ -124,52 +116,41 @@ export function YourDataPage({ holdings }: { holdings: Holdings | null }) {
                     />
                   ))}
                 </ul>
-                <h3 className="mt-5 font-semibold text-paper">In this window</h3>
-                <p className="mt-0.5 max-w-2xl text-body text-stone">
-                  These live in the window, not in the data file, so this page can&apos;t see what is in them
-                  right now. This is what DotAmi puts there and how long it stays.
-                </p>
+                <h3 className="mt-5 font-semibold text-paper">{words.window.heading}</h3>
+                <p className="mt-0.5 max-w-2xl text-body text-stone">{words.window.lead}</p>
                 <ul className="mt-3 space-y-3">
                   {holdings.windowStorage.map((w) => (
                     <WindowRow key={`${w.store}:${w.key}`} entry={w} />
                   ))}
                 </ul>
                 <p className="mt-4 max-w-2xl text-body text-stone">
-                  Anyone who can use this computer can read all of this. Disk encryption is what protects it if
-                  the computer is lost; how to turn it on is under{" "}
+                  {words.protection.start}{" "}
                   <Link href="/settings#data" className="text-paper underline decoration-stone-dim underline-offset-2 hover:text-maple">
-                    Settings → Data and backups
+                    {words.protection.link}
                   </Link>
-                  .
+                  {words.protection.end}
                 </p>
               </Section>
 
-              <Section id="leaves" title="What leaves this computer">
+              <Section id="leaves" title={words.sections.leaves}>
                 <ul className="mt-3 space-y-3">
                   {holdings.sentElsewhere.map((s) => (
                     <SentRow key={s.entry.id} facts={s} />
                   ))}
                 </ul>
                 <p className="mt-4 max-w-2xl text-body text-stone">
-                  DotAmi has no server of its own and collects no usage data. More on what leaves, including from
-                  the tools DotAmi is built with, is under{" "}
+                  {words.leaves.start}{" "}
                   <Link href="/settings#privacy" className="text-paper underline decoration-stone-dim underline-offset-2 hover:text-maple">
-                    Settings → Privacy
+                    {words.leaves.link}
                   </Link>
-                  .
+                  {words.leaves.end}
                 </p>
               </Section>
 
-              <Section id="removing" title="Taking things out">
+              <Section id="removing" title={words.sections.removing}>
                 <div className="mt-3 max-w-2xl space-y-2 text-lead text-paper-dim">
-                  <p>
-                    On an idea&apos;s card you can retract an agreed figure or discard a waiting one (it stops
-                    counting, and its amount stays in the file, listed above), and remove a link between two ideas.
-                  </p>
-                  <p>
-                    Delete erases whole kinds of data from the file: you pick which, see what else goes with each,
-                    and DotAmi asks twice. It can&apos;t pick out a single figure, statement or idea.
-                  </p>
+                  <p>{words.removing.onTheCard}</p>
+                  <p>{words.removing.delete}</p>
                 </div>
                 <DeleteMenu
                   menu={DELETE_MENU}
@@ -183,8 +164,8 @@ export function YourDataPage({ holdings }: { holdings: Holdings | null }) {
                   keptCounts={holdings.keptLinks}
                   tableNames={{
                     ...Object.fromEntries(holdings.tables.map((t) => [t.entry.model, t.entry.name])),
-                    [SAFETY_COPIES_KEY]: "Safety copies",
-                    [SET_ASIDE_RECEIPTS_KEY]: "Set-aside receipt folders",
+                    [SAFETY_COPIES_KEY]: words.removing.safetyCopies,
+                    [SET_ASIDE_RECEIPTS_KEY]: words.removing.setAsideFolders,
                   }}
                   notCleared={NOT_CLEARED_BY_DELETE}
                   retention={recordRetentionV2026}
@@ -220,7 +201,7 @@ function Code({ children }: { children: ReactNode }) {
 function Removal({ children }: { children: ReactNode }) {
   return (
     <p className="mt-2 text-body text-paper-dim">
-      <span className="font-mono text-label uppercase tracking-[0.14em] text-stone">What takes it out · </span>
+      <span className="font-mono text-label uppercase tracking-[0.14em] text-stone">{words.tables.removedBy}</span>
       {children}
     </p>
   );
@@ -233,16 +214,16 @@ function TableRow({ table, ideasWithNotes }: { table: TableCount; ideasWithNotes
       <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
         <h3 className="font-semibold text-paper">{entry.name}</h3>
         <span className="font-mono text-body text-paper">
-          {count === 0 ? "None" : plural(count, "record")}
-          {entry.model === "Venture" && count > 0 ? ` · ${ideasWithNotes} with your notes` : ""}
-          {entry.model === "Figure" && count > 0 ? " · listed above" : ""}
+          {count === 0 ? words.tables.none : plural(count, counted.record)}
+          {entry.model === "Venture" && count > 0 ? words.tables.withNotes(ideasWithNotes) : ""}
+          {entry.model === "Figure" && count > 0 ? words.tables.listedAbove : ""}
         </span>
       </div>
       <p className="mt-1 text-body text-paper-dim">{entry.holds}</p>
       {/* A table that can hold something about other people says so, under the same kind of label. */}
       {entry.aboutOthers ? (
         <p className="mt-2 text-body text-paper-dim">
-          <span className="font-mono text-label uppercase tracking-[0.14em] text-stone">About other people · </span>
+          <span className="font-mono text-label uppercase tracking-[0.14em] text-stone">{words.tables.aboutOthers}</span>
           {entry.aboutOthers}
         </p>
       ) : null}
@@ -263,12 +244,13 @@ function DataFileRow({ holdings }: { holdings: Holdings }) {
   const { path, exists, bytes } = holdings.dataFile;
   return (
     <div className="mt-3 rounded-lg border border-spruce-line/60 bg-spruce/20 px-4 py-3">
-      <p className="font-mono text-label uppercase tracking-[0.14em] text-sage">The data file</p>
+      <p className="font-mono text-label uppercase tracking-[0.14em] text-sage">{words.dataFile.label}</p>
       {path ? (
         <div className="mt-1.5 space-y-1.5 text-lead text-paper">
           <p>
-            Everything in the sections above is this one file{exists && bytes !== null ? ` (${sizeWords(bytes)})` : ""}
-            {exists ? ":" : ", which isn't there yet:"}
+            {words.dataFile.isThisFile}
+            {exists && bytes !== null ? ` (${sizeWords(bytes)})` : ""}
+            {exists ? ":" : words.dataFile.notThereYet}
           </p>
           <div className="flex flex-wrap items-center gap-2">
             <Code>{path}</Code>
@@ -277,9 +259,7 @@ function DataFileRow({ holdings }: { holdings: Holdings }) {
           <DatabaseProtection database={holdings.database} />
         </div>
       ) : (
-        <p className="mt-1.5 text-lead text-paper">
-          This copy&apos;s database setting doesn&apos;t point at a single file, so there is no file to show.
-        </p>
+        <p className="mt-1.5 text-lead text-paper">{words.dataFile.noSingleFile}</p>
       )}
     </div>
   );
@@ -311,39 +291,35 @@ function FolderRow({
   const { entry } = facts;
   let status: ReactNode;
   if (facts.path === null) {
-    status = <p className="mt-2 text-body text-stone">This copy has no data file, so there is no folder beside it.</p>;
+    status = <p className="mt-2 text-body text-stone">{words.folders.noDataFile}</p>;
   } else if (!facts.exists) {
     status = (
       <p className="mt-2 text-body text-stone">
         {entry.whenAbsent ??
-          (desktop || !entry.desktopOnly
-            ? "None yet."
-            : "None here. This copy runs from source; the desktop app is what makes it.")}
+          (desktop || !entry.desktopOnly ? words.folders.noneYet : words.folders.noneHere)}
       </p>
     );
   } else if (!facts.readable) {
     status = (
-      <p className="mt-2 text-body text-amber">It is there, but DotAmi isn&apos;t allowed to look inside, so it can&apos;t say what&apos;s in it.</p>
+      <p className="mt-2 text-body text-amber">{words.folders.notAllowed}</p>
     );
   } else {
     status = (
       <div className="mt-2 space-y-1.5 text-body text-paper">
         <p>
           {facts.files !== null
-            ? `${plural(facts.files, "file")}${facts.bytes !== null ? `, ${sizeWords(facts.bytes)} in all` : ""}`
+            ? `${plural(facts.files, counted.file)}${facts.bytes !== null ? words.folders.inAll(sizeWords(facts.bytes)) : ""}`
             : facts.bytes !== null
               ? sizeWords(facts.bytes)
-              : "Present"}
-          {facts.newestOn ? ` · ${facts.files !== null ? "newest written" : "last written"} ${facts.newestOn}` : ""}
+              : words.folders.present}
+          {facts.newestOn ? ` · ${facts.files !== null ? words.folders.newestWritten : words.folders.lastWritten} ${facts.newestOn}` : ""}
         </p>
         <div className="flex flex-wrap items-center gap-2">
           <Code>{facts.path}</Code>
           <CopyPathButton path={facts.path} />
         </div>
         <p className="text-body text-stone-dim">
-          {receiptFiles
-            ? "DotAmi counted the files, read their dates and the first few bytes of each (enough to tell an encrypted receipt from a plain one); it never opened a receipt."
-            : "DotAmi only counted the files and read their dates; it never opened them."}
+          {receiptFiles ? words.folders.countedReceipts : words.folders.countedOnly}
         </p>
       </div>
     );
@@ -376,14 +352,16 @@ function ReceiptProtection({
   const total = files.encrypted + files.plain + files.locked;
   const counts: string[] = [];
   if (files.state === "on" && total > 0) {
-    counts.push(`${files.encrypted} of ${plural(total, "receipt file")} encrypted with this computer's key.`);
-    if (files.plain > 0) counts.push(`${plural(files.plain, "file")} not encrypted yet: DotAmi encrypts ${files.plain === 1 ? "it" : "them"} the next time it starts.`);
+    counts.push(words.receipts.encryptedOf(files.encrypted, plural(total, counted.receiptFile)));
+    if (files.plain > 0) {
+      counts.push(words.receipts.notEncryptedYet(plural(files.plain, counted.file), files.plain === 1 ? itOrThem.one : itOrThem.many));
+    }
   }
   if (files.locked > 0) {
     counts.push(
       files.state === "source"
-        ? `${plural(files.locked, "file")} encrypted by the DotAmi desktop app; this copy can't open ${files.locked === 1 ? "it" : "them"}.`
-        : `${plural(files.locked, "file")} locked with a key this computer can't open.`,
+        ? words.receipts.encryptedByTheApp(plural(files.locked, counted.file), files.locked === 1 ? itOrThem.one : itOrThem.many)
+        : words.receipts.lockedElsewhere(plural(files.locked, counted.file)),
     );
   }
   return (
@@ -406,26 +384,22 @@ function WindowRow({ entry }: { entry: WindowStorageEntry }) {
       <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
         <h4 className="font-semibold text-paper">{entry.name}</h4>
         <span className="rounded-sm border border-rule px-1.5 py-0.5 font-mono text-small tracking-wide text-stone">
-          {entry.store === "localStorage" ? "Stays until cleared" : "Gone when the window closes"}
+          {entry.store === "localStorage" ? words.window.untilCleared : words.window.untilWindowCloses}
         </span>
       </div>
       <p className="mt-1 text-body text-paper-dim">{entry.holds}</p>
       <p className="mt-2 text-body text-paper-dim">
-        <span className="font-mono text-label uppercase tracking-[0.14em] text-stone">How long · </span>
+        <span className="font-mono text-label uppercase tracking-[0.14em] text-stone">{words.window.howLong}</span>
         {entry.lasts}
       </p>
       <p className="mt-1 text-body text-stone-dim">
-        Stored under <Code>{entry.key}</Code>
+        {words.window.storedUnder} <Code>{entry.key}</Code>
       </p>
     </li>
   );
 }
 
-const SENT_STATE_WORDS: Record<SentState, string> = {
-  active: "Happening in this copy",
-  inactive: "Not happening in this copy",
-  "on-your-action": "Only when you choose",
-};
+const SENT_STATE_WORDS: Record<SentState, string> = words.sent.states;
 
 /** One row of "What leaves this computer". Exported for its test (tests/privacy-holdings.spec.ts). */
 export function SentRow({ facts }: { facts: SentFacts }) {
@@ -449,27 +423,27 @@ export function SentRow({ facts }: { facts: SentFacts }) {
       </div>
       <p className="mt-1 text-body text-paper">{facts.detail}</p>
       <dl className="mt-2 grid grid-cols-[auto_minmax(0,1fr)] gap-x-3 gap-y-0.5 text-body">
-        <dt className="font-mono text-label uppercase leading-[18px] tracking-[0.14em] text-stone">When</dt>
+        <dt className="font-mono text-label uppercase leading-[18px] tracking-[0.14em] text-stone">{words.sent.when}</dt>
         <dd className="text-paper-dim">{entry.when}</dd>
-        <dt className="font-mono text-label uppercase leading-[18px] tracking-[0.14em] text-stone">What</dt>
+        <dt className="font-mono text-label uppercase leading-[18px] tracking-[0.14em] text-stone">{words.sent.what}</dt>
         <dd className="text-paper-dim">{entry.what}</dd>
-        <dt className="font-mono text-label uppercase leading-[18px] tracking-[0.14em] text-stone">Taking it back</dt>
+        <dt className="font-mono text-label uppercase leading-[18px] tracking-[0.14em] text-stone">{words.sent.takingItBack}</dt>
         <dd className="text-paper-dim">{entry.canTakeBack}</dd>
       </dl>
       {entry.id === "intake-sentence" && facts.state === "active" ? (
         // Anthropic's period in its own words, after the label that says whose they are (never DotAmi's paraphrase).
         <div className="mt-2 text-body text-stone">
           <p>
-            How long Anthropic keeps it:{" "}
+            {words.sent.anthropicKeeps}{" "}
             <a
               href={ANTHROPIC_RETENTION_URL}
               target="_blank"
               rel="noreferrer"
               className="text-paper underline decoration-stone-dim underline-offset-2 hover:text-maple"
             >
-              its own page on data retention
+              {words.sent.anthropicPage}
             </a>
-            .{" "}
+            {words.sent.anthropicPageEnd}{" "}
             {/* In the same words and colour as every source: amber while no person has read the page. */}
             <span className={isCheckFirst(ANTHROPIC_RETENTION_CHECK) ? "text-amber" : "text-stone"}>
               {howCheckedWords(ANTHROPIC_RETENTION_CHECK)}
@@ -479,7 +453,7 @@ export function SentRow({ facts }: { facts: SentFacts }) {
           {/* The page's two other sections, after the five and under a label of their own (the maintainer, 2026-10-29). */}
           <PageQuotes
             quotes={retention.alsoSays}
-            lead="Anthropic's page also says:"
+            lead={words.sent.anthropicAlsoSays}
             layout="lines"
             className="mt-1 space-y-0.5 text-paper-dim"
           />

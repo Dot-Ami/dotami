@@ -6,6 +6,9 @@ import { useMemo, useRef, useState } from "react";
 import { Pill } from "@/components/ui";
 import { describeReminder, describeWaiting, dueReminders, type ReminderFigure } from "@/lib/figures/reminder";
 import type { ReminderCadence, ReminderDismissal } from "@/lib/settings/values";
+import { venturesWords } from "@/lib/ventures/words";
+
+const words = venturesWords.reminders;
 
 /**
  * [8e] "<September 2026> ended and your figures for <idea> don't cover it" — the reminder inside
@@ -72,7 +75,7 @@ export function FigureReminderBanners({ ideaId, ideaName, figures, today, remind
     const nextButtons = others[0]?.querySelectorAll<HTMLElement>("button");
     const target = nextButtons && nextButtons.length > 0 ? nextButtons[nextButtons.length - 1] : box.current;
     target?.focus();
-    setHiddenNote(`Hidden until the next ${reminder.cadence} period has ended.`);
+    setHiddenNote(words.hidden(reminder.cadence));
     reminders.dismiss({ ideaId, cadence: reminder.cadence, periodEnd: reminder.period.end }, today);
   }
 
@@ -96,7 +99,7 @@ export function FigureReminderBanners({ ideaId, ideaName, figures, today, remind
         <section
           key={reminder.cadence}
           data-cadence={reminder.cadence}
-          aria-label={`Figure reminder, ${reminder.cadence}: ${reminder.period.label}`}
+          aria-label={words.region(reminder.cadence, reminder.period.label)}
           className="rounded-sm border border-amber/40 bg-amber/5 px-3 py-2"
         >
           <p className="text-body wrap-break-word text-amber">{describeReminder(reminder.period, ideaName)}</p>
@@ -104,22 +107,22 @@ export function FigureReminderBanners({ ideaId, ideaName, figures, today, remind
           <div className="mt-2 flex flex-wrap items-center gap-2">
             {onAddFigures ? (
               <Pill variant="amber-out" size="small" onClick={onAddFigures}>
-                Add figures
+                {words.addFigures}
               </Pill>
             ) : addFiguresHref ? (
               <Link href={addFiguresHref} className={BUTTON_CLASS}>
-                Add figures
+                {words.addFigures}
               </Link>
             ) : null}
             <Pill variant="ghost" size="small" onClick={() => dismiss(reminder)}>
-              Not this time
+              {words.notThisTime}
             </Pill>
           </div>
         </section>
       ))}
       {reminders.dismissFailed ? (
         <p role="alert" className="text-body text-amber">
-          Couldn&apos;t save that — the reminder is back where it was.
+          {words.saveFailed}
         </p>
       ) : null}
     </div>

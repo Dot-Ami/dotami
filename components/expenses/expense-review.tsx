@@ -4,6 +4,9 @@ import { useCallback, useEffect, useId, useRef, useState } from "react";
 
 import { Pill } from "@/components/ui";
 import { CHECK_FIRST_LINE } from "@/components/ventures/agree-prompt";
+import { expensesWords } from "@/lib/expenses/words";
+
+const words = expensesWords.review;
 
 /**
  * [8i] The review list: "type many, agree once" (the maintainer's decision, 2026-10-08). Every record
@@ -137,7 +140,7 @@ export function ExpenseReview({
             </p>
           </div>
           <button type="button" onClick={onClose} className="shrink-0 text-body text-stone hover:text-paper">
-            Close
+            {words.close}
           </button>
         </div>
 
@@ -148,7 +151,7 @@ export function ExpenseReview({
         ) : null}
 
         <ol ref={listRef} onScroll={checkScrolled} className="mt-4 min-h-0 flex-1 space-y-2 overflow-y-auto pr-1">
-          {rows.length === 0 ? <li className="text-lead text-stone">Nothing left to review.</li> : null}
+          {rows.length === 0 ? <li className="text-lead text-stone">{words.nothingLeft}</li> : null}
           {rows.map((row, i) => {
             const boxId = `${titleId}-tick-${i}`;
             return (
@@ -173,7 +176,7 @@ export function ExpenseReview({
                       disabled={busy}
                       className="shrink-0 text-body text-stone-dim hover:text-maple disabled:opacity-50"
                     >
-                      Turn down
+                      {words.turnDown}
                     </button>
                   ) : null}
                 </div>
@@ -193,22 +196,29 @@ export function ExpenseReview({
           <p className="basis-full text-lead text-paper-dim">{CHECK_FIRST_LINE}</p>
           {waitingToScroll ? (
             <p className="mr-auto text-body text-stone" role="status">
-              Scroll through all {rows.length} to agree
+              {words.scrollLead}
+              {rows.length}
+              {words.scrollTail}
             </p>
           ) : ticked.length < rows.length ? (
             <p className="mr-auto text-body text-stone" role="status">
-              {rows.length - ticked.length} left out: {rows.length - ticked.length === 1 ? "it stays" : "they stay"} where {rows.length - ticked.length === 1 ? "it is" : "they are"}
+              {rows.length - ticked.length}
+              {words.leftOut}
+              {rows.length - ticked.length === 1 ? words.itStays : words.theyStay}
+              {words.where}
+              {rows.length - ticked.length === 1 ? words.itIs : words.theyAre}
             </p>
           ) : null}
           <Pill variant="ghost" onClick={onClose} disabled={busy}>
-            Not now
+            {words.notNow}
           </Pill>
           <Pill
             variant="maple"
             onClick={() => onAgree(ticked.map((r) => r.key))}
             disabled={busy || ticked.length === 0 || waitingToScroll}
           >
-            Agree to all {ticked.length}
+            {words.agreeToAll}
+            {ticked.length}
           </Pill>
         </div>
       </div>

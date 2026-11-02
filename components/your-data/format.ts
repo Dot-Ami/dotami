@@ -1,35 +1,25 @@
 import { formatCents } from "@/lib/figures/money";
 import { FIGURE_KIND_LABELS, type FigureKind, type FigureSourceKind, type FigureStatus } from "@/lib/figures/types";
+import { yourDataWords } from "@/lib/person/words";
 
-/** Words for the /your-data page. Pure, so a test can check them without rendering anything. */
+/**
+ * Plain readings for the /your-data page. Pure, so a test can check them without rendering anything. The words
+ * themselves are in lib/person/words.ts (`yourDataWords`).
+ */
+
+const words = yourDataWords.figures;
+const formatWords = yourDataWords.format;
 
 /** The four states in the words the person already sees on the idea's card and in the agree prompt. */
-export const STATUS_WORDS: Record<FigureStatus, string> = {
-  proposed: "Waiting for you to agree",
-  confirmed: "Agreed",
-  retracted: "Taken back",
-  discarded: "Turned down",
-};
+export const STATUS_WORDS: Record<FigureStatus, string> = words.status;
 
 /** Short versions for a count line: "3 agreed · 1 waiting". */
-export const STATUS_COUNT_WORDS: Record<FigureStatus, string> = {
-  confirmed: "agreed",
-  proposed: "waiting",
-  retracted: "taken back",
-  discarded: "turned down",
-};
+export const STATUS_COUNT_WORDS: Record<FigureStatus, string> = words.statusCount;
 
 /** The order a count line lists them in: what is counting first, what is only history last. */
 export const STATUS_ORDER: readonly FigureStatus[] = ["confirmed", "proposed", "retracted", "discarded"];
 
-export const SOURCE_KIND_WORDS: Record<FigureSourceKind, string> = {
-  typed: "Typed by you",
-  file: "Read from a file",
-  agent: "Proposed by an agent",
-  "tax-return": "Read from a tax return",
-  // The maintainer's wording (2026-10-08): books and a file in one name, with a slash.
-  books: "Books / file",
-};
+export const SOURCE_KIND_WORDS: Record<FigureSourceKind, string> = words.sourceKind;
 
 export function kindWords(kind: string): string {
   return FIGURE_KIND_LABELS[kind as FigureKind] ?? kind;
@@ -51,7 +41,7 @@ export function countLine(counts: Record<FigureStatus, number>): string {
  */
 export function amountWords(cents: string, currency: string): string {
   const n = Number(cents);
-  if (!Number.isSafeInteger(n)) return `${cents} cents ${currency}`;
+  if (!Number.isSafeInteger(n)) return formatWords.inCents(cents, currency);
   try {
     return formatCents(n, currency);
   } catch {
@@ -62,13 +52,13 @@ export function amountWords(cents: string, currency: string): string {
 
 /** "2026-01-01 to 2026-01-31" — exact days, because this page is about what is stored. */
 export function periodWords(periodStart: string, periodEnd: string): string {
-  return periodStart === periodEnd ? periodStart : `${periodStart} to ${periodEnd}`;
+  return periodStart === periodEnd ? periodStart : formatWords.period(periodStart, periodEnd);
 }
 
 /** "1.2 MB" — enough to tell a few kilobytes from a few hundred megabytes. */
 export function sizeWords(bytes: number): string {
-  if (bytes < 1024) return `${bytes} bytes`;
-  const units = ["KB", "MB", "GB"];
+  if (bytes < 1024) return formatWords.bytes(bytes);
+  const units = formatWords.sizeUnits;
   let value = bytes / 1024;
   let unit = 0;
   while (value >= 1024 && unit < units.length - 1) {
@@ -83,7 +73,7 @@ export function plural(count: number, one: string, many: string = `${one}s`): st
   return `${count} ${count === 1 ? one : many}`;
 }
 
-const NUMBER_WORDS = ["zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten"];
+const NUMBER_WORDS: readonly string[] = formatWords.numbers;
 
 /** "six" for 6, as a sentence writes a small number; digits from 11 up. */
 export function numberWords(n: number): string {
