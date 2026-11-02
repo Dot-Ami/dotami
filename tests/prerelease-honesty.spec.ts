@@ -1013,7 +1013,8 @@ describe("6. The screen specs and design docs say what the screens now draw and 
       expect(text, file).toContain("Help → Licences");
     }
     // The privacy log says every way the memory is emptied: each time it names the Go menu, it names Licences too.
-    const log = readFileSync("docs/privacy-log.md", "utf8");
+    // Unix line endings whatever the checkout has on disk: the planted controls below look for "\n".
+    const log = readFileSync("docs/privacy-log.md", "utf8").replace(/\r\n/g, "\n");
     expect(licencesLeftOut(log)).toEqual([]);
     // Planted control: the log once a release has turned [Unreleased] into its section, and a later line names
     // the Go menu for something else. That line says nothing of the journey's memory, so it binds nothing.

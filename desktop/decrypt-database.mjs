@@ -273,7 +273,12 @@ export function decryptFile(dataDir, file, key, { log = () => {}, crashAt, renam
   return swapAndWipe(dataDir, file, { log, crashAt, rename });
 }
 
-/** Steps 5 to 7, from a note that says "swap" and a checked copy in place. */
+/**
+ * Steps 5 to 7, from a note that says "swap" and a checked copy in place.
+ * @param {string} dataDir
+ * @param {string} file
+ * @param {{ log: (line: string) => void, crashAt?: DecryptCrashPoint, rename?: (from: string, to: string) => void }} options
+ */
 function swapAndWipe(dataDir, file, { log, crashAt, rename = renameSync }) {
   const copy = `${file}${DECRYPT_COPY_SUFFIX}`;
   const old = `${file}${ENCRYPTED_SUFFIX}`;
@@ -310,13 +315,19 @@ function swapAndWipe(dataDir, file, { log, crashAt, rename = renameSync }) {
     );
   }
   if (crashAt === "second-rename") return { crashed: true };
-  const note = readDecryptNote(dataDir);
+  // An unreadable note ({ unreadable: true }) has neither field; the fallbacks stand in for both.
+  const note = /** @type {{ size?: number, sha256?: string } | null} */ (readDecryptNote(dataDir));
   writeNote(dataDir, { step: "wipe", file: path.relative(dataDir, file), size: note?.size ?? 0, sha256: note?.sha256 ?? "0".repeat(64) });
   if (crashAt === "note-wipe") return { crashed: true };
   return finishWipe(dataDir, file, { log, crashAt });
 }
 
-/** Step 7: the encrypted original and its journal zero-filled and deleted, then the note. */
+/**
+ * Step 7: the encrypted original and its journal zero-filled and deleted, then the note.
+ * @param {string} dataDir
+ * @param {string} file
+ * @param {{ log: (line: string) => void, crashAt?: DecryptCrashPoint }} options
+ */
 function finishWipe(dataDir, file, { log, crashAt }) {
   const old = `${file}${ENCRYPTED_SUFFIX}`;
   try {

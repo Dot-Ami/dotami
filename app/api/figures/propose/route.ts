@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 
+import { readBody, throttle } from "@/lib/api/route";
 import { localToday } from "@/lib/figures/age";
-import { readBody, storeErrorResponse, throttle } from "@/lib/figures/http";
+import { storeErrorResponse } from "@/lib/figures/http";
 import { proposeFigures } from "@/lib/figures/store";
 import { prisma } from "@/lib/prisma";
 
@@ -34,7 +35,7 @@ function carriesForbiddenKey(value: unknown): boolean {
  * in /api/figures/agree, from the app's own page.
  */
 export async function POST(request: Request) {
-  const limited = throttle(request, "propose", RATE_LIMIT);
+  const limited = throttle("figures-propose", request, RATE_LIMIT);
   if (limited) return limited;
 
   const read = await readBody(request, MAX_BODY_BYTES);

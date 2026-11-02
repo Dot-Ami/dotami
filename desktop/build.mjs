@@ -18,7 +18,7 @@ const standalone = path.join(dist, "standalone");
 rmSync(dist, { recursive: true, force: true });
 // `next build` rewrites tsconfig.json and next-env.d.ts to point at the build folder it's using;
 // for this one-off folder that's churn in two committed files, so put them back afterwards.
-const kept = ["tsconfig.json", "next-env.d.ts"].map((f) => [f, readFileSync(path.join(root, f))]);
+const kept = ["tsconfig.json", "next-env.d.ts"].map((f) => /** @type {[string, Buffer]} */ ([f, readFileSync(path.join(root, f))]));
 try {
   execFileSync(process.execPath, [path.join(root, "node_modules", "next", "dist", "bin", "next"), "build"], {
     env: { ...process.env, DOTAMI_DESKTOP_BUILD: "1", NEXT_TELEMETRY_DISABLED: "1" },

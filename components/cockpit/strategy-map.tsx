@@ -18,43 +18,37 @@ import { isBranchDecided, stageChipFor, type StageChipKind } from "@/lib/scenari
 import type { Scenario } from "@/lib/scenarios/types";
 
 /**
- * S2.5.4j — the map as tier columns (decided 2026-09-16: the free-form graph was hard to
- * follow visually; a column-per-tier layout replaced it). Deliberately NOT copied from the
- * reference layout: per-card dollar ranges — no engine computes them, so none are shown.
+ * The map as tier columns (S2.5.4j; docs/ui-spec/cockpit/03-canvas.md): the free-form graph was hard to follow
+ * visually, so each tier is a column. Deliberately NOT copied from the reference layout: per-card dollar
+ * ranges — no engine computes them, so none are shown.
  *
- * 2026-10-11: the map draws whatever road it is given (`lib/engines/roads/v2026/`) and holds no
- * map of its own. Today's ten-step tax map is the road "Starting any business in Alberta", drawn
- * exactly as before, plus four before-you-open steps (three on 2026-10-12, the records step on
- * 2026-10-14): tests/road-map.spec.ts cuts those four cards out and compares the rest of the HTML with
- * what the old map drew.
+ * The map draws whatever road it is given (`lib/engines/roads/v2026/`) and holds no map of its own. Today's
+ * ten-step tax map is the road "Starting any business in Alberta", plus four before-you-open steps:
+ * tests/road-map.spec.ts cuts those four cards out and compares the rest of the HTML with the recordings in
+ * tests/fixtures/strategy-map/, what the original ten-step map drew.
  *
  * Each column = one column of the road. Inside: a stage card per step the column lists, and under
  * each stage card a lever card per evaluator item relevant to that step (`itemsForNode`). Stage
  * chips say where the step sits on THIS venture's path; lever chips say what the answers given
  * support. Nothing here ranks or recommends.
  *
- * Ruling 2 (same day): hover or select a stage card and arrows show where it leads — the
- * road's own `next`, walked to the end (`map-arrows.tsx`); everything off that future dims.
+ * Hover or select a stage card and arrows show where it leads — the road's own `next`, walked to the end
+ * (`map-arrows.tsx`); everything off that future dims.
  *
- * 2026-10-12, the cockpit screen (docs/architecture/future-cockpit.md § 2): given road evaluation's
- * result and the overlays, the cards take their colour from each step's state, their chip from the
- * person's own status where they set one, and the Skills and Money badges; Rules & tax switches the lever
- * cards; a selected skill dims the steps that don't list it. A card the person marked not for me says
- * "set aside by you" in place of its colour's words. Given none of that, the map draws exactly as before
- * (tests/road-map.spec.ts).
+ * In the cockpit (docs/architecture/future-cockpit.md § 2) the map is given road evaluation's result and the
+ * overlays: the cards take their colour from each step's state, their chip from the person's own status where
+ * they set one, and the Skills and Money badges; Rules & tax switches the lever cards; a selected skill dims
+ * the steps that don't list it. A card the person marked not for me says "set aside by you" in place of its
+ * colour's words. Given none of that, the map draws exactly as the road alone gives it (tests/road-map.spec.ts).
  *
- * 2026-10-12, folding and phone width (future-cockpit.md § 2): given `cockpit`, the legend folds with its
- * own button, the road's scrolling area is a region named for a screen reader, and below 768 px each
- * column is the window's width less the margins, the area scrolling sideways one column at a time (scroll
- * snap) at 70 % of the window's height. Without `cockpit` none of that is drawn and the HTML is unchanged.
- * 2026-10-14: from 768 px the road's area keeps at least 12rem of height, so the legend under it never
- * slides under the cockpit's what-if bar (the cockpit's canvas scrolls instead).
- *
- * 2026-10-17, the calm first view (S2.5.30c): in the cockpit, the columns after the first two can fold into
- * one column, "The road ahead · N steps", which shows them (`cockpit.roadAhead`); the folded legend is hidden
- * whole, shown again from the cockpit (since 2026-10-20 an item of the goal bar's Look closer menu). The
- * road's area keeps the clutter limit's
- * "road" mark. Drawn without `cockpit`, the HTML is still unchanged.
+ * Given `cockpit` (docs/ui-spec/cockpit/12-folding-and-phone.md), the legend folds with its own button, the
+ * road's scrolling area is a region named for a screen reader, and below 768 px each column is the window's
+ * width less the margins, the area scrolling sideways one column at a time (scroll snap) at 70 % of the
+ * window's height. From 768 px the road's area keeps at least 12rem of height, so the legend under it never
+ * slides under the cockpit's what-if bar (the cockpit's canvas scrolls instead). The columns after the first
+ * two can fold into one column, "The road ahead · N steps", which shows them (`cockpit.roadAhead`); the folded
+ * legend is hidden whole, shown again from an item of the goal bar's Look closer menu. The road's area keeps
+ * the clutter limit's "road" mark. Without `cockpit` none of that is drawn and the HTML is unchanged.
  */
 
 /** What the cockpit adds to the map: the legend's fold, and the road ahead's. */
@@ -62,7 +56,7 @@ export interface MapInCockpit {
   legendFolded: boolean;
   onToggleLegend: () => void;
   /**
-   * The calm first view (2026-10-17): the columns after the first `openColumns` fold into one column, "The
+   * The calm first view: the columns after the first `openColumns` fold into one column, "The
    * road ahead · N steps", which is the button that shows them. Left out, every column shows.
    */
   roadAhead?: { folded: boolean; onShow: () => void; openColumns: number };
@@ -97,9 +91,9 @@ interface StrategyMapProps {
 }
 
 /**
- * The chip's words (lib/scenarios/graph.ts `stageChipFor` decides which). Issue #5, 2026-10-11:
- * "your pick" only on what the person picked; an untouched toggle's side says "default", and the fork
- * drawn on every map says "open choice".
+ * The chip's words (lib/scenarios/graph.ts `stageChipFor` decides which): "your pick" only on what the
+ * person picked; an untouched toggle's side says "default", and the fork drawn on every map says "open
+ * choice" (issue #5).
  */
 const STAGE_CHIP: Record<StageChipKind, { label: string; className: string }> = {
   "first-stage": { label: cockpitWords.map.chips["first-stage"], className: "text-maple bg-maple/15" },
@@ -113,7 +107,7 @@ const STAGE_CHIP: Record<StageChipKind, { label: string; className: string }> = 
 
 /**
  * The left accent in words, for the card's accessible name, so the colour is never the only way to
- * tell (2026-10-11). The same words as the legend.
+ * tell. The same words as the legend.
  */
 const COLOUR_WORDS: Record<"green" | "yellow" | "gray", string> = cockpitWords.map.colours;
 
@@ -201,8 +195,8 @@ export function StrategyMap({
               tabIndex: -1,
               className:
                 // From 768 px the area is at least 12rem tall, grown from a zero basis (a percentage basis
-                // would make its minimum the height of every card): with the what-if bar open it used to
-                // shrink to 20 px, the legend sliding under the bar (2026-10-14).
+                // would make its minimum the height of every card): with the what-if bar open it would
+                // shrink to 20 px, the legend sliding under the bar.
                 "min-h-0 flex-1 overflow-auto px-5 pt-5 md:min-h-48 md:basis-0 max-md:h-[70svh] max-md:flex-none max-md:snap-x max-md:snap-mandatory max-md:scroll-px-5",
             }
           : { className: "min-h-0 flex-1 overflow-auto px-5 pt-5" })}
@@ -269,7 +263,7 @@ interface MapFocus {
 /**
  * A step's colour from today's rules, by step id, or undefined when the rules don't colour it (road
  * 0's before-you-open steps, or a step from another road). Such a step is drawn with no colour at all
- * rather than grey: grey says "doesn't apply as answered", which no rule decided (2026-10-12). Only
+ * rather than grey: grey says "doesn't apply as answered", which no rule decided. Only
  * used when the map is drawn without road evaluation; in the cockpit every step has a state of its own.
  */
 function colourOf(evaluation: EvaluationResult, stepId: string): NodeStateColor | undefined {
@@ -555,7 +549,7 @@ export function BranchToggle({
 }
 
 /**
- * The road ahead, folded (the calm first view, 2026-10-17; future-cockpit.md § 2, "First visit and return
+ * The road ahead, folded (the calm first view; future-cockpit.md § 2, "First visit and return
  * visits"): one column in place of the road's later columns, naming them and counting their steps. The whole
  * column is the button that shows them; the folded columns are on the page, hidden.
  */
@@ -606,10 +600,8 @@ function Legend({
       </footer>
     );
   }
-  // Folded, the whole legend stays on the page, hidden, and the cockpit shows it again from "Show the legend":
-  // a button in the road's bottom line from 2026-10-17 (the calm first view), an item of the goal bar's Look
-  // closer menu since 2026-10-20; until 2026-10-17 the folded legend was a line of its own with that button.
-  // Open, it is a region of its own again.
+  // Folded, the whole legend stays on the page, hidden, and the cockpit shows it again from "Show the legend",
+  // an item of the goal bar's Look closer menu. Open, it is a region of its own again.
   return (
     <footer
       data-region="legend"
@@ -632,7 +624,7 @@ function Legend({
  * list the words file is checked against (tests/helpers/verdict-words.ts VERDICT_WORDS) refuses the word
  * "recommendation" even in a line that denies one, and the map's recordings hold this line word for
  * word, so it stays here under tests/cockpit-own-words.spec.ts's one allowance until the maintainer
- * picks other words for it (2026-10-17).
+ * picks other words for it.
  */
 function LegendLines({ coverage, setAsideShown }: { coverage: EvaluationResult["provinceCoverage"]; setAsideShown: boolean }) {
   const legend = cockpitWords.map.legend;

@@ -1,7 +1,9 @@
 import { NextResponse } from "next/server";
 
-import { guardWatched, readBody, watchedFailure } from "@/lib/landscape/http";
+import { pageOnly, readBody, throttle } from "@/lib/api/route";
+import { watchedFailure } from "@/lib/landscape/http";
 import { editWatched } from "@/lib/landscape/watched";
+import { landscapeWords } from "@/lib/landscape/words";
 import { prisma } from "@/lib/prisma";
 
 export const runtime = "nodejs";
@@ -17,7 +19,7 @@ const MAX_BODY_BYTES = 64 * 1024;
  * Its place in the list and the day it was added stay. Only from DotAmi's own window.
  */
 export async function POST(request: Request, { params }: { params: Promise<{ id: string; businessId: string }> }) {
-  const refused = guardWatched(request, "watched-edit", RATE_LIMIT);
+  const refused = pageOnly(request, landscapeWords.errors.pageOnly) ?? throttle("watched-edit", request, RATE_LIMIT);
   if (refused) return refused;
   const { id, businessId } = await params;
 

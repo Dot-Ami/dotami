@@ -1,5 +1,6 @@
-// Runs the Next.js command (`next dev`, `next build`, `next start`, `next lint`) with its anonymous
-// usage reports switched off; the npm scripts go through here. scripts/telemetry-off.mjs says what
+// Runs the Next.js command (`next dev`, `next build`, `next start`) with its anonymous usage reports
+// switched off; the npm scripts go through here. (`npm run lint` is the ESLint command line, which
+// reports nothing, so it doesn't need this.) scripts/telemetry-off.mjs says what
 // Next.js would otherwise send and why it is done this way. `npx next …` run by hand skips this:
 // set NEXT_TELEMETRY_DISABLED=1 yourself for that.
 import { runWithTelemetryOff } from "./telemetry-off.mjs";

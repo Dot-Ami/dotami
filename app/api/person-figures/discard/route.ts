@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
-import { futureFailure, guardRead, readBody } from "@/lib/futures/http";
+import { readBody, throttle } from "@/lib/api/route";
+import { futureFailure } from "@/lib/futures/http";
 import { discardPersonFigures } from "@/lib/futures/person-figures";
 import { isRecord } from "@/lib/futures/types";
 import { prisma } from "@/lib/prisma";
@@ -17,7 +18,7 @@ const MAX_BODY_BYTES = 8 * 1024;
  * person agreed to changes.
  */
 export async function POST(request: Request) {
-  const limited = guardRead(request, "person-figures-discard", RATE_LIMIT);
+  const limited = throttle("person-figures-discard", request, RATE_LIMIT);
   if (limited) return limited;
 
   const read = await readBody(request, MAX_BODY_BYTES);

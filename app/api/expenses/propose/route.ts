@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
-import { readBody, storeErrorResponse, throttle } from "@/lib/expenses/http";
+import { readBody, throttle } from "@/lib/api/route";
+import { storeErrorResponse } from "@/lib/expenses/http";
 import { proposeExpenses } from "@/lib/expenses/store";
 import { localToday } from "@/lib/figures/age";
 import { prisma } from "@/lib/prisma";
@@ -34,7 +35,7 @@ function carriesForbiddenKey(value: unknown): boolean {
  * outright, with nothing created. Confirming happens in /api/expenses/agree, from the app's own page.
  */
 export async function POST(request: Request) {
-  const limited = throttle(request, "propose", RATE_LIMIT);
+  const limited = throttle("expenses-propose", request, RATE_LIMIT);
   if (limited) return limited;
 
   const read = await readBody(request, MAX_BODY_BYTES);

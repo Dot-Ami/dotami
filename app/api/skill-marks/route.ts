@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
-import { futureFailure, guardWrite, readBody } from "@/lib/futures/http";
+import { pageOnly, readBody, throttle } from "@/lib/api/route";
+import { COCKPIT_PAGE_ONLY, futureFailure } from "@/lib/futures/http";
 import { markSkill } from "@/lib/futures/skill-marks";
 import { prisma } from "@/lib/prisma";
 
@@ -19,7 +20,7 @@ const MAX_BODY_BYTES = 4 * 1024;
  * person sets a mark.
  */
 export async function POST(request: Request) {
-  const refused = guardWrite(request, "skill-marks", RATE_LIMIT);
+  const refused = pageOnly(request, COCKPIT_PAGE_ONLY) ?? throttle("skill-marks", request, RATE_LIMIT);
   if (refused) return refused;
 
   const read = await readBody(request, MAX_BODY_BYTES);

@@ -25,7 +25,9 @@ import { defineImport, evenText, fingerprint, importAppModule, runIfMain } from 
 
 export { evenText, fingerprint };
 
-const { levelOfSourceCode, NOT_PUBLISHED } = await importAppModule("lib/engines/wages/v2026/levels.ts");
+const { levelOfSourceCode, NOT_PUBLISHED } = /** @type {typeof import("../lib/engines/wages/v2026/levels.ts")} */ (
+  await importAppModule("lib/engines/wages/v2026/levels.ts")
+);
 
 /** Where the file is kept, relative to the repo's top folder. */
 export const WAGE_DATA_DIR = "data/job-bank-wages-2025";
