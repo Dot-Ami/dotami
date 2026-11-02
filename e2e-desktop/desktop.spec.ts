@@ -230,8 +230,9 @@ async function describeVenture(page: Page) {
   await openTheMapFromTheIntake(page);
   // The map shows after the idea is saved and the cockpit's first load. On CI's Windows machines it was sometimes
   // not there when the 5 s an expect waits by default ran out (runs 40635367751, 41049883130, 41059248632 and 17
-  // others: "element(s) not found", and the retry passed). It gets the 30 s every click before it gets, and says
-  // so in the log when it needed more than the old 5 s.
+  // others: "element(s) not found"; the retry passed in 19 of the 20, and in run 39539308119 it stopped earlier, at
+  // the Encrypt now click). Whether the map would have come later isn't known. It gets the 30 s every click before
+  // it gets, and says so in the log when it needed more than the old 5 s.
   const map = page.getByRole("button", { name: /^Sole Prop activation, / });
   const opened = Date.now();
   await expect(map).toBeVisible({ timeout: 30_000 });
