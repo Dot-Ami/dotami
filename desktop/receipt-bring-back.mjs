@@ -330,9 +330,11 @@ export function listSetAsideReceipts(dataDir, { fromDotAmi, opened, store, platf
       if (there === "back") counts.alreadyBack += 1;
       else if (there === "other") counts.otherCopy += 1;
       else if (there === "unreadable") counts.unreadable += 1;
-      else if (keys.has(encryptedKeyId(read.head))) counts.canBringBack += 1;
+      // encryptedKeyId is null for a file that isn't encrypted; null is never a key id here, so the
+      // lookups below answer false for it (typed as a string only for the lookup).
+      else if (keys.has(/** @type {string} */ (encryptedKeyId(read.head)))) counts.canBringBack += 1;
       // No key here opens it: is its key file somewhere (won't open on this account), or nowhere at all?
-      else if (fileIds.has(encryptedKeyId(read.head))) counts.noKey += 1;
+      else if (fileIds.has(/** @type {string} */ (encryptedKeyId(read.head)))) counts.noKey += 1;
       else counts.noKeyFile += 1;
     }
     if (counts.receipts > 0) {

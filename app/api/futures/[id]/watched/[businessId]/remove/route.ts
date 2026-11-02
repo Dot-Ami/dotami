@@ -1,7 +1,9 @@
 import { NextResponse } from "next/server";
 
-import { guardWatched, readBody, watchedFailure } from "@/lib/landscape/http";
+import { pageOnly, readBody, throttle } from "@/lib/api/route";
+import { watchedFailure } from "@/lib/landscape/http";
 import { removeWatched } from "@/lib/landscape/watched";
+import { landscapeWords } from "@/lib/landscape/words";
 import { prisma } from "@/lib/prisma";
 
 export const runtime = "nodejs";
@@ -16,7 +18,7 @@ const MAX_BODY_BYTES = 1024;
  * good: its name, link, note and ad links are deleted from the data file. Only from DotAmi's own window.
  */
 export async function POST(request: Request, { params }: { params: Promise<{ id: string; businessId: string }> }) {
-  const refused = guardWatched(request, "watched-remove", RATE_LIMIT);
+  const refused = pageOnly(request, landscapeWords.errors.pageOnly) ?? throttle("watched-remove", request, RATE_LIMIT);
   if (refused) return refused;
   const { id, businessId } = await params;
 

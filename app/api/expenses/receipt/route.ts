@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { logRouteError } from "@/lib/api/log-error";
-import { readBody, refuseUnlessFromAppPage, throttle } from "@/lib/expenses/http";
+import { pageOnly, readBody, throttle } from "@/lib/api/route";
 import { addReceipt, ReceiptError, receiptsFolder } from "@/lib/expenses/receipts/store";
 import { MAX_RECEIPT_BYTES } from "@/lib/expenses/receipts/types";
 import { prisma } from "@/lib/prisma";
@@ -31,11 +31,11 @@ const BASE64 = /^[A-Za-z0-9+/]*={0,2}$/;
  * the record goes in the address or the log.
  */
 export async function POST(request: Request) {
-  const limited = throttle(request, "receipt", RATE_LIMIT);
+  const limited = throttle("expenses-receipt", request, RATE_LIMIT);
   if (limited) return limited;
 
   // Checked before the body is read: a request that isn't from the app's page gets nothing.
-  const notFromApp = refuseUnlessFromAppPage(request, PAGE_ONLY_MESSAGE);
+  const notFromApp = pageOnly(request, PAGE_ONLY_MESSAGE);
   if (notFromApp) return notFromApp;
 
   const read = await readBody(request, MAX_BODY_BYTES);

@@ -1,9 +1,10 @@
 import { NextResponse } from "next/server";
 
 import { aboutJobForFuture } from "@/lib/about-job/view";
+import { throttle } from "@/lib/api/route";
 import { firstWordsOf } from "@/lib/db/ventures";
 import { readFuture } from "@/lib/futures/future";
-import { futureFailure, guardRead } from "@/lib/futures/http";
+import { futureFailure } from "@/lib/futures/http";
 import { currentIncomeWanted } from "@/lib/futures/person-figures";
 import { dayOnThisComputer } from "@/lib/futures/person";
 import { listSkillMarks } from "@/lib/futures/skill-marks";
@@ -27,7 +28,7 @@ const RATE_LIMIT = { limit: 600, windowMs: 60_000 };
  * amounts come back in the body.
  */
 export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
-  const limited = guardRead(request, "futures-read", RATE_LIMIT);
+  const limited = throttle("futures-read", request, RATE_LIMIT);
   if (limited) return limited;
   const { id } = await params;
 

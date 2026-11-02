@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 
+import { pageOnly, readBody, throttle } from "@/lib/api/route";
 import { readFuture } from "@/lib/futures/future";
-import { futureFailure, guardWrite, readBody } from "@/lib/futures/http";
+import { COCKPIT_PAGE_ONLY, futureFailure } from "@/lib/futures/http";
 import { changeRegion } from "@/lib/futures/region";
 import { isRecord } from "@/lib/futures/types";
 import { prisma } from "@/lib/prisma";
@@ -21,7 +22,7 @@ const MAX_BODY_BYTES = 1024;
  * own click.
  */
 export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
-  const refused = guardWrite(request, "futures-region", RATE_LIMIT);
+  const refused = pageOnly(request, COCKPIT_PAGE_ONLY) ?? throttle("futures-region", request, RATE_LIMIT);
   if (refused) return refused;
   const { id } = await params;
 

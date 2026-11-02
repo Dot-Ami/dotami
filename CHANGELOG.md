@@ -54,8 +54,122 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   person's own browser); and DotAmi doesn't use `setCertificateVerifyProc`. For developers: Dependabot's
   rewrite of `package-lock.json` dropped `"gypfile": false` from the database package's entry, so
   `tests/database-package.spec.ts` failed on #219; `node scripts/keep-gypfile.mjs` put it back.
+- **The desktop app moves to Electron 44.10.1 and electron-updater 6.8.11, the Anthropic library to
+  0.137.0, and the installer is built with electron-builder 26.18.0** (from 44.9.1, 6.8.9, 0.135.0 and
+  26.15.3; Dependabot's #212, whose lockfile this replaces, went only as far as Electron 44.9.3). Along the
+  way npm moves two development packages to their patched versions: undici 6.29.0, which `node-gyp` uses
+  (Dependabot alerts 62, 72, 74 and 76, three rated high; #228 makes the same change), and fast-uri 3.1.8,
+  which electron-builder uses, through ajv, to check its settings (alerts 63 to 66, rated medium and low).
+  **Electron:** 44.10.1 brings Node.js 24.22.1 (from 24.22.0), a Node security release that fixes 8 CVEs on
+  Node 24: 4 rated high, 3 medium and 1 low, by Node's
+  [security notice](https://nodejs.org/en/blog/vulnerability/october-2026-security-releases) (read
+  2026-10-31; the [24.22.1 notes](https://nodejs.org/en/blog/release/v24.22.1), read 2026-10-31, list the same
+  8). In plain words: three are in how Node checks that a secure connection reached the computer it asked
+  for, in TLS (how a program makes a secure connection): CVE-2026-106069 and CVE-2026-105483 (high) and
+  CVE-2026-106072 (medium); one let a DNS lookup (the lookup that turns a web address into a computer's
+  address) look up a different name from the one it was given: CVE-2026-105482 (high); one is in unpacking
+  Brotli, one kind of compressed data: CVE-2026-111497 (high); one let a reused connection take a reply written before its
+  request: CVE-2026-105481 (medium); one made programs started from the same saved copy of Node repeat the
+  same random values: CVE-2026-106074 (medium); and one is in Node's optional switch that limits which files
+  a program may use: CVE-2026-106073 (low). Node's notes also list newer security certificates and
+  libraries, with no CVE. Electron's [44.10.0](https://github.com/electron/electron/releases/tag/v44.10.0)
+  moves Chromium, its browser engine, to 152.0.7977.169 (from .167), and
+  [44.10.1](https://github.com/electron/electron/releases/tag/v44.10.1) adds 18 fixes Electron copied from
+  Chromium and its graphics and JavaScript parts (Dawn, Skia and V8; electron/electron#55492), with no CVE
+  named (read 2026-10-31); 44.9.3 added fixes copied from Chromium and its parts (ANGLE, PDFium, Skia and
+  V8), and the [44.9.2](https://github.com/electron/electron/releases/tag/v44.9.2) notes list nothing
+  ([44.9.3](https://github.com/electron/electron/releases/tag/v44.9.3), read 2026-10-30). Electron marks none
+  of its own fixes in 44.10.0 as security fixes. **Where it reaches DotAmi:** the Chromium fixes reach the
+  window (DotAmi's pages, and the receipt files a person adds) and the update check, which goes through
+  Electron's own network module, that is Chromium's networking (`loadUpdater` in `desktop/main.mjs`;
+  electron-updater's `electronHttpExecutor.js`). Two of 44.10.0's fixes reach how the installed app reads its
+  own files, which are packed into one archive, `resources/app.asar` (its code, the window's preload and the
+  migrations; electron-builder's default; the server runs from its own folder beside it,
+  `desktop/package.mjs`): a damaged archive whose size fields don't match the file's length is now handled
+  (electron/electron#55176), and the main process and the programs it starts now read paths inside the
+  archive the same way (#55183). The time-zone data moves to tzdata 2026e: Electron's note names
+  Europe/London, and the [tz database's own notes](https://github.com/eggert/tz/blob/main/NEWS) (Release
+  2026e, read 2026-10-31) add that Manitoba no longer turns its clocks back on 2026-11-01, so for a person
+  there the day DotAmi counts as today follows that change (`localDay` in `lib/figures/age.ts`). **What
+  doesn't reach DotAmi:** in the desktop app, Node runs the main process and the server, and neither sends
+  anything through Node's TLS or DNS. The main process's one request is a `HEAD` to DotAmi's own server on
+  127.0.0.1 (`waitForServer` in `desktop/main.mjs`); the server's one outside request, the Anthropic call in
+  `app/api/intent/parse/route.ts`, runs only with `ANTHROPIC_API_KEY`, which the app takes out of the
+  server's environment (`serverEnv` in `desktop/main.mjs`). DotAmi's own code doesn't look names up with
+  Node's `dns` or turn on Node's file-permission switch, and never unpacks Brotli (the gzip and zip files a
+  person adds are unpacked by a JavaScript library, `fflate`, not by Node). The File System Access fix (#55330) is for pickers DotAmi's
+  pages never open (the window is refused every permission but writing to the clipboard,
+  `setPermissionRequestHandler` in `desktop/main.mjs`); DotAmi doesn't use `protocol.registerSource`
+  (#55177), `onSendHeaders` (#55168; it uses `onBeforeSendHeaders`), `session.registerPreloadScript`,
+  extensions, `webContents.adjustSelection` or `net.fetch`, and its menu has no DevTools item;
+  `utilityProcess` now reports an exit when the app quits while one is still starting (#55273), which
+  DotAmi's server handler ignores while quitting; the rest are for Linux, macOS and login items. Copies
+  already installed get Electron 44.10.1 with the next release; a copy run from source runs on plain Node,
+  which this doesn't change. **The update
+  checker:** an update that downloads only the changed parts of the new installer (from the release's
+  `.blockmap`) now works in cases where 6.8.9 gave up and downloaded the whole file; a stale saved block
+  map is removed so it can't spoil the next one; and a saved update whose file name is missing or is a
+  folder path is refused
+  ([6.8.10](https://github.com/electron-userland/electron-builder/releases/tag/electron-updater%406.8.10),
+  [6.8.11](https://github.com/electron-userland/electron-builder/releases/tag/electron-updater%406.8.11),
+  read 2026-10-30). Its requests still go only to DotAmi's GitHub releases, with the same headers: the new
+  release, and, when no block map is saved, the old version's `.blockmap` from the release before. 6.8.9
+  fetched that too; now that a stale one is deleted, the fetch can happen where 6.8.9 read its saved copy.
+  One new progress line, kept in the log as written, names that `.blockmap`'s address on GitHub. **The
+  Anthropic library**
+  ([0.136.0](https://github.com/anthropics/anthropic-sdk-typescript/releases/tag/sdk-v0.136.0),
+  [0.137.0](https://github.com/anthropics/anthropic-sdk-typescript/releases/tag/sdk-v0.137.0), read
+  2026-10-30) adds administration and user-profile endpoints DotAmi doesn't call, changes how streamed
+  answers are read (DotAmi's one call, `messages.create` in `app/api/intent/parse/route.ts`, doesn't stream)
+  and hides one more header from its own logs; a request is built the same way. The desktop app never calls
+  the model. **The installer:** since
+  [26.16.0](https://github.com/electron-userland/electron-builder/releases/tag/electron-builder%4026.16.0), its
+  step that closes a DotAmi still running starts PowerShell with `-NoProfile -NonInteractive`, so the
+  person's own PowerShell profile doesn't run, and
+  [26.15.6](https://github.com/electron-userland/electron-builder/releases/tag/electron-builder%4026.15.6)
+  makes sure it installs the main program and its native files (the notes from
+  [26.15.4](https://github.com/electron-userland/electron-builder/releases/tag/electron-builder%4026.15.4) to
+  [26.18.0](https://github.com/electron-userland/electron-builder/releases/tag/electron-builder%4026.18.0),
+  read 2026-10-30). The other changes are for macOS, Linux, other
+  kinds of installer, options DotAmi doesn't set (`differentialPackage: "store-asar"`, `useZip`), or the
+  build itself (signing log lines, path checks, the native-rebuild tool, which DotAmi switches off); the
+  installer's own templates differ from 26.15.3's only by those PowerShell flags. The Windows update steps
+  in [desktop-app.md](docs/architecture/desktop-app.md) were re-read in the new versions: the same, except
+  one moved line number. The code comments that cite electron-updater 6.8.9 by line now say the lines are
+  the same in 6.8.11 (`desktop/log.mjs`, `lib/privacy/inventory.ts`, `tests/error-logging.spec.ts`). For developers: Dependabot's rewrite of
+  `package-lock.json` dropped `"gypfile": false` from the database package's entry, so
+  `tests/database-package.spec.ts` failed on #212; `node scripts/keep-gypfile.mjs` put it back. npm's rewrite
+  for Electron 44.10.1 dropped it again, and the script put it back again.
+  `@noble/hashes` goes back from 2.4.0 to 1.8.0 because app-builder-lib
+  [26.16.0](https://github.com/electron-userland/electron-builder/releases/tag/electron-builder%4026.16.0)
+  asks for version 1 (`^1.8.0` in its package.json on npm, where 26.15.3 asked for `^2.2.0`; read
+  2026-10-31); it makes the
+  `.blockmap` when the installer is built, and doesn't ship.
+- **undici, a library for web requests that only developer tools use, moves to its patched versions**
+  (6.29.0 to 6.29.1 and 7.30.0 to 7.30.1; Dependabot's #225, whose lockfile this replaces). It closes
+  Dependabot alerts 62, 72, 74 and 76 (the 6.29.0 copy; #229 makes the same change) and 70, 73, 75, 77 and
+  78 (the 7.30.0 copy); seven are rated high, two medium. The [6.29.1](https://github.com/nodejs/undici/releases/tag/v6.29.1) and
+  [7.30.1](https://github.com/nodejs/undici/releases/tag/v7.30.1) notes (read 2026-10-30) fix ways a
+  malicious server could crash the program using undici or make it run out of memory, a way custom
+  certificate checks were silently dropped, and, in 7.30.1, a way a cached answer could be stored under the
+  wrong address. **Neither copy ships in DotAmi:** 7.30.1 is an optional part of `@electron/get`, which
+  downloads Electron when the packages install and loads undici only to go through a proxy
+  (`dist/proxy.js`), and 6.29.1 is used by `node-gyp`, which electron-builder's native rebuild step brings;
+  all are development packages. Nothing in DotAmi imports undici (the privacy scan in
+  `tests/helpers/source-scan.ts` would flag it), so nothing about what DotAmi keeps, sends, ships or asks
+  changes. For developers: Dependabot's rewrite of `package-lock.json` dropped `"gypfile": false` from the
+  database package's entry, so `tests/database-package.spec.ts` failed on #225; `node scripts/keep-gypfile.mjs`
+  put it back.
 
 ### Added
+- **A test that each hand-written `.d.mts` file names exactly what its JavaScript module exports**
+  (`tests/declarations-match.spec.ts`). The tests that import a module from `desktop/` or `scripts/` are
+  typed against the `.d.mts` file (a file of type declarations) written by hand beside it, never against
+  the module itself, and nothing compared the two. The test reads both files as code, not as text, and
+  fails, naming the file and the name,
+  when a declaration file declares a value its module doesn't export, or the module exports one the
+  declaration file doesn't declare (type-only exports aside). All 26 pairs (18 in `desktop/`, 8 in
+  `scripts/`) match today.
 - **The quote checker reads a table row as one piece, and the Productivity Grant's card names who pays which share**
   (the maintainer's answers of 2026-10-29: "Teach the checker to read a table row as one piece" and "One new check
   that holds the old and new sentences"). `scripts/check-quotes.mjs` also reads each table row as one piece, its
@@ -315,6 +429,16 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   `e2e-desktop/desktop.spec.ts` now waits for the map as long as Playwright waits for the clicks before it,
   instead of the shorter default for an `expect`, which sometimes ran out on CI before the map showed (the retry
   passed every time), and writes a line to the test log when the map needed more than that old default.
+- **The tests read the same line endings on Windows as on CI.** `.gitattributes` gains
+  `* text=auto eol=lf`, so every text file is checked out with Unix line endings, even where git's
+  `core.autocrlf` is on (Git for Windows' default). Until now a Windows clone had Windows line endings
+  on disk while the repository stores Unix ones, and `tests/prerelease-honesty.spec.ts` failed there
+  (its planted control looked for a `"\n"` in `docs/privacy-log.md` that wasn't on disk); CI runs the
+  unit tests on Ubuntu only, so it never saw that. That spec now reads the log with its line endings
+  made Unix ones, as other specs already do. The `.gitattributes` line takes effect on a new clone; an
+  existing Windows clone, with its work committed first (the command throws away uncommitted changes),
+  runs `git rm -r --cached . && git reset --hard` once (CONTRIBUTING.md, *Line endings on Windows*). The
+  repository's stored files don't change.
 - **Mara's example: its prices re-opened, and no promotion length in DotAmi's own words** (2026-10-27). The
   sellers' pages a review couldn't re-open were opened again: every Busy Bee Tools, Autodesk and QuickBooks
   price is the same as on 2026-10-14 (Autodesk's appear once a browser draws the page); Lee Valley's showed a
@@ -776,6 +900,71 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   Prop activation's three sources: the new one in amber until 2026-10-27, each read by a person since).
 
 ### Changed
+- **`npm run lint` lints the whole repository with the ESLint command line, not `next lint`.** `next lint`
+  read only `app/`, `components/` and `lib/`, so the desktop app (`desktop/`), the scripts, the unit tests
+  and the browser and desktop tests were never linted, and every run said `next lint` goes away in
+  Next.js 16. The script is now `eslint . --ext .js,.jsx,.mjs,.cjs,.ts,.tsx` (729 files, from 416), still
+  reading `.eslintrc.json` (ESLint 8's own format. Next's codemod, its tool that converts a project for
+  you, writes a flat config, ESLint's newer kind of config file, which needs ESLint 9 and
+  eslint-config-next 16: a dependency change for its own pull request. The file says why a flat config
+  isn't used yet). The Node folders (`desktop/`, `scripts/`, `tests/`, `e2e/`, `e2e-desktop/`,
+  `prisma/`) leave out React's hook rules and Next's page rules, which fired 11 false alarms there
+  (`useSqliteFrom` in `desktop/main.mjs` read as a React hook, ten test variables called `module`).
+  In the desktop app's main process and the scripts, which run in Node, a browser-only name such as
+  `window` is an error; the desktop pages' own scripts and their preload files keep them.
+  Plain JavaScript (`.js`, `.mjs`, `.cjs`) also gets ESLint's own recommended rules (a name never
+  defined, a key written twice, unreachable code). They found two things, neither changing what runs: an
+  invisible byte-order-mark character written into a regular expression in `scripts/lib/import-kit.mjs`
+  (now the escape `\uFEFF`), and the control character `scripts/check-quotes.mjs` uses on purpose as its
+  block marker (the rule is switched off there, with the reason). `scripts/next.mjs` no longer runs lint:
+  ESLint sends no usage reports.
+- **`npm run typecheck` also checks the JavaScript of the desktop app and the scripts.** `tsconfig.json` has
+  `allowJs` off, so the first pass never read the `.mjs`, `.cjs` and `.js` files in `desktop/` and `scripts/`.
+  A second pass, `tsc --noEmit -p tsconfig.desktop.json`, now checks them against their JSDoc types (type
+  notes written in comments, which JavaScript ignores) and the `.d.mts` files they import one another
+  through. It is looser than the TypeScript for now: parameters without a JSDoc type are allowed, and a
+  caught error is read as `any`; tightening it to strict is left for later (510 places would need a type
+  on 2026-11-01, 380 of them parameters: `npx tsc --noEmit -p tsconfig.desktop.json --noImplicitAny true
+  --useUnknownInCatchVariables true`). Clearing it took JSDoc and type-only changes: `@param` types for
+  options objects with defaults (most of them `= null` or `= {}`); type casts in comments where the code
+  already guarantees a value (a key made a few lines up, the data file a backup always starts with); casts
+  on Electron's dialogs, which accept "no window" though their type lists that only as a separate form
+  (without a window argument at all); and corrections to two hand-written declaration files: `EncryptionStopped` and
+  `DecryptionStopped` take `(kind, message)`, and the results of `encryptFile`, `decryptFile`,
+  `resumeEncryption` and `resumeDecryption` list `wipePending` as absent on the kinds of result that don't
+  carry it, so `desktop/main.mjs` may read it from any of them, as it does. The desktop pages' three small
+  scripts type their window bridge from its preload file. One change is code, not a note: three arrow
+  functions in `desktop/main.mjs` that write to the log now use `log?.write(`, as 27 other places there
+  already do. The log is always open by the time they run, so nothing changes in practice; it lets the
+  type checker see the line whole (an earlier try silenced the whole line instead, and with it a check of
+  the data file's key passed on the same line), and `tests/error-logging.spec.ts` still follows every
+  write.
+- **The API routes share one copy of their route helpers** (developer-facing; nothing a person sees changes;
+  house-cleaning audit of 2026-10-31, item architecture-6). The rate limit, the "only DotAmi's own window" check,
+  reading the JSON body and turning a store error into an answer now live once, in `lib/api/route.ts` (`throttle`,
+  `pageOnly`, `readBody`, `failure`), where four domains' `http.ts` files and nine routes each had their own wrapper,
+  so a fix to one copy can no longer miss the others. Each domain's `http.ts` keeps what is its own: its words,
+  which of its errors answer which status, and the shape of its own request bodies (`parseIdsBody`, `parseScope`;
+  figures also keeps `refuseUnlessFromAppPage`, its binding of `pageOnly`); every route keeps its rate-limit bucket,
+  its limits, its order of checks and its words. `tests/route-helpers-one-copy.spec.ts` fails if a copy comes back (it failed on the code before, naming
+  the copies). `tests/route-answers-unchanged.spec.ts`, written first, pins the status, every header and the whole
+  body of 16 of the 41 route files the move changed (figures propose and bank-sources, the cockpit's date and
+  region, expenses propose and agree, the watched-businesses add, and the nine routes that counted their rate limit
+  by hand), and each domain's 503 answer and log line by calling its error mapper directly; the other moved routes
+  keep their existing tests, and the launch-secret refusal stays `tests/launch-secret.spec.ts`'s.
+- **The desktop app no longer reads every receipt whole when it starts.** At each start, before its window
+  opens, it checks that every receipt file kept is encrypted (in `receipts/` and in the receipts folders
+  earlier restores moved into `backups/`). It used to read each file in full only to look at its first 14
+  bytes, the text that marks an encrypted receipt, so the more receipts were kept, the more it read before the
+  window could open. Now it reads those 14 bytes, and reads a file whole only when it is still plain and is
+  encrypted then; a start with many receipts kept has far less to read. How a receipt is written and
+  encrypted is unchanged. What the start counts is unchanged too, with one exception: a receipt already
+  encrypted whose later bytes can't be read (a disk error partway through the file) is now counted as
+  encrypted, where it used to be counted as one that couldn't be done yet, because those bytes are no longer
+  read; nothing is written to it either way. The same files are opened, so the privacy log has no new line
+  (`desktop/receipt-crypto.mjs`; [expense-records.md § 9](docs/architecture/expense-records.md)). Test:
+  `tests/receipt-crypto.spec.ts`, where on the old code each of three encrypted receipts of 307,251 bytes was
+  read whole.
 - **The CRA's GST/HST rate table, on the maintainer's answer about its rows; and the vehicle write-off's s.67.3
   source names only what its page holds** (his answers of 2026-10-28 on his reading page). The table is drawn by a
   script, so no tool can see it; he copied Ontario's row "13%" and Alberta's row "5%". That answer is about two rows,
@@ -973,6 +1162,33 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   [expense-records.md](docs/architecture/expense-records.md) and two lines of
   [other-ways-to-build.md](docs/architecture/other-ways-to-build.md)), they now give it; every screen already
   did, and `tests/reading-list-corrections.spec.ts` fails if the code or those docs drop it again.
+- **The docs say what is on disk and what is done** (the house-cleaning audit of 2026-10-31).
+  [docs/architecture/overview.md](docs/architecture/overview.md) lists all 12 pages, every folder under `lib/`,
+  `components/` and `desktop/`, and the layers since added (roads, futures, the front door, the cockpit, figures,
+  expenses); it no longer names four paths that had gone, or Recharts. A new test,
+  `tests/architecture-docs-paths.spec.ts`, fails when overview.md or
+  [docs/architecture/engines.md](docs/architecture/engines.md) names a `lib/`, `components/`, `app/` or `desktop/`
+  path that isn't on disk. engines.md drops the archetype section (archetypes went on 2026-09-14), shows the shape
+  the catalogs really export (three of the ten differ from the `EngineCatalog` type, and it says how), and has a
+  row for each of the 14 engine folders. The [docs/brain/](docs/brain/README.md) status lines match the code (the
+  cockpit's colouring reads the evaluator; the risk calculator is built; the plan for searching the law's text no
+  longer counts on pgvector, a PostgreSQL add-on, since the database is SQLite), and the rules engine's spec
+  drops its "What it replaces" section, whose targets were deleted. future-cockpit.md, use-cases.md and
+  settings-and-edge-cases.md say what on each is built instead of "Nothing here is built".
+  [docs/task-list.md](docs/task-list.md) catches up: research 28f done; the desktop app [7b] done and installers
+  [7d] partly done, with the Electron updates of #185 and #226; the server fix of #205 under security, which now
+  points to the repository's Security tab for open advisories; contributors [13a] paused since 2026-10-11; the
+  finished parts of release 0.5.0's list ticked. CONTRIBUTING.md says to run Prettier only on files you add and
+  to keep an existing file's layout, and, with `scripts/keep-gypfile.mjs`'s header, how to repair a Dependabot
+  pull request that fails on the database package's `"gypfile": false`. Docs only: nothing DotAmi keeps, sends,
+  ships or asks changes.
+- **The cockpit's code comments say what each piece does, not how it was built** (2026-10-31, comments only:
+  nothing a person or a build sees changes). The dated build histories in `components/cockpit/cockpit-page.tsx`,
+  `what-if-bar.tsx`, `strategy-map.tsx`, `structure-ladder-rail.tsx` and `lib/cockpit/words.ts` are now short
+  present-tense notes, pointing to the cockpit's screen spec ([docs/ui-spec/cockpit/](docs/ui-spec/cockpit/_index.md))
+  where one applies, since this file and the ui-spec pages already record the history. A comment in
+  `what-if-bar.tsx` named `WhatIfShowButton`, a component that was removed when its button moved into
+  *Look closer*; it no longer does.
 
 ## [0.4.1] — 2026-10-20
 

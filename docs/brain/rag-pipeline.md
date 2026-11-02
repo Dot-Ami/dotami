@@ -1,6 +1,11 @@
 # RAG Pipeline — Spec
 
-Last updated: 2026-07-02 · Status: **not built** · Build order: #4 (last, deliberately)
+Last updated: 2026-10-31 (the note below on the store); 2026-07-02 · Status: **not built** · Build order: #4 (last,
+deliberately)
+
+> **2026-10-31:** DotAmi's database has been one SQLite file on the person's computer since 2026-09-28 (it was
+> PostgreSQL before), so the pgvector extension and the Postgres tables this page plans under § Storage no longer
+> apply.
 
 ## Job — and the boundary that matters more than the job
 

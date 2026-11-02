@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 
+import { pageOnly, readBody, throttle } from "@/lib/api/route";
 import { pickEnding, readFuture } from "@/lib/futures/future";
-import { futureFailure, guardWrite, readBody } from "@/lib/futures/http";
+import { COCKPIT_PAGE_ONLY, futureFailure } from "@/lib/futures/http";
 import { prisma } from "@/lib/prisma";
 
 export const runtime = "nodejs";
@@ -19,7 +20,7 @@ const MAX_BODY_BYTES = 4 * 1024;
  * `pickEnding`). Answers the future as kept. Only from DotAmi's own window: only the person picks.
  */
 export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
-  const refused = guardWrite(request, "futures-ending", RATE_LIMIT);
+  const refused = pageOnly(request, COCKPIT_PAGE_ONLY) ?? throttle("futures-ending", request, RATE_LIMIT);
   if (refused) return refused;
   const { id } = await params;
 

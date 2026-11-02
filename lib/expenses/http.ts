@@ -1,40 +1,27 @@
-import { NextResponse } from "next/server";
-
-import { logRouteError } from "@/lib/api/log-error";
-import { checkRateLimit, clientKeyFromRequest, rateLimitResponse, type RateLimitOptions } from "@/lib/api/rate-limit";
+import { failure } from "@/lib/api/route";
 import { VentureNotFoundError } from "@/lib/figures/store";
 
 import { ExpenseInputError } from "./store";
 
 /**
- * Shared plumbing for the /api/expenses routes, so each route file reads as its own rule. The
- * body reader and the "only DotAmi's own page" check are the figures routes' own (lib/figures/http.ts):
- * one definition of what counts as the app's page, for figures and expenses alike.
+ * What the /api/expenses routes say and answer that is their own: the agree prompt's words, which store
+ * errors answer which status, and the shape of a body's idea and ids. The steps every route shares,
+ * the "only DotAmi's own page" check among them, are lib/api/route.ts: one definition of what counts
+ * as the app's page, for figures and expenses alike.
  */
-export { readBody, refuseUnlessFromAppPage } from "@/lib/figures/http";
 
 export const AGREE_ONLY_MESSAGE = "Only the agree prompt in DotAmi's window can confirm expense records.";
 
-/** Rate limit for one route; a 429 response to return, or null to carry on. */
-export function throttle(request: Request, route: string, options: RateLimitOptions): Response | null {
-  const result = checkRateLimit(`expenses-${route}:${clientKeyFromRequest(request)}`, options);
-  return result.allowed ? null : rateLimitResponse(result);
-}
-
 /**
- * Turns a store error into the response. Unknown failures log only the error's name and code
- * (logRouteError) — never the error itself, because a database error can carry the values being
+ * Turns a store error into the response. Unknown failures log only the error's name and code under
+ * "expenses/<route>" — never the error itself, because a database error can carry the values being
  * written, and what the person paid, to whom and for what never goes in a log.
  */
 export function storeErrorResponse(route: string, error: unknown): Response {
-  if (error instanceof VentureNotFoundError) {
-    return NextResponse.json({ error: error.message }, { status: 404 });
-  }
-  if (error instanceof ExpenseInputError) {
-    return NextResponse.json({ error: error.message }, { status: 400 });
-  }
-  logRouteError(`expenses/${route}`, error);
-  return NextResponse.json({ error: "No database reachable — nothing was changed." }, { status: 503 });
+  return failure(`expenses/${route}`, error, [
+    [VentureNotFoundError, 404],
+    [ExpenseInputError, 400],
+  ]);
 }
 
 /**

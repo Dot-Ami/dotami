@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
-import { throttle, storeErrorResponse } from "@/lib/figures/http";
+import { throttle } from "@/lib/api/route";
+import { storeErrorResponse } from "@/lib/figures/http";
 import { listFigures } from "@/lib/figures/store";
 import { prisma } from "@/lib/prisma";
 
@@ -18,7 +19,7 @@ const RATE_LIMIT = { limit: 600, windowMs: 60_000 };
  * response body, never in an address (privacy review, rule 1).
  */
 export async function GET(request: Request) {
-  const limited = throttle(request, "list", RATE_LIMIT);
+  const limited = throttle("figures-list", request, RATE_LIMIT);
   if (limited) return limited;
 
   const ventureId = new URL(request.url).searchParams.get("venture");

@@ -216,7 +216,7 @@ async function start() {
   // opens the file. Only then — an ordinary start, with no note, does nothing here: free space in
   // the file is normal after any edit, and rebuilding it on every start would only slow it down.
   // It never stops the start: what still can't be done stays owed for the next one.
-  const wipe = finishPendingWipe(dbFile, { vacuum: (file) => vacuumFile(file, databaseKey), log: (line) => log.write(`${line}\n`) });
+  const wipe = finishPendingWipe(dbFile, { vacuum: (file) => vacuumFile(file, databaseKey), log: (line) => log?.write(`${line}\n`) });
   if (wipe.ran) log.write(`[desktop] wipe-pending note ${wipe.wiped && wipe.backupsLeft.length === 0 && wipe.receiptFoldersLeft.length === 0 ? "cleared" : "kept for the next start"}\n`);
 
   // A fresh data folder gets its database here; an existing one gets any new migrations, after a
@@ -224,7 +224,7 @@ async function start() {
   // untouched (the one exception is the owed wipe just above: when a "wipe pending" note was there,
   // the file has already been rebuilt, with the same contents, before these checks run).
   try {
-    const { applied, backup } = migrate(dbFile, migrations, { log: (line) => log.write(`${line}\n`), key: databaseKey });
+    const { applied, backup } = migrate(dbFile, migrations, { log: (line) => log?.write(`${line}\n`), key: databaseKey });
     log.write(`[desktop] database ready (${applied.length} update(s) applied${backup ? `, backup ${backup}` : ""})\n`);
   } catch (error) {
     if (error instanceof MigrationRefused) return fail(error.message);
@@ -423,7 +423,7 @@ function safetyCopyFiles() {
  *   the new data file must then be encrypted, never created plain (if no key can be made, the start stops).
  */
 async function prepareDatabase({ afterStartFresh = false } = {}) {
-  const say = (line) => log.write(`[database] ${line}\n`);
+  const say = (line) => log?.write(`[database] ${line}\n`);
   // After "Start fresh" the person was promised an empty file under a new key: never an unencrypted one.
   const noPlainAfterStartFresh = () => {
     say("no key could be made after starting fresh; no unencrypted data file was created");
@@ -1097,7 +1097,8 @@ function answerWindowCalls(origin) {
       stopServer: async () => {
         quitting = true;
         if (!server) return;
-        const stopped = new Promise((resolve) => server.once("exit", resolve));
+        // Checked just above; the type checker can't carry that into the callback.
+        const stopped = new Promise((resolve) => /** @type {Electron.UtilityProcess} */ (server).once("exit", resolve));
         server.kill();
         await stopped;
       },
@@ -1229,7 +1230,9 @@ async function backUp() {
   const passphrase = await askPassphrase("backup");
   if (passphrase === null || passphrase === "") return null;
   const day = new Date().toLocaleDateString("en-CA");
-  const { canceled, filePath } = await dialog.showSaveDialog(win ?? undefined, {
+  // Electron takes undefined for "no parent window", but its type has that only as a separate overload
+  // without the window, hence the casts on `win ?? undefined` in these dialogs.
+  const { canceled, filePath } = await dialog.showSaveDialog(/** @type {BrowserWindow} */ (win ?? undefined), {
     title: "Back up DotAmi",
     defaultPath: path.join(app.getPath("documents"), `DotAmi backup ${day}.${BACKUP_EXTENSION}`),
     filters: [{ name: "DotAmi backup", extensions: [BACKUP_EXTENSION] }],
@@ -1249,7 +1252,7 @@ async function backUp() {
     log?.write(
       `[backup] wrote ${filePath} (${encrypted ? "locked" : "not locked"}; ${receipts} receipt files, ${missingReceipts} missing, ${unreadableReceipts} couldn't be opened)\n`,
     );
-    await dialog.showMessageBox(win ?? undefined, {
+    await dialog.showMessageBox(/** @type {BrowserWindow} */ (win ?? undefined), {
       type: "info",
       title: "Backed up",
       message: `Backed up to ${filePath}`,
@@ -1266,7 +1269,7 @@ async function backUp() {
     // The dialog shows the person the whole message; the log keeps only the name and code, since the
     // message can name the file they chose and the folders around it.
     log?.write(`[backup] failed (${describeError(error)})\n`);
-    await dialog.showMessageBox(win ?? undefined, { type: "error", title: "Backup failed", message: "DotAmi couldn't write the backup.", detail: String(error?.message ?? error) });
+    await dialog.showMessageBox(/** @type {BrowserWindow} */ (win ?? undefined), { type: "error", title: "Backup failed", message: "DotAmi couldn't write the backup.", detail: String(error?.message ?? error) });
     return null;
   }
 }
@@ -1284,7 +1287,8 @@ async function backUp() {
  * the new key is saved before the restore is put in place (database-encryption.md § 10).
  */
 async function restore({ databaseKeyLost = false } = {}) {
-  const { canceled, filePaths } = await dialog.showOpenDialog(win ?? undefined, {
+  // The casts on `win ?? undefined`: see backUp().
+  const { canceled, filePaths } = await dialog.showOpenDialog(/** @type {BrowserWindow} */ (win ?? undefined), {
     title: "Restore DotAmi from a backup",
     properties: ["openFile"],
     filters: [{ name: "DotAmi backup", extensions: [BACKUP_EXTENSION] }],
@@ -1297,7 +1301,12 @@ async function restore({ databaseKeyLost = false } = {}) {
   const keyLost = receiptKey?.state === "key-unreadable";
   // Start a new key (expense-records.md § 10) may have moved receipts.key aside since this start: the
   // dialog then says it is missing, not that it goes to the backups folder.
-  const keyFileGone = keyLost && (receiptKey.missing || !existsSync(path.join(dataDir, RECEIPT_KEY_FILE)));
+  // (When keyLost, receiptKey is the "key-unreadable" state; the type checker can't follow that through a
+  // variable, hence the casts on receiptKey here and on restoreKey and stagingKey below.)
+  const keyFileGone =
+    keyLost &&
+    (/** @type {Extract<import("./receipt-key.mjs").OpenedReceiptKey, { state: "key-unreadable" }>} */ (receiptKey).missing ||
+      !existsSync(path.join(dataDir, RECEIPT_KEY_FILE)));
   const restoreKey = receiptKey?.state === "on" ? receiptKey.key : keyLost ? newReceiptKey() : null;
   // [8i] The key the restored data file is staged under: this computer's own, or, when it is lost, a new
   // one, kept in memory and saved only once the person confirms.
@@ -1321,7 +1330,7 @@ async function restore({ databaseKeyLost = false } = {}) {
       // A BackupError's kind is one of a fixed few words ("damaged", "newer-app", …); anything else,
       // its name and code.
       log?.write(`[restore] refused (${error instanceof BackupError ? error.kind : describeError(error)})\n`);
-      await dialog.showMessageBox(win ?? undefined, {
+      await dialog.showMessageBox(/** @type {BrowserWindow} */ (win ?? undefined), {
         type: "error",
         title: "Can't restore",
         message: error instanceof BackupError ? error.message : "DotAmi couldn't read that backup. Nothing was changed.",
@@ -1330,7 +1339,7 @@ async function restore({ databaseKeyLost = false } = {}) {
     }
   }
 
-  const { response } = await dialog.showMessageBox(win ?? undefined, {
+  const { response } = await dialog.showMessageBox(/** @type {BrowserWindow} */ (win ?? undefined), {
     type: "warning",
     title: "Restore from a backup",
     buttons: ["Replace and restart", "Cancel"],
@@ -1357,7 +1366,8 @@ async function restore({ databaseKeyLost = false } = {}) {
   // The server has the database open; stop it and wait, so the file can be replaced.
   quitting = true;
   if (server) {
-    const stopped = new Promise((resolve) => server.once("exit", resolve));
+    // Checked just above; the type checker can't carry that into the callback.
+    const stopped = new Promise((resolve) => /** @type {Electron.UtilityProcess} */ (server).once("exit", resolve));
     server.kill();
     await stopped;
   }
@@ -1367,7 +1377,7 @@ async function restore({ databaseKeyLost = false } = {}) {
     // Saved before the swap: the staged receipts are encrypted with this key, so without it saved they
     // would be lost. The unreadable key file moves into backups/, never deleted.
     try {
-      newKeySaved = await saveReceiptKey(dataDir, safeStorage, restoreKey);
+      newKeySaved = await saveReceiptKey(dataDir, safeStorage, /** @type {Buffer} */ (restoreKey)); // keyLost: the new key
       log?.write(`[restore] a new receipts key was saved; the one this account couldn't open went to the backups folder\n`);
     } catch (error) {
       log?.write(`[restore] the new receipts key couldn't be saved: ${describeError(error)}\n`);
@@ -1384,7 +1394,8 @@ async function restore({ databaseKeyLost = false } = {}) {
     // locked file: a move that fails changes nothing, and a key that can't be saved puts the file back
     // (desktop/database-key.mjs setAsideLockedFileUnderNewKey).
     try {
-      const { lockedTo, keySetAside } = await setAsideLockedFileUnderNewKey(dataDir, dbFile, safeStorage, stagingKey);
+      // databaseKeyLost: stagingKey is the new key made above.
+      const { lockedTo, keySetAside } = await setAsideLockedFileUnderNewKey(dataDir, dbFile, safeStorage, /** @type {Buffer} */ (stagingKey));
       log?.write(`[restore] the locked data file and its key went to the backups folder${keySetAside || lockedTo ? "" : " (there were none)"}; a new key for the data file was saved\n`);
     } catch (error) {
       log?.write(`[restore] the locked data file couldn't be set aside under a new key (step: ${error?.step ?? "?"}): ${describeError(error)}\n`);
@@ -1416,7 +1427,8 @@ async function restore({ databaseKeyLost = false } = {}) {
       // file, not the one saved for the restored receipts: otherwise the next start says "encrypted"
       // over receipts it can't open.
       try {
-        const outcome = revertReceiptKey(dataDir, keyIdOf(restoreKey), newKeySaved.setAside);
+        // A new key was saved only when keyLost, so restoreKey is that key.
+        const outcome = revertReceiptKey(dataDir, keyIdOf(/** @type {Buffer} */ (restoreKey)), newKeySaved.setAside);
         log?.write(`[restore] the new receipts key was ${outcome === "reverted" ? "taken back; the old key file is in place again" : "kept: restored receipts are locked with it"}\n`);
         if (outcome === "kept" && newKeySaved.setAside) keyNote = `\n\nThe key file this Windows account couldn't open was moved to:\n${newKeySaved.setAside}`;
       } catch (revertError) {

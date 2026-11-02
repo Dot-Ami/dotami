@@ -9,7 +9,7 @@ import { randomBytes } from "node:crypto";
 import { existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import {
   decryptReceipt,
@@ -30,11 +30,65 @@ import { pdf, png } from "./helpers/receipt-files";
 const ID = "0123456789abcdef0123456789abcdef";
 const OTHER_ID = "fedcba9876543210fedcba9876543210";
 
+/**
+ * What the first-start pass reads, file by file: node:fs is wrapped so a test can count the bytes each
+ * readSync call hands back, by the path its handle was opened on, and can make an open fail the way
+ * Windows does when another program holds the file. Off between tests (`watching` null, `busy` empty),
+ * so every other call is the real one, untouched.
+ */
+const fsWatch = vi.hoisted(() => ({
+  watching: null as Map<string, number> | null,
+  pathOf: new Map<number, string>(),
+  busy: new Set<string>(),
+}));
+vi.mock("node:fs", async (importOriginal) => {
+  const real = await importOriginal<typeof import("node:fs")>();
+  const realRead = real.readSync as (fd: number, ...rest: unknown[]) => number;
+  const wrapped = {
+    ...real,
+    openSync: (...args: Parameters<typeof real.openSync>) => {
+      if (fsWatch.busy.has(String(args[0]))) throw Object.assign(new Error("EBUSY: resource busy or locked, open"), { code: "EBUSY" });
+      const fd = real.openSync(...args);
+      if (fsWatch.watching) fsWatch.pathOf.set(fd, String(args[0]));
+      return fd;
+    },
+    readSync: (fd: number, ...rest: unknown[]) => {
+      const n = realRead(fd, ...rest);
+      const file = fsWatch.pathOf.get(fd);
+      if (fsWatch.watching && file !== undefined) fsWatch.watching.set(file, (fsWatch.watching.get(file) ?? 0) + n);
+      return n;
+    },
+    closeSync: (fd: number) => {
+      fsWatch.pathOf.delete(fd);
+      real.closeSync(fd);
+    },
+  };
+  return { ...wrapped, default: wrapped };
+});
+
+/** Runs `run` while counting the bytes read from each file; returns its result and the counts, by file name. */
+function watchingReads<T>(run: () => T): { result: T; bytesRead: Record<string, number> } {
+  const counts = new Map<string, number>();
+  fsWatch.watching = counts;
+  try {
+    const result = run();
+    return { result, bytesRead: Object.fromEntries([...counts].map(([file, n]) => [path.basename(file), n])) };
+  } finally {
+    fsWatch.watching = null;
+    fsWatch.pathOf.clear();
+  }
+}
+
 let dir = "";
 beforeEach(() => {
   dir = mkdtempSync(path.join(os.tmpdir(), "dotami-receipt-crypto-"));
 });
-afterEach(() => rmSync(dir, { recursive: true, force: true, maxRetries: 5, retryDelay: 100 }));
+afterEach(() => {
+  fsWatch.watching = null;
+  fsWatch.pathOf.clear();
+  fsWatch.busy.clear();
+  rmSync(dir, { recursive: true, force: true, maxRetries: 5, retryDelay: 100 });
+});
 
 /** The ReceiptCryptoError kind a call throws, or "no error". */
 function failure(run: () => unknown): string {
@@ -185,6 +239,82 @@ describe("encrypting the receipts already on the disk", () => {
     const shown = decryptReceipt(onDisk, { key, id: ID });
     expect(shown.equals(photo)).toBe(true);
     expect(heicPicture(new Uint8Array(shown)).ok).toBe(true);
+  });
+
+  it("tells a receipt already encrypted by its first 14 bytes alone, and reads only a plain one whole", () => {
+    // At every start the pass meets mostly receipts it encrypted at an earlier one. Reading each of
+    // those whole (up to the 10 MB cap) just to look at its first 14 bytes made the start read as much
+    // as every receipt kept; the text "DOTAMI-RECEIPT" at the start is all it needs.
+    const folder = path.join(dir, "receipts");
+    const [[plainName, plainBytes]] = [...plainReceipts(folder, 1)];
+    const encrypted = new Map<string, Buffer>();
+    for (let i = 0; i < 3; i += 1) {
+      const id = randomBytes(16).toString("hex");
+      // A photo's size. Nothing here looks at what kind of file a receipt is, so random bytes do.
+      encrypted.set(`${id}.png`, encryptReceipt(randomBytes(300 * 1024), { key, id }));
+    }
+    for (const [name, file] of encrypted) writeFileSync(path.join(folder, name), file);
+
+    const { result, bytesRead } = watchingReads(() => encryptReceiptsIn(folder, key, { isReceiptName: isReceiptFileName }));
+    expect(result).toEqual({ encrypted: 1, already: 3, failed: 0, leftoversRemoved: 0 });
+    expect(bytesRead).toEqual({
+      ...Object.fromEntries([...encrypted.keys()].map((name) => [name, 14])),
+      [plainName]: plainBytes.length,
+    });
+    // The encrypted ones are exactly as they were; the plain one is now encrypted and opens to its own bytes.
+    for (const [name, file] of encrypted) expect(readFileSync(path.join(folder, name)).equals(file), name).toBe(true);
+    expect(isEncryptedReceipt(readFileSync(path.join(folder, plainName)))).toBe(true);
+    expectAllReadable(folder, new Map([[plainName, plainBytes]]), key);
+  });
+
+  it("a file shorter than the 14-byte mark, even an empty one, is plain and is encrypted", () => {
+    const folder = path.join(dir, "receipts");
+    mkdirSync(folder, { recursive: true });
+    const files = new Map<string, Buffer>([
+      [`${randomBytes(16).toString("hex")}.png`, Buffer.alloc(0)],
+      // The first 13 of the mark's 14 bytes: still not an encrypted receipt.
+      [`${randomBytes(16).toString("hex")}.pdf`, Buffer.from("DOTAMI-RECEIP", "ascii")],
+    ]);
+    for (const [name, bytes] of files) writeFileSync(path.join(folder, name), bytes);
+    expect(encryptReceiptsIn(folder, key, { isReceiptName: isReceiptFileName })).toEqual({ encrypted: 2, already: 0, failed: 0, leftoversRemoved: 0 });
+    for (const name of files.keys()) expect(isEncryptedReceipt(readFileSync(path.join(folder, name)))).toBe(true);
+    expectAllReadable(folder, files, key);
+  });
+
+  it("a file bigger than any receipt is left alone, not counted and not read, whether or not it starts with the mark", () => {
+    const folder = path.join(dir, "receipts");
+    mkdirSync(folder, { recursive: true });
+    // One byte over the biggest encrypted receipt: the 10 MB cap plus the format's overhead.
+    const size = 10 * 1024 * 1024 + ENCRYPTED_OVERHEAD + 1;
+    const marked = Buffer.alloc(size, 7);
+    Buffer.from("DOTAMI-RECEIPT", "ascii").copy(marked);
+    const files = new Map<string, Buffer>([
+      [`${randomBytes(16).toString("hex")}.png`, Buffer.alloc(size, 7)],
+      [`${randomBytes(16).toString("hex")}.pdf`, marked],
+    ]);
+    for (const [name, bytes] of files) writeFileSync(path.join(folder, name), bytes);
+    const { result, bytesRead } = watchingReads(() => encryptReceiptsIn(folder, key, { isReceiptName: isReceiptFileName }));
+    expect(result).toEqual({ encrypted: 0, already: 0, failed: 0, leftoversRemoved: 0 });
+    expect(bytesRead).toEqual({});
+    for (const [name, bytes] of files) expect(readFileSync(path.join(folder, name)).equals(bytes), name).toBe(true);
+  });
+
+  it("a receipt another program holds, so it can't be opened, is counted in failed and left as it was, plain or encrypted", () => {
+    const folder = path.join(dir, "receipts");
+    const files = plainReceipts(folder, 2);
+    const [heldPlain, freePlain] = [...files.keys()];
+    const id = randomBytes(16).toString("hex");
+    const heldEncrypted = `${id}.pdf`;
+    const encryptedBytes = encryptReceipt(pdf({ text: "kept" }), { key, id });
+    writeFileSync(path.join(folder, heldEncrypted), encryptedBytes);
+    fsWatch.busy.add(path.join(folder, heldPlain));
+    fsWatch.busy.add(path.join(folder, heldEncrypted));
+    expect(encryptReceiptsIn(folder, key, { isReceiptName: isReceiptFileName })).toEqual({ encrypted: 1, already: 0, failed: 2, leftoversRemoved: 0 });
+    fsWatch.busy.clear();
+    expect(readFileSync(path.join(folder, heldPlain)).equals(files.get(heldPlain)!)).toBe(true);
+    expect(readFileSync(path.join(folder, heldEncrypted)).equals(encryptedBytes)).toBe(true);
+    expect(isEncryptedReceipt(readFileSync(path.join(folder, freePlain)))).toBe(true);
+    expectAllReadable(folder, files, key);
   });
 
   it("a folder that isn't there is nothing to do", () => {

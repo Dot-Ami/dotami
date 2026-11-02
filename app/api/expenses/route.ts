@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
-import { storeErrorResponse, throttle } from "@/lib/expenses/http";
+import { throttle } from "@/lib/api/route";
+import { storeErrorResponse } from "@/lib/expenses/http";
 import { listExpenses } from "@/lib/expenses/store";
 import { prisma } from "@/lib/prisma";
 
@@ -19,7 +20,7 @@ const RATE_LIMIT = { limit: 120, windowMs: 60_000 };
  * response body, never in an address (privacy review, rule 6).
  */
 export async function GET(request: Request) {
-  const limited = throttle(request, "list", RATE_LIMIT);
+  const limited = throttle("expenses-list", request, RATE_LIMIT);
   if (limited) return limited;
 
   const params = new URL(request.url).searchParams;
