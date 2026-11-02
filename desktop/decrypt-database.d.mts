@@ -4,6 +4,7 @@ export const DECRYPT_COPY_SUFFIX: string;
 export const ENCRYPTED_SUFFIX: string;
 export type DecryptCrashPoint = "copied" | "checked" | "note-swap" | "first-rename" | "second-rename" | "note-wipe" | "old-deleted";
 export class DecryptionStopped extends Error {
+  constructor(kind: DecryptionStopped["kind"], message: string);
   kind: "damaged" | "busy" | "stuck" | "mismatch" | "pending" | "failed";
 }
 export function readDecryptNote(dataDir: string): null | { unreadable: true } | { step: "swap" | "wipe"; file: string; size: number; sha256: string };
@@ -18,7 +19,7 @@ export function decryptFile(
     rename?: (from: string, to: string) => void;
     copyInto?: (source: unknown, copy: string) => void;
   },
-): { crashed: true } | { wipePending: boolean };
+): { crashed: true; wipePending?: undefined } | { wipePending: boolean };
 export function resumeDecryption(
   dataDir: string,
   key: Buffer | null,
@@ -27,7 +28,7 @@ export function resumeDecryption(
   | { action: "none" }
   | { action: "cleared"; file?: string; wipePending?: boolean }
   | { action: "finished"; file: string; wipePending: boolean }
-  | { action: "restart"; file: string };
+  | { action: "restart"; file: string; wipePending?: undefined };
 export function filesLockedWith(dataDir: string, key: Buffer): string[];
 export function deleteKeyWhenUnused(dataDir: string, key: Buffer, options?: { remove?: (file: string) => void }): { deleted: boolean; lockedLeft: number };
 export const TURNED_OFF_NOTE: string;

@@ -37,7 +37,7 @@ export function runWithTelemetryOff(cliFromRoot, args) {
   // leaves the server running on its own. On Windows, Ctrl+C already reaches every program in the
   // console window, and killing the child there would cut its own shutdown short, so this only
   // waits for it to exit.
-  for (const signal of ["SIGINT", "SIGTERM", "SIGHUP"]) {
+  for (const signal of /** @type {const} */ (["SIGINT", "SIGTERM", "SIGHUP"])) {
     process.on(signal, () => {
       if (process.platform === "win32" && signal === "SIGINT") return;
       child.kill(signal);

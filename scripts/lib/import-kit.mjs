@@ -72,7 +72,7 @@ export function decode(bytes, encoding, name = "the file") {
 
 /** The text as an import reads it: no byte-order mark, "\n" line endings. */
 export function evenText(text) {
-  return text.replace(/^﻿/, "").replace(/\r\n?/g, "\n");
+  return text.replace(/^\uFEFF/, "").replace(/\r\n?/g, "\n");
 }
 
 /** A file's SHA-256, of its text evened out, so the same file checked out with other line endings matches. */
@@ -153,6 +153,8 @@ export function sourceCard(id, cards = SOURCES) {
 /**
  * The card's credit line with its `{table}` and `{period}` filled from the import's table id and reference
  * period. Throws when the line asks for one the import didn't give, or the card owes no credit line.
+ * @param {import("../../lib/engines/research-kit/v2026/types").SourceCard} card
+ * @param {{ tableId?: string, referencePeriod?: string }} [inputs]
  */
 export function creditLine(card, { tableId, referencePeriod } = {}) {
   if (card.creditLine === null) throw new Error(`${card.id}: the card has no credit line, so nothing from it may be shipped`);

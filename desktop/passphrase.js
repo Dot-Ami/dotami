@@ -1,7 +1,10 @@
 // The passphrase window's behaviour. Runs in a sandboxed page with no Node and no network; it
 // talks to the app only through `window.dotamiPassphrase` (desktop/passphrase-preload.cjs).
 (() => {
-  const bridge = window.dotamiPassphrase;
+  // The bridge's shape is passphrase-preload.cjs's; `$` finds this page's own elements by the ids its HTML has.
+  /** @type {{ mode: "backup" | "restore", message: string, submit: (passphrase: string) => void, cancel: () => void }} */
+  const bridge = /** @type {any} */ (window).dotamiPassphrase;
+  /** @type {(id: string) => any} */
   const $ = (id) => document.getElementById(id);
   const backup = bridge.mode === "backup";
 

@@ -1,3 +1,81 @@
+// `npm run lint` runs ESLint 8 over the whole repository (`eslint . --ext …`), and ESLint 8 reads this
+// file (it allows comments in .eslintrc.json). Before, lint was `next lint`, which read only app/,
+// components/ and lib/, so the desktop app, the scripts and the tests were never linted.
+//
+// Why not a flat config (eslint.config.mjs): with the ESLint 8 and eslint-config-next 15 installed
+// here, a flat config needs FlatCompat from @eslint/eslintrc, a package package.json doesn't declare
+// (it is only there because ESLint 8 needs it), and tests/privacy-inventory.spec.ts refuses a file in
+// the top folder that imports an undeclared package. The move to a flat config comes with ESLint 9
+// and eslint-config-next 16, which ship flat configs of their own.
 {
-  "extends": ["next/core-web-vitals"]
+  "root": true,
+  "extends": ["next/core-web-vitals"],
+  "ignorePatterns": [
+    // Build output and test reports (node_modules and dot-folders such as .next are skipped anyway).
+    "dist/",
+    "dist-desktop/",
+    "coverage/",
+    "playwright-report/",
+    "test-results/",
+    // Hand-written type declarations for the .mjs modules: Next's config has no parser for .d.mts,
+    // and tests/declarations-match.spec.ts compares each one with its module.
+    "*.d.mts",
+    "next-env.d.ts"
+  ],
+  "overrides": [
+    {
+      // Node code: the desktop app's main process, the scripts, the unit, browser and desktop tests,
+      // and the database seed. React's hook rules read any function named use… as a hook
+      // (desktop/sqlite.mjs's useSqliteFrom is a plain function), and Next's rules are about pages
+      // and documents (no-assign-module-variable fires on a test's local variable called `module`).
+      "files": ["desktop/**", "scripts/**", "tests/**", "e2e/**", "e2e-desktop/**", "prisma/**"],
+      "rules": {
+        "react-hooks/rules-of-hooks": "off",
+        "react-hooks/exhaustive-deps": "off",
+        "@next/next/google-font-display": "off",
+        "@next/next/google-font-preconnect": "off",
+        "@next/next/inline-script-id": "off",
+        "@next/next/next-script-for-ga": "off",
+        "@next/next/no-assign-module-variable": "off",
+        "@next/next/no-async-client-component": "off",
+        "@next/next/no-before-interactive-script-outside-document": "off",
+        "@next/next/no-css-tags": "off",
+        "@next/next/no-document-import-in-page": "off",
+        "@next/next/no-duplicate-head": "off",
+        "@next/next/no-head-element": "off",
+        "@next/next/no-head-import-in-document": "off",
+        "@next/next/no-html-link-for-pages": "off",
+        "@next/next/no-img-element": "off",
+        "@next/next/no-page-custom-font": "off",
+        "@next/next/no-script-component-in-head": "off",
+        "@next/next/no-styled-jsx-in-document": "off",
+        "@next/next/no-sync-scripts": "off",
+        "@next/next/no-title-in-document-head": "off",
+        "@next/next/no-typos": "off",
+        "@next/next/no-unwanted-polyfillio": "off"
+      }
+    },
+    {
+      // Plain JavaScript (.js, .mjs, .cjs): Next's rules are almost all about JSX, so ESLint's own
+      // recommended rules are added for it: a name used but never defined, unreachable code, a key
+      // written twice, an assignment where a comparison was meant.
+      "files": ["*.js", "*.mjs", "*.cjs"],
+      "extends": ["eslint:recommended"],
+      "env": { "node": true, "es2024": true }
+    },
+    {
+      // Next's config turns the browser's globals on everywhere. The desktop app's main process and
+      // the scripts run in Node, where `window` and `document` don't exist, so a stray one is an error
+      // here. (The tests keep them: some run with a browser-like document.)
+      "files": ["desktop/**", "scripts/**"],
+      "env": { "browser": false }
+    },
+    {
+      // Comes after the block above, so it wins for these files: the desktop app's small pages
+      // (passphrase, lost key, the encryption question) and its preload scripts run in a window,
+      // where `window` and `document` exist.
+      "files": ["desktop/*.js", "desktop/*-preload.cjs"],
+      "env": { "browser": true }
+    }
+  ]
 }
