@@ -21,9 +21,17 @@
 // (tests/desktop-update-notice.spec.ts).
 
 /**
+ * `dialog` is written out rather than taken from Electron's type: the code passes the window or, when there
+ * is none, undefined, which Electron accepts but its type, two separate overloads, doesn't say.
  * @param {{
  *   updater: import("node:events").EventEmitter & { quitAndInstall: () => void },
- *   dialog: Pick<Electron.Dialog, "showMessageBox">,
+ *   dialog: {
+ *     showMessageBox(options: Electron.MessageBoxOptions): Promise<Electron.MessageBoxReturnValue>;
+ *     showMessageBox(
+ *       window: Pick<Electron.BrowserWindow, "setProgressBar" | "isDestroyed"> | undefined,
+ *       options: Electron.MessageBoxOptions,
+ *     ): Promise<Electron.MessageBoxReturnValue>;
+ *   },
  *   window: () => (Pick<Electron.BrowserWindow, "setProgressBar" | "isDestroyed"> | null),
  *   log: (line: string) => void,
  *   whenShown?: (fn: () => void) => void,

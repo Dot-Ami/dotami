@@ -236,7 +236,9 @@ binary while `next dev` holds it), and delete `.next` before restarting the dev 
 a production build. `tests/engine-integrity.spec.ts` must stay green; new catalog work adds
 its test first. Never claim green without the command and its output.
 `npm run test:browser` (Playwright, `e2e/`) runs the production build on a throwaway database in
-Chromium; CI runs it as its own job. A new screen arrives with a browser test for its main path, and
+Chromium; CI runs it in two halves on two machines (`--shard=N/2`, files in their usual order), each
+on its own fresh database, so a file must not rely on what a file in the other half leaves
+(`npx playwright test --shard=2/2` alone shows it doesn't). A new screen arrives with a browser test for its main path, and
 joins the walk in `e2e/no-verdict.spec.ts`, which reads the visible text of every screen of the journey
 as it opens and fails on advice or ranking words ("you should", "we recommend", "DotAmi recommends", "top
 pick", "#1"…). Those words, and the only official quotes allowed to carry one (each with its reason, and

@@ -3,8 +3,9 @@ import { formatMoney, formatMonth } from "@/lib/format/money-and-months";
 import { monthsFromToday } from "@/lib/roads/words";
 
 /**
- * Every sentence the cockpit screen shows, in one file (the maintainer's decision of 2026-10-11: new
- * screens keep their words in one place). Amounts and months go through lib/format/money-and-months.ts.
+ * Every sentence the cockpit screen shows, in one file (the maintainer's decision: new screens keep their
+ * words in one place, and tests/cockpit-own-words.spec.ts fails on a sentence written in a component).
+ * Amounts and months go through lib/format/money-and-months.ts.
  * Road evaluation's own sentences (a step's reason, the answers) stay in lib/roads/words.ts and reach the
  * screen as road evaluation wrote them.
  *
@@ -47,9 +48,9 @@ export const cockpitWords = {
     savedBeforeRoads: (roadLabel: string) =>
       `Map drawn: ${roadLabel} · the general road, because this idea was saved before a road was picked for it`,
     /**
-     * The goal bar's one menu for the things it can open in the right-hand panel (the calm first view,
-     * 2026-10-17): Compare (where a fork's own pick moves steps), Others in this line of work, and later
-     * About this job. Their own words stay with them (compare.region, lib/landscape/words.ts).
+     * The goal bar's one menu for the things it can open in the right-hand panel (the calm first view):
+     * Compare (where a fork's own pick moves steps), Others in this line of work and About this job. Their own
+     * words stay with them (compare.region, lib/landscape/words.ts, lib/about-job/words.ts).
      */
     lookCloser: "Look closer",
   },
@@ -82,8 +83,8 @@ export const cockpitWords = {
       noneListed: "No skills are listed on this road yet",
       /**
        * The road's legal requirements (an ID number, an agreement, a certificate), counted apart from its skills
-       * (the screen review of 2026-10-23: road 1's three read as "3 listed" skills). Only the marks that have a
-       * count are named.
+       * (counted with them, road 1's three would read as "3 listed" skills). Only the marks that have a count are
+       * named.
        */
       requirements: (listed: number, have: number, learning: number, notYet: number, notMarked: number) =>
         `${count(listed, "legal requirement", "legal requirements")}, apart from skills: ${[
@@ -119,10 +120,10 @@ export const cockpitWords = {
       onlyIf: (n: number) => `${count(n, "official fee applies", "official fees apply")} only sometimes, not added up`,
       notPriced: (n: number) => `${n} not priced yet`,
       leftOut: (n: number) => `${n} left out: not on your path`,
-      // The official fees among the waiting lines are named with their sum (pre-release fix, 2026-10-23): none is
-      // added to the total above. Where both endings carry the same waiting fees (the apprentice road today), the
-      // total plus them is what Compare shows for an ending; where the endings carry different fees it adds both
-      // sides' fees, more than any one ending reaches (a review of 2026-10-24).
+      // The official fees among the waiting lines are named with their sum: none is added to the total above.
+      // Where both endings carry the same waiting fees (the apprentice road today), the total plus them is what
+      // Compare shows for an ending; where the endings carry different fees it adds both sides' fees, more than
+      // any one ending reaches.
       waiting: (n: number, fork: string, feeCents = 0, feeLines = 0) =>
         `${n} ${n === 1 ? "waits" : "wait"} on a pick at ${quoted(fork)}` +
         (feeLines > 0 ? `, ${count(feeLines, "official fee", "official fees")} among them (${formatMoney(feeCents)})` : ""),
@@ -186,7 +187,7 @@ export const cockpitWords = {
     doneWhenNone: "No “done when” lines are written for this step yet.",
     // A section the road drawn for the idea's place left empty says why (lib/cockpit/view.ts `emptySectionLine`).
     doneWhenNoneForPlace: "This step's “done when” lines rest on other provinces' pages, so none is shown for your place.",
-    /** The step's legal requirements (an ID number, an agreement), above its skills (2026-10-23). */
+    /** The step's legal requirements (an ID number, an agreement), above its skills. */
     whatItNeeds: "What it needs",
     skills: "Skills it needs",
     skillsNone: "No skills are listed for this step yet.",
@@ -219,7 +220,7 @@ export const cockpitWords = {
     costsWaiting: (fork: string) => `Not counted yet: it waits on a pick at ${quoted(fork)}.`,
     notSaved: "This idea is not saved yet, so nothing here can be kept.",
     sources: (n: number) => `Sources for this step · ${n}`,
-    /** Under a step's sources: other provinces' pages it didn't draw (task 28d; on every road since a-call-12, 2026-10-23). */
+    /** Under a step's sources: other provinces' pages it didn't draw (task 28d; on every road, a-call-12). */
     sourcesOtherProvinces: (n: number) =>
       n === 1 ? "1 source for other provinces isn't shown." : `${n} sources for other provinces aren't shown.`,
     officialLinks: "Official pages you open yourself",
@@ -243,7 +244,7 @@ export const cockpitWords = {
 
   lists: {
     close: "Close",
-    /** Since 2026-10-23 the list names legal requirements too, under a heading of their own, never as skills. */
+    /** The list names legal requirements too, under a heading of their own, never as skills. */
     skillsTitle: "Skills and legal requirements",
     /** Above the legal requirements the road's own steps list (an ID number, an agreement, a certificate). */
     requirementsTitle: "Legal requirements on this road's steps",
@@ -263,14 +264,14 @@ export const cockpitWords = {
     addOwnAs: (mark: string) => `Add as ${mark}`,
     /** On a skill the person typed, the button that takes it away (the road's own skills say "I don't know"). */
     removeOwn: "Remove",
-    /** The person's pick of job and the government's list for it (decision 5 of 2026-10-11). Names only. */
+    /** The person's pick of job and the government's list for it (future-cockpit.md decision 5). Names only. */
     job: {
       title: "Your pick of job",
       ask: "Pick the job closest to the work you'd do yourself",
       optional:
         "Optional. DotAmi then shows the government's skills list for that job, each item tagged “your pick of job”. Change it or take it back here any time.",
-      // The search's own words are the first step's (lib/front-door/words.ts jobStepWords), since 2026-10-22:
-      // the cockpit runs the same search as Pick a future, so there is one picker.
+      // The search's own words are the first step's (lib/front-door/words.ts jobStepWords): the cockpit runs the
+      // same search as Pick a future, so there is one picker.
       /** The job once picked. */
       picked: (label: string, code: string, day: string | null) => `${label} · ${code}${day ? ` · picked ${day}` : ""}`,
       change: "Change",
@@ -283,8 +284,8 @@ export const cockpitWords = {
       // can say about itself.
       aboutTheList: "This is the government's list for the job you picked. DotAmi doesn't say which skills a business needs.",
       /**
-       * The job's list folds under one button, below the road's own items (the screen review of 2026-10-23: its
-       * 44 rows swamped the road's 3).
+       * The job's list folds under one button, below the road's own items, so a long list doesn't swamp the road's
+       * own (Cabinetmakers' 44 rows against road 1's 3, in a screen review).
        */
       showList: (n: number) => `Show the ${n} on this job's list`,
       hideList: "Fold this job's list",
@@ -314,11 +315,11 @@ export const cockpitWords = {
     goal: { fold: "Fold goal and gauges", show: "Show goal and gauges" },
     panel: { fold: "Fold the panel", show: (what: string) => `Show the panel: ${what}` },
     legend: { fold: "Fold the legend", show: "Show the legend", title: "Legend" },
-    /** The what-if bar and "This visit" under the map (2026-10-13). */
+    /** The what-if bar and "This visit" under the map. */
     whatIf: { fold: "Fold the what-if bar", show: "Show the what-if bar" },
     /**
-     * The road's later columns, folded on a first visit into one column that names them (the calm first view,
-     * 2026-10-17): the folded column is the button that shows them.
+     * The road's later columns, folded on a first visit into one column that names them (the calm first view):
+     * the folded column is the button that shows them.
      */
     roadAhead: {
       fold: "Fold the road ahead",
@@ -341,7 +342,7 @@ export const cockpitWords = {
   /** The agree prompt's line under a start-up cost: which line on which step, and where the amount came from. */
   agreeNote: (line: string, step: string, from: string) => `${quoted(line)} on ${quoted(step)}, from ${from}`,
 
-  // --- Part 2 (2026-10-12): the left list, receipts, the what-if bar and Compare.
+  // --- The left list, receipts, the what-if bar and Compare.
 
   /** "What you've told DotAmi": every answer the person gave, dated, with what it unlocked. */
   told: {
@@ -399,7 +400,7 @@ export const cockpitWords = {
       unlocks: "your numbers in Start-up money",
     },
     skills: {
-      // Skills and legal requirements named apart, each only when one is waiting (2026-10-23).
+      // Skills and legal requirements named apart, each only when one is waiting.
       question: (skills: number, requirements: number) =>
         `Your marks on ${[
           ...(skills > 0 ? [count(skills, "skill", "skills")] : []),
@@ -431,7 +432,7 @@ export const cockpitWords = {
       no: "No",
     },
     // Asked on a road holding Incorporating while the idea has no third-year estimate (a future picked on
-    // Pick a future keeps none): docs/ui-spec/cockpit/incorporating-estimate.md, 2026-10-21.
+    // Pick a future keeps none): docs/ui-spec/cockpit/incorporating-estimate.md.
     salesYear3: {
       question: "Your third-year sales estimate",
       why: "Your own estimate. The Incorporating step compares it with the yearly sales at which you'd incorporate. DotAmi has no number of its own for this.",
@@ -461,7 +462,7 @@ export const cockpitWords = {
 
   /** Lines a step's own panel shows about the person's numbers it reads. */
   steps: {
-    /** Above the Incorporating step's two boxes (docs/ui-spec/cockpit/incorporating-estimate.md, 2026-10-21). */
+    /** Above the Incorporating step's two boxes (docs/ui-spec/cockpit/incorporating-estimate.md). */
     incorporatingBoth: "This step lights when your third-year sales estimate reaches your own “I'd incorporate at” number. Both are yours.",
   },
 
@@ -476,13 +477,13 @@ export const cockpitWords = {
     /**
      * The answer is in the journey held in the window's memory (lib/journey/held-journey.ts), never its storage:
      * a fresh load empties it, the desktop app's Go menu among them (it opens its pages with loadURL). A new window
-     * opens the idea as the data file holds it. "Your answer stays in this tab" until 2026-10-24.
+     * opens the idea as the data file holds it.
      */
     notSaved:
       "Not saved yet: the save didn't go through. Only this window holds your answer: a reload or the desktop app's Go menu loses it. Save now tries again.",
     /**
-     * This visit's newest receipt lines (2026-10-12, after review: named for what they hold; "Since last
-     * time" is kept for the return visit's list, which isn't built).
+     * This visit's newest receipt lines, named for what they hold; "Since last time" is kept for the return
+     * visit's list, which isn't built.
      */
     thisVisit: "This visit",
     moreThisVisit: (n: number) => `${n} more this visit`,
@@ -543,18 +544,18 @@ export const cockpitWords = {
   },
 
   /**
-   * The cockpit drawn read-only for an invented example person (docs/ui-spec/example/_index.md; since
-   * 2026-10-13). The banner never folds; every control that would save says `cantKeep`.
+   * The cockpit drawn read-only for an invented example person (docs/ui-spec/example/_index.md). The banner
+   * never folds; every control that would save says `cantKeep`.
    */
   example: {
     region: "Invented example",
     /**
-     * Since 2026-10-14 (the maintainer's option A) the person is invented and the numbers are real: the
-     * banner says both, and the day the sources were seen.
+     * The person is invented and the numbers are real (the maintainer's option A): the banner says both, and
+     * the day the sources were seen.
      */
     banner: (person: string, seenOn: string) =>
       `${person} is invented; the prices and statistics are real, from the sources listed, seen on ${seenOn}. Nothing here is saved.`,
-    /** For an example whose numbers have no sources (none today): the banner Mara had until 2026-10-14. */
+    /** For an example whose numbers have no sources (none today). */
     bannerInvented: "Invented person, invented numbers, not real data. Nothing here is saved.",
     whose: (person: string) => `${person}'s example future: an invented person on a written road.`,
     cantKeep: "This is an example. Start your own to keep anything.",
@@ -563,8 +564,8 @@ export const cockpitWords = {
     /** The example person's own words, in the rail where a person's own statements would be. */
     theirWords: (person: string) => `In ${person}'s words`,
     /**
-     * Said once in the banner and once over the story (2026-10-14, after review): the receipts and the
-     * buttons are the same words every person's own cockpit uses, so their "you" means the example person.
+     * Said once in the banner and once over the story: the receipts and the buttons are the same words every
+     * person's own cockpit uses, so their "you" means the example person.
      */
     youMeans: (person: string) => `Here, “you” and “your” mean ${person}, the invented person.`,
     /**
@@ -596,8 +597,8 @@ export const cockpitWords = {
       note: "Each line is worked out by the rules: the road without the answer, compared with the road with it.",
       // By the person's name, not a pronoun: an example is any entry of lib/examples/, not Mara alone.
       parts: {
-        // Her marks on skills and on legal requirements alike, so neither is called the other ("Mara's skill marks"
-        // until the review of #209's merge, 2026-10-26).
+        // Her marks on skills and on legal requirements alike, so neither is called the other (not "Mara's skill
+        // marks").
         marks: (person: string) => `${person}'s marks`,
         costs: (person: string) => `${person}'s start-up cost, from listed prices`,
         savings: (person: string) => `${person}'s savings`,
@@ -607,7 +608,7 @@ export const cockpitWords = {
       },
     },
     /**
-     * "Where these numbers come from" (2026-10-14; docs/ui-spec/example/_index.md): every number the
+     * "Where these numbers come from" (docs/ui-spec/example/_index.md): every number the
      * example shows, how it was worked out, each source with its link and the day it was seen. The tools
      * are information: twelve of the tools the trade's official descriptions name, picked for this example,
      * with what sellers charge; never ranked, never "buy this", never called the trade's whole list.
@@ -625,8 +626,8 @@ export const cockpitWords = {
       blank: (person: string) => `${person}'s savings and shop space deposit: not priced yet. Nothing real can supply them; the list at the end says why.`,
       /**
        * A statistic shown beside the example person's numbers for context, never as one of them (the
-       * maintainer's pick A, 2026-10-15): ISED's average revenue, which was Mara's what-if until then. Said
-       * as what it is: an average over existing businesses of every age, not a first-year figure.
+       * maintainer's pick A): ISED's average revenue, shown here rather than as Mara's what-if, which starts
+       * empty. Said as what it is: an average over existing businesses of every age, not a first-year figure.
        */
       contextHeading: (person: string) => `For context, not one of ${person}'s numbers`,
       context: (person: string, cents: number, what: string, period: string) =>
@@ -634,7 +635,7 @@ export const cockpitWords = {
       // No "you" here: the banner says "you" on this page means the example person, not the visitor.
       contextWhatIf: (person: string) =>
         `${person}'s example has no what-if: the what-if bar under the map starts empty, and a number tried there is for that look only, kept nowhere.`,
-      /** "Picked for this example": the sources name more tools than are priced (2026-10-14, after review). */
+      /** "Picked for this example": the sources name more tools than are priced. */
       toolsHeading: (n: number) => `${n} of the tools the trade's official descriptions name, picked for this example, with average prices from Canadian sellers`,
       toolsOrder: "In the order the Alberta curriculum teaches them, not by price.",
       officialHeading: "The trade's official descriptions",
@@ -667,13 +668,13 @@ export const cockpitWords = {
   },
 
   /**
-   * Your plan (2026-10-13, issue #41; docs/ui-spec/plan/_index.md): one idea's plan to read and print,
+   * Your plan (issue #41; docs/ui-spec/plan/_index.md): one idea's plan to read and print,
    * made from what DotAmi keeps. Where the cockpit already has the words (the goal bar's, the step
    * panel's, Compare's), the plan uses those; these are the plan's own.
    */
   plan: {
     title: "Your plan",
-    /** The contents list of the plan's steps, at the top of Each step, each a link to its step (2026-10-23). */
+    /** The contents list of the plan's steps, at the top of Each step, each a link to its step. */
     contents: "The steps in this plan",
     made: (day: string) => `Made on ${day} from what DotAmi keeps for this idea on this computer.`,
     /** The Export panel's way here, and what it says for an idea not saved yet. */
@@ -702,7 +703,7 @@ export const cockpitWords = {
     wordsNone: "No words of yours are kept for this idea.",
     roadChosen: (day: string | null) => (day ? `You picked this future on ${day}.` : "You picked this future."),
     roadDefault: "No future picked: this idea is drawn on the general road.",
-    // Where you are, as picked on Pick a future's step 2 (2026-10-22): shown back, read by no rule.
+    // Where you are, as picked on Pick a future's step 2: shown back, read by no rule.
     whereArea: (area: string, day: string | null) => `Your area: ${area}${day ? ` · picked ${day}` : ""}`,
     whereRegion: (region: string, day: string | null) => `Your economic region: ${region}${day ? ` · picked ${day}` : ""}`,
     ending: (fork: string, pick: string) => `${quoted(fork)}: ${pick}`,
@@ -737,7 +738,7 @@ export const cockpitWords = {
   },
 
   /**
-   * Export's markdown (lib/playbook/road-export.ts; pre-release fix of 2026-10-23): the road on screen, step by
+   * Export's markdown (lib/playbook/road-export.ts): the road on screen, step by
    * step, in the plan's own words (`plan` above) with these few headings of its own.
    */
   exportDoc: {
@@ -765,11 +766,11 @@ export const cockpitWords = {
 
   /**
    * The left rail's own fields: the venture block, its structure and prep-tool sections, the save line and
-   * its buttons, and the compass line at its foot (the rail as it stood since 2026-09-14, S2.5.4h; its
-   * sentences moved here from the component on 2026-10-17, S2.5.30e, so the words tests read them).
+   * its buttons, and the compass line at its foot (S2.5.4h; the sentences are here, not in the component, so
+   * the words tests read them, S2.5.30e).
    */
   rail: {
-    /** A Year 1 / Year 3 sales target: no number is not given, never a $0 target (2026-10-12, after review). */
+    /** A Year 1 / Year 3 sales target: no number is not given, never a $0 target. */
     salesTarget: (dollars: number) => (dollars > 0 ? formatMoney(dollars * 100) : "not given"),
     venture: "Venture",
     structure: "Structure",
@@ -783,11 +784,11 @@ export const cockpitWords = {
     prepToolsNote: "Orientation links for your accountant or lawyer — DotAmi does not generate legal documents.",
     openReference: "Open reference ↗",
     /** The structure ladder (lib/engines/structure/): where the idea's structure sits on it. */
-    // In plain words since the screen review of 2026-10-23 ("Holding company (Holdco) … Estate freeze" on the
-    // apprentice road), and drawn only on the tax and structure roads (lib/engines/roads/v2026
-    // `drawsTheStructureLadder`). Each rung is named, never ranked. Since the review of #209's merge (2026-10-26) a
-    // rung is its plain name only: the one-line definitions under them were tax and legal claims in DotAmi's own
-    // words with no citation behind them ("A corporation, owned and controlled in Canada." for a CCPC was wrong).
+    // In plain words, not the catalog's tax terms ("Holding company (Holdco) … Estate freeze" on the apprentice
+    // road), and drawn only on the tax and structure roads (lib/engines/roads/v2026 `drawsTheStructureLadder`).
+    // Each rung is named, never ranked. A rung is its plain name only: a one-line definition under it would be a
+    // tax or legal claim in DotAmi's own words with no citation behind it ("A corporation, owned and controlled
+    // in Canada." for a CCPC was wrong).
     ladder: {
       title: "Ways a business can be set up",
       note: "From a business in your own name to companies that own companies, in Canada. Something to take to your accountant, not tax or legal advice.",
@@ -810,7 +811,7 @@ export const cockpitWords = {
       saving: "Saving…",
       unsaved: "Unsaved changes…",
       savedAt: (when: string) => `Saved · ${when}`,
-      // Where the unsaved edits are, as receipts.notSaved says it ("kept in this tab" until 2026-10-24).
+      // Where the unsaved edits are, as receipts.notSaved says it.
       unavailable: "Save unavailable — only this window holds it; a reload or the desktop app's Go menu loses it. Save now retries.",
       automatic: "Edits save automatically.",
     },
@@ -855,9 +856,9 @@ export const cockpitWords = {
    * so a change here re-records the map, which tests/road-map.spec.ts never does on its own.
    */
   map: {
-    /** The chip's words (lib/scenarios/graph.ts `stageChipFor` decides which; issue #5, 2026-10-11). */
-    // Where the stage sits on the map, never the person's status (2026-10-23): "first stage" and "starting
-    // point" were "now" and "done" until then, said of every idea whatever the person had told DotAmi.
+    /** The chip's words (lib/scenarios/graph.ts `stageChipFor` decides which; issue #5). */
+    // Where the stage sits on the map, never the person's status: "first stage" and "starting point", not
+    // "now" and "done", which said it of every idea whatever the person had told DotAmi.
     chips: {
       "first-stage": "first stage",
       "your-pick": "your pick",
@@ -869,7 +870,7 @@ export const cockpitWords = {
     },
     /** The chip on a step no rule reads yet: it claims neither a colour nor a place on the person's path. */
     noRule: "no rule yet",
-    /** The left accent in words, so the colour is never the only way to tell (2026-10-11); the legend's words too. */
+    /** The left accent in words, so the colour is never the only way to tell; the legend's words too. */
     colours: { green: "applies as answered", yellow: "check first", gray: "doesn't apply as answered" },
     tier: (n: number) => `Tier ${n}`,
     /** A stage card's accessible name: the step, its chip, its colour in words, its badges, and that it opens. */
@@ -881,8 +882,8 @@ export const cockpitWords = {
       applies: "applies",
       /**
        * An item that has an end date (`UnlockItem.expires`), on its open row in node detail and on the intake's
-       * preview, before `inUseBefore`: the legend's own words (`legend.checkFirst`). "Time-boxed" until 2026-10-24,
-       * a time word of DotAmi's own written in the two components, where no words check read it.
+       * preview, before `inUseBefore`: the legend's own words (`legend.checkFirst`). A plain "has an end date", not
+       * "time-boxed", which is a time word of DotAmi's own.
        */
       endDate: "has an end date",
       /** The one dated fact the evaluator carries for an item: in use before the year it expires. */
@@ -896,7 +897,7 @@ export const cockpitWords = {
     legend: {
       arrows: "Hover a card: arrows show where it leads — solid next, dashed further on",
       chip: "Stage chip = where it sits on the map; doing, done or not for me only when you mark it",
-      // "time-boxed" until 2026-10-23: a time word of DotAmi's own. The items it means carry a date they end.
+      // "has an end date", not "time-boxed", a time word of DotAmi's own. The items it means carry a date they end.
       checkFirst: "check first — confirm, has an end date, or one fork away",
       leftBar: "left bar = what your answers support",
       federalOnly: "federal rules only for this province",

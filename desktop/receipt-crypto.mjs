@@ -136,7 +136,9 @@ const MAX_PLAIN_BYTES = 10 * 1024 * 1024;
 /**
  * Encrypts every plain receipt in `folder` with `key` (expense-records.md § 9, "Existing receipts are
  * encrypted once"). Run by the desktop app at every start, before its server starts, so it normally
- * finds nothing to do after the first.
+ * finds nothing to do after the first. That is why a file is read only as far as it must be: its first
+ * 14 bytes tell a receipt already encrypted, and only a plain one is read whole, so a start with many
+ * receipts kept reads a few bytes of each, not every receipt in full.
  *
  * Only files `isReceiptName` says DotAmi named are touched (backup.mjs isReceiptFileName, which follows
  * the receipt types the app accepts); everything else in the folder is left as it is.
@@ -183,18 +185,19 @@ export function encryptReceiptsIn(folder, key, { isReceiptName, onStep = () => {
     if (!id) continue;
     const file = path.join(folder, name);
     const temp = `${file}${IN_PROGRESS}`;
-    let plain;
+    let read;
     try {
-      plain = readSmallFile(file);
+      read = readUnlessEncrypted(file);
     } catch {
       result.failed += 1;
       continue;
     }
-    if (plain === null) continue; // bigger than any receipt DotAmi keeps: not one of its own
-    if (isEncryptedReceipt(plain)) {
+    if (read.status === "too-big") continue; // bigger than any receipt DotAmi keeps: not one of its own
+    if (read.status === "encrypted") {
       result.already += 1;
       continue;
     }
+    const plain = read.bytes;
     let tempIsOurs = false;
     try {
       const encrypted = encryptReceipt(plain, { key, id });
@@ -221,21 +224,45 @@ export function encryptReceiptsIn(folder, key, { isReceiptName, onStep = () => {
   return result;
 }
 
-/** A file's bytes through one open handle, or null when it is bigger than any receipt (plain or encrypted). */
-function readSmallFile(file) {
+/**
+ * A receipt file read through one open handle, only as far as the first-start pass needs (the same
+ * open-measure-read-the-start pattern as desktop/sqlite.mjs fileKind):
+ *   "too-big"    bigger than any receipt, plain or encrypted: nothing is read
+ *   "encrypted"  its first 14 bytes are "DOTAMI-RECEIPT": only those 14 are read
+ *   "plain"      anything else, read whole (the 14 already read are kept, so no byte is read twice)
+ * A file that ends sooner than its size said (it shrank while open) gives what was there, as before.
+ * @param {string} file
+ * @returns {{ status: "too-big" } | { status: "encrypted" } | { status: "plain", bytes: Buffer }}
+ */
+function readUnlessEncrypted(file) {
   const fd = openSync(file, "r");
   try {
     const size = fstatSync(fd).size;
-    if (size > MAX_PLAIN_BYTES + ENCRYPTED_OVERHEAD) return null;
+    if (size > MAX_PLAIN_BYTES + ENCRYPTED_OVERHEAD) return { status: "too-big" };
+    // A file shorter than the magic is read whole right here, and is plain, as before.
+    const head = Buffer.alloc(Math.min(size, MAGIC.length));
+    const headRead = readInto(fd, head, 0, head.length);
+    if (isEncryptedReceipt(head.subarray(0, headRead))) return { status: "encrypted" };
     const bytes = Buffer.alloc(size);
-    let read = 0;
-    while (read < size) {
-      const n = readSync(fd, bytes, read, size - read, read);
-      if (n === 0) break;
-      read += n;
-    }
-    return bytes.subarray(0, read);
+    head.copy(bytes, 0, 0, headRead);
+    // A short read of the start means the file already ended there.
+    const end = headRead < head.length ? headRead : headRead + readInto(fd, bytes, headRead, size);
+    return { status: "plain", bytes: bytes.subarray(0, end) };
   } finally {
     closeSync(fd);
   }
+}
+
+/**
+ * Reads the file's bytes `from` up to `to` into the same positions of `bytes`, stopping early at the
+ * file's end. Returns how many it read.
+ */
+function readInto(fd, bytes, from, to) {
+  let at = from;
+  while (at < to) {
+    const n = readSync(fd, bytes, at, to - at, at);
+    if (n === 0) break;
+    at += n;
+  }
+  return at - from;
 }

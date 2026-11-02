@@ -152,8 +152,10 @@ Anything that goes wrong says what happened in a dialog and quits — never a bl
 
 The app applies Prisma's own migration files (`prisma/migrations/*/migration.sql`) with the
 SQLite built into Electron's Node (`node:sqlite`; added in Node 22.5, no flag since 22.13, a
-"release candidate" from 25.7 — [Node docs](https://nodejs.org/api/sqlite.html), read 2026-10-05 —
-so still marked experimental in Electron 44's Node 24.21). It replaces shipping the Prisma CLI,
+"release candidate" from 24.15 and 25.7 — [Node docs](https://nodejs.org/api/sqlite.html), read 2026-10-05;
+[Node 24.22.1's](https://nodejs.org/docs/v24.22.1/api/sqlite.html), read 2026-10-31 — so still marked
+experimental, Node's stability 1.2, in the Node 24.22.1 inside Electron 44.10.1). It replaces shipping the
+Prisma CLI,
 which is about 146 MB of engines for five kinds of database and reports usage to
 `checkpoint.prisma.io` on every run.
 
@@ -301,7 +303,7 @@ check reveals: GitHub sees the computer's internet address, which version it run
 updater's install ID (below).
 
 **The install ID** (electron-updater's own, not DotAmi's; read 2026-10-14 in the locked 6.8.9, found
-in the review of #169). The first time the updater checks, it makes a random ID (a UUID from 4096
+in the review of #169; every line cited here is the same in 6.8.11, re-read 2026-10-30). The first time the updater checks, it makes a random ID (a UUID from 4096
 random bytes) and keeps it in a file of its own, `.updaterId`, in the data folder (electron's
 `userData`, which `desktop/main.mjs` makes the data folder): `getOrCreateStagingUserId`,
 `node_modules/electron-updater/out/AppUpdater.js:501-526`. It sends that same ID with every request
@@ -365,9 +367,10 @@ inside the page would need a bridge from the app into its pages, which they don'
 
 ### Updating on Windows: what runs when
 
-Read 2026-10-08 in the versions this checkout locks (electron-updater 6.8.9, electron-builder's
-`app-builder-lib` 26.15.3), for the one-click installer DotAmi builds (`desktop/package.mjs`:
-`oneClick: true`, per user):
+Read 2026-10-08 in electron-updater 6.8.9 and electron-builder's `app-builder-lib` 26.15.3, and
+re-read 2026-10-30 in 6.8.11 and 26.18.0, the versions this checkout locks now (the line numbers
+below are theirs; only `NsisTarget.js`'s moved), for the one-click installer DotAmi builds
+(`desktop/package.mjs`: `oneClick: true`, per user):
 
 1. **The click.** *Restart and update* calls `autoUpdater.quitAndInstall()` with no arguments
    (`desktop/update-notice.mjs:99`). That means not silent, and "run the app afterwards" taken from
@@ -381,14 +384,15 @@ Read 2026-10-08 in the versions this checkout locks (electron-updater 6.8.9, ele
    (`node_modules/app-builder-lib/templates/nsis/installSection.nsh:33`) looks for any process
    started from the install folder; after an update it waits 0.3 s, then 1 s more if one is still
    there, then ends it — with PowerShell's `Stop-Process`, which ends a process outright (no chance
-   to tidy up), or, without PowerShell, `taskkill`, which asks first and forces after another
+   to tidy up; since 26.16.0 PowerShell starts with `-NoProfile -NonInteractive`, so the person's own
+   PowerShell profile doesn't run), or, without PowerShell, `taskkill`, which asks first and forces after another
    second (`include/allowOnlyOneInstallerInstance.nsh:105-160`, `:81-103`). The old version's
    uninstaller, which the installer runs and waits for next, does the same check at its own start
    (`uninstaller.nsh:2`, run from `include/installUtil.nsh:224`).
 4. **Files, shortcuts, then the app.** It installs the new files and shortcuts, then — last —
    starts DotAmi once, through its Start-menu shortcut, with `--updated`
    (`installSection.nsh:66-75`, `:91-97`; `common.nsh:123-131`; `RUN_AFTER_FINISH` is on because
-   DotAmi doesn't set `runAfterFinish: false`, `out/targets/nsis/NsisTarget.js:408`), and exits. It
+   DotAmi doesn't set `runAfterFinish: false`, `out/targets/nsis/NsisTarget.js:518`), and exits. It
    doesn't wait for the app or touch it afterwards.
 
 **Does that explain the start of 2026-10-08,** killed right after its safety copy? Not by itself.
@@ -503,3 +507,31 @@ to the data.
   mid-save; a server that never answers; the update dialogs in the real app (they're tested with a
   fake updater, not against a release).
 - An app icon (the default Electron icon is used); Mac and Linux builds.
+
+## Checking where an installer came from (build provenance)
+
+Releases built since the release workflow gained this step carry build provenance (0.2.0 to 0.4.1 have
+none): `.github/workflows/release.yml` has GitHub's own action, `actions/attest-build-provenance`, sign a
+statement that names the repository, the workflow file and the commit that built the installer, and the
+installer's SHA-256. GitHub keeps the statement with the repository, and the draft release carries the same
+statement as `DotAmi-Setup-<version>.exe.sigstore.json`. To check a downloaded installer with the GitHub
+CLI:
+
+```bash
+gh attestation verify DotAmi-Setup-x.y.z.exe --repo Dot-Ami/dotami
+```
+
+It passes only when a statement made in this repository names the file's SHA-256, and it prints the
+workflow and commit. Add `--bundle DotAmi-Setup-x.y.z.exe.sigstore.json` to check against the release's
+copy of the statement instead of GitHub's.
+
+What it doesn't do:
+
+- **It isn't code signing.** The installer is still unsigned, so Windows SmartScreen still shows "Windows
+  protected your PC" (code signing is parked: [7d] in [docs/task-list.md](../task-list.md)).
+- **It proves which workflow and commit built the file, not who published it.** Publishing the draft is
+  still the maintainer's click, and *What protects an update* (above) still applies. Nor does it say
+  anything about what a package the build installed did during the build.
+- An installed app doesn't check it: an update is still checked against the SHA-512 in `latest.yml`.
+- The statement is also written to Sigstore's public log, with the repository, workflow and commit, all
+  of which are public already.

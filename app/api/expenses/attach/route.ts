@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
-import { readBody, refuseUnlessFromAppPage, storeErrorResponse, throttle } from "@/lib/expenses/http";
+import { pageOnly, readBody, throttle } from "@/lib/api/route";
+import { storeErrorResponse } from "@/lib/expenses/http";
 import { attachExpenses } from "@/lib/expenses/store";
 import { prisma } from "@/lib/prisma";
 
@@ -22,11 +23,11 @@ const ATTACH_ONLY_MESSAGE = "Only DotAmi's own window can move expense records b
  * included, so a body that forgot it never detaches anything.
  */
 export async function POST(request: Request) {
-  const limited = throttle(request, "attach", RATE_LIMIT);
+  const limited = throttle("expenses-attach", request, RATE_LIMIT);
   if (limited) return limited;
 
   // Checked before the body is read: a request that isn't from the app's page gets nothing.
-  const notFromApp = refuseUnlessFromAppPage(request, ATTACH_ONLY_MESSAGE);
+  const notFromApp = pageOnly(request, ATTACH_ONLY_MESSAGE);
   if (notFromApp) return notFromApp;
 
   const read = await readBody(request, MAX_BODY_BYTES);

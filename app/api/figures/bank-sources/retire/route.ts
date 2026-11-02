@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
-import { BANK_SOURCES_PAGE_ONLY, bankSourcesFailure, readBody, refuseUnlessFromAppPage, throttle } from "@/lib/figures/http";
+import { readBody, throttle } from "@/lib/api/route";
+import { BANK_SOURCES_PAGE_ONLY, bankSourcesFailure, refuseUnlessFromAppPage } from "@/lib/figures/http";
 import { readBankSources, retireAccount, takeBackEveryAccount } from "@/lib/figures/source-accounts";
 import { prisma } from "@/lib/prisma";
 
@@ -19,7 +20,7 @@ const MAX_BODY_BYTES = 4 * 1024;
  * person's click in Settings. Answers the list as it now stands, like GET /api/figures/bank-sources.
  */
 export async function POST(request: Request) {
-  const limited = throttle(request, "bank-sources-retire", RATE_LIMIT);
+  const limited = throttle("figures-bank-sources-retire", request, RATE_LIMIT);
   if (limited) return limited;
   const notFromApp = refuseUnlessFromAppPage(request, BANK_SOURCES_PAGE_ONLY);
   if (notFromApp) return notFromApp;

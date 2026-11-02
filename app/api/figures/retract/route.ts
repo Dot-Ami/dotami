@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
-import { parseIdsBody, readBody, refuseUnlessFromAppPage, storeErrorResponse, throttle } from "@/lib/figures/http";
+import { readBody, throttle } from "@/lib/api/route";
+import { parseIdsBody, refuseUnlessFromAppPage, storeErrorResponse } from "@/lib/figures/http";
 import { retractFigures } from "@/lib/figures/store";
 import { prisma } from "@/lib/prisma";
 
@@ -16,7 +17,7 @@ const MAX_BODY_BYTES = 64 * 1024;
  * DotAmi's own page (see `refuseUnlessFromAppPage`).
  */
 export async function POST(request: Request) {
-  const limited = throttle(request, "retract", RATE_LIMIT);
+  const limited = throttle("figures-retract", request, RATE_LIMIT);
   if (limited) return limited;
 
   const notFromApp = refuseUnlessFromAppPage(request);

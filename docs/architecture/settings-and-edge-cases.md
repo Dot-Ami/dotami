@@ -1,6 +1,14 @@
 # Settings and edge cases — every story, before it's built
 
-Status: plan, 2026-10-03. Nothing here is built. Companion to [use-cases.md](use-cases.md) (who
+Status (2026-10-31): a plan of 2026-10-03, partly built.
+
+- Part 1: two settings can be changed on the settings page, Encrypt the data file and Figure reminders
+  (the two marked `live` in `lib/settings/catalog.ts`). The rest are shown with their default and the
+  story that brings them.
+- Part 2: where an edge case has a note, the note says whether it is built and tested. A case with no
+  note has no status recorded here; its story's state is on its line in [../task-list.md](../task-list.md).
+
+Companion to [use-cases.md](use-cases.md) (who
 DotAmi is for and the build order). The codes in brackets match the stories in
 [../task-list.md](../task-list.md).
 

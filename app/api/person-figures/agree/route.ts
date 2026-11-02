@@ -1,8 +1,7 @@
 import { NextResponse } from "next/server";
 
-import { checkRateLimit, clientKeyFromRequest, rateLimitResponse } from "@/lib/api/rate-limit";
-import { refuseUnlessFromAppPage } from "@/lib/figures/http";
-import { futureFailure, readBody } from "@/lib/futures/http";
+import { pageOnly, readBody, throttle } from "@/lib/api/route";
+import { futureFailure } from "@/lib/futures/http";
 import { agreeToPersonFigures } from "@/lib/futures/person-figures";
 import { isRecord } from "@/lib/futures/types";
 import { prisma } from "@/lib/prisma";
@@ -20,15 +19,15 @@ const AGREE_ONLY = "Only the agree prompt in DotAmi's window can agree to a numb
  *
  * THE PERSON'S CLICK. The only way a proposed number about the person becomes one they agreed to, and
  * it answers only DotAmi's own page (`Sec-Fetch-Site: same-origin`), like /api/figures/agree; see
- * `refuseUnlessFromAppPage` for what that does and doesn't stop. Agreeing takes back the one agreed
+ * `pageOnly` (lib/api/route.ts) for what that does and doesn't stop. Agreeing takes back the one agreed
  * before it, which stays in the history (lib/futures/person-figures.ts).
  */
 export async function POST(request: Request) {
   // Checked before anything else is read: a request that isn't from the app's page gets nothing.
-  const notFromApp = refuseUnlessFromAppPage(request, AGREE_ONLY);
+  const notFromApp = pageOnly(request, AGREE_ONLY);
   if (notFromApp) return notFromApp;
-  const limited = checkRateLimit(`person-figures-agree:${clientKeyFromRequest(request)}`, RATE_LIMIT);
-  if (!limited.allowed) return rateLimitResponse(limited);
+  const limited = throttle("person-figures-agree", request, RATE_LIMIT);
+  if (limited) return limited;
 
   const read = await readBody(request, MAX_BODY_BYTES);
   if ("refusal" in read) return read.refusal;

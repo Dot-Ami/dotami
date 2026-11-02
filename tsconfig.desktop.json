@@ -1,0 +1,21 @@
+// The second pass of `npm run typecheck`: the plain JavaScript of the desktop app (desktop/) and of the
+// scripts (scripts/), which the first pass (tsconfig.json, allowJs off) never reads. It checks them
+// against their JSDoc types and the hand-written .d.mts files the modules import one another through
+// (tests/declarations-match.spec.ts keeps those in step with the modules' exports).
+//
+// Looser than tsconfig.json for now, on purpose, to be tightened to strict later:
+//   - noImplicitAny off: most parameters here have no JSDoc type yet;
+//   - useUnknownInCatchVariables off: a caught error is read as `any`, as JavaScript reads it, not `unknown`.
+// Everything else in strict mode (null checks included) applies.
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "allowJs": true,
+    "checkJs": true,
+    "noImplicitAny": false,
+    "useUnknownInCatchVariables": false,
+    // scripts/eval-intent.mjs imports the app's .ts files by their own names (it runs under tsx).
+    "allowImportingTsExtensions": true
+  },
+  "include": ["desktop/**/*.mjs", "desktop/**/*.cjs", "desktop/**/*.js", "scripts/**/*.mjs"]
+}

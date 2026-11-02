@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server";
 
+import { pageOnly, readBody, throttle } from "@/lib/api/route";
 import { localToday } from "@/lib/figures/age";
 import { readFuture, setTargetMonth } from "@/lib/futures/future";
-import { futureFailure, guardWrite, readBody } from "@/lib/futures/http";
+import { COCKPIT_PAGE_ONLY, futureFailure } from "@/lib/futures/http";
 import { isRecord } from "@/lib/futures/types";
 import { prisma } from "@/lib/prisma";
 
@@ -18,7 +19,7 @@ const MAX_BODY_BYTES = 4 * 1024;
  * person's, in the desktop app). Answers the future as kept. Only from DotAmi's own window.
  */
 export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
-  const refused = guardWrite(request, "futures-date", RATE_LIMIT);
+  const refused = pageOnly(request, COCKPIT_PAGE_ONLY) ?? throttle("futures-date", request, RATE_LIMIT);
   if (refused) return refused;
   const { id } = await params;
 

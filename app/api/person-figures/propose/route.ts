@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
-import { futureFailure, guardRead, readBody } from "@/lib/futures/http";
+import { readBody, throttle } from "@/lib/api/route";
+import { futureFailure } from "@/lib/futures/http";
 import { proposeIncomeWanted } from "@/lib/futures/person-figures";
 import { isRecord } from "@/lib/futures/types";
 import { prisma } from "@/lib/prisma";
@@ -25,7 +26,7 @@ const FORBIDDEN_KEYS = ["status", "confirmedAt", "editedByPerson"] as const;
  */
 export async function POST(request: Request) {
   // The rate limit only, like the figures' propose route: a proposal changes nothing the person agreed to.
-  const limited = guardRead(request, "person-figures-propose", RATE_LIMIT);
+  const limited = throttle("person-figures-propose", request, RATE_LIMIT);
   if (limited) return limited;
 
   const read = await readBody(request, MAX_BODY_BYTES);

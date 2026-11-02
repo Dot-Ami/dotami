@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
-import { BANK_SOURCES_PAGE_ONLY, bankSourcesFailure, readBody, refuseUnlessFromAppPage, throttle } from "@/lib/figures/http";
+import { readBody, throttle } from "@/lib/api/route";
+import { BANK_SOURCES_PAGE_ONLY, bankSourcesFailure, refuseUnlessFromAppPage } from "@/lib/figures/http";
 import { allowAccount, readBankSources } from "@/lib/figures/source-accounts";
 import { prisma } from "@/lib/prisma";
 
@@ -21,7 +22,7 @@ const MAX_BODY_BYTES = 4 * 1024;
  * on that path cover it.
  */
 export async function GET(request: Request) {
-  const limited = throttle(request, "bank-sources", RATE_LIMIT);
+  const limited = throttle("figures-bank-sources", request, RATE_LIMIT);
   if (limited) return limited;
   const notFromApp = refuseUnlessFromAppPage(request, BANK_SOURCES_PAGE_ONLY);
   if (notFromApp) return notFromApp;
@@ -41,7 +42,7 @@ export async function GET(request: Request) {
  * `{ account, ...state }`: the account as listed, and the list as it now stands.
  */
 export async function POST(request: Request) {
-  const limited = throttle(request, "bank-sources", RATE_LIMIT);
+  const limited = throttle("figures-bank-sources", request, RATE_LIMIT);
   if (limited) return limited;
   const notFromApp = refuseUnlessFromAppPage(request, BANK_SOURCES_PAGE_ONLY);
   if (notFromApp) return notFromApp;

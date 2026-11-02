@@ -412,7 +412,7 @@ export function qualityMarkdown(q: QualityNumbers): string {
   const c = q.clutter;
   if (!c) {
     lines.push(
-      "No browser run's measurements in test-results/ here. They come from `npm run test:browser` (e2e/clutter-budget.spec.ts); in CI the Browser tests job prints this part in its own log.",
+      "No browser run's measurements in test-results/ here. They come from `npm run test:browser` (e2e/clutter-budget.spec.ts); in CI the half of the browser tests that runs that file (Browser tests 1/2 as of 2026-11-01) prints this part in its own log.",
       "",
     );
   } else {
