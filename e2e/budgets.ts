@@ -151,8 +151,8 @@ export const BASELINE: ClutterTable = {
  * so a screen added later can't be put in it. Its first row goes here instead, in the pull request that adds the
  * screen, and is then a record like the baseline:
  *
- * - it is what the gate measures for the new screen as it opens (Chromium on Ubuntu, CI's Browser tests job),
- *   with the pull request naming the run;
+ * - it is what the gate measures for the new screen as it opens (Chromium on Ubuntu, in the half of CI's browser
+ *   tests that runs e2e/clutter-budget.spec.ts), with the pull request naming the run;
  * - it is at or under the baseline row of the screen it is a part of (`ADDED_SCREEN_PART_OF`), so a part of a
  *   screen is never allowed more than the screen itself (the smallest text at or over it);
  * - once on main it never changes (`tests/clutter-budgets.spec.ts` compares it with main's), and the screen's

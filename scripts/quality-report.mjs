@@ -2,7 +2,8 @@
 //
 //   npm run quality:report                     every part: the idea harness, the job search against the corpus,
 //                                              the clutter from the last browser run, and source health
-//   npm run quality:report -- --clutter-only   only the clutter (CI's Browser tests job, after its run)
+//   npm run quality:report -- --clutter-only   only the clutter (in CI, the half of the browser tests that runs
+//                                              e2e/clutter-budget.spec.ts, after its run)
 //   npm run quality:report -- --live           every part, plus a live run of the quote checker
 //                                              (scripts/check-quotes.mjs) for the dead and changed pages
 //   npm run quality:line                       only the one Quality line the release pull request puts in the
