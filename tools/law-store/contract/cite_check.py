@@ -52,7 +52,6 @@ DEFAULT_CLAIMS: list[tuple[str, str, str]] = [
     ("ita", "9", "income from business = profit"),
     ("ita", "248", "definitions incl. SR&ED"),
     ("cbca", "146", "unanimous shareholder agreement"),
-    ("ita", "85.7", "PLANTED FAKE, taken out by the next commit"),
 ]
 
 # Deliberately false. These MUST NOT be found or the tool is not trustworthy.
