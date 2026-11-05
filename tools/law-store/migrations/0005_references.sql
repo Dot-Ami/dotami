@@ -3,8 +3,8 @@
 -- Applied by contract/new_store.py, after the files before it.
 --
 -- WHY: statute works like a Bible with a symbol pointing at every other place a thing is
--- mentioned. Measured in the stored Income Tax
--- Act: 5,030 "subsection N(n)" references, 1,848 "section N", 1,703 "paragraph N(n)(l)",
+-- mentioned. Measured in the stored Income Tax Act: 5,030 "subsection N(n)" references,
+-- 1,848 "section N", 1,703 "paragraph N(n)(l)",
 -- 542 "subject to", 434 "notwithstanding", 557 "as defined in". **Section 85 alone makes
 -- 55 outbound references.**
 --

@@ -11,15 +11,17 @@
 -- affected quotes visibly SUPERSEDED instead of quietly wrong. (The maintainer's call
 -- 2026-08-14: keep every version forever — audits look backwards.)
 --
--- Facts / provenance split: the content tables hold only what a document says. Where it came from, who fetched it and how confident they were
--- lives in `provenance`. Nothing about a row's origin is stored inline.
+-- Facts / provenance split: the content tables hold only what a document says. Where it
+-- came from, who fetched it and how confident they were lives in `provenance`. Nothing
+-- about a row's origin is stored inline.
 --
 -- NOT stored here, deliberately: tax rates, brackets, thresholds, CCA rates and filing
 -- deadlines. Those are fetched live at question time because a stored rate goes stale in
 -- silence and then answers with total confidence. There is no rates table on purpose.
 --
 -- ALSO not stored here: legal basis and licence per source. Those stay canonical in
--- registry.yaml. Duplicating them into SQL would create a second source of truth that rots independently.
+-- registry.yaml. Duplicating them into SQL would create a second source of truth that
+-- rots independently.
 
 -- ---------------------------------------------------------------------------
 -- document — one immutable snapshot of one source, as fetched at one moment.
@@ -78,8 +80,8 @@ CREATE INDEX idx_quote_document ON quote(document_id);
 -- ---------------------------------------------------------------------------
 -- source_check — freshness probe history, one row per check per source.
 --
--- History rather than last-known-state on purpose: "when did this source start failing?" is a real question,
--- and a single overwritten row cannot answer it.
+-- History rather than last-known-state on purpose: "when did this source start failing?"
+-- is a real question, and a single overwritten row cannot answer it.
 --
 -- UNREACHABLE is stored as its own status because a network failure is NOT evidence of
 -- freshness, and collapsing it into UNCHANGED would be the most dangerous bug available.

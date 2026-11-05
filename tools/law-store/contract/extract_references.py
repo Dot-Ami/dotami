@@ -4,8 +4,7 @@ Run: ``python tools/law-store/contract/extract_references.py ita``
      ``python ... --all`` | ``python ... ita --dry-run``
 
 Statute works like a Bible, where a mark points at every other place a thing is dealt
-with. Measured on the stored Income Tax Act: 5,030
-"subsection N(n)" references, 542 "subject to", 434 "notwithstanding", 557 "as defined in".
+with. Measured on the stored Income Tax Act: 5,030 "subsection N(n)" references, 542 "subject to", 434 "notwithstanding", 557 "as defined in".
 **Section 85 alone makes 55 outbound references.** A section read alone is therefore not
 just incomplete -- it can be exactly backwards.
 
