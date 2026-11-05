@@ -16,6 +16,13 @@ updates:
       actions:
         patterns: ["*"]
 
+  - package-ecosystem: pip
+    directory: /tools/law-store
+    schedule:
+      interval: weekly
+    commit-message:
+      prefix: "deps"
+
   - package-ecosystem: npm
     directory: /
     schedule:

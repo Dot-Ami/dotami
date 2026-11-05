@@ -1,0 +1,156 @@
+# Legal basis registry — NON-NEGOTIABLE.
+# Every source is registered here BEFORE it is ingested. No entry -> no ingestion.
+#
+# STRUCTURAL LAW ONLY. Rates, thresholds, brackets and deadlines are NEVER registered and
+# NEVER stored — they are fetched live at question time, because a stored rate goes stale
+# silently and then answers with total confidence.
+#
+# `currency_selector` is how the freshness checker finds the source's own "current to"
+# date on the page. That date — not our download date — is what a citation carries.
+
+# `urls` is the citable landing page (and where the currency line lives).
+# `text_url` is where the actual body of the law is, when they differ -- verified
+# 2026-08-14: the CBCA landing page is a 4 KB table of contents with no statutory text,
+# while FullText.html is 474 KB and carries the same currency line. Storing the landing
+# page as "the Act" would have been a quiet, total failure.
+
+sources:
+  ita:
+    xml_path: eng/acts/I-3.3.xml
+    key: ita
+    name: Income Tax Act (Canada)
+    citation: R.S.C., 1985, c. 1 (5th Supp.)
+    operator: Department of Justice Canada
+    jurisdiction: CA
+    data_type: federal statute (structural provisions only)
+    kind: structure
+    legal_basis: >-
+      Federal statutes are published by the Department of Justice under the Statutory
+      Instruments Act and are reproduced under the Reproduction of Federal Law Order,
+      which permits reproduction without permission provided reasonable care is taken to
+      ensure accuracy and it is not represented as the official version.
+    licence: Reproduction of Federal Law Order (SI/97-5)
+    official_version: false
+    urls:
+      - https://laws-lois.justice.gc.ca/eng/acts/i-3.3/
+    text_url: https://laws-lois.justice.gc.ca/eng/acts/i-3.3/FullText.html
+    currency_selector: "Act current to"
+    notes: >-
+      Verified 2026-08-12: s.85 page reported "Act current to 2026-06-17 and last amended
+      on 2026-04-01". Amendments land on a budget cycle — this source WILL move.
+
+  cbca:
+    xml_path: eng/acts/C-44.xml
+    key: cbca
+    name: Canada Business Corporations Act
+    citation: R.S.C., 1985, c. C-44
+    operator: Department of Justice Canada
+    jurisdiction: CA
+    data_type: federal statute (incorporation and corporate structure)
+    kind: structure
+    legal_basis: >-
+      Same basis as `ita` — Reproduction of Federal Law Order.
+    licence: Reproduction of Federal Law Order (SI/97-5)
+    official_version: false
+    urls:
+      - https://laws-lois.justice.gc.ca/eng/acts/c-44/
+    text_url: https://laws-lois.justice.gc.ca/eng/acts/c-44/FullText.html
+    currency_selector: "Act current to"
+
+  itr:
+    xml_path: eng/regulations/C.R.C.,_c._945.xml
+    key: itr
+    name: Income Tax Regulations
+    citation: C.R.C., c. 945
+    operator: Department of Justice Canada
+    jurisdiction: CA
+    data_type: federal regulation (structural provisions — CCA CLASS DEFINITIONS, Schedule II)
+    kind: structure
+    legal_basis: >-
+      Same basis as `ita` — Reproduction of Federal Law Order. Registered 2026-09-13 (tracker
+      S2.5.2g) because ITA s.20(1)(a) delegates every capital cost allowance CLASS to these
+      Regulations: without them, "computer equipment is Class 50" cannot be verified against
+      any law in this store, only against a CRA help page.
+    licence: Reproduction of Federal Law Order (SI/97-5)
+    official_version: false
+    urls:
+      - https://laws-lois.justice.gc.ca/eng/regulations/C.R.C.,_c._945/
+    text_url: https://laws-lois.justice.gc.ca/eng/regulations/C.R.C.,_c._945/FullText.html
+    currency_selector: "Regulations are current to"
+    notes: >-
+      SCOPE, stated because this file's header says rates are never stored: what this entry
+      is FOR is the STRUCTURAL half — Schedule II's class definitions (which property falls
+      in which class) and the structure of Part XI. The Regulations' text unavoidably
+      contains rate figures ("CLASS 8 (20 per cent)", s.1100). They are stored only as the
+      provision's own text with its lims dates, exactly like every other provision — an
+      answer must cite the provision and its currency date, never lift the number out as a
+      standalone fact. The "fetch live" rule for rates stands. Parser: Schedule items are
+      indexed under their own label namespace ("Sch. II Class 50") so they can never collide
+      with a body section number (ingest_xml.py, 2026-09-13). The Justice Canada XML parsed
+      2026-09-13: 499 body sections, 85 schedule items (all 66 Schedule II classes), currency
+      2026-03-31. SCOPE APPROVED by the maintainer 2026-09-15, with one addition that binds
+      every answer drawn from this store, not just this entry: never say something is legal
+      or not without a deep dive into whether it is possible, and where that can't settle
+      it, point to a human professional.
+
+  abca:
+    key: abca
+    name: Business Corporations Act (Alberta)
+    citation: R.S.A. 2000, c. B-9
+    operator: Alberta King's Printer
+    jurisdiction: CA-AB
+    data_type: provincial statute (incorporation and corporate structure)
+    kind: structure
+    legal_basis: >-
+      Alberta legislation is published by the King's Printer. Copyright is held by the
+      Crown in right of Alberta; unofficial copies may be reproduced for non-commercial
+      purposes. Registered because an Alberta incorporation is a live option and the
+      federal act alone does not answer it.
+    licence: Alberta King's Printer — Crown copyright, unofficial copy
+    official_version: false
+    urls:
+      - https://kings-printer.alberta.ca/1266.cfm?page=B09.cfm
+    text_url: https://kings-printer.alberta.ca/1266.cfm?display=html&isbncln=9780779760664&leg_type=Acts&page=B09.cfm
+    currency_selector: "Current as of"
+    notes: >-
+      VERIFIED 2026-08-14. The bare `?page=B09.cfm` URL returns an 833-character JavaScript
+      shell with no statutory text — it was registered from a search result and never
+      fetched, which is exactly why "no entry until a real fetch confirms it" is the rule.
+      Adding `display=html&isbncln=...&leg_type=Acts` serves the real consolidation:
+      456,791 chars, "Current as of December 07, 2023", 34 hits for "articles of
+      incorporation". NOTE the currency date is ~2.5 years older than the federal acts —
+      that is Alberta's actual consolidation date, not a fetch problem.
+      An official PDF also exists (documents/Acts/B09.pdf, 1.4 MB) if the HTML view breaks.
+
+  cra-folios:
+    key: cra-folios
+    name: CRA Income Tax Folios
+    operator: Canada Revenue Agency
+    jurisdiction: CA
+    data_type: administrative interpretation (CRA's stated position, NOT law)
+    kind: interpretation
+    legal_basis: >-
+      Published by CRA on canada.ca under the Open Government Licence - Canada.
+    licence: Open Government Licence - Canada
+    official_version: false
+    urls:
+      - https://www.canada.ca/en/revenue-agency/services/tax/technical-information/income-tax/income-tax-folios-index.html
+    currency_selector: "Date modified"
+    ingestible: false
+    notes: >-
+      NOT INGESTIBLE AS REGISTERED (verified 2026-08-14). This URL is an INDEX — a page of
+      links to individual folios — not a document. It returns ~7,400 chars of navigation,
+      carries no currency line, and is JavaScript-rendered. Storing it would file a table
+      of contents as though it were CRA's guidance.
+      To use folios, register each one separately (e.g. S1-F1-C1) with its own URL and its
+      own "Date modified" line. Left registered so the decision is visible rather than the
+      source silently disappearing.
+      CRITICAL when they are added: a folio is CRA's INTERPRETATION, not the statute, and
+      courts have overruled folios. Any answer resting on a folio must say so and must also
+      cite the provision.
+
+# Deliberately NOT registered (fetch live, never store):
+#   - tax rates, brackets, and the capital gains inclusion rate
+#   - CCA (depreciation) rates
+#   - contribution and threshold limits
+#   - filing deadlines and instalment dates

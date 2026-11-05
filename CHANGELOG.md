@@ -162,6 +162,16 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   put it back.
 
 ### Added
+- **The law store's builder tools are in this repository** (the maintainer's ruling of 2026-11-03 that DotAmi
+  relies on no other project). `tools/law-store/` holds the Python that builds and checks the statute store behind
+  "Show the words": the contract and its refusals, the parsers, the schema and the source registry, plus
+  `new_store.py`, which makes an empty store. It never runs on a person's computer and nothing in it ships. No built
+  store and no Act text is committed: whether law text may ship in a public release waits on a lawyer's answer. The
+  `Law store` workflow runs `selftest.py`, then `cite_check.py` against the Income Tax Act and the Canada Business
+  Corporations Act fetched into a throw-away store on the runner. `cite_check.py` now fails when a claim isn't
+  found: until now only a fake that came back real did, so a planted fake claim, or a store with nothing in it,
+  still exited 0. The app reaches the store through `LAW_STORE_PATH` as before and no screen changes
+  ([tools/law-store/README.md](tools/law-store/README.md), [law-store.md](docs/architecture/law-store.md)).
 - **Build provenance for the Windows installer** (the house-cleaning audit of 2026-10-31). None of the installer
   releases so far (0.2.0 to 0.4.1) carried a signature or anything saying where it was built. The release workflow
   now has GitHub's `actions/attest-build-provenance` sign a statement that this repository's `release.yml`, at the
