@@ -43,3 +43,7 @@ document, no unregistered source, no deletes). One such store exists privately a
 the maintainers verify catalog entries against; the citation fields on every entry
 (`verification.status`, `method`, `corpus` pointers) are the visible result. A public,
 reusable store is welcome as a separate project that implements the contract above.
+
+Since 2026-11-04 the tools that build and check that store are in this repo, in
+[`tools/law-store/`](../../tools/law-store/README.md). The built store is still not, and the app still
+reaches it only through `LAW_STORE_PATH`.
