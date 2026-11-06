@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { evaluateProfile, buildEvaluationProfile } from "@/lib/brain";
 import type { EvaluationProfile } from "@/lib/brain";
+import { writeOffCategoriesV2026 } from "@/lib/engines/writeoffs/v2026";
 import { defaultIntakeDraft } from "@/lib/journey/types";
 
 const TODAY = "2026-07-02";
@@ -111,6 +112,38 @@ describe("strategy rules engine — GPU/workstation golden scenario", () => {
         expect(unlock.state).not.toBe("green");
       }
     }
+  });
+
+  describe("a caution on a write-off (docs/engines/writeoffs.md, the maintainer's ruling of 2026-11-05)", () => {
+    // Every activity tag the catalog knows, so each write-off that can show for a sole proprietor does.
+    const everyWriteOff = evaluateProfile(
+      {
+        ...gpuWorkstationProfile,
+        activityTags: [...new Set(writeOffCategoriesV2026.flatMap((category) => [...category.activityTags]))],
+      },
+      { today: TODAY },
+    );
+    const card = (id: string) => everyWriteOff.unlocks.find((unlock) => unlock.id === id);
+
+    it.each(["writeoff-home-office", "writeoff-vehicle", "writeoff-capital-equipment"])(
+      "%s starts yellow and keeps its caution",
+      (id) => {
+        expect(card(id)?.risk?.level).toBe("caution");
+        expect(card(id)?.state).toBe("yellow");
+      },
+    );
+
+    it.each(["writeoff-meals", "writeoff-saas-tools"])("%s has no risk read and stays green", (id) => {
+      expect(card(id)?.risk).toBeUndefined();
+      expect(card(id)?.state).toBe("green");
+    });
+
+    it("stops at write-offs: a caution on any other card leaves its colour alone", () => {
+      const hobby = card("compliance-hobby-vs-business");
+      expect(hobby?.engine).toBe("compliance");
+      expect(hobby?.risk?.level).toBe("caution");
+      expect(hobby?.state).toBe("green");
+    });
   });
 
   it("never emits 'you qualify' language (compass, not GPS)", () => {
