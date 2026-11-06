@@ -129,7 +129,11 @@
  * second quote is What's new's line on the limit, under "The CRA's What's new for corporations:", in place of the policy
  * page's section 3.0 sentence; "Sources for this stage · 4" becomes "· 5"; the policy page's amber source lists the one
  * sentence; and the fifth source is What's new for corporations, "CRA · CA · Read by a person on 2026-10-25". The other 32
- * are ca18ae2's recording byte for byte. The only cards allowed to change are the
+ * are ca18ae2's recording byte for byte. Redrawn on 2026-11-05 for road 0's 11 panels only, when a caution began to turn
+ * a write-off yellow (tests/brain-evaluate.spec.ts, the maintainer's ruling of 2026-11-05): drawn from 016d9f3 with that
+ * change and compared with its recording, 11 of 34 differ, and only in 22 dots, Home office expenses' and Motor vehicle
+ * expenses' on each panel, from bg-sage to bg-amber. Putting the 22 back gives the recording byte for byte, and no word
+ * changes. The only cards allowed to change are the
  * ones that gained road 0's named start-up cost lines (docs/architecture/future-cockpit.md § 6, "The official
  * fees catalog and start-up cost lines as built"); with those seven lines taken out, they match too.
  */

@@ -427,6 +427,16 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   ([docs/engines/citations.md](docs/engines/citations.md), § Outside the list, item 3). Test:
   `tests/repeated-losses-read.spec.ts`.
 ### Fixed
+- **A write-off that needs care now starts amber, "check first", not green** (2026-11-05). Home office, vehicle and
+  capital equipment read "applies as answered" for anyone whose kind of work matched, even a person who had said
+  nothing about a home, a car or personal use. [`docs/engines/writeoffs.md`](docs/engines/writeoffs.md) has always made
+  these yellow, but the code lowered a card only on a `professional-required` risk read, so their `caution` left them
+  green. A maintainer's check found the two disagreeing, and the maintainer's ruling of 2026-11-05 was "Yellow, as the
+  doc says". `attachRisk` in `lib/brain/evaluate.ts` now lowers a write-off on a `caution` too. Write-offs only: the
+  business-or-hobby card also carries a `caution`, the doc doesn't speak to it, and it stays as it was. Meals and
+  software tools have no risk read and stay green. No card's words, sources or risk read changed, and no card appears
+  or disappears; only the colour and its label do. Capital equipment's caution still appears only when a capital
+  purchase is on the person's path.
 - **The desktop app's start-up questions close as soon as they're answered** (2026-10-31). The window that asks
   whether to lock the data file, and the one shown when the data file's key can't be opened, used to stay on the
   screen after a click, not redrawing, until DotAmi had made the key and prepared the data file; on a slow

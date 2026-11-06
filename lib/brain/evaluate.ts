@@ -649,6 +649,9 @@ const COMBO_MITIGATION =
  * Attaches the honest risk read to every surfaced lever (docs/brain/risk-calculator.md).
  * Risk informs — it never removes or down-ranks an option. A professional-required read
  * does downgrade green → yellow, because "needs a professional first" IS the yellow state.
+ * A caution does the same on a write-off, and only there (docs/engines/writeoffs.md, the
+ * maintainer's ruling of 2026-11-05): a claim that rests on the person's own measurements and
+ * records is "check first", not "applies as answered".
  *
  * Also evaluates `riskCatalogV2026.combinations` (audit H2): strategy stacks whose members
  * are all live in the same result raise the severity beyond any single member's own risk
@@ -687,9 +690,12 @@ function attachRisk(profile: EvaluationProfile, unlocks: UnlockItem[]): UnlockIt
         ? worstCombo.severityBump
         : worstEntry!.severity;
 
+    const needsCare =
+      severity === "professional-required" || (severity === "caution" && unlock.engine === "writeoffs");
+
     return {
       ...unlock,
-      state: severity === "professional-required" && unlock.state === "green" ? "yellow" : unlock.state,
+      state: needsCare && unlock.state === "green" ? "yellow" : unlock.state,
       risk: {
         level: severity,
         gaar: worstEntry?.gaarExposure ?? false,
