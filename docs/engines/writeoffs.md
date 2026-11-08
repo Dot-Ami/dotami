@@ -21,6 +21,11 @@ A write-off surfaces when its `conditions` predicate (see
   CCA with mixed personal/business use**, and every time-boxed incentive.
 - **Gray**: structure or activity rules it out.
 
+The evaluator does this through the risk read: a write-off whose read is `caution` or stronger starts
+yellow (`attachRisk` in `lib/brain/evaluate.ts`, since the maintainer's ruling of 2026-11-05; until then
+a caution left it green). A card with no risk read stays green, so a category that needs care needs a
+Risk entry (rule 5 below).
+
 `why` strings are templated from the matched predicate ("Shown because you selected
 Alberta and AI/R&D activity"), matching the signed-off intake card anatomy.
 
