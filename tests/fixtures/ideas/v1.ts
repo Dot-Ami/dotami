@@ -661,4 +661,36 @@ export const IDEAS_V1: readonly Idea[] = [
   I(365, P8, "MB", UNSAID, 9, "candles and soap", [MF], NONE, "I make candles and soap, receipts all over, in Brandon Manitoba", { named: ["MB"] }),
   I(366, P1, "NL", UNSAID, 5, "guitar lessons", [], NONE, "guitar lessons in Corner Brook, Newfoundland", { named: ["NL"] }),
   I(367, P7, "AB", UNSAID, 5, "photography", [], NONE, "Agent summary: the person wants to do more with their photography, based in Red Deer", { named: ["AB"] }),
+
+  // --- Changes a business reports that no idea named before (added 2026-11-10, task 47l). The CRA's page
+  // "Maintain your business" lists them:
+  // https://www.canada.ca/en/revenue-agency/services/tax/businesses/topics/business-registration/maintain-business.html
+  // Three ideas each for six of its changes: bankruptcy or receivership, an amalgamation, a change of fiscal
+  // year-end, resuming after a pause, the death of an owner or partner, and buying an existing business. No road
+  // is written for any of the six, so each expects "none-written-yet": that expectation is the author's, for the
+  // maintainer to check. `people` is the nearest of the eleven kinds; the corpus has no field for the situation yet.
+  // Bankruptcy or receivership
+  I(368, P9, "ON", B, 6, "restaurant", [], NONE, "my restaurant in Thunder Bay went bankrupt and a trustee has taken over. what do I still have to file myself, GST and payroll?", { named: ["ON"], ws: "business-owner", jobs: ["60030.00"], odd: ["city-no-province"] }),
+  I(369, P9, "SK", B, 9, "machine shop", [MF], NONE, "the bank appointed a receiver for our machine shop in Estevan last week. I'm still a director, what am I still responsible for", { named: ["SK"], ws: "business-owner", jobs: ["94106.00"], odd: ["city-no-province"] }),
+  I(370, P3, "NL", B, 7, "carpentry", [TR], NONE, "I'm a self-employed carpenter in Grand Falls-Windsor and I filed for personal bankruptcy in the spring. can I keep taking jobs and invoicing under my own name", { named: ["NL"], ws: "self-employed", jobs: ["72310.00"], odd: ["city-no-province"], y3: 60_000 }),
+  // Amalgamation
+  I(371, P5, "AB", B, 7, "plumbing and heating companies", [TR], NONE, "I own two corporations in Lethbridge, one does plumbing and one does heating and air conditioning. my accountant wants to amalgamate them on January 1. what changes with the CRA accounts", { named: ["AB"], ws: "business-owner", jobs: ["72012.00"], odd: ["city-no-province"], y3: 120_000 }),
+  I(372, P5, "MB", B, 0, "trucking companies", [], NONE, "we have a trucking company in Saskatchewan and another one in Manitoba and want to amalgamate them into one corporation based in Winnipeg. do we keep one of the business numbers or get a new one", { named: ["SK", "MB"], ws: "business-owner", jobs: ["00015.00"], odd: ["two-provinces"], y3: 180_000 }),
+  I(373, P5, "BC", B, 0, "holding and operating companies", [], NONE, "amalgamating my holdco and my opco in Kelowna 🤝 do the GST and payroll accounts carry over or do I start again??", { named: ["BC"], ws: "business-owner", jobs: ["00012.00"], odd: ["emoji", "city-no-province"], y3: 85_000 }),
+  // A change of fiscal year-end
+  I(374, P4, "NS", B, 2, "software company", [SW], NONE, "our software company in Halifax has a June 30 year-end and we want to switch to December 31. how do we change a corporation's fiscal year", { named: ["NS"], ws: "business-owner", y3: 300_000 }),
+  I(375, P4, "YT", B, 6, "ski shop", [EC], NONE, "my ski shop in Whitehorse is incorporated and the year-end is December 31, right in the middle of my busiest season. can I move it to the spring", { named: ["YT"], ws: "business-owner", jobs: ["60020.00"], y3: 40_000 }),
+  I(376, P4, "QC", B, 7, "snow removal company", [], NONE, "je veux changer la fin d'exercice de ma compagnie de déneigement à Saguenay, du 31 décembre au 30 juin. est-ce qu'il faut demander la permission", { named: ["QC"], ws: "business-owner", odd: ["french", "city-no-province"], y3: 60_000 }),
+  // Resuming after a pause
+  I(377, P9, "AB", B, 7, "mobile welding", [TR], NONE, "I parked my mobile welding business two years ago to take a camp job. I'm back in Hinton now and want to start it up again, do I reuse my old GST number or register fresh", { named: ["AB"], jobs: ["72106.01"], odd: ["city-no-province"] }),
+  I(378, P9, "PE", B, 6, "ice cream stand", [], NONE, "reopening my ice cream stand in Cavendish this summer after two summers off 🍦 my payroll account was closed, how do I get it going again", { named: ["PE"], odd: ["emoji", "city-no-province"] }),
+  I(379, P9, "NU", B, 4, "home daycare", [], NONE, "I closed my home daycare in Iqaluit for a year when my own baby came. now I'm opening again and my helper is coming back. what do I need to restart", { named: ["NU"], jobs: ["44100.01"] }),
+  // The death of an owner or partner
+  I(380, P9, "MB", UNSAID, 7, "auto repair shop", [TR], NONE, "My father died in March. He ran an auto repair shop in Brandon on his own, never incorporated, and I'm the executor. What do I have to do about the business and its tax accounts?", { named: ["MB"], odd: ["city-no-province"] }),
+  I(381, P3, "NT", B, 2, "land surveying", [], NONE, "my business partner passed away last month. the two of us ran a land surveying firm in Yellowknife as a partnership. I want to keep it going, what happens to the partnership now", { named: ["NT"], ws: "business-owner", jobs: ["21203.00"], odd: ["regulated-profession"], y3: 120_000 }),
+  I(382, P4, "BC", B, 6, "flower shop", [EC], NONE, "My wife and I each owned half of our flower shop corporation in Nelson. She died this spring. I'm the only director left and I don't know what has to be updated or who I have to tell.", { named: ["BC"], ws: "business-owner", jobs: ["60020.00"], odd: ["city-no-province"], y3: 85_000 }),
+  // Buying an existing business
+  I(383, P3, "SK", B, 6, "laundromat", [], NONE, "I run a laundromat in Regina as a sole proprietor and I'm buying a second one from an owner who is retiring. do I need a new business number for it or does it go under mine", { named: ["SK"], ws: "self-employed", y3: 180_000 }),
+  I(384, P1, "ON", B, 1, "accounting practice", [CON], NONE, "I'm a CPA at a firm in North Bay. A sole practitioner here is retiring and wants to sell me her practice, about 200 clients. What do I need to set up to take it over", { named: ["ON"], ws: "employee", jobs: ["11100.02"], odd: ["regulated-profession", "city-no-province"] }),
+  I(385, P1, "NB", B, 6, "convenience store", [EC], NONE, "on veut racheter le dépanneur du village à Caraquet, l'inventaire et les frigos sont inclus dans le prix. par où on commence", { named: ["NB"], jobs: ["60020.00"], odd: ["french", "city-no-province"], buys: true }),
 ];
