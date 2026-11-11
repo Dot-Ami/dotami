@@ -173,6 +173,11 @@ export interface ClutterRow {
   within: boolean;
   /** What breaks the rule, in words (e2e/clutter-rule.ts); none when within. */
   breaches: string[];
+  /**
+   * Words a person meets, in the first window and on the whole page (since 2026-11-11, the maintainer's w4 A: reported,
+   * no limit). Null in a file saved before the measurer counted them.
+   */
+  words: { firstWindow: number; wholePage: number } | null;
 }
 
 export interface ClutterNumbers {
@@ -220,7 +225,10 @@ export function clutterNumbers(folder: string, platform: NodeJS.Platform = proce
       const breaches = clutterBreaches(measured, budget);
       const within = !!budget && breaches.length === 0;
       const { regions, controls, textSizes, smallestTextPx } = measured;
-      rows.push({ screen, width: size.id, px: size.width, measured: { regions, controls, textSizes, smallestTextPx }, budget, within, breaches });
+      const w = measured as Partial<Record<"wordsFirstWindow" | "wordsWholePage", unknown>>;
+      const words =
+        typeof w.wordsFirstWindow === "number" && typeof w.wordsWholePage === "number" ? { firstWindow: w.wordsFirstWindow, wholePage: w.wordsWholePage } : null;
+      rows.push({ screen, width: size.id, px: size.width, measured: { regions, controls, textSizes, smallestTextPx }, budget, within, breaches, words });
     }
   }
   return { folder, rows, missing: SCREENS.filter((s) => !newest.has(s)) };
@@ -421,7 +429,7 @@ export function qualityMarkdown(q: QualityNumbers): string {
     if (c.missing.length > 0) lines.push(`No file for: ${c.missing.join(", ")}.`, "");
     const cell = (n: number, b: number | undefined) => (b === undefined ? `${n}` : `${n} / ${b}`);
     table(
-      ["Screen", "Width", "Regions", "Controls", "Text sizes", "Smallest text, px", "Within budget"],
+      ["Screen", "Width", "Regions", "Controls", "Text sizes", "Smallest text, px", "Within budget", "Words, first window", "Words, whole page"],
       c.rows.map((r) => [
         r.screen,
         `${r.px} px`,
@@ -430,10 +438,12 @@ export function qualityMarkdown(q: QualityNumbers): string {
         cell(r.measured.textSizes, r.budget?.textSizes),
         cell(r.measured.smallestTextPx, r.budget?.smallestTextPx),
         r.budget ? (r.within ? "yes" : "**no**") : "no budget",
+        r.words ? `${r.words.firstWindow}` : "not counted",
+        r.words ? `${r.words.wholePage}` : "not counted",
       ]),
     );
     lines.push(
-      "Each cell is measured / budget; the smallest text's budget is a floor. A screen size is within only when the clutter spec's own rule finds nothing (e2e/clutter-rule.ts), which also counts a drawn block with no region mark.",
+      "The two word columns have no budget: they are counted and reported, never held to a limit (the maintainer's w4 A of 2026-11-11). Each other cell is measured / budget; the smallest text's budget is a floor. A screen size is within only when the clutter spec's own rule finds nothing (e2e/clutter-rule.ts), which also counts a drawn block with no region mark.",
       "",
     );
     const broken = c.rows.filter((r) => r.breaches.length > 0);

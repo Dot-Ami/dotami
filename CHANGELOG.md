@@ -950,6 +950,12 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   with two planted controls).
 
 ### Changed
+- **The clutter test counts each screen's words, and the quality report shows them, with no limit** (story S2.5.52,
+  the maintainer's pick w4 A of 2026-11-11: "count and report, no limit"; "We can always delete this -or at least
+  block it- for once Dotami is in a good place where it's clean and organized."). `e2e/clutter-measure.ts` counts the
+  words a person meets in the first window and on the whole page as it opens; `e2e/clutter-budget.spec.ts` logs them
+  beside the four clutter numbers and checks the count first on a page whose answers are known (13 and 26);
+  `npm run quality:report`'s clutter table gains two columns, with no budget. Nothing fails on a word count.
 - **No screen says how a source was checked any more** (story S2.5.52, the maintainer's w2 of 2026-11-11: "there's
   really no need to have this line at all", and his answer the same day on the cards' counts, "Take them away
   too"). Gone from every screen: the line under each source ("Read by a person on …", "Read on … Who read it
