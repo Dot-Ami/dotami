@@ -84,6 +84,23 @@ describe("About this job in place on step 3: the same view as the cockpit's pane
     // No Change where none is handed in (the steps change the region with their own back link).
     expect(html).not.toContain(aboutJobWords.wages.changeName);
   });
+
+  // The maintainer's pick w3 C of 2026-11-11 (story S2.5.52): in place, each row is a closed fold showing only its
+  // heading; open (the panel, which the person opens themself), no row folds.
+  it("folds each of the four rows to its heading in place, and none in the panel", () => {
+    const view = aboutJobForAnswers({ job: BARBERS, province: "AB", area: null, region: null })!;
+    const folded = renderToStaticMarkup(createElement(AboutThisJobRows, { view, folded: true }));
+    const rows = [...folded.matchAll(/<details class="[^"]*" data-about-row="(\w+)"/g)].map((m) => m[1]);
+    expect(rows).toEqual(["rules", "wages", "counts", "links"]);
+    expect(folded).not.toMatch(/<details[^>]*\sopen/);
+    for (const heading of [aboutJobWords.rules.heading, aboutJobWords.wages.heading, aboutJobWords.counts.heading, aboutJobWords.links.heading]) {
+      // The heading is the fold's own button (its summary), still a level 3 heading.
+      expect(folded).toMatch(new RegExp(`<summary[^>]*><h3[^>]*>.*?${heading}</h3></summary>`));
+    }
+    const open = renderToStaticMarkup(createElement(AboutThisJobRows, { view }));
+    expect(open).not.toContain("<details");
+    expect(open).toContain(`<h3 class="font-semibold text-paper">${aboutJobWords.rules.heading}</h3>`);
+  });
 });
 
 describe("About this job's region Change in the cockpit", () => {

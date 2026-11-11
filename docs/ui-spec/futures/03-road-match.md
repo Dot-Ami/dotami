@@ -1,5 +1,7 @@
 # Pick a future: the road written for your job, or an honest "not written yet" (step 3 of 3)
 
+> **Since 2026-11-11, the rows fold to their headings** (story S2.5.52, the maintainer's pick w3 C: "It saves a tone of mental bandwidth and allows the user to take a breath before diving in."): case B still shows *About this job* by default (K6 A), under its lead sentence, but each of its four rows (*Employment requirements*, *Wages published for this job group*, *Business counts*, *Where to look yourself*) is a closed fold showing only its heading, which opens it in place (`AboutThisJobRows`' `folded`, set by `components/front-door/about-job-in-place.tsx`). The block's last two lines stay open. Below, where this file says the rows are open by default, read: shown, each folded to its heading. On a phone the requirements row, once opened, still folds its quoted lines after five. The cockpit's panel, which the person opens themself, keeps the rows open.
+
 Page: Pick a future (`/futures`), and the intake's last screen on the typed way · Component: the shared
 three-step component (planned), with today's cards (`components/front-door/pick-future-page.tsx`
 `FutureCardItem`, `lib/front-door/futures.ts`) and *About this job*'s rows

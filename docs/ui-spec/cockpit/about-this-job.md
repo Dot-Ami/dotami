@@ -1,5 +1,7 @@
 # About this job
 
+> **Since 2026-11-11, the rows fold to their headings in place** (story S2.5.52, the maintainer's pick w3 C): where step 3's no-road block draws these rows in place, each is a closed fold showing only its heading ([futures/03-road-match.md](../futures/03-road-match.md)). This panel, opened by the person's own click, keeps them open as before.
+
 Page: Cockpit (`/cockpit?venture=<id>`), in the right-hand panel; also shown in place on Pick a future's
 no-road block ([../futures/03-road-match.md](../futures/03-road-match.md)) · Component:
 `components/cockpit/about-this-job-panel.tsx` (built 2026-10-22, task 25h; words `lib/about-job/words.ts`; data
