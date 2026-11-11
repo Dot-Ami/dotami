@@ -17,7 +17,7 @@ import { waitForReact } from "../tests/helpers/react-ready";
 
 import { ABOUT_JOB, aboutJobPanel, readAboutJob } from "./about-job-read";
 import { lookCloser } from "./cockpit-calm";
-import { answerWhereInAlberta, pickTheJob, skipTheJob } from "./three-steps";
+import { answerWhereInAlberta, openHowThisWorks, pickTheJob, skipTheJob } from "./three-steps";
 
 const Q1 = /what do you want your work and life to look like/i;
 const Q2 = "Are you after a business of your own, a job or career, or both?";
@@ -70,8 +70,11 @@ test("step 1 searches the government's example titles, grouped and labelled, and
   await toPickAFuture(page);
   await expect(page.getByRole("heading", { name: jobStepWords.heading, level: 1 })).toBeVisible();
   await expect(page.getByText(jobStepWords.stepCount, { exact: true })).toBeVisible();
-  // Nothing typed: no list; the empty state's line, and the words typed aren't kept.
-  await expect(page.getByRole("status").filter({ hasText: jobStepWords.empty })).toBeVisible();
+  // Nothing typed: no list, and the status line says nothing yet. Since 2026-11-11 the notes (the empty state's
+  // line, and that the words typed aren't kept) wait in the step's fold, How this works (S2.5.52, w1 C).
+  await expect(page.getByText(jobStepWords.notKept, { exact: true })).toBeHidden();
+  await openHowThisWorks(page);
+  await expect(page.getByText(jobStepWords.empty, { exact: true })).toBeVisible();
   await expect(page.getByText(jobStepWords.notKept, { exact: true })).toBeVisible();
 
   const box = page.getByRole("searchbox", { name: jobStepWords.boxLabel });
@@ -232,7 +235,8 @@ test("in Alberta: the job, then the area, then the region (never worked out from
   await region.selectOption("dont-know");
   await expect(lookup).toHaveAttribute("target", "_blank");
   // Step 2's two lines about About this job, back word for word since About this job reads the region and draws
-  // its Change (task 28h).
+  // its Change (task 28h), in the step's fold since 2026-11-11 (w1 C).
+  await openHowThisWorks(page);
   await expect(page.getByText(whereStepWords.region.dontKnowNote, { exact: true })).toBeVisible();
   await expect(page.getByText(whereStepWords.kept, { exact: true })).toBeVisible();
   await region.selectOption("4860");
@@ -356,7 +360,8 @@ test("in place for a job with no road: the region picked on step 2 chooses the w
   // Back to the region, "I don't know": the rows follow the answer on screen, Alberta's own row, said so.
   await page.getByRole("button", { name: pickWords.backToRegion, exact: true }).click();
   await page.getByRole("combobox", { name: whereStepWords.region.label }).selectOption("dont-know");
-  // Step 2's line, back word for word now that it's true (task 28h).
+  // Step 2's line, back word for word now that it's true (task 28h), in the step's fold since 2026-11-11 (w1 C).
+  await openHowThisWorks(page);
   await expect(page.getByText(whereStepWords.region.dontKnowNote, { exact: true })).toBeVisible();
   await expect(page.getByText(whereStepWords.kept, { exact: true })).toBeVisible();
   await page.getByRole("button", { name: whereStepWords.region.next, exact: true }).click();
@@ -436,9 +441,11 @@ test("outside Alberta: step 2 asks nothing and says why; Skip lists every future
   await pickTheJob(page, CABINETMAKERS);
   await expect(page.getByRole("heading", { level: 1, name: whereStepWords.outside.heading("Ontario") })).toBeVisible();
   await expect(page.getByText(whereStepWords.outside.notAsked("Ontario"), { exact: true })).toBeVisible();
-  // About this job's wage row outside Alberta, said word for word (held until task 28h made it true).
-  await expect(page.getByText(whereStepWords.outside.wageRow("Ontario"), { exact: true })).toBeVisible();
+  // About this job's wage row outside Alberta, said word for word (held until task 28h made it true), in the step's
+  // fold since 2026-11-11 (w1 C). The pictures are taken first, with the fold closed, as the person first meets it.
   await shotsAtEveryWidth(page, "futures-outside");
+  await openHowThisWorks(page);
+  await expect(page.getByText(whereStepWords.outside.wageRow("Ontario"), { exact: true })).toBeVisible();
   await expect(page.getByRole("combobox")).toHaveCount(0);
   await expect(page.getByText(whereStepWords.kept, { exact: true })).toHaveCount(0);
   await page.getByRole("button", { name: whereStepWords.outside.next, exact: true }).click();

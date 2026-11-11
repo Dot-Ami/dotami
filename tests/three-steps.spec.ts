@@ -20,6 +20,7 @@ import { createDatabaseClient } from "@/lib/db/client";
 import { ensureVentureFromScenario } from "@/lib/db/ensure-venture-from-scenario";
 import { parseFirstSave } from "@/lib/db/parse-scenario-input";
 import { searchJobTitles } from "@/lib/engines/oasis/v2026/title-search";
+import { ALBERTA_REGIONS_PAGE, economicRegionsSourcePage } from "@/lib/engines/research-kit/v2026/economic-regions";
 import {
   citationsForPlace,
   generalRoadV2026,
@@ -464,8 +465,15 @@ describe("the steps as drawn", () => {
 
   it("2b: Statistics Canada's list is drawn only once “I don't know” is picked", () => {
     const at = (region: string | null) => draw("futures", { part: "region", job: CABINETMAKERS, area: "cma-825", region });
-    expect(at(null)).not.toContain("statcan.gc.ca");
-    expect(at("4830")).not.toContain("statcan.gc.ca");
-    expect(at("dont-know")).toContain("statcan.gc.ca");
+    // The list of towns by its own address (its CVD part, which the classification's page doesn't have): since
+    // 2026-11-11 the question's fold links Statistics Canada's page for the regions, also on statcan.gc.ca, under
+    // Learn more (w1 C).
+    const townsList = "CVD=1368932";
+    expect(ALBERTA_REGIONS_PAGE).toContain(townsList);
+    expect(economicRegionsSourcePage()).not.toContain(townsList);
+    expect(at(null)).not.toContain(townsList);
+    expect(at("4830")).not.toContain(townsList);
+    expect(at("dont-know")).toContain(townsList);
+    expect(at(null)).toContain(economicRegionsSourcePage().replace(/&/g, "&amp;"));
   });
 });

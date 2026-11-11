@@ -1,5 +1,7 @@
 # Screen 0 — "Before the venture — about you"
 
+> **Since 2026-11-11, one fold for the notes** (story S2.5.52, the maintainer's pick w1 C; the layout rule's fifth line, [README.md](../README.md)): The screen shows its heading, the question (*What should DotAmi know about you? How you work, what you won't do, what you're after.*), the statements box and **Continue →**. What is kept and how, *You can skip this. Nothing here gates the map.* and the preview's own line (*Compass language: …*) wait in one fold under Continue, **How this works**. Words in `lib/front-door/words.ts` `intakeNoteWords`, no longer written in the component.
+
 Page: Intake (`/intake`) · Component: `components/discovery/intake-page.tsx` (`AboutScreen`)
 + `components/shared/person-statements.tsx` (`PersonStatements`, `variant="full"`)
 Type: free-text composer + dated record list (wizard step, skippable)

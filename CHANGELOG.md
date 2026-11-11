@@ -950,6 +950,22 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   with two planted controls).
 
 ### Changed
+- **The question screens show the question first; every note around it waits in one fold, *How this works*** (story
+  S2.5.52, the maintainer's picks of 2026-11-11: w1 C, "it's got to be crazy simple and straightforward", the fold
+  named *How this works* and a *Learn more* inside it; w5 A, the layout rule's fifth line, *one line first*). On
+  *About you*, *Did we get this?*, *Ground it*, *What's closest to your work?*, *Where you are* (both parts, and the
+  screen outside Alberta) and each question of *Your destination*, the question, its box, its buttons and a line
+  saying why a button can't be pressed yet stay in view; how the screen works, what is kept, where its facts come
+  from and the preview's *Compass language* line wait in one closed fold under them, with *Learn more ↗* to the
+  official page behind the screen where there is one (the government's job titles, Statistics Canada's economic
+  regions, the CRA's page on when to register for GST/HST). No sentence was rewritten: each moved. Measured on the
+  laptop window, *What's closest to your work?* goes from 157 words to 73. A fold's own button is allowed by his
+  answer of the same day ("Allow +1 for a fold"): `FOLD_ALLOWANCE` in `e2e/budgets.ts` lists each screen and size
+  where it shows in the first window, each raised by one, and `tests/clutter-budgets.spec.ts` allows that once,
+  in this pull request (`components/shared/how-this-works.tsx`, `components/front-door/job-and-road-steps.tsx`,
+  `components/front-door/job-search.tsx`, `components/discovery/intake-page.tsx`,
+  `components/front-door/destination-page.tsx`, words in `lib/front-door/words.ts`; docs/ui-spec/README.md and
+  the eight design files of those screens).
 - **Every sentence on *Your expenses*, *Settings*, *Licences*, *Your futures* and *What DotAmi knows about you* now
   lives in a words file, and a test reads every folder of `components/` for text written anywhere else** (the
   maintainer's decision of 2026-10-11 that new screens keep their words in one file, widened to every screen by his

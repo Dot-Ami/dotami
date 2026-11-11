@@ -1,13 +1,14 @@
 # UI behavior specs
 
-Last updated: 2026-10-21 (how a new screen gets its clutter limit, task 29j); 2026-10-17 (the layout rule and the clutter limit, below; the same day, the cockpit's calm first view and its regions as built, S2.5.30c, and the type scale, S2.5.30d); 2026-06-10
+Last updated: 2026-11-11 (the layout rule's fifth line, one line first, and a fold's own button, S2.5.52); 2026-10-21 (how a new screen gets its clutter limit, task 29j); 2026-10-17 (the layout rule and the clutter limit, below; the same day, the cockpit's calm first view and its regions as built, S2.5.30c, and the type scale, S2.5.30d); 2026-06-10
 
 Per-page catalogs of **what each interactive control does and why** — purpose-first, backend wiring deferred until Phase 5.
 
 ## The layout rule (the maintainer, 2026-10-17)
 
 Asked for after *"there's a LOT on the screen"*: a calm first view, kept calm by a limit on how busy a
-screen may get. Every screen, and every feature added to one, follows these four lines.
+screen may get. Every screen, and every feature added to one, follows these five lines (the fifth since
+2026-11-11).
 
 1. **One primary thing per screen.** On the cockpit it is the road. Everything else on the screen is there
    to read or change the primary thing, and is drawn quieter than it.
@@ -24,6 +25,15 @@ screen may get. Every screen, and every feature added to one, follows these four
 4. **Everything folds, and is remembered.** Any region but the primary thing can be folded with a button
    that says what it does, and stays the way the person left it on their next visit (the cockpit's
    answers are in `lib/cockpit/folds.ts`; a new remembered answer is listed in `lib/privacy/inventory.ts`).
+5. **One line first** (the maintainer's pick w5 A of 2026-11-11, story S2.5.52, "showing less at once"). Anything
+   new arrives as one line, and its detail waits one click under it: a fold, or the right-hand panel. On a screen
+   that asks a question, every note around the question (how the screen works, what is kept, where its facts come
+   from, what DotAmi won't do) waits in one fold under it, **How this works**, with **Learn more** at its foot
+   opening the official page the screen's facts come from, where it has one (his pick w1 C and his answers of the
+   same day; `components/shared/how-this-works.tsx`, words in `lib/front-door/words.ts`). What is asked, its box,
+   its buttons, a hint on how to fill the box, and a line saying why a button can't be pressed yet stay in view.
+   A note fold is not a region and is not remembered. Screens built before 2026-11-11 are brought to this rule one
+   at a time, in the journey's order (his note on w6: "start from page 1 and work your way through in order").
 
 **Where the planned features land** (none adds a region):
 
@@ -67,7 +77,13 @@ kept beside them), and they can only go down: a unit test (`tests/clutter-budget
 limit is above its baseline or above what it is on main, or the smallest text below either, so a limit once
 lowered can't be raised back later (CI compares with main; locally, with where the branch left
 `origin/main`). A screen over its limit fails the browser
-suite. To add a region, take one away first; a new screen arrives with its own `data-region` marks and its
+suite. To add a region, take one away first. **A fold's own button** (the maintainer's answer of 2026-11-11,
+"Allow +1 for a fold"): a fold that takes words off a screen may add its own one button, so that screen's limit on
+controls goes up by exactly one at the sizes where the fold's button shows in the first window. Each such screen
+and size is listed in `FOLD_ALLOWANCE` in `e2e/budgets.ts`, dated, and its budget is raised by one in the same pull
+request; `tests/clutter-budgets.spec.ts` allows a budget above the baseline, a first row or main's by its allowance,
+and above main's only in that pull request, so once it is on main the raised budget can only go down again. A new
+screen arrives with its own `data-region` marks and its
 own row in `e2e/budgets.ts`, the written way (task 29j): listed in `ADDED_SCREENS` with the measured screen it
 is a part, a state or a sibling of (`ADDED_SCREEN_PART_OF`), its first row in `FIRST_MEASURED` is what CI counts,
 in the half of the browser tests that runs `e2e/clutter-budget.spec.ts` (*Browser tests 1/2* as of 2026-11-01),

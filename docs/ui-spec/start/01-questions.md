@@ -1,5 +1,7 @@
 # The four questions
 
+> **Since 2026-11-11, one fold for the notes** (story S2.5.52, the maintainer's pick w1 C; the layout rule's fifth line, [README.md](../README.md)): The question being asked shows its words and its answer controls. Its *Why we ask: …* and *What it unlocks: …* wait in one fold under the controls, **How this works**. An answered question shows its receipt as before. Below, where this file says the two lines are drawn under the question, read: in the fold.
+
 Page: Your destination (`/start`) · Component: `components/front-door/destination-page.tsx`
 Type: wizard step (one question at a time) + receipts
 

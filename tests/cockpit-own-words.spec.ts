@@ -53,7 +53,8 @@ const ALLOWED: readonly { file: string; text: string; since: string; why: string
 const NOT_MOVED_YET: { since: string; pieces: Readonly<Record<string, number>> } = {
   since: "2026-10-31",
   pieces: {
-    "components/discovery/intake-page.tsx": 68,
+    // 68 until 2026-11-11, when five of its notes moved to lib/front-door/words.ts with its folds (S2.5.52, w1 C).
+    "components/discovery/intake-page.tsx": 63,
     "components/discovery/landing-page.tsx": 3,
     "components/front-door/income-agree-prompt.tsx": 1,
     "components/node-detail-panel.tsx": 25,
