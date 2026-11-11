@@ -379,18 +379,23 @@ describe("on the idea corpus", () => {
     const m = measureJobSearch();
     // The receipt, printed so the pull request can quote it.
     console.log(`job-title-search corpus measure: ${JSON.stringify(m)}`);
-    expect(m.withJob).toBeGreaterThanOrEqual(220);
-    // Today's search (job names and codes, every word): the before.
-    expect(m.cockpitList).toBe(20);
-    expect(m.cockpitListNone).toBe(187);
+    // 220 until 2026-11-10; 233 since ideas 368 to 385 joined the corpus (task 47l), 13 of which name a job. Every
+    // number below moved that day because the corpus grew, not because a search changed: the counts on ideas 1 to
+    // 367 alone are the ones in the "until" half of each comment.
+    expect(m.withJob).toBeGreaterThanOrEqual(233);
+    // Today's search (job names and codes, every word): the before. 20 and 187 until 2026-11-10; of the 13 new
+    // ideas with a job it finds 1 and shows nothing for 11.
+    expect(m.cockpitList).toBe(21);
+    expect(m.cockpitListNone).toBe(198);
     // The floors, as the screen lists the jobs (each part's first JOB_SEARCH_GROUP_CAP, the closest group open
-    // whole): 150 and 172 before whole words first (main 694007d), 152 and 181 with it (a-call-11, 2026-10-23).
-    expect(m.firstGroup).toBeGreaterThanOrEqual(152);
-    expect(m.anyGroup).toBeGreaterThanOrEqual(181);
+    // whole): 150 and 172 before whole words first (main 694007d), 152 and 181 with it (a-call-11, 2026-10-23),
+    // 161 and 190 with the 13 new ideas (9 of them found by the person's own words, in the open group).
+    expect(m.firstGroup).toBeGreaterThanOrEqual(161);
+    expect(m.anyGroup).toBeGreaterThanOrEqual(190);
     expect(m.noResults).toBeLessThanOrEqual(4);
-    // Counted past the cap.
-    expect(m.firstGroupUncapped).toBeGreaterThanOrEqual(153);
-    expect(m.anyGroupUncapped).toBeGreaterThanOrEqual(184);
+    // Counted past the cap: 153 and 184 until 2026-11-10 (10 of the 13 new ideas are found past it).
+    expect(m.firstGroupUncapped).toBeGreaterThanOrEqual(163);
+    expect(m.anyGroupUncapped).toBeGreaterThanOrEqual(194);
   }, 60_000);
 
   it("still lists every idea it listed before whole words first (a-call-11: no idea that was listed drops out)", () => {

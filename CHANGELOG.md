@@ -436,6 +436,19 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   calls). The card's own description and Lens lines are unchanged, still his open question
   ([docs/engines/citations.md](docs/engines/citations.md), § Outside the list, item 3). Test:
   `tests/repeated-losses-read.spec.ts`.
+- **Tests: 18 more invented ideas, for six changes a business reports that no test idea named** (2026-11-10, tests
+  only; the maintainer's pick of 2026-11-09). The CRA's page
+  [Maintain your business](https://www.canada.ca/en/revenue-agency/services/tax/businesses/topics/business-registration/maintain-business.html)
+  lists the changes a business reports. Six of them had no test idea: bankruptcy or receivership, an amalgamation, a
+  change of fiscal year-end, resuming after a pause, the death of an owner or partner, and buying an existing business.
+  `tests/fixtures/ideas/v1.ts` now has three invented ideas for each (ideas 368 to 385, 385 in all), in all 13
+  provinces and territories between them, two in French and two with an emoji. Nothing a person sees changes. All 18
+  hold every promise of the idea harness. Five of them join a gap already listed, not a new one: with a word of the
+  kind of work misspelt, the job is found only by its own name (now 89 of the 233 test ideas with a job,
+  `tests/fixtures/ideas/accuracy-gaps.ts`). The job-search counts `tests/job-title-search.spec.ts` holds rise with the
+  larger set (233 ideas with a job, 161 found in the group shown open). What the 18 show: no road is written for any of
+  the six, so each idea expects none (the author's expectation, for the maintainer to check), and typed in, each is
+  drawn on the road for starting a business in its place (16 on the federal steps, 2 on Alberta's general road).
 ### Fixed
 - **A write-off that needs care now starts amber, "check first", not green** (2026-11-05). Home office, vehicle and
   capital equipment read "applies as answered" for anyone whose kind of work matched, even a person who had said
@@ -933,6 +946,18 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   `tests/reading-list-corrections.spec.ts` §§ 2–4 and 7, `tests/engine-integrity.spec.ts` (a stage's dollar
   figure must come from a page that stage cites), `tests/brain-incorporation.spec.ts`, `e2e/app.spec.ts` (Sole
   Prop activation's three sources: the new one in amber until 2026-10-27, each read by a person since).
+- **The browser tests read a wage line that ends "the same, as published"** (2026-11-11, tests only; found by pull
+  request #245). Since the fix of 2026-10-23, *About this job* ends a wage line "low and median the same, as
+  published" where two published levels are the same amount. The browser tests' reader of that panel was written
+  before the ending existed and took everything after "high" as the high wage, so a screen that was right read as
+  wrong: `wage row ER35: drawn highCents NaN`. Nothing showed it until the weekly idea sweep drew a musician in
+  Ontario (idea 156), whose low and median are the same; eight test ideas carry such a line, none of them among the
+  nine the sweep always runs. Now the ending is read as a note (`e2e/wage-line.ts`): the figures are the file's own,
+  the note must name exactly the levels drawn the same, and two equal figures with no note are named too. Nothing a
+  person sees changes. Tests: `tests/wage-line-read.spec.ts` (the old reading shown failing on the musician's line;
+  every figures line the screen draws from the shipped wage file read back as the file's figures, 10,558 lines, 177
+  with the note; planted wrong notes caught) and `e2e/about-this-job.spec.ts` (Ontario bakers in a real browser,
+  with two planted controls).
 
 ### Changed
 - **Every sentence on *Your expenses*, *Settings*, *Licences*, *Your futures* and *What DotAmi knows about you* now

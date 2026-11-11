@@ -50,11 +50,15 @@ export const REWORDING_GAPS: readonly RewordingGap[] = [
     // person's own words, where on main 694007d they found it only by its name (it sat past the first 50 of one
     // group: Electricians 55th of 101 for "electrician", now 4th); misspelt, they still find it only by its name, so
     // the rewording now changes what they are shown. The same gap as the rest, not a new one.
+    // 2026-11-10 (task 47l, ideas 368 to 385 added): 89 of the 233 ideas with a job. Five of the 13 new ideas with a
+    // job join the list: 368 ("restaurant"), 370 ("carpentry"), 382 ("flower shop"), 384 ("accounting practice") and
+    // 385 ("convenience store") find their job by the person's own words, and, misspelt, only by its name. The same
+    // gap, not a new one; the other 8 either keep their job when misspelt or already find it only by its name.
     why: "Step 1's search finds the job by the person's words only when every word is spelt as the government's titles spell it: with one word misspelt, these ideas find their job only by typing its own name.",
     ideas: [
       4, 10, 12, 13, 27, 31, 35, 39, 50, 51, 53, 54, 55, 56, 57, 58, 59, 60, 65, 70, 72, 78, 79, 84, 85, 92, 94, 98, 104, 110, 122, 129, 136, 149,
       156, 160, 161, 162, 164, 172, 176, 177, 178, 179, 181, 193, 198, 201, 213, 216, 220, 231, 233, 235, 253, 255, 256, 266, 273, 274, 275, 277,
-      278, 279, 280, 283, 284, 285, 287, 299, 300, 302, 308, 309, 311, 314, 316, 318, 332, 334, 336, 337, 338, 339,
+      278, 279, 280, 283, 284, 285, 287, 299, 300, 302, 308, 309, 311, 314, 316, 318, 332, 334, 336, 337, 338, 339, 368, 370, 382, 384, 385,
     ],
   },
   // The French place words gap (idea 32, "je suis adjointe administrative à Regina") is fixed: the maintainer's call
