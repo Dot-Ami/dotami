@@ -11,6 +11,9 @@
  *   `findVerdicts` catches shows in quote marks under its lead line, where its allowance lifts it; the same line
  *   out of the quote is caught (the control).
  * - In Ontario: the row for Ontario as a whole, said why, and no Tradesecrets.
+ * - Ontario bakers, whose low and median are the same: the figures line ends "low and median the same, as
+ *   published", the reader takes that ending as a note and not as part of the high figure (e2e/wage-line.ts), and
+ *   a note the figures don't bear out, or equal figures with no note, is caught (the controls).
  * - On every screen of it: no verdict, and no time in DotAmi's words (the quoted lines lifted only on the rules
  *   row and only as the lines the shipped file holds for the group); nothing leaves the computer.
  *
@@ -26,12 +29,14 @@ import path from "node:path";
 
 import { expect, test, type Locator, type Page, type Request, type TestInfo } from "@playwright/test";
 
+import { aboutJobWords } from "../lib/about-job/words";
 import { nocRequirements } from "../lib/engines/noc/v2021";
 import { generalRoadV2026, roadApprenticeToOwnShopAB } from "../lib/engines/roads/v2026";
 import { OFFICIAL_QUOTE_ALLOWANCES } from "../tests/helpers/verdict-words";
 
 import { readAboutJob, saveIdea } from "./about-job-read";
 import { lookCloser, lookCloserItems, pickJob } from "./cockpit-calm";
+import { sameNoteProblems } from "./wage-line";
 
 const REGION = "About this job";
 const ROWS = ["rules", "wages", "counts", "links"] as const;
@@ -237,4 +242,35 @@ test("in Ontario: the row for Ontario as a whole, why it is that row, and no Tra
     await lookCloser(page, REGION);
     await expect(panel(page)).toBeVisible();
   });
+});
+
+test("Ontario bakers: a wage line that ends with “the same, as published” is read whole, and a note its figures don't bear out is caught", async ({ page }) => {
+  await page.goto(await saveIdea(page, `Invented — about this job, bakers ${Date.now()}`, "ON", generalRoadV2026.id));
+  await pickJob(page, "Bakers", "63202.00");
+  await lookCloser(page, REGION, goalBar(page));
+  await expect(panel(page)).toBeVisible();
+
+  // The wage file gives Ontario's bakers the same low and median, so the figures line ends with the note.
+  const w = aboutJobWords.wages;
+  const note = w.sameAsPublished(`${w.levelNames.low} ${w.and} ${w.levelNames.median}`);
+  const block = row(page, "wages").locator("[data-wage-row]");
+  const figures = block.locator("p").filter({ hasText: ` · ${w.levelNames.median} ` });
+  await expect(figures).toHaveCount(1);
+  const drawn = (await figures.textContent()) ?? "";
+  expect(drawn.endsWith(` · ${note}`), drawn).toBe(true);
+  expect(sameNoteProblems(drawn)).toEqual([]);
+  // The reader takes the note as a note, so the row is the file's own, figure for figure. Until 2026-11-11 it read
+  // the note into the high figure, and the idea sweep failed on a musician in Ontario with a screen that was right.
+  expect(await findingsIn(page, "63202")).toEqual([]);
+
+  // The controls: the same line with a note its figures don't bear out, then with no note at all. Each is the
+  // only finding: the figures are still the file's.
+  const code = await block.getAttribute("data-wage-row");
+  const withoutNote = drawn.slice(0, -` · ${note}`.length);
+  const wrongNote = w.sameAsPublished(`${w.levelNames.median} ${w.and} ${w.levelNames.high}`);
+  const redraw = (text: string) => figures.evaluate((el, to) => void (el.textContent = to), text);
+  await redraw(`${withoutNote} · ${wrongNote}`);
+  expect(await findingsIn(page, "63202")).toEqual([`wage row ${code}: the line says “${wrongNote}”, where the figures drawn make it “${note}”`]);
+  await redraw(withoutNote);
+  expect(await findingsIn(page, "63202")).toEqual([`wage row ${code}: two of the figures drawn are the same, and the line doesn't say “${note}”`]);
 });
