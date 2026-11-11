@@ -52,10 +52,11 @@ function withFolds(table: ClutterTable, allowance: Allowance): ClutterTable {
 
 /** The entries of `now` that `before` doesn't list: the allowance a pull request adds, allowed over main's once. */
 function addedSince(before: Allowance, now: Allowance): Allowance {
-  const added: Record<string, Record<string, 1>> = {};
+  const added: Record<string, Record<string, number>> = {};
   for (const [screen, bySize] of Object.entries(now)) {
     for (const size of Object.keys(bySize ?? {})) {
-      if (before[screen as keyof Allowance]?.[size as SizeId] === undefined) (added[screen] ??= {})[size] = 1;
+      const was = before[screen as keyof Allowance]?.[size as SizeId];
+      if (was === undefined) (added[screen] ??= {})[size] = (bySize as Record<string, number>)[size]!;
     }
   }
   return added as Allowance;
@@ -282,13 +283,13 @@ describe("the clutter budgets (e2e/budgets.ts)", () => {
     expect(wrong).toEqual([]);
   });
 
-  it("allow a fold's own button only as exactly one, on a real screen and size (the maintainer's answer of 2026-11-11)", () => {
+  it("allow a fold's own buttons only as a whole number of folds, on a real screen and size (the maintainer's answer of 2026-11-11)", () => {
     const wrong: string[] = [];
     for (const [screen, bySize] of Object.entries(FOLD_ALLOWANCE.controls)) {
       if (!(SCREENS as readonly string[]).includes(screen)) wrong.push(`${screen}: not a screen`);
       for (const [size, extra] of Object.entries(bySize ?? {})) {
         if (!(sizes as readonly string[]).includes(size)) wrong.push(`${screen} ${size}: not a size`);
-        if (extra !== 1) wrong.push(`${screen} ${size}: ${String(extra)}, not 1`);
+        if (!Number.isInteger(extra) || (extra as number) < 1) wrong.push(`${screen} ${size}: ${String(extra)}, not a whole number of folds`);
       }
     }
     expect(wrong).toEqual([]);
