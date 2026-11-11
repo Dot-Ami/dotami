@@ -426,6 +426,19 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   calls). The card's own description and Lens lines are unchanged, still his open question
   ([docs/engines/citations.md](docs/engines/citations.md), § Outside the list, item 3). Test:
   `tests/repeated-losses-read.spec.ts`.
+- **Tests: 18 more invented ideas, for six changes a business reports that no test idea named** (2026-11-10, tests
+  only; the maintainer's pick of 2026-11-09). The CRA's page
+  [Maintain your business](https://www.canada.ca/en/revenue-agency/services/tax/businesses/topics/business-registration/maintain-business.html)
+  lists the changes a business reports. Six of them had no test idea: bankruptcy or receivership, an amalgamation, a
+  change of fiscal year-end, resuming after a pause, the death of an owner or partner, and buying an existing business.
+  `tests/fixtures/ideas/v1.ts` now has three invented ideas for each (ideas 368 to 385, 385 in all), in all 13
+  provinces and territories between them, two in French and two with an emoji. Nothing a person sees changes. All 18
+  hold every promise of the idea harness. Five of them join a gap already listed, not a new one: with a word of the
+  kind of work misspelt, the job is found only by its own name (now 89 of the 233 test ideas with a job,
+  `tests/fixtures/ideas/accuracy-gaps.ts`). The job-search counts `tests/job-title-search.spec.ts` holds rise with the
+  larger set (233 ideas with a job, 161 found in the group shown open). What the 18 show: no road is written for any of
+  the six, so each idea expects none (the author's expectation, for the maintainer to check), and typed in, each is
+  drawn on the road for starting a business in its place (16 on the federal steps, 2 on Alberta's general road).
 ### Fixed
 - **A write-off that needs care now starts amber, "check first", not green** (2026-11-05). Home office, vehicle and
   capital equipment read "applies as answered" for anyone whose kind of work matched, even a person who had said
