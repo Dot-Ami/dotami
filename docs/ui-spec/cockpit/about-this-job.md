@@ -68,7 +68,13 @@ to see:
   inside their labelled quote on the rules row and only as the shipped file holds them; and every figure a
   published wage, on its own wage block, read back as the file's own row with the level its source code gives.
   A planted control in the sweep shows each is caught (an unlabelled quote, a line the file doesn't hold, a
-  summed wage, a wrong level, a wage outside its row, a verdict).
+  summed wage, a wrong level, a wage outside its row, a verdict). A figures line that ends with the note that two
+  levels are the same (*low and median the same, as published*) is read as its figures and a note
+  (`e2e/wage-line.ts`, since 2026-11-11; before, the note was read into the high figure and a right screen failed):
+  the note must name exactly the levels drawn the same, and two equal figures with no note are named too.
+  `tests/wage-line-read.spec.ts` reads back every figures line the screen draws from the shipped wage file, and
+  `e2e/about-this-job.spec.ts` reads Ontario bakers' line in the browser, with a wrong note and a missing note
+  planted as controls.
 
 Mockup: `C:\dotami-wt\designs-phase2\05-about-this-job.html` (an invented cabinetmaker in Calgary, corpus idea
 `idea-v1-0276`, on road 1).

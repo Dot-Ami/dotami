@@ -12,7 +12,9 @@
  *   each wage block the panel draws (`data-wage-row`, the row's geography code) is read back as a row (its label's
  *   level, its figures, its period) and must be the wage file's own row for that job group and code, with the
  *   level its source code gives; its figures count only there. A figure anywhere else in the panel, a sum of two
- *   figures, a figure that isn't the file's, or a row labelled with another level is named.
+ *   figures, a figure that isn't the file's, or a row labelled with another level is named. Where two published
+ *   levels are the same amount the figures line ends "low and median the same, as published": that ending is read
+ *   as a note (e2e/wage-line.ts), and a note the drawn figures don't bear out, or equal figures with none, is named.
  *
  * Each finding is a line like "verdict: …", "time (rules): …", "amount: …" or "wage row ER48: …".
  */
@@ -27,7 +29,6 @@ import { nocRequirements } from "../lib/engines/noc/v2021";
 import { wages } from "../lib/engines/wages/v2026";
 import { wageData } from "../lib/engines/wages/v2026/data";
 import {
-  amountsIn,
   uncitedAmounts,
   wageLevelOf,
   wageRowProblems,
@@ -38,6 +39,8 @@ import {
 import { REQUIREMENT_LINES_PLACE } from "../tests/helpers/official-quotes";
 import { findTimeWords } from "../tests/helpers/time-words";
 import { findVerdicts } from "../tests/helpers/verdict-words";
+
+import { readFiguresLine, sameNoteProblems, shape, SLOT } from "./wage-line";
 
 export const ABOUT_JOB = aboutJobWords.region;
 export const aboutJobPanel = (page: Page) => page.getByRole("region", { name: ABOUT_JOB });
@@ -128,12 +131,8 @@ export function fileWageRow(noc: string, code: string): PublishedWageRow | null 
   };
 }
 
-// --- Reading a drawn wage block back as a row, by the words' own shapes.
+// --- Reading a drawn wage block back as a row, by the words' own shapes (the figures line: ./wage-line.ts).
 
-const SLOT = "\u0001";
-const escape = (text: string) => text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-/** A words function's sentence as a pattern, each argument a capture. */
-const shape = (sentence: string) => new RegExp(`^${escape(sentence).split(SLOT).join("(.+?)")}$`);
 const w = aboutJobWords.wages;
 
 /** The label's shape for each level, the fixed ones first ("Canada-wide figure" also fits the province's shape). */
@@ -144,23 +143,13 @@ const LEVEL_LABELS: readonly (readonly [WageLevel, RegExp])[] = [
   ["small-area", shape(w.levelSmallArea(SLOT))],
   ["province", shape(w.levelProvince(SLOT))],
 ];
-const FIGURES = [
-  ["hour", shape(w.hourly(SLOT, SLOT, SLOT))],
-  ["year", shape(w.yearly(SLOT, SLOT, SLOT))],
-] as const;
 const PERIODS = [shape(w.period(SLOT, SLOT)), shape(w.periodOnly(SLOT))];
-
-/** A figure as drawn: null for "not published", its cents for one amount, NaN for anything else. */
-function drawnFigure(text: string): number | null {
-  if (text.trim() === w.figureNotPublished) return null;
-  const amounts = amountsIn(text);
-  return amounts.length === 1 && amounts[0].written === text.trim() ? amounts[0].cents : Number.NaN;
-}
 
 /**
  * A wage block as the screen draws it, read back into a row: the level its label says, the figures and the
  * period its lines say. The source code isn't drawn, so it is the file's row's at the same code: the level the
- * label says must be the one that code gives.
+ * label says must be the one that code gives. The figures line may end with the note that two levels are the
+ * same, which `readFiguresLine` keeps apart from the figures (until 2026-11-11 it was read into the high one).
  */
 function drawnWageRow(
   noc: string,
@@ -172,12 +161,10 @@ function drawnWageRow(
   let per: PublishedWageRow["per"] = "hour";
   let figures: (number | null)[] = [Number.NaN, Number.NaN, Number.NaN];
   for (const line of lines) {
-    for (const [basis, re] of FIGURES) {
-      const m = re.exec(line);
-      if (m) {
-        per = basis;
-        figures = [drawnFigure(m[1]), drawnFigure(m[2]), drawnFigure(m[3])];
-      }
+    const read = readFiguresLine(line);
+    if (read) {
+      per = read.per;
+      figures = read.figures;
     }
   }
   let period = "";
@@ -297,6 +284,8 @@ export async function readAboutJob(page: Page, at: string, group: string, root: 
     fileRows.push(file);
     const shown = drawnWageRow(group, block.code, block.lines, file.sourceCode);
     for (const problem of wageRowProblems(shown)) found.push(`wage row ${block.code}: ${problem}`);
+    // The figures line's ending: a note that two levels are the same names exactly the levels drawn the same.
+    for (const problem of block.lines.flatMap(sameNoteProblems)) found.push(`wage row ${block.code}: ${problem}`);
     for (const field of ROW_FIELDS) {
       if (!Object.is(shown[field], file[field]))
         found.push(
