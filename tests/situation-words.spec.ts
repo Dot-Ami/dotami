@@ -99,20 +99,23 @@ describe("the person's own words about closing, pausing, selling or being behind
     expect(elsewhere).toEqual([]);
   });
 
-  it("misses three of the 33 test ideas no road is written for, and may only miss fewer", () => {
+  it("misses eight of the 39 test ideas no road is written for, and may only miss fewer", () => {
     // The corpus's closing, pausing, selling and catch-up ideas with a place, a business and no road written for them.
-    const the33 = IDEAS_V1.filter(
+    // 33 until task 47l's ideas (368 to 385, #245) added six.
+    const the39 = IDEAS_V1.filter(
       (idea) =>
         (idea.people === "moves-pauses-closes" || idea.people === "already-behind") &&
         idea.road === "none-written-yet" &&
         idea.lookingFor !== "career" &&
         idea.place !== "not-said",
     );
-    expect(the33).toHaveLength(33);
-    const missed = the33.filter((idea) => situationWordsIn(idea.words) === null).map((idea) => Number(idea.id.slice(-4)));
+    expect(the39).toHaveLength(39);
+    const missed = the39.filter((idea) => situationWordsIn(idea.words) === null).map((idea) => Number(idea.id.slice(-4)));
     // 189: moving to another territory, which the sentence on screen doesn't name. 203: typed in French, and the list
-    // is English only. 252: an unlicensed daycare, which DotAmi must not quote back as being behind.
-    expect(missed).toEqual([189, 203, 252]);
+    // is English only. 252: an unlicensed daycare, which DotAmi must not quote back as being behind. 368 and 369: a
+    // bankruptcy and a receiver, and 377, 378 and 380: reopening after a pause and an owner's death, none of which
+    // the sentence on screen names. 378 and 380 skip the job question, so they still see the line after a Skip.
+    expect(missed).toEqual([189, 203, 252, 368, 369, 377, 378, 380]);
   });
 
   it("the quoted line holds no verdict and no time, whatever the list quotes", () => {

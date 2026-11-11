@@ -106,8 +106,11 @@ is never reached without a line saying why the road drawn is the one drawn.
   the line quotes 30 of the 33 and nothing from any idea of another kind. With it, 31 of the 33 are told (one
   more skips the job question and sees case C's line). Two are not, and are listed as known gaps
   (`tests/fixtures/ideas/known-gaps.ts`): 189, moving to another territory, which the sentence doesn't name, and
-  252, an unlicensed daycare, which DotAmi must not quote back as being behind. The lasting answer is the
-  person saying where the business stands themselves (the phases plan), not a longer word list.
+  252, an unlicensed daycare, which DotAmi must not quote back as being behind. Task 47l's ideas (368 to 385,
+  added the same day) brought the count to 39: the line quotes 31 of them and 34 are told. Three more are known
+  gaps, none of which the sentence names: 368, a bankruptcy; 369, a receiver; 377, a paused business starting up
+  again. The lasting answer is the person saying where the business stands themselves (the phases plan), not a
+  longer word list.
 
 ### After Look inside: what the cockpit says
 

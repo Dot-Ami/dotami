@@ -333,18 +333,21 @@ describe("the harness fails on a planted product regression", () => {
     expect(addedKeys(skips, "quoteNothing", "ends:situation-said")).toEqual([]);
   });
 
-  it("the screen as it was before 2026-11-11 fails the new promise for 21 of the corpus's 33 such ideas", () => {
+  it("the screen as it was before 2026-11-11 fails the new promise for 25 of the corpus's 39 such ideas", () => {
     // The measurement the quoted line was built on (the maintainer's pick s1 D): with nothing quoted, every one of
-    // the 33 whose person picks a job is told nothing about closing, pausing, selling or catching up.
+    // the 39 whose person picks a job is told nothing about closing, pausing, selling or catching up. The recount of
+    // 2026-11-10 found 21 of 33; task 47l's ideas (368 to 385, #245) added six of these kinds, four picking a job.
     plants.quoteNothing = true;
     const said = (target: (typeof IDEAS_V1)[number]) =>
       checkRun(runIdea(target, { probeQuestions: false })).filter((f) => f.invariant === "ends:situation-said").map((f) => Number(f.ideaId.slice(-4)));
     const closingOrBehind = IDEAS_V1.filter((i) => i.people === "moves-pauses-closes" || i.people === "already-behind");
     const notTold = closingOrBehind.flatMap(said);
-    expect(notTold).toEqual([178, 183, 189, 191, 197, 198, 199, 201, 204, 207, 211, 212, 213, 252, 255, 301, 308, 318, 321, 330, 331]);
-    // With the line, the two the known-gaps list names are left.
+    expect(notTold).toEqual([
+      178, 183, 189, 191, 197, 198, 199, 201, 204, 207, 211, 212, 213, 252, 255, 301, 308, 318, 321, 330, 331, 368, 369, 377, 379,
+    ]);
+    // With the line, the five the known-gaps list names are left.
     plants.quoteNothing = false;
-    expect(closingOrBehind.flatMap(said)).toEqual([189, 252]);
+    expect(closingOrBehind.flatMap(said)).toEqual([189, 252, 368, 369, 377]);
     // Some sixty ideas run twice: more than the default time on a busy machine.
   }, 60_000);
 

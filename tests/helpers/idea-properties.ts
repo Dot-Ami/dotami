@@ -30,7 +30,7 @@ import type { TextPiece } from "./text-pieces";
 
 /**
  * Property tests over the whole answer space road evaluation reads (S2.5.29d). The corpus harness
- * (tests/idea-harness.spec.ts) runs 367 ideas each through one fixed list of answers; here fast-check
+ * (tests/idea-harness.spec.ts) runs 385 ideas each through one fixed list of answers; here fast-check
  * generates the answers themselves, thousands of sets of them, on the two written roads: the place, the kind
  * of venture, the work situation, the structure, the kinds of work, hire-first, equipment, first- and
  * third-year sales (the CRA's $30,000 line and its two neighbours among them), business figures (most in the
