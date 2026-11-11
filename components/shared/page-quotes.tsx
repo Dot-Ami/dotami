@@ -1,4 +1,4 @@
-import { PAGE_QUOTES_LEAD } from "@/lib/engines/shared/citation-check";
+import { PAGE_QUOTES_FOLD, PAGE_QUOTES_LEAD } from "@/lib/engines/shared/citation-check";
 
 /**
  * The official-quote component (2026-10-23): the words a tool check found on an official page (since 2026-10-27
@@ -25,6 +25,26 @@ import { PAGE_QUOTES_LEAD } from "@/lib/engines/shared/citation-check";
  * the five under "Anthropic's page also says:". The caller holds that label's words, as it holds its other labels;
  * the quotes are still drawn here and only here.
  */
+/**
+ * The same quotes behind a closed fold named for them, under a source on a screen (since 2026-11-11, story S2.5.52,
+ * the maintainer's w2: "there's really no need to have this line at all", so no line says how the source was
+ * checked, and the words found wait one click under it). Opened, they read as everywhere: after their label.
+ */
+export function PageQuotesFold({ quotes, className = "" }: { quotes: readonly string[]; className?: string }) {
+  if (quotes.length === 0) return null;
+  return (
+    <details className={`group ${className}`} data-page-quotes-fold>
+      <summary className="cursor-pointer list-none text-small leading-4 text-stone hover:text-paper">
+        <span aria-hidden className="mr-1 inline-block transition group-open:rotate-90">
+          ▸
+        </span>
+        {PAGE_QUOTES_FOLD}
+      </summary>
+      <PageQuotes quotes={quotes} className="mt-0.5 block text-small leading-4 text-stone" />
+    </details>
+  );
+}
+
 export function PageQuotes({
   quotes,
   layout = "inline",

@@ -1,4 +1,4 @@
-import { countReadByAPerson, howCheckedWords, oldestRead, toolCheckQuotes } from "@/lib/engines/shared/citation-check";
+import { countReadByAPerson, oldestRead, toolCheckQuotes } from "@/lib/engines/shared/citation-check";
 import { cockpitWords as words } from "@/lib/cockpit/words";
 import { isNotSaid, salesTargetField } from "@/lib/scenarios/not-said";
 
@@ -109,7 +109,8 @@ export function renderPlaybookMarkdown(skeleton: PlaybookSkeleton): string {
 
       for (const c of section.citations) {
         body.push(
-          `- [${c.title}](${c.url}) — ${c.authority} / ${c.jurisdiction} · ${howCheckedWords(c)}`,
+          // How it was checked followed here until 2026-11-11 (the maintainer's w2); the front matter keeps its counts.
+          `- [${c.title}](${c.url}) — ${c.authority} / ${c.jurisdiction}`,
         );
         // A tool check's words go under its line, so the reader can see what was found on the page.
         for (const quote of toolCheckQuotes(c)) body.push(`  - *Words found on the page:* "${quote}"`);

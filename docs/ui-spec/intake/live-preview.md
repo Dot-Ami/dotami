@@ -1,5 +1,7 @@
 # Live preview rail
 
+> **Since 2026-11-11, no screen says how a source was checked** (story S2.5.52, the maintainer's w2: "there's really no need to have this line at all"; [engines/citations.md](../../engines/citations.md), § No screen says it). A source shows its title as the link, who publishes it and where it applies; the words a tool found wait in a closed fold under the link, *Words found on the page*. Below, where this file says a screen draws *Read by a person on …*, *Checked by a tool on …*, its amber, or a card's count of sources by kind, read: the catalog records it, and no screen draws it.
+
 > **Since 2026-11-11, one fold for the notes** (story S2.5.52, the maintainer's pick w1 C; the layout rule's fifth line, [README.md](../README.md)): The rail's own line, *Compass language: if an item applies, it may unlock a branch. Nothing here is a guarantee, and sources open in a new tab.*, is no longer drawn in the rail: each intake screen's fold, **How this works**, holds it.
 
 > **S2.5.4h (2026-09-14) — removed.** The preview no longer derives an equipment purchase from the “Write things off” chip — only the explicit toggle sets `capitalPurchasePlanned`. `today` is the local calendar day, matching the cockpit. The behaviour below is the pre-cut record, kept for reference; the shipped surface is described in `CLAUDE.md` § What the app is.

@@ -664,9 +664,9 @@ export function piecesOfPlan(add: AddPiece, p: PlanView) {
     add("plan › not advice", p.notAdvice);
   }
 
-  function addSource(where: string, src: { title: string; checked: string; quotes: readonly string[] }) {
+  // How a source was checked is no longer drawn (since 2026-11-11, the maintainer's w2), so there is no such text to read.
+  function addSource(where: string, src: { title: string; quotes: readonly string[] }) {
     add(`${where} › source`, src.title, "catalog");
-    add(`${where} › source › checked`, src.checked);
     src.quotes.forEach((q) => add(`${where} › source › quote`, q, "official-quote"));
   }
 }

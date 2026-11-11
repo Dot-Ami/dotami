@@ -204,7 +204,8 @@ describe("each step", () => {
     expect(stepOf(plan, "step-eval-ticket").status).toBe(cockpitWords.plan.noStatus);
   });
 
-  it("marks each done-when line ticked or not, with its source and how it was checked", () => {
+  // Since the maintainer's w2 of 2026-11-11, story S2.5.52, Your plan prints no line on how a source was checked.
+  it("marks each done-when line ticked or not, with its source", () => {
     const plan = buildPlan(args({ progress: [{ stepId: "step-eval-train", status: null, doneWhenIds: ["dw-eval-train-2"] }] }));
     const train = stepOf(plan, "step-eval-train");
     expect(train.doneWhenTitle).toBe(cockpitWords.plan.doneWhen(1, 2));
@@ -215,8 +216,8 @@ describe("each step", () => {
     expect(train.doneWhen[0]!.source).toMatchObject({
       title: "Invented page (test only)",
       url: "https://example.org/invented",
-      checked: "Read on 2026-10-01. Who read it wasn't recorded.",
     });
+    expect(train.doneWhen[0]!.source).not.toHaveProperty("checked");
     // A step with none says so, in the step panel's own words.
     expect(stepOf(plan, "step-eval-ticket").doneWhenTitle).toBe(cockpitWords.panel.doneWhenNone);
   });
@@ -312,7 +313,7 @@ describe("start-up money: three kinds of line, and a blank stays blank", () => {
     expect(strings(plan).filter((s) => /\$0\b/.test(s))).toEqual([]);
   });
 
-  it("an official fee shows its amount, its source and the day it was read", () => {
+  it("an official fee shows its amount and its source", () => {
     const plan = buildPlan(args());
     const tuition = lineOf(plan, "cost-eval-tuition");
     expect(tuition.amount).toBe("$1,500");
@@ -320,12 +321,11 @@ describe("start-up money: three kinds of line, and a blank stays blank", () => {
     expect(tuition.source).toEqual({
       title: "Invented page (test only)",
       url: "https://example.org/invented",
-      checked: "Read on 2026-10-01. Who read it wasn't recorded.",
       quotes: [],
     });
   });
 
-  it("an official fee checked by a tool says so, with the day and the words the tool found", () => {
+  it("an official fee checked by a tool shows the words the tool found, and not how it was checked", () => {
     const road = roadToEvaluate();
     const toolChecked = {
       title: "Invented fee page (test only)",
@@ -342,7 +342,6 @@ describe("start-up money: three kinds of line, and a blank stays blank", () => {
     expect(exam.source).toEqual({
       title: "Invented fee page (test only)",
       url: "https://example.org/fee",
-      checked:"Checked by a tool on 2026-10-09: it found on the page the exact words this entry relies on. Not read by a person yet.",
       quotes: ["the exam fee is $300.00"],
     });
   });

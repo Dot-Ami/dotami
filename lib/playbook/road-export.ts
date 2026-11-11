@@ -176,8 +176,9 @@ function exportedCitations(road: Road, place: string): EngineCitation[] {
   ]);
 }
 
+/** A source in the export: its title as a link. How it was checked followed until 2026-11-11 (the maintainer's w2). */
 function sourceLine(source: PlanSource): string {
-  return `[${source.title}](${source.url}) · ${source.checked}`;
+  return `[${source.title}](${source.url})`;
 }
 
 function yamlScalar(value: string): string {

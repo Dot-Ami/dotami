@@ -59,6 +59,13 @@ export function howCheckedWords(c: CitationCheck): string {
  */
 export const PAGE_QUOTES_LEAD = "Words found on the page:";
 
+/**
+ * The name of the fold a source's quoted words wait behind on a screen (since 2026-11-11, the maintainer's w2: no line
+ * says how a source was checked, and the words a tool found are one click under the source;
+ * components/shared/page-quotes.tsx PageQuotesFold). The quotes inside it still follow PAGE_QUOTES_LEAD.
+ */
+export const PAGE_QUOTES_FOLD = "Words found on the page";
+
 /** The words a tool check found, when that is what a screen shows; empty otherwise. */
 export function toolCheckQuotes(c: CitationCheck): readonly string[] {
   const h = howChecked(c);

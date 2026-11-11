@@ -6,7 +6,6 @@ import { useEffect, useId, useRef, useState, type ReactNode } from "react";
 import { useJourney } from "@/components/shared/journey-provider";
 import { postJson } from "@/components/ventures/agree-prompt";
 import type { RecordRetentionEntry } from "@/lib/engines/compliance/v2026";
-import { howCheckedWords, isCheckFirst } from "@/lib/engines/shared/citation-check";
 import { intakeAfterDelete } from "@/lib/journey/window-storage";
 import { yourDataWords } from "@/lib/person/words";
 import type { DeleteKindId, DeleteMenuEntry, KeptLink } from "@/lib/privacy/inventory";
@@ -313,10 +312,8 @@ export function DeleteMenu({ menu, counts, keptCounts, tableNames, notCleared, r
                 className="text-paper underline decoration-stone-dim underline-offset-2 hover:text-maple"
               >
                 {words.menu.cra} {citation.title}
-              </a>{" "}
-              {/* How the page was checked, in the same words and colour as every source: amber when
-                  no person has read it (docs/engines/citations.md). */}
-              <span className={isCheckFirst(citation) ? "text-amber" : "text-stone"}>({howCheckedWords(citation)})</span>
+              </a>
+              {/* How the page was checked was said here until 2026-11-11 (the maintainer's w2): no screen says it since. */}
             </p>
           </div>
 

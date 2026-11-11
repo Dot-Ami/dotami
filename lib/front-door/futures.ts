@@ -173,6 +173,9 @@ export function futureCards(
 }
 
 /**
+ * Not drawn on any card since 2026-11-11 (the maintainer's w2 and his answer the same day: "Take them away too"); kept
+ * for the readout and the tests, which still count a road's sources each way.
+ *
  * The card's sources line, as parts: each kind it has, and only those, in the order a read beats a tool
  * check. `checkFirst` marks the parts no person has read (amber on screen, as everywhere else).
  */

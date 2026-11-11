@@ -950,6 +950,21 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   with two planted controls).
 
 ### Changed
+- **No screen says how a source was checked any more** (story S2.5.52, the maintainer's w2 of 2026-11-11: "there's
+  really no need to have this line at all", and his answer the same day on the cards' counts, "Take them away
+  too"). Gone from every screen: the line under each source ("Read by a person on …", "Read on … Who read it
+  wasn't recorded.", "Checked by a tool on …: it found on the page the exact words this entry relies on. Not read
+  by a person yet.") and its amber; *Pick a future*'s count of a road's sources by kind and "Checked by a tool
+  means …"; the line under each source in *Your plan*; the Tax year hint's; *What DotAmi knows about you*'s and
+  the Delete menu's. A source still shows its title as the link, who publishes it and where it applies; the words
+  a tool found on the page wait in a closed fold under the link, *Words found on the page*. Measured on the laptop
+  window, one step's panel goes from 840 words to about 514. The catalogs, `/api/readout` and the quality report
+  keep how each source was checked; the Markdown export's front matter keeps its counts. The count he asked to
+  have planned, "Reviewed by x users", is written up for when DotAmi has a server:
+  [docs/architecture/reviewed-by-people.md](docs/architecture/reviewed-by-people.md). The contract (`CLAUDE.md`)
+  and [docs/engines/citations.md](docs/engines/citations.md) say so; the panel recording
+  (`tests/fixtures/official-fees/panels-before.json`) was redrawn after checking that all 34 panels differ only
+  by those two things.
 - **For a job with no written road, *Pick a future* shows *About this job*'s four parts folded to their headings**
   (story S2.5.52, the maintainer's pick w3 C of 2026-11-11: "It saves a tone of mental bandwidth and allows the user
   to take a breath before diving in."). The block is still shown by default (his K6 A of 2026-10-16), under its lead

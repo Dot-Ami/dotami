@@ -1,5 +1,7 @@
 # A source's line: how it was checked
 
+> **Since 2026-11-11, no screen says how a source was checked** (story S2.5.52, the maintainer's w2: "there's really no need to have this line at all"; [engines/citations.md](../../engines/citations.md), § No screen says it). A source shows its title as the link, who publishes it and where it applies; the words a tool found wait in a closed fold under the link, *Words found on the page*. Below, where this file says a screen draws *Read by a person on …*, *Checked by a tool on …*, its amber, or a card's count of sources by kind, read: the catalog records it, and no screen draws it.
+
 Last updated: 2026-10-29 (a line under a source's title saying what its page holds, § What it is, set on the
 Motor vehicle expenses write-off's s.67.3 only, and in the readout; the Alberta sales-tax card's new source "Checked
 by a tool on 2026-10-29", § Today; the CRA's rate page keeps "Read by a person on 2026-10-25"; `PageQuotes` can be

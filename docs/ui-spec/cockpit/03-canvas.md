@@ -1,5 +1,7 @@
 # Cockpit canvas — the map as tier columns
 
+> **Since 2026-11-11, no screen says how a source was checked** (story S2.5.52, the maintainer's w2: "there's really no need to have this line at all"; [engines/citations.md](../../engines/citations.md), § No screen says it). A source shows its title as the link, who publishes it and where it applies; the words a tool found wait in a closed fold under the link, *Words found on the page*. Below, where this file says a screen draws *Read by a person on …*, *Checked by a tool on …*, its amber, or a card's count of sources by kind, read: the catalog records it, and no screen draws it.
+
 Last updated: 2026-11-01 (SR&ED deepening's 35% and tax impact quote the SR&ED Investment Tax Credit Policy, which
 joins its sources, checked by a tool, and road 0's lines on CCPCs on Incorporation for liability/SR&ED quote newer
 pages, four lines now: the maintainer's answers on his reading page, item 10, § Four more stages quote their pages;

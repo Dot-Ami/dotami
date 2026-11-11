@@ -330,9 +330,9 @@ describe("the steps as drawn", () => {
     // Every road counts the place's pages only since 2026-10-23 (a-call-12): road 0 in Alberta counts fewer than all.
     const road0 = (place: "AB" | null) => total(futureCards([generalRoadV2026], skillItemsV2026, place)[0]!.sources);
     expect(road0("AB")).toBeLessThan(road0(null));
-    // As drawn: the federal card on Pick a future in Ontario carries the place's count.
+    // As drawn: no card shows the count since the maintainer's w2 of 2026-11-11, story S2.5.52 ("Take them away too"); it stays counted for the readout.
     const html = draw("futures", skipped(), "CA-ON");
-    for (const part of sourcesLine(federalFor("ON"))) expect(html).toContain(esc(part.text));
+    for (const part of sourcesLine(federalFor("ON"))) expect(html).not.toContain(esc(part.text));
   });
 
   it("an Alberta road's card, for a person in another province, counts what the cockpit draws there (second review of #207)", () => {
