@@ -14,6 +14,17 @@ import { showGroupName } from "../lib/front-door/job-search-lines";
 import { intakeStepsWords, jobStepWords, pickWords, whereStepWords } from "../lib/front-door/words";
 import { waitForReact } from "../tests/helpers/react-ready";
 
+/**
+ * Opens the screen's one fold of notes, How this works (story S2.5.52, the maintainer's pick w1 C of 2026-11-11;
+ * components/shared/how-this-works.tsx), when it is closed, so a test can read a note inside it.
+ */
+export async function openHowThisWorks(page: Page) {
+  const fold = page.locator("[data-how-this-works]").first();
+  await expect(fold).toBeVisible();
+  if (!(await fold.evaluate((d) => (d as HTMLDetailsElement).open))) await fold.locator("summary").click();
+  await expect(fold).toHaveAttribute("open", "");
+}
+
 /** Step 1's Skip: no job, so no area and no region either; step 3 opens at once. */
 export async function skipTheJob(page: Page) {
   const skip = page.getByRole("button", { name: jobStepWords.skip, exact: true });
