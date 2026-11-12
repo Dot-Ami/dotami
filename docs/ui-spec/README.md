@@ -83,8 +83,9 @@ controls goes up by one for each such fold whose button shows in the first windo
 no-road block, whose four rows each fold, w3 C). Each such screen and size is listed in `FOLD_ALLOWANCE` in
 `e2e/budgets.ts` with its number of folds, dated, and its budget is raised by that number in the same pull
 request; a button that comes into view for another reason (a shorter block above it) is not a fold's own, and is
-allowed only where the maintainer says so (`BACK_IN_VIEW`: his "Allow them back" of 2026-11-11, the two futures'
-Look inside buttons on the typed way's last step for a job with no road, at tablet size); `tests/clutter-budgets.spec.ts` allows a budget above the baseline, a first row or main's by its allowance,
+allowed by the maintainer's standing rule of 2026-11-11 ("Allow them, and as a rule") only when it is the screen's own
+button coming into view because words above it were taken away, each recorded in `BACK_IN_VIEW` with its screen,
+size and day in the pull request that takes the words away; `tests/clutter-budgets.spec.ts` allows a budget above the baseline, a first row or main's by its allowance,
 and above main's only in that pull request, so once it is on main the raised budget can only go down again. A new
 screen arrives with its own `data-region` marks and its
 own row in `e2e/budgets.ts`, the written way (task 29j): listed in `ADDED_SCREENS` with the measured screen it

@@ -321,6 +321,11 @@ export const FIRST_MEASURED: Partial<Record<AddedScreenId, Partial<Record<WidthI
  * shorter block also brings the two futures' Look inside buttons back into `intake-road`'s first window (8 there):
  * those are not a fold's own; the maintainer allowed them back the same day ("Allow them back", BACK_IN_VIEW below), so
  * `intake-road` stands at 8 there.
+ *
+ * 2026-11-11, no line on how a source was checked (the maintainer's w2): Pick a future's cards are shorter, so their own
+ * Look inside buttons come into the first window on four screens, allowed by his standing rule of the same day
+ * (BACK_IN_VIEW): `futures-road` tablet 7 to 9, `futures-road-written` tablet 5 to 6, `futures-road-skipped` phone 4 to
+ * 5, `intake-road-written` tablet 4 to 5.
  */
 export const BUDGETS: ClutterTable = {
   "front-door": { phone: m(4, 7, 6, 9.5), tablet: m(4, 11, 6, 9.5), laptop: m(4, 11, 6, 9.5) },
@@ -338,13 +343,13 @@ export const BUDGETS: ClutterTable = {
   "futures-area": { phone: m(4, 6, 5, 10.5), tablet: m(4, 6, 5, 10.5), laptop: m(4, 6, 5, 10.5) },
   "futures-region": { phone: m(4, 6, 5, 10.5), tablet: m(4, 6, 5, 10.5), laptop: m(4, 6, 5, 10.5) },
   "futures-outside": { phone: m(4, 5, 5, 10.5), tablet: m(4, 5, 5, 10.5), laptop: m(4, 5, 5, 10.5) },
-  "futures-road-written": { phone: m(6, 5, 6, 10.5), tablet: m(6, 5, 6, 10.5), laptop: m(6, 5, 6, 10.5) },
-  "futures-road": { phone: m(6, 7, 6, 10.5), tablet: m(6, 7, 6, 10.5), laptop: m(6, 7, 6, 10.5) },
-  "futures-road-skipped": { phone: m(6, 4, 6, 10.5), tablet: m(6, 7, 6, 10.5), laptop: m(6, 6, 6, 10.5) },
+  "futures-road-written": { phone: m(6, 5, 6, 10.5), tablet: m(6, 6, 6, 10.5), laptop: m(6, 5, 6, 10.5) },
+  "futures-road": { phone: m(6, 7, 6, 10.5), tablet: m(6, 9, 6, 10.5), laptop: m(6, 7, 6, 10.5) },
+  "futures-road-skipped": { phone: m(6, 5, 6, 10.5), tablet: m(6, 7, 6, 10.5), laptop: m(6, 6, 6, 10.5) },
   "intake-steps": { phone: m(3, 6, 5, 10.5), tablet: m(3, 6, 5, 10.5), laptop: m(3, 6, 5, 10.5) },
   "intake-area": { phone: m(3, 6, 5, 10.5), tablet: m(3, 6, 5, 10.5), laptop: m(3, 6, 5, 10.5) },
   "intake-region": { phone: m(3, 6, 5, 10.5), tablet: m(3, 6, 5, 10.5), laptop: m(3, 6, 5, 10.5) },
-  "intake-road-written": { phone: m(3, 3, 5, 10.5), tablet: m(3, 4, 5, 10.5), laptop: m(3, 3, 5, 10.5) },
+  "intake-road-written": { phone: m(3, 3, 5, 10.5), tablet: m(3, 5, 5, 10.5), laptop: m(3, 3, 5, 10.5) },
   "intake-road": { phone: m(3, 6, 5, 10.5), tablet: m(3, 8, 5, 10.5), laptop: m(3, 6, 5, 10.5) },
   "futures-outside-alberta": { phone: m(6, 4, 6, 10.5), tablet: m(6, 6, 6, 10.5), laptop: m(6, 4, 6, 10.5) },
   "cockpit-federal": { phone: m(7, 14, 4, 9.5), tablet: m(8, 29, 5, 9.5), laptop: m(8, 27, 5, 9.5) },
@@ -398,13 +403,29 @@ export const FOLD_ALLOWANCE: {
  * tablet size, his answer: "Allow them back". They are not a fold's own (FOLD_ALLOWANCE), so they have their own
  * record. tests/clutter-budgets.spec.ts treats it as it treats a fold's: allowed over main's once, in the pull request
  * that adds it; a record once on main.
+ *
+ * **A standing rule since the same day** (his answer to the next such case, "Allow them, and as a rule"): a screen's
+ * own buttons that come into the first window because words above them were taken away are allowed, each recorded
+ * here with its screen, its size and the day, in the pull request that takes the words away. Nothing else is: a new
+ * button, or one that comes into view for any other reason, still needs a lower limit somewhere or his word.
+ *
+ * 2026-11-11, no line on how a source was checked (his w2): *Pick a future*'s cards lose their sources lines, so the
+ * cards are shorter and their own Look inside buttons, and once the Not here yet? box, come into the first window:
+ * `futures-road` on a tablet (2), `futures-road-written` on a tablet (1), `futures-road-skipped` on a phone (1) and
+ * `intake-road-written` on a tablet (1), as the gate counted them on Windows.
  */
 export const BACK_IN_VIEW: {
   since: string;
   controls: Partial<Record<ScreenId, Partial<Record<WidthId, number>>>>;
 } = {
   since: "2026-11-11",
-  controls: { "intake-road": { tablet: 2 } },
+  controls: {
+    "intake-road": { tablet: 2 },
+    "futures-road": { tablet: 2 },
+    "futures-road-written": { tablet: 1 },
+    "futures-road-skipped": { phone: 1 },
+    "intake-road-written": { tablet: 1 },
+  },
 };
 
 /** What Chromium on Windows may count over a budget: only regions, controls and text sizes, never fewer. */

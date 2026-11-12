@@ -7,7 +7,6 @@
  * from a return, the form and line printed on that return (`formLine`) are shown as they were read.
  */
 
-import { howCheckedWords } from "@/lib/engines/shared/citation-check";
 import { newestYearRead, taxLineEntryForKind, taxLineForYear } from "@/lib/engines/taxlines/v2026";
 import type { TaxLineEntry } from "@/lib/engines/taxlines/v2026";
 

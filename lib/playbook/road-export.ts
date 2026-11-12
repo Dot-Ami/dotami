@@ -2,7 +2,7 @@ import { buildPlan, type PlanArgs, type PlanSource } from "@/lib/cockpit/plan";
 import { cockpitWords as words } from "@/lib/cockpit/words";
 import { cfeNodesV2026 } from "@/lib/engines/cfe/v2026";
 import { citationsForPlace, type Road } from "@/lib/engines/roads/v2026";
-import { countReadByAPerson, howCheckedWords, oldestRead, toolCheckQuotes } from "@/lib/engines/shared/citation-check";
+import { countReadByAPerson, oldestRead, toolCheckQuotes } from "@/lib/engines/shared/citation-check";
 import type { EngineCitation } from "@/lib/engines/shared/types";
 
 import { formatProfileBlock } from "./render-markdown";
@@ -139,7 +139,8 @@ export function renderRoadExport(args: PlanArgs): string {
       if (sources.length > 0) {
         body.push(`#### ${e.citations}`, "");
         for (const c of sources) {
-          body.push(`- [${c.title}](${c.url}) — ${c.authority} / ${c.jurisdiction} · ${howCheckedWords(c)}`);
+          // How it was checked followed here until 2026-11-11 (the maintainer's w2); the front matter keeps its counts.
+          body.push(`- [${c.title}](${c.url}) — ${c.authority} / ${c.jurisdiction}`);
           for (const quote of toolCheckQuotes(c)) body.push(`  - *${e.wordsFound}:* "${quote}"`);
           body.push(`  - *${e.note}:* ${c.note}`);
         }
