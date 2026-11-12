@@ -319,7 +319,8 @@ export const FIRST_MEASURED: Partial<Record<AddedScreenId, Partial<Record<WidthI
  * maintainer's pick w3 C), four folds whose buttons the gate counted in the first window at every size, so
  * `futures-road` goes from 3 to 7 controls and `intake-road` from 2 to 6 (FOLD_ALLOWANCE, four each). On a tablet the
  * shorter block also brings the two futures' Look inside buttons back into `intake-road`'s first window (8 there):
- * those are not a fold's own, so they are not allowed here.
+ * those are not a fold's own; the maintainer allowed them back the same day ("Allow them back", BACK_IN_VIEW below), so
+ * `intake-road` stands at 8 there.
  */
 export const BUDGETS: ClutterTable = {
   "front-door": { phone: m(4, 7, 6, 9.5), tablet: m(4, 11, 6, 9.5), laptop: m(4, 11, 6, 9.5) },
@@ -344,7 +345,7 @@ export const BUDGETS: ClutterTable = {
   "intake-area": { phone: m(3, 6, 5, 10.5), tablet: m(3, 6, 5, 10.5), laptop: m(3, 6, 5, 10.5) },
   "intake-region": { phone: m(3, 6, 5, 10.5), tablet: m(3, 6, 5, 10.5), laptop: m(3, 6, 5, 10.5) },
   "intake-road-written": { phone: m(3, 3, 5, 10.5), tablet: m(3, 4, 5, 10.5), laptop: m(3, 3, 5, 10.5) },
-  "intake-road": { phone: m(3, 6, 5, 10.5), tablet: m(3, 6, 5, 10.5), laptop: m(3, 6, 5, 10.5) },
+  "intake-road": { phone: m(3, 6, 5, 10.5), tablet: m(3, 8, 5, 10.5), laptop: m(3, 6, 5, 10.5) },
   "futures-outside-alberta": { phone: m(6, 4, 6, 10.5), tablet: m(6, 6, 6, 10.5), laptop: m(6, 4, 6, 10.5) },
   "cockpit-federal": { phone: m(7, 14, 4, 9.5), tablet: m(8, 29, 5, 9.5), laptop: m(8, 27, 5, 9.5) },
   "intake-road-skipped": { phone: m(3, 3, 5, 10.5), tablet: m(3, 6, 5, 10.5), laptop: m(3, 5, 5, 10.5) },
@@ -386,6 +387,24 @@ export const FOLD_ALLOWANCE: {
     "futures-road": { phone: 4, tablet: 4, laptop: 4 },
     "intake-road": { phone: 4, tablet: 4, laptop: 4 },
   },
+};
+
+/**
+ * Buttons back in view (the maintainer's answer of 2026-11-11, story S2.5.52: "Allow them back"). On a tablet, the
+ * typed way's last step for a job with no written road (`intake-road`) shows About this job's rows folded to their
+ * headings (w3 C), and the shorter block brings the two futures' Look inside buttons back into the first window, as
+ * they were when the screen was first measured (its first row: 5 at tablet size), before task 28c's open rows pushed
+ * them down and its budget was lowered to 2 (2026-10-22). Asked whether to allow those two back on that one screen at
+ * tablet size, his answer: "Allow them back". They are not a fold's own (FOLD_ALLOWANCE), so they have their own
+ * record. tests/clutter-budgets.spec.ts treats it as it treats a fold's: allowed over main's once, in the pull request
+ * that adds it; a record once on main.
+ */
+export const BACK_IN_VIEW: {
+  since: string;
+  controls: Partial<Record<ScreenId, Partial<Record<WidthId, number>>>>;
+} = {
+  since: "2026-11-11",
+  controls: { "intake-road": { tablet: 2 } },
 };
 
 /** What Chromium on Windows may count over a budget: only regions, controls and text sizes, never fewer. */
