@@ -172,6 +172,16 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   found: until now only a fake that came back real did, so a planted fake claim, or a store with nothing in it,
   still exited 0. The app reaches the store through `LAW_STORE_PATH` as before and no screen changes
   ([tools/law-store/README.md](tools/law-store/README.md), [law-store.md](docs/architecture/law-store.md)).
+- **Tests: the phases a business can go through, as three lists** (2026-11-11, tests only; the maintainer's picks of
+  2026-11-11 on business phases, b1 A). `tests/fixtures/phases/v1.ts` keeps apart what the official pages keep apart:
+  where a business stands (not started, running, paused, ended), its legal form (the CRA's three business structures,
+  two of them in DotAmi's rules today, and six other kinds of organization the registries name, kept for later), and
+  33 changes it can go through in six groups (keeping the record straight, owners or legal form, growing, stopping,
+  coming back, catching up), each with the official pages behind it, which legal forms they speak of, and what it
+  leads to. The maintainer's 12 situation values are mapped onto the three. Every page was fetched on 2026-11-11 and
+  found to say what its entry leans on: a tool's check, not a person's read. No road is written for any of the 33,
+  nothing in the app reads the file, and nothing a person sees changes. `tests/phase-lists.spec.ts` fails on a page
+  that isn't an official https page, a "leads to" naming nothing, an id used twice, or a group that shrinks.
 - **Build provenance for the Windows installer** (the house-cleaning audit of 2026-10-31). None of the installer
   releases so far (0.2.0 to 0.4.1) carried a signature or anything saying where it was built. The release workflow
   now has GitHub's `actions/attest-build-provenance` sign a statement that this repository's `release.yml`, at the
@@ -436,7 +446,30 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   calls). The card's own description and Lens lines are unchanged, still his open question
   ([docs/engines/citations.md](docs/engines/citations.md), § Outside the list, item 3). Test:
   `tests/repeated-losses-read.spec.ts`.
+- **Tests: 18 more invented ideas, for six changes a business reports that no test idea named** (2026-11-10, tests
+  only; the maintainer's pick of 2026-11-09). The CRA's page
+  [Maintain your business](https://www.canada.ca/en/revenue-agency/services/tax/businesses/topics/business-registration/maintain-business.html)
+  lists the changes a business reports. Six of them had no test idea: bankruptcy or receivership, an amalgamation, a
+  change of fiscal year-end, resuming after a pause, the death of an owner or partner, and buying an existing business.
+  `tests/fixtures/ideas/v1.ts` now has three invented ideas for each (ideas 368 to 385, 385 in all), in all 13
+  provinces and territories between them, two in French and two with an emoji. Nothing a person sees changes. All 18
+  hold every promise of the idea harness. Five of them join a gap already listed, not a new one: with a word of the
+  kind of work misspelt, the job is found only by its own name (now 89 of the 233 test ideas with a job,
+  `tests/fixtures/ideas/accuracy-gaps.ts`). The job-search counts `tests/job-title-search.spec.ts` holds rise with the
+  larger set (233 ideas with a job, 161 found in the group shown open). What the 18 show: no road is written for any of
+  the six, so each idea expects none (the author's expectation, for the maintainer to check), and typed in, each is
+  drawn on the road for starting a business in its place (16 on the federal steps, 2 on Alberta's general road).
 ### Fixed
+- **A write-off that needs care now starts amber, "check first", not green** (2026-11-05). Home office, vehicle and
+  capital equipment read "applies as answered" for anyone whose kind of work matched, even a person who had said
+  nothing about a home, a car or personal use. [`docs/engines/writeoffs.md`](docs/engines/writeoffs.md) has always made
+  these yellow, but the code lowered a card only on a `professional-required` risk read, so their `caution` left them
+  green. A maintainer's check found the two disagreeing, and the maintainer's ruling of 2026-11-05 was "Yellow, as the
+  doc says". `attachRisk` in `lib/brain/evaluate.ts` now lowers a write-off on a `caution` too. Write-offs only: the
+  business-or-hobby card also carries a `caution`, the doc doesn't speak to it, and it stays as it was. Meals and
+  software tools have no risk read and stay green. No card's words, sources or risk read changed, and no card appears
+  or disappears; only the colour and its label do. Capital equipment's caution still appears only when a capital
+  purchase is on the person's path.
 - **The desktop app's start-up questions close as soon as they're answered** (2026-10-31). The window that asks
   whether to lock the data file, and the one shown when the data file's key can't be opened, used to stay on the
   screen after a click, not redrawing, until DotAmi had made the key and prepared the data file; on a slow
@@ -923,6 +956,18 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   `tests/reading-list-corrections.spec.ts` §§ 2–4 and 7, `tests/engine-integrity.spec.ts` (a stage's dollar
   figure must come from a page that stage cites), `tests/brain-incorporation.spec.ts`, `e2e/app.spec.ts` (Sole
   Prop activation's three sources: the new one in amber until 2026-10-27, each read by a person since).
+- **The browser tests read a wage line that ends "the same, as published"** (2026-11-11, tests only; found by pull
+  request #245). Since the fix of 2026-10-23, *About this job* ends a wage line "low and median the same, as
+  published" where two published levels are the same amount. The browser tests' reader of that panel was written
+  before the ending existed and took everything after "high" as the high wage, so a screen that was right read as
+  wrong: `wage row ER35: drawn highCents NaN`. Nothing showed it until the weekly idea sweep drew a musician in
+  Ontario (idea 156), whose low and median are the same; eight test ideas carry such a line, none of them among the
+  nine the sweep always runs. Now the ending is read as a note (`e2e/wage-line.ts`): the figures are the file's own,
+  the note must name exactly the levels drawn the same, and two equal figures with no note are named too. Nothing a
+  person sees changes. Tests: `tests/wage-line-read.spec.ts` (the old reading shown failing on the musician's line;
+  every figures line the screen draws from the shipped wage file read back as the file's figures, 10,558 lines, 177
+  with the note; planted wrong notes caught) and `e2e/about-this-job.spec.ts` (Ontario bakers in a real browser,
+  with two planted controls).
 
 ### Changed
 - **Every sentence on *Your expenses*, *Settings*, *Licences*, *Your futures* and *What DotAmi knows about you* now
