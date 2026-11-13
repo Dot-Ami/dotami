@@ -1,5 +1,7 @@
 # Where you are: your area, then your region (step 2 of 3)
 
+> **Since 2026-11-11, one fold for the notes** (story S2.5.52, the maintainer's pick w1 C; the layout rule's fifth line, [README.md](../README.md)): Each part shows its question's label, its drop-down and **Next**; on 2b, *Your area: …* above and Statistics Canada's list of towns once "I don't know" is picked (unchanged). Every other note waits in one fold under Next, **How this works**: the question's why-line and hint (still the drop-down's description for a screen reader), how the list is ordered, what is kept and, on 2b, the regions' credit line, then **Learn more ↗**, Statistics Canada's page for the economic regions (the source card's link, `economicRegionsSourcePage()`; not the list of towns). The area question has no Learn more: no official page for the four areas is on record. Below, where this file says a line is drawn under the question, read: in the fold.
+
 Page: Pick a future (`/futures`), and the intake's last screen on the typed way · Component: the shared
 three-step component (`components/front-door/job-and-road-steps.tsx`, planned; words `lib/front-door/words.ts`
 `whereStepWords`; the lists: `lib/places/alberta-areas.ts` and the economic-region catalog of task 25e)

@@ -12,6 +12,33 @@ import { formatMoney } from "@/lib/format/money-and-months";
 
 const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;
 
+/**
+ * The one fold under a question (the maintainer's pick w1 C of 2026-11-11, story S2.5.52, "showing less at once"):
+ * every note around a question waits behind it, closed until the person opens it, and *Learn more* at its foot opens
+ * the official page the screen's facts come from, where it has one (components/shared/how-this-works.tsx;
+ * docs/ui-spec/README.md, the layout rule's fifth line).
+ */
+export const howThisWorksWords = {
+  summary: "How this works",
+  learnMore: "Learn more ↗",
+  learnMoreName: (what: string) => `Learn more: ${what}, opens outside DotAmi`,
+} as const;
+
+/**
+ * The intake's own notes that moved into its folds (2026-11-11). Until then they were written in
+ * components/discovery/intake-page.tsx, word for word as here but for two dashes now a full stop and a comma.
+ */
+export const intakeNoteWords = {
+  aboutAsk: "What should DotAmi know about you? How you work, what you won't do, what you're after.",
+  aboutKept: "It keeps your words with the date you said them. It does not turn them into a type of person, and nothing you write here is used to rank anything.",
+  aboutSkip: "You can skip this. Nothing here gates the map.",
+  canadaFirst: "Canada is the first jurisdiction mapped; other countries are not on the map yet.",
+  numbersWhy: "Numbers let the map check your estimates against official tests, like the Canada Revenue Agency's GST/HST small-supplier tests. Skippable.",
+  // What Learn more opens under Ground it: the CRA page the small-supplier tests are on.
+  numbersPage: "the Canada Revenue Agency's page on when to register for GST/HST",
+  compass: "Compass language: if an item applies, it may unlock a branch. Nothing here is a guarantee, and sources open in a new tab.",
+} as const;
+
 export const frontDoorWords = {
   headline: "See the road to the work and life you want.",
   subline: "Every step, skill and start-up cost, with its sources.",
@@ -259,7 +286,12 @@ export const pickWords = {
 export const jobStepWords = {
   stepCount: "1 of 3 · Your work",
   heading: "What's closest to your work?",
-  lead: "Type the work in your own words. DotAmi looks for them in the government's example job titles and lists the jobs that hold them. Nothing is picked until you click a job.",
+  // The lead's first sentence stays under the heading; the rest waits in the step's fold, How this works (w1 C,
+  // 2026-11-11). Until then the lead was the two together.
+  lead: "Type the work in your own words.",
+  leadMore: "DotAmi looks for them in the government's example job titles and lists the jobs that hold them. Nothing is picked until you click a job.",
+  // What Learn more opens: the government's dataset page for the job titles.
+  sourcePage: "the government's page for the job titles DotAmi searches",
   yourIdea: (sentence: string) => `Your idea, in your words: “${sentence}”`,
   boxLabel: "The work, in your own words",
   boxHint: "A word or two works, such as “barber” or “cake decorating”.",
@@ -366,6 +398,9 @@ export const whereStepWords = {
     dontKnowNote: "With “I don't know”, About this job shows the Alberta-wide figure, and a link to Statistics Canada's list of the towns in each region shows here.",
     lookup: "Which towns are in each region? Statistics Canada's list ↗",
     lookupName: "Which towns are in each region? Statistics Canada's list, opens outside DotAmi",
+    // What Learn more opens under this question (w1 C, 2026-11-11): Statistics Canada's page for the regions'
+    // classification, not the list of towns (that one shows only once "I don't know" is picked).
+    sourcePage: "Statistics Canada's page for the economic regions",
     next: "Next: the futures →",
   },
   outside: {

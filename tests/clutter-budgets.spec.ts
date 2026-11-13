@@ -23,11 +23,43 @@ import {
   BASELINE_SCREENS,
   BUDGETS,
   FIRST_MEASURED,
+  FOLD_ALLOWANCE,
   SCREENS,
   WIDTHS,
   WINDOWS_EXTRA,
   type ClutterTable,
 } from "../e2e/budgets";
+
+type Allowance = (typeof FOLD_ALLOWANCE)["controls"];
+type SizeId = (typeof WIDTHS)[number]["id"];
+
+/**
+ * `table` with a fold's own button added to its controls where `allowance` lists one (docs/ui-spec/README.md, "A
+ * fold's own button", the maintainer's answer of 2026-11-11). Every other number is as it was.
+ */
+function withFolds(table: ClutterTable, allowance: Allowance): ClutterTable {
+  const out: Record<string, Record<string, NonNullable<NonNullable<ClutterTable[keyof ClutterTable]>[SizeId]>>> = {};
+  for (const [screen, bySize] of Object.entries(table)) {
+    out[screen] = {};
+    for (const [size, row] of Object.entries(bySize ?? {})) {
+      if (!row) continue;
+      const extra = allowance[screen as keyof Allowance]?.[size as SizeId] ?? 0;
+      out[screen][size] = { ...row, controls: row.controls + extra };
+    }
+  }
+  return out as ClutterTable;
+}
+
+/** The entries of `now` that `before` doesn't list: the allowance a pull request adds, allowed over main's once. */
+function addedSince(before: Allowance, now: Allowance): Allowance {
+  const added: Record<string, Record<string, 1>> = {};
+  for (const [screen, bySize] of Object.entries(now)) {
+    for (const size of Object.keys(bySize ?? {})) {
+      if (before[screen as keyof Allowance]?.[size as SizeId] === undefined) (added[screen] ??= {})[size] = 1;
+    }
+  }
+  return added as Allowance;
+}
 
 /**
  * The baseline as recorded on 2026-10-17. The baseline is a record, so it never changes: this fails on any edit
@@ -87,14 +119,21 @@ function mainCommit(): string | null {
 }
 
 /** `e2e/budgets.ts` as it is at `commit`, loaded from a copy; null when that commit has no such file. */
-async function budgetsAt(commit: string): Promise<{ BASELINE: ClutterTable; BUDGETS: ClutterTable; FIRST_MEASURED?: ClutterTable } | null> {
+async function budgetsAt(
+  commit: string,
+): Promise<{ BASELINE: ClutterTable; BUDGETS: ClutterTable; FIRST_MEASURED?: ClutterTable; FOLD_ALLOWANCE?: typeof FOLD_ALLOWANCE } | null> {
   const source = git("show", `${commit}:e2e/budgets.ts`);
   if (source === null) return null;
   const dir = mkdtempSync(path.join(tmpdir(), "dotami-budgets-"));
   try {
     const file = path.join(dir, "budgets.ts");
     writeFileSync(file, source);
-    return (await import(pathToFileURL(file).href)) as { BASELINE: ClutterTable; BUDGETS: ClutterTable; FIRST_MEASURED?: ClutterTable };
+    return (await import(pathToFileURL(file).href)) as {
+      BASELINE: ClutterTable;
+      BUDGETS: ClutterTable;
+      FIRST_MEASURED?: ClutterTable;
+      FOLD_ALLOWANCE?: typeof FOLD_ALLOWANCE;
+    };
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }
@@ -116,7 +155,7 @@ describe("the clutter budgets (e2e/budgets.ts)", () => {
   });
 
   it("start an added screen at its first row, no busier than the screen it is a part of (the written way, 2026-10-22)", () => {
-    expect(looserThan(FIRST_MEASURED, BUDGETS)).toEqual([]);
+    expect(looserThan(withFolds(FIRST_MEASURED, FOLD_ALLOWANCE.controls), BUDGETS)).toEqual([]);
     // Each added screen's first row against the baseline of the whole screen it is a part of, as if it were that
     // screen (the whole screen's own budget may be lower: Pick a future's opens on step 1, the calmest part).
     const asWhole: ClutterTable = Object.fromEntries(ADDED_SCREENS.map((s) => [s, BASELINE[ADDED_SCREEN_PART_OF[s]]]));
@@ -167,8 +206,9 @@ describe("the clutter budgets (e2e/budgets.ts)", () => {
   });
 
   it("are never above the baseline or a screen's first row, and the smallest text never below it", () => {
-    expect(looserThan(BASELINE, BUDGETS)).toEqual([]);
-    expect(looserThan(FIRST_MEASURED, BUDGETS)).toEqual([]);
+    // A fold's own button, where FOLD_ALLOWANCE lists one, is the one way above them (2026-11-11).
+    expect(looserThan(withFolds(BASELINE, FOLD_ALLOWANCE.controls), BUDGETS)).toEqual([]);
+    expect(looserThan(withFolds(FIRST_MEASURED, FOLD_ALLOWANCE.controls), BUDGETS)).toEqual([]);
   });
 
   it("catch a budget above a screen's first row (the control)", () => {
@@ -190,7 +230,8 @@ describe("the clutter budgets (e2e/budgets.ts)", () => {
     // Main has no budgets yet (the pull request that adds them): the baseline is the whole limit.
     if (!before) return;
     expect(
-      looserThan(before.BUDGETS, BUDGETS),
+      // Over main's only by an allowance main doesn't list yet: the pull request that brings the fold.
+      looserThan(withFolds(before.BUDGETS, addedSince(before.FOLD_ALLOWANCE?.controls ?? {}, FOLD_ALLOWANCE.controls)), BUDGETS),
       `budgets looser than on main (${main.slice(0, 7)}); make the screen calmer instead of raising its limit`,
     ).toEqual([]);
     expect(BASELINE, `BASELINE differs from main's (${main.slice(0, 7)}); it is a record and never changes`).toEqual(
@@ -199,6 +240,10 @@ describe("the clutter budgets (e2e/budgets.ts)", () => {
     // A first row is a record too, once it is on main: it never changes (a new screen's first row can be added).
     for (const [screen, row] of Object.entries(before.FIRST_MEASURED ?? {})) {
       expect(FIRST_MEASURED[screen as keyof typeof FIRST_MEASURED], `FIRST_MEASURED["${screen}"] differs from main's; it is a record and never changes`).toEqual(row);
+    }
+    // A fold's allowance is a record too, once it is on main: never changed, never taken out.
+    for (const [screen, bySize] of Object.entries(before.FOLD_ALLOWANCE?.controls ?? {})) {
+      expect(FOLD_ALLOWANCE.controls[screen as keyof Allowance], `FOLD_ALLOWANCE["${screen}"] differs from main's; it is a record`).toEqual(bySize);
     }
   });
 
@@ -235,6 +280,31 @@ describe("the clutter budgets (e2e/budgets.ts)", () => {
       }
     }
     expect(wrong).toEqual([]);
+  });
+
+  it("allow a fold's own button only as exactly one, on a real screen and size (the maintainer's answer of 2026-11-11)", () => {
+    const wrong: string[] = [];
+    for (const [screen, bySize] of Object.entries(FOLD_ALLOWANCE.controls)) {
+      if (!(SCREENS as readonly string[]).includes(screen)) wrong.push(`${screen}: not a screen`);
+      for (const [size, extra] of Object.entries(bySize ?? {})) {
+        if (!(sizes as readonly string[]).includes(size)) wrong.push(`${screen} ${size}: not a size`);
+        if (extra !== 1) wrong.push(`${screen} ${size}: ${String(extra)}, not 1`);
+      }
+    }
+    expect(wrong).toEqual([]);
+    expect(FOLD_ALLOWANCE.since).toBe("2026-11-11");
+  });
+
+  it("catch a budget two over its baseline where a fold allows one (the control)", () => {
+    const allowance = { "intake-steps": { laptop: 1 } } as Allowance;
+    const row = FIRST_MEASURED["intake-steps"]!.laptop!;
+    const oneOver: ClutterTable = { "intake-steps": { laptop: { ...row, controls: row.controls + 1 } } };
+    const twoOver: ClutterTable = { "intake-steps": { laptop: { ...row, controls: row.controls + 2 } } };
+    expect(looserThan(withFolds(FIRST_MEASURED, allowance), oneOver)).toEqual([]);
+    expect(looserThan(withFolds(FIRST_MEASURED, allowance), twoOver)).toHaveLength(1);
+    // Once main lists the allowance, a raise over main's budget is no longer allowed.
+    expect(addedSince(allowance, allowance)).toEqual({});
+    expect(looserThan(withFolds(FIRST_MEASURED, addedSince(allowance, allowance)), oneOver)).toHaveLength(1);
   });
 
   it("keep the baseline exactly as it was recorded", () => {

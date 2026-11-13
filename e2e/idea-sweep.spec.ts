@@ -75,7 +75,7 @@ import type { ScreenId } from "./budgets";
 import { measurePage, type Measured } from "./clutter-measure";
 import { budgetFor, clutterBreaches } from "./clutter-rule";
 import { cockpitSettled, lookCloser, pickJob, showRail } from "./cockpit-calm";
-import { findTheJobByWords } from "./three-steps";
+import { findTheJobByWords, openHowThisWorks } from "./three-steps";
 
 // --- Which ideas.
 
@@ -408,7 +408,9 @@ async function typedWay(s: Sweep) {
   await expect(place).toBeVisible();
   await read(s, "intake: where does this operate");
   if (!isProvince(idea.place)) {
-    // Outside Canada or not said: the place question has no answer, the screen says why, and the map can't open.
+    // Outside Canada or not said: the place question has no answer, the screen says why (in its fold, How this
+    // works, since 2026-11-11), and the map can't open.
+    await openHowThisWorks(page);
     await expect(page.getByText("Canada is the first jurisdiction mapped; other countries are not on the map yet.")).toBeVisible();
     await expect(button(page, intakeStepsWords.next)).toBeDisabled();
     s.measured.push(`typed: stopped at the intake's place question (${idea.place})`);

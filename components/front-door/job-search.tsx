@@ -39,6 +39,7 @@ export function JobSearchBox({
   disabled = false,
   compact = false,
   attribution = true,
+  notesInFold = false,
 }: {
   onPick: (job: { code: string; label: string }) => void;
   disabled?: boolean;
@@ -46,6 +47,12 @@ export function JobSearchBox({
   compact?: boolean;
   /** Draw the licence's attribution line with the results; the cockpit's skills list draws its own. */
   attribution?: boolean;
+  /**
+   * The box's notes (the line before anything is typed, how a word matches, where the titles come from and their
+   * licence) are drawn by the step's own fold, How this works, instead of here (w1 C, 2026-11-11). The status line
+   * stays, saying nothing until something is typed.
+   */
+  notesInFold?: boolean;
 }) {
   const boxId = useId();
   const hintId = useId();
@@ -122,30 +129,35 @@ export function JobSearchBox({
       {/* One polite line: that DotAmi is looking while a search waits, then what the list holds (the searching
           line stays the same while the person types, so it isn't read again on every key). */}
       <p role="status" className="text-body text-stone">
-        {searchBoxStatusLine({ typed, compact, failed: failedQuery === query, search })}
+        {searchBoxStatusLine({ typed, compact: compact || notesInFold, failed: failedQuery === query, search })}
       </p>
 
       {notSearchedFirst ? null : notSearchedLine}
       {search && showsEnglishOnly(search) ? <p className="text-body text-stone">{words.englishOnly}</p> : null}
       {search?.state === "results" ? <Groups key={query} search={search} disabled={disabled} compact={compact} onPick={onPick} /> : null}
 
-      {search?.state === "results" ? (
+      {notesInFold ? null : search?.state === "results" ? (
         <div className="space-y-1 text-body text-stone">
           <p>{words.wordStart}</p>
           <p>{words.source}</p>
-          {attribution ? (
-            <p>
-              {OASIS_ATTRIBUTION}{" "}
-              <a href={OASIS_LICENCE_URL} target="_blank" rel="noopener noreferrer" className="underline hover:text-paper">
-                {words.licence}
-              </a>
-            </p>
-          ) : null}
+          {attribution ? <OasisAttribution /> : null}
         </div>
       ) : compact ? null : (
         <p className="text-body text-stone-dim">{words.source}</p>
       )}
     </div>
+  );
+}
+
+/** The licence's attribution line for the job titles, with its link: under the results, or in the step's fold. */
+export function OasisAttribution() {
+  return (
+    <p>
+      {OASIS_ATTRIBUTION}{" "}
+      <a href={OASIS_LICENCE_URL} target="_blank" rel="noopener noreferrer" className="underline hover:text-paper">
+        {words.licence}
+      </a>
+    </p>
   );
 }
 
