@@ -16,7 +16,7 @@ import {
   ANTHROPIC_RETENTION_CHECK,
   ANTHROPIC_RETENTION_URL,
 } from "@/lib/privacy/anthropic-retention-official-words";
-import { howCheckedWords, isCheckFirst, toolCheckQuotes } from "@/lib/engines/shared/citation-check";
+import { toolCheckQuotes } from "@/lib/engines/shared/citation-check";
 import { PageQuotes } from "@/components/shared/page-quotes";
 import { yourDataWords } from "@/lib/person/words";
 
@@ -443,11 +443,8 @@ export function SentRow({ facts }: { facts: SentFacts }) {
             >
               {words.sent.anthropicPage}
             </a>
-            {words.sent.anthropicPageEnd}{" "}
-            {/* In the same words and colour as every source: amber while no person has read the page. */}
-            <span className={isCheckFirst(ANTHROPIC_RETENTION_CHECK) ? "text-amber" : "text-stone"}>
-              {howCheckedWords(ANTHROPIC_RETENTION_CHECK)}
-            </span>
+            {words.sent.anthropicPageEnd}
+            {/* How the page was checked was said here until 2026-11-11 (the maintainer's w2): no screen says it since. */}
           </p>
           <PageQuotes quotes={retention.forApiUsers} layout="lines" className="mt-1 space-y-0.5 text-paper-dim" />
           {/* The page's two other sections, after the five and under a label of their own (the maintainer, 2026-10-29). */}

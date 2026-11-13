@@ -14,7 +14,6 @@ import { expect, test, type Download, type Locator, type Page, type Worker } fro
 import { createDatabaseClient } from "../lib/db/client";
 import { cfeNodesV2026 } from "../lib/engines/cfe/v2026";
 import { CRA_WHEN_TO_REGISTER_URL } from "../lib/engines/compliance/v2026/gst-official-words";
-import { howCheckedWords } from "../lib/engines/shared/citation-check";
 import { SETTING_GROUPS, SETTINGS } from "../lib/settings/catalog";
 import { INVENTED_AMOUNTS, otherFormPage, t2125Pages } from "../tests/fixtures/returns/cra-layout";
 import { gnucashGz, gnucashXml, smallBook } from "../tests/helpers/make-gnucash";
@@ -390,7 +389,9 @@ test("the map draws today's road: columns, cards, toggles and hover arrows, plus
 // in full on 2026-10-25, so since 2026-10-27 each says "Read by a person on 2026-10-25"
 // (tests/maintainer-reads.spec.ts); stages he didn't read keep their words. The readout says the same words
 // as the screens, and none says "verified".
-test("every source says how it was checked: the map's sources, the playbook export and the readout", async ({ page }) => {
+// Since 2026-11-11 (the maintainer's w2, story S2.5.52) no screen says it: not the map's sources and not the export's
+// citation lines. The readout still does, for an agent, and the export's front matter keeps its counts.
+test("no screen says how a source was checked; the readout still does", async ({ page }) => {
   const scenario = {
     id: `checked-${Date.now()}`,
     profile: {
@@ -422,30 +423,22 @@ test("every source says how it was checked: the map's sources, the playbook expo
   await page.locator("summary", { hasText: /Sources for this stage · \d+/ }).click();
   const sources = page.locator("details[open]").filter({ has: page.locator("summary", { hasText: "Sources for this stage" }) }).getByRole("listitem");
   const stage = cfeNodesV2026.find((n) => n.id === "stage-1-sole-prop-activation")!;
-  const expected = stage.citations.map((c) => howCheckedWords(c));
   await expect(sources).toHaveCount(stage.citations.length);
   for (const item of await sources.all()) {
-    // Lower-cased: a read's line is drawn in capitals (CSS), which innerText keeps.
-    const text = (await item.innerText()).replace(/\s+/g, " ").toLowerCase();
-    expect(expected.some((words) => text.includes(words.toLowerCase())), text).toBe(true);
+    await expect(item).not.toContainText(/Read by a person on|wasn't recorded|Checked by a tool on|Not read by a person yet|Read by an AI model/i);
     await expect(item).not.toContainText(/verified/i);
   }
-  // The maintainer read each of these pages in full on 2026-10-25, so each says so, and none says a tool's or an
-  // unrecorded reader's line.
-  await expect(sources.filter({ hasText: /Read by a person on 2026-10-25/i })).toHaveCount(stage.citations.length);
-  await expect(sources.filter({ hasText: /Not read by a person yet|wasn't recorded/i })).toHaveCount(0);
-  // The page the $30,000 note quotes: checked by a tool on 2026-10-12, then read by him; the read wins on screen, so
-  // the words the tool found aren't listed under it.
+  // The page the $30,000 note quotes is still there, by its link; its read wins over its tool check, so the words
+  // the tool found aren't listed under it (they would wait in a fold).
   const quotedPage = sources.filter({ has: page.locator(`a[href="${CRA_WHEN_TO_REGISTER_URL}"]`) });
   await expect(quotedPage).toHaveCount(1);
-  await expect(quotedPage).toContainText(/Read by a person on 2026-10-25/i);
   await expect(quotedPage).not.toContainText("Words found on the page");
 
-  // The playbook export, in the same words.
+  // The playbook export: its citation lines don't say it either; its front matter keeps the count.
   await page.getByRole("button", { name: "Export", exact: true }).click();
   const markdown = page.locator("pre");
   await expect(markdown).toContainText("### Citations");
-  await expect(markdown).toContainText(/ · Read on \d{4}-\d{2}-\d{2}\. Who read it wasn't recorded\./);
+  await expect(markdown).not.toContainText(/Read by a person on|wasn't recorded|Checked by a tool on|Not read by a person yet|Read by an AI model/i);
   await expect(markdown).toContainText(/sources_read_by_a_person: \d+ of \d+/);
   await expect(markdown).not.toContainText("· verified ");
 
@@ -534,8 +527,8 @@ test("the map quotes the CRA, shows both ways to incorporate, and lights Incorpo
   await expect(inc.getByRole("heading", { name: "Alberta (Corporate Registry)" })).toBeVisible();
   await expect(inc.getByText("It will cost $200 and will take 1 day.", { exact: false }).first()).toBeVisible();
   await expect(inc.getByText(/no amount read/i).first()).toBeVisible();
-  // Each line says how its source was checked (option B): a tool found the words, no person read the page.
-  await expect(inc.getByText(/^Checked by a tool on 2026-10-12: .* Not read by a person yet\.$/).first()).toBeVisible();
+  // No line says how its source was checked (since 2026-11-11, the maintainer's w2).
+  await expect(inc.getByText(/Checked by a tool on|Not read by a person yet/)).toHaveCount(0);
 
   // The person's own number lights it; DotAmi never does.
   const own = inc.getByLabel("I'd incorporate at");
@@ -1316,7 +1309,8 @@ test("Add a figure offers the four T2125 totals with their lines, asks the tax y
 
   // 2025 has been read: the line, the form's words for it and the day it was read.
   await taxYear.fill("2025");
-  await expect(card.getByText(`Line 8299 on the CRA's 2025 T2125 ("Gross business or professional income"). Read by a person on 2026-10-10.`)).toBeVisible();
+  // How the form was checked followed the line until 2026-11-11 (the maintainer's w2).
+  await expect(card.getByText(`Line 8299 on the CRA's 2025 T2125 ("Gross business or professional income").`, { exact: true })).toBeVisible();
   await expect(unread).toHaveCount(0);
 
   // Dates from the wrong year: a period is filed for the year it ends in, so this is refused.

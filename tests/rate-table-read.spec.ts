@@ -204,8 +204,8 @@ describe("Alberta: the row shows only 5%, so DotAmi's words say only that", () =
       expect(html.split(sentence), sentence).toHaveLength(2);
       expect(html.indexOf(sentence), sentence).toBeGreaterThan(label);
     }
-    // The rate page's own line says his full read.
-    expect(html).toContain("Read by a person on 2026-10-25");
+    // His full read of the rate page was said on its line until the maintainer's w2 of 2026-11-11, story S2.5.52; no line says it since.
+    expect(html).not.toContain("Read by a person on");
     expect(html).not.toContain("2026-10-28");
   });
 });

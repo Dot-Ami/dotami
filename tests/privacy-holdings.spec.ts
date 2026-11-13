@@ -342,12 +342,12 @@ describe("readHoldings on a seeded database", () => {
     const alsoLabel = ALSO_LABEL.replace(/'/g, "&#x27;");
     expect(at("How long Anthropic keeps it:")).toBeGreaterThan(-1);
     expect(at(`href="${ANTHROPIC_RETENTION_URL}"`)).toBeGreaterThan(at("How long Anthropic keeps it:"));
-    // In amber, like every source no person has read, and with the day the script printed.
-    expect(at('<span class="text-amber">Checked by a tool on 2026-10-29')).toBeGreaterThan(at(`href="${ANTHROPIC_RETENTION_URL}"`));
+    // The check line (in amber, with the day the script printed) was drawn here until the maintainer's w2 of 2026-11-11, story S2.5.52.
+    expect(html).not.toContain("Checked by a tool");
     expect(html).not.toContain("2026-10-27");
     // The five stay where they were, each after "Words found on the page:" and in order.
     let before = at(PAGE_QUOTES_LEAD);
-    expect(before).toBeGreaterThan(at("Checked by a tool on 2026-10-29"));
+    expect(before).toBeGreaterThan(at(`href="${ANTHROPIC_RETENTION_URL}"`));
     for (const quote of FOUND) {
       expect(at(`“${quote}”`), quote).toBeGreaterThan(before);
       before = at(`“${quote}”`);
@@ -390,7 +390,8 @@ describe("readHoldings on a seeded database", () => {
     try {
       const { SentRow: SentRowWithRead } = await import("@/components/your-data/your-data-page");
       const html = renderToStaticMarkup(createElement(SentRowWithRead, { facts: facts! }));
-      expect(html).toContain("Read by a person on 2026-10-29");
+      // The read was said on the row until the maintainer's w2 of 2026-11-11, story S2.5.52; no line says how the page was checked since.
+      expect(html).not.toContain("Read by a person on");
       expect(html).not.toContain("Checked by a tool");
       expect(html).not.toContain(PAGE_QUOTES_LEAD);
       expect(html).not.toContain("also says:");

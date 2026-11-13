@@ -1,5 +1,5 @@
 import type { EngineCitation } from "@/lib/engines/shared/types";
-import { howCheckedWords, toolCheckQuotes } from "@/lib/engines/shared/citation-check";
+import { toolCheckQuotes } from "@/lib/engines/shared/citation-check";
 import type { CostLineAsShown, SkillItem } from "@/lib/engines/roads/v2026";
 import { COST_LINE_AMOUNT_FROM_LABELS } from "@/lib/figures/types";
 import { formatMoney } from "@/lib/format/money-and-months";
@@ -53,11 +53,13 @@ export interface PlanArgs {
   today: string;
 }
 
-/** A source as printed: its title, its address (the link's text too), how it was checked, and any words a tool found. */
+/**
+ * A source as printed: its title, its address (the link's text too), and any words a tool found. How it was checked
+ * was printed too until 2026-11-11 (the maintainer's w2, story S2.5.52: no screen says it).
+ */
 export interface PlanSource {
   title: string;
   url: string;
-  checked: string;
   quotes: readonly string[];
 }
 
@@ -139,7 +141,7 @@ function whereLines(where: PlanArgs["where"], province: string): string[] {
 }
 
 function source(c: EngineCitation): PlanSource {
-  return { title: c.title, url: c.url, checked: howCheckedWords(c), quotes: [...toolCheckQuotes(c)] };
+  return { title: c.title, url: c.url, quotes: [...toolCheckQuotes(c)] };
 }
 
 const markWords = (mark: SkillMarkValue | undefined) => (mark ? words.plan.mark[mark] : words.plan.mark.none);

@@ -136,6 +136,10 @@
  * changes. The only cards allowed to change are the
  * ones that gained road 0's named start-up cost lines (docs/architecture/future-cockpit.md § 6, "The official
  * fees catalog and start-up cost lines as built"); with those seven lines taken out, they match too.
+ * Redrawn on 2026-11-11 for all 34 entries (the maintainer's w2 of 2026-11-11, story S2.5.52): no line says how a source was checked, and the words a tool
+ * found wait in a closed fold under the source's link instead of inside it. A one-off check drew every panel from this
+ * code and compared it with the recording with those two things taken out of both: all 34 were the recording byte
+ * for byte. No other word changes.
  */
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";

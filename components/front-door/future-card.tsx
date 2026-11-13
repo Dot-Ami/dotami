@@ -3,7 +3,7 @@
 import { useId } from "react";
 
 import { Pill } from "@/components/ui";
-import { sourcesLine, writtenForAllOfCanada, type FutureCard } from "@/lib/front-door/futures";
+import { writtenForAllOfCanada, type FutureCard } from "@/lib/front-door/futures";
 import { pickWords as words } from "@/lib/front-door/words";
 import { PROVINCE_LABELS, type Province } from "@/lib/scenarios/types";
 
@@ -63,17 +63,8 @@ export function FutureCardItem({
         </p>
       ) : null}
       <p className="text-body tabular-nums text-paper-dim">{words.counts(card.steps, card.skillsListed, card.requirementsListed, card.officialFees, card.linesToPrice)}</p>
-      <p className="text-body leading-snug text-stone">
-        {words.sourcesLead}{" "}
-        {sourcesLine(card.sources).map((part, i) => (
-          <span key={part.text} className={part.checkFirst ? "text-amber" : undefined}>
-            {i > 0 ? " · " : ""}
-            {part.text}
-          </span>
-        ))}
-      </p>
-      {/* What "checked by a tool only" means, for a newcomer (the screen review of 2026-10-23), where it shows. */}
-      {card.sources.tool > 0 ? <p className="text-body leading-snug text-stone">{words.sources.toolMeans}</p> : null}
+      {/* How the road's sources were checked, counted, and what "checked by a tool only" means were drawn here until
+          2026-11-11; the maintainer's w2 and his answer the same day take them away ("Take them away too"). */}
       <div className="mt-auto flex justify-end">
         <Pill
           variant="maple"

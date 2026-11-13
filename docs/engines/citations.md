@@ -1,6 +1,6 @@
 # How a source was checked: read, or checked by a tool
 
-Last updated: 2026-11-01 (the maintainer's answers on his reading page, item 10: SR&ED deepening's 35% quotes the
+Last updated: 2026-11-11 (no screen says how a source was checked, the maintainer's w2, § No screen says it); 2026-11-01 (the maintainer's answers on his reading page, item 10: SR&ED deepening's 35% quotes the
 policy page's own sentence and the SR&ED glossary is quoted nowhere, and the four lines DotAmi had written from the
 relationships page alone show the newer pages' words, road 0's line on associated corporations now two, § Rules 8, As
 built; § Blocked; § Waiting for the maintainer's read, which gains the Type of corporation page; § The maintainer's
@@ -32,8 +32,30 @@ checks in the catalogs: the honest map's six pages, § Tool checks in the catalo
 maintainer's decision; same day, after review: a card says "Read by a person" only when the catalog
 records that a person did the reading)
 
-Every citation in every catalog says how it was checked, and a card always says which kind of
-check it had.
+Every citation in every catalog says how it was checked. **Since 2026-11-11 no screen says it** (below).
+
+## No screen says it (the maintainer's w2, 2026-11-11)
+
+On the Showing Less page (story S2.5.52) the maintainer picked w2 B and wrote, whole:
+
+> I don't think we even need this. Its just more to read for the sake of it. If anything, this is a super useful tool for me as the developer for when I need to review something while building-> and it could also be useful as a back-end tool for when a real human HAS read something, and then that data could be cached and thre could be a ticker that says "Reviewed by 'x' amount of users", or " 'x' + user have read this". But there's really no need to have this line at all. Please plan out this feature for the back-end when we have users and set-up our analytics, but get rid of it for now. Make sure to update docs for a future build for when we actually start working on our back-end and analytics stories and tasks.
+
+His answer the same day to whether the cards' counts go too: "Take them away too".
+
+So, from that day:
+
+- No screen draws how a source was checked: not the line under a source ("Read by a person on <date>",
+  "Read on <date>. Who read it wasn't recorded.", "Read by an AI model on <date>. …", "Checked by a tool on
+  <date>: …"), not its amber, not *Pick a future*'s counts of a road's sources by kind, not "Checked by a
+  tool means …", not *Your plan*'s line under each source, not the Tax year hint's, not *What DotAmi knows about
+  you*'s or the Delete menu's. The Markdown export's citation lines lose it too; its front matter keeps the counts.
+- A source still shows its title as the link to the official page, who publishes it and where it applies.
+  The words a tool found on the page wait in a closed fold under the link, *Words found on the page*
+  (`components/shared/page-quotes.tsx` `PageQuotesFold`; on *Your plan*, made for printing, they stay open).
+- Every rule below about how a citation records its check still holds: the catalogs, the tests, the quality
+  report and `/api/readout` read it. Where a rule below says what a screen shows, read it as what the catalog
+  records.
+- The count he describes, "Reviewed by x users", is planned, not built: `docs/architecture/reviewed-by-people.md`.
 
 ## The decision
 

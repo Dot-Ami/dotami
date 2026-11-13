@@ -209,19 +209,24 @@ describe("the playbook export", () => {
     disclaimer: "Not advice.",
   };
 
-  it("says how each source was checked, in the same words as the screens", () => {
+  // Since the maintainer's w2 of 2026-11-11, story S2.5.52: the export no longer says how each source was checked; the front matter keeps the counts.
+  it("lists each source by its title, its authority and its place, and says nothing of how it was checked", () => {
     const md = renderPlaybookMarkdown(skeleton);
-    expect(md).toContain("- [Read page](https://www.canada.ca/a.html) — CRA / CA · Read by a person on 2026-10-10");
-    expect(md).toContain(`- [Tool page](https://www.canada.ca/b.html) — CRA / CA · ${TOOL_WORDS}`);
-    expect(md).toContain("- [Unrecorded page](https://www.canada.ca/d.html) — CRA / CA · Read on 2026-06-08. Who read it wasn't recorded.");
+    expect(md).toContain("- [Read page](https://www.canada.ca/a.html) — CRA / CA\n");
+    expect(md).toContain("- [Tool page](https://www.canada.ca/b.html) — CRA / CA\n");
+    expect(md).toContain("- [Unrecorded page](https://www.canada.ca/d.html) — CRA / CA\n");
+    for (const gone of ["Read by a person on", "Who read it wasn't recorded", "Checked by a tool on", "Read by an AI model on"]) {
+      expect(md, gone).not.toContain(gone);
+    }
+    expect(TOOL_WORDS.length).toBeGreaterThan(0);
     expect(md).not.toMatch(/· verified /);
   });
 
-  it("lists the words a tool check found under its line, so a reader can see what was checked", () => {
+  it("lists the words a tool check found under its line, so a reader can see what was found", () => {
     const md = renderPlaybookMarkdown(skeleton);
-    expect(md).toContain(`- [Tool page](https://www.canada.ca/b.html) — CRA / CA · ${TOOL_WORDS}\n  - *Words found on the page:* "${QUOTE}"\n  - *Note:*`);
+    expect(md).toContain(`- [Tool page](https://www.canada.ca/b.html) — CRA / CA\n  - *Words found on the page:* "${QUOTE}"\n  - *Note:*`);
     // A read source has no quotes to list.
-    expect(md).toContain("Read by a person on 2026-10-10\n  - *Note:*");
+    expect(md).toContain("- [Read page](https://www.canada.ca/a.html) — CRA / CA\n  - *Note:*");
   });
 
   it("dates the catalog by the oldest read of any kind (a tool check is not a read), and counts the sources a person read", () => {
