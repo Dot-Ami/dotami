@@ -991,6 +991,15 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   with two planted controls).
 
 ### Changed
+- **For a job with no written road, *Pick a future* shows *About this job*'s four parts folded to their headings**
+  (story S2.5.52, the maintainer's pick w3 C of 2026-11-11: "It saves a tone of mental bandwidth and allows the user
+  to take a breath before diving in."). The block is still shown by default (his K6 A of 2026-10-16), under its lead
+  sentence; *Employment requirements*, *Wages published for this job group*, *Business counts* and *Where to look
+  yourself* each open in place from their own heading, which stays a level 3 heading. Measured on the laptop window
+  for Barbers, the screen goes from 813 words to 388, and the two futures come up the page. The cockpit's panel,
+  opened by the person's own click, keeps the rows open (`components/cockpit/about-this-job-panel.tsx`,
+  `components/front-door/about-job-in-place.tsx`; docs/ui-spec/futures/03-road-match.md,
+  docs/ui-spec/cockpit/about-this-job.md).
 - **The question screens show the question first; every note around it waits in one fold, *How this works*** (story
   S2.5.52, the maintainer's picks of 2026-11-11: w1 C, "it's got to be crazy simple and straightforward", the fold
   named *How this works* and a *Learn more* inside it; w5 A, the layout rule's fifth line, *one line first*). On

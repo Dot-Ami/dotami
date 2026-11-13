@@ -79,9 +79,12 @@ lowered can't be raised back later (CI compares with main; locally, with where t
 `origin/main`). A screen over its limit fails the browser
 suite. To add a region, take one away first. **A fold's own button** (the maintainer's answer of 2026-11-11,
 "Allow +1 for a fold"): a fold that takes words off a screen may add its own one button, so that screen's limit on
-controls goes up by exactly one at the sizes where the fold's button shows in the first window. Each such screen
-and size is listed in `FOLD_ALLOWANCE` in `e2e/budgets.ts`, dated, and its budget is raised by one in the same pull
-request; `tests/clutter-budgets.spec.ts` allows a budget above the baseline, a first row or main's by its allowance,
+controls goes up by one for each such fold whose button shows in the first window (four on *Pick a future*'s
+no-road block, whose four rows each fold, w3 C). Each such screen and size is listed in `FOLD_ALLOWANCE` in
+`e2e/budgets.ts` with its number of folds, dated, and its budget is raised by that number in the same pull
+request; a button that comes into view for another reason (a shorter block above it) is not a fold's own, and is
+allowed only where the maintainer says so (`BACK_IN_VIEW`: his "Allow them back" of 2026-11-11, the two futures'
+Look inside buttons on the typed way's last step for a job with no road, at tablet size); `tests/clutter-budgets.spec.ts` allows a budget above the baseline, a first row or main's by its allowance,
 and above main's only in that pull request, so once it is on main the raised budget can only go down again. A new
 screen arrives with its own `data-region` marks and its
 own row in `e2e/budgets.ts`, the written way (task 29j): listed in `ADDED_SCREENS` with the measured screen it
