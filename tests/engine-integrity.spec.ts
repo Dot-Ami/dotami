@@ -20,6 +20,7 @@ import { recordRetentionV2026 } from "@/lib/engines/compliance/v2026";
 import { officialFeesV2026 } from "@/lib/engines/fees/v2026";
 import { roadsCatalogV2026, skillItemsV2026 } from "@/lib/engines/roads/v2026";
 import { oasisCatalogCitations } from "@/lib/engines/oasis/v2026";
+import { phasesCatalogV2026 } from "@/lib/engines/phases/v2026";
 import { citationCheckProblems, howChecked } from "@/lib/engines/shared/citation-check";
 
 describe("engine catalog integrity", () => {
@@ -125,7 +126,11 @@ describe("engine catalog integrity", () => {
       skillItemsV2026.reduce((n, item) => n + item.citations.length + (item.howToGetIt ? 1 : 0), 0) +
       // The government's skills list (2026-10-12): its dataset page, the profile page that says what a 0
       // means, and the licence page; every item of every job cites the first.
-      oasisCatalogCitations().length;
+      oasisCatalogCitations().length +
+      // The phase catalog (task 48c, 2026-11-12): each standing's, legal form's and change's sources, and one page
+      // for each "leads to".
+      [...phasesCatalogV2026.standings, ...phasesCatalogV2026.legalForms].reduce((n, e) => n + e.citations.length, 0) +
+      phasesCatalogV2026.changes.reduce((n, c) => n + c.citations.length + c.leadsTo.length, 0);
     const listed = allCatalogCitations();
     expect(listed.length).toBe(expected);
     // The roads are in the list: road 0's steps carry the map stages' sources.
