@@ -13,6 +13,7 @@ import { complianceCatalogV2026, recordRetentionV2026 } from "@/lib/engines/comp
 import { officialFeesV2026 } from "@/lib/engines/fees/v2026";
 import { grantsCatalogV2026 } from "@/lib/engines/grants/v2026";
 import { oasisCatalogCitations } from "@/lib/engines/oasis/v2026";
+import { phasesCatalogV2026 } from "@/lib/engines/phases/v2026";
 import { riskCatalogV2026 } from "@/lib/engines/risk/v2026";
 import { roadsCatalogV2026, skillItemsV2026 } from "@/lib/engines/roads/v2026";
 import type { CitationCheck } from "@/lib/engines/shared/types";
@@ -79,5 +80,13 @@ export function allCatalogCitations(): CitationInCatalog[] {
   // The government's skills list (2026-10-12): every item of every job cites the dataset's page with one
   // tool check, so the page is listed once, with the profile page that says what a 0 means and the licence.
   for (const { where, citation } of oasisCatalogCitations()) add(where, [citation]);
+  // The phase catalog (task 48c, 2026-11-12): each standing's, legal form's and change's sources, then the page each
+  // "leads to" cites. No screen reads it yet; it is listed so the quote check reads its quotes with the rest.
+  for (const standing of phasesCatalogV2026.standings) add(`phases ${standing.id}`, standing.citations);
+  for (const form of phasesCatalogV2026.legalForms) add(`phases ${form.id}`, form.citations);
+  for (const change of phasesCatalogV2026.changes) {
+    add(`phases ${change.id}`, change.citations);
+    for (const link of change.leadsTo) add(`phases ${change.id}->${link.to}`, [link.citation]);
+  }
   return out;
 }
