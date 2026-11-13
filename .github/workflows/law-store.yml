@@ -1,0 +1,52 @@
+# The law store's builder tools (tools/law-store/). They are not part of the app, so this runs only
+# when they change, and it isn't a required check.
+name: Law store
+
+on:
+  push:
+    branches: [main, master]
+    paths:
+      - "tools/law-store/**"
+      - ".github/workflows/law-store.yml"
+  pull_request:
+    branches: [main, master]
+    paths:
+      - "tools/law-store/**"
+      - ".github/workflows/law-store.yml"
+
+concurrency:
+  group: law-store-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  checks:
+    name: Selftest and citation check
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: "3.12"
+
+      - name: Install the tools' dependency
+        run: pip install --require-hashes -r tools/law-store/requirements.txt
+
+      - name: Selftest (offline, on a temporary store)
+        run: python tools/law-store/contract/selftest.py
+
+      # cite_check needs real Acts and the repository holds none (tools/law-store/README.md), so the two
+      # it reads are fetched from Justice Canada into a store that lives only on this runner: it is
+      # never uploaded and goes with the run. A failed fetch prints UNREACHABLE and carries on; the
+      # next step then finds no source and fails.
+      - name: Fetch the Acts into a throw-away store
+        run: |
+          python tools/law-store/contract/new_store.py
+          python tools/law-store/contract/ingest_xml.py ita cbca
+
+      - name: Citation check (12 real claims, 3 fakes)
+        run: python tools/law-store/contract/cite_check.py
