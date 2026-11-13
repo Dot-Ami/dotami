@@ -162,6 +162,27 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   put it back.
 
 ### Added
+- **Pick a future tells a person who wrote about closing, pausing or selling a business, or being behind on
+  filings, that no road is written for that yet, quoting their own words** (the maintainer's pick of 2026-11-11,
+  made on pictures of four placements drawn on the real screen). On the typed way's last screen, when the sentence
+  the person typed holds such words, one line shows in front of the futures: *You wrote “closing”. None is written
+  yet for closing, pausing or selling a business, or for catching up on filings. Not here yet? keeps your note.*
+  **Before:** that sentence showed only after a Skip at the job question. Of the test set's 39 ideas about a
+  business closing, pausing, being sold or behind, the 25 whose person picks a job were told only *No road is
+  written for <job> yet*, and went on to a road about starting. **Now:** 34 of the 39 are told. The five that
+  aren't are listed as known gaps: four are about moving, a bankruptcy, a receiver and starting a paused business
+  up again, which the sentence doesn't name, and one says an unlicensed daycare, which DotAmi must not quote back
+  as being behind. **What it never does:** it quotes, it doesn't
+  conclude; nothing is kept or sent; no card moves, none is hidden, no road is picked. A word counts only with
+  the words around it that make it about a business or its filings (*closing my retail store*, not *close to the
+  GST line*; *behind on GST*, not *behind on orders*), in English only, and a sentence the list misses sees the
+  screen as before. **A rule changed:** this screen's design said DotAmi doesn't read the person's words to guess
+  the kind of idea; it now reads them for this one line (`docs/ui-spec/futures/03-road-match.md`, case D).
+  `lib/front-door/situation-words.ts`, `components/front-door/job-and-road-steps.tsx`, `lib/front-door/words.ts`
+  (`pickWords.youWrote`). Tests: `tests/situation-words.spec.ts`; two new promises in the idea harness,
+  `ends:situation-said` and `nothing-derived:situation`, each proven by a planted mistake
+  (`tests/idea-harness-plants.spec.ts`, which also holds the 21 as they were before); `e2e/three-steps.spec.ts`
+  in a real browser.
 - **Tests: the phases a business can go through, as three lists** (2026-11-11, tests only; the maintainer's picks of
   2026-11-11 on business phases, b1 A). `tests/fixtures/phases/v1.ts` keeps apart what the official pages keep apart:
   where a business stands (not started, running, paused, ended), its legal form (the CRA's three business structures,

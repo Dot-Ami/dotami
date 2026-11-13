@@ -165,4 +165,20 @@ export const KNOWN_GAPS: readonly KnownGap[] = [
   // ideas the same way). The typed way now ends on Pick a future's three steps, and the road drawn is the one the
   // person opened on step 3, kept as their pick, with the step's own line saying why (the road written for their
   // job first, "No road is written for <job> yet", or "You didn't pick a job").
+  //
+  // Added on 2026-11-11 with step 3's quoted line (the maintainer's pick s1 D) and its promise, `ends:situation-said`.
+  // Before the line, 21 of the corpus's 33 ideas about a business closing, pausing, being sold or behind on its
+  // filings failed that promise: every one whose invented person picks a job, since only a Skip drew the "None is
+  // written yet for closing…" line (planted in tests/idea-harness-plants.spec.ts). The quoted line tells 19 of them.
+  // Task 47l's ideas (#245, merged first) added six more of these two kinds; three of them pick a job and hold none
+  // of the quoted words (368, 369, 377), so they join the list here.
+  {
+    invariant: "ends:situation-said",
+    subject: "typed",
+    kind: "planned",
+    story: "S2.5.48, task 48e: Pick a future asks where the business stands, so the person says it themselves",
+    why:
+      "The person picks a job, so the line everyone sees after a Skip isn't drawn, and their sentence holds none of the words the quoted line is drawn for. 189 is moving to another territory, which the sentence on screen doesn't name. 252 says an unlicensed daycare: quoting that back as being behind would be DotAmi judging the idea, which this screen never does. 368 (a restaurant gone bankrupt) and 369 (a receiver appointed for a machine shop) are neither closing, pausing nor selling as the sentence on screen names them. 377 parked a welding business and is starting it up again, which the sentence doesn't name either.",
+    ideas: [189, 252, 368, 369, 377],
+  },
 ];

@@ -7,7 +7,10 @@ three-step component (planned), with today's cards (`components/front-door/pick-
 `pickWords` (extended) and `lib/cockpit/words.ts` `goal`
 Type: list of cards, a no-road block, buttons
 
-Last updated: 2026-10-20 (designed before it is built, task 28g, for task 28c. The maintainer's picks of
+Last updated: 2026-11-11 (case D, the person's own words quoted back on the typed way: the maintainer's pick s1 D,
+"We'll go with D for now", made on pictures of four placements drawn on this screen. It changes case C's rule that
+DotAmi doesn't read the person's words here; what it reads them for, and what it never does with them, is in case
+D.) · 2026-10-20 (designed before it is built, task 28g, for task 28c. The maintainer's picks of
 2026-10-16, K6 A: a job with no written road shows *About this job* by default, with road 0 one click away; of
 2026-10-20: the career road joins in phase 3, so it is not offered now; no sending an idea with no road to the
 maintainers, D4 = no; of 2026-10-21, call 3: a job with no written road saves nothing, and call 2: no region
@@ -72,9 +75,42 @@ is never reached without a line saying why the road drawn is the one drawn.
 - No pick line. The cards, all in one group, in the order they were written, with *You didn't pick a job, so
   no future is matched to one. These are all the futures written so far, in the order they were written.*
 - *None is written yet for closing, pausing or selling a business, or for catching up on filings. Not here
-  yet? keeps your note.* The same words for everyone who skips: DotAmi doesn't read the person's words to
-  guess which kind of idea it is (the corpus's closing, pausing, selling and catch-up ideas, and illegal ones
-  such as corpus 250 and 252, see the same screen; nothing on it judges the idea).
+  yet? keeps your note.* The same words for everyone who skips, on Pick a future and on the typed way, unless
+  case D's line stands in its place. Nothing on the screen judges the idea: illegal ones such as corpus 250 and
+  252 see the same screen as everyone else.
+- **Until 2026-11-11** this case's rule was that DotAmi doesn't read the person's words to guess which kind of
+  idea it is. Measured on 2026-11-09: of the corpus's 33 ideas about a business closing, pausing, being sold or
+  behind on its filings, the 21 whose person picks a job never saw this line, and were told only *No road is
+  written for <job> yet.* The maintainer changed the rule for one use (case D).
+
+### D. The person's own sentence says closing, pausing, selling or being behind (the typed way)
+
+- **What shows.** In front of the futures, whatever the person did at the job question, one line in a box:
+  *You wrote “closing”. None is written yet for closing, pausing or selling a business, or for catching up on
+  filings. Not here yet? keeps your note.* The words in quote marks are the person's own, as typed. After a
+  Skip the line stands in the place of case C's second line, so the sentence is said once.
+- **When.** Only on the typed way (the intake's last screen), where the person's sentence is on the page, and
+  only when `situationWordsIn` (`lib/front-door/situation-words.ts`) finds words in it: closing, shutting or
+  winding down, pausing or selling a business the sentence names; being behind on, or never having done,
+  filings. Pick a future has no sentence, so cases A to C are unchanged there.
+- **What it never does** (so it stays inside "never derive a fact about the person" and "the person's words
+  stay the person's words", `CLAUDE.md`): it quotes, it doesn't conclude. The line never says the person is
+  closing anything, only what they wrote. Nothing is kept, sent or put in a profile; the sentence is read on the
+  page each time the step draws. No card moves, none is hidden or added, no road is picked, and *Not here yet?*
+  opens the road it always opened.
+- **Missing is safe; quoting wrongly is not** (the same care as the intake's keyword parser,
+  `lib/journey/intent-fallback.ts`). A word counts only with the words around it that make it about a business
+  or its filings: *closing my retail store*, not *close to the GST line* or *closing our seed round*; *behind on
+  GST*, not *behind on orders*. English only. A person the list misses sees cases A to C as before.
+- **Measured on the corpus, 2026-11-11** (`tests/situation-words.spec.ts`, `tests/idea-harness-plants.spec.ts`):
+  the line quotes 30 of the 33 and nothing from any idea of another kind. With it, 31 of the 33 are told (one
+  more skips the job question and sees case C's line). Two are not, and are listed as known gaps
+  (`tests/fixtures/ideas/known-gaps.ts`): 189, moving to another territory, which the sentence doesn't name, and
+  252, an unlicensed daycare, which DotAmi must not quote back as being behind. Task 47l's ideas (368 to 385,
+  added the same day) brought the count to 39: the line quotes 31 of them and 34 are told. Three more are known
+  gaps, none of which the sentence names: 368, a bankruptcy; 369, a receiver; 377, a paused business starting up
+  again. The lasting answer is the person saying where the business stands themselves (the phases plan), not a
+  longer word list.
 
 ### After Look inside: what the cockpit says
 
@@ -110,6 +146,7 @@ pickWords (additions) = {
   road0NotForJob: "Not written for <job>. It covers the tax and structure steps for any business in Alberta.",
   skipped: "You didn't pick a job, so no future is matched to one. These are all the futures written so far, in the order they were written.",
   skippedNoneFor: "None is written yet for closing, pausing or selling a business, or for catching up on filings. Not here yet? keeps your note.",
+  youWrote: "You wrote “<the person's words>”. None is written yet for closing, pausing or selling a business, or for catching up on filings. Not here yet? keeps your note.",
 }
 cockpitWords.goal (additions) = {
   forJob: "written for your pick of job",
@@ -209,6 +246,8 @@ differently, with nothing taken away from what the person can do:
   level 3 headings (*Employment requirements* …).
 - A card's extra line (*Written for Cabinetmakers (72311).*, *Not written for Barbers. …*) is part of the
   card's description, read with its **Look inside** button.
+- Case D's line is a paragraph, not a heading, a region or an alert: it is read in order, after the pick line
+  and before the first group, and takes no focus.
 
 ## Phone (375 px)
 
@@ -242,4 +281,5 @@ fallback, even one a known gap lists (`silentFallbackProblems`, tests/helpers/id
 ## Checked against the rules
 
 Every string in the words block was run through `VERDICT_WORDS`, `findVerdicts` and `findTimeWords` on
-2026-10-20, and again on 2026-10-21 after the maintainer's calls: no finding.
+2026-10-20, and again on 2026-10-21 after the maintainer's calls: no finding. Case D's line is checked by a test
+with every set of words the list quotes from the corpus (`tests/situation-words.spec.ts`, 2026-11-11): no finding.
