@@ -162,6 +162,47 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   put it back.
 
 ### Added
+- **The law store's builder tools are in this repository** (the maintainer's ruling of 2026-11-03 that DotAmi
+  relies on no other project). `tools/law-store/` holds the Python that builds and checks the statute store behind
+  "Show the words": the contract and its refusals, the parsers, the schema and the source registry, plus
+  `new_store.py`, which makes an empty store. It never runs on a person's computer and nothing in it ships. No built
+  store and no Act text is committed: whether law text may ship in a public release waits on a lawyer's answer. The
+  `Law store` workflow runs `selftest.py`, then `cite_check.py` against the Income Tax Act and the Canada Business
+  Corporations Act fetched into a throw-away store on the runner. `cite_check.py` now fails when a claim isn't
+  found: until now only a fake that came back real did, so a planted fake claim, or a store with nothing in it,
+  still exited 0. The app reaches the store through `LAW_STORE_PATH` as before and no screen changes
+  ([tools/law-store/README.md](tools/law-store/README.md), [law-store.md](docs/architecture/law-store.md)).
+- **Pick a future tells a person who wrote about closing, pausing or selling a business, or being behind on
+  filings, that no road is written for that yet, quoting their own words** (the maintainer's pick of 2026-11-11,
+  made on pictures of four placements drawn on the real screen). On the typed way's last screen, when the sentence
+  the person typed holds such words, one line shows in front of the futures: *You wrote “closing”. None is written
+  yet for closing, pausing or selling a business, or for catching up on filings. Not here yet? keeps your note.*
+  **Before:** that sentence showed only after a Skip at the job question. Of the test set's 39 ideas about a
+  business closing, pausing, being sold or behind, the 25 whose person picks a job were told only *No road is
+  written for <job> yet*, and went on to a road about starting. **Now:** 34 of the 39 are told. The five that
+  aren't are listed as known gaps: four are about moving, a bankruptcy, a receiver and starting a paused business
+  up again, which the sentence doesn't name, and one says an unlicensed daycare, which DotAmi must not quote back
+  as being behind. **What it never does:** it quotes, it doesn't
+  conclude; nothing is kept or sent; no card moves, none is hidden, no road is picked. A word counts only with
+  the words around it that make it about a business or its filings (*closing my retail store*, not *close to the
+  GST line*; *behind on GST*, not *behind on orders*), in English only, and a sentence the list misses sees the
+  screen as before. **A rule changed:** this screen's design said DotAmi doesn't read the person's words to guess
+  the kind of idea; it now reads them for this one line (`docs/ui-spec/futures/03-road-match.md`, case D).
+  `lib/front-door/situation-words.ts`, `components/front-door/job-and-road-steps.tsx`, `lib/front-door/words.ts`
+  (`pickWords.youWrote`). Tests: `tests/situation-words.spec.ts`; two new promises in the idea harness,
+  `ends:situation-said` and `nothing-derived:situation`, each proven by a planted mistake
+  (`tests/idea-harness-plants.spec.ts`, which also holds the 21 as they were before); `e2e/three-steps.spec.ts`
+  in a real browser.
+- **Tests: the phases a business can go through, as three lists** (2026-11-11, tests only; the maintainer's picks of
+  2026-11-11 on business phases, b1 A). `tests/fixtures/phases/v1.ts` keeps apart what the official pages keep apart:
+  where a business stands (not started, running, paused, ended), its legal form (the CRA's three business structures,
+  two of them in DotAmi's rules today, and six other kinds of organization the registries name, kept for later), and
+  33 changes it can go through in six groups (keeping the record straight, owners or legal form, growing, stopping,
+  coming back, catching up), each with the official pages behind it, which legal forms they speak of, and what it
+  leads to. The maintainer's 12 situation values are mapped onto the three. Every page was fetched on 2026-11-11 and
+  found to say what its entry leans on: a tool's check, not a person's read. No road is written for any of the 33,
+  nothing in the app reads the file, and nothing a person sees changes. `tests/phase-lists.spec.ts` fails on a page
+  that isn't an official https page, a "leads to" naming nothing, an id used twice, or a group that shrinks.
 - **Build provenance for the Windows installer** (the house-cleaning audit of 2026-10-31). None of the installer
   releases so far (0.2.0 to 0.4.1) carried a signature or anything saying where it was built. The release workflow
   now has GitHub's `actions/attest-build-provenance` sign a statement that this repository's `release.yml`, at the

@@ -16,6 +16,7 @@ import { leftOutLine, searchStatusLine } from "@/lib/front-door/job-search-lines
 import { ALBERTA_ECONOMIC_REGIONS, DONT_KNOW_REGION, economicRegionsCreditLine } from "@/lib/engines/research-kit/v2026/economic-regions";
 import { roadJobNames } from "@/lib/front-door/road-jobs";
 import { cardJobLine, roadMatch, type RoadMatchCase } from "@/lib/front-door/road-match";
+import { situationWordsIn } from "@/lib/front-door/situation-words";
 import { answersOf, asksWhere, type StepsState } from "@/lib/front-door/three-steps";
 import { typedWayCount } from "@/lib/front-door/typed-way";
 import { jobStepWords, whereStepWords } from "@/lib/front-door/words";
@@ -931,6 +932,10 @@ function piecesOfSteps(pieces: TextPiece[], way: "typed" | "picked", idea: Idea,
   if (steps.job) add("road › pick line", pickWords.pickLine(steps.job.label, steps.job.code));
   // Outside Alberta the futures not written for the job sit under the two groups' headings, not the others heading.
   const { listed, outsideAlberta, folded } = stepThree(idea, steps.job?.code ?? null);
+  // The typed way's quoted line (case D, 2026-11-11): the person's own words about closing, pausing, selling or
+  // being behind, read from the sentence they typed, as the screen reads them. Pick a future has no sentence.
+  const wrote = way === "typed" ? situationWordsIn(idea.words) : null;
+  if (wrote) add("road › you wrote", pickWords.youWrote(wrote));
   if (steps.match === "written") {
     add("road › written heading", pickWords.writtenForJobHeading);
     if (!outsideAlberta) add("road › others heading", pickWords.othersHeading);
@@ -944,7 +949,8 @@ function piecesOfSteps(pieces: TextPiece[], way: "typed" | "picked", idea: Idea,
     if (!outsideAlberta) add("road › others heading", pickWords.othersHeading);
   } else {
     add("road › skipped", pickWords.skipped(outsideAlberta));
-    add("road › skipped none for", pickWords.skippedNoneFor);
+    // Said once: the quoted line ends with the same sentence, so it stands in this one's place.
+    if (!wrote) add("road › skipped none for", pickWords.skippedNoneFor);
   }
   if (outsideAlberta) {
     add("road › canada heading", pickWords.canadaHeading);

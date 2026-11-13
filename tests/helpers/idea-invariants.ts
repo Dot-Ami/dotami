@@ -30,10 +30,15 @@ import { findVerdicts, VERDICT_WORDS } from "./verdict-words";
  *    once every question is answered, a next step or the road done; every fork side reaches the end; every
  *    question asked changes something when answered, and goes off *Not told yet* once answered; the road is
  *    written for the idea's place; and the road drawn is the one the person picked on step 3, where the roads
- *    written for their pick of job come first, not a silent fallback.
+ *    written for their pick of job come first, not a silent fallback. Since 2026-11-11 (the maintainer's pick
+ *    s1 D), an idea about closing, pausing or selling a business or being behind on filings, which no road is
+ *    written for, is also told so on the typed way's step 3 (`ends:situation-said`): by the line that quotes the
+ *    person's own words, or by the line everyone sees after a Skip. Before that pick, 21 of the corpus's 33 such
+ *    ideas were told nothing about it.
  * 6. nothing derived: no province, kind of work, equipment purchase or job set without the person's words
  *    naming it or the person picking it (a job is only ever the one the person clicked on step 1); a picked future's unasked answers stay "not said"; ID-like digits
- *    never copied into DotAmi's own text.
+ *    never copied into DotAmi's own text; and the line that quotes the person's words about closing, pausing,
+ *    selling or being behind shows only for an idea that is about one of those (`nothing-derived:situation`).
  * 7. same-output: the same idea gives the same run, checked by the spec (`runDigest` twice).
  */
 export const INVARIANTS = [
@@ -48,6 +53,7 @@ export const INVARIANTS = [
   "ends:answered-question-goes",
   "ends:road-written-for-place",
   "ends:no-silent-fallback",
+  "ends:situation-said",
   "nothing-derived:province",
   "nothing-derived:kind-of-work",
   "nothing-derived:equipment",
@@ -55,6 +61,7 @@ export const INVARIANTS = [
   "nothing-derived:place-kept",
   "nothing-derived:picked-not-said",
   "nothing-derived:id-digits",
+  "nothing-derived:situation",
   "same-output",
 ] as const;
 export type InvariantId = (typeof INVARIANTS)[number];
@@ -310,6 +317,12 @@ export function honestAlbertaPick(run: IdeaRun, c: CockpitRun, province: string)
   return cardSaysPlace && cardSaysJob && cockpitSays;
 }
 
+/**
+ * The corpus's two kinds of person whose idea is about a business moving, pausing or closing, or about being
+ * behind (docs/architecture/use-cases.md, "The people"). The only ideas step 3's quoted line may show for.
+ */
+const aboutItsSituation = (idea: IdeaRun["idea"]) => idea.people === "moves-pauses-closes" || idea.people === "already-behind";
+
 /** Every failure of one idea's run, invariants 1 to 6. Invariant 7 needs two runs: see `sameOutput`. */
 export function checkRun(run: IdeaRun): Failure[] {
   const failures: Failure[] = [];
@@ -352,6 +365,23 @@ export function checkRun(run: IdeaRun): Failure[] {
   }
 
   for (const c of [run.typed, run.picked]) if (c) cockpitFailures(run, c, fail);
+
+  // The typed way's step 3 and the person's situation (the maintainer's pick s1 D of 2026-11-11).
+  if (run.typedSteps) {
+    const at = (where: string) => run.pieces.some((p) => p.where === `typed › steps › road › ${where}`);
+    const quoted = at("you wrote");
+    // 6. The quoted line shows only where the idea is about closing, pausing, selling or being behind: words
+    // quoted from any other idea would read as DotAmi knowing something it was never told.
+    if (quoted && !aboutItsSituation(idea)) {
+      fail("nothing-derived:situation", "", "typed: step 3 quotes the person's words as being about closing, pausing, selling or being behind; the idea isn't filed as either kind");
+    }
+    // 5. An idea about a business closing, pausing, being sold or behind, with no road written for it, is told
+    // none is written: by its own words quoted back, or by the line everyone sees after a Skip. A career change
+    // is no business closing, so the sentence isn't about it.
+    if (aboutItsSituation(idea) && idea.road === "none-written-yet" && idea.lookingFor !== "career" && !quoted && !at("skipped none for")) {
+      fail("ends:situation-said", "typed", `typed: step 3 never says no road is written for closing, pausing, selling or catching up (${run.typedSteps.match})`);
+    }
+  }
 
   // 5. The honest end of step 3 (task 29h): a way in that stopped at Pick a future's third step, with nothing
   // saved, ends honestly only where a job was picked, no road is written for it, and the screen said so.
