@@ -136,6 +136,9 @@ export const destinationWords = {
   },
 } as const;
 
+/** What no road is written for yet, said once: after a Skip, and after the person's own words (`pickWords.youWrote`). */
+const NONE_WRITTEN_FOR = "None is written yet for closing, pausing or selling a business, or for catching up on filings. Not here yet? keeps your note.";
+
 export const pickWords = {
   back: "← Your destination",
   navLabel: "Pick a future",
@@ -239,7 +242,14 @@ export const pickWords = {
     outsideAlberta
       ? "You didn't pick a job, so no future is matched to one. These are all the futures written so far: the federal steps, written for all of Canada, then the futures written for Alberta, folded below. Each group is in the order it was written."
       : "You didn't pick a job, so no future is matched to one. These are all the futures written so far, in the order they were written.",
-  skippedNoneFor: "None is written yet for closing, pausing or selling a business, or for catching up on filings. Not here yet? keeps your note.",
+  skippedNoneFor: NONE_WRITTEN_FOR,
+  /**
+   * On the typed way, in front of the futures, when the person's own sentence holds words about closing, pausing or
+   * selling a business, or about being behind on filings (lib/front-door/situation-words.ts; the maintainer's pick
+   * s1 D of 2026-11-11). It quotes their words back and says what isn't written yet. It never says what the person
+   * is doing, only what they wrote. After a Skip it stands in `skippedNoneFor`'s place, so the sentence shows once.
+   */
+  youWrote: (words: string) => `You wrote “${words}”. ${NONE_WRITTEN_FOR}`,
 } as const;
 
 /**

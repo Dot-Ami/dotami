@@ -39,7 +39,23 @@ const plants = vi.hoisted(() => ({
   dropJobLine: false,
   /** No card says where it is written for: *Written for Alberta.* is empty (the first half of call 35's first label). */
   dropWrittenFor: false,
+  /** Step 3 quotes nothing from the person's sentence: the screen as it was before the maintainer's pick s1 D of 2026-11-11. */
+  quoteNothing: false,
+  /** A careless word list: any "close" in the sentence is quoted as being about closing ("close to the GST line"). */
+  quoteAnyClose: false,
 }));
+
+vi.mock("@/lib/front-door/situation-words", async (importOriginal) => {
+  const real = await importOriginal<typeof import("@/lib/front-door/situation-words")>();
+  return {
+    ...real,
+    situationWordsIn: (sentence: string | null | undefined) => {
+      if (plants.quoteNothing) return null;
+      if (plants.quoteAnyClose) return /\bclose\b/i.exec(sentence ?? "")?.[0] ?? real.situationWordsIn(sentence);
+      return real.situationWordsIn(sentence);
+    },
+  };
+});
 
 vi.mock("@/lib/front-door/words", async (importOriginal) => {
   const real = await importOriginal<typeof import("@/lib/front-door/words")>();
@@ -169,6 +185,8 @@ afterEach(() => {
   plants.futureForAnyPlace = false;
   plants.dropJobLine = false;
   plants.dropWrittenFor = false;
+  plants.quoteNothing = false;
+  plants.quoteAnyClose = false;
 });
 
 describe("the harness fails on a planted product regression", () => {
@@ -301,5 +319,42 @@ describe("the harness fails on a planted product regression", () => {
 
   it("a place the person didn't pick, set by the intake's scenario builder", () => {
     expect(addedKeys(BC_IDEA, "moveToAlberta", "nothing-derived:place-kept")).toEqual([`${BC_IDEA.id} · nothing-derived:place-kept · `]);
+  });
+
+  it("step 3's quoted line gone: an idea about closing whose person picks a job is told nothing about it", () => {
+    // Closing a retail store in Calgary (idea 178): the person picks a job, so the line everyone sees after a Skip
+    // isn't drawn, and only their own word quoted back, "closing", says no road is written for that.
+    const closing = idea("idea-v1-0178");
+    expect(stepsChoice(closing, "typed").job).not.toBeNull();
+    expect(addedKeys(closing, "quoteNothing", "ends:situation-said")).toEqual([`${closing.id} · ends:situation-said · typed`]);
+    // A person who skips the job question (idea 188, closing a craft shop) still sees that line, so nothing is added.
+    const skips = idea("idea-v1-0188");
+    expect(stepsChoice(skips, "typed").job).toBeNull();
+    expect(addedKeys(skips, "quoteNothing", "ends:situation-said")).toEqual([]);
+  });
+
+  it("the screen as it was before 2026-11-11 fails the new promise for 25 of the corpus's 39 such ideas", () => {
+    // The measurement the quoted line was built on (the maintainer's pick s1 D): with nothing quoted, every one of
+    // the 39 whose person picks a job is told nothing about closing, pausing, selling or catching up. The recount of
+    // 2026-11-10 found 21 of 33; task 47l's ideas (368 to 385, #245) added six of these kinds, four picking a job.
+    plants.quoteNothing = true;
+    const said = (target: (typeof IDEAS_V1)[number]) =>
+      checkRun(runIdea(target, { probeQuestions: false })).filter((f) => f.invariant === "ends:situation-said").map((f) => Number(f.ideaId.slice(-4)));
+    const closingOrBehind = IDEAS_V1.filter((i) => i.people === "moves-pauses-closes" || i.people === "already-behind");
+    const notTold = closingOrBehind.flatMap(said);
+    expect(notTold).toEqual([
+      178, 183, 189, 191, 197, 198, 199, 201, 204, 207, 211, 212, 213, 252, 255, 301, 308, 318, 321, 330, 331, 368, 369, 377, 379,
+    ]);
+    // With the line, the five the known-gaps list names are left.
+    plants.quoteNothing = false;
+    expect(closingOrBehind.flatMap(said)).toEqual([189, 252, 368, 369, 377]);
+    // Some sixty ideas run twice: more than the default time on a busy machine.
+  }, 60_000);
+
+  it("a careless word list: words quoted from an idea that isn't about closing or being behind", () => {
+    // The plumber's "revenue is getting close to the GST line" (idea 51) says nothing about closing a business.
+    expect(addedKeys(Y3_IDEA, "quoteAnyClose", "nothing-derived:situation")).toEqual([`${Y3_IDEA.id} · nothing-derived:situation · `]);
+    // The retail store's owner did write about closing it, so the same careless list adds nothing there.
+    expect(addedKeys(idea("idea-v1-0178"), "quoteAnyClose", "nothing-derived:situation")).toEqual([]);
   });
 });

@@ -39,6 +39,16 @@ person is asked).
 
 ### What DotAmi keeps, and where
 
+- **Pick a future reads the sentence you typed for words about closing, pausing or selling a business, or being
+  behind on filings, and quotes them back to you (2026-11-11, the maintainer's pick).** Asks: nothing new. Keeps:
+  nothing new. Sends: nothing. On the typed way's last screen the page looks in the sentence it already holds in the
+  window's memory for a short, fixed list of English phrases
+  ([`lib/front-door/situation-words.ts`](../lib/front-door/situation-words.ts); a list, not a model), each time the
+  screen draws. What it finds shows in one line, *You wrote “…”. None is written yet for closing, pausing or selling
+  a business, or for catching up on filings.* The words found are not kept, not sent to DotAmi's server or anywhere
+  else, not added to *What DotAmi knows about you*, and change no card, order or road. Until now this screen's
+  design said DotAmi doesn't read your words to guess the kind of idea
+  ([03-road-match.md](ui-spec/futures/03-road-match.md), case D, says what changed and what it never does).
 - **Export is built in the page, from what Your plan shows (2026-10-23, pre-release fix).** Asks: nothing new.
   Keeps: nothing new. Until now the cockpit's **Export** sent the idea's map answers and the road to DotAmi's own
   server on this computer (`POST /api/playbook`), which answered with the tax map's catalog stages. Now the
@@ -265,6 +275,10 @@ person is asked).
 
 ### What the policy will need to say
 
+- **"On the last screen of the typed way in, DotAmi looks in the sentence you typed for a short, fixed list of
+  phrases about closing, pausing or selling a business, or being behind on filings, so it can tell you no road is
+  written for those yet. It quotes your words back to you on that screen and does nothing else with them."**
+  ([`lib/front-door/situation-words.ts`](../lib/front-door/situation-words.ts).)
 - **"The window's own storage holds nothing you typed or answered, only how you left the cockpit's screen.
   Until this version it also held the intake in progress, a statement that couldn't be saved and the job
   descriptions typed under Other…; this version removes those where it finds them."**
