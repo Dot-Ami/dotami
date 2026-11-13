@@ -1005,9 +1005,11 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   [docs/architecture/reviewed-by-people.md](docs/architecture/reviewed-by-people.md). The contract (`CLAUDE.md`)
   and [docs/engines/citations.md](docs/engines/citations.md) say so; the panel recording
   (`tests/fixtures/official-fees/panels-before.json`) was redrawn after checking that all 34 panels differ only
-  by those two things. With the cards shorter, their own Look inside buttons come into the first window on four screens:
-  allowed by the maintainer's standing rule of the same day ("Allow them, and as a rule": a screen's own buttons that
-  come into view because words above them were taken away), each recorded in `BACK_IN_VIEW` (`e2e/budgets.ts`).
+  by those two things. With the cards shorter, their own Look inside buttons come into the first window on four screens,
+  and on two more as CI's Ubuntu run draws them (outside Alberta at laptop size, where the page's own *open source on
+  GitHub* link comes in too, and the intake's step 3 with the job skipped on a phone): allowed by the maintainer's
+  standing rule of the same day ("Allow them, and as a rule": a screen's own buttons that come into view because
+  words above them were taken away), each recorded in `BACK_IN_VIEW` (`e2e/budgets.ts`).
 - **For a job with no written road, *Pick a future* shows *About this job*'s four parts folded to their headings**
   (story S2.5.52, the maintainer's pick w3 C of 2026-11-11: "It saves a tone of mental bandwidth and allows the user
   to take a breath before diving in."). The block is still shown by default (his K6 A of 2026-10-16), under its lead
