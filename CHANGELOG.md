@@ -172,6 +172,15 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   found: until now only a fake that came back real did, so a planted fake claim, or a store with nothing in it,
   still exited 0. The app reaches the store through `LAW_STORE_PATH` as before and no screen changes
   ([tools/law-store/README.md](tools/law-store/README.md), [law-store.md](docs/architecture/law-store.md)).
+- **A catalog of the phases a business can go through** (task 48c, story S2.5.48; `lib/engines/phases/v2026/`,
+  [docs/engines/phases.md](docs/engines/phases.md)): where a business stands (4), its legal form (3), and the 33
+  changes the official pages name, in six groups. Written from the list the maintainer read against the CRA's
+  "Maintain your business" page on 2026-11-12, and held to it by `tests/phase-catalog.spec.ts`. Every source is a
+  tool check (92 quotes on 41 pages, found by `scripts/check-quotes.mjs` on 2026-11-12), and the three CRA pages the
+  maintainer read in full on 2026-10-25 record that read too; every "leads to" cites the
+  page that says so; a source whose words sit in a fold that is shut when the page opens names the fold (9 quotes).
+  One link from the list, retiring leading to selling, is held back and listed: no page read says it. No screen
+  reads the catalog yet; `lib/engines/all-citations.ts` lists its sources for the quote check.
 - **Pick a future tells a person who wrote about closing, pausing or selling a business, or being behind on
   filings, that no road is written for that yet, quoting their own words** (the maintainer's pick of 2026-11-11,
   made on pictures of four placements drawn on the real screen). On the typed way's last screen, when the sentence

@@ -1,6 +1,6 @@
 # Engine Reasoning Docs
 
-Last updated: 2026-10-12 (the official fees catalog, [fees.md](./fees.md); 2026-10-11: the roads catalog, [14a]; how a source was checked: read by a person
+Last updated: 2026-11-12 (the phase catalog, [phases.md](./phases.md); 2026-10-12: the official fees catalog, [fees.md](./fees.md); 2026-10-11: the roads catalog, [14a]; how a source was checked: read by a person
 or checked by a tool, [citations.md](./citations.md); 2026-10-08: the tax-lines catalog, [8f])
 
 One file per engine: what it holds, how it reasons (today vs target), and the authoring
@@ -21,6 +21,7 @@ in `docs/brain/`.
 | Tax lines ([8f], 2026-10-08) | [taxlines.md](./taxlines.md) | Low (read by the figures store and the return reader, not by the map) |
 | Roads ([14a], 2026-10-11) | [roads.md](./roads.md) | High (the map draws a road; today's map is road 0) |
 | Official fees (2026-10-12) | [fees.md](./fees.md) | Medium (each fee written once; roads and the ways to incorporate name it by id) |
+| Phases (S2.5.48, 2026-11-12) | [phases.md](./phases.md) | Low for now (no screen reads it; where a business stands, its legal form, and the 33 changes it can go through) |
 
 ## Conventions that apply to every engine (do not deviate)
 
