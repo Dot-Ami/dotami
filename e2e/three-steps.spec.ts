@@ -14,6 +14,7 @@ import { partHeading } from "../lib/front-door/job-search-lines";
 import { typedWayCount } from "../lib/front-door/typed-way";
 import { intakeStepsWords, jobStepWords, pickWords, whereStepWords } from "../lib/front-door/words";
 import { waitForReact } from "../tests/helpers/react-ready";
+import { findVerdicts } from "../tests/helpers/verdict-words";
 
 import { ABOUT_JOB, aboutJobPanel, readAboutJob } from "./about-job-read";
 import { lookCloser } from "./cockpit-calm";
@@ -476,11 +477,14 @@ test("outside Alberta: step 2 asks nothing and says why; Skip lists every future
   await expect(page.getByRole("button", { name: pickWords.backToWork, exact: true })).toBeVisible();
 });
 
-test("the typed way ends on the same three steps, on the intake page, and keeps the job and the road opened", async ({ page }) => {
+/**
+ * The typed way from the front door to the three steps' first screen, for an invented sentence, in Alberta. Answers
+ * whether About you opened it, since the one numbering starts where the typed way opens.
+ */
+async function typedWayToTheSteps(page: Page, sentence: string): Promise<boolean> {
   await page.goto("/");
   const box = page.getByPlaceholder(/What are you building/);
   await waitForReact(box);
-  const sentence = `Custom kitchen cabinets in Lethbridge (invented ${Date.now()})`;
   await box.fill(sentence);
   await page.getByRole("button", { name: "Map it →" }).click();
   const confirm = page.getByRole("heading", { name: /Did we get this/ });
@@ -494,6 +498,56 @@ test("the typed way ends on the same three steps, on the intake page, and keeps 
   await page.getByRole("combobox", { name: "Current employment", exact: true }).selectOption("self-employed");
   await expect(page.getByText(typedWayCount("ground", startsAtAbout), { exact: true })).toBeVisible();
   await page.getByRole("button", { name: intakeStepsWords.next, exact: true }).click();
+  return startsAtAbout;
+}
+
+test("the typed way quotes the person's own words about closing back, with a job picked and after a Skip, and quotes nothing from other words", async ({ page }) => {
+  // Case D (docs/ui-spec/futures/03-road-match.md; the maintainer's pick s1 D of 2026-11-11). Before it, a person
+  // who typed this and picked a job was told only "No road is written for Barbers yet".
+  const before = await ventureCount(page);
+  await typedWayToTheSteps(page, `closing my retail store in Calgary and want to know what to file (invented ${Date.now()})`);
+  await pickTheJob(page, BARBERS);
+  await answerWhereInAlberta(page, "", "");
+  const quoted = page.getByText(pickWords.youWrote("closing"), { exact: true });
+  await expect(quoted).toBeVisible();
+  // In front of the futures: above the no-road block, which is as it was.
+  const noRoad = page.getByRole("region", { name: pickWords.noRoad.heading(BARBERS.label, BARBERS.code) });
+  await expect(noRoad).toContainText(pickWords.noRoad.body(BARBERS.label, false));
+  const above = await quoted.evaluate((el, block) => !!(el.compareDocumentPosition(block!) & Node.DOCUMENT_POSITION_FOLLOWING), await noRoad.elementHandle());
+  expect(above, "the quoted line is drawn above the no-road block").toBe(true);
+  // DotAmi's own sentence, read as every screen's is: no advice and no ranking in it.
+  expect(findVerdicts(await quoted.innerText())).toEqual([]);
+  // It changes nothing below it: the same card, said not to be written for the job, and nothing kept.
+  await expect(page.getByRole("button", { name: pickWords.lookInsideName(generalRoadV2026.label), exact: true })).toHaveAccessibleDescription(
+    pickWords.road0NotForJob(BARBERS.label),
+  );
+  expect(await ventureCount(page)).toBe(before);
+  await shotsAtEveryWidth(page, "intake-road-you-wrote");
+
+  // After a Skip the quoted line stands in the place of the line everyone sees, so the sentence is said once.
+  await typedWayToTheSteps(page, `winding down my trucking corporation in Red Deer (invented ${Date.now()})`);
+  await skipTheJob(page);
+  await expect(page.getByText(pickWords.youWrote("winding down"), { exact: true })).toBeVisible();
+  await expect(page.getByText(pickWords.skippedNoneFor, { exact: true })).toHaveCount(0);
+  await shotsAtEveryWidth(page, "intake-road-you-wrote-skipped");
+
+  // "close" that isn't about closing a business: nothing is quoted, with a job picked or after a Skip, and the
+  // skipped line is the one everyone sees.
+  const nearTheLine = `plumber in Calgary, revenue is getting close to the GST line (invented ${Date.now()})`;
+  await typedWayToTheSteps(page, nearTheLine);
+  await pickTheJob(page, BARBERS);
+  await answerWhereInAlberta(page, "", "");
+  await expect(page.getByRole("region", { name: pickWords.noRoad.heading(BARBERS.label, BARBERS.code) })).toBeVisible();
+  await expect(page.getByText(/^You wrote/)).toHaveCount(0);
+  await typedWayToTheSteps(page, nearTheLine);
+  await skipTheJob(page);
+  await expect(page.getByText(pickWords.skippedNoneFor, { exact: true })).toBeVisible();
+  await expect(page.getByText(/^You wrote/)).toHaveCount(0);
+});
+
+test("the typed way ends on the same three steps, on the intake page, and keeps the job and the road opened", async ({ page }) => {
+  const sentence = `Custom kitchen cabinets in Lethbridge (invented ${Date.now()})`;
+  const startsAtAbout = await typedWayToTheSteps(page, sentence);
 
   // One numbering from the first screen to the last (2026-10-23): the step goes on from Ground it, never "1 of 3".
   await expect(page.getByText(typedWayCount("work", startsAtAbout), { exact: true })).toBeVisible();
