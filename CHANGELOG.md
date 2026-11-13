@@ -162,6 +162,16 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   put it back.
 
 ### Added
+- **Tests: the phases a business can go through, as three lists** (2026-11-11, tests only; the maintainer's picks of
+  2026-11-11 on business phases, b1 A). `tests/fixtures/phases/v1.ts` keeps apart what the official pages keep apart:
+  where a business stands (not started, running, paused, ended), its legal form (the CRA's three business structures,
+  two of them in DotAmi's rules today, and six other kinds of organization the registries name, kept for later), and
+  33 changes it can go through in six groups (keeping the record straight, owners or legal form, growing, stopping,
+  coming back, catching up), each with the official pages behind it, which legal forms they speak of, and what it
+  leads to. The maintainer's 12 situation values are mapped onto the three. Every page was fetched on 2026-11-11 and
+  found to say what its entry leans on: a tool's check, not a person's read. No road is written for any of the 33,
+  nothing in the app reads the file, and nothing a person sees changes. `tests/phase-lists.spec.ts` fails on a page
+  that isn't an official https page, a "leads to" naming nothing, an id used twice, or a group that shrinks.
 - **Build provenance for the Windows installer** (the house-cleaning audit of 2026-10-31). None of the installer
   releases so far (0.2.0 to 0.4.1) carried a signature or anything saying where it was built. The release workflow
   now has GitHub's `actions/attest-build-provenance` sign a statement that this repository's `release.yml`, at the
