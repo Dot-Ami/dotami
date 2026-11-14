@@ -325,7 +325,10 @@ export const FIRST_MEASURED: Partial<Record<AddedScreenId, Partial<Record<WidthI
  * 2026-11-11, no line on how a source was checked (the maintainer's w2): Pick a future's cards are shorter, so their own
  * Look inside buttons come into the first window on four screens, allowed by his standing rule of the same day
  * (BACK_IN_VIEW): `futures-road` tablet 7 to 9, `futures-road-written` tablet 5 to 6, `futures-road-skipped` phone 4 to
- * 5, `intake-road-written` tablet 4 to 5.
+ * 5, `intake-road-written` tablet 4 to 5. CI's Ubuntu run (43350238300, 2026-11-12) counted one more on two screens
+ * that Windows draws a little taller: `futures-outside-alberta` laptop 4 to 5 (the federal card's Look inside and the
+ * page's own *open source on GitHub* link now both in the first window) and `intake-road-skipped` phone 3 to 4 (a
+ * road's Look inside).
  */
 export const BUDGETS: ClutterTable = {
   "front-door": { phone: m(4, 7, 6, 9.5), tablet: m(4, 11, 6, 9.5), laptop: m(4, 11, 6, 9.5) },
@@ -351,9 +354,9 @@ export const BUDGETS: ClutterTable = {
   "intake-region": { phone: m(3, 6, 5, 10.5), tablet: m(3, 6, 5, 10.5), laptop: m(3, 6, 5, 10.5) },
   "intake-road-written": { phone: m(3, 3, 5, 10.5), tablet: m(3, 5, 5, 10.5), laptop: m(3, 3, 5, 10.5) },
   "intake-road": { phone: m(3, 6, 5, 10.5), tablet: m(3, 8, 5, 10.5), laptop: m(3, 6, 5, 10.5) },
-  "futures-outside-alberta": { phone: m(6, 4, 6, 10.5), tablet: m(6, 6, 6, 10.5), laptop: m(6, 4, 6, 10.5) },
+  "futures-outside-alberta": { phone: m(6, 4, 6, 10.5), tablet: m(6, 6, 6, 10.5), laptop: m(6, 5, 6, 10.5) },
   "cockpit-federal": { phone: m(7, 14, 4, 9.5), tablet: m(8, 29, 5, 9.5), laptop: m(8, 27, 5, 9.5) },
-  "intake-road-skipped": { phone: m(3, 3, 5, 10.5), tablet: m(3, 6, 5, 10.5), laptop: m(3, 5, 5, 10.5) },
+  "intake-road-skipped": { phone: m(3, 4, 5, 10.5), tablet: m(3, 6, 5, 10.5), laptop: m(3, 5, 5, 10.5) },
 };
 
 /**
@@ -412,7 +415,10 @@ export const FOLD_ALLOWANCE: {
  * 2026-11-11, no line on how a source was checked (his w2): *Pick a future*'s cards lose their sources lines, so the
  * cards are shorter and their own Look inside buttons, and once the Not here yet? box, come into the first window:
  * `futures-road` on a tablet (2), `futures-road-written` on a tablet (1), `futures-road-skipped` on a phone (1) and
- * `intake-road-written` on a tablet (1), as the gate counted them on Windows.
+ * `intake-road-written` on a tablet (1), as the gate counted them on Windows. CI's Ubuntu run of the same pull request
+ * (43350238300, 2026-11-12), where those screens are drawn a little shorter, counted one more on two others:
+ * `futures-outside-alberta` at laptop size (1; the federal card's Look inside and the page's own *open source on
+ * GitHub* link both in the first window) and `intake-road-skipped` on a phone (1; a road's Look inside).
  */
 export const BACK_IN_VIEW: {
   since: string;
@@ -425,6 +431,8 @@ export const BACK_IN_VIEW: {
     "futures-road-written": { tablet: 1 },
     "futures-road-skipped": { phone: 1 },
     "intake-road-written": { tablet: 1 },
+    "futures-outside-alberta": { laptop: 1 },
+    "intake-road-skipped": { phone: 1 },
   },
 };
 

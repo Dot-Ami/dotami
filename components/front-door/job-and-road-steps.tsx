@@ -17,6 +17,7 @@ import { generalRoadV2026, skillItemsV2026, type Road } from "@/lib/engines/road
 import { futureCards, groupedForPlace, notHereRoad, type FutureCard } from "@/lib/front-door/futures";
 import { placeName, provinceOfPlace } from "@/lib/front-door/receipts";
 import { cardJobLine, roadMatch } from "@/lib/front-door/road-match";
+import { situationWordsIn } from "@/lib/front-door/situation-words";
 import { answersOf, next, pickedJob, skipped, type StepsState } from "@/lib/front-door/three-steps";
 import { areaLabel } from "@/lib/front-door/where";
 import { jobStepWords, pickWords, whereStepWords } from "@/lib/front-door/words";
@@ -166,6 +167,7 @@ export function JobAndRoadSteps({
       place={place}
       listed={listed}
       roadJobs={roadJobs}
+      firstSentence={firstSentence}
       intro={(lines) =>
         intro(
           count("pick"),
@@ -317,6 +319,7 @@ function RoadStep({
   place,
   listed,
   roadJobs,
+  firstSentence,
   intro,
   onLookInside,
 }: {
@@ -325,6 +328,8 @@ function RoadStep({
   place: PlaceCode;
   listed: readonly Road[];
   roadJobs: RoadJobNames;
+  /** The typed way's own first sentence, or null on Pick a future, where nothing was typed. */
+  firstSentence: string | null;
   intro: (lines: ReactNode) => ReactNode;
   onLookInside: (road: Road, answers: StepAnswers, name: string) => Promise<boolean>;
 }) {
@@ -354,6 +359,11 @@ function RoadStep({
   const nameId = useId();
   const noteId = useId();
   const noRoadId = useId();
+  // The person's own words about closing, pausing or selling a business, or being behind on filings, quoted back
+  // in front of the futures (case D of docs/ui-spec/futures/03-road-match.md; the maintainer's pick of 2026-11-11).
+  // Read here, from the sentence already on the page, each time the step draws: nothing is kept or sent, and
+  // nothing below changes because of it, not the cards, their order or the road *Not here yet?* opens.
+  const wrote = useMemo(() => situationWordsIn(firstSentence), [firstSentence]);
 
   async function open(road: Road, failed: string = pickWords.saveFailed) {
     if (opening) return;
@@ -502,6 +512,7 @@ function RoadStep({
       ) : null}
 
       <div {...mark("futures")} className="space-y-4">
+        {wrote ? <p className="rounded-lg border border-rule bg-ink2 px-5 py-4 text-body text-paper">{pickWords.youWrote(wrote)}</p> : null}
         {match.case === "written" ? (
           <>
             {groupHeading(pickWords.writtenForJobHeading)}
@@ -524,7 +535,8 @@ function RoadStep({
         ) : (
           <>
             <p className="text-body text-stone">{pickWords.skipped(outsideAlberta)}</p>
-            <p className="text-body text-stone">{pickWords.skippedNoneFor}</p>
+            {/* Said once: the quoted line above ends with the same sentence. */}
+            {wrote ? null : <p className="text-body text-stone">{pickWords.skippedNoneFor}</p>}
             {others(match.others, null)}
           </>
         )}

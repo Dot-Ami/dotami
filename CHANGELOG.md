@@ -162,6 +162,56 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   put it back.
 
 ### Added
+- **The law store's builder tools are in this repository** (the maintainer's ruling of 2026-11-03 that DotAmi
+  relies on no other project). `tools/law-store/` holds the Python that builds and checks the statute store behind
+  "Show the words": the contract and its refusals, the parsers, the schema and the source registry, plus
+  `new_store.py`, which makes an empty store. It never runs on a person's computer and nothing in it ships. No built
+  store and no Act text is committed: whether law text may ship in a public release waits on a lawyer's answer. The
+  `Law store` workflow runs `selftest.py`, then `cite_check.py` against the Income Tax Act and the Canada Business
+  Corporations Act fetched into a throw-away store on the runner. `cite_check.py` now fails when a claim isn't
+  found: until now only a fake that came back real did, so a planted fake claim, or a store with nothing in it,
+  still exited 0. The app reaches the store through `LAW_STORE_PATH` as before and no screen changes
+  ([tools/law-store/README.md](tools/law-store/README.md), [law-store.md](docs/architecture/law-store.md)).
+- **A catalog of the phases a business can go through** (task 48c, story S2.5.48; `lib/engines/phases/v2026/`,
+  [docs/engines/phases.md](docs/engines/phases.md)): where a business stands (4), its legal form (3), and the 33
+  changes the official pages name, in six groups. Written from the list the maintainer read against the CRA's
+  "Maintain your business" page on 2026-11-12, and held to it by `tests/phase-catalog.spec.ts`. Every source is a
+  tool check (92 quotes on 41 pages, found by `scripts/check-quotes.mjs` on 2026-11-12), and the three CRA pages the
+  maintainer read in full on 2026-10-25 record that read too; every "leads to" cites the
+  page that says so; a source whose words sit in a fold that is shut when the page opens names the fold (9 quotes).
+  One link from the list, retiring leading to selling, is held back and listed: no page read says it. No screen
+  reads the catalog yet; `lib/engines/all-citations.ts` lists its sources for the quote check.
+- **Pick a future tells a person who wrote about closing, pausing or selling a business, or being behind on
+  filings, that no road is written for that yet, quoting their own words** (the maintainer's pick of 2026-11-11,
+  made on pictures of four placements drawn on the real screen). On the typed way's last screen, when the sentence
+  the person typed holds such words, one line shows in front of the futures: *You wrote “closing”. None is written
+  yet for closing, pausing or selling a business, or for catching up on filings. Not here yet? keeps your note.*
+  **Before:** that sentence showed only after a Skip at the job question. Of the test set's 39 ideas about a
+  business closing, pausing, being sold or behind, the 25 whose person picks a job were told only *No road is
+  written for <job> yet*, and went on to a road about starting. **Now:** 34 of the 39 are told. The five that
+  aren't are listed as known gaps: four are about moving, a bankruptcy, a receiver and starting a paused business
+  up again, which the sentence doesn't name, and one says an unlicensed daycare, which DotAmi must not quote back
+  as being behind. **What it never does:** it quotes, it doesn't
+  conclude; nothing is kept or sent; no card moves, none is hidden, no road is picked. A word counts only with
+  the words around it that make it about a business or its filings (*closing my retail store*, not *close to the
+  GST line*; *behind on GST*, not *behind on orders*), in English only, and a sentence the list misses sees the
+  screen as before. **A rule changed:** this screen's design said DotAmi doesn't read the person's words to guess
+  the kind of idea; it now reads them for this one line (`docs/ui-spec/futures/03-road-match.md`, case D).
+  `lib/front-door/situation-words.ts`, `components/front-door/job-and-road-steps.tsx`, `lib/front-door/words.ts`
+  (`pickWords.youWrote`). Tests: `tests/situation-words.spec.ts`; two new promises in the idea harness,
+  `ends:situation-said` and `nothing-derived:situation`, each proven by a planted mistake
+  (`tests/idea-harness-plants.spec.ts`, which also holds the 21 as they were before); `e2e/three-steps.spec.ts`
+  in a real browser.
+- **Tests: the phases a business can go through, as three lists** (2026-11-11, tests only; the maintainer's picks of
+  2026-11-11 on business phases, b1 A). `tests/fixtures/phases/v1.ts` keeps apart what the official pages keep apart:
+  where a business stands (not started, running, paused, ended), its legal form (the CRA's three business structures,
+  two of them in DotAmi's rules today, and six other kinds of organization the registries name, kept for later), and
+  33 changes it can go through in six groups (keeping the record straight, owners or legal form, growing, stopping,
+  coming back, catching up), each with the official pages behind it, which legal forms they speak of, and what it
+  leads to. The maintainer's 12 situation values are mapped onto the three. Every page was fetched on 2026-11-11 and
+  found to say what its entry leans on: a tool's check, not a person's read. No road is written for any of the 33,
+  nothing in the app reads the file, and nothing a person sees changes. `tests/phase-lists.spec.ts` fails on a page
+  that isn't an official https page, a "leads to" naming nothing, an id used twice, or a group that shrinks.
 - **Build provenance for the Windows installer** (the house-cleaning audit of 2026-10-31). None of the installer
   releases so far (0.2.0 to 0.4.1) carried a signature or anything saying where it was built. The release workflow
   now has GitHub's `actions/attest-build-provenance` sign a statement that this repository's `release.yml`, at the
@@ -970,9 +1020,11 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   [docs/architecture/reviewed-by-people.md](docs/architecture/reviewed-by-people.md). The contract (`CLAUDE.md`)
   and [docs/engines/citations.md](docs/engines/citations.md) say so; the panel recording
   (`tests/fixtures/official-fees/panels-before.json`) was redrawn after checking that all 34 panels differ only
-  by those two things. With the cards shorter, their own Look inside buttons come into the first window on four screens:
-  allowed by the maintainer's standing rule of the same day ("Allow them, and as a rule": a screen's own buttons that
-  come into view because words above them were taken away), each recorded in `BACK_IN_VIEW` (`e2e/budgets.ts`).
+  by those two things. With the cards shorter, their own Look inside buttons come into the first window on four screens,
+  and on two more as CI's Ubuntu run draws them (outside Alberta at laptop size, where the page's own *open source on
+  GitHub* link comes in too, and the intake's step 3 with the job skipped on a phone): allowed by the maintainer's
+  standing rule of the same day ("Allow them, and as a rule": a screen's own buttons that come into view because
+  words above them were taken away), each recorded in `BACK_IN_VIEW` (`e2e/budgets.ts`).
 - **For a job with no written road, *Pick a future* shows *About this job*'s four parts folded to their headings**
   (story S2.5.52, the maintainer's pick w3 C of 2026-11-11: "It saves a tone of mental bandwidth and allows the user
   to take a breath before diving in."). The block is still shown by default (his K6 A of 2026-10-16), under its lead
