@@ -78,6 +78,12 @@ describe("phase catalog (48c)", () => {
       expect(problems(c).join("\n")).toMatch(/change-address.*a file/);
     });
 
+    it("a source on a site the phase pages may not come from", () => {
+      const c = copy();
+      c.changes[0].citations[0].url = "https://www.bdc.ca/en/articles-tools/change-ownership/plan-succession/thinking-about-retiring-how-plan-your-exit";
+      expect(problems(c).join("\n")).toMatch(/change-address.*www\.bdc\.ca.*not one of the sites/);
+    });
+
     it("an id used twice", () => {
       const c = copy();
       c.changes[1].id = c.changes[0].id;

@@ -5,6 +5,7 @@
  */
 import { describe, expect, it } from "vitest";
 
+import { PHASE_SOURCE_HOSTS } from "@/lib/engines/phases/v2026";
 import { roadsV2026 } from "@/lib/engines/roads/v2026";
 
 import { networkSourceFiles, readSource } from "./helpers/source-scan";
@@ -19,8 +20,11 @@ import {
   type OfficialPage,
 } from "./fixtures/phases/v1";
 
-/** The governments whose pages the lists may name: the CRA and canada.ca, the federal registries, Alberta, Statistics Canada. */
-const OFFICIAL_HOSTS = new Set(["www.canada.ca", "ised-isde.canada.ca", "www.alberta.ca", "www23.statcan.gc.ca"]);
+/**
+ * The governments whose pages the lists may name: the CRA and canada.ca, the federal registries, Alberta (its main site
+ * and, since 2026-11-13, its career site ALIS), Statistics Canada. One list with the catalog's (lib/engines/phases).
+ */
+const OFFICIAL_HOSTS = PHASE_SOURCE_HOSTS;
 const FORM_ANSWERS: readonly FormAnswer[] = ["yes", "no", "result", "not-said", "not-read"];
 
 /**

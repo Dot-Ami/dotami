@@ -179,8 +179,10 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   tool check (92 quotes on 41 pages, found by `scripts/check-quotes.mjs` on 2026-11-12), and the three CRA pages the
   maintainer read in full on 2026-10-25 record that read too; every "leads to" cites the
   page that says so; a source whose words sit in a fold that is shut when the page opens names the fold (9 quotes).
-  One link from the list, retiring leading to selling, is held back and listed: no page read says it. No screen
-  reads the catalog yet; `lib/engines/all-citations.ts` lists its sources for the quote check.
+  One link from the list, retiring leading to selling, was held back at first, since no CRA page says it; since
+  2026-11-13 it cites Alberta's career site ALIS ("owners looking to retire" may offer good terms "to the right
+  buyer"), on the maintainer's word, and every source's site is checked against one list shared with the test
+  list. No screen reads the catalog yet; `lib/engines/all-citations.ts` lists its sources for the quote check.
 - **Pick a future tells a person who wrote about closing, pausing or selling a business, or being behind on
   filings, that no road is written for that yet, quoting their own words** (the maintainer's pick of 2026-11-11,
   made on pictures of four placements drawn on the real screen). On the typed way's last screen, when the sentence

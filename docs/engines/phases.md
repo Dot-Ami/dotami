@@ -45,9 +45,12 @@ noted, 55 right, nothing missing; his three notes were two words that sit inside
 one page that was down when he read it. `tests/phase-catalog.spec.ts` holds the catalog to that list: the same
 ids, names, groups, forms, starting points, roads and pages.
 
-One difference, on purpose: the list has *The owner retires or steps away* leading to *Selling the business*,
-and no page read says so. The catalog leaves that link out and lists it in `PHASE_LINKS_HELD_BACK` with the
-reason, until a page that says so is found or the maintainer decides.
+One link was held back at first: the list has *The owner retires or steps away* leading to *Selling the
+business*, and no CRA page says so (its retirement page and its selling page don't mention each other). On the
+maintainer's "Look for a page" (2026-11-13), none of the sites the list allowed said it; Alberta's career site,
+ALIS, did (*Buy Yourself a Business—And a Job*: owners looking to retire may offer good terms to the right
+buyer). On his "Use the Alberta page" the link cites that page, and ALIS joined the sites phase pages may come
+from. `PHASE_LINKS_HELD_BACK` is empty and stays as the place a link goes when no page says it.
 
 ## Authoring rules
 
@@ -58,7 +61,10 @@ reason, until a page that says so is found or the maintainer decides.
 3. **A "leads to" cites the page that says so.** Its words are quoted like any source's; DotAmi's own reading of
    how the pages link each other is never enough. A link no page states is held back and listed, never written
    in without a source.
-4. **Pages, never files.** No source is a PDF or another download: the quote check reads web pages only.
+4. **Pages, never files, from the listed sites.** No source is a PDF or another download: the quote check reads
+   web pages only. Every source is on one of `PHASE_SOURCE_HOSTS` (canada.ca, the federal registries, Alberta's
+   main site and its career site ALIS, Statistics Canada); a new site is the maintainer's decision, made in that
+   one list, which the test list's check reads too.
    And no quote carries advice words ("you should"): where a page's sentence has them, the quote starts after them
    (`tests/helpers/verdict-words.ts`), as the closing page's sentence on dissolving does.
 5. **Name the fold.** When the quoted words sit in a fold that is shut when the page opens, the source carries the

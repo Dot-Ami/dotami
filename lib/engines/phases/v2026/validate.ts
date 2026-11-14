@@ -7,9 +7,33 @@ const FORM_ANSWERS = new Set(["yes", "no", "result", "not-said", "not-read"]);
 const FILE_ADDRESS = /\.(pdf|docx?|xlsx?|pptx?|zip|csv)(?:[?#]|$)/i;
 
 /**
+ * The sites the phase pages may come from: the CRA and canada.ca, the federal registries, Alberta's main site and,
+ * since the maintainer's word of 2026-11-13 ("Use the Alberta page"), its career site ALIS, and Statistics Canada.
+ * The catalog's sources and the test list it was written from (tests/phase-lists.spec.ts) are held to this one list,
+ * so a new site is a decision made once, here.
+ */
+export const PHASE_SOURCE_HOSTS: ReadonlySet<string> = new Set([
+  "www.canada.ca",
+  "ised-isde.canada.ca",
+  "www.alberta.ca",
+  "alis.alberta.ca",
+  "www23.statcan.gc.ca",
+]);
+
+/** The site of an address, or null when it is no address at all. */
+function hostOf(url: string): string | null {
+  try {
+    return new URL(url).hostname;
+  } catch {
+    return null;
+  }
+}
+
+/**
  * The checks the phase catalog must pass (docs/engines/phases.md; tests/phase-catalog.spec.ts runs them). The two of
  * the plan's § 3.2 first: every entry has a source, and every "leads to" names an entry that exists. Then: every "leads
- * to" cites the page that says so, every source is a page checked the way every catalog's is, ids are used once, every
+ * to" cites the page that says so, every source is a page on one of PHASE_SOURCE_HOSTS checked the way every catalog's
+ * is, ids are used once, every
  * change answers for all three legal forms and starts from a standing, and a road it names is written. Each problem is
  * one plain sentence naming the entry; an empty list means the catalog is fine. Pure: today's date and the written
  * roads' ids are passed in.
@@ -33,6 +57,10 @@ export function phaseCatalogProblems(
     for (const source of sources) {
       if (!/^https:\/\//.test(source.url)) problems.push(`A source of ${where} is not an https page: ${source.url}`);
       if (FILE_ADDRESS.test(source.url)) problems.push(`A source of ${where} is a file, not a page: ${source.url}`);
+      const host = hostOf(source.url);
+      if (host !== null && !PHASE_SOURCE_HOSTS.has(host)) {
+        problems.push(`A source of ${where} is on ${host}, which is not one of the sites phase pages may come from.`);
+      }
       for (const p of citationCheckProblems(source, today)) problems.push(`A source of ${where}: ${p}.`);
       if (source.fold !== undefined && source.fold.label.trim() === "") problems.push(`A source of ${where} has a fold with no label.`);
       if (source.fold?.under !== undefined && source.fold.under.trim() === "") {
