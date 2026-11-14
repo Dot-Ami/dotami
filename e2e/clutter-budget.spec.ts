@@ -161,7 +161,7 @@ async function measureAtEverySize(page: Page, testInfo: TestInfo, screen: Screen
     await page.screenshot({ path: shot });
     await testInfo.attach(`${label}.png`, { path: shot, contentType: "image/png" });
     console.log(
-      `clutter ${label}: ${measured.regions} regions, ${measured.controls} controls, ${measured.textSizes} text sizes, smallest ${measured.smallestTextPx}px`,
+      `clutter ${label}: ${measured.regions} regions, ${measured.controls} controls, ${measured.textSizes} text sizes, smallest ${measured.smallestTextPx}px, words ${measured.wordsFirstWindow} in the first window and ${measured.wordsWholePage} on the page (no limit)`,
     );
 
     // The budgets are what CI (Ubuntu) measures; on Windows, where Chromium draws a few screens a little
@@ -244,6 +244,30 @@ async function pickFuture(page: Page, roadLabel: string, place = "CA-AB"): Promi
 }
 
 const road = (page: Page) => page.getByRole("region", { name: "The road" });
+
+// The word count's own check (since 2026-11-11, the maintainer's w4 A: count and report, no limit), on a page whose
+// answers are known: a hidden line, a screen-reader line, a closed fold, a word cut off by its box, a line under
+// another block, a box that scrolls and the hint in an empty box. It needs no server.
+test("the word count counts what a person meets, and only that", async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 720 });
+  await page.setContent(`<!doctype html><body style="margin:0;font:16px monospace">
+    <div><p>one two three four five six seven</p><input placeholder="type your idea"></div>
+    <div style="overflow:hidden"><div style="height:40px;overflow:auto"><p style="margin:0">top line</p><div style="height:300px"></div><p>below the inner fold</p></div></div>
+    <div style="height:2000px"></div>
+    <div><p>eight nine ten eleven twelve — · →</p>
+      <details><summary>More</summary><p>folded away from view now</p></details>
+      <div style="width:100px;overflow:hidden;white-space:nowrap"><span>shown</span><span style="display:inline-block;width:300px"></span><span>never seen here</span></div>
+    </div>
+    <p style="display:none">hidden words here</p>
+    <span style="position:absolute;width:1px;height:1px;overflow:hidden">reader only</span>
+    <div style="position:fixed;left:0;top:300px;width:300px;height:60px;background:#fff;z-index:5">over</div>
+    <p style="position:absolute;left:0;top:310px;margin:0">underneath it</p>
+  </body>`);
+  const m = await page.evaluate(measurePage);
+  // First window: 7 + the hint's 3 + the scrolling box's top line 2 + over 1 = 13. Whole page: those, the 4 lower in
+  // the scrolling box, 5, More, shown, and the 2 under the fixed block = 26.
+  expect([m.wordsFirstWindow, m.wordsWholePage]).toEqual([13, 26]);
+});
 
 // First, before any test here saves anything: the page counts everything in the data file, so it is
 // measured on the seed alone (a test retried after a failure gets a fresh server and folder too).
