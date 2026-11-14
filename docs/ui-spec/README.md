@@ -71,6 +71,7 @@ measures four things on each:
 | Controls | Links, buttons, boxes, menus and switches that can be used (not disabled, not behind a sheet) and show inside the first window, before any scrolling: at least 24 px of each showing each way (WCAG 2.2's smallest target size), or all of it where it is smaller, so a card's bare edge under a fold isn't counted; a control inside another counts once |
 | Text sizes | Distinct computed font sizes of the text drawn on the page (text a screen reader alone hears is left out) |
 | Smallest text | The smallest of those sizes, in px |
+| Words (reported, no limit) | Since 2026-11-11 (the maintainer's pick w4 A, story S2.5.52: "count and report, no limit"): the words a person meets in the first window, and on the whole page as it opens (a word is a run of characters holding a letter or a digit; not inside a closed fold, not cut off for good by its box, not for a screen reader alone; an empty box's hint and a closed menu's choice count). The quality report's clutter table shows both; no budget holds them, and nothing fails on them. His note: "We can always delete this -or at least block it- for once Dotami is in a good place where it's clean and organized." |
 
 The limits are in `e2e/budgets.ts`. They started at what each screen measured on 2026-10-17 (the baseline,
 kept beside them), and they can only go down: a unit test (`tests/clutter-budgets.spec.ts`) fails if any
