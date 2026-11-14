@@ -8,7 +8,8 @@ import type { PhaseChange, PhaseLegalForm, PhaseLinkHeldBack, PhaseSource, Phase
  * names, groups, forms, starting points and pages, and tests/phase-catalog.spec.ts holds the two together.
  *
  * Every source is a tool check (option B, docs/engines/citations.md): `node scripts/check-quotes.mjs` found each quote
- * below, word for word, on its live page on CHECKED_ON. Three pages were also read in full by the maintainer on
+ * below, word for word, on its live page on CHECKED_ON (one, Alberta's career site's, on ALIS_CHECKED_ON). Three
+ * pages were also read in full by the maintainer on
  * 2026-10-25 (`HIS_READ`), so their citations record that read and their cards say "Read by a person"; no other page
  * here has a read date. Every "leads to" carries the page that says so and the words it says it in. Where the quoted words
  * sit in a fold that is shut when the page opens, the source names the fold (`fold`), so a person who opens the page
@@ -22,6 +23,8 @@ import type { PhaseChange, PhaseLegalForm, PhaseLinkHeldBack, PhaseSource, Phase
 
 /** The day scripts/check-quotes.mjs found every quote below on its page. */
 const CHECKED_ON = "2026-11-12";
+/** The day it found the one quote from Alberta's career site, ALIS (the retiring -> selling link). */
+const ALIS_CHECKED_ON = "2026-11-13";
 
 interface Page {
   title: string;
@@ -74,6 +77,14 @@ const PAGES = {
     "Corporate Registry forms for businesses (Alberta)",
     `${AB}business-organization-forms`,
     "Alberta's registry forms for starting, changing, ending or reviving a business. The forms themselves are files and are not cited.",
+  ),
+  // Alberta's career site, on the maintainer's word of 2026-11-13 ("Use the Alberta page"): of the pages searched
+  // for the retiring -> selling link, the one from a government that says an owner who retires may sell (the
+  // search's scripts are in the plan's folder, 48c).
+  alisBuyBusiness: alberta(
+    "Buy Yourself a Business—And a Job (ALIS, Alberta)",
+    "https://alis.alberta.ca/look-for-work/self-employment/buy-yourself-a-business-and-a-job/",
+    "Alberta's career site on buying a business, including that owners looking to retire may sell to a buyer.",
   ),
   owners: cra(
     "Change of owners, partners, or directors (CRA)",
@@ -201,9 +212,9 @@ const PAGES = {
 } satisfies Record<string, Page>;
 
 /** A source: the page, the words this entry leans on, and the fold they sit in when the page opens with it shut. */
-function src(page: Page, quotes: readonly string[], fold?: PhaseSource["fold"]): PhaseSource {
+function src(page: Page, quotes: readonly string[], fold?: PhaseSource["fold"], checkedOn = CHECKED_ON): PhaseSource {
   const { read, ...cited } = page;
-  const toolCheck = { checkedOn: CHECKED_ON, quotes: [...quotes] };
+  const toolCheck = { checkedOn, quotes: [...quotes] };
   // A page he read keeps both: the read wins on screen, the tool check stays for the quote check (citations.md, rule 3).
   // Spread whole: only lib/engines/shared/citation-check.ts reads a citation's date fields by name
   // (tests/citation-check.spec.ts).
@@ -672,9 +683,19 @@ export const phaseChangesV2026: readonly PhaseChange[] = [
     name: "The owner retires or steps away",
     forms: ALL_YES,
     from: RUNNING_OR_PAUSED,
-    // The list he read also has "Selling the business" here; no page read says so, so it is held back
-    // (PHASE_LINKS_HELD_BACK below).
     leadsTo: [
+      // Held back at first (no CRA page says it); since 2026-11-13 Alberta's career site, on the maintainer's word.
+      {
+        to: "change-selling",
+        citation: src(
+          P.alisBuyBusiness,
+          [
+            "Business owners looking to retire often have a strong interest in making sure their beloved business continues. They may be willing to offer good terms to the right buyer.",
+          ],
+          undefined,
+          ALIS_CHECKED_ON,
+        ),
+      },
       {
         to: "change-partners",
         citation: src(P.retirement, ["If a partner no longer wants to be in a partnership, go to Change of owner, partners, or directors"]),
@@ -851,12 +872,7 @@ export const phaseChangesV2026: readonly PhaseChange[] = [
 
 /**
  * The "leads to" links of the list the maintainer read (2026-11-12) that the catalog leaves out, each with why. A link
- * comes in once a page that says so is found, or on the maintainer's word.
+ * comes in once a page that says so is found, or on the maintainer's word. Empty since 2026-11-13: the one link held
+ * back, retiring -> selling, now cites Alberta's career site (the maintainer's "Use the Alberta page").
  */
-export const PHASE_LINKS_HELD_BACK: readonly PhaseLinkHeldBack[] = [
-  {
-    from: "change-retiring",
-    to: "change-selling",
-    why: "No page read says it: the CRA's retirement page and its selling page don't mention each other.",
-  },
-];
+export const PHASE_LINKS_HELD_BACK: readonly PhaseLinkHeldBack[] = [];

@@ -15,7 +15,7 @@ export type {
   PhaseStandingId,
 } from "./types";
 export { PHASE_LINKS_HELD_BACK, phaseChangesV2026, phaseLegalFormsV2026, phaseStandingsV2026 } from "./catalog";
-export { phaseCatalogProblems } from "./validate";
+export { PHASE_SOURCE_HOSTS, phaseCatalogProblems } from "./validate";
 
 /**
  * The phase catalog (task 48c; docs/engines/phases.md): where a business stands, its legal form, and what it can go
