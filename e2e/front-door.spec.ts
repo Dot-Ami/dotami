@@ -118,20 +118,12 @@ test("door 1: four answers, each with its receipt and focus moving on, then the 
   // Road 0 and the first written future, in the order written (the maintainer's yes of 2026-10-13, design § 13).
   const cards = page.getByRole("list", { name: "Written futures" }).getByRole("listitem");
   await expect(cards.getByRole("heading", { level: 2 })).toHaveText([GENERAL, APPRENTICE]);
-  // The first written future's card says plainly, in amber, how many of its sources no person has read, and, since
-  // 2026-10-27, in grey, the 8 the maintainer read (three CRA pages he read in full on 2026-10-25).
+  // Until 2026-11-11 the first written future's card counted, in amber, the sources no person had read; since the
+  // maintainer's w2 and his answer the same day ("Take them away too") no card counts its sources by kind.
   const apprentice = cards.nth(1);
   await expect(apprentice).toContainText("A career and a business");
-  // Its sources line has two parts, the second after " · " (components/front-door/future-card.tsx).
-  const sourceParts = apprentice.getByText(/^Sources: /).locator("span");
-  await expect(sourceParts).toHaveText(["8 read by a person", /^\s*·\s*\d+ checked by a tool only, not read by a person yet$/]);
-  const toolChecked = sourceParts.nth(1);
-  await expect(toolChecked).toBeVisible();
-  await expect(toolChecked).toHaveClass(/text-amber/);
-  const readByAPerson = sourceParts.nth(0);
-  await expect(readByAPerson).toBeVisible();
-  await expect(readByAPerson).not.toHaveClass(/text-amber/);
-  await expect(apprentice).not.toContainText("wasn't recorded");
+  await expect(apprentice.getByText(/^Sources: /)).toHaveCount(0);
+  await expect(apprentice).not.toContainText(/Read by a person on|wasn't recorded|Checked by a tool on|Not read by a person yet|Read by an AI model/i);
   const general = cards.first();
   await expect(general).toContainText("A business");
   await expect(general).toContainText("Written for Alberta");
@@ -310,13 +302,13 @@ test("the first written future, picked on Pick a future, opens in the cockpit on
   const step = page.getByRole("button", { name: new RegExp(`^${first.label}, `) });
   await expect(step).toBeVisible();
 
-  // Its step opens, and its sources say, in amber, that a tool checked them and no person has read them yet.
+  // Its step opens, and its sources list their pages; since 2026-11-11 (the maintainer's w2) none says how it was
+  // checked, and the words a tool found wait in a fold under each link.
   await step.click();
   const panel = page.getByRole("region", { name: "Step" });
   await panel.getByText(/Sources for this step · \d+/).click();
-  const check = panel.getByText(/^Checked by a tool on \d{4}-\d{2}-\d{2}: .*Not read by a person yet\.$/).first();
-  await expect(check).toBeVisible();
-  await expect(check).toHaveClass(/text-amber/);
+  await expect(panel.getByText(/Read by a person on|wasn't recorded|Checked by a tool on|Not read by a person yet|Read by an AI model/i)).toHaveCount(0);
+  await expect(panel.locator("details[data-page-quotes-fold]").first()).toBeVisible();
 
   // A status set on it is kept in the data file, on this road, and shown again after a reload.
   const doing = panel.getByRole("button", { name: "Doing", exact: true });

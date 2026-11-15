@@ -34,7 +34,6 @@ function Source({ source }: { source: PlanSource }) {
       <p>
         {source.title} · <Address url={source.url} />
       </p>
-      <p>{source.checked}</p>
       {/* The page's own words, after their label (the official-quote component, 2026-10-23). */}
       <PageQuotes quotes={source.quotes} layout="lines" />
     </div>

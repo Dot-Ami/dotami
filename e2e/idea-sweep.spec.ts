@@ -75,7 +75,7 @@ import type { ScreenId } from "./budgets";
 import { measurePage, type Measured } from "./clutter-measure";
 import { budgetFor, clutterBreaches } from "./clutter-rule";
 import { cockpitSettled, lookCloser, pickJob, showRail } from "./cockpit-calm";
-import { findTheJobByWords } from "./three-steps";
+import { findTheJobByWords, openHowThisWorks } from "./three-steps";
 
 // --- Which ideas.
 
@@ -271,6 +271,9 @@ async function read(s: Sweep, where: string, held: ScreenId | null = null) {
   if ((await slot.count()) > 0) {
     const group = ((await slot.getAttribute("data-about-this-job-slot")) ?? "").slice(0, 5);
     for (const what of await readAboutJob(s.page, at, group, slot)) s.findings.push({ where: `${at} › about this job in place`, what });
+    // readAboutJob opens the rows folded to their headings (since 2026-11-11, the maintainer's w3 C), so the screen is
+    // read again with them open, and the rows are taken out of that reading.
+    text = await s.page.locator("body").innerText();
     const rows = await slot.innerText();
     if (!text.includes(rows)) s.findings.push({ where: at, what: "about this job in place: its rows couldn't be read apart from the screen" });
     text = text.split(rows).join("\n");
@@ -408,7 +411,9 @@ async function typedWay(s: Sweep) {
   await expect(place).toBeVisible();
   await read(s, "intake: where does this operate");
   if (!isProvince(idea.place)) {
-    // Outside Canada or not said: the place question has no answer, the screen says why, and the map can't open.
+    // Outside Canada or not said: the place question has no answer, the screen says why (in its fold, How this
+    // works, since 2026-11-11), and the map can't open.
+    await openHowThisWorks(page);
     await expect(page.getByText("Canada is the first jurisdiction mapped; other countries are not on the map yet.")).toBeVisible();
     await expect(button(page, intakeStepsWords.next)).toBeDisabled();
     s.measured.push(`typed: stopped at the intake's place question (${idea.place})`);

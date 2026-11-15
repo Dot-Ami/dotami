@@ -30,14 +30,16 @@ says where it is going.
   person chose; it never changes a catalog. Plan: `docs/architecture/use-cases.md`.
 - **Every claim is cited and dated.** A rule, rate, threshold, date or eligibility condition
   without a typed citation is a bug. `lastVerified` is the day the source was last read in full;
-  `readBy` (`"person"` or `"model"`) says who did that read only when it is on record, and a screen
-  says "Read by a person" only then (most older entries were read in build sessions that didn't
-  record who read them, and say "Read on <date>. Who read it wasn't recorded."). Since the
-  maintainer's decision of 2026-10-11 (option B) a citation may instead, or also, carry a
-  `toolCheck`: the day `scripts/check-quotes.mjs` fetched the live page and found the quoted words
-  on it as whole words, and those quotes. It needs one of the two; a read wins on screen, and every
-  screen says which kind of check a source had, through `lib/engines/shared/citation-check.ts`
-  only. Rules: `docs/engines/citations.md`.
+  `readBy` (`"person"` or `"model"`) says who did that read only when it is on record (most older
+  entries were read in build sessions that didn't record who read them). Since the maintainer's
+  decision of 2026-10-11 (option B) a citation may instead, or also, carry a `toolCheck`: the day
+  `scripts/check-quotes.mjs` fetched the live page and found the quoted words on it as whole words,
+  and those quotes. It needs one of the two, read only through `lib/engines/shared/citation-check.ts`.
+  **No screen says how a source was checked** (the maintainer's w2 of 2026-11-11, story S2.5.52: "there's
+  really no need to have this line at all"; from 2026-10-11 until then every screen did): the catalogs,
+  the readout and the quality report keep it, and a source's quoted words wait in a fold under its link.
+  A count of the people who have read a source waits for a server (`docs/architecture/reviewed-by-people.md`).
+  Rules: `docs/engines/citations.md`.
 - **Legal but honest.** Every lever ships with its audit/GAAR read. Nothing is presented as
   legal or tax advice; the app is a prep tool for the person's accountant and lawyer. It
   never files, never generates a binding document, never claims a qualification.

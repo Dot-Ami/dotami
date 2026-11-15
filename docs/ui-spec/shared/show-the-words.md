@@ -1,5 +1,7 @@
 # "Show the words" — a provision's text on every statute citation
 
+> **Since 2026-11-11, no screen says how a source was checked** (story S2.5.52, the maintainer's w2: "there's really no need to have this line at all"; [engines/citations.md](../../engines/citations.md), § No screen says it). A source shows its title as the link, who publishes it and where it applies; the words a tool found wait in a closed fold under the link, *Words found on the page*. Below, where this file says a screen draws *Read by a person on …*, *Checked by a tool on …*, its amber, or a card's count of sources by kind, read: the catalog records it, and no screen draws it.
+
 Last updated: 2026-10-29 (a citation's title may name fewer provisions than its buttons, § What it does);
 2026-10-12 (the words keep the Act's paragraph breaks, #9); 2026-10-11 (the
 citation above the button says how it was checked; 2026-09-16:

@@ -1,5 +1,7 @@
 # What's closest to your work? (step 1 of 3)
 
+> **Since 2026-11-11, one fold for the notes** (story S2.5.52, the maintainer's pick w1 C; the layout rule's fifth line, [README.md](../README.md)): The step shows its kicker, the heading, the lead's first sentence (*Type the work in your own words.*), the person's own sentence on the typed way, the box with its label and hint, the status line (which says nothing until something is typed) and **Skip this question**. Every other note waits in one fold under Skip, **How this works**: the rest of the lead, the line the status said before anything was typed, how a word matches, what Skip does (still Skip's description for a screen reader), what is kept, where the titles come from and their licence line, then **Learn more ↗**, the government's dataset page for the job titles (`OASIS_DATASET_URL`). The cockpit's skills list keeps the box's notes in place (`JobSearchBox`'s `notesInFold`). Below, where this file says a note is drawn under the box or under Skip, read: in the fold.
+
 Page: Pick a future (`/futures`), and the intake's last screen on the typed way (`/intake`) · Component:
 one shared component for the three steps, `components/front-door/job-and-road-steps.tsx` (planned; words:
 `lib/front-door/words.ts` `jobStepWords`; search: `lib/engines/oasis/v2026/index.ts` `searchOasisJobs`,

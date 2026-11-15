@@ -307,12 +307,34 @@ export const FIRST_MEASURED: Partial<Record<AddedScreenId, Partial<Record<WidthI
  * cards reach the first window. Lowered to what CI's Ubuntu run counts with it (run 39969349101, PR #209): the
  * cockpit's phone controls on road 0 17 to 14, on road 1 14 to 11, on the federal road 17 to 14, and Mara's
  * example 11 to 10; tablet and laptop unchanged.
+ *
+ * 2026-11-11, the question screens' notes in one fold, *How this works* (story S2.5.52, the maintainer's pick w1 C), and
+ * his answer of the same day, "Allow +1 for a fold" (FOLD_ALLOWANCE below): the fold's button is one more control in the
+ * first window on Your destination, Pick a future's step 1 and step 2 (area, region, outside Alberta) and the intake's
+ * own screen and its steps 1 and 2, at all three sizes, so each of those nine rows is raised by one control. The gate's
+ * run on Windows counted each one over its old budget, the extra being the fold's button in every case; regions,
+ * text sizes and the smallest text are unchanged.
+ *
+ * 2026-11-11, the same story: on step 3's no-road block, About this job's four rows each fold to their heading (the
+ * maintainer's pick w3 C), four folds whose buttons the gate counted in the first window at every size, so
+ * `futures-road` goes from 3 to 7 controls and `intake-road` from 2 to 6 (FOLD_ALLOWANCE, four each). On a tablet the
+ * shorter block also brings the two futures' Look inside buttons back into `intake-road`'s first window (8 there):
+ * those are not a fold's own; the maintainer allowed them back the same day ("Allow them back", BACK_IN_VIEW below), so
+ * `intake-road` stands at 8 there.
+ *
+ * 2026-11-11, no line on how a source was checked (the maintainer's w2): Pick a future's cards are shorter, so their own
+ * Look inside buttons come into the first window on four screens, allowed by his standing rule of the same day
+ * (BACK_IN_VIEW): `futures-road` tablet 7 to 9, `futures-road-written` tablet 5 to 6, `futures-road-skipped` phone 4 to
+ * 5, `intake-road-written` tablet 4 to 5. CI's Ubuntu run (43350238300, 2026-11-12) counted one more on two screens
+ * that Windows draws a little taller: `futures-outside-alberta` laptop 4 to 5 (the federal card's Look inside and the
+ * page's own *open source on GitHub* link now both in the first window) and `intake-road-skipped` phone 3 to 4 (a
+ * road's Look inside).
  */
 export const BUDGETS: ClutterTable = {
   "front-door": { phone: m(4, 7, 6, 9.5), tablet: m(4, 11, 6, 9.5), laptop: m(4, 11, 6, 9.5) },
-  start: { phone: m(3, 5, 3, 10.5), tablet: m(3, 5, 3, 10.5), laptop: m(3, 5, 3, 10.5) },
-  futures: { phone: m(4, 5, 5, 10.5), tablet: m(4, 5, 5, 10.5), laptop: m(4, 5, 5, 10.5) },
-  intake: { phone: m(4, 5, 5, 9.5), tablet: m(4, 5, 5, 9.5), laptop: m(4, 5, 5, 9.5) },
+  start: { phone: m(3, 6, 3, 10.5), tablet: m(3, 6, 3, 10.5), laptop: m(3, 6, 3, 10.5) },
+  futures: { phone: m(4, 6, 5, 10.5), tablet: m(4, 6, 5, 10.5), laptop: m(4, 6, 5, 10.5) },
+  intake: { phone: m(4, 6, 5, 9.5), tablet: m(4, 6, 5, 9.5), laptop: m(4, 6, 5, 9.5) },
   ventures: { phone: m(4, 10, 7, 9.5), tablet: m(4, 19, 7, 9.5), laptop: m(4, 14, 7, 9.5) },
   "your-data": { phone: m(9, 7, 7, 9.5), tablet: m(9, 7, 7, 9.5), laptop: m(9, 7, 7, 9.5) },
   "example-mara": { phone: m(7, 10, 5, 9.5), tablet: m(8, 23, 5, 9.5), laptop: m(8, 21, 5, 9.5) },
@@ -321,20 +343,97 @@ export const BUDGETS: ClutterTable = {
   plan: { phone: m(10, 2, 5, 10.5), tablet: m(10, 2, 5, 10.5), laptop: m(10, 2, 5, 10.5) },
   // Added screens start at their first row (FIRST_MEASURED) and can only go down from there.
   "cockpit-about-job": { phone: m(8, 2, 5, 9.5), tablet: m(9, 28, 5, 9.5), laptop: m(9, 23, 5, 9.5) },
-  "futures-area": { phone: m(4, 5, 5, 10.5), tablet: m(4, 5, 5, 10.5), laptop: m(4, 5, 5, 10.5) },
-  "futures-region": { phone: m(4, 5, 5, 10.5), tablet: m(4, 5, 5, 10.5), laptop: m(4, 5, 5, 10.5) },
-  "futures-outside": { phone: m(4, 4, 5, 10.5), tablet: m(4, 4, 5, 10.5), laptop: m(4, 4, 5, 10.5) },
-  "futures-road-written": { phone: m(6, 5, 6, 10.5), tablet: m(6, 5, 6, 10.5), laptop: m(6, 5, 6, 10.5) },
-  "futures-road": { phone: m(6, 3, 6, 10.5), tablet: m(6, 3, 6, 10.5), laptop: m(6, 3, 6, 10.5) },
-  "futures-road-skipped": { phone: m(6, 4, 6, 10.5), tablet: m(6, 7, 6, 10.5), laptop: m(6, 6, 6, 10.5) },
-  "intake-steps": { phone: m(3, 5, 5, 10.5), tablet: m(3, 5, 5, 10.5), laptop: m(3, 5, 5, 10.5) },
-  "intake-area": { phone: m(3, 5, 5, 10.5), tablet: m(3, 5, 5, 10.5), laptop: m(3, 5, 5, 10.5) },
-  "intake-region": { phone: m(3, 5, 5, 10.5), tablet: m(3, 5, 5, 10.5), laptop: m(3, 5, 5, 10.5) },
-  "intake-road-written": { phone: m(3, 3, 5, 10.5), tablet: m(3, 4, 5, 10.5), laptop: m(3, 3, 5, 10.5) },
-  "intake-road": { phone: m(3, 2, 5, 10.5), tablet: m(3, 2, 5, 10.5), laptop: m(3, 2, 5, 10.5) },
-  "futures-outside-alberta": { phone: m(6, 4, 6, 10.5), tablet: m(6, 6, 6, 10.5), laptop: m(6, 4, 6, 10.5) },
+  "futures-area": { phone: m(4, 6, 5, 10.5), tablet: m(4, 6, 5, 10.5), laptop: m(4, 6, 5, 10.5) },
+  "futures-region": { phone: m(4, 6, 5, 10.5), tablet: m(4, 6, 5, 10.5), laptop: m(4, 6, 5, 10.5) },
+  "futures-outside": { phone: m(4, 5, 5, 10.5), tablet: m(4, 5, 5, 10.5), laptop: m(4, 5, 5, 10.5) },
+  "futures-road-written": { phone: m(6, 5, 6, 10.5), tablet: m(6, 6, 6, 10.5), laptop: m(6, 5, 6, 10.5) },
+  "futures-road": { phone: m(6, 7, 6, 10.5), tablet: m(6, 9, 6, 10.5), laptop: m(6, 7, 6, 10.5) },
+  "futures-road-skipped": { phone: m(6, 5, 6, 10.5), tablet: m(6, 7, 6, 10.5), laptop: m(6, 6, 6, 10.5) },
+  "intake-steps": { phone: m(3, 6, 5, 10.5), tablet: m(3, 6, 5, 10.5), laptop: m(3, 6, 5, 10.5) },
+  "intake-area": { phone: m(3, 6, 5, 10.5), tablet: m(3, 6, 5, 10.5), laptop: m(3, 6, 5, 10.5) },
+  "intake-region": { phone: m(3, 6, 5, 10.5), tablet: m(3, 6, 5, 10.5), laptop: m(3, 6, 5, 10.5) },
+  "intake-road-written": { phone: m(3, 3, 5, 10.5), tablet: m(3, 5, 5, 10.5), laptop: m(3, 3, 5, 10.5) },
+  "intake-road": { phone: m(3, 6, 5, 10.5), tablet: m(3, 8, 5, 10.5), laptop: m(3, 6, 5, 10.5) },
+  "futures-outside-alberta": { phone: m(6, 4, 6, 10.5), tablet: m(6, 6, 6, 10.5), laptop: m(6, 5, 6, 10.5) },
   "cockpit-federal": { phone: m(7, 14, 4, 9.5), tablet: m(8, 29, 5, 9.5), laptop: m(8, 27, 5, 9.5) },
-  "intake-road-skipped": { phone: m(3, 3, 5, 10.5), tablet: m(3, 6, 5, 10.5), laptop: m(3, 5, 5, 10.5) },
+  "intake-road-skipped": { phone: m(3, 4, 5, 10.5), tablet: m(3, 6, 5, 10.5), laptop: m(3, 5, 5, 10.5) },
+};
+
+/**
+ * A fold's own button (the maintainer's answer of 2026-11-11, story S2.5.52: "Allow +1 for a fold"). A fold that
+ * takes words off a screen may add its own one button: that screen's limit on controls may stand one above its
+ * baseline, its first row or main's for each such fold whose button shows in the first window, at the sizes
+ * listed. Each entry is the number of those folds (one button each); its budget in `BUDGETS` is raised by that
+ * number in the pull request that adds the folds. A button that comes into view for another reason (a shorter
+ * block above it) is not a fold's own and is not allowed here.
+ *
+ * tests/clutter-budgets.spec.ts adds an entry to main's budget only while main doesn't list it yet, so the raise is
+ * allowed once, in the pull request that brings the fold; once on main, the raised budget can only go down, as
+ * every budget does. An entry is a record: once on main it never changes and is never taken out.
+ *
+ * 2026-11-11, the question screens' notes in one fold, *How this works* (his pick w1 C; docs/ui-spec/README.md,
+ * the layout rule's fifth line): the entries below are the sizes where the fold's button showed in the first
+ * window when the gate measured the pull request that added it.
+ */
+export const FOLD_ALLOWANCE: {
+  since: string;
+  controls: Partial<Record<ScreenId, Partial<Record<WidthId, number>>>>;
+} = {
+  since: "2026-11-11",
+  controls: {
+    start: { phone: 1, tablet: 1, laptop: 1 },
+    futures: { phone: 1, tablet: 1, laptop: 1 },
+    "futures-area": { phone: 1, tablet: 1, laptop: 1 },
+    "futures-region": { phone: 1, tablet: 1, laptop: 1 },
+    "futures-outside": { phone: 1, tablet: 1, laptop: 1 },
+    intake: { phone: 1, tablet: 1, laptop: 1 },
+    "intake-steps": { phone: 1, tablet: 1, laptop: 1 },
+    "intake-area": { phone: 1, tablet: 1, laptop: 1 },
+    "intake-region": { phone: 1, tablet: 1, laptop: 1 },
+    // 2026-11-11, the maintainer's pick w3 C: on step 3's no-road block About this job's four rows each fold to their
+    // heading, four folds whose buttons all show in the first window at every size.
+    "futures-road": { phone: 4, tablet: 4, laptop: 4 },
+    "intake-road": { phone: 4, tablet: 4, laptop: 4 },
+  },
+};
+
+/**
+ * Buttons back in view (the maintainer's answer of 2026-11-11, story S2.5.52: "Allow them back"). On a tablet, the
+ * typed way's last step for a job with no written road (`intake-road`) shows About this job's rows folded to their
+ * headings (w3 C), and the shorter block brings the two futures' Look inside buttons back into the first window, as
+ * they were when the screen was first measured (its first row: 5 at tablet size), before task 28c's open rows pushed
+ * them down and its budget was lowered to 2 (2026-10-22). Asked whether to allow those two back on that one screen at
+ * tablet size, his answer: "Allow them back". They are not a fold's own (FOLD_ALLOWANCE), so they have their own
+ * record. tests/clutter-budgets.spec.ts treats it as it treats a fold's: allowed over main's once, in the pull request
+ * that adds it; a record once on main.
+ *
+ * **A standing rule since the same day** (his answer to the next such case, "Allow them, and as a rule"): a screen's
+ * own buttons that come into the first window because words above them were taken away are allowed, each recorded
+ * here with its screen, its size and the day, in the pull request that takes the words away. Nothing else is: a new
+ * button, or one that comes into view for any other reason, still needs a lower limit somewhere or his word.
+ *
+ * 2026-11-11, no line on how a source was checked (his w2): *Pick a future*'s cards lose their sources lines, so the
+ * cards are shorter and their own Look inside buttons, and once the Not here yet? box, come into the first window:
+ * `futures-road` on a tablet (2), `futures-road-written` on a tablet (1), `futures-road-skipped` on a phone (1) and
+ * `intake-road-written` on a tablet (1), as the gate counted them on Windows. CI's Ubuntu run of the same pull request
+ * (43350238300, 2026-11-12), where those screens are drawn a little shorter, counted one more on two others:
+ * `futures-outside-alberta` at laptop size (1; the federal card's Look inside and the page's own *open source on
+ * GitHub* link both in the first window) and `intake-road-skipped` on a phone (1; a road's Look inside).
+ */
+export const BACK_IN_VIEW: {
+  since: string;
+  controls: Partial<Record<ScreenId, Partial<Record<WidthId, number>>>>;
+} = {
+  since: "2026-11-11",
+  controls: {
+    "intake-road": { tablet: 2 },
+    "futures-road": { tablet: 2 },
+    "futures-road-written": { tablet: 1 },
+    "futures-road-skipped": { phone: 1 },
+    "intake-road-written": { tablet: 1 },
+    "futures-outside-alberta": { laptop: 1 },
+    "intake-road-skipped": { phone: 1 },
+  },
 };
 
 /** What Chromium on Windows may count over a budget: only regions, controls and text sizes, never fewer. */

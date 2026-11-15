@@ -172,6 +172,17 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   found: until now only a fake that came back real did, so a planted fake claim, or a store with nothing in it,
   still exited 0. The app reaches the store through `LAW_STORE_PATH` as before and no screen changes
   ([tools/law-store/README.md](tools/law-store/README.md), [law-store.md](docs/architecture/law-store.md)).
+- **A catalog of the phases a business can go through** (task 48c, story S2.5.48; `lib/engines/phases/v2026/`,
+  [docs/engines/phases.md](docs/engines/phases.md)): where a business stands (4), its legal form (3), and the 33
+  changes the official pages name, in six groups. Written from the list the maintainer read against the CRA's
+  "Maintain your business" page on 2026-11-12, and held to it by `tests/phase-catalog.spec.ts`. Every source is a
+  tool check (92 quotes on 41 pages, found by `scripts/check-quotes.mjs` on 2026-11-12), and the three CRA pages the
+  maintainer read in full on 2026-10-25 record that read too; every "leads to" cites the
+  page that says so; a source whose words sit in a fold that is shut when the page opens names the fold (9 quotes).
+  One link from the list, retiring leading to selling, was held back at first, since no CRA page says it; since
+  2026-11-13 it cites Alberta's career site ALIS ("owners looking to retire" may offer good terms "to the right
+  buyer"), on the maintainer's word, and every source's site is checked against one list shared with the test
+  list. No screen reads the catalog yet; `lib/engines/all-citations.ts` lists its sources for the quote check.
 - **Pick a future tells a person who wrote about closing, pausing or selling a business, or being behind on
   filings, that no road is written for that yet, quoting their own words** (the maintainer's pick of 2026-11-11,
   made on pictures of four placements drawn on the real screen). On the typed way's last screen, when the sentence
@@ -991,6 +1002,56 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   with two planted controls).
 
 ### Changed
+- **The clutter test counts each screen's words, and the quality report shows them, with no limit** (story S2.5.52,
+  the maintainer's pick w4 A of 2026-11-11: "count and report, no limit"; "We can always delete this -or at least
+  block it- for once Dotami is in a good place where it's clean and organized."). `e2e/clutter-measure.ts` counts the
+  words a person meets in the first window and on the whole page as it opens; `e2e/clutter-budget.spec.ts` logs them
+  beside the four clutter numbers and checks the count first on a page whose answers are known (13 and 26);
+  `npm run quality:report`'s clutter table gains two columns, with no budget. Nothing fails on a word count.
+- **No screen says how a source was checked any more** (story S2.5.52, the maintainer's w2 of 2026-11-11: "there's
+  really no need to have this line at all", and his answer the same day on the cards' counts, "Take them away
+  too"). Gone from every screen: the line under each source ("Read by a person on …", "Read on … Who read it
+  wasn't recorded.", "Checked by a tool on …: it found on the page the exact words this entry relies on. Not read
+  by a person yet.") and its amber; *Pick a future*'s count of a road's sources by kind and "Checked by a tool
+  means …"; the line under each source in *Your plan*; the Tax year hint's; *What DotAmi knows about you*'s and
+  the Delete menu's. A source still shows its title as the link, who publishes it and where it applies; the words
+  a tool found on the page wait in a closed fold under the link, *Words found on the page*. Measured on the laptop
+  window, one step's panel goes from 840 words to about 514. The catalogs, `/api/readout` and the quality report
+  keep how each source was checked; the Markdown export's front matter keeps its counts. The count he asked to
+  have planned, "Reviewed by x users", is written up for when DotAmi has a server:
+  [docs/architecture/reviewed-by-people.md](docs/architecture/reviewed-by-people.md). The contract (`CLAUDE.md`)
+  and [docs/engines/citations.md](docs/engines/citations.md) say so; the panel recording
+  (`tests/fixtures/official-fees/panels-before.json`) was redrawn after checking that all 34 panels differ only
+  by those two things. With the cards shorter, their own Look inside buttons come into the first window on four screens,
+  and on two more as CI's Ubuntu run draws them (outside Alberta at laptop size, where the page's own *open source on
+  GitHub* link comes in too, and the intake's step 3 with the job skipped on a phone): allowed by the maintainer's
+  standing rule of the same day ("Allow them, and as a rule": a screen's own buttons that come into view because
+  words above them were taken away), each recorded in `BACK_IN_VIEW` (`e2e/budgets.ts`).
+- **For a job with no written road, *Pick a future* shows *About this job*'s four parts folded to their headings**
+  (story S2.5.52, the maintainer's pick w3 C of 2026-11-11: "It saves a tone of mental bandwidth and allows the user
+  to take a breath before diving in."). The block is still shown by default (his K6 A of 2026-10-16), under its lead
+  sentence; *Employment requirements*, *Wages published for this job group*, *Business counts* and *Where to look
+  yourself* each open in place from their own heading, which stays a level 3 heading. Measured on the laptop window
+  for Barbers, the screen goes from 813 words to 388, and the two futures come up the page. The cockpit's panel,
+  opened by the person's own click, keeps the rows open (`components/cockpit/about-this-job-panel.tsx`,
+  `components/front-door/about-job-in-place.tsx`; docs/ui-spec/futures/03-road-match.md,
+  docs/ui-spec/cockpit/about-this-job.md).
+- **The question screens show the question first; every note around it waits in one fold, *How this works*** (story
+  S2.5.52, the maintainer's picks of 2026-11-11: w1 C, "it's got to be crazy simple and straightforward", the fold
+  named *How this works* and a *Learn more* inside it; w5 A, the layout rule's fifth line, *one line first*). On
+  *About you*, *Did we get this?*, *Ground it*, *What's closest to your work?*, *Where you are* (both parts, and the
+  screen outside Alberta) and each question of *Your destination*, the question, its box, its buttons and a line
+  saying why a button can't be pressed yet stay in view; how the screen works, what is kept, where its facts come
+  from and the preview's *Compass language* line wait in one closed fold under them, with *Learn more ↗* to the
+  official page behind the screen where there is one (the government's job titles, Statistics Canada's economic
+  regions, the CRA's page on when to register for GST/HST). No sentence was rewritten: each moved. Measured on the
+  laptop window, *What's closest to your work?* goes from 157 words to 73. A fold's own button is allowed by his
+  answer of the same day ("Allow +1 for a fold"): `FOLD_ALLOWANCE` in `e2e/budgets.ts` lists each screen and size
+  where it shows in the first window, each raised by one, and `tests/clutter-budgets.spec.ts` allows that once,
+  in this pull request (`components/shared/how-this-works.tsx`, `components/front-door/job-and-road-steps.tsx`,
+  `components/front-door/job-search.tsx`, `components/discovery/intake-page.tsx`,
+  `components/front-door/destination-page.tsx`, words in `lib/front-door/words.ts`; docs/ui-spec/README.md and
+  the eight design files of those screens).
 - **Every sentence on *Your expenses*, *Settings*, *Licences*, *Your futures* and *What DotAmi knows about you* now
   lives in a words file, and a test reads every folder of `components/` for text written anywhere else** (the
   maintainer's decision of 2026-10-11 that new screens keep their words in one file, widened to every screen by his

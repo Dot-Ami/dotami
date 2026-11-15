@@ -17,7 +17,9 @@ import { listedRoads } from "@/lib/front-door/futures";
 import type { PlaceCode } from "@/lib/places/codes";
 import { back as stepBack, FIRST_STEP, type StepsState } from "@/lib/front-door/three-steps";
 import { typedWayCount } from "@/lib/front-door/typed-way";
-import { intakeStepsWords, pickWords } from "@/lib/front-door/words";
+import { HowThisWorks } from "@/components/shared/how-this-works";
+import { CRA_WHEN_TO_REGISTER_URL } from "@/lib/engines/compliance/v2026/gst-official-words";
+import { intakeNoteWords, intakeStepsWords, pickWords } from "@/lib/front-door/words";
 import { INTAKE_GOAL_IDS, INTAKE_GOAL_LABELS, type IntakeDraft, type IntakeGoalId } from "@/lib/journey/types";
 import { STATEMENT_FULL_NOTE, STATEMENT_MAX_CHARS } from "@/lib/person/types";
 import { buildScenarioFromIntake } from "@/lib/scenarios/build-scenario-from-intake";
@@ -382,6 +384,9 @@ export function IntakePage({
                       Looks right →
                     </Pill>
                   </div>
+                  <HowThisWorks>
+                    <p>{intakeNoteWords.compass}</p>
+                  </HowThisWorks>
                 </>
               )
             ) : (
@@ -411,9 +416,6 @@ export function IntakePage({
                       </option>
                     ))}
                   </select>
-                  <p className="mt-2 max-w-sm text-body leading-snug text-stone-dim">
-                    Canada is the first jurisdiction mapped; other countries are not on the map yet.
-                  </p>
                   {intake.province !== null &&
                   !FULL_COVERAGE_PROVINCES.includes(intake.province) ? (
                     <p className="mt-2 max-w-sm rounded-sm border border-rule bg-ink px-3 py-2 text-body leading-snug text-stone">
@@ -475,10 +477,6 @@ export function IntakePage({
                 </FieldGroup>
 
                 <FieldGroup label="Numbers — optional">
-                  <p className="mb-3 text-body leading-snug text-stone">
-                    Numbers let the map check your estimates against official tests, like the Canada Revenue Agency&apos;s GST/HST small-supplier tests.
-                    Skippable.
-                  </p>
                   <div className="grid max-w-sm grid-cols-2 gap-3">
                     <RevenueInput
                       label="Year 1 revenue"
@@ -533,6 +531,13 @@ export function IntakePage({
                     Choose your current employment context to open the map — it affects which paths may apply.
                   </p>
                 ) : null}
+                {/* Every note on this screen (w1 C, 2026-11-11). The two lines just above stay: each says why the
+                    button can't be pressed yet, and goes once it can. */}
+                <HowThisWorks learnMore={{ url: CRA_WHEN_TO_REGISTER_URL, what: intakeNoteWords.numbersPage }}>
+                  <p>{intakeNoteWords.canadaFirst}</p>
+                  <p>{intakeNoteWords.numbersWhy}</p>
+                  <p>{intakeNoteWords.compass}</p>
+                </HowThisWorks>
               </>
             )}
           </div>
@@ -557,23 +562,23 @@ function AboutScreen({ onContinue }: { onContinue: () => void }) {
         <h1 className="font-serif text-display font-bold leading-[1.15] tracking-tight text-paper">
           Before the venture — <span className="font-normal italic text-maple">about you.</span>
         </h1>
-        <p className="mt-2 max-w-xl text-lead text-paper-dim">
-          What should DotAmi know about you? How you work, what you won&apos;t do, what
-          you&apos;re after. It keeps your words with the date you said them — it does not
-          turn them into a type of person, and nothing you write here is used to rank anything.
-        </p>
+        <p className="mt-2 max-w-xl text-lead text-paper-dim">{intakeNoteWords.aboutAsk}</p>
       </header>
 
       <PersonStatements variant="full" />
 
-      <div className="flex items-center justify-between gap-4 border-t border-rule-soft pt-6">
-        <p className="text-body text-stone-dim">
-          You can skip this. Nothing here gates the map.
-        </p>
+      <div className="flex items-center justify-end gap-4 border-t border-rule-soft pt-6">
         <Pill variant="maple" onClick={onContinue}>
           Continue →
         </Pill>
       </div>
+      {/* Every note on this screen (w1 C, 2026-11-11): what is kept and how, that it can be skipped, and the
+          preview's own line. */}
+      <HowThisWorks>
+        <p>{intakeNoteWords.aboutKept}</p>
+        <p>{intakeNoteWords.aboutSkip}</p>
+        <p>{intakeNoteWords.compass}</p>
+      </HowThisWorks>
     </>
   );
 }
@@ -620,6 +625,10 @@ function ConfirmEmptyState({
           {STATEMENT_FULL_NOTE}
         </p>
       ) : null}
+      {/* The preview's own line, this screen's one note (w1 C, 2026-11-11). */}
+      <HowThisWorks>
+        <p>{intakeNoteWords.compass}</p>
+      </HowThisWorks>
     </>
   );
 }
@@ -720,11 +729,7 @@ function PreviewRail({
           </p>
         ) : null}
       </div>
-
-      <p className="mt-4 border-t border-rule-soft pt-4 text-small leading-snug text-stone-dim">
-        Compass language: if an item applies, it may unlock a branch. Nothing here is a
-        guarantee — sources open in a new tab.
-      </p>
+      {/* Its one note, "Compass language: …", waits in the screen's fold, How this works, since 2026-11-11 (w1 C). */}
     </aside>
   );
 }

@@ -1,5 +1,7 @@
 # Delete
 
+> **Since 2026-11-11, no screen says how a source was checked** (story S2.5.52, the maintainer's w2: "there's really no need to have this line at all"; [engines/citations.md](../../engines/citations.md), § No screen says it). A source shows its title as the link, who publishes it and where it applies; the words a tool found wait in a closed fold under the link, *Words found on the page*. Below, where this file says a screen draws *Read by a person on …*, *Checked by a tool on …*, its amber, or a card's count of sources by kind, read: the catalog records it, and no screen draws it.
+
 Page: What DotAmi knows about you (`/your-data`) · Component: `components/your-data/delete-menu.tsx`  
 Type: button that opens a menu of tick-boxes, then two confirm dialogs
 

@@ -2,12 +2,15 @@
 
 import { useEffect, useId, useMemo, useRef, useState, type ReactNode } from "react";
 
+import { HowThisWorks } from "@/components/shared/how-this-works";
 import { Pill } from "@/components/ui";
+import { OASIS_DATASET_URL } from "@/lib/engines/oasis/v2026/licence";
 import {
   ALBERTA_ECONOMIC_REGIONS,
   ALBERTA_REGIONS_PAGE,
   DONT_KNOW_REGION,
   economicRegionsCreditLine,
+  economicRegionsSourcePage,
   regionNameOnScreen,
 } from "@/lib/engines/research-kit/v2026/economic-regions";
 import { generalRoadV2026, skillItemsV2026, type Road } from "@/lib/engines/roads/v2026";
@@ -26,7 +29,7 @@ import { PROVINCE_LABELS } from "@/lib/scenarios/types";
 
 import { AboutJobInPlace } from "./about-job-in-place";
 import { FutureCardItem } from "./future-card";
-import { JobSearchBox } from "./job-search";
+import { JobSearchBox, OasisAttribution } from "./job-search";
 
 /** The five-digit groups' titles each listed road is written for, read on the server from the NOC file (too big for a page). */
 export type RoadJobNames = Record<string, readonly { code: string; title: string }[]>;
@@ -143,13 +146,15 @@ export function JobAndRoadSteps({
         {intro(count("where"), whereStepWords.outside.heading(name), pickedLine)}
         <div {...mark("step")} className="max-w-2xl space-y-3">
           <p className="text-lead text-paper-dim">{whereStepWords.outside.notAsked(name)}</p>
-          <p className="text-body text-stone">{whereStepWords.outside.why}</p>
-          <p className="text-body text-stone">{whereStepWords.outside.wageRow(name)}</p>
           <div className="flex justify-end pt-2">
             <Pill variant="maple" onClick={() => setState(next(state))}>
               {whereStepWords.outside.next}
             </Pill>
           </div>
+          <HowThisWorks>
+            <p>{whereStepWords.outside.why}</p>
+            <p>{whereStepWords.outside.wageRow(name)}</p>
+          </HowThisWorks>
         </div>
       </>
     );
@@ -199,16 +204,23 @@ function WorkStep({
         {jobStepWords.heading}
       </span>
       {firstSentence ? <p className="text-body text-stone">{jobStepWords.yourIdea(firstSentence)}</p> : null}
-      <JobSearchBox onPick={onPick} />
-      <div className="space-y-1 border-t border-rule-soft pt-3">
+      <JobSearchBox onPick={onPick} notesInFold />
+      <div className="border-t border-rule-soft pt-3">
         <Pill variant="ghost" aria-describedby={skipHintId} onClick={onSkip}>
           {jobStepWords.skip}
         </Pill>
-        <p id={skipHintId} className="text-body text-stone-dim">
-          {jobStepWords.skipHint}
-        </p>
       </div>
-      <p className="text-body text-stone-dim">{jobStepWords.notKept}</p>
+      {/* Every note: how the search works, what Skip does, what is kept, where the titles come from and their
+          licence. Skip's own note keeps its id, so a screen reader still says it with the button. */}
+      <HowThisWorks learnMore={{ url: OASIS_DATASET_URL, what: jobStepWords.sourcePage }}>
+        <p>{jobStepWords.leadMore}</p>
+        <p>{jobStepWords.empty}</p>
+        <p>{jobStepWords.wordStart}</p>
+        <p id={skipHintId}>{jobStepWords.skipHint}</p>
+        <p>{jobStepWords.notKept}</p>
+        <p>{jobStepWords.source}</p>
+        <OasisAttribution />
+      </HowThisWorks>
     </div>
   );
 }
@@ -233,9 +245,6 @@ function WhereStep({ regions, state, setState }: { regions: boolean; state: Step
       <label id={labelId} htmlFor={selectId} className="block font-serif text-title font-bold tracking-tight text-paper">
         {w.label}
       </label>
-      <p id={whyId} className="text-body text-stone">
-        {w.why}
-      </p>
       <select
         id={selectId}
         data-step-question
@@ -262,16 +271,6 @@ function WhereStep({ regions, state, setState }: { regions: boolean; state: Step
               </option>,
             ]}
       </select>
-      <div id={hintId} className="space-y-1 text-body text-stone-dim">
-        {areaPart ? (
-          <p>{whereStepWords.area.hint}</p>
-        ) : (
-          <>
-            <p>{whereStepWords.region.order}</p>
-            <p>{whereStepWords.region.dontKnowNote}</p>
-          </>
-        )}
-      </div>
       {/* Statistics Canada's list of towns, a fixed link carrying nothing about the person: only once "I don't know" is picked. */}
       {!areaPart && state.region === DONT_KNOW_REGION ? (
         <p className="text-body">
@@ -286,13 +285,29 @@ function WhereStep({ regions, state, setState }: { regions: boolean; state: Step
           </a>
         </p>
       ) : null}
-      {areaPart ? null : <p className="text-body text-stone-dim">{economicRegionsCreditLine()}</p>}
-      <p className="text-body text-stone-dim">{whereStepWords.kept}</p>
       <div className="flex justify-end pt-2">
         <Pill variant="maple" onClick={() => setState(next(state))}>
           {w.next}
         </Pill>
       </div>
+      {/* Every note: why it is asked, how the list is ordered, what is kept, and the credit line Statistics
+          Canada's regions are shown with. The why and the hint keep their ids, so a screen reader still says them
+          with the drop-down. */}
+      <HowThisWorks learnMore={areaPart ? undefined : { url: economicRegionsSourcePage(), what: whereStepWords.region.sourcePage }}>
+        <p id={whyId}>{w.why}</p>
+        <div id={hintId} className="space-y-2">
+          {areaPart ? (
+            <p>{whereStepWords.area.hint}</p>
+          ) : (
+            <>
+              <p>{whereStepWords.region.order}</p>
+              <p>{whereStepWords.region.dontKnowNote}</p>
+            </>
+          )}
+        </div>
+        <p>{whereStepWords.kept}</p>
+        {areaPart ? null : <p>{economicRegionsCreditLine()}</p>}
+      </HowThisWorks>
     </div>
   );
 }

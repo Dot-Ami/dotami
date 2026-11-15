@@ -20,6 +20,7 @@ import { createDatabaseClient } from "@/lib/db/client";
 import { ensureVentureFromScenario } from "@/lib/db/ensure-venture-from-scenario";
 import { parseFirstSave } from "@/lib/db/parse-scenario-input";
 import { searchJobTitles } from "@/lib/engines/oasis/v2026/title-search";
+import { ALBERTA_REGIONS_PAGE, economicRegionsSourcePage } from "@/lib/engines/research-kit/v2026/economic-regions";
 import {
   citationsForPlace,
   generalRoadV2026,
@@ -329,9 +330,9 @@ describe("the steps as drawn", () => {
     // Every road counts the place's pages only since 2026-10-23 (a-call-12): road 0 in Alberta counts fewer than all.
     const road0 = (place: "AB" | null) => total(futureCards([generalRoadV2026], skillItemsV2026, place)[0]!.sources);
     expect(road0("AB")).toBeLessThan(road0(null));
-    // As drawn: the federal card on Pick a future in Ontario carries the place's count.
+    // As drawn: no card shows the count since the maintainer's w2 of 2026-11-11, story S2.5.52 ("Take them away too"); it stays counted for the readout.
     const html = draw("futures", skipped(), "CA-ON");
-    for (const part of sourcesLine(federalFor("ON"))) expect(html).toContain(esc(part.text));
+    for (const part of sourcesLine(federalFor("ON"))) expect(html).not.toContain(esc(part.text));
   });
 
   it("an Alberta road's card, for a person in another province, counts what the cockpit draws there (second review of #207)", () => {
@@ -464,8 +465,15 @@ describe("the steps as drawn", () => {
 
   it("2b: Statistics Canada's list is drawn only once “I don't know” is picked", () => {
     const at = (region: string | null) => draw("futures", { part: "region", job: CABINETMAKERS, area: "cma-825", region });
-    expect(at(null)).not.toContain("statcan.gc.ca");
-    expect(at("4830")).not.toContain("statcan.gc.ca");
-    expect(at("dont-know")).toContain("statcan.gc.ca");
+    // The list of towns by its own address (its CVD part, which the classification's page doesn't have): since
+    // 2026-11-11 the question's fold links Statistics Canada's page for the regions, also on statcan.gc.ca, under
+    // Learn more (w1 C).
+    const townsList = "CVD=1368932";
+    expect(ALBERTA_REGIONS_PAGE).toContain(townsList);
+    expect(economicRegionsSourcePage()).not.toContain(townsList);
+    expect(at(null)).not.toContain(townsList);
+    expect(at("4830")).not.toContain(townsList);
+    expect(at("dont-know")).toContain(townsList);
+    expect(at(null)).toContain(economicRegionsSourcePage().replace(/&/g, "&amp;"));
   });
 });

@@ -502,7 +502,9 @@ describe("Your destination names the cause when DotAmi's own server doesn't answ
   });
 });
 
-describe("a future's card says what 'checked by a tool only' means", () => {
+// Until the maintainer's w2 of 2026-11-11, story S2.5.52 and his answer the same day ("Take them away too"), each card counted its sources by how they were
+// checked and said what "checked by a tool only" means. No card says either since.
+describe("a future's card says nothing of how its sources were checked", () => {
   // "AB", a province code, as the catalogs' citations name it: "CA-AB" (the data file's code) matched no citation,
   // so the cards were counted as if every Alberta page were another province's (the review of #209's merge).
   const cards = futureCards(listedRoads(roadsV2026, "AB"), skillItemsV2026, "AB");
@@ -511,12 +513,12 @@ describe("a future's card says what 'checked by a tool only' means", () => {
   const draw = (card: (typeof cards)[number]) =>
     shown(renderToStaticMarkup(createElement(FutureCardItem, { card, personPlace: "AB", personPlaceLabel: "Alberta", opening: null, onLookInside: () => {} })));
 
-  it("one plain sentence under the sources line, on a card with sources checked by a tool", () => {
+  it("draws neither the counts nor the sentence, even on a card with sources checked by a tool", () => {
     expect(withTool).toBeDefined();
     const text = draw(withTool);
-    expect(text).toContain(pickWords.sources.tool(withTool.sources.tool));
-    expect(text).toContain(pickWords.sources.toolMeans);
-    expect(pickWords.sources.toolMeans.split(/[.!?](\s|$)/).filter((s) => s.trim().length > 1)).toHaveLength(1);
+    expect(text).not.toContain(pickWords.sources.tool(withTool.sources.tool));
+    expect(text).not.toContain(pickWords.sources.toolMeans);
+    expect(text).not.toContain(pickWords.sourcesLead);
   });
 
   it("not on a card with none", () => {

@@ -1,5 +1,7 @@
 # Screen A — "Did we get this right?"
 
+> **Since 2026-11-11, one fold for the notes** (story S2.5.52, the maintainer's pick w1 C; the layout rule's fifth line, [README.md](../README.md)): The preview's own line (*Compass language: …*), the screen's one note, waits in a fold under **Looks right →**, **How this works**; on the empty state (*What are you building?*), under the box. The rest of the screen is unchanged.
+
 Page: Intake (`/intake`) · Component: `components/discovery/intake-page.tsx`
 Type: confirm screen (intent-parse output)
 

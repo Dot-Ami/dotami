@@ -2,19 +2,21 @@
 
 import { useState } from "react";
 
-import { howCheckedWords, isCheckFirst, toolCheckQuotes } from "@/lib/engines/shared/citation-check";
+import { toolCheckQuotes } from "@/lib/engines/shared/citation-check";
 import type { CitationVerificationStatus, CorpusPointer, EngineCitation } from "@/lib/engines/shared/types";
 import { httpsOnly } from "@/lib/http/safe-url";
 import { provisionLines } from "@/lib/law/provision-lines";
 
-import { PageQuotes } from "./page-quotes";
+import { PageQuotesFold } from "./page-quotes";
 
 /**
  * S2.5.4f (decided 2026-09-13) — show the law on every item, as clickable official links.
  * Every citation is a link to its official URL (Justice Canada for the Act, canada.ca for
- * CRA), with authority · jurisdiction · how it was checked ("Read by a person on <date>", "Read on
- * <date>. Who read it wasn't recorded.", an AI model's read or "Checked by a tool on <date>: …",
- * 2026-10-11), and the statute-check status where one exists. A citation that says what its page holds
+ * CRA), with authority · jurisdiction, and the statute-check status where one exists. Since 2026-11-11 (story
+ * S2.5.52, the maintainer's w2) no line says how it was checked ("Read by a person on <date>", "Checked by a tool on
+ * <date>: …" and the rest, from 2026-10-11 until then): the catalogs keep those fields, the readout gives them, and a
+ * count of people who have read a source is planned for when DotAmi has a server (docs/architecture/reviewed-by-people.md).
+ * The words a tool found on the page wait in a fold under the link. A citation that says what its page holds
  * (`pageHolds`, since 2026-10-29) has that line under its title.
  * PARTIAL is amber on purpose: it is the gap the UI must show, not hide.
  *
@@ -71,28 +73,17 @@ export function CitationLinks({ citations, compact = false }: { citations: Engin
                 note of 2026-10-28). Only a source that has one: the line comes from a words file
                 (lib/engines/shared/words.ts), never from this component. */}
             {c.pageHolds ? <span className="mt-0.5 block text-small leading-4 text-stone">{c.pageHolds}</span> : null}
-            {/* How it was checked (decided 2026-10-11, docs/engines/citations.md). A person's read,
-                or a read nobody recorded the reader of, keeps its place on the one line; an AI
-                model's read or a tool check gets its own line, in amber, because it says no person
-                has read the page yet. A tool check lists the words it found under that line. */}
-            {!isCheckFirst(c) ? (
-              <span className="mt-0.5 block font-mono text-label uppercase tracking-wider text-stone">
-                {c.authority} · {c.jurisdiction} · {howCheckedWords(c)}
-              </span>
-            ) : (
-              <>
-                <span className="mt-0.5 block font-mono text-label uppercase tracking-wider text-stone">
-                  {c.authority} · {c.jurisdiction}
-                </span>
-                <span className="mt-1 block text-small leading-4 text-amber">{howCheckedWords(c)}</span>
-                {/* The official-quote component: the page's own words, after their label. */}
-                <PageQuotes quotes={toolCheckQuotes(c)} className="mt-0.5 block text-small leading-4 text-stone" />
-              </>
-            )}
+            {/* Who publishes it and where it applies. How it was checked was said here from 2026-10-11 to 2026-11-11;
+                no screen says it since (the maintainer's w2). */}
+            <span className="mt-0.5 block font-mono text-label uppercase tracking-wider text-stone">
+              {c.authority} · {c.jurisdiction}
+            </span>
             {c.verification?.status === "partial" ? (
               <span className="mt-1 block text-small leading-4 text-amber">{c.verification.method}</span>
             ) : null}
           </a>
+          {/* The words a tool found on the page, one click under the link (w2 B), outside it so the fold isn't a link. */}
+          <PageQuotesFold quotes={toolCheckQuotes(c)} className="mt-1" />
           {c.corpus && c.corpus.length > 0 ? (
             <div className="mt-1.5 flex flex-wrap gap-1.5">
               {c.corpus.map((p) => (

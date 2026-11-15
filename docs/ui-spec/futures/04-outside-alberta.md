@@ -1,5 +1,7 @@
 # Outside Alberta, honestly: the federal steps, and "Written for Alberta" with your province named
 
+> **Since 2026-11-11, one fold for the notes** (story S2.5.52, the maintainer's pick w1 C; the layout rule's fifth line, [README.md](../README.md)): The screen says why nothing is asked for the province and shows **Next: the futures →**. Its two other lines (why only Alberta's regions are listed, and which wage row About this job shows) wait in one fold under Next, **How this works**.
+
 Page: Pick a future (`/futures`, step 3) and the cockpit (`/cockpit?venture=<id>`) · Components: the shared
 three-step component (planned), `FutureCardItem`, `components/cockpit/goal-bar.tsx`, the step panel · Road:
 a new catalog road built with `roadFromCfe` (`lib/engines/roads/v2026/from-cfe.ts:25-85`) · Words:

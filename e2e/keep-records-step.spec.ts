@@ -71,13 +71,8 @@ test("today's Alberta road: the records step is drawn in the first column, on yo
   const panel = stepPanel(page);
   await expect(panel.getByRole("heading", { name: LABEL })).toBeVisible();
   for (const line of road0Step.doneWhen) await expect(panel.getByText(line.text, { exact: true })).toBeVisible();
-  // Its sources say how each was checked: the where-and-how-long page, which the maintainer read in full on
-  // 2026-10-25, says so (since 2026-10-27; until then every source here was a tool's check only); the other page
-  // still says a tool checked it on the day and that no person has read it.
-  await expect(panel.getByText(/Checked by a tool on 2026-10-14/).first()).toBeVisible();
-  await expect(panel.getByText(/Not read by a person yet\./).first()).toBeVisible();
-  await expect(panel.getByText(/Read by a person on 2026-10-25/).first()).toBeVisible();
-  await expect(panel.getByText(/Read by a person on (?!2026-10-25)/)).toHaveCount(0);
+  // Until 2026-11-11 its sources said how each was checked; since the maintainer's w2 none does.
+  await expect(panel.getByText(/Read by a person on|wasn't recorded|Checked by a tool on|Not read by a person yet|Read by an AI model/i)).toHaveCount(0);
 });
 
 test("the apprentice road: the records step waits on the fork, then is on your road once you pick your own shop", async ({ page }) => {

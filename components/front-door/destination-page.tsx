@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useId, useRef, useState, type FormEvent, type ReactNode, type RefObject } from "react";
 
 import { IncomeAgreePrompt } from "@/components/front-door/income-agree-prompt";
+import { HowThisWorks } from "@/components/shared/how-this-works";
 import { useJourney } from "@/components/shared/journey-provider";
 import { Chip, GhostLink, Pill, WordMark } from "@/components/ui";
 import { AMOUNT_HELP } from "@/components/ventures/agree-prompt";
@@ -158,7 +159,10 @@ export function DestinationPage({ kept }: { kept: KeptOnRecord }) {
   );
 }
 
-/** The question's words, why it is asked and what it unlocks. The heading names the answer controls. */
+/**
+ * The question's words. The heading names the answer controls. Why it is asked and what it unlocks were drawn
+ * here until 2026-11-11; they wait in the question's fold, How this works, since (w1 C).
+ */
 function QuestionHead({
   question,
   headingId,
@@ -180,10 +184,6 @@ function QuestionHead({
       >
         {question.ask}
       </h2>
-      <p className="mt-2 text-body leading-snug text-stone">{words.why(question.why)}</p>
-      <p className="mt-0.5 text-body leading-snug text-stone">
-        {words.unlocks(question.unlocks)}
-      </p>
     </header>
   );
 }
@@ -256,6 +256,11 @@ function AskedQuestion({
           onAnswer={onAnswer}
         />
       )}
+      {/* Why it is asked and what it unlocks, the question's notes, in its one fold (w1 C, 2026-11-11). */}
+      <HowThisWorks>
+        <p>{words.why(question.why)}</p>
+        <p>{words.unlocks(question.unlocks)}</p>
+      </HowThisWorks>
     </section>
   );
 }

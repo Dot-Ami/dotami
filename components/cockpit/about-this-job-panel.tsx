@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useId, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState, type ReactNode } from "react";
 
 import { aboutJobKicker, copyText, quoted, rulesLead, wageBlock, wageContextLine, type WageBlock } from "@/lib/about-job/text";
 import type { AboutJobView } from "@/lib/about-job/types";
@@ -162,11 +162,41 @@ function ChangeRegion({ change }: { change: RegionChange }) {
 }
 
 /**
+ * One of the four rows: its heading, then its lines. `folded`: the row is a closed fold showing only its heading,
+ * which opens it in place (step 3's no-road block, the maintainer's pick w3 C of 2026-11-11, story S2.5.52). The
+ * heading stays a level 3 heading inside the fold's button, so a screen reader still finds it by heading.
+ */
+function Row({ name, heading, folded, open, children }: { name: string; heading: string; folded: boolean; open: string; children: ReactNode }) {
+  if (!folded) {
+    return (
+      <div className={`${open} space-y-2`} data-about-row={name}>
+        <h3 className="font-semibold text-paper">{heading}</h3>
+        {children}
+      </div>
+    );
+  }
+  return (
+    <details className="group mt-2 border-t border-rule-soft pt-2" data-about-row={name}>
+      <summary className="cursor-pointer list-none hover:text-maple">
+        <h3 className="inline font-semibold text-paper">
+          <span aria-hidden className="mr-1.5 inline-block text-stone transition group-open:rotate-90">
+            ▸
+          </span>
+          {heading}
+        </h3>
+      </summary>
+      <div className="mt-2 space-y-2">{children}</div>
+    </details>
+  );
+}
+
+/**
  * The four rows and the footer line, as the panel and step 3's no-road block both draw them. `regionChange` draws
  * the region's **Change**, only where the region question exists (Alberta in this version: never on a row shown
- * for a place outside it).
+ * for a place outside it). `folded`: each row folds to its heading (step 3's no-road block since 2026-11-11, w3 C;
+ * the cockpit's panel, opened by the person's own click, keeps them open).
  */
-export function AboutThisJobRows({ view, regionChange }: { view: AboutJobView; regionChange?: RegionChange }) {
+export function AboutThisJobRows({ view, regionChange, folded = false }: { view: AboutJobView; regionChange?: RegionChange; folded?: boolean }) {
   const [allLines, setAllLines] = useState(false);
   const lead = rulesLead(view);
   const entries = view.rules.entries;
@@ -177,8 +207,7 @@ export function AboutThisJobRows({ view, regionChange }: { view: AboutJobView; r
   return (
     <>
       {/* 1. Employment requirements: the government's words, quoted in full, labelled as its words. */}
-      <div className="mt-5 space-y-2" data-about-row="rules">
-        <h3 className="font-semibold text-paper">{words.rules.heading}</h3>
+      <Row name="rules" heading={words.rules.heading} folded={folded} open="mt-5">
         {lead && entries.length > 0 ? (
           <>
             <p className="text-body text-stone">{lead}</p>
@@ -207,11 +236,10 @@ export function AboutThisJobRows({ view, regionChange }: { view: AboutJobView; r
         )}
         <p className="text-small text-stone">{words.rules.source(view.rules.readOn)}</p>
         <p className="text-small text-stone">{view.rules.licence}</p>
-      </div>
+      </Row>
 
       {/* 2. The wages Job Bank publishes for the group: the row's own level, period and method. */}
-      <div className="mt-6 space-y-2" data-about-row="wages">
-        <h3 className="font-semibold text-paper">{words.wages.heading}</h3>
+      <Row name="wages" heading={words.wages.heading} folded={folded} open="mt-6">
         <WageRows block={wages} context={wageContextLine(view.wages.context)} />
         {showsFigures(wages) ? <p className="text-body text-stone">{words.wages.lowHigh}</p> : null}
         <p className="text-body text-paper-dim">{words.wages.notYours}</p>
@@ -221,18 +249,16 @@ export function AboutThisJobRows({ view, regionChange }: { view: AboutJobView; r
         {/* The region's Change, at the row's end, named for what it changes (task 28h): the row's own lines first, so
             on a phone the sheet's first window holds no more than it did (the clutter row `cockpit-about-job`). */}
         {canChange ? <ChangeRegion key={regionChange.current ?? ""} change={regionChange} /> : null}
-      </div>
+      </Row>
 
       {/* 3. Business counts: not in this version, said plainly, with the area the person gave. */}
-      <div className="mt-6 space-y-2" data-about-row="counts">
-        <h3 className="font-semibold text-paper">{words.counts.heading}</h3>
+      <Row name="counts" heading={words.counts.heading} folded={folded} open="mt-6">
         <p className="text-body text-paper-dim">{words.counts.notInVersion}</p>
         <p className="text-body text-stone">{view.area ? words.counts.yourArea(view.area) : words.counts.areaNotPicked}</p>
-      </div>
+      </Row>
 
       {/* 4. Where to look yourself: general pages, and the job's name and code as text to copy. */}
-      <div className="mt-6 space-y-2" data-about-row="links">
-        <h3 className="font-semibold text-paper">{words.links.heading}</h3>
+      <Row name="links" heading={words.links.heading} folded={folded} open="mt-6">
         <p className="text-body text-paper-dim">{words.links.copy}</p>
         <p className="select-all break-words font-mono text-body text-paper">{copyText(view)}</p>
         <ul className="space-y-1">
@@ -246,9 +272,9 @@ export function AboutThisJobRows({ view, regionChange }: { view: AboutJobView; r
         </ul>
         {view.links.tradesecretsLeftOutFor ? <p className="text-body text-stone">{words.links.notAlberta(view.links.tradesecretsLeftOutFor)}</p> : null}
         <p className="text-body text-stone">{words.links.note}</p>
-      </div>
+      </Row>
 
-      <p className="mt-8 border-t border-rule pt-3 text-body text-stone">{words.footer}</p>
+      <p className={`${folded ? "mt-4" : "mt-8"} border-t border-rule pt-3 text-body text-stone`}>{words.footer}</p>
     </>
   );
 }

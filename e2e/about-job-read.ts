@@ -224,6 +224,10 @@ const pieces = (text: string) => text.replace(/\r?\n+/g, " ¶ ");
 export async function readAboutJob(page: Page, at: string, group: string, root: Locator = aboutJobPanel(page)): Promise<string[]> {
   const panel = root;
   await expect(panel).toBeVisible();
+  // On Pick a future's no-road block each row is folded to its heading (since 2026-11-11, the maintainer's pick w3 C):
+  // every one is opened first, by its own heading, as a person reading them would, so all its text is read.
+  const folds = panel.locator("details[data-about-row]:not([open]) > summary");
+  for (let left = await folds.count(); left > 0; left = await folds.count()) await folds.first().click();
   const drawn: DrawnPanel = await panel.evaluate((el) => {
     const textNodes = (keep: (node: Text) => boolean) => {
       const out: string[] = [];

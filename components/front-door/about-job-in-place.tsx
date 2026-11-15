@@ -16,7 +16,8 @@ import { pickWords } from "@/lib/front-door/words";
  *
  * Nothing is kept: the answers travel in the request's body, never in an address, and nothing stores them. While
  * the rows are read the slot says so; if they can't be read it says that, never an empty slot and never anything
- * drawn in their place. The lead sentence shows only with the rows.
+ * drawn in their place. The lead sentence shows only with the rows. Since 2026-11-11 (w3 C) each row is folded to its
+ * heading here; the cockpit's panel, which the person opens themself, keeps them open.
  */
 export function AboutJobInPlace({
   job,
@@ -70,7 +71,9 @@ export function AboutJobInPlace({
         <>
           <p className="text-body text-paper">{pickWords.noRoad.governmentLead}</p>
           <div className="text-body leading-snug" data-about-this-job={current.view.job.code}>
-            <AboutThisJobRows view={current.view} />
+            {/* Each row folded to its heading (the maintainer's pick w3 C of 2026-11-11, story S2.5.52): "It saves a
+                tone of mental bandwidth and allows the user to take a breath before diving in." */}
+            <AboutThisJobRows view={current.view} folded />
           </div>
         </>
       )}

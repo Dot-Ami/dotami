@@ -231,6 +231,14 @@ describe("the clutter numbers", () => {
     if (at) utimesSync(file, at, at);
   };
 
+  it("reads the words from a file that has them, and none from one that doesn't", () => {
+    const folder = tempFolder();
+    write(folder, "clutter-budget-the-front-door-chromium", "front-door", JSON.stringify({ phone: { ...JSON.parse(saved()).phone, wordsFirstWindow: 129, wordsWholePage: 201 } }));
+    expect(clutterNumbers(folder, "linux")!.rows[0].words).toEqual({ firstWindow: 129, wholePage: 201 });
+    const older = tempFolder();
+    write(older, "clutter-budget-the-front-door-chromium", "front-door", saved());
+    expect(clutterNumbers(older, "linux")!.rows[0].words).toBeNull();
+  });
   it("are none when no browser run left its files", () => {
     expect(clutterNumbers(path.join(tempFolder(), "not-there"))).toBeNull();
     const folder = tempFolder();
@@ -416,8 +424,8 @@ describe("the report and the Quality line", () => {
     clutter: {
       folder: "test-results",
       rows: [
-        { screen: "front-door", width: "phone", px: 375, measured: { regions: 4, controls: 9, textSizes: 8, smallestTextPx: 9.5 }, budget: { regions: 4, controls: 7, textSizes: 8, smallestTextPx: 9.5 }, within: false, breaches: ["9 controls in the first window, budget 7"] },
-        { screen: "front-door", width: "tablet", px: 768, measured: { regions: 4, controls: 7, textSizes: 8, smallestTextPx: 9.5 }, budget: { regions: 4, controls: 11, textSizes: 8, smallestTextPx: 9.5 }, within: true, breaches: [] },
+        { screen: "front-door", width: "phone", px: 375, measured: { regions: 4, controls: 9, textSizes: 8, smallestTextPx: 9.5 }, budget: { regions: 4, controls: 7, textSizes: 8, smallestTextPx: 9.5 }, within: false, breaches: ["9 controls in the first window, budget 7"], words: { firstWindow: 129, wholePage: 201 } },
+        { screen: "front-door", width: "tablet", px: 768, measured: { regions: 4, controls: 7, textSizes: 8, smallestTextPx: 9.5 }, budget: { regions: 4, controls: 11, textSizes: 8, smallestTextPx: 9.5 }, within: true, breaches: [], words: null },
       ],
       missing: [],
     },
@@ -432,6 +440,16 @@ describe("the report and the Quality line", () => {
       dead: { addresses: 2, citations: 5 },
       live: null,
     },
+  });
+
+  // Since 2026-11-11 (the maintainer's w4 A): each screen size's words, reported with no budget; an older file's row says
+  // it wasn't counted.
+  it("shows each screen size's words, first window and whole page, with no budget", () => {
+    const md = qualityMarkdown(numbers());
+    expect(md).toContain("| Words, first window | Words, whole page |");
+    expect(md).toContain("| 129 | 201 |");
+    expect(md).toContain("| not counted | not counted |");
+    expect(md).toContain("The two word columns have no budget");
   });
 
   it("puts every part in the report, with each count", () => {

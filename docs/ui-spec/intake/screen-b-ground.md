@@ -1,5 +1,7 @@
 # Screen B — "Where does this operate?"
 
+> **Since 2026-11-11, one fold for the notes** (story S2.5.52, the maintainer's pick w1 C; the layout rule's fifth line, [README.md](../README.md)): *Canada is the first jurisdiction mapped …*, *Numbers let the map check your estimates …* and the preview's own line wait in one fold at the foot of the screen, **How this works**, with **Learn more ↗**, the CRA's page on when to register for GST/HST (`CRA_WHEN_TO_REGISTER_URL`). The line under the button that says why it can't be pressed yet stays, and goes once it can.
+
 > **S2.5.4h (2026-09-14) — removed.** “Compare starting points →” (the Explore route) is removed; the only primary action is “Open my map →”. `seedGoalWeightsFromIntakeGoals` no longer runs on submit. The behaviour below is the pre-cut record, kept for reference; the shipped surface is described in `CLAUDE.md` § What the app is.
 
 Page: Intake (`/intake`) · Component: `components/discovery/intake-page.tsx`

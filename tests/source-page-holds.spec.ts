@@ -127,15 +127,15 @@ describe("the source list draws it as one line under the title, only when it is 
   // The line as the markup writes it: React escapes its apostrophe.
   const LINE_HTML = LINE.replace(/'/g, "&#x27;");
 
-  it("draws the line once, after the title and before how the page was checked", () => {
+  // How the page was checked followed the line until the maintainer's w2 of 2026-11-11, story S2.5.52; no line says it since.
+  it("draws the line once, after the title", () => {
     const html = markup(vehicleSource());
     expect(html.split(LINE_HTML)).toHaveLength(2);
     const title = html.indexOf(HEADING);
     const line = html.indexOf(LINE_HTML);
-    const check = html.indexOf("Read by a person on 2026-10-25");
     expect(title).toBeGreaterThan(-1);
     expect(line).toBeGreaterThan(title);
-    expect(check).toBeGreaterThan(line);
+    expect(html).not.toContain("Read by a person on");
     // Its own element, a line of its own.
     expect(html).toMatch(new RegExp(`<span class="[^"]*\\bblock\\b[^"]*">${LINE_HTML.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}</span>`));
   });

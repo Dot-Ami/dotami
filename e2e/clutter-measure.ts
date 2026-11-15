@@ -11,6 +11,11 @@
  * - text sizes: the distinct computed font sizes of the text drawn on the page;
  * - the smallest text size.
  *
+ * And, since 2026-11-11, words (the maintainer's pick w4 A, story S2.5.52: count and report, no limit): how many a
+ * person meets in the first window, and on the whole page as it opens. Reported only (the quality report's clutter
+ * table): no budget holds them. His note: "We can always delete this -or at least block it- for once Dotami is in a
+ * good place where it's clean and organized."
+ *
  * Regions are counted by their marks, so the measurer also lists any drawn landmark or section (header, nav,
  * aside, footer, section, main, and their roles, a group) that is no region, sits inside none and holds none.
  */
@@ -23,6 +28,10 @@ export interface Measured extends Clutter {
   sizesPx: number[];
   /** Drawn landmarks and sections that are no region, inside none and hold none: each fails the test. */
   unmarkedBlocks: string[];
+  /** Words in the first window, before any scrolling and not under another block (reported, no budget). */
+  wordsFirstWindow: number;
+  /** Words drawn on the whole page as it opens: scrolling reaches them, no click is needed (reported, no budget). */
+  wordsWholePage: number;
 }
 
 /**
@@ -135,6 +144,89 @@ export function measurePage(): Measured {
   }
   const sizesPx = [...sizes].sort((a, b) => a - b);
 
+  // Words (since 2026-11-11, w4 A; the rules of FORGE's S2.5.52 count, walk.mjs `countWords`). A word is a run of
+  // characters between spaces holding a letter or a digit, counted where its middle is drawn: not inside a closed
+  // fold, not cut off for good by a box that hides its overflow (a box that scrolls doesn't: scrolling reaches the
+  // word), not for a screen reader alone. The grey hint in an empty box and the choice a closed menu shows count too.
+  // "First window": also inside the window and every box that clips it, and not under another block.
+  const HAS_WORD = /[\p{L}\p{N}]/u;
+  type Box = { left: number; top: number; right: number; bottom: number };
+  const clipsFor = (el: Element): { hard: Box; view: Box } => {
+    const hard: Box = { left: -Infinity, top: -Infinity, right: Infinity, bottom: Infinity };
+    const view: Box = { left: 0, top: 0, right: window.innerWidth, bottom: window.innerHeight };
+    let scrollsX = false;
+    let scrollsY = false;
+    for (let node: Element | null = el; node && node !== document.documentElement; node = node.parentElement) {
+      const style = getComputedStyle(node);
+      const box = node.getBoundingClientRect();
+      if (style.overflowX !== "visible") {
+        view.left = Math.max(view.left, box.left);
+        view.right = Math.min(view.right, box.right);
+        if (style.overflowX === "auto" || style.overflowX === "scroll") scrollsX = true;
+        else if (!scrollsX) {
+          hard.left = Math.max(hard.left, box.left);
+          hard.right = Math.min(hard.right, box.right);
+        }
+      }
+      if (style.overflowY !== "visible") {
+        view.top = Math.max(view.top, box.top);
+        view.bottom = Math.min(view.bottom, box.bottom);
+        if (style.overflowY === "auto" || style.overflowY === "scroll") scrollsY = true;
+        else if (!scrollsY) {
+          hard.top = Math.max(hard.top, box.top);
+          hard.bottom = Math.min(hard.bottom, box.bottom);
+        }
+      }
+      if (style.position === "fixed") break;
+    }
+    return { hard, view };
+  };
+  const inside = (x: number, y: number, b: Box) => x >= b.left && x <= b.right && y >= b.top && y <= b.bottom;
+  const seenAt = (el: Element, x: number, y: number, view: Box) => {
+    if (!inside(x, y, view)) return false;
+    const hit = document.elementFromPoint(x, y);
+    return !!hit && (hit === el || el.contains(hit) || hit.contains(el));
+  };
+  let wordsWholePage = 0;
+  let wordsFirstWindow = 0;
+  const wordWalker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+  for (let node = wordWalker.nextNode(); node; node = wordWalker.nextNode()) {
+    const text = node.textContent ?? "";
+    if (!text.trim()) continue;
+    const parent = node.parentElement;
+    if (!parent || parent.closest("script, style, noscript, template, option, nextjs-portal")) continue;
+    if (!parent.checkVisibility({ checkOpacity: true, checkVisibilityCSS: true })) continue;
+    if (screenReaderOnly(parent)) continue;
+    const { hard, view } = clipsFor(parent);
+    for (const match of text.matchAll(/\S+/g)) {
+      if (!HAS_WORD.test(match[0])) continue;
+      range.setStart(node, match.index!);
+      range.setEnd(node, match.index! + match[0].length);
+      const r = range.getBoundingClientRect();
+      if (r.width === 0 || r.height === 0) continue;
+      const x = r.left + r.width / 2;
+      const y = r.top + r.height / 2;
+      if (!inside(x, y, hard)) continue;
+      wordsWholePage += 1;
+      if (seenAt(parent, x, y, view)) wordsFirstWindow += 1;
+    }
+  }
+  for (const el of document.querySelectorAll<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>("input, textarea, select")) {
+    if (!el.checkVisibility({ checkOpacity: true, checkVisibilityCSS: true })) continue;
+    const r = el.getBoundingClientRect();
+    if (r.width === 0 || r.height === 0) continue;
+    const shown =
+      el instanceof HTMLSelectElement ? (el.selectedOptions[0]?.textContent ?? "") : !el.value && el.type !== "hidden" ? (el.getAttribute("placeholder") ?? "") : "";
+    const words = shown.split(/\s+/).filter((w) => HAS_WORD.test(w)).length;
+    if (words === 0) continue;
+    const { hard, view } = clipsFor(el);
+    const x = r.left + Math.min(r.width / 2, 40);
+    const y = r.top + Math.min(r.height / 2, 16);
+    if (!inside(x, y, hard)) continue;
+    wordsWholePage += words;
+    if (seenAt(el, x, y, view)) wordsFirstWindow += words;
+  }
+
   return {
     regions: regionNames.length,
     controls: controlNames.length,
@@ -144,5 +236,7 @@ export function measurePage(): Measured {
     controlNames,
     sizesPx,
     unmarkedBlocks,
+    wordsFirstWindow,
+    wordsWholePage,
   };
 }

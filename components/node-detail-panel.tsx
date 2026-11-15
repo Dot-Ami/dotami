@@ -9,7 +9,6 @@ import { PageQuotes } from "@/components/shared/page-quotes";
 import { cockpitWords } from "@/lib/cockpit/words";
 import type { CFENode, CFEOwnNumber, CFERoute, CFERouteLine } from "@/lib/engines/cfe/v2026";
 import { incorporationRoutesFor, provinceNotWrittenNote, routesHeading } from "@/lib/engines/cfe/v2026/incorporation-routes";
-import { howCheckedWords, isCheckFirst } from "@/lib/engines/shared/citation-check";
 import { ownNumberFromTyping } from "@/lib/scenarios/branches";
 import { PROVINCE_LABELS, type Province } from "@/lib/scenarios/types";
 
@@ -368,10 +367,6 @@ function RoutesSideBySide({ routes, provinceNotWritten }: { routes: CFERoute[]; 
                     >
                       source
                     </a>
-                  </p>
-                  {/* How the source was checked, in the words every screen uses (a tool check, since 2026-10-12). */}
-                  <p className={`mt-0.5 font-mono text-small ${isCheckFirst(line.citation) ? "text-amber" : "text-stone-dim"}`}>
-                    {howCheckedWords(line.citation)}
                   </p>
                 </li>
               ))}

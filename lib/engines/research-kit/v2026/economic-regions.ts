@@ -88,6 +88,17 @@ export function economicRegionsCreditLine(): string {
   return card.creditLine.replace("{period}", ECONOMIC_REGIONS_REFERENCE);
 }
 
+/**
+ * Statistics Canada's own page for the classification the regions come from, the source card's link: what the region
+ * question's *Learn more* opens (w1 C, 2026-11-11). Not the list of towns, which the question shows only once
+ * "I don't know" is picked (ALBERTA_REGIONS_PAGE).
+ */
+export function economicRegionsSourcePage(): string {
+  const card = SOURCES.find((c) => c.id === ECONOMIC_REGIONS_SOURCE_ID);
+  if (!card?.url) throw new Error(`The registry has no page for ${ECONOMIC_REGIONS_SOURCE_ID}.`);
+  return card.url;
+}
+
 /** What the person said about their region, as About this job and Your plan read it. */
 export type RegionPicked =
   /** They picked one of their province's regions. */
