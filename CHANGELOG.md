@@ -492,6 +492,26 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   the six, so each idea expects none (the author's expectation, for the maintainer to check), and typed in, each is
   drawn on the road for starting a business in its place (16 on the federal steps, 2 on Alberta's general road).
 ### Fixed
+- **The law store's builder no longer flags a section as repealed because one part of it carries a "Repealed" mark, and
+  no longer takes a section quoted inside another for a section of the Act** (2026-11-23, builder tools only; nothing
+  on any screen changes). What was wrong: `_is_repealed` in `tools/law-store/contract/ingest_xml.py` flagged a whole
+  section when it had no `Subsection` and any `Repealed` mark anywhere inside it, so a section made of paragraphs or
+  definitions with one marked paragraph was flagged, and the quote gate refuses a quote from a flagged section. On the
+  official Income Tax Act file read 2026-11-21, 7 of the 57 flagged sections were not notices (54, 60, 122.6, 127.55,
+  190.11, 190.13 and 204); in the Income Tax Regulations, 10 of 77 (body sections 1406, 2101, 2104, 4601, 6701, 8000
+  and 8600, and Schedule II classes 10, 43.1 and 43.2). Separately, `parse_act` walked every `Section` element, so a
+  section quoted inside an amending provision became a row of its own: one in the Act (a label made of a quote mark
+  and 85) and one in the Regulations (a second 2606, which the duplicate-label rule then dropped, printing "1 dup
+  labels dropped"). Now a section is flagged only when its only children are a label, a marginal note, a text and a
+  historical note, and every word of its text sits inside a `Repealed` mark (spaces and line breaks ignored); and a
+  `Section` inside another `Section` gets no row. Counts on the same files: flagged 57 to 50 in the Act, 77 to 67 in
+  the Regulations, 5 to 3 in the Business Corporations Act (sections 147 and 258.1 are no longer flagged); the Act's
+  rows 763 to 762; the Regulations' duplicate message gone. What did not change: the stored text, its length and its
+  sha256 in all three laws, and the `char_start`, `char_end` and order number of every row that is still there. The
+  quoted words stay in the text where they were. A store built before this change gets the corrected flags when its
+  Act is ingested again, but keeps the quote-mark row until the store is rebuilt. "Repealed" here is what the file
+  marks, not a reading of the law. Tests: 18 more checks in `tools/law-store/contract/selftest.py` (57 in all), on
+  invented XML.
 - **A write-off that needs care now starts amber, "check first", not green** (2026-11-05). Home office, vehicle and
   capital equipment read "applies as answered" for anyone whose kind of work matched, even a person who had said
   nothing about a home, a car or personal use. [`docs/engines/writeoffs.md`](docs/engines/writeoffs.md) has always made
