@@ -505,7 +505,7 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   labels dropped"). Now a section is flagged only when its only children are a label, a marginal note, a text and a
   historical note, and every word of its text sits inside a `Repealed` mark (spaces and line breaks ignored); and a
   `Section` inside another `Section` gets no row. Counts on the same files: flagged 57 to 50 in the Act, 77 to 67 in
-  the Regulations, 5 to 3 in the Business Corporations Act (sections 147 and 258.1 are no longer flagged); the Act's
+  the Regulations, 5 to 3 in the Canada Business Corporations Act (sections 147 and 258.1 are no longer flagged); the Act's
   rows 763 to 762; the Regulations' duplicate message gone. What did not change: the stored text, its length and its
   sha256 in all three laws, and the `char_start`, `char_end` and order number of every row that is still there. The
   quoted words stay in the text where they were. A store built before this change gets the corrected flags when its
