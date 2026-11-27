@@ -88,6 +88,9 @@ def parse_act(xml_bytes: bytes) -> Parsed:
     if body is None:
         return Parsed("", [], currency)
 
+    # A Section inside another Section is a section QUOTED by an amending provision, not a
+    # section of the Act (see _nested_sections).
+    nested = _nested_sections(root)
     stream = _Stream()
     for section in body.iter("Section"):
         label_node = section.find("Label")
@@ -96,14 +99,14 @@ def parse_act(xml_bytes: bytes) -> Parsed:
             continue
         heading_node = section.find("MarginalNote")
         heading = _flatten(heading_node) if heading_node is not None else ""
-        stream.add(label, heading, section)
+        stream.add(label, heading, section, indexed=section not in nested)
 
     # Schedules, in their OWN label namespace (S2.5.2g, 2026-09-13). The CBCA trap above
     # was a schedule item labelled "1" colliding with body s.1; "Sch. II Class 50" cannot
     # collide with anything in a Body. Needed because the Income Tax Regulations keep the
     # CCA classes in Schedule II as Heading+Provision pairs, not Sections.
     for schedule in root.findall("Schedule"):
-        _walk_schedule(schedule, stream)
+        _walk_schedule(schedule, stream, nested)
     return Parsed("".join(stream.parts), stream.provisions, currency)
 
 
@@ -120,14 +123,25 @@ class _Stream:
     cursor: int = 0
     ordinal: int = 0
 
-    def add(self, label: str, heading: str, node: ElementTree.Element) -> None:
-        """Flatten one node into the text stream and index it under ``label``."""
+    def add(
+        self, label: str, heading: str, node: ElementTree.Element, *, indexed: bool = True
+    ) -> None:
+        """Flatten one node into the text stream and index it under ``label``.
+
+        ``indexed=False`` still appends the block (so the stored text, its hash and every
+        other offset stay as they were) but records no provision row for it.
+        """
         text = _flatten(node)
         if not text:
             return
         block = text + chr(10) * 2
         start = self.cursor
         self.parts.append(block)
+        if not indexed:
+            # The ordinal counts blocks in the text, so no other row's ordinal moves either.
+            self.cursor += len(block)
+            self.ordinal += 1
+            return
         self.provisions.append(
             (
                 label,
@@ -144,10 +158,27 @@ class _Stream:
         self.ordinal += 1
 
 
+def _nested_sections(root: ElementTree.Element) -> set[ElementTree.Element]:
+    """Every Section that sits inside another Section.
+
+    The official files quote whole sections inside amending provisions (a Section under a
+    ReadAsText element, itself under a Subsection or Paragraph of the section that amends).
+    Those are words the Act SAYS, not sections it HAS. Indexing them put a section with a
+    stray quote mark for a label in the Income Tax Act and a second 2606 in the Regulations.
+    ElementTree has no parent pointer, so collect them from the top down instead.
+    """
+    nested: set[ElementTree.Element] = set()
+    for outer in root.iter("Section"):
+        nested.update(inner for inner in outer.iter("Section") if inner is not outer)
+    return nested
+
+
 _CLASS_HEADING = re.compile(r"^\s*(CLASS\s+\d+(?:\.\d+)?)", re.IGNORECASE)
 
 
-def _walk_schedule(schedule: ElementTree.Element, stream: _Stream) -> None:
+def _walk_schedule(
+    schedule: ElementTree.Element, stream: _Stream, nested: set[ElementTree.Element]
+) -> None:
     """Index a Schedule's items under a "Sch. <label>" prefix.
 
     Two shapes seen in the real XML (2026-09-13, Income Tax Regulations C.R.C., c. 945):
@@ -172,7 +203,7 @@ def _walk_schedule(schedule: ElementTree.Element, stream: _Stream) -> None:
             continue
         note = section.find("MarginalNote")
         heading = _flatten(note) if note is not None else ""
-        stream.add(f"{prefix} s.{label}", heading, section)
+        stream.add(f"{prefix} s.{label}", heading, section, indexed=section not in nested)
 
     children = list(schedule)
     for i, node in enumerate(children):
@@ -186,27 +217,56 @@ def _walk_schedule(schedule: ElementTree.Element, stream: _Stream) -> None:
         stream.add(f"{prefix} {m.group(1).title()}", heading, nxt)
 
 
+# The only children a section may have and still be a bare repeal notice. Anything else (a
+# Subsection, Paragraph, Definition, a nested Provision...) is content that is still there.
+_NOTICE_SHELL = {"Label", "MarginalNote", "Text", "HistoricalNote"}
+
+
+def _live_text(element: ElementTree.Element) -> str:
+    """The text under an element with everything inside a <Repealed> mark left out."""
+    parts = [element.text or ""]
+    for child in element:
+        if child.tag != "Repealed":
+            parts.append(_live_text(child))
+        parts.append(child.tail or "")
+    return "".join(parts)
+
+
 def _is_repealed(section: ElementTree.Element) -> int:
-    """1 only when the WHOLE section is repealed, not one of its subsections.
+    """1 only when the WHOLE section is a repeal notice, not when part of it is repealed.
 
-    A genuinely repealed section has no subsections left and its entire content is the
-    notice -- e.g. Income Tax Act s.15.1 is exactly
-    ``<Section><Label>15.1</Label><Text><Repealed>[Repealed, 2023, c. 26,
-    s. 7]</Repealed></Text></Section>``.
+    A genuinely repealed section keeps nothing but the notice -- e.g. Income Tax Act s.15.1
+    is exactly ``<Section><Label>15.1</Label><Text><Repealed>[Repealed, 2023, c. 26,
+    s. 7]</Repealed></Text></Section>``, sometimes with a MarginalNote and a HistoricalNote.
+    So both must hold:
+      (a) its element children are all among Label, MarginalNote, Text, HistoricalNote --
+          one Subsection, Paragraph or Definition and the section still has content;
+      (b) it has a Text, and every word of every Text lies inside a <Repealed> mark.
+          Whitespace is ignored, because the notice can be broken over lines.
 
-    Two wrong rules were tried first, and both are worth remembering:
-      * `.//Repealed` (any descendant) marked s.85 -- the rollover, live law -- as repealed,
-        because subsections 85(1), 85(1.1) and 85(4) each carry their own repeal marker.
-        That inflated the ITA to 212 "repealed" sections, nearly all false, and it hit the
-        longest and most-cited provisions hardest.
+    Rules tried before, each wrong in its own way (the first two are the 2026-08 findings):
+      * `.//Repealed` (any descendant) marked s.85 -- live law -- as repealed, because its
+        subsections each carry their own repeal marker. It inflated the ITA to 212.
       * direct-child `<Repealed>` only found ZERO, because the notice sits under `<Text>`.
+      * "no Subsection child, and a mark anywhere inside" (the rule until 2026-11) still
+        flagged live sections whose parts are Paragraphs or Definitions, or whose Text mixes
+        a mark with live words: on the official files, 7 of the Income Tax Act's 57 flagged
+        sections and 10 of the Regulations' 77, and the quote gate refused them all.
 
     Subsection-level repeal is real and worth capturing later at subsection granularity.
     It is a different fact from "this section is gone".
     """
-    if any(child.tag == "Subsection" for child in section):
+    if any(child.tag not in _NOTICE_SHELL for child in section):
         return 0
-    return 1 if section.find(".//Repealed") is not None else 0
+    texts = section.findall("Text")
+    if not texts:
+        return 0
+    for text in texts:
+        whole = re.sub(r"\s+", "", "".join(text.itertext()))
+        live = re.sub(r"\s+", "", _live_text(text))
+        if not whole or live:  # empty, or some words sit outside every <Repealed> mark
+            return 0
+    return 1
 
 
 def drop_duplicate_labels(provisions: list[tuple]) -> tuple[list[tuple], list[str]]:

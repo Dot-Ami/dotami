@@ -28,7 +28,7 @@ from corpus_contract import (
     RefusalError,
     Snapshot,
 )
-from ingest_xml import parse_act
+from ingest_xml import drop_duplicate_labels, parse_act
 
 MIGRATIONS = Path(__file__).resolve().parent.parent / "migrations"
 
@@ -242,6 +242,181 @@ def _check_schedule_parsing() -> list[bool]:
         )
     )
     return out
+
+
+# Invented XML in the official file's shape, for the two section-reading rules. Every word
+# is made up; only the element names and nesting follow the real files. No whitespace sits
+# between elements (except case 15), so a section's flattened text is its pieces joined end
+# to end and the expected strings further down can be written out by hand.
+REPEAL_XML = (
+    '<Statute xmlns:lims="http://justice.gc.ca/lims" lims:current-date="2026-03-31">'
+    "<Body>"
+    # 10: a notice and a historical note -> repealed
+    "<Section><Label>10</Label><MarginalNote>Old rule</MarginalNote>"
+    "<Text><Repealed>[Repealed, 2020, c. 1, s. 2]</Repealed></Text>"
+    "<HistoricalNote><HistoricalNoteSubItem>2020, c. 1, s. 2</HistoricalNoteSubItem>"
+    "</HistoricalNote></Section>"
+    # 11: a notice and nothing else -> repealed
+    "<Section><Label>11</Label><Text><Repealed>[Repealed, 2020, c. 1, s. 3]</Repealed></Text>"
+    "</Section>"
+    # 12: paragraphs, one of them repealed -> live section
+    "<Section><Label>12</Label><MarginalNote>Mixed</MarginalNote><Text>Lead-in words:</Text>"
+    "<Paragraph><Label>(a)</Label><Text>Live paragraph words.</Text></Paragraph>"
+    "<Paragraph><Label>(b)</Label><Text><Repealed>[Repealed, 2019, c. 3, s. 4]</Repealed></Text>"
+    "</Paragraph></Section>"
+    # 13: subsections, one of them repealed -> live section
+    "<Section><Label>13</Label>"
+    "<Subsection><Label>(1)</Label><Text>Live subsection words.</Text></Subsection>"
+    "<Subsection><Label>(2)</Label><Text><Repealed>[Repealed, 2019, c. 3, s. 5]</Repealed></Text>"
+    "</Subsection></Section>"
+    # 14: one Text holding a mark AND live words -> live section
+    "<Section><Label>14</Label>"
+    "<Text><Repealed>[Repealed, 2018, c. 5, s. 6]</Repealed> Other live words here.</Text>"
+    "</Section>"
+    # 15: a notice broken over lines and padded with blanks -> still repealed
+    "<Section><Label>15</Label><Text>\n  <Repealed>[Repealed,\n   2017, c. 7, s. 8]</Repealed>\n"
+    "</Text></Section>"
+    # 16: a Definition child next to a bare notice -> never flagged as a whole
+    "<Section><Label>16</Label><Text><Repealed>[Repealed, 2016, c. 9, s. 1]</Repealed></Text>"
+    "<Definition><Text>invented term means something.</Text></Definition></Section>"
+    # 17: no Text at all, only a mark in the marginal note -> not flagged
+    "<Section><Label>17</Label><MarginalNote><Repealed>[Repealed]</Repealed></MarginalNote>"
+    "</Section>"
+    "</Body>"
+    "<Schedule><ScheduleFormHeading><Label>SCHEDULE II</Label></ScheduleFormHeading>"
+    # a class with children, one of them repealed -> live class
+    "<Heading>CLASS 7</Heading>"
+    "<Provision><Text>Invented class words.</Text><Paragraph><Label>(a)</Label>"
+    "<Text><Repealed>[Repealed, 2015, c. 2, s. 2]</Repealed></Text></Paragraph></Provision>"
+    # a notice-only class -> repealed
+    "<Heading>CLASS 9</Heading>"
+    "<Provision><Text><Repealed>[Repealed, 2017, c. 7, s. 8]</Repealed></Text></Provision>"
+    "</Schedule>"
+    "</Statute>"
+)
+
+
+def _check_repeal_flag() -> list[bool]:
+    """A section is repealed only when its whole content is the notice (Rule 1).
+
+    The fault, found on the official Income Tax Act and Regulations files: a section with
+    no Subsection and a Repealed mark ANYWHERE inside was flagged whole, so sections made of
+    paragraphs or definitions, with one repealed paragraph, were refused as quotes. Each
+    case here is one shape from those files, in invented words.
+    """
+    parsed = parse_act(REPEAL_XML.encode("utf-8"))
+    flagged = {row[0]: bool(row[7]) for row in parsed.provisions}
+    return [
+        _check("notice with a historical note is flagged", flagged["10"]),
+        _check("notice with nothing else is flagged", flagged["11"]),
+        _check("section of paragraphs, one repealed, is not flagged", not flagged["12"]),
+        _check("section of subsections, one repealed, is not flagged", not flagged["13"]),
+        _check("Text with a mark and live words is not flagged", not flagged["14"]),
+        _check("notice split over lines is still flagged (whitespace ignored)", flagged["15"]),
+        _check("section with a Definition is not flagged", not flagged["16"]),
+        _check("mark only in the marginal note is not flagged", not flagged["17"]),
+        _check("Schedule II class with children is not flagged", not flagged["Sch. II Class 7"]),
+        _check("notice-only Schedule II class is flagged", flagged["Sch. II Class 9"]),
+    ]
+
+
+# Sections 2 and 3 each quote a whole section inside an amending provision (under
+# ReadAsText), as the real files do. The first quoted label matches no real section; the
+# second repeats the label of real section 1. The Schedule item quotes one too.
+NESTED_XML = (
+    '<Statute xmlns:lims="http://justice.gc.ca/lims" lims:current-date="2026-03-31">'
+    "<Body>"
+    "<Section><Label>1</Label><MarginalNote>First</MarginalNote><Text>Outer one.</Text></Section>"
+    "<Section><Label>2</Label><Text>Amending lead-in.</Text>"
+    "<Subsection><Label>(1)</Label><Text>Replace it with:</Text>"
+    "<ReadAsText><Section><Label>“88</Label><Text>Quoted words.</Text></Section></ReadAsText>"
+    "</Subsection></Section>"
+    "<Section><Label>3</Label><Text>Outer three.</Text>"
+    "<Subsection><Label>(1)</Label>"
+    "<ReadAsText><Section><Label>1</Label><Text>Repeated label words.</Text></Section>"
+    "</ReadAsText></Subsection></Section>"
+    "<Section><Label>4</Label><Text>Outer four.</Text></Section>"
+    "</Body>"
+    "<Schedule><ScheduleFormHeading><Label>SCHEDULE I</Label></ScheduleFormHeading>"
+    "<Section><Label>1</Label><Text>Item one.</Text><Subsection><Label>(1)</Label>"
+    "<ReadAsText><Section><Label>7</Label><Text>Quoted item words.</Text></Section>"
+    "</ReadAsText></Subsection></Section>"
+    "</Schedule>"
+    "</Statute>"
+)
+
+# The text block by block, in the order the walk meets the sections; label None = a quoted
+# section, which is a block of its own straight after the section holding it. That is where
+# its words have always been, and the stored text, its hash and every offset depend on it
+# staying there.
+NESTED_BLOCKS = [
+    ("1", "1FirstOuter one."),
+    ("2", "2Amending lead-in.(1)Replace it with:“88Quoted words."),
+    (None, "“88Quoted words."),
+    ("3", "3Outer three.(1)1Repeated label words."),
+    (None, "1Repeated label words."),
+    ("4", "4Outer four."),
+    ("Sch. I s.1", "1Item one.(1)7Quoted item words."),
+    (None, "7Quoted item words."),
+]
+
+
+def _check_nested_sections() -> list[bool]:
+    """A Section quoted inside another section is not a section of the Act (Rule 2).
+
+    The official files quote whole sections inside amending provisions. Walking every
+    Section element indexed those as sections: one became a row labelled with a stray quote
+    mark, another repeated a real label (and was only dropped by the duplicate-label rule).
+    The expected text and offsets are built here from the invented strings above, not by
+    calling the walk under test.
+    """
+    parsed = parse_act(NESTED_XML.encode("utf-8"))
+    expected_text = "".join(block + "\n\n" for _, block in NESTED_BLOCKS)
+    expected_rows: dict[str, tuple[int, int]] = {}
+    block_of: dict[str, str] = {}
+    cursor = 0
+    for label, block in NESTED_BLOCKS:
+        if label is not None:
+            expected_rows[label] = (cursor, cursor + len(block))
+            block_of[label] = block
+        cursor += len(block) + 2
+    labels = [row[0] for row in parsed.provisions]
+    kept, dropped = drop_duplicate_labels(parsed.provisions)
+    got_rows = {row[0]: (row[2], row[3]) for row in parsed.provisions}
+    return [
+        _check(
+            "quoted sections get no row; the rows are exactly the real sections",
+            labels == list(expected_rows),
+            f"got {labels}",
+        ),
+        _check("no row for the quoted section with a stray label", "“88" not in labels),
+        _check(
+            "a quoted section repeating a real label leaves no duplicate to drop",
+            dropped == [] and len(kept) == len(parsed.provisions),
+            f"dropped {dropped}",
+        ),
+        _check(
+            "quoted blocks are still blocks of their own in the document text",
+            # Not just a substring: the enclosing section's block repeats these words, so
+            # only the blank lines either side prove the standalone block was kept.
+            "\n\n“88Quoted words.\n\n" in parsed.text
+            and "\n\n1Repeated label words.\n\n" in parsed.text,
+        ),
+        _check(
+            "document text is exactly the blocks, quoted ones included",
+            parsed.text == expected_text,
+        ),
+        _check("every real section keeps its start and end", got_rows == expected_rows),
+        _check(
+            "every real section keeps its ordinal (its block's place in the text)",
+            {row[0]: row[4] for row in parsed.provisions}
+            == {lab: i for i, (lab, _) in enumerate(NESTED_BLOCKS) if lab is not None},
+        ),
+        _check(
+            "each row's offsets index its own words",
+            all(parsed.text[s:e] == block_of[lab] for lab, (s, e) in got_rows.items()),
+        ),
+    ]
 
 
 def run() -> int:
@@ -467,6 +642,8 @@ def run() -> int:
 
         # --- XML parser: schedules in their own label namespace (S2.5.2g) -------------
         passed.extend(_check_schedule_parsing())
+        passed.extend(_check_repeal_flag())
+        passed.extend(_check_nested_sections())
 
         # --- schema-version guard -------------------------------------------------
         conn = sqlite3.connect(db)
